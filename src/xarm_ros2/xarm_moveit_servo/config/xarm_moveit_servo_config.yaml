@@ -1,0 +1,66 @@
+###############################################
+# Modify all parameters related to servoing here
+###############################################
+use_gazebo: false # Whether the robot is started in a Gazebo simulation environment
+
+## Properties of incoming commands
+command_in_type: "unitless" # "unitless"> in the range [-1:1], as if from joystick.
+scale:
+  # Scale parameters are only used if command_in_type=="unitless"
+  linear:  0.4  # Max linear velocity. Meters per publish_period. Unit is [m/s].
+  rotational:  0.8 # Max angular velocity. Rads per publish_period. Unit is [rad/s].
+  joint: 0.5
+
+## Properties of outgoing commands
+publish_period: 0.034  # 1/Nominal publish rate [seconds]
+low_latency_mode: false  
+
+# What type of topic does your robot driver expect?
+command_out_type: trajectory_msgs/JointTrajectory
+
+# What to publish?
+publish_joint_positions: true
+publish_joint_velocities: false
+publish_joint_accelerations: false
+
+## Incoming Joint State properties
+low_pass_filter_coeff: 2.0  
+
+## MoveIt properties
+move_group_name:  xarm7   # Beibehalten laut Backup
+planning_frame: link_base  # Beibehalten laut Backup
+
+## Other frames
+ee_frame_name: link_eef  
+robot_link_command_frame:  link_base  
+
+## Stopping behaviour
+incoming_command_timeout:  0.2  
+num_outgoing_halt_msgs_to_publish: 4
+
+## Configure handling of singularities and joint limits
+lower_singularity_threshold:  17.0  
+hard_stop_singularity_threshold: 30.0 
+joint_limit_margin: 0.1 
+
+## Topic names
+cartesian_command_in_topic: ~/delta_twist_cmds  
+joint_command_in_topic: ~/delta_joint_cmds 
+joint_topic: /joint_states
+status_topic: ~/status 
+command_out_topic: /xarm7_traj_controller/joint_trajectory # Beibehalten laut Backup
+
+## Collision checking for the entire robot body
+check_collisions: true 
+collision_check_rate: 10.0 
+
+# UMGESCHALTET auf stop_distance, um Rückwärtsfahren zu ermöglichen
+collision_check_type: stop_distance
+
+# Parameter für "threshold_distance"
+self_collision_proximity_threshold: 0.01 
+scene_collision_proximity_threshold: 0.02 
+
+# Parameter für "stop_distance" (Werte optimiert für Rückzug-Logik)
+collision_distance_safety_factor: 10.0 
+min_allowable_collision_distance: 0.01

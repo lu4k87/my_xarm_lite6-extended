@@ -1,0 +1,38 @@
+whisper:
+  inference:
+    ros__parameters:
+      model_name: "base"         # oder small/medium/large-v3, je nach GPU
+      wparams:
+        language: "en"           # Deine drei Kommandos sind Englisch
+        task: "transcribe"
+        # Wichtig: Biasing auf Deine drei Sätze
+        initial_prompt: |
+          You will hear short voice commands for a robot. The only valid commands are:
+          - "move to green"
+          - "move to red"
+          - "move to blue"
+          Output exactly the spoken command, nothing else.
+
+        # Für stabile, deterministische Erkennung (niedrige Latenz)
+        temperature: 0.0
+        beam_size: 1
+        best_of: 1
+        no_timestamps: true
+        condition_on_previous_text: false   # vermeidet “Hängenbleiben” im Kontext
+        vad_filter: true                    # Falls Dein Server diese Option unterstützt
+        # (Optional – je nach Whisper-Server verfügbar)
+        # vad_parameters:
+        #   min_silence_duration_ms: 250
+        #   speech_pad_ms: 100
+
+        print_progress: false
+        n_threads: 4
+
+      cparams:
+        flash_attn: true
+        gpu_device: 0
+        use_gpu: true
+
+      # Reaktionsfreudigkeit (kannst Du feinjustieren)
+      buffer_capacity: 8        # kleiner = schnellere Entscheidungen (z.B. 6–10)
+      callback_ms: 250          # häufigere Rückmeldungen (z.B. 200–300 ms)
