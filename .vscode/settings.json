@@ -1,0 +1,18 @@
+{
+    "ROS2.distro": "humble",
+    "python.autoComplete.extraPaths": [
+        "/home/mk1/dev_ws/install/yolo_object_detector/lib/python3.10/site-packages",
+        "/home/mk1/dev_ws/install/move_to_coordinator/lib/python3.10/site-packages",
+        "/home/mk1/dev_ws/install/motion_sequence/lib/python3.10/site-packages",
+        "/home/mk1/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages",
+        "/home/mk1/dev_ws/install/whisper_demos/lib/python3.10/site-packages",
+        "/home/mk1/dev_ws/install/voice_command_listener/lib/python3.10/site-packages",
+        "/home/mk1/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages",
+        "/home/mk1/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages",
+        "/home/mk1/dev_ws/install/rviz_marker/lib/python3.10/site-packages",
+        "/home/mk1/dev_ws/install/collision_check/lib/python3.10/site-packages",
+        "/home/mk1/dev_ws/install/audio_listener/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}

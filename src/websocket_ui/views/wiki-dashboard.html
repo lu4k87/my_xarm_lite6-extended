@@ -1,0 +1,144 @@
+<div class="header-bar">
+    <h2>Dashboard Architektur &amp; Datenfluss</h2>
+</div>
+
+<div class="exec-scroll-area">
+    <p class="exec-intro">Hier wird im Detail erklärt, wie das Dashboard im Hintergrund arbeitet, welche Dateien beteiligt sind und wie die Live-Daten aus ROS 2 extrahiert und kategorisiert werden.</p>
+    
+    <div class="exec-category">
+        <h3 class="exec-cat-title"><i class="fa-solid fa-server" style="color: var(--accent-secondary);"></i> 1. Backend (Datenerfassung &amp; ROS 2 Bridge)</h3>
+        <div class="exec-grid">
+            <div class="exec-card" style="grid-column: span 2;">
+                <div class="exec-card-header">
+                    <h4><i class="fa-brands fa-python"></i> workspace_analyzer.py</h4>
+                </div>
+                <div class="exec-cmd code-font" style="font-size: 0.85rem;">Kernstück: Hybrid-Scanner &amp; Daten-Aggregator</div>
+                <div style="margin-top: 10px;">
+                    <div class="exec-row-item">
+                        <i class="fa-solid fa-magnifying-glass feature-icon" style="margin-right: 8px;"></i>
+                        <strong>Statische Analyse:</strong> Durchsucht den <code>~/dev_ws/src</code> Ordner nach Projekt-Dateien (Python/C++), analysiert <code>package.xml</code> auf Abhängigkeiten und zerlegt rekursiv Launch-Files, um Start-Beziehungen (<i>launched_by</i>) zu verstehen.
+                    </div>
+                    <div class="exec-row-item">
+                        <i class="fa-solid fa-satellite-dish feature-icon" style="margin-right: 8px;"></i>
+                        <strong>Live-Metadaten via CLI:</strong> Liest im Hintergrund asynchron per Subprozess echte <code>ros2 node info</code> Befehle aus. Dies garantiert, dass zu aktiven Nodes die korrekten Topics, Services und Clients gemeldet werden, anstatt sich auf fehleranfälliges Regex zu verlassen.
+                    </div>
+                    <div class="exec-row-item">
+                        <i class="fa-solid fa-code feature-icon" style="margin-right: 8px;"></i>
+                        <strong>Die is_workspace Flag:</strong> Berechnet für jeden gefundenen Node dynamisch, ob dieser aus eurem eigenen Workspace stammt (z.B. indem geprüft wird, ob die Node Exe dem lokalen Workspace gehört oder in einem lokalen Launch-Script aufgerufen wird).
+                    </div>
+                </div>
+            </div>
+            
+            <div class="exec-card">
+                <div class="exec-card-header">
+                    <h4><i class="fa-solid fa-bridge-water"></i> rosbridge_server</h4>
+                </div>
+                <div class="exec-cmd" style="font-size: 0.85rem;">Der Übersetzer</div>
+                <div style="margin-top: 15px;">
+                    <div class="exec-row-item">
+                        Offizielles ROS 2 Paket. Öffnet einen WebSocket-Port (9090).
+                    </div>
+                    <div class="exec-row-item">
+                        Konvertiert rohe ROS 2 Messages in standardisiertes JSON für den Web-Browser und leitet umgekehrt UI-Befehle ins ROS Netzwerk weiter.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="exec-category">
+        <h3 class="exec-cat-title"><i class="fa-solid fa-layer-group" style="color: var(--accent-secondary);"></i> 2. Node Explorer Logik (Sidebar)</h3>
+        <p style="margin-bottom: 20px; font-size: 0.95rem; color: #cbd5e1;">Das Dashboard trennt alle erkannten ROS 2 Nodes intelligent in <strong>drei Hauptkategorien</strong>. Die Zuordnung erfolgt durch das JavaScript-Frontend (<code>dashboard_script.js</code>), welches die <code>is_workspace</code> Flag vom Backend auswertet.</p>
+        
+        <div class="exec-grid">
+            <div class="exec-card" style="grid-column: span 3; border: 1px solid rgba(255,255,255,0.05); background: transparent;">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <!-- Card 1 -->
+                    <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.3); border: 1px solid rgba(34, 197, 94, 0.2); padding: 15px; border-radius: 8px; border-top: 3px solid rgb(34, 197, 94);">
+                        <h5 style="color: rgb(34, 197, 94); margin-bottom: 8px;"><i class="fa-solid fa-code"></i> Workspace Nodes</h5>
+                        <p style="font-size: 0.85rem; color: #cbd5e1;"><strong>Eigener, aktiver Code.</strong><br>Diese Nodes laufen gerade im System (grüner Status-Puls). Das Backend hat validiert, dass ihr Ursprung im lokalen <code>dev_ws/src</code> Ordner liegt – sei es als kompiliertes C++ Executable, statisches Python Script oder durch ein lokales Launch File parametrisiert.</p>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.3); border: 1px solid rgba(100, 116, 139, 0.3); padding: 15px; border-radius: 8px; border-top: 3px solid #64748b;">
+                        <h5 style="color: #cbd5e1; margin-bottom: 8px;"><i class="fa-solid fa-server"></i> System Nodes</h5>
+                        <p style="font-size: 0.85rem; color: #cbd5e1;"><strong>Global installierte Programme.</strong><br>Diese Nodes laufen aktiv mit, haben aber keine direkte physikalische Entsprechung im gecachten Workspace. Beispiele: <code>rosbridge_websocket</code>, MoveIt Controller (<code>/servo_server</code>), global installierte ROS-Packages.</p>
+                        
+                        <div style="margin-top: 10px; background: rgba(56, 189, 248, 0.05); padding: 10px; border-radius: 6px; border-left: 2px solid var(--accent-primary);">
+                            <span style="font-size: 0.8rem; color: var(--accent-primary);"><strong>Smart-Clustering:</strong></span>
+                            <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Das Frontend gruppiert unübersichtliche Systemkomponenten automatisch. So werden z.B. alle Daemons in einem Ordner <i>System Daemons (CLI)</i> versteckt und Marker-Visualisierungen unter <i>RViz 2</i> geordnet.</p>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.2); border: 1px dashed rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+                        <h5 style="color: #94a3b8; margin-bottom: 8px;"><i class="fa-regular fa-file-code"></i> Inaktive Dateien</h5>
+                        <p style="font-size: 0.85rem; color: #94a3b8;">Der Code-Scanner hat diese <code>.py</code> oder <code>.cpp</code> Datei mit ROS-Code im Workspace gefunden, aber zum jetzigen Zeitpunkt ist kein laufender Node damit assoziiert. Sie eignen sich zur Source-Code-Ansicht.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="exec-category">
+        <h3 class="exec-cat-title"><i class="fa-solid fa-network-wired" style="color: var(--accent-secondary);"></i> 3. Live-Datenfluss (Wie kommen Sub/Pub Topics ins UI?)</h3>
+        <div class="exec-grid">
+            <div class="exec-card" style="grid-column: span 3;">
+                <div class="exec-card-header">
+                    <h4><i class="fa-solid fa-bolt"></i> Der dynamische Topic Tracker</strong></h4>
+                </div>
+                <div style="display: flex; gap: 30px; margin-top: 15px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 300px;">
+                        <h5 style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">Schritt 1: UI Trigger</h5>
+                        <div style="margin-top: 10px; font-size: 0.85rem; color: #cbd5e1;">
+                            <div class="exec-row-item">Klickt der Benutzer auf einen Node, extrahiert die JS-Logik dessen Publisher und Subscriber.</div>
+                            <div class="exec-row-item">JS sendet eine Anforderung per WebSocket an <code>/ui/request_topic_activity</code> inklusive aller benötigten Topics.</div>
+                        </div>
+                        
+                        <h5 style="color: var(--accent-primary); margin-top: 20px; margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">Schritt 2: Backend Bindings</h5>
+                        <div style="margin-top: 10px; font-size: 0.85rem; color: #cbd5e1;">
+                            <div class="exec-row-item">Der <code>workspace_analyzer</code> löst die Topic-Strings dynamisch über <code>get_message(type)</code> auf.</div>
+                            <div class="exec-row-item">Es werden temporäre ROS-Subscriptions erstellt, welche bei Message-Eingang einen Zähler hochsetzen und die letzte Payload cachen.</div>
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 300px;">
+                        <h5 style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">Schritt 3: Frequenz-Kalkulation</h5>
+                        <div style="margin-top: 10px; font-size: 0.85rem; color: #cbd5e1;">
+                            <div class="exec-row-item">Ein 500ms Timer prozessiert die angehäuften Zähler, vergleicht sie mit der Delta-Zeit und errechnet die Frequenz (Hz) der Messages.</div>
+                        </div>
+                        
+                        <h5 style="color: var(--accent-primary); margin-top: 20px; margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">Schritt 4: Render Response</h5>
+                        <div style="margin-top: 10px; font-size: 0.85rem; color: #cbd5e1;">
+                            <div class="exec-row-item">Das Ergebnis-Tuple (Hz, ActiveState, stringified(MsgPayload)) wird JSON-gepackt auf <code>/dashboard/topic_activity</code> gepublished.</div>
+                            <div class="exec-row-item">Das UI liest das Ergebnis, aktiviert die Pulse-Animationen (grün leuchtender Punkt) an den Flow-Linien und updatet den DOM-Text.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="exec-card" style="grid-column: span 3;">
+                <div class="exec-card-header">
+                    <h4><i class="fa-solid fa-code"></i> Frontend (UI Layout)</h4>
+                </div>
+                <div style="margin-top: 15px; font-size: 0.85rem;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                        <div style="flex: 1; min-width: 250px;">
+                            <strong>dashboard_index.html</strong><br>
+                            Definiert das DOM-Grundgerüst (Container für Flow, Tab-Leiste, Explorer). Enthält die <code>roslibjs</code> Imports um nativ via JS mit ROS sprechen zu können.
+                        </div>
+                        <div style="flex: 1; min-width: 250px;">
+                            <strong>dashboard_style.css</strong><br>
+                            Ein hochentwickeltes Flex/Grid-System mit CSS Variables. Bestimmt die Glow-Effekte, abgerundeten Rahmen und Scrollbars (Dark Theme).
+                        </div>
+                        <div style="flex: 1; min-width: 250px;">
+                            <strong>views/</strong><br>
+                            Enthält HTML-Fragmente für die Tabs (zB das Wiki, Netzwerk-Ansicht). Werden zur Laufzeit vom VanillaJS in den Content-Bereich geschoben (Single Page Application Prinzip).
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>

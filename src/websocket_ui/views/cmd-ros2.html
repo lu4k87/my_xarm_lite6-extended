@@ -1,0 +1,59 @@
+
+
+<div class="header-bar">
+<h2><i class="fa-solid fa-laptop-code" style="color: var(--accent-primary); margin-right: 10px;"></i>
+                        Commands: ROS 2 CLI</h2>
+</div>
+
+
+<div class="exec-scroll-area">
+<p class="exec-intro">Die wichtigsten Befehle zur Interaktion mit dem ROS 2 System, Nodes und
+                        Topics.</p>
+<div class="exec-category">
+<h3 class="exec-cat-title"><i class="fa-solid fa-diagram-project" style="color: var(--accent-secondary);"></i> Nodes &amp; Info</h3>
+<div class="cmd-list-container widget" style="padding: 0;">
+<div class="cmd-item" style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+<div class="exec-cmd">ros2 node list</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Listet alle aktuell
+                                    laufenden Nodes im System auf.</div>
+</div>
+<div class="cmd-item" style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+<div class="exec-cmd">ros2 node info /node_name</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Zeigt Details (Publisher,
+                                    Subscriber, Services) einer bestimmten Node an.</div>
+</div>
+<div class="cmd-item" style="padding: 15px;">
+<div class="exec-cmd">ros2 run package_name executable_name</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Startet eine einzelne
+                                    kompilierte C++ Node oder ein Python-Skript.</div>
+</div>
+</div>
+</div>
+<div class="exec-category">
+<h3 class="exec-cat-title"><i class="fa-solid fa-satellite-dish" style="color: var(--accent-secondary);"></i> Topics &amp; Messages</h3>
+<div class="cmd-list-container widget" style="padding: 0;">
+<div class="cmd-item" style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+<div class="exec-cmd">ros2 topic list -t</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Listet alle aktiven Topics
+                                    inklusive ihres Message-Typs (z.B. std_msgs/msg/String) auf.</div>
+</div>
+<div class="cmd-item" style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+<div class="exec-cmd">ros2 topic echo /topic_name</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Druckt die
+                                    Live-Nachrichten, die aktuell über ein Topic gesendet werden, ins Terminal.</div>
+</div>
+<div class="cmd-item" style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+<div class="exec-cmd">ros2 topic hz /topic_name</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Misst die Frequenz (Hz),
+                                    mit der Nachrichten auf einem Topic veröffentlicht werden.</div>
+</div>
+<div class="cmd-item" style="padding: 15px;">
+<div class="exec-cmd">ros2 interface show msg_type</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Zeigt die innere Struktur
+                                    (Felder und Datentypen) einer Message an (z.B. <code>geometry_msgs/msg/Pose</code>).
+                                </div>
+</div>
+</div>
+</div>
+</div>
+

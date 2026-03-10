@@ -1,0 +1,44 @@
+
+
+<div class="header-bar">
+<h2>Live Telemetrie</h2>
+<div class="alert-banner hidden" id="collision-banner"><i class="fa-solid fa-triangle-exclamation"></i>
+                        KOLLISION ERKANNT</div>
+</div>
+
+
+<div class="grid-dashboard">
+<div class="widget">
+<div class="widget-header">End-Effektor Position (EEF)</div>
+<div class="coords-container">
+<div class="coord-box x-box"><span class="coord-label">X-Achse</span><span class="coord-value code-font"><span id="val-x">0</span><span class="unit">mm</span></span>
+</div>
+<div class="coord-box y-box"><span class="coord-label">Y-Achse</span><span class="coord-value code-font"><span id="val-y">0</span><span class="unit">mm</span></span>
+</div>
+<div class="coord-box z-box"><span class="coord-label">Z-Achse</span><span class="coord-value code-font"><span id="val-z">0</span><span class="unit">mm</span></span>
+</div>
+</div>
+</div>
+<div class="widget">
+<div class="widget-header">Systemgeschwindigkeit</div>
+<div class="speed-display">
+<div class="speed-value code-font" id="val-speed">0%</div>
+<div class="progress-track">
+<div class="progress-fill" id="speed-bar"></div>
+</div>
+</div>
+</div>
+<div class="widget">
+<div class="widget-header">Planning Frame</div>
+<div style="padding: 20px; text-align: center; color: var(--accent-primary); font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; background: rgba(0,0,0,0.2); border-radius: 8px; margin-top: 10px;">
+    <span id="val-planning-frame">Warte auf Daten...</span>
+</div>
+</div>
+<div class="widget span-2 terminal-widget">
+<div class="widget-header">System Terminal</div>
+<div class="terminal-window" id="sys-terminal">
+<div class="term-line info">System initialisiert... Warte auf Daten.</div>
+</div>
+</div>
+</div>
+

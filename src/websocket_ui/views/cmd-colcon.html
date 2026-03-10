@@ -1,0 +1,31 @@
+
+
+<div class="header-bar">
+<h2><i class="fa-solid fa-laptop-code" style="color: var(--accent-primary); margin-right: 10px;"></i>
+                        Commands: Colcon Build</h2>
+</div>
+
+
+<div class="exec-scroll-area">
+<p class="exec-intro">Befehle zum Kompilieren und Erstellen von ROS 2 Workspaces.</p>
+<div class="widget" style="padding: 0;">
+<div class="cmd-item" style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+<div class="exec-cmd">colcon build --symlink-install</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Kompiliert den gesamten
+                                Workspace. <strong>Sehr wichtig (Python):</strong> Erlaubt das Ändern von
+                                Python-Skripten, ohne danach neu kompilieren zu müssen.</div>
+</div>
+<div class="cmd-item" style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+<div class="exec-cmd">colcon build --packages-select pkg_name</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Kompiliert nur ein
+                                spezifisches Paket, anstatt des gesamten Workspaces (Sammelt massiv Zeit bei C++).</div>
+</div>
+<div class="cmd-item" style="padding: 15px;">
+<div class="exec-cmd">source install/setup.bash</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Macht neu kompilierte Nodes
+                                oder neue Packages im aktuellen Terminal verfügbar. Muss nach jedem Start eines neuen
+                                Terminals (oder per .bashrc) ausgeführt werden.</div>
+</div>
+</div>
+</div>
+

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>voice_command_listener</name>
+  <version>0.1.0</version>
+  <description>Listens to ros2_whisper transcript and prints DE/EN commands</description>
+  <maintainer email="you@example.com">you</maintainer>
+  <license>MIT</license>
+
+  <!-- Build type: ament_python (kein ament_cmake!) -->
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <!-- Messages aus ros2_whisper -->
+  <exec_depend>whisper_idl</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
+

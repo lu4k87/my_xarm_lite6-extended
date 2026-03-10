@@ -1,0 +1,1536 @@
+let workspaceData = {};
+let network = null;
+let visNodes = new vis.DataSet();
+let visEdges = new vis.DataSet();
+let codeRequestPub = null;
+let currentRequestedPath = "";
+
+let expandedFolders = new Set(['dev_ws/src']);
+
+window.toggleFolder = function (event, path) {
+    event.stopPropagation();
+    if (expandedFolders.has(path)) {
+        expandedFolders.delete(path);
+    } else {
+        expandedFolders.add(path);
+    }
+    if (workspaceData.tree) {
+        document.getElementById('ws-tree-container').innerHTML = renderWorkspaceTree(workspaceData.tree);
+    }
+};
+
+function renderWorkspaceTree(treeNode, currentPath = "") {
+    if (!treeNode) return '';
+    const nodePath = currentPath ? `${currentPath}/${treeNode.name}` : treeNode.name;
+
+    if (treeNode.type === 'folder') {
+        const isOpen = expandedFolders.has(nodePath);
+        const safePath = nodePath.replace(/'/g, "\\\\'");
+
+        let html = `
+            <div class="tree-item folder" onclick="toggleFolder(event, '${safePath}')">
+                <i class="fa-solid fa-chevron-right tree-caret ${isOpen ? 'open' : ''}"></i>
+                <i class="fa-solid ${isOpen ? 'fa-folder-open' : 'fa-folder'} folder-icon"></i>
+                <span class="tree-name">${treeNode.name}</span>
+            </div>
+        `;
+
+        if (isOpen && treeNode.children && treeNode.children.length > 0) {
+            html += `<div class="tree-children">`;
+            treeNode.children.forEach(child => {
+                html += renderWorkspaceTree(child, nodePath);
+            });
+            html += `</div>`;
+        }
+        return html;
+    } else {
+        let iconClass = "fa-solid fa-file";
+        let colorStyle = "color: var(--text-secondary);";
+
+        if (treeNode.name.endsWith('.py')) {
+            iconClass = "fa-brands fa-python";
+            colorStyle = "color: #fbbf24;";
+        } else if (treeNode.name.endsWith('.cpp') || treeNode.name.endsWith('.hpp') || treeNode.name.endsWith('.h') || treeNode.name.endsWith('.c')) {
+            iconClass = "fa-solid fa-file-code";
+            colorStyle = "color: #3b82f6;";
+        } else if (treeNode.name.includes('launch')) {
+            iconClass = "fa-solid fa-rocket";
+            colorStyle = "color: #ef4444;";
+        } else if (treeNode.name.endsWith('.xml') || treeNode.name.endsWith('.yaml') || treeNode.name.endsWith('.json')) {
+            iconClass = "fa-solid fa-sliders";
+            colorStyle = "color: #10b981;";
+        }
+
+        return `
+            <div class="tree-item file">
+                <span class="spacer"></span>
+                <i class="${iconClass}" style="${colorStyle}"></i>
+                <span class="tree-name">${treeNode.name}</span>
+            </div>
+        `;
+    }
+}
+
+
+
+function updateNodeList() {
+    const listEl = document.getElementById('dynamic-node-list');
+    const nodes = Object.keys(workspaceData.nodes || {}).sort();
+    const proj_keys = Object.keys(workspaceData.project_files || {}).sort();
+
+    if (nodes.length === 0 && proj_keys.length === 0) {
+        listEl.innerHTML = '<li class="empty-state">Keine Nodes gefunden</li>';
+        return;
+    }
+
+    const currentNodesStr = JSON.stringify({ n: nodes, p: proj_keys });
+    if (listEl.dataset.cachedNodes === currentNodesStr && !listEl.querySelector('.empty-state')) {
+        return;
+    }
+    listEl.dataset.cachedNodes = currentNodesStr;
+
+    const activeLi = listEl.querySelector('li.active');
+    const activeNodeName = activeLi ? activeLi.dataset.name : null;
+
+    let activeWsNodes = [];
+    let inactiveWsNodes = [];
+    let sysNodes = [];
+
+    // Erfasse direkt ueber Backend-Metadaten, wer wirklich ein Workspace Node ist
+    nodes.forEach(n => {
+        const info = workspaceData.nodes[n];
+        let isWs = false;
+
+        // Expliziter Ausschluss für oft genutzte RViz- und System-Nodes
+        const isRvizInternal = n.includes('interactive_marker_display') || n.includes('rviz2');
+
+        if (info && info.is_workspace && !isRvizInternal) {
+            isWs = true;
+        }
+
+        // Eindeutig ein Workspace Node laut Backend
+        if (isWs) {
+            activeWsNodes.push(n);
+        } else {
+            sysNodes.push(n);
+        }
+    });
+
+    // Zusaetzlich inaktive Projekt-Dateien auslesen
+    if (workspaceData.project_files) {
+        Object.keys(workspaceData.project_files).forEach(file => {
+            const fileData = workspaceData.project_files[file];
+            const activeName = fileData.active_node_name;
+            // Wenn der Node nicht laeuft oder nicht zuzuordnen ist, zeige als inaktive Datei
+            if (!activeName || !nodes.includes(activeName)) {
+                inactiveWsNodes.push(file);
+            }
+        });
+    }
+
+    activeWsNodes.sort();
+    sysNodes.sort();
+
+    // Inaktive Nodes nach Package-Name sortieren, dann nach Datei-Name
+    inactiveWsNodes.sort((a, b) => {
+        const pkgA = workspaceData.project_files[a]?.package || '';
+        const pkgB = workspaceData.project_files[b]?.package || '';
+        if (pkgA === pkgB) {
+            return a.localeCompare(b);
+        }
+        return pkgA.localeCompare(pkgB);
+    });
+
+    // Helper zur Kategorisierung in Parent/Child
+    function parseNodeHierarchy(nodeList) {
+        const parents = [];
+        const orphans = [];
+
+        nodeList.forEach(name => {
+            // Erkennt Muster wie "_impl_...", "_private_...", "daemon" etc.
+            const match = name.match(/^(.*(?:_impl_|_private_|_ros2cli_daemon)).*$/);
+            if (match && name.includes('_impl_') || name.includes('_private_')) {
+                // Finde potenziellen Parent
+                let baseName = name.split('_impl_')[0];
+                if (baseName === name) baseName = name.split('_private_')[0];
+
+                // Wir tun den Child in den gefundenen Parent (oder erstellen einen virtuellen)
+                let parentObj = parents.find(p => p.name === baseName);
+                if (!parentObj) {
+                    parentObj = { name: baseName, isVirtual: !nodeList.includes(baseName), children: [] };
+                    parents.push(parentObj);
+                }
+                parentObj.children.push(name);
+            } else if (name.startsWith('/_ros2cli_daemon')) {
+                let daemonParent = parents.find(p => p.name === 'System Daemons (CLI)');
+                if (!daemonParent) {
+                    daemonParent = { name: 'System Daemons (CLI)', isVirtual: true, children: [] };
+                    parents.push(daemonParent);
+                }
+                daemonParent.children.push(name);
+            } else if (name.includes('interactive_marker_display') || name.includes('rviz')) {
+                let rvizParent = parents.find(p => p.name === 'RViz 2');
+                if (!rvizParent) {
+                    rvizParent = { name: 'RViz 2', isVirtual: true, children: [] };
+                    parents.push(rvizParent);
+                }
+                rvizParent.children.push(name);
+            } else {
+                // Wenn es bereits als Parent angelegt wurde (weil ein Child vorher dran war), skip
+                if (!parents.some(p => p.name === name)) {
+                    parents.push({ name: name, isVirtual: false, children: [] });
+                }
+            }
+        });
+
+        // Aufräumen: Wenn ein Parent keine children hat, behandle ihn einfach als flachen Node (schönerer Code)
+        return parents.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    const wsHierarchies = parseNodeHierarchy(activeWsNodes);
+    const sysHierarchies = parseNodeHierarchy(sysNodes);
+
+    let html = '';
+
+    window.toggleNodeGroup = function (btn) {
+        const container = btn.closest('.node-group-container');
+        if (!container) return;
+        const body = container.querySelector('.node-group-body');
+        const caret = btn.querySelector('.group-toggle-caret');
+        const isCollapsed = body.style.display === 'none';
+        body.style.display = isCollapsed ? 'block' : 'none';
+        if (caret) caret.style.transform = isCollapsed ? 'rotate(90deg)' : 'rotate(0deg)';
+    };
+
+    window.toggleSubNodes = function (event, parentName) {
+        event.stopPropagation();
+        const parentLi = event.currentTarget.closest('.node-card, .virtual-node-card');
+        if (parentLi) {
+            const subList = parentLi.nextElementSibling;
+            const caret = parentLi.querySelector('.sub-node-caret');
+            if (subList && subList.classList.contains('sub-node-list')) {
+                const isHidden = subList.style.display === 'none';
+                subList.style.display = isHidden ? 'block' : 'none';
+                if (caret) caret.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+            }
+        }
+    };
+
+    function renderHierarchy(hierarchies, isSystem) {
+        let outHtml = '';
+
+        const getPackageForNode = (name) => {
+            // Priority 1: direct live node data from the Python backend (most accurate)
+            if (workspaceData.nodes && workspaceData.nodes[name]) {
+                const pkg = workspaceData.nodes[name].package;
+                if (pkg && pkg !== 'ROS 2 System' && pkg !== 'Unbekannt') return pkg;
+            }
+
+            // Priority 2: project_files entry that has this node as its active instance
+            if (workspaceData.project_files) {
+                for (let file in workspaceData.project_files) {
+                    const pf = workspaceData.project_files[file];
+                    if (pf.active_node_name === name && pf.package && pf.package !== 'Unbekannt') {
+                        return pf.package;
+                    }
+                }
+            }
+
+            // Priority 3: live node package even if it is "ROS 2 System" (better than nothing)
+            if (workspaceData.nodes && workspaceData.nodes[name]) {
+                const pkg = workspaceData.nodes[name].package;
+                if (pkg) return pkg;
+            }
+
+            return 'Unbekannt';
+        };
+
+        hierarchies.forEach(h => {
+            const hasChildren = h.children && h.children.length > 0;
+            const nodeClass = isSystem ? 'sys-node' : 'ws-node';
+            const iconMain = isSystem ? 'fa-share-nodes' : 'fa-diagram-project';
+            const statusPulse = '<span class="status-pulse" style="width: 6px; height: 6px; margin: 0 8px 0 0; background-color: rgb(34, 197, 94);"></span>';
+
+            if (h.isVirtual && hasChildren) {
+                // Virtueller Parent (z.B. für System Daemons, Container)
+                outHtml += `<li class="virtual-node-card" style="padding: 10px 15px; cursor: pointer; color: var(--text-secondary); display:flex; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.02);" onclick="toggleSubNodes(event, '${h.name}')">
+                                <i class="fa-solid fa-chevron-right sub-node-caret" style="margin-right: 10px; font-size: 0.8rem; transition: transform 0.2s;"></i>
+                                <i class="fa-solid fa-folder-tree" style="margin-right: 10px; font-size: 1.1rem; color: #64748b;"></i>
+                                <span class="node-name-text" style="font-weight: 500;">${h.name}</span>
+                                <span style="margin-left:auto; font-size:0.7rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 10px;">${h.children.length}</span>
+                            </li>`;
+
+                outHtml += `<ul class="sub-node-list" style="display:none; list-style:none; padding: 0; background: rgba(0,0,0,0.1);">`;
+                h.children.forEach(child => {
+                    const activeClass = (child === activeNodeName) ? 'active' : '';
+                    const childPkg = getPackageForNode(child);
+                    outHtml += `<li class="${nodeClass} node-card sub-node-item ${activeClass}" data-name="${child}" onclick="selectNode('${child}')">
+                                <div class="node-card-content" style="padding-left: 20px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${statusPulse}
+                                        <img src="node-icon.svg" style="width: 14px; height: 14px; margin-right: 12px; filter: opacity(0.7);" alt="Node">
+                                        <span class="node-name-text" style="font-size: 0.85rem; color: #cbd5e1;">${child}</span>
+                                    </div>
+                                    <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkg}</span>
+                                </div>
+                             </li>`;
+                });
+                outHtml += `</ul>`;
+            } else {
+                // Normaler Node
+                const activeClass = (h.name === activeNodeName) ? 'active' : '';
+                const iconColor = (h.name === activeNodeName) ? 'var(--accent-primary)' : 'var(--text-secondary)';
+
+                let caretHtml = '';
+                let clickAction = `onclick="selectNode('${h.name}')"`;
+
+                if (hasChildren) {
+                    caretHtml = `<div class="sub-toggle-zone" onclick="toggleSubNodes(event, '${h.name}')" style="padding: 5px; margin-right: 5px; cursor: pointer; z-index: 2;">
+                                    <i class="fa-solid fa-chevron-right sub-node-caret" style="font-size: 0.8rem; transition: transform 0.2s; color: var(--text-secondary);"></i>
+                                 </div>`;
+                }
+
+                const pkg = getPackageForNode(h.name);
+                outHtml += `<li class="${nodeClass} node-card ${activeClass}" data-name="${h.name}" ${clickAction}>
+                                <div class="node-card-content" style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                                    <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${caretHtml}
+                                        ${statusPulse}
+                                        <img src="node-icon.svg" style="width: 18px; height: 18px; margin-right: 12px; filter: opacity(0.8);" alt="Node">
+                                        <span class="node-name-text">${h.name}</span>
+                                    </div>
+                                    <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkg}</span>
+                                </div>
+                             </li>`;
+
+                if (hasChildren) {
+                    outHtml += `<ul class="sub-node-list" style="display:none; list-style:none; padding: 0; background: rgba(0,0,0,0.1);">`;
+                    h.children.forEach(child => {
+                        const childActiveClass = (child === activeNodeName) ? 'active' : '';
+                        const childPkgInner = getPackageForNode(child);
+                        outHtml += `<li class="${nodeClass} node-card sub-node-item ${childActiveClass}" data-name="${child}" onclick="selectNode('${child}')">
+                                    <div class="node-card-content" style="padding-left: 35px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                        <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            ${statusPulse}
+                                            <img src="node-icon.svg" style="width: 14px; height: 14px; margin-right: 12px; filter: opacity(0.7);" alt="Node">
+                                            <span class="node-name-text" style="font-size: 0.85rem; color: #cbd5e1;">${child}</span>
+                                        </div>
+                                        <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkgInner}</span>
+                                    </div>
+                                 </li>`;
+                    });
+                    outHtml += `</ul>`;
+                }
+            }
+        });
+        return outHtml;
+    }
+
+    // NEU: Nodes - Übersicht Button ganz oben
+    html += `<li class="ws-node node-card overview-button" style="border-color: var(--accent-primary); background: rgba(56, 189, 248, 0.05);" onclick="showNodesOverview()">
+                <div class="node-card-content">
+                    <i class="fa-solid fa-table-cells-large" style="color: var(--accent-primary); margin-right: 12px; font-size: 1.1rem;"></i>
+                    <span class="node-name-text" style="font-weight: 600;">Nodes - Übersicht</span>
+                </div>
+             </li>`;
+
+    if (activeWsNodes.length > 0) {
+        html += `<div class="node-group-container">
+                    <div class="node-group-header ws-header" onclick="toggleNodeGroup(this)">
+                        <span><i class="fa-solid fa-code" style="margin-right: 8px;"></i>Workspace Nodes</span>
+                        <i class="fa-solid fa-chevron-right group-toggle-caret" style="transform: rotate(90deg); transition: transform 0.2s; font-size: 0.8rem; margin-left: auto;"></i>
+                    </div>
+                    <div class="node-group-body">`;
+        html += renderHierarchy(wsHierarchies, false);
+        html += `</div></div>`;
+    }
+
+    if (sysNodes.length > 0) {
+        html += `<div class="node-group-container">
+                    <div class="node-group-header sys-header" onclick="toggleNodeGroup(this)">
+                        <span><i class="fa-solid fa-server" style="margin-right: 8px;"></i>ROS2 - System Nodes</span>
+                        <i class="fa-solid fa-chevron-right group-toggle-caret" style="transform: rotate(90deg); transition: transform 0.2s; font-size: 0.8rem; margin-left: auto;"></i>
+                    </div>
+                    <div class="node-group-body">`;
+        html += renderHierarchy(sysHierarchies, true);
+        html += `</div></div>`;
+    }
+
+    if (inactiveWsNodes.length > 0) {
+        html += `<div class="node-group-container" style="opacity: 0.8;">
+                    <div class="node-group-header ws-inactive-header" onclick="toggleNodeGroup(this)">
+                        <span><i class="fa-regular fa-file-code" style="margin-right: 8px;"></i>Lokale Dateien (.py, .cpp)</span>
+                        <i class="fa-solid fa-chevron-right group-toggle-caret" style="transform: rotate(90deg); transition: transform 0.2s; font-size: 0.8rem; margin-left: auto;"></i>
+                    </div>
+                    <div class="node-group-body">`;
+        inactiveWsNodes.forEach(n => {
+            const activeClass = (n === activeNodeName) ? 'active' : '';
+            const iconColor = (n === activeNodeName) ? 'var(--accent-primary)' : '#64748b';
+            const statusPulse = '<span style="display:inline-block; width: 6px; height: 6px; margin: 0 8px 0 0; background-color: #64748b; border-radius: 50%;"></span>';
+
+            const pkg = workspaceData.project_files[n]?.package || 'Unknown';
+            html += `<li class="ws-inactive-node node-card ${activeClass}" style="opacity: 0.7;" data-name="${n}" onclick="selectNode('${n}')">
+                        <div class="node-card-content" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                ${statusPulse}
+                                <i class="fa-solid fa-file" style="color: ${iconColor}; margin-right: 12px; font-size: 1.1rem;"></i>
+                                <span class="node-name-text" style="color: #cbd5e1;">${n}</span>
+                            </div>
+                            <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkg}</span>
+                        </div>
+                     </li>`;
+        });
+        html += `</div></div>`;
+    }
+
+    listEl.innerHTML = html;
+    filterNodes();
+}
+
+function filterNodes() {
+    const filter = document.getElementById('node-search').value.toLowerCase();
+    const items = document.getElementById('dynamic-node-list').getElementsByTagName('li');
+
+    let wsVisible = 0;
+    let sysVisible = 0;
+    let wsInactiveVisible = 0;
+
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].classList.contains('empty-state')) continue;
+        if (items[i].classList.contains('overview-button')) continue;
+
+        const text = items[i].textContent || items[i].innerText;
+        const isMatch = text.toLowerCase().indexOf(filter) > -1;
+
+        items[i].style.display = isMatch ? "flex" : "none";
+
+        if (isMatch) {
+            if (items[i].classList.contains('ws-node')) wsVisible++;
+            if (items[i].classList.contains('sys-node')) sysVisible++;
+            if (items[i].classList.contains('ws-inactive-node')) wsInactiveVisible++;
+        }
+    }
+
+    // Show/hide the whole group container (header + body)
+    const containers = document.querySelectorAll('.node-group-container');
+    containers.forEach(container => {
+        if (container.querySelector('.ws-header')) {
+            container.style.display = wsVisible > 0 ? 'block' : 'none';
+        } else if (container.querySelector('.sys-header')) {
+            container.style.display = sysVisible > 0 ? 'block' : 'none';
+        } else if (container.querySelector('.ws-inactive-header')) {
+            container.style.display = wsInactiveVisible > 0 ? 'block' : 'none';
+        }
+    });
+}
+
+const IGNORE_TOPICS = ['/parameter_events', '/rosout'];
+function filterValidTopics(topicsArray) {
+    return (topicsArray || []).filter(t => !IGNORE_TOPICS.includes(t));
+}
+
+function getNodeData(name) {
+    if (workspaceData.nodes && workspaceData.nodes[name]) return workspaceData.nodes[name];
+    if (workspaceData.project_files && workspaceData.project_files[name]) return workspaceData.project_files[name];
+    return null;
+}
+
+function findConnections(targetNode) {
+    let connectedTo = [];
+    let connectedFrom = [];
+
+    const targetData = getNodeData(targetNode);
+    if (!targetData) return { connectedTo, connectedFrom };
+
+    const myPubTopics = filterValidTopics((targetData.publishers || []).map(p => p.topic));
+    const mySubTopics = filterValidTopics((targetData.subscribers || []).map(s => s.topic));
+
+    let matchedPubs = new Set();
+    let matchedSubs = new Set();
+
+    // NUR aktuell laufende Nodes berücksichtigen, wie vom User gewünscht
+    const allEntities = workspaceData.nodes || {};
+
+    for (const [otherNode, otherData] of Object.entries(allEntities)) {
+        if (otherNode === targetNode) continue;
+
+        const otherPubTopics = filterValidTopics((otherData.publishers || []).map(p => p.topic));
+        const otherSubTopics = filterValidTopics((otherData.subscribers || []).map(s => s.topic));
+
+        const commonPubSub = myPubTopics.filter(t => otherSubTopics.includes(t));
+        if (commonPubSub.length > 0) {
+            connectedTo.push({ node: otherNode, topics: commonPubSub, isUnbound: false });
+            commonPubSub.forEach(t => matchedPubs.add(t));
+        }
+
+        const commonSubPub = mySubTopics.filter(t => otherPubTopics.includes(t));
+        if (commonSubPub.length > 0) {
+            connectedFrom.push({ node: otherNode, topics: commonSubPub, isUnbound: false });
+            commonSubPub.forEach(t => matchedSubs.add(t));
+        }
+    }
+
+    return { connectedTo, connectedFrom };
+}
+
+function selectNode(nodeName) {
+    const items = document.getElementById('dynamic-node-list').getElementsByTagName('li');
+    for (let i = 0; i < items.length; i++) {
+        items[i].classList.remove('active');
+        if (items[i].dataset.name === nodeName) items[i].classList.add('active');
+    }
+
+    document.getElementById('global-graph-view').classList.add('hidden');
+    document.getElementById('nodes-overview-view').classList.add('hidden');
+    document.getElementById('node-details-view').classList.remove('hidden');
+
+    const data = getNodeData(nodeName);
+    if (!data) return;
+
+    const elTitle = document.getElementById('nd-title');
+    if (elTitle) elTitle.textContent = (data.active_node_name) ? data.active_node_name : (data.file_name ? data.file_name : nodeName);
+
+    const elCenter = document.getElementById('nd-flow-center-name');
+    if (elCenter) elCenter.textContent = (data.active_node_name) ? data.active_node_name : (data.file_name ? data.file_name : nodeName);
+
+    const elPkg = document.getElementById('nd-pkg');
+    if (elPkg) elPkg.textContent = data.package || 'Unbekannt';
+
+    const elPath = document.getElementById('nd-path');
+    if (elPath) elPath.textContent = data.file_path || 'Pfad unbekannt';
+
+    const codeBtn = document.getElementById('btn-show-code');
+    if (codeBtn) {
+        if (data.file_path && !data.file_path.includes('Pfad unbekannt') && !data.file_path.includes('System')) {
+            codeBtn.style.display = 'block';
+        } else {
+            codeBtn.style.display = 'none';
+        }
+    }
+
+    const depContainer = document.getElementById('nd-dependencies');
+    if (depContainer) {
+        if (data.is_workspace || (data.dependencies && data.dependencies.length > 0)) {
+            const deps = data.dependencies || [];
+            if (deps.length === 0) {
+                depContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:left; color:var(--text-secondary); font-style:italic; width:100%;'>Keine Abhängigkeiten in package.xml gefunden</div>";
+            } else {
+                const typeColorMap = {
+                    "depend": { label: "General", colorClass: "dep-general" },
+                    "build_depend": { label: "Build", colorClass: "dep-build" },
+                    "exec_depend": { label: "Exec", colorClass: "dep-exec" },
+                    "test_depend": { label: "Test", colorClass: "dep-test" },
+                    "build_export_depend": { label: "Build Export", colorClass: "dep-build" },
+                    "buildtool_depend": { label: "Tool", colorClass: "dep-build" }
+                };
+
+                const legendHtml = `
+                    <div class="dep-legend" style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; width: 100%;">
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); margin-right: 5px; flex-shrink: 0;"><i class="fa-solid fa-list" style="margin-right: 4px;"></i> Legende:</span>
+                        
+                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 4px;">
+                            <span class="dep-badge dep-build" style="padding: 1px 6px; font-size: 0.75rem;"><i class="fa-solid fa-code"></i> Build/Tool</span>
+                            <i class="fa-solid fa-circle-info tooltip-icon" style="font-size: 0.75rem;"></i>
+                            <div class="tooltip-text">
+                                <b>&lt;buildtool_depend&gt;:</b> Werkzeuge zum Bauen (z.B. ament_cmake)<br><br>
+                                <b>&lt;build_depend&gt;:</b> Pakete zur Kompilierung (z.B. Header)<br><br>
+                                <b>&lt;build_export_depend&gt;:</b> Transitive Header für andere Pakete
+                            </div>
+                        </div>
+
+                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 4px;">
+                            <span class="dep-badge dep-exec" style="padding: 1px 6px; font-size: 0.75rem;"><i class="fa-solid fa-play"></i> Exec</span>
+                            <i class="fa-solid fa-circle-info tooltip-icon" style="font-size: 0.75rem;"></i>
+                            <div class="tooltip-text">
+                                <b>&lt;exec_depend&gt;:</b> Pakete, die nur zur Laufzeit benötigt werden.
+                            </div>
+                        </div>
+
+                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 4px;">
+                            <span class="dep-badge dep-general" style="padding: 1px 6px; font-size: 0.75rem;"><i class="fa-solid fa-cube"></i> General</span>
+                            <i class="fa-solid fa-circle-info tooltip-icon" style="font-size: 0.75rem;"></i>
+                            <div class="tooltip-text">
+                                <b>&lt;depend&gt;:</b> All-in-One Tag für Build, Export & Execution.
+                            </div>
+                        </div>
+
+                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 4px;">
+                            <span class="dep-badge dep-test" style="padding: 1px 6px; font-size: 0.75rem;"><i class="fa-solid fa-vial"></i> Test</span>
+                            <i class="fa-solid fa-circle-info tooltip-icon" style="font-size: 0.75rem;"></i>
+                            <div class="tooltip-text">
+                                <b>&lt;test_depend&gt;:</b> Ausschließlich für Unit-Tests nötig (z.B. ament_lint_auto oder gtest).
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Sort dependencies by type (General -> Exec -> Build -> Test) then alphabetically
+                deps.sort((a, b) => {
+                    const order = ["depend", "exec_depend", "build_depend", "build_export_depend", "buildtool_depend", "test_depend"];
+                    const indexA = order.indexOf(a.type);
+                    const indexB = order.indexOf(b.type);
+                    if (indexA !== indexB) return indexA - indexB;
+                    return a.name.localeCompare(b.name);
+                });
+
+                const depsHtml = deps.map(d => {
+                    const config = typeColorMap[d.type] || { label: "Dep", colorClass: "dep-general" };
+                    return `<span class='dep-badge ${config.colorClass}'><i class="fa-solid fa-box-open"></i> ${d.name} <span style="opacity:0.6; font-size: 0.70rem; margin-left: 6px; font-family: Inter;">${config.label}</span></span>`;
+                }).join('');
+
+                depContainer.innerHTML = legendHtml + '<div class="nd-dependencies-list">' + depsHtml + '</div>';
+            }
+        } else {
+            depContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:left; color:var(--text-secondary); font-style:italic; width:100%;'>System Node - keine lokalen Abhängigkeiten</div>";
+        }
+    }
+
+    const conns = findConnections(nodeName);
+    let hasActiveFlow = false;
+
+    const flowOutEl = document.getElementById('nd-flow-out');
+    const flowInEl = document.getElementById('nd-flow-in');
+    let allRelevantTopics = [];
+
+    const HARDWARE_INPUT_NODES = ['xarm_moveit_servo_keyboard_node', 'joy_node'];
+
+    if (flowInEl) {
+        let connInHtml = '';
+        if (conns.connectedFrom.length === 0) {
+            const checkNodeName = nodeName.startsWith('/') ? nodeName.substring(1) : nodeName;
+            if (HARDWARE_INPUT_NODES.includes(checkNodeName)) {
+                connInHtml = `<div class='conn-card unbound-card rx-card'>
+                    <span class='card-hz-display'>Local OS</span>
+                    <span class='conn-node-name'>
+                        <i class="fa-brands fa-linux" style="margin-right:8px; color: #94a3b8;" title="OS-Ebene Input"></i>Input-Stream Linux-Systemebene
+                        <i class="fa-solid fa-circle-info tooltip-trigger" style="margin-left:8px; color: var(--color-warning); font-size: 0.9em;" 
+                           title="Dieser Node empfängt Daten direkt von der Hardware (z.B. Tastatur/Gamepad) über das Betriebssystem und nicht über das ROS-Netzwerk."></i>
+                    </span>
+                </div>`;
+            } else {
+                connInHtml = "<div style='color:#64748b; font-style:italic; text-align:center; padding: 20px;'>Empfängt keine Daten!</div>";
+            }
+        } else {
+            conns.connectedFrom.forEach(c => {
+                const topicsBadges = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+                                        <div style='background: rgba(16, 185, 129, 0.1); color: #34d399; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>PUB</div>
+                                        <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center;">
+                                            ${c.topics.map(t => `<span class='conn-topic-badge' data-topic='${t}' style="margin: 0; padding: 6px 10px;">${t}</span>`).join('')}
+                                        </div>
+                                      </div>`;
+                const cardClass = c.isUnbound ? 'unbound-card rx-card live-trackable' : 'rx-card active-flow-rx live-trackable';
+                const nodeIcon = c.isUnbound
+                    ? '<i class="fa-solid fa-wifi" style="margin-right:8px; color: #64748b;" title="Offener Endpunkt"></i>'
+                    : '<span class="flow-icon-pulse" style="display:inline-block; width: 14px; height: 14px; margin-right:8px; background-color: var(--color-rx); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;" title="Empfängt Daten von"></span>';
+
+                connInHtml += `<div class='conn-card ${cardClass}' data-topics='${JSON.stringify(c.topics)}'>
+                    <span class='card-hz-display'>-- Hz</span>
+                    <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>${nodeIcon}${c.node}</span>
+                    <div class='topics-wrapper'>${topicsBadges}</div>
+                </div>`;
+
+                c.topics.forEach(t => allRelevantTopics.push({ topic: t, type: "Unbekannt" }));
+            });
+        }
+        flowInEl.innerHTML = connInHtml;
+        const arrowRxEl = document.querySelector('.flow-arrow.color-rx');
+        if (arrowRxEl) {
+            arrowRxEl.innerHTML = `
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.3s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.6s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.9s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.2s"></i>
+            `;
+        }
+    }
+
+    if (flowOutEl) {
+        let connOutHtml = '';
+        if (conns.connectedTo.length === 0) {
+            connOutHtml = "<div style='color:#64748b; font-style:italic; text-align:center; padding: 20px;'>Sendet keine Daten!</div>";
+        } else {
+            conns.connectedTo.forEach(c => {
+                const topicsBadges = `<div style="display: flex; gap: 8px; align-items: stretch;">
+                                        <div style='background: rgba(245, 158, 11, 0.1); color: #f59e0b; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>SUB</div>
+                                        <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center;">
+                                            ${c.topics.map(t => `<span class='conn-topic-badge' data-topic='${t}' style="margin: 0; padding: 6px 10px;">${t}</span>`).join('')}
+                                        </div>
+                                      </div>`;
+                const cardClass = c.isUnbound ? 'unbound-card tx-card live-trackable' : 'tx-card active-flow-tx live-trackable';
+                const nodeIcon = c.isUnbound
+                    ? '<i class="fa-solid fa-satellite-dish" style="margin-right:8px; color: #64748b;" title="Offener Endpunkt"></i>'
+                    : '<span class="flow-icon-pulse" style="display:inline-block; width: 14px; height: 14px; margin-right:8px; background-color: var(--color-tx); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;" title="Sendet Daten an"></span>';
+                connOutHtml += `<div class='conn-card ${cardClass}' data-topics='${JSON.stringify(c.topics)}'>
+                    <span class='card-hz-display'>-- Hz</span>
+                    <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>${nodeIcon}${c.node}</span>
+                    <div class='topics-wrapper'>${topicsBadges}</div>
+                </div>`;
+
+                c.topics.forEach(t => allRelevantTopics.push({ topic: t, type: "Unbekannt" }));
+            });
+        }
+        flowOutEl.innerHTML = connOutHtml;
+        const arrowTxEl = document.querySelector('.flow-arrow.color-tx');
+        if (arrowTxEl) {
+            arrowTxEl.innerHTML = `
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.3s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.6s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.9s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.2s"></i>
+            `;
+        }
+    }
+
+    // Add static topics to tracker
+    if (data.subscribers) data.subscribers.forEach(s => {
+        if (!IGNORE_TOPICS.includes(s.topic)) allRelevantTopics.push({ topic: s.topic, type: (s.types && s.types.length > 0) ? s.types[0] : "Unbekannt" });
+    });
+    if (data.publishers) data.publishers.forEach(p => {
+        if (!IGNORE_TOPICS.includes(p.topic)) allRelevantTopics.push({ topic: p.topic, type: (p.types && p.types.length > 0) ? p.types[0] : "Unbekannt" });
+    });
+
+    // Deduplicate topics before sending request
+    const uniqueTopics = [];
+    const topicSet = new Set();
+    allRelevantTopics.forEach(t => {
+        if (!topicSet.has(t.topic)) {
+            topicSet.add(t.topic);
+            uniqueTopics.push(t);
+        }
+    });
+
+    // Trigger live topic activity tracker for the new node
+    if (window.requestTopicActivity && uniqueTopics.length > 0) {
+        window.requestTopicActivity(uniqueTopics);
+    }
+
+    const isLive = Object.keys(workspaceData.nodes || {}).includes(nodeName);
+
+    const centerNodeBox = document.querySelector('.center-node-box');
+    if (centerNodeBox) {
+        centerNodeBox.classList.remove('center-node-active');
+        if (isLive) {
+            centerNodeBox.classList.add('node-is-live');
+            const dot = centerNodeBox.querySelector('.node-status-dot');
+            if (dot) {
+                dot.style.display = 'inline-block';
+                dot.style.width = '8px';
+                dot.style.height = '8px';
+                dot.style.borderRadius = '50%';
+                dot.style.marginRight = '8px';
+                dot.style.background = '#10b981';
+                dot.style.boxShadow = '0 0 8px rgba(16,185,129,0.8)';
+                dot.style.animation = 'pulse-dot 2s infinite';
+            }
+        } else {
+            centerNodeBox.classList.remove('node-is-live');
+            const dot = centerNodeBox.querySelector('.node-status-dot');
+            if (dot) {
+                dot.style.display = 'inline-block';
+                dot.style.width = '8px';
+                dot.style.height = '8px';
+                dot.style.borderRadius = '50%';
+                dot.style.marginRight = '8px';
+                dot.style.background = '#64748b';
+                dot.style.boxShadow = 'none';
+                dot.style.animation = 'none';
+            }
+        }
+    }
+
+    const subsContainer = document.getElementById('nd-subs');
+    if (subsContainer) {
+        const validSubs = (data.subscribers || []).filter(s => !IGNORE_TOPICS.includes(s.topic));
+        let filterHtml = "";
+        if (data.filtered_subs_count > 0) {
+            filterHtml = `<div class="tooltip-container" style="margin-bottom: 10px; color: var(--text-secondary); font-size: 0.85rem; background: rgba(255,165,0,0.1); border-left: 3px solid orange; padding: 5px 10px; border-radius: 4px;">
+                <i class="fa-solid fa-filter" style="color: orange; margin-right: 5px;"></i> ${data.filtered_subs_count} Topic(s) gefiltert
+                <i class="fa-solid fa-circle-info tooltip-icon" style="margin-left: 5px; cursor: help; font-size: 0.75rem;"></i>
+                <div class="tooltip-text" style="width: 250px;">
+                    <b>Warum gefiltert?</b><br>
+                    Diese Topics werden vom Node nur kurzzeitig oder intern dynamisch abonniert (z.B. für Live-Monitoring). Sie sind nicht Teil der festen statischen Architektur des Nodes und wurden zur besseren Übersichtlichkeit ausgeblendet.
+                </div>
+            </div>`;
+        }
+
+        if (validSubs.length === 0) {
+            subsContainer.innerHTML = filterHtml + "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine relevanten Subscriber</div>";
+        } else {
+            subsContainer.innerHTML = filterHtml + validSubs.map(s => {
+                const typeStr = (s.types && s.types.length > 0) ? s.types.join(', ') : "Unbekannt";
+                return `<div class='topic-item live-trackable rx-card' data-topics='["${s.topic}"]' style='position: relative; transition: box-shadow 0.3s, border-color 0.3s;'>
+                            <span class='card-hz-display' style='position:absolute; top: -10px; right: -5px; background: #0f172a; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.65rem;'>-- Hz</span>
+                            <div class="topic-info-row"><span class="topic-lbl">Topic:</span><i class="fa-solid fa-circle-dot topic-icon" id="icon-sub-${s.topic.replace(/\//g, '-')}" style="margin-right: 6px; color: var(--text-secondary); transition: color 0.3s, text-shadow 0.3s;"></i><span class="topic-val" title="${s.topic}">${s.topic}</span></div>
+                            <div class="topic-info-row"><span class="topic-lbl">Type:</span><span class="topic-type-badge">${typeStr}</span></div>
+                            <div class="topic-info-row msg-content" id="msg-${s.topic.replace(/\//g, '-')}"><span class="topic-lbl">Msg:</span><span class="topic-val" title="Wartet auf Daten..." style="color:var(--text-secondary); font-size:0.8rem;">Wartet auf Daten...</span></div>
+                        </div>`;
+            }).join('');
+        }
+    }
+
+    const pubsContainer = document.getElementById('nd-pubs');
+    if (pubsContainer) {
+        const validPubs = (data.publishers || []).filter(p => !IGNORE_TOPICS.includes(p.topic));
+        if (validPubs.length === 0) {
+            pubsContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine relevanten Publisher</div>";
+        } else {
+            pubsContainer.innerHTML = validPubs.map(p => {
+                const typeStr = (p.types && p.types.length > 0) ? p.types.join(', ') : "Unbekannt";
+                return `<div class='topic-item live-trackable tx-card' data-topics='["${p.topic}"]' style='position: relative; transition: box-shadow 0.3s, border-color 0.3s;'>
+                            <span class='card-hz-display' style='position:absolute; top: -10px; right: -5px; background: #0f172a; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.65rem;'>-- Hz</span>
+                            <div class="topic-info-row"><span class="topic-lbl">Topic:</span><i class="fa-solid fa-circle-dot topic-icon" id="icon-pub-${p.topic.replace(/\//g, '-')}" style="margin-right: 6px; color: var(--text-secondary); transition: color 0.3s, text-shadow 0.3s;"></i><span class="topic-val" title="${p.topic}">${p.topic}</span></div>
+                            <div class="topic-info-row"><span class="topic-lbl">Type:</span><span class="topic-type-badge">${typeStr}</span></div>
+                            <div class="topic-info-row msg-content" id="msg-${p.topic.replace(/\//g, '-')}"><span class="topic-lbl">Msg:</span><span class="topic-val" title="Wartet auf Daten..." style="color:var(--text-secondary); font-size:0.8rem;">Wartet auf Daten...</span></div>
+                        </div>`;
+            }).join('');
+        }
+    }
+
+    const srvsContainer = document.getElementById('nd-services');
+    if (srvsContainer) {
+        const validSrvs = (data.services || []);
+        if (validSrvs.length === 0) {
+            srvsContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Services bereitgestellt</div>";
+        } else {
+            srvsContainer.innerHTML = validSrvs.map(s => {
+                const typeStr = (s.types && s.types.length > 0) ? s.types.join(', ') : "Unbekannt";
+                return `<div class='topic-item' style='border-color: rgba(168, 85, 247, 0.3);'>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #a855f7;'>Service:</span><span class="topic-val" title="${s.name}">${s.name}</span></div>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #a855f7;'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
+                        </div>`;
+            }).join('');
+        }
+    }
+
+    const cliContainer = document.getElementById('nd-clients');
+    if (cliContainer) {
+        const validCli = (data.clients || []);
+        if (validCli.length === 0) {
+            cliContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Clients vorhanden</div>";
+        } else {
+            cliContainer.innerHTML = validCli.map(c => {
+                const typeStr = (c.types && c.types.length > 0) ? c.types.join(', ') : "Unbekannt";
+                return `<div class='topic-item' style='border-color: rgba(56, 189, 248, 0.3);'>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #38bdf8;'>Client:</span><span class="topic-val" title="${c.name}">${c.name}</span></div>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #38bdf8;'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
+                        </div>`;
+            }).join('');
+        }
+    }
+}
+
+function closeNodeDetails() {
+    document.getElementById('node-details-view').classList.add('hidden');
+    document.getElementById('nodes-overview-view').classList.add('hidden');
+    document.getElementById('global-graph-view').classList.remove('hidden');
+    const items = document.getElementById('dynamic-node-list').getElementsByTagName('li');
+    for (let i = 0; i < items.length; i++) items[i].classList.remove('active');
+    if (network) network.fit();
+}
+
+function showNodesOverview() {
+    closeNodeDetails();
+    document.getElementById('global-graph-view').classList.add('hidden');
+    document.getElementById('nodes-overview-view').classList.remove('hidden');
+
+    // Remove highlight on node list
+    const items = document.getElementById('dynamic-node-list').getElementsByTagName('li');
+    for (let i = 0; i < items.length; i++) {
+        items[i].classList.remove('active');
+    }
+
+    const grid = document.getElementById('nodes-overview-grid');
+    let gridHtml = '';
+
+    const wsNodeElements = document.querySelectorAll('#dynamic-node-list li.ws-node');
+    const sysNodeElements = document.querySelectorAll('#dynamic-node-list li.sys-node');
+
+    const generateCard = (el, isWs) => {
+        const nodeName = el.dataset.name;
+        if (!nodeName) return '';
+        const icon = isWs ? "fa-diagram-project" : "fa-share-nodes";
+        const typeStr = isWs ? "Workspace Node" : "System Node";
+        const nodeData = getNodeData(nodeName) || {};
+
+        const pubs = nodeData.publishers ? nodeData.publishers.length : 0;
+        const subs = nodeData.subscribers ? nodeData.subscribers.length : 0;
+        const srvs = nodeData.services ? nodeData.services.length : 0;
+
+        const isLive = isWs ? Object.keys(workspaceData.nodes || {}).includes(nodeName) : true;
+        const badgeHtml = isLive
+            ? `<div style="background: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94); border: 1px solid rgba(34, 197, 94, 0.3); font-size: 0.70rem; padding: 2px 8px; border-radius: 12px; display:inline-flex; align-items:center; gap: 6px;"><span class="status-pulse" style="width:6px; height:6px;"></span>LÄUFT</div>`
+            : `<div style="background: rgba(100, 116, 139, 0.1); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3); font-size: 0.70rem; padding: 2px 8px; border-radius: 12px; display:inline-flex; align-items:center; gap: 6px;"><span style="width:6px; height:6px; background-color:#64748b; border-radius:50%; display:inline-block;"></span>INAKTIV</div>`;
+
+        return `
+            <div class="mini-node-card" onclick="selectNode('${nodeName}')" style="position: relative; ${!isLive ? 'opacity: 0.8;' : ''}">
+                <img src="node-icon.svg" class="mini-node-icon" style="width: 32px; height: 32px; margin-right: 10px;" alt="Node">
+                <div style="flex-grow: 1;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                        <div class="mini-node-title" style="font-size: 1.2rem;">${nodeName}</div>
+                        ${badgeHtml}
+                    </div>
+                    <div class="mini-node-type" style="font-size: 0.85rem;">${typeStr}</div>
+                </div>
+                <div style="display: flex; gap: 20px; color: var(--text-secondary); font-size: 0.9rem; text-align: center;">
+                    <div><div style="font-weight: bold; color: white;">${pubs}</div>Pubs</div>
+                    <div><div style="font-weight: bold; color: white;">${subs}</div>Subs</div>
+                    <div><div style="font-weight: bold; color: white;">${srvs}</div>Srvs</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: var(--text-secondary); margin-left: 20px;"></i>
+            </div>
+        `;
+    };
+
+    if (wsNodeElements.length > 0) {
+        gridHtml += `<div class="nd-section-title" style="margin-top: 10px;">Workspace Nodes</div>`;
+        wsNodeElements.forEach(el => gridHtml += generateCard(el, true));
+    }
+
+    if (sysNodeElements.length > 0) {
+        gridHtml += `<div class="nd-section-title" style="margin-top: 30px;">System Nodes</div>`;
+        sysNodeElements.forEach(el => gridHtml += generateCard(el, false));
+    }
+
+    grid.innerHTML = gridHtml;
+}
+
+function refreshNodeGraph() {
+    closeNodeDetails();
+    if (!window.ros) return;
+    const nodeNames = Object.keys(workspaceData.nodes || {});
+    if (nodeNames.length === 0) return;
+
+    const container = document.getElementById('vis-container');
+    visNodes.clear(); visEdges.clear();
+
+    visNodes.add(nodeNames.map((name) => ({ id: name, label: name, shape: 'image', image: 'node-icon.svg', size: 24, font: { color: '#f8fafc', face: 'Inter' } })));
+
+    nodeNames.forEach(name => {
+        const conns = findConnections(name);
+        conns.connectedTo.forEach(target => {
+            if (!target.isUnbound) {
+                visEdges.add({ from: name, to: target.node, arrows: 'to', color: { color: 'rgba(56, 189, 248, 0.5)' } });
+            }
+        });
+    });
+
+    if (network) network.destroy();
+    network = new vis.Network(container, { nodes: visNodes, edges: visEdges }, { physics: { stabilization: true, barnesHut: { springLength: 200 } } });
+    network.on("click", function (params) {
+        if (params.nodes.length > 0) selectNode(params.nodes[0]);
+    });
+}
+
+function restartSystemNode(nodeName) {
+    if (!window.ros) return;
+    if (!window.restartNodePub) {
+        window.restartNodePub = new ROSLIB.Topic({ ros: window.ros, name: '/ui/request_restart_node', messageType: 'std_msgs/String' });
+    }
+    window.restartNodePub.publish(new ROSLIB.Message({ data: nodeName }));
+    logToTerminal(`Neustart für System-Node '${nodeName}' angefordert.`, 'warn');
+}
+
+function initCopyButtons() {
+    document.querySelectorAll('.exec-cmd').forEach(cmdEl => {
+        if (cmdEl.querySelector('.copy-btn-overlay')) return; // Bereits hinzugefügt
+
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn-overlay';
+        btn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+        btn.title = 'Kopieren';
+
+        btn.onclick = function (e) {
+            e.stopPropagation();
+
+            // Extrahiert den reinen Text ohne den Button selbst
+            let textToCopy = Array.from(cmdEl.childNodes)
+                .filter(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('copy-btn-overlay')))
+                .map(node => node.textContent)
+                .join('')
+                .trim();
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showSuccess(btn);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    fallbackCopyTextToClipboard(textToCopy, btn);
+                });
+            } else {
+                fallbackCopyTextToClipboard(textToCopy, btn);
+            }
+        };
+
+        cmdEl.appendChild(btn);
+    });
+}
+
+function showSuccess(btn) {
+    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    btn.classList.add('success');
+    setTimeout(() => {
+        btn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+        btn.classList.remove('success');
+    }, 2000);
+}
+
+function fallbackCopyTextToClipboard(text, btn) {
+    var textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        var successful = document.execCommand('copy');
+        if (successful) showSuccess(btn);
+    } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+    }
+    document.body.removeChild(textArea);
+}
+
+async function loadExternalViews() {
+    const sections = document.querySelectorAll('section[data-view]');
+    const promises = Array.from(sections).map(async section => {
+        const url = section.getAttribute('data-view');
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                const html = await response.text();
+                section.innerHTML = html;
+            } else {
+                console.error(`Failed to load ${url}: ${response.statusText}`);
+            }
+        } catch (err) {
+            console.error(`Error fetching ${url}:`, err);
+        }
+    });
+
+    await Promise.all(promises);
+
+    // After all views have been injected into the DOM, initialize dynamic elements
+    if (typeof initCopyButtons === 'function') {
+        initCopyButtons();
+    }
+}
+
+// Load views asynchronously when DOM is parsed
+document.addEventListener('DOMContentLoaded', () => {
+    loadExternalViews();
+    initSidebarAutoHide();
+});
+
+let sidebarTimeout;
+function initSidebarAutoHide() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+
+    sidebar.addEventListener('mouseenter', () => {
+        sidebar.classList.remove('collapsed');
+        clearTimeout(sidebarTimeout);
+    });
+
+    sidebar.addEventListener('mouseleave', () => {
+        clearTimeout(sidebarTimeout);
+        sidebar.classList.add('collapsed');
+    });
+
+    // Start initial timer
+    sidebar.classList.remove('collapsed');
+    sidebarTimeout = setTimeout(() => {
+        sidebar.classList.add('collapsed');
+    }, 2000);
+}
+
+window.restartSystemNode = restartSystemNode;
+window.initCopyButtons = initCopyButtons;
+window.loadExternalViews = loadExternalViews;
+
+function switchView(viewId) {
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.wiki-list li').forEach(li => li.classList.remove('active'));
+
+    const clickedElement = event ? event.currentTarget : null;
+    if (clickedElement) clickedElement.classList.add('active');
+
+    document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
+    const targetSection = document.getElementById(viewId);
+    if (targetSection) targetSection.classList.add('active');
+
+    if (viewId === 'network') {
+        if (!network) refreshNodeGraph();
+        showNodesOverview();
+    }
+
+    if (viewId === 'launch-files') {
+        if (typeof renderLaunchFiles === 'function') renderLaunchFiles();
+    }
+
+    // Trigger syntax highlighting for freshly visible pre/code blocks
+    if (typeof hljs !== 'undefined') {
+        hljs.highlightAll();
+    }
+}
+
+window.openInExplorer = function (path) {
+    if (!window.ros) return;
+    if (!path || path.includes('Pfad unbekannt') || path.includes('System')) return;
+
+    if (!window.openExplorerPub) {
+        window.openExplorerPub = new ROSLIB.Topic({ ros: window.ros, name: '/ui/request_open_explorer', messageType: 'std_msgs/String' });
+    }
+    window.openExplorerPub.publish(new ROSLIB.Message({ data: path.trim() }));
+};
+
+function requestSourceCode() {
+    const pathNode = document.getElementById('nd-path').textContent;
+    if (!pathNode || pathNode.includes('Pfad unbekannt') || pathNode.includes('System')) return;
+
+    currentRequestedPath = pathNode;
+
+    document.getElementById('code-modal').classList.remove('hidden');
+    document.getElementById('code-modal-title').textContent = pathNode.split('/').pop();
+    document.getElementById('code-modal-text').innerHTML = "Lade Quellcode über ROS 2 WebSocket...";
+
+    if (codeRequestPub) {
+        const req = new ROSLIB.Message({ data: pathNode });
+        codeRequestPub.publish(req);
+    }
+}
+
+function requestFileContent(path) {
+    if (!window.ros || !path) return;
+
+    currentRequestedPath = path;
+
+    document.getElementById('code-modal').classList.remove('hidden');
+    document.getElementById('code-modal-title').textContent = path.split('/').pop();
+    document.getElementById('code-modal-text').innerHTML = "Lade Quellcode über ROS 2 WebSocket...";
+
+    if (codeRequestPub) {
+        const req = new ROSLIB.Message({ data: path });
+        codeRequestPub.publish(req);
+    }
+}
+
+function closeCodeViewer() {
+    document.getElementById('code-modal').classList.add('hidden');
+}
+
+function renderCode(rawCode, path) {
+    let esc = rawCode.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const isPython = path.endsWith('.py');
+    const isCpp = path.endsWith('.cpp') || path.endsWith('.hpp') || path.endsWith('.h');
+
+    if (isPython) {
+        esc = esc.replace(/(#.*)/g, '<span class="sh-comment">$1</span>');
+        esc = esc.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, '<span class="sh-string">$&</span>');
+        esc = esc.replace(/\b(def|class|import|from|return|if|elif|else|try|except|with|as|for|in|while|pass|True|False|None|and|or|not)\b/g, '<span class="sh-keyword">$1</span>');
+        esc = esc.replace(/\bdef\s+([a-zA-Z_]\w*)/g, 'def <span class="sh-function">$1</span>');
+        esc = esc.replace(/\b(\d+)\b/g, '<span class="sh-number">$1</span>');
+    } else if (isCpp) {
+        esc = esc.replace(/(\/\/.*)/g, '<span class="sh-comment">$1</span>');
+        esc = esc.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, '<span class="sh-string">$&</span>');
+        esc = esc.replace(/\b(int|void|float|double|char|bool|class|struct|public|private|protected|return|if|else|for|while|include|using|namespace|new|delete)\b/g, '<span class="sh-keyword">$1</span>');
+        esc = esc.replace(/\b([a-zA-Z_]\w*)\s*\(/g, '<span class="sh-function">$1</span>(');
+        esc = esc.replace(/\b(\d+)\b/g, '<span class="sh-number">$1</span>');
+    }
+    document.getElementById('code-modal-text').innerHTML = esc;
+}
+
+function renderLaunchFiles() {
+    const container = document.getElementById('dynamic-launch-container');
+    if (!container) return;
+
+    if (!workspaceData.launches || workspaceData.launches.length === 0) {
+        container.innerHTML = "<div class='empty-state' style='padding: 30px;'>Keine aktiven Launch-Files gefunden.</div>";
+        return;
+    }
+
+    const launchesMap = {};
+    const allIncluded = new Set();
+
+    workspaceData.launches.forEach(l => {
+        launchesMap[l.file_name] = l;
+        (l.parsed_includes || []).forEach(inc => {
+            allIncluded.add(inc);
+        });
+    });
+
+    const rootLaunches = workspaceData.launches.filter(l => !allIncluded.has(l.file_name));
+
+    let html = '';
+
+    function buildNodeHtml(nodeName) {
+        const nodeInfo = getNodeData(nodeName) || {};
+        const pkg = nodeInfo.package || 'Unbekannt';
+
+        let badge = `<span class="t-badge badge-node"><i class="fa-solid fa-microchip"></i> NODE</span>`;
+        if (pkg.includes('component_container') || nodeName.includes('_container')) {
+            badge = `<span class="t-badge badge-container"><i class="fa-solid fa-box-open"></i> CONTAINER</span>`;
+        }
+
+        return `
+            <li>
+                <div class="tree-card">
+                    <div class="tree-card-header">
+                        <span class="tree-card-title">${nodeName.startsWith('/') ? nodeName.substring(1) : nodeName}</span>
+                        <span class="tree-card-pkg" style="opacity: 0.7;">(${pkg})</span>
+                        <div class="tree-card-badges">
+                            ${badge}
+                        </div>
+                    </div>
+                </div>
+            </li>
+        `;
+    }
+
+    function buildTreeHtml(launchFileName, isRoot, visited = new Set()) {
+        if (visited.has(launchFileName)) return '';
+        visited.add(launchFileName);
+
+        const launch = launchesMap[launchFileName];
+        if (!launch) return '';
+
+        let badgeClass = isRoot ? 'is-entry' : 'is-launch';
+        let badgeHtml = isRoot
+            ? `<div class="tree-card-badges"><span class="t-badge badge-entry">ENTRY POINT</span></div>`
+            : '';
+
+        let iconHtml = isRoot
+            ? `<i class="fa-solid fa-play" style="color: #38bdf8;"></i>`
+            : `<i class="fa-solid fa-rocket" style="color: var(--accent-secondary);"></i>`;
+
+        let pkgObj = launch.path ? launch.path.split('/')[2] : 'Unbekannt';
+        if (launch.path && launch.path.startsWith('opt')) {
+            pkgObj = launch.path.split('/')[4] || 'System';
+            if (launch.path.includes('share/')) {
+                pkgObj = launch.path.split('share/')[1].split('/')[0];
+            }
+        } else if (launch.path && launch.path.includes('src/')) {
+            const parts = launch.path.split('/');
+            const srcIdx = parts.indexOf('src');
+            if (parts.length > srcIdx + 2) {
+                const launchIdx = parts.indexOf('launch');
+                if (launchIdx > 0) {
+                    pkgObj = parts[launchIdx - 1];
+                }
+            }
+        }
+
+        let displayPath = launch.path || 'Pfad unbekannt';
+        if (displayPath.length > 55) {
+            const parts = displayPath.split('/');
+            displayPath = parts.slice(0, 3).join('/') + '/.../' + parts[parts.length - 1];
+        }
+
+        let html = `
+            <li>
+                <div class="tree-card ${badgeClass}">
+                    <div class="tree-card-header">
+                        ${iconHtml}
+                        <span class="tree-card-title">${launch.file_name}</span>
+                        <span class="tree-card-pkg" style="opacity: 0.7;">(${pkgObj})</span>
+                        <div class="tree-card-path" onclick="openInExplorer('${launch.path}')">
+                            <i class="fa-regular fa-folder-open"></i> ${displayPath}
+                        </div>
+                        ${badgeHtml}
+                    </div>
+                </div>
+        `;
+
+        if ((launch.active_nodes && launch.active_nodes.length > 0) || (launch.parsed_includes && launch.parsed_includes.length > 0)) {
+            html += `<ul>`;
+
+            if (launch.active_nodes) {
+                const sortedNodes = [...launch.active_nodes].sort();
+                sortedNodes.forEach(node => {
+                    html += buildNodeHtml(node);
+                });
+            }
+
+            if (launch.parsed_includes) {
+                launch.parsed_includes.forEach(inc => {
+                    html += buildTreeHtml(inc, false, new Set(visited));
+                });
+            }
+
+            html += `</ul>`;
+        }
+
+        html += `</li>`;
+        return html;
+    }
+
+    if (rootLaunches.length > 0) {
+        rootLaunches.forEach(root => {
+            html += `<div class="launch-tree-container"><ul class="modern-tree">`;
+            html += buildTreeHtml(root.file_name, true);
+            html += `</ul></div>`;
+        });
+    } else {
+        html = "<div class='empty-state' style='padding: 30px;'>Es laufen derzeit keine Launch-Files.</div>";
+    }
+
+    container.innerHTML = html;
+}
+
+function renderBashrc(bashrcArray) {
+    const container = document.getElementById('bashrc-content');
+    if (!bashrcArray || bashrcArray.length === 0) {
+        container.innerHTML = "Keine ROS2/CUDA Einträge gefunden.<br>Bitte Skript-Pfad prüfen.";
+        return;
+    }
+
+    const htmlLines = bashrcArray.map(line => {
+        let esc = line.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if (esc.trim().startsWith('#')) {
+            return `<span style="color: #64748b; font-style: italic;">${esc}</span>`;
+        } else {
+            return esc
+                .replace(/\b(export|source|if|then|fi)\b/g, '<span style="color: #c678dd; font-weight: bold;">$1</span>')
+                .replace(/\b(ROS_DOMAIN_ID|ROS_DISTRO|RMW_IMPLEMENTATION|LD_LIBRARY_PATH|PATH|ROS_LOCALHOST_ONLY)\b/g, '<span style="color: #e06c75;">$1</span>')
+                .replace(/=/g, '<span style="color: #56b6c2;">=</span>');
+        }
+    });
+    container.innerHTML = htmlLines.join('<br>');
+}
+
+function logToTerminal(message, type = 'info') {
+    const term = document.getElementById('sys-terminal');
+    if (!term) return;
+    const time = new Date().toLocaleTimeString('de-DE');
+    const line = document.createElement('div');
+    line.className = 'term-line';
+    line.innerHTML = `<span class="time">[${time}]</span> <span class="${type}">${message}</span>`;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+}
+
+window.onload = function () {
+    const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
+    window.ros = ros;
+
+    const statusText = document.getElementById('dashboard-status-text');
+    const statusDot = document.getElementById('dashboard-status-dot');
+    const robotText = document.getElementById('robot-status-text');
+    const robotDot = document.getElementById('robot-status-dot');
+
+    ros.on('connection', () => { statusText.textContent = 'Online'; statusDot.className = 'status-indicator online'; logToTerminal("WebSocket Verbindung etabliert.", "info"); });
+    ros.on('error', () => { statusText.textContent = 'Error'; statusDot.className = 'status-indicator offline'; });
+    ros.on('close', () => {
+        statusText.textContent = 'Offline';
+        statusDot.className = 'status-indicator offline';
+        robotText.textContent = 'Offline';
+        robotDot.className = 'status-indicator offline';
+        document.getElementById('bridge-ping').textContent = '-- ms';
+    });
+
+    // Ping Measurement
+    const pingTopic = new ROSLIB.Topic({ ros: ros, name: '/ui/ping', messageType: 'std_msgs/Float64' });
+    pingTopic.subscribe((msg) => {
+        const latency = Date.now() - msg.data;
+        document.getElementById('bridge-ping').textContent = latency + ' ms';
+    });
+    setInterval(() => {
+        if (ros.isConnected) {
+            pingTopic.publish(new ROSLIB.Message({ data: Date.now() }));
+        }
+    }, 2000);
+
+    codeRequestPub = new ROSLIB.Topic({ ros: ros, name: '/ui/request_file_content', messageType: 'std_msgs/String' });
+    window.openExplorerPub = new ROSLIB.Topic({ ros: window.ros, name: '/ui/request_open_explorer', messageType: 'std_msgs/String' });
+
+    new ROSLIB.Topic({ ros: ros, name: '/ui/file_content', messageType: 'std_msgs/String' }).subscribe((msg) => {
+        try {
+            const response = JSON.parse(msg.data);
+            if (response.path === currentRequestedPath || response.original_request === currentRequestedPath) {
+                renderCode(response.content, response.path);
+            }
+        } catch (e) { }
+    });
+
+    new ROSLIB.Topic({ ros: ros, name: '/dashboard/workspace_metadata', messageType: 'std_msgs/String' }).subscribe((msg) => {
+        try {
+            workspaceData = JSON.parse(msg.data);
+
+            // Roboter Status Detektion
+            const isRobotOnline = workspaceData.robot_hardware_connected === true;
+
+            const robotText = document.getElementById('robot-status-text');
+            const robotDot = document.getElementById('robot-status-dot');
+            if (isRobotOnline) {
+                robotText.textContent = 'Online';
+                robotDot.className = 'status-indicator online';
+            } else {
+                robotText.textContent = 'Offline';
+                robotDot.className = 'status-indicator offline';
+            }
+
+            updateNodeList();
+            renderBashrc(workspaceData.bashrc);
+            if (typeof renderLaunchFiles === 'function') renderLaunchFiles();
+
+            if (workspaceData.tree) {
+                document.getElementById('ws-tree-container').innerHTML = renderWorkspaceTree(workspaceData.tree);
+            }
+
+
+            if (!document.getElementById('node-details-view').classList.contains('hidden')) {
+                const currentNodeActiveEl = document.querySelector('#dynamic-node-list li.active');
+                if (currentNodeActiveEl) {
+                    const currentNodeName = currentNodeActiveEl.dataset.name;
+                    if (getNodeData(currentNodeName)) selectNode(currentNodeName);
+                }
+            } else if (!document.getElementById('nodes-overview-view').classList.contains('hidden')) {
+                showNodesOverview();
+            }
+        } catch (e) { }
+    });
+
+    new ROSLIB.Topic({ ros: ros, name: '/ui/eef_position', messageType: 'std_msgs/Float32MultiArray' }).subscribe((msg) => {
+        document.getElementById('val-x').textContent = msg.data[0].toFixed(0); document.getElementById('val-y').textContent = msg.data[1].toFixed(0); document.getElementById('val-z').textContent = msg.data[2].toFixed(0);
+    });
+    new ROSLIB.Topic({ ros: ros, name: '/ui/robot_control/current_speed', messageType: 'std_msgs/Float32' }).subscribe((msg) => {
+        const pct = Math.round(msg.data * 100); document.getElementById('val-speed').textContent = `${pct}%`; document.getElementById('speed-bar').style.width = `${pct}%`;
+    });
+    new ROSLIB.Topic({ ros: ros, name: '/ui/joy_button_presses', messageType: 'std_msgs/String' }).subscribe((msg) => { logToTerminal(`Joy-Input: ${msg.data}`, "joy"); });
+    new ROSLIB.Topic({ ros: ros, name: '/ui/voice_feedback', messageType: 'std_msgs/String' }).subscribe((msg) => { logToTerminal(`Voice: ${msg.data}`, "voice"); });
+
+    // Placeholder für Planning Frame
+    new ROSLIB.Topic({ ros: ros, name: '/ui/planning_frame', messageType: 'std_msgs/String' }).subscribe((msg) => {
+        const pfEl = document.getElementById('val-planning-frame');
+        if (pfEl) pfEl.textContent = msg.data;
+    });
+
+    const alertBanner = document.getElementById('collision-banner');
+    new ROSLIB.Topic({ ros: ros, name: '/ui/collision_msg', messageType: 'std_msgs/String' }).subscribe((msg) => {
+        const text = msg.data.trim();
+        if (!text) return;
+        if (text.includes('Kollision')) { alertBanner.classList.remove('hidden'); logToTerminal(`CRITICAL: ${text}`, "collision"); }
+    });
+
+    let liveActivityTimeout;
+
+    // Publish a request to track the selected node's topics
+    window.requestTopicActivity = function (topics) {
+        if (!window.ros || !window.topicActivityPub) return;
+        window.topicActivityPub.publish(new ROSLIB.Message({
+            data: JSON.stringify({ topics: topics })
+        }));
+    };
+
+    // Sub to see live data and animate CSS classes
+    window.topicActivityPub = new ROSLIB.Topic({ ros: ros, name: '/ui/request_topic_activity', messageType: 'std_msgs/String' });
+
+    new ROSLIB.Topic({ ros: ros, name: '/dashboard/topic_activity', messageType: 'std_msgs/String' }).subscribe((msg) => {
+        try {
+            const data = JSON.parse(msg.data);
+            let anyActive = false;
+
+            // Loop through all trackable cards
+            document.querySelectorAll('.live-trackable').forEach(card => {
+                let cardActive = false;
+                let maxHz = 0;
+                try {
+                    const cardTopics = JSON.parse(card.dataset.topics || "[]");
+                    cardTopics.forEach(t => {
+                        const activity = data[t];
+                        if (activity) {
+                            if (activity.hz > maxHz) maxHz = activity.hz;
+                            if (activity.active) {
+                                cardActive = true;
+                                anyActive = true;
+                            }
+                        }
+                    });
+                } catch (e) { }
+
+                const hzDisplay = card.querySelector('.card-hz-display');
+                if (hzDisplay) {
+                    if (maxHz > 0) {
+                        hzDisplay.textContent = `${maxHz} Hz`;
+                        hzDisplay.classList.add('hz-active');
+                    }
+                }
+
+                if (cardActive) {
+                    card.classList.add('live-pulsing');
+                } else {
+                    card.classList.remove('live-pulsing');
+                }
+            });
+
+            // Update topic message contents
+            Object.keys(data).forEach(t => {
+                const activity = data[t];
+                const safeId = t.replace(/\//g, '-');
+
+                if (activity.active) {
+                    const iconSub = document.getElementById(`icon-sub-${safeId}`);
+                    if (iconSub) {
+                        iconSub.classList.add('topic-icon-glow');
+                        iconSub.closest('.topic-item').classList.add('topic-item-glow');
+                    }
+                    const iconPub = document.getElementById(`icon-pub-${safeId}`);
+                    if (iconPub) {
+                        iconPub.classList.add('topic-icon-glow');
+                        iconPub.closest('.topic-item').classList.add('topic-item-glow');
+                    }
+
+                    // Also apply glow to the flow diagram badges
+                    document.querySelectorAll(`.conn-topic-badge[data-topic='${t}']`).forEach(badge => {
+                        badge.classList.add('topic-item-glow');
+                    });
+                } else {
+                    document.querySelectorAll(`.conn-topic-badge[data-topic='${t}']`).forEach(badge => {
+                        badge.classList.remove('topic-item-glow');
+                    });
+                }
+
+                if (activity.last_msg) {
+                    const msgEl = document.getElementById(`msg-${safeId}`);
+                    if (msgEl) {
+                        const valEl = msgEl.querySelector('.topic-val');
+                        if (valEl) {
+                            valEl.textContent = activity.last_msg;
+                            valEl.title = activity.last_msg;
+                            valEl.style.color = "var(--text-primary)";
+                        }
+                    }
+                }
+            });
+
+            const centerBox = document.querySelector('.center-node-box');
+            if (centerBox) {
+                if (anyActive) centerBox.classList.add('center-node-active');
+                else centerBox.classList.remove('center-node-active');
+            }
+
+            clearTimeout(liveActivityTimeout);
+            liveActivityTimeout = setTimeout(() => {
+                document.querySelectorAll('.live-pulsing').forEach(el => {
+                    el.classList.remove('live-pulsing');
+                });
+                document.querySelectorAll('.topic-icon-glow').forEach(el => {
+                    el.classList.remove('topic-icon-glow');
+                });
+                document.querySelectorAll('.topic-item-glow').forEach(el => {
+                    el.classList.remove('topic-item-glow');
+                });
+                if (centerBox) centerBox.classList.remove('center-node-active');
+                document.querySelectorAll('.card-hz-display').forEach(el => {
+                    el.textContent = '-- Hz';
+                    el.classList.remove('hz-active');
+                });
+            }, 1000);
+
+        } catch (e) { }
+    });
+};

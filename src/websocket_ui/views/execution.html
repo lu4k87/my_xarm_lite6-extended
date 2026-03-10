@@ -1,0 +1,128 @@
+
+
+<div class="header-bar">
+<h2>Execution Übersicht: lite6.sh</h2>
+<button class="action-btn play-btn" onclick="alert('Simulation: Skript gestartet!')"><i class="fa-solid fa-play"></i> Run lite6.sh</button>
+</div>
+
+
+<div class="exec-scroll-area">
+<p class="exec-intro">Übersicht aller Hintergrundprozesse und Nodes, die für den Betrieb des
+                        Roboter-Systems und des Dashboards initialisiert werden.</p>
+<div class="exec-category">
+<h3 class="exec-cat-title"><i class="fa-solid fa-robot" style="color: var(--accent-secondary);"></i>
+                            Kinematik &amp; Steuerung</h3>
+<div class="exec-grid">
+<div class="exec-card">
+<div class="exec-card-header">
+<h4><i class="fa-solid fa-gears"></i> X-Arm MoveIt Servo</h4>
+</div>
+<div class="exec-cmd">ros2 launch xarm_moveit_servo
+                                    lite6_moveit_servo_realmove.launch.py</div>
+<div class="exec-params">
+<div class="param-badge" title="IP Adresse der Roboter-Hardware"><i class="fa-solid fa-network-wired" style="color: var(--accent-primary);"></i><span class="p-key">robot_ip</span><span class="p-eq">:=</span><span class="p-val string">192.168.1.175</span></div>
+<div class="param-badge" title="Lädt URDF-Modell inklusive Vakuum-Greifer"><i class="fa-solid fa-hand-holding" style="color: var(--color-rx);"></i><span class="p-key">add_vacuum_gripper</span><span class="p-eq">:=</span><span class="p-val bool">True</span></div>
+<div class="param-badge" title="Setzt den Output-Modus für das Terminal"><i class="fa-solid fa-bug" style="color: var(--color-tx);"></i><span class="p-key">report_type</span><span class="p-eq">:=</span><span class="p-val mode">dev</span></div>
+</div>
+<ul class="exec-desc">
+<li>Baut TCP/IP Verbindung zur Lite6 Hardware auf.</li>
+<li>Aktiviert MoveIt Servoing.</li>
+</ul>
+</div>
+<div class="exec-card">
+<div class="exec-card-header">
+<h4><i class="fa-solid fa-route"></i> Motion Sequence</h4>
+</div>
+<div class="exec-cmd">ros2 launch motion_sequence motion_sequence_launch.py</div>
+<ul class="exec-desc">
+<li>Verwaltet geplante Bewegungsabläufe.</li>
+</ul>
+</div>
+<div class="exec-card">
+<div class="exec-card-header">
+<h4><i class="fa-solid fa-location-crosshairs"></i> Move To Coordinator</h4>
+</div>
+<div class="exec-cmd">ros2 run move_to_coordinator move_to_coordinator</div>
+<ul class="exec-desc">
+<li>Handler für dynamische Zielkoordinaten.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="exec-category">
+<h3 class="exec-cat-title"><i class="fa-solid fa-eye" style="color: var(--accent-secondary);"></i>
+                            Vision &amp; Sicherheit</h3>
+<div class="exec-grid">
+<div class="exec-card">
+<h4><i class="fa-solid fa-camera"></i> YOLO Homographie</h4>
+<div class="exec-cmd">ros2 run yolo_object_detector yolo_homography_node</div>
+<ul class="exec-desc">
+<li>Objekterkennung (YOLO) &amp; 3D-Koordinaten.</li>
+</ul>
+</div>
+<div class="exec-card">
+<h4><i class="fa-solid fa-shield-halved"></i> Collision Check</h4>
+<div class="exec-cmd">ros2 run collision_check checker</div>
+<ul class="exec-desc">
+<li>Echtzeit-Sicherheitsüberwachung.</li>
+</ul>
+</div>
+<div class="exec-card">
+<h4><i class="fa-solid fa-cube"></i> RViz Publisher</h4>
+<div class="exec-cmd">ros2 run rviz_marker marker_publisher</div>
+<ul class="exec-desc">
+<li>Generiert 3D-Marker für RViz.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="exec-category">
+<h3 class="exec-cat-title"><i class="fa-solid fa-microphone-lines" style="color: var(--accent-secondary);"></i> Sprachsteuerung</h3>
+<div class="exec-grid">
+<div class="exec-card">
+<h4><i class="fa-solid fa-server"></i> Whisper Bringup</h4>
+<div class="exec-cmd">ros2 launch whisper_bringup bringup.launch.py</div>
+<div class="exec-params">
+<div class="param-badge" title="Aktiviert Nvidia CUDA Hardwarebeschleunigung für VAD"><i class="fa-solid fa-microchip" style="color: var(--color-rx);"></i><span class="p-key">silero_vad_use_cuda</span><span class="p-eq">:=</span><span class="p-val bool">True</span></div>
+</div>
+<ul class="exec-desc">
+<li>Startet KI-Spracherkennung.</li>
+</ul>
+</div>
+<div class="exec-card">
+<h4><i class="fa-regular fa-keyboard"></i> Whisper Stream Demo</h4>
+<div class="exec-cmd">ros2 run whisper_demos whisper_on_key</div>
+<ul class="exec-desc">
+<li>Aktiviert Mikrofon bei Tastendruck.</li>
+</ul>
+</div>
+<div class="exec-card">
+<h4><i class="fa-solid fa-language"></i> Voice Command Listener</h4>
+<div class="exec-cmd">ros2 run voice_command_listener listener</div>
+<ul class="exec-desc">
+<li>Parst Text in Roboterkommandos.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="exec-category">
+<h3 class="exec-cat-title"><i class="fa-solid fa-network-wired" style="color: var(--accent-secondary);"></i> Dashboard &amp; System</h3>
+<div class="exec-grid">
+<div class="exec-card">
+<h4><i class="fa-solid fa-bridge"></i> ROS Bridge Websocket</h4>
+<div class="exec-cmd">ros2 launch rosbridge_server rosbridge_websocket_launch.xml</div>
+<ul class="exec-desc">
+<li>Schnittstelle zw. ROS (DDS) und Web (JSON).</li>
+</ul>
+</div>
+<div class="exec-card highlight-card">
+<h4><i class="fa-solid fa-magnifying-glass-chart"></i> Workspace Analyzer</h4>
+<div class="exec-cmd">python3 workspace_analyzer.py</div>
+<ul class="exec-desc">
+<li>Backend für das Node Dashboard.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+

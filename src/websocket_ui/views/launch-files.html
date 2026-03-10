@@ -1,0 +1,178 @@
+<style>
+    .launch-tree-container {
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 25px;
+    }
+
+    .modern-tree {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .modern-tree ul {
+        list-style: none;
+        padding-left: 18px;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 8px;
+        margin-bottom: 12px;
+        margin-left: 12px;
+    }
+
+    .modern-tree li {
+        margin-bottom: 8px;
+        position: relative;
+    }
+
+    /* Horizontal line connecting to the child */
+    .modern-tree ul li::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: -18px;
+        width: 14px;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .tree-card {
+        display: flex;
+        flex-direction: column;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        padding: 8px 12px;
+        transition: background 0.2s, border-color 0.2s;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .tree-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .tree-card.is-entry {
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .tree-card.is-launch {
+        background: rgba(239, 68, 68, 0.05);
+        /* slightly reddish for launch files */
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .tree-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .tree-card-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .tree-card-pkg {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .tree-card-badges {
+        margin-left: auto;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .t-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .badge-entry {
+        background: #38bdf8;
+        color: #0f172a;
+    }
+
+    .badge-node {
+        color: #a855f7;
+        border: 1px solid rgba(168, 85, 247, 0.5);
+        background: rgba(168, 85, 247, 0.05);
+    }
+
+    .badge-container {
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.5);
+        background: rgba(56, 189, 248, 0.05);
+    }
+
+    .badge-comp {
+        color: #cbd5e1;
+        border: 1px solid rgba(203, 213, 225, 0.3);
+        background: rgba(203, 213, 225, 0.05);
+    }
+
+    .tree-card-path {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin: 0;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        padding: 4px 6px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.3);
+        width: fit-content;
+        transition: color 0.2s, background 0.2s;
+    }
+
+    .tree-card-path:hover {
+        color: var(--accent-primary);
+        background: rgba(0, 0, 0, 0.5);
+    }
+</style>
+
+<div class="header-bar">
+    <h2>Ausgeführte Launch-Files (dashboard.sh)</h2>
+</div>
+
+<div class="widget" style="height: calc(100vh - 120px); overflow-y: auto; padding-right: 15px;">
+
+    <!-- LEGENDE -->
+    <div
+        style="margin-bottom: 25px; font-size: 0.8rem; color: var(--text-secondary); display: flex; gap: 15px; align-items: center; flex-wrap: wrap; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); padding: 15px 20px;">
+        <strong style="color: var(--text-primary);"><i class="fa-solid fa-circle-info" style="margin-right: 6px;"></i>
+            Legende:</strong>
+        <span class="t-badge badge-entry">ENTRY POINT</span> <span style="margin-left: -5px;">Ausgeführtes Launch
+            File</span>
+        <span style="display:flex; align-items:center; gap:4px; margin-left: 10px;"><i class="fa-solid fa-rocket"
+                style="color:var(--accent-secondary);"></i> Injiziertes Launch File</span>
+        <span class="t-badge badge-node"><i class="fa-solid fa-microchip"></i> NODE</span> <span
+            style="margin-left: -5px;">Standard ROS2 Node</span>
+        <span class="t-badge badge-container"><i class="fa-solid fa-box-open"></i> CONTAINER</span> <span
+            style="margin-left: -5px;">Multi-Thread Prozess</span>
+        <span class="t-badge badge-comp"><i class="fa-solid fa-puzzle-piece"></i> COMP</span> <span
+            style="margin-left: -5px;">C++ Plugin Node</span>
+    </div>
+
+    <!-- DYNAMISCHER INHALT -->
+    <div id="dynamic-launch-container">
+        <div class="empty-state" style="padding: 30px;">Warte auf Workspace Analyzer...</div>
+    </div>
+</div>

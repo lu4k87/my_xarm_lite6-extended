@@ -1,0 +1,17 @@
+# ROS 2 Build Artifacts
+build/
+install/
+log/
+
+# Python caching
+__pycache__/
+*.pyc
+
+# Local backup files and zips
+*.zip
+backup_src_+dashboard/
+*.sh.copy
+start (copy).sh
+
+# OS files
+.DS_Store

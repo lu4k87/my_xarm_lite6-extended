@@ -1,0 +1,38 @@
+<div class="header-bar">
+    <h2><i class="fa-solid fa-book" style="color: var(--accent-primary); margin-right: 10px;"></i>
+        Wiki: Git Online Repository</h2>
+</div>
+
+<div class="wiki-content" style="padding: 20px; overflow-y: auto;">
+    <h3 style="color: var(--accent-primary); margin-top: 0;">Lokales Git mit Online-Server verbinden</h3>
+    <p style="color: var(--text-secondary); line-height: 1.6;">Um das lokale Git-Repository online zu sichern (z.B. auf GitHub oder GitLab) und KI-Agenten Updates bzw. Sicherungen machen zu lassen, muss es mit einem "Remote-Repository" (einem Online-Speicher) verknüpft werden.</p>
+    
+    <h4 style="margin-top: 25px; color: #fff;">Schritt 1: Ein leeres Repository online erstellen</h4>
+    <p style="color: var(--text-secondary);">Erstelle auf GitHub ein neues Repository <b style="color: #fbbf24;">ohne</b> README, <code>.gitignore</code> oder Lizenz. Es muss komplett leer sein.</p>
+    
+    <h4 style="margin-top: 20px; color: #fff;">Schritt 2: Die Online-URL kopieren</h4>
+    <p style="color: var(--text-secondary);">Kopiere die HTTPS oder SSH URL des neuen Repositories (z.B. <code>https://github.com/DeinName/dein-repo.git</code>).</p>
+    
+    <h4 style="margin-top: 20px; color: #fff;">Schritt 3: Das lokale Git verknüpfen & hochladen</h4>
+    <div class="widget" style="padding: 15px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
+        <pre style="margin: 0; padding: 10px; background: #0f172a; border-radius: 6px;"><code class="language-bash" style="color: #38bdf8;"># Den Online-Server als "origin" hinzufügen
+git remote add origin &lt;DEINE_URL&gt;
+
+# Den aktuellen Branch auf "main" umbenennen (falls "master")
+git branch -M main
+
+# Die Daten hochladen und origin als Standard festlegen
+git push -u origin main</code></pre>
+    </div>
+    
+    <h3 style="margin-top: 35px; color: var(--accent-primary);">So arbeitet der KI-Assistent damit (Antigravity):</h3>
+    <p style="color: var(--text-secondary);">Sobald dieser erste Push funktioniert hat, kann der Assistent den Code verwalten. Du kannst einfach sagen:</p>
+    <ul style="color: var(--text-secondary); line-height: 1.8; margin-top: 10px;">
+        <li><i>"Speichere die heutigen Änderungen und lade sie auf Git hoch"</i></li>
+        <li><i>"Lade den neuesten Code von GitHub herunter"</i></li>
+        <li><i>"Checke den aktuellen Git Status"</i></li>
+        <li><i>"Welche Commits wurden heute gemacht?"</i></li>
+    </ul>
+    
+    <button class="code-btn" style="margin-top: 25px;" onclick="copyToClipboard('git remote add origin YOUR_URL_HERE && git branch -M main && git push -u origin main')"><i class="fa-solid fa-copy" style="margin-right: 8px;"></i> Befehle kopieren (URL dann manuell ersetzen)</button>
+</div>

@@ -1,0 +1,87 @@
+
+
+<div class="header-bar" style="margin-bottom: 15px;">
+<h2><i class="fa-solid fa-camera-retro"></i> Vision &amp; Live-Streams</h2>
+<button class="action-btn" onclick="alert('Verbinde mit Kamera-Streams...')"><i class="fa-solid fa-rotate"></i> Connect</button>
+</div>
+
+
+<div class="camera-grid">
+<div class="camera-card">
+<div class="camera-header">
+<h4><i class="fa-solid fa-video"></i> Cam 1: Main (YOLO)</h4>
+<span class="status-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">OFFLINE</span>
+</div>
+<div class="camera-stream-placeholder">
+<div class="camera-stream-info">
+<i class="fa-solid fa-video-slash"></i>
+<div class="code-font">Waiting for stream...</div>
+</div>
+</div>
+<div class="camera-meta">
+<span>IP: <span class="p-val string">192.168.0.125</span></span>
+<span>Res: <span class="p-val number">1280x960</span></span>
+<span>FPS: <span class="p-val time">--</span></span>
+</div>
+</div>
+<div class="camera-card">
+<div class="camera-header">
+<h4><i class="fa-solid fa-video"></i> Cam 2: EEF (Gripper)</h4>
+<span class="status-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">OFFLINE</span>
+</div>
+<div class="camera-stream-placeholder">
+<div class="camera-stream-info">
+<i class="fa-solid fa-video-slash"></i>
+<div class="code-font">Waiting for stream...</div>
+</div>
+</div>
+<div class="camera-meta">
+<span>IP: <span class="p-val string">192.168.0.126</span></span>
+<span>Res: <span class="p-val number">640x480</span></span>
+<span>FPS: <span class="p-val time">--</span></span>
+</div>
+</div>
+<div class="camera-card">
+<div class="camera-header">
+<h4><i class="fa-solid fa-cubes"></i> Cam 3: Depth (3D)</h4>
+<span class="status-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">OFFLINE</span>
+</div>
+<div class="camera-stream-placeholder">
+<div class="camera-stream-info">
+<i class="fa-solid fa-video-slash"></i>
+<div class="code-font">Waiting for depth data...</div>
+</div>
+</div>
+<div class="camera-meta">
+<span>Src: <span class="p-val string">/camera/depth</span></span>
+<span>Res: <span class="p-val number">848x480</span></span>
+<span>FPS: <span class="p-val time">--</span></span>
+</div>
+</div>
+</div>
+
+
+<div class="header-bar" style="margin-bottom: 15px; margin-top: 10px;">
+<h2 style="font-size: 1.4rem;">Erfasste Objekte im Raum</h2>
+</div>
+
+
+<div class="widget">
+<table class="modern-table">
+<thead>
+<tr>
+<th>Objekt-ID</th>
+<th>Pos X</th>
+<th>Pos Y</th>
+<th>Pos Z</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="vision-table-body">
+<tr>
+<td class="empty-state" colspan="5">Warte auf Erkennungsdaten...</td>
+</tr>
+</tbody>
+</table>
+</div>
+

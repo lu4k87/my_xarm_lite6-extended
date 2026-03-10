@@ -1,0 +1,42 @@
+
+
+<div class="header-bar">
+<h2><i class="fa-solid fa-laptop-code" style="color: var(--accent-primary); margin-right: 10px;"></i>
+                        Commands: rqt Tools (GUI)
+                    </h2>
+</div>
+
+
+<div class="exec-scroll-area">
+<p class="exec-intro">rqt ist das offizielle GUI-Framework von ROS 2. Es bietet interaktive Fenster,
+                        um den Systemzustand visuell anzuzeigen oder Nachrichten zu senden, als würdest du eine normale
+                        Desktop-Applikation bedienen.</p>
+<div class="widget" style="padding: 0;">
+<div class="cmd-item" style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+<h4 style="margin: 0 0 10px 0; color: white; font-size: 1.05rem;"><i class="fa-solid fa-network-wired" style="color: var(--accent-primary); margin-right: 8px;"></i> Visuelle
+                                Netzwerk-Karte</h4>
+<div class="exec-cmd">rqt_graph</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Öffnet ein Fenster, das jeden
+                                laufenden Node als Blase
+                                darstellt und alle Datenströme (Topics) als verbundene Pfeile dazwischen zeichnet.
+                                Perfekt zum Debuggen von Abhängigkeiten.</div>
+</div>
+<div class="cmd-item" style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+<h4 style="margin: 0 0 10px 0; color: white; font-size: 1.05rem;"><i class="fa-solid fa-concierge-bell" style="color: var(--accent-primary); margin-right: 8px;"></i> Service-Tester</h4>
+<div class="exec-cmd">ros2 run rqt_service_caller rqt_service_caller</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Ein Pop-up, mit dem du
+                                Parameter bequem wie in einem
+                                Formular ausfüllen und ROS 2 Services live am Roboter auslösen kannst (z.B. "Fahre zu
+                                Scanner-Pose"). Du ersparst dir das Tippen langer Terminal-Befehle.</div>
+</div>
+<div class="cmd-item" style="padding: 15px;">
+<h4 style="margin: 0 0 10px 0; color: white; font-size: 1.05rem;"><i class="fa-solid fa-list-check" style="color: var(--accent-primary); margin-right: 8px;"></i> Log-Zentrale</h4>
+<div class="exec-cmd">ros2 run rqt_console rqt_console</div>
+<div style="color: var(--text-secondary); font-size: 0.9rem;">Sammelt alle Meldungen,
+                                Warnungen und Fehler aller Nodes an einem Ort. Man kann filtern,
+                                sortieren und übersichtlich lesen, ohne hunderte Terminal-Fenster checken zu müssen.
+                            </div>
+</div>
+</div>
+</div>
+

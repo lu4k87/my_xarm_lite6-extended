@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="de">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>ROS 2 Pro Dashboard</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link href="dashboard_style.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+    <script src="roslib.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="brand"><i class="fa-solid fa-share-nodes"></i><span>ROS 2 Core</span></div>
+            <div class="system-status">
+                <div class="status-row-horizontal">
+                    <div class="status-col">
+                        <div class="status-row">
+                            <div class="status-indicator" id="dashboard-status-dot"></div>
+                            <div class="status-info">
+                                <div class="status-label">Dashboard</div>
+                                <div id="dashboard-status-text">Offline</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="status-col">
+                        <div class="status-row">
+                            <div class="status-indicator" id="robot-status-dot"></div>
+                            <div class="status-info">
+                                <div class="status-label">Roboter</div>
+                                <div id="robot-status-text">Offline</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ping-text" id="bridge-ping">-- ms</div>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-btn" onclick="switchView('telemetry')"><i class="fa-solid fa-gauge-high"></i>
+                    Telemetrie</button>
+                <button class="nav-btn" onclick="switchView('vision')"><i class="fa-solid fa-camera-retro"></i> Vision
+                    &amp;
+                    Objekte</button>
+                <button class="nav-btn active" onclick="switchView('network')"><i
+                        class="fa-solid fa-diagram-project"></i> Node Explorer</button>
+                <button class="nav-btn" onclick="switchView('script-docs')"><i class="fa-solid fa-file-code"></i> Node -
+                    Parms &amp; Configs</button>
+                <button class="nav-btn" onclick="switchView('workspace-tree')"><i class="fa-solid fa-folder-tree"></i>
+                    Workspace</button>
+                <button class="nav-btn" onclick="switchView('launch-files')"><i class="fa-solid fa-rocket"></i>
+                    Launch-Files</button>
+                <button class="nav-btn btn-execution" onclick="switchView('execution')" style="margin-bottom: 20px;"><i
+                        class="fa-solid fa-terminal"></i> Execution (lite6.sh)</button>
+                <!-- NEUE SECTION: COMMANDS -->
+                <div class="wiki-group">
+                    <div class="wiki-header" style="color: var(--accent-primary);"><i
+                            class="fa-solid fa-laptop-code"></i> Commands &gt;&gt;</div>
+                    <ul class="wiki-list">
+                        <li onclick="switchView('cmd-system')">Linux System</li>
+                        <li onclick="switchView('cmd-ros2')">ROS 2 CLI</li>
+                        <li onclick="switchView('cmd-colcon')">Colcon Build</li>
+                        <li onclick="switchView('cmd-rqt')">rqt Tools (Interaktiv)</li>
+                        <li onclick="switchView('cmd-git')">Git &amp; Versioning</li>
+                    </ul>
+                    <!-- WIKI SECTION -->
+                    <div class="wiki-group" style="margin-top: 15px;">
+                        <div class="wiki-header"><i class="fa-solid fa-book"></i> Wiki &gt;&gt;</div>
+                        <ul class="wiki-list">
+                            <li onclick="switchView('wiki-dashboard')">Dashboard Architektur</li>
+                            <li onclick="switchView('wiki-bootcamp')">ROS 2 Bootcamp Summary</li>
+                            <li onclick="switchView('wiki-git')">Git Setup & KI</li>
+                            <li onclick="switchView('wiki-intro')">Introduction</li>
+                            <li onclick="switchView('wiki-install')">Installation</li>
+                            <li onclick="switchView('wiki-ros2')">Ros2</li>
+                            <li onclick="switchView('wiki-vision')">Vision</li>
+                            <li onclick="switchView('wiki-object')">Object Detection</li>
+                            <li onclick="switchView('wiki-rviz2')">Rviz2</li>
+                            <li onclick="switchView('wiki-isaacsim')">Isaac Sim</li>
+                            <li onclick="switchView('wiki-isaaclab')">Isaac Lab</li>
+                            <li onclick="switchView('wiki-stereovision')">Stereo Vision (3D)</li>
+                            <li onclick="switchView('wiki-koordinaten')">Koordinaten Transformation</li>
+                            <li onclick="switchView('wiki-pointcloud')">Pointcloud</li>
+                            <li onclick="switchView('wiki-octomap')">Octomap</li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <section class="view-section active" data-view="views/network.html" id="network"></section>
+            <section class="view-section" data-view="views/workspace-tree.html" id="workspace-tree"></section>
+            <section class="view-section" data-view="views/launch-files.html" id="launch-files"></section>
+            <section class="view-section" data-view="views/telemetry.html" id="telemetry"></section>
+            <section class="view-section" data-view="views/vision.html" id="vision"></section>
+            <section class="view-section" data-view="views/execution.html" id="execution"></section>
+            <section class="view-section" data-view="views/script-docs.html" id="script-docs"></section>
+            <section class="view-section" data-view="views/wiki-dashboard.html" id="wiki-dashboard"></section>
+            <section class="view-section" data-view="views/wiki-bootcamp.html" id="wiki-bootcamp"></section>
+            <section class="view-section" data-view="views/wiki-git.html" id="wiki-git"></section>
+            <section class="view-section" data-view="views/wiki-intro.html" id="wiki-intro"></section>
+            <section class="view-section" data-view="views/wiki-install.html" id="wiki-install"></section>
+            <section class="view-section" data-view="views/wiki-ros2.html" id="wiki-ros2"></section>
+            <section class="view-section" data-view="views/wiki-vision.html" id="wiki-vision"></section>
+            <section class="view-section" data-view="views/wiki-object.html" id="wiki-object"></section>
+            <section class="view-section" data-view="views/wiki-rviz2.html" id="wiki-rviz2"></section>
+            <section class="view-section" data-view="views/wiki-isaacsim.html" id="wiki-isaacsim"></section>
+            <section class="view-section" data-view="views/wiki-isaaclab.html" id="wiki-isaaclab"></section>
+            <section class="view-section" data-view="views/wiki-stereovision.html" id="wiki-stereovision"></section>
+            <section class="view-section" data-view="views/wiki-koordinaten.html" id="wiki-koordinaten"></section>
+            <section class="view-section" data-view="views/wiki-pointcloud.html" id="wiki-pointcloud"></section>
+            <section class="view-section" data-view="views/wiki-octomap.html" id="wiki-octomap"></section>
+            <!-- ================= NEW COMMAND SECTIONS ================= -->
+            <section class="view-section" data-view="views/cmd-ros2.html" id="cmd-ros2"></section>
+            <section class="view-section" data-view="views/cmd-colcon.html" id="cmd-colcon"></section>
+            <section class="view-section" data-view="views/cmd-git.html" id="cmd-git"></section>
+            <section class="view-section" data-view="views/cmd-system.html" id="cmd-system"></section>
+            <section class="view-section" data-view="views/cmd-rqt.html" id="cmd-rqt"></section>
+            <!-- ======================================================== -->
+            <div class="code-modal hidden" id="code-modal">
+                <div class="code-modal-content">
+                    <div class="code-modal-header">
+                        <div>
+                            <i class="fa-solid fa-file-code"
+                                style="color: var(--accent-primary); margin-right: 10px;"></i>
+                            <span id="code-modal-title">Lade...</span>
+                        </div>
+                        <button class="close-modal-btn" onclick="closeCodeViewer()"><i
+                                class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="code-modal-body">
+                        <pre><code id="code-modal-text">Warte auf Quellcode...</code></pre>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="dashboard_script.js"></script>
+</body>
+
+</html>

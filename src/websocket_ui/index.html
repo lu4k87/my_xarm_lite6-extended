@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roboter UI</title>
+    <link rel="stylesheet" href="style.css?v=3.8">
+</head>
+<body>
+
+    <div class="ui-panel">
+        <div class="roboter-status">
+            <span class="status-label">Status:</span>
+            <span class="status-value" id="status-value-text">Offline</span>
+        </div>
+        
+        <div class="card">
+            <div class="data-pair-vertical">
+                <span class="label">Position des Greifers</span>
+                <div class="value" id="eef-pos">
+                    <span class="x-axis-group axis-group">
+                        <span class="x-axis">X:</span> <span class="x-val">0</span> mm
+                    </span>
+                    <span class="y-axis-group axis-group">
+                        <span class="y-axis">Y:</span> <span class="y-val">0</span> mm
+                    </span>
+                    <span class="z-axis-group axis-group">
+                        <span class="z-axis">Z:</span> <span class="z-val">0</span> mm
+                    </span>
+                </div>
+            </div>
+            
+            <hr class="divider">
+
+            <div class="data-pair">
+                <span class="label">Geschwindigkeit</span>
+                <div class="value-container">
+                    <span class="speed-val-text">100%</span>
+                    <div class="speed-bar-container">
+                        <div class="speed-bar-fill" id="speed-bar-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-pair">
+                <span class="label">Referenzrahmen</span>
+                <div class="value-container">
+                    <div id="frame-display" class="frame-val-text frame-base">BASE (link_base)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card control-box">
+            <div class="title">Steuerung: Controller Eingabe</div>
+            <iframe class="gamepad-viewer"
+                    src="https://app.gpv.gg/?p=1&s=0&sc=.4"
+                    frameborder="0">
+            </iframe>
+            
+            <div class="icon-bar">
+                 <div class="icon-section-wrapper">
+                     <div class="icon-wrapper" id="icon-x">
+                         <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                             <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5S7 13.76 7 11H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                         </svg>
+                         <span>X</span>
+                         <span class="button-description">Mikrofon EIN/AUS</span>
+                     </div>
+                 </div>
+                 <div class="icon-section-wrapper"> 
+                     <div class="icon-wrapper" id="icon-y">
+                         <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                         </svg>
+                         <span>Y</span>
+                         <span class="button-description">Zur Initialposition</span>
+                     </div>
+                 </div>
+                 <div class="icon-section-wrapper">
+                     <div class="icon-wrapper" id="icon-a">
+                         <svg class="greifer-icon" xmlns="http://www.w3.org/2000/svg" version="1.0" viewBox="0 0 1144 1164">
+                            <path d="M518.5 154.2c-.3.7-.4 33-.3 71.8l.3 70.5h107v-143l-53.3-.3c-42.1-.2-53.4 0-53.7 1m-65.7 250.5-.3 64.8-48 .3-48 .3-3.6 5.2c-2 2.9-28 40.7-57.9 84.2-29.9 43.4-73.3 106.4-96.4 140-25.3 36.8-42.9 63.3-44.4 66.9-2.1 5.2-2.4 7.1-2 15-.3 6.9 1 10.2 2.7 13.6 1.3 2.5 37.3 55.3 80 117.5 51.5 75 79.4 114.8 83 118.3 16.1 15.6 40.4 19.3 61 9.1 19.8-9.8 31.1-29.2 29.8-51.4-.6-12.2-3.7-19.8-14-34.8-4.6-6.7-31.4-45.7-59.6-86.6s-51.8-75.6-52.6-77.1c-2.6-5-2.9-12-.8-18 1.4-3.9 19.7-31.2 61.9-92.5 32.9-47.8 61.7-88.8 64-91.1 2.2-2.2 6.7-5.4 10-7 5.9-2.9 6-2.9 27.4-3.2l21.5-.3 3.5 6.2c5.2 9.3 11.8 17.5 20.7 26 9.9 9.5 17.7 14.8 30.7 20.9 53.5 25.4 117.3 7.5 149.9-42.2l7.2-10.9 21 .3 21.1.3 6.4 3.2c3.6 1.8 8.1 4.9 10.2 7 5.4 5.7 123.7 177.9 125.4 182.6 1.7 4.9 1.7 12 0 16.8-.7 2-5.1 9.2-9.8 16-9.5 13.8-44.3 64.4-83 120.4-14 20.4-26.4 38.8-27.5 41-7.7 15.3-7.7 33.8-.1 49 13.3 26.4 46 37 72.8 23.5 12.2-6.2 15-9.8 75.6-98 31.2-45.4 63.5-92.4 71.9-104.5s17.9-26.1 21.2-31.1c9.6-14.6 11.4-25.3 6.4-38.3-1-2.6-31.2-47.5-67.1-99.7-36-52.2-81.1-117.7-100.3-145.6L787.8 470l-53.6-.2-53.7-.3-.3-64.8-.2-64.7H453zm140.6 75.1C610.6 488.4 621 505 621 524c0 24.1-17.3 44-41.7 48.2-25.5 4.3-50.7-14-55.4-40.2-4.3-24.1 11.4-48.8 35.2-55.5 3.7-1 8.6-1.4 15.6-1.2 9.7.4 10.7.6 18.7 4.5"/>
+                    </svg>
+                         <span>A</span>
+                         <span class="button-description">Greifer EIN/AUS</span>
+                     </div>
+                 </div>
+            </div>
+        </div>
+
+        <div class="card joy-log-box" id="collision-status"> 
+            <div class="title">Eingabe Feedback: Modus</div>
+            <div class="log-content" id="joy-log-content"></div>
+        </div>
+
+        <div class="card voice-feedback-box">
+             <div class="title">Sprachbefehl Status</div>
+             <div class="feedback-content" id="voice-feedback-content">
+                 <div style="color: #666; font-style: italic;">Warte auf Befehl...</div>
+             </div> 
+        </div>
+    </div>
+       
+    <script src="roslib.min.js"></script>
+    <script src="script.js?v=3.2"></script> 
+</body>
+</html>

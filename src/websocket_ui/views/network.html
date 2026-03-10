@@ -1,0 +1,98 @@
+<div class="network-layout">
+<div class="widget node-list-panel">
+<div class="search-box">
+<i class="fa-solid fa-magnifying-glass"></i>
+<input id="node-search" onkeyup="filterNodes()" placeholder="Node suchen..." type="text"/>
+</div>
+<ul class="node-list" id="dynamic-node-list">
+<li class="empty-state">Lade Nodes...</li>
+</ul>
+</div>
+<div class="main-explorer-area">
+<div class="widget network-widget hidden" id="global-graph-view">
+<div class="widget-header" style="position: absolute; top: 15px; left: 20px; z-index: 10;">
+                                Globales Netzwerk <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 300; margin-left: 10px;">(Wähle
+                                    links einen Node für Details)</span></div>
+<div id="vis-container"></div>
+</div>
+<!-- NEU: Nodes Overview Ansicht -->
+<div class="widget network-widget" id="nodes-overview-view" style="padding: 20px; overflow-y: auto;">
+<div class="widget-header" style="margin-bottom: 20px;">
+<i class="fa-solid fa-table-cells-large" style="color: var(--accent-primary); margin-right: 10px;"></i>
+                                Alle System- &amp; Workspace Nodes
+                            </div>
+<div class="nodes-overview-grid" id="nodes-overview-grid"></div>
+</div>
+<div class="node-details-dashboard hidden" id="node-details-view">
+<div class="nd-header" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="nd-title-group"><span style="display:inline-block; width: 44px; height: 44px; background-color: var(--accent-primary); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;"></span>
+<h2 class="code-font" id="nd-title" style="margin: 0;">/node_name</h2>
+</div>
+<button class="action-btn" onclick="refreshNodeGraph()" style="font-size: 0.9rem; padding: 6px 12px;"><i class="fa-solid fa-rotate"></i> Reset View</button>
+</div>
+<div class="nd-scroll-area">
+<div class="nd-workspace-grid">
+<div class="ws-card"><i class="fa-solid fa-box-archive ws-icon"></i>
+<div class="ws-info"><span class="ws-lbl">ROS 2 Paket</span><span class="ws-val" id="nd-pkg">...</span></div>
+</div>
+<div class="ws-card ws-card-interactive" onclick="openInExplorer(document.getElementById('nd-path').textContent)" title="Im Datei-Explorer (Ubuntu) öffnen">
+<i class="fa-regular fa-folder-open ws-icon"></i>
+<div class="ws-info">
+<span class="ws-lbl">Dateipfad</span>
+<span class="ws-val path-text code-font" id="nd-path">...</span>
+</div>
+<button class="code-btn" id="btn-show-code" onclick="event.stopPropagation(); requestSourceCode()" title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
+</div>
+</div>
+<div style="display: flex; justify-content: space-between; margin-top: 35px; padding: 0 10px; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;">
+    <div style="color: var(--color-tx); text-align: center; width: 40%;"><i class="fa-solid fa-arrow-right-to-bracket" style="margin-right: 8px;"></i> Empfängt Daten von</div>
+    <div style="color: var(--color-rx); text-align: center; width: 40%;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right: 8px;"></i> Sendet Daten an</div>
+</div>
+<div class="nd-flow-diagram" style="margin-top: 15px;">
+<div class="flow-col flow-rx">
+<div class="flow-content" id="nd-flow-in"></div>
+</div>
+<div class="flow-arrow color-rx"><i class="fa-solid fa-chevron-right"></i></div>
+<div class="flow-col flow-center">
+<div class="center-node-box">
+<img src="node-icon.svg" style="width: 28px; height: 28px; margin-bottom: 5px;" alt="Node">
+<div class="center-node-name code-font"><span class="node-status-dot"></span><span id="nd-flow-center-name">/node</span></div>
+</div>
+</div>
+<div class="flow-arrow color-tx"><i class="fa-solid fa-chevron-right"></i></div>
+<div class="flow-col flow-tx">
+<div class="flow-content" id="nd-flow-out"></div>
+</div>
+</div>
+<div class="nd-section-title" style="margin-top: 40px;">Paket Abhängigkeiten (Workspace)
+                                </div>
+<div class="nd-dependencies-list" id="nd-dependencies">
+<span class="empty-state">Wähle einen Workspace Node...</span>
+</div>
+<div class="nd-section-title" style="margin-top: 40px;">Alle registrierten Topics des Nodes (Raw)
+                                </div>
+<div class="nd-topics-grid">
+<div class="topic-col col-subs">
+<h4 class="color-rx">Subscriber (Eingehend)</h4>
+<div class="topic-list" id="nd-subs"></div>
+</div>
+<div class="topic-col col-pubs">
+<h4 class="color-tx">Publisher (Ausgehend)</h4>
+<div class="topic-list" id="nd-pubs"></div>
+</div>
+</div>
+<div class="nd-section-title" style="margin-top: 40px;">Services &amp; Action Clients</div>
+<div class="nd-topics-grid">
+<div class="topic-col col-services">
+<h4 style="color: #a855f7;">Services (Bereitgestellt)</h4>
+<div class="topic-list" id="nd-services"></div>
+</div>
+<div class="topic-col col-clients">
+<h4 style="color: #38bdf8;">Clients (Ausgehend)</h4>
+<div class="topic-list" id="nd-clients"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>

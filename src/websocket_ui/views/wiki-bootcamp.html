@@ -1,0 +1,1057 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/vs2015.min.css">
+
+<style>
+    .bootcamp-wiki-container {
+        /* Kühles, modernes Dark Theme (inspiriert von GitHub Dark / VS Code) */
+        --bg-body: #0d1117;
+        --bg-section: #161b22;
+        --text-main: #c9d1d9;
+        --text-heading: #58a6ff;
+        --text-subheading: #79c0ff;
+        --border-color: #30363d;
+        --bg-table-header: #21262d;
+        --bg-table-row-alt: #0d1117;
+        --bg-inline-code: rgba(110, 118, 129, 0.25);
+        --text-inline-code: #a5d6ff;
+        --text-strong: #ffffff;
+        /* Klares Weiß */
+
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: var(--text-main);
+        background-color: var(--bg-body);
+        padding: 30px 20px;
+    }
+
+    .bootcamp-wiki-container .container {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .bootcamp-wiki-container h1 {
+        text-align: center;
+        color: var(--text-heading);
+        font-size: 2.6em;
+        margin-bottom: 40px;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 15px;
+        font-weight: 600;
+        margin-top: 0;
+    }
+
+    .bootcamp-wiki-container section {
+        padding: 35px 40px;
+        margin-bottom: 35px;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        border: 0px solid var(--border-color);
+        display: block;
+    }
+
+    .bootcamp-wiki-container h2 {
+        color: var(--text-heading);
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        margin-top: 0;
+        font-size: 1.8em;
+        font-weight: 500;
+    }
+
+    .bootcamp-wiki-container h3 {
+        color: var(--text-subheading);
+        margin-top: 30px;
+        font-size: 1.3em;
+        font-weight: 500;
+    }
+
+    .bootcamp-wiki-container p {
+        margin-bottom: 15px;
+        font-size: 1.05em;
+    }
+
+    .bootcamp-wiki-container ul {
+        margin-bottom: 20px;
+        padding-left: 25px;
+    }
+
+    .bootcamp-wiki-container li {
+        margin-bottom: 8px;
+    }
+
+    .bootcamp-wiki-container strong {
+        color: var(--text-strong);
+        font-weight: 600;
+    }
+
+    /* Table Styling */
+    .bootcamp-wiki-container table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 25px 0;
+        font-size: 0.95em;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .bootcamp-wiki-container th,
+    .bootcamp-wiki-container td {
+        padding: 14px 18px;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+    }
+
+    .bootcamp-wiki-container th:last-child,
+    .bootcamp-wiki-container td:last-child {
+        border-right: none;
+    }
+
+    .bootcamp-wiki-container tr:last-child td {
+        border-bottom: none;
+    }
+
+    .bootcamp-wiki-container th {
+        background-color: var(--bg-table-header);
+        color: #ffffff;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .bootcamp-wiki-container tr:nth-child(even) {
+        background-color: var(--bg-table-row-alt);
+    }
+
+    /* Inline code */
+    .bootcamp-wiki-container p code,
+    .bootcamp-wiki-container li code,
+    .bootcamp-wiki-container td code {
+        background-color: var(--bg-inline-code);
+        color: var(--text-inline-code);
+        padding: 3px 7px;
+        border-radius: 6px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.95em;
+        border: 1px solid var(--border-color);
+    }
+
+    /* Block code styling */
+    .bootcamp-wiki-container pre {
+        background-color: #0d1117;
+        padding: 20px;
+        border-radius: 12px;
+        overflow-x: auto;
+        font-size: 0.95em;
+        line-height: 1.5;
+        margin-bottom: 25px;
+        border: 1px solid var(--border-color);
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .bootcamp-wiki-container pre code {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        background: none;
+        color: inherit;
+        padding: 0;
+        border: none;
+    }
+
+    .bootcamp-wiki-container .image-placeholder {
+        background-color: var(--bg-table-header);
+        border: 1px dashed var(--text-subheading);
+        padding: 20px;
+        text-align: center;
+        color: var(--text-subheading);
+        font-style: italic;
+        border-radius: 8px;
+        margin: 20px 0;
+    }
+</style>
+
+<div class="bootcamp-wiki-container">
+    <div class="container">
+
+        <h1>ROS 2 Gesamtübersicht (BOOTCAMP)</h1>
+
+        <section>
+            <h2>1. ROS 2 Workspace & Pakete</h2>
+            <p>Ein <strong>Workspace</strong> ist das Verzeichnis, in dem ROS 2-Code entwickelt und gebaut wird. Das
+                grundlegende ROS-System (z. B. in <code>/opt/ros/humble</code>) bildet das <em>Underlay</em>. Der
+                eigene, darüber geladene Workspace ist das <em>Overlay</em>.</p>
+
+            <div class="image-placeholder"></div>
+
+            <ul>
+                <li><strong><code>src/</code>:</strong> Hier liegen die Quellcodes (Packages) des Benutzers.</li>
+                <li><strong><code>build/</code>:</strong> Temporäre Dateien, die während des Build-Prozesses entstehen.
+                </li>
+                <li><strong><code>install/</code>:</strong> Kompilierte Dateien, Skripte und Executables (dieser Ordner
+                    wird per <code>source</code> in die Umgebung geladen).</li>
+                <li><strong><code>log/</code>:</strong> Log-Dateien des Build-Prozesses zur Fehleranalyse.</li>
+            </ul>
+
+            <p>Ein <strong>Paket (Package)</strong> ist die organisatorische Grundeinheit in ROS 2. Es bündelt Code
+                (Nodes), Bibliotheken, Konfigurationsdateien oder Launch-Files. Ein typisches Python-Paket
+                (<code>ament_python</code>) besteht aus:</p>
+            <ul>
+                <li><strong><code>package.xml</code>:</strong> Enthält Metadaten (Name, Version, Autor) und
+                    <strong>Abhängigkeiten</strong> (Dependencies), die das System zum Ausführen benötigt (z.B.
+                    <code>rclpy</code>, <code>std_msgs</code>). Wird auch von <code>rosdep</code> gelesen.</li>
+                <li><strong><code>setup.py</code>:</strong> Das Bau-Skript. Hier werden Launch-Files registriert
+                    (<code>data_files</code>) und die <strong>Entry Points</strong> definiert. Ein Entry Point sagt dem
+                    System genau, welcher Aufrufname im Terminal zu welcher <code>.py</code>-Datei und welcher Funktion
+                    darin führt.</li>
+                <li><strong><code>setup.cfg</code>:</strong> Teilt dem System mit, wo die ausführbaren Dateien abgelegt
+                    werden sollen.</li>
+                <li><strong><code>&lt;paket_name&gt;/</code>:</strong> Der Ordner, der die eigentlichen Python-Skripte
+                    (die Nodes) enthält.</li>
+            </ul>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aktion</th>
+                        <th>Befehl(e) / Ausführung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Workspace Ordner anlegen</strong></td>
+                        <td><code>mkdir -p ~/ros2_ws/src && cd ~/ros2_ws</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Python-Paket erstellen</strong></td>
+                        <td><code>cd ~/ros2_ws/src</code><br><code>ros2 pkg create --build-type ament_python &lt;pkg_name&gt; --dependencies &lt;deps&gt;</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Workspace bauen</strong></td>
+                        <td><code>cd ~/ros2_ws</code><br><code>colcon build</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Paket isoliert bauen</strong></td>
+                        <td><code>colcon build --packages-select &lt;pkg_name&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Python-Pakete bauen (Symlink)</strong></td>
+                        <td><code>colcon build --symlink-install</code> <em>(Erspart erneutes Bauen)</em></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Workspace bereinigen</strong></td>
+                        <td><code>rm -rf build/ install/ log/</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Workspace laden</strong></td>
+                        <td><code>source install/setup.bash</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Abhängigkeiten prüfen</strong></td>
+                        <td><code>rosdep install -i --from-path src --rosdistro &lt;distro&gt; -y</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>Code-Beispiel: <code>setup.py</code> (Entry Points & Launch Files)</strong></p>
+            <pre><code class="language-python">data_files=[
+    # Registrierung des Launch-Ordners:
+    ('share/' + package_name + '/launch', ['launch/start.launch.py']),
+],
+entry_points={
+    'console_scripts': [
+        # Syntax: 'terminal_aufruf_name = paket_name.datei_name:main_funktion'
+        'publisher = python_basics.publisher:main',
+        'subscriber = python_basics.subscriber:main',
+        'action_server = python_basics.action_server:main',
+        'action_client = python_basics.action_client:main',
+    ],
+},</code></pre>
+        </section>
+
+        <section>
+            <h2>2. ROS 2 Grundbegriffe & Architektur</h2>
+
+            <div class="image-placeholder"></div>
+
+            <h3>A. Der Node (Knoten)</h3>
+            <p>Ein <strong>Node</strong> ist ein einzelner Prozess, der Berechnungen durchführt und über eine
+                Client-Bibliothek mit anderen Nodes innerhalb des ROS-Graphen kommuniziert.</p>
+            <ul>
+                <li><strong>Vorteile:</strong> Fehlertoleranz (isoliert bei Abstürzen), Modularität,
+                    Wiederverwendbarkeit. Sprachunabhängig (C++ Nodes können mit Python Nodes kommunizieren).</li>
+                <li><strong>Best Practice:</strong> Ein Node sollte genau eine logische Aufgabe erfüllen.</li>
+            </ul>
+
+            <h3>B. Wichtige Konzepte & Mechanismen</h3>
+            <p>Diese Bausteine definieren, wie Nodes strukturiert sind und wie sie im Hintergrund arbeiten:</p>
+            <ul>
+                <li><strong>Namespace:</strong> Ein Präfix zur Gruppierung von Nodes und Topics (z. B.
+                    <code>/turtle1/cmd_vel</code>). Verhindert Namenskonflikte in komplexen Systemen.</li>
+                <li><strong>Spin:</strong> Eine Endlosschleife, die den Node aktiv hält, um auf Daten und Ereignisse zu
+                    reagieren.</li>
+                <li><strong>Callback:</strong> Eine Funktion, die bei einem bestimmten Ereignis (z. B. beim Empfang
+                    einer Nachricht) automatisch ausgelöst wird.</li>
+                <li><strong>Executors & Callback Groups:</strong> Der Mechanismus "unter der Haube", der entscheidet,
+                    <em>wann</em> welcher Callback ausgeführt wird (z. B. Single-Threaded vs. Multi-Threaded).</li>
+                <li><strong>Future:</strong> Ein Platzhalter-Objekt für das Ergebnis einer asynchronen Operation, das
+                    erst zu einem späteren Zeitpunkt verfügbar ist.</li>
+                <li><strong>Synchron vs. Asynchron:</strong> <em>Synchron</em> blockiert den laufenden Prozess, bis eine
+                    Antwort kommt. <em>Asynchron</em> lässt den Prozess weiterlaufen, während auf die Antwort gewartet
+                    wird.</li>
+            </ul>
+
+            <p><strong>Code-Beispiel: Minimaler Node ohne Klasse (<code>bare.py</code>)</strong></p>
+            <pre><code class="language-python">import rclpy
+
+def main(args=None) -> None:
+    rclpy.init(args=args)
+    node = rclpy.create_node("bare_node")
+    print("Hello World !!!")
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()</code></pre>
+
+            <p><strong>Code-Beispiel: Node mit Klasse und Timer (<code>class.py</code>)</strong></p>
+            <pre><code class="language-python">import rclpy
+from rclpy.node import Node
+
+class MyNode(Node):
+    def __init__(self) -> None:
+        super().__init__("my_node")
+        self.count = 0
+        self.create_timer(0.5, self.my_callback)
+
+    def my_callback(self):
+        self.get_logger().info(f"Hello: {self.count}")
+        self.count += 1
+
+def main(args=None) -> None:
+    rclpy.init(args=args)
+    my_node = MyNode()
+    rclpy.spin(my_node)
+    rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()</code></pre>
+        </section>
+
+        <section>
+            <h2>3. ROS 2 Interfaces & Code-Beispiele</h2>
+            <p>Interfaces definieren die Struktur der ausgetauschten Daten.</p>
+
+            <h3>A. Topics (<code>.msg</code> Dateien) - <em>Asynchron</em></h3>
+            <div class="image-placeholder"></div>
+            <p>Kontinuierliche Datenströme (Viele-zu-Viele).</p>
+
+            <p><strong>Code-Beispiel: Publisher (<code>publisher_msg.py</code>)</strong></p>
+            <pre><code class="language-python">import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+class PublisherNode(Node):
+    def __init__(self) -> None:
+        super().__init__("publisher_msg_node")
+        self.__pub = self.create_publisher(String, "/message_topic_name", 10)
+        self.create_timer(0.5, self.pub_message)
+
+    def pub_message(self): 
+        msg = String()
+        msg.data = "testnachricht....."
+        self.__pub.publish(msg)
+        self.get_logger().info(f'Publishing: "{msg.data}"')
+
+def main(args=None) -> None:
+    rclpy.init(args=args)
+    node = PublisherNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()</code></pre>
+
+            <p><strong>Code-Beispiel: Subscriber (<code>subscriber_msg.py</code>)</strong></p>
+            <pre><code class="language-python">import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+class SubscriberNode(Node):
+    def __init__(self, node_name: str = "subscriber_msg_node") -> None:
+        super().__init__(node_name)
+        self.__sub = self.create_subscription(String, "/message_topic_name", self.message_callback, 10)
+
+    def message_callback(self, msg):
+        self.get_logger().info(f"Empfangen: {msg.data}") 
+
+def main(args=None) -> None:
+    rclpy.init(args=args)
+    node = SubscriberNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()</code></pre>
+
+            <h3>B. Services (<code>.srv</code> Dateien) - <em>Synchron</em></h3>
+            <p>Remote Procedure Calls (Request / Response) für kurze Abfragen.</p>
+
+            <p><strong>Struktur einer Service-Datei:</strong></p>
+            <pre><code class="language-plaintext">string str
+---
+string str</code></pre>
+
+            <p><strong>Code-Beispiel: Service Server (<code>server.py</code>)</strong></p>
+            <pre><code class="language-python">import math
+import rclpy
+from rclpy.node import Node
+from demo_interfaces.srv import EuclidianDistance
+
+class ServerNode(Node):
+    def __init__(self) -> None:
+        super().__init__("server_node")
+        self.create_service(EuclidianDistance, "/EuclidianDistance", self.compute_distance)
+
+    def compute_distance(self, request, response):
+        self.get_logger().info("Got a request...")
+        dx = request.target.x - request.origin.x
+        dy = request.target.y - request.origin.y
+        dz = request.target.z - request.origin.z
+        response.distance = math.sqrt(dx**2 + dy**2 + dz**2)
+        return response</code></pre>
+
+            <p><strong>Code-Beispiel: Service Client (<code>my_client.py</code>)</strong></p>
+            <pre><code class="language-python">import rclpy
+from rclpy.node import Node
+from demo_interfaces.srv import EuclidianDistance
+from rclpy.task import Future
+
+class ClientNode(Node):
+    def __init__(self) -> None:
+        super().__init__("client_node")
+        self.client = self.create_client(EuclidianDistance, "/EuclidianDistance")
+        while not self.client.wait_for_service(timeout_sec=3.0):
+            self.get_logger().info("Waiting for Service....")
+        self.__request = EuclidianDistance.Request()
+
+    def send_request(self) -> Future:
+        self.__request.origin.x = 0.0
+        self.__request.origin.y = 0.0
+        self.__request.origin.z = 0.0
+        self.__request.target.x = 1.0
+        self.__request.target.y = 1.0
+        self.__request.target.z = 1.0
+        return self.client.call_async(self.__request)
+
+def main(args=None) -> None:
+    rclpy.init(args=args)
+    node = ClientNode()
+    future = node.send_request()
+    rclpy.spin_until_future_complete(node, future)
+    response = future.result()
+    node.get_logger().info(f"Got the result: {response.distance}")
+    rclpy.shutdown()</code></pre>
+
+            <h3>C. Actions (<code>.action</code> Dateien) - <em>Asynchron</em></h3>
+            <div class="image-placeholder"></div>
+            <p>Langanhaltende Prozesse. Bestehen aus: <strong>Goal</strong> (Ziel), <strong>Feedback</strong>
+                (Fortschritt), <strong>Result</strong> (Endergebnis). Können abgebrochen werden (<em>preemptable</em>).
+            </p>
+
+            <p><strong>Struktur einer Action-Datei:</strong></p>
+            <pre><code class="language-plaintext">&lt;request_type&gt; &lt;request_fieldname&gt;
+---
+&lt;response_type&gt; &lt;response_fieldname&gt;
+---
+&lt;feedback_type&gt; &lt;feedback_fieldname&gt;</code></pre>
+
+            <p><strong>Code-Beispiel: Action Server (<code>action_server.py</code>)</strong></p>
+            <pre><code class="language-python">import rclpy
+from rclpy.node import Node
+from demo_interfaces.action import DriveDistance
+from rclpy.action import ActionServer, GoalResponse, CancelResponse
+import time
+
+class ActionServerNode(Node):
+    def __init__(self) -> None:
+        super().__init__("action_server")
+        self.action_server = ActionServer(
+            self, DriveDistance, "/DriveDistanceAction",
+            goal_callback=self.goal_callback,
+            cancel_callback=self.cancel_callback,
+            execute_callback=self.execute_callback)
+
+    def goal_callback(self, goal_request):
+        if goal_request.goal.x == 0 and goal_request.goal.y == 0 and goal_request.goal.z == 0:
+            return GoalResponse.REJECT
+        return GoalResponse.ACCEPT
+    
+    def cancel_callback(self, goal_handle):
+        return CancelResponse.ACCEPT
+    
+    def execute_callback(self, goal_handle):
+        feedback_msg = DriveDistance.Feedback()
+        for i in range(1, 11):
+            if goal_handle.is_cancel_requested:
+                goal_handle.canceled()
+                return DriveDistance.Result()
+            feedback_msg.remaining_distance_m = float(11 - i)
+            goal_handle.publish_feedback(feedback_msg)
+            time.sleep(0.5)
+        goal_handle.succeed()
+        result = DriveDistance.Result()
+        result.success = True
+        return result</code></pre>
+
+            <p><strong>Code-Beispiel: Action Client (<code>action_client.py</code>)</strong></p>
+            <pre><code class="language-python">import rclpy
+from rclpy.node import Node
+from rclpy.action import ActionClient
+from demo_interfaces.action import DriveDistance
+
+class ActionClientNode(Node):
+    def __init__(self):
+        super().__init__("action_client")
+        self._action_client = ActionClient(self, DriveDistance, "/DriveDistanceAction")
+
+    def send_goal(self, x: float, y: float, z: float):
+        target_location = DriveDistance.Goal()
+        target_location.goal.x, target_location.goal.y, target_location.goal.z = float(x), float(y), float(z)
+        while not self._action_client.wait_for_server(timeout_sec=3.0):
+            pass
+        self._send_goal_future = self._action_client.send_goal_async(
+            target_location, feedback_callback=self.updates_from_server)
+        self._send_goal_future.add_done_callback(self.goal_response_callback)
+
+    def goal_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            return
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+
+    def get_result_callback(self, future):
+        result = future.result().result
+        self.get_logger().info(f"FERTIG! Ergebnis: {result.success}")
+        rclpy.shutdown()
+
+    def updates_from_server(self, feedback_msg):
+        actual_feedback = feedback_msg.feedback
+        self.get_logger().info(f"FEEDBACK: Verbleibende Distanz: {actual_feedback.remaining_distance_m} m")</code></pre>
+        </section>
+
+        <section>
+            <h2>4. ROS 2 Parameter, Diagnose & Tools (Basics)</h2>
+            <p>In diesem Bereich sind alle CLI-Befehle gebündelt, um das System zu konfigurieren, zu analysieren und
+                Daten aufzuzeichnen.</p>
+
+            <p><strong>Parameter-Befehle:</strong></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aktion</th>
+                        <th>Befehl(e) / Ausführung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Alle Parameter auflisten</strong></td>
+                        <td><code>ros2 param list</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Wert auslesen / setzen</strong></td>
+                        <td><code>ros2 param get &lt;node&gt; &lt;param&gt;</code> /
+                            <code>ros2 param set &lt;node&gt; &lt;param&gt; &lt;wert&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Alle Parameter speichern</strong></td>
+                        <td><code>ros2 param dump &lt;node_name&gt;</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>Analyse- & Diagnose-Befehle (<code>ros2 doctor</code> & co):</strong></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aktion</th>
+                        <th>Befehl(e) / Ausführung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Nodes auflisten / Infos</strong></td>
+                        <td><code>ros2 node list</code><br><code>ros2 node info &lt;node_name&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Topics auflisten / Infos</strong></td>
+                        <td><code>ros2 topic list -t</code><br><code>ros2 topic info &lt;topic_name&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nachrichten live lesen</strong></td>
+                        <td><code>ros2 topic echo &lt;topic_name&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Topic-Frequenz messen</strong></td>
+                        <td><code>ros2 topic hz &lt;topic_name&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Verfügbare Interfaces zeigen</strong></td>
+                        <td><code>ros2 interface list</code><br><code>ros2 interface show &lt;type&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>System Check (Doctor)</strong></td>
+                        <td><code>ros2 doctor</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Grafische Oberfläche (RQT)</strong></td>
+                        <td><code>rqt</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>Daten aufzeichnen & abspielen (<code>rosbag2</code>):</strong></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aktion</th>
+                        <th>Befehl(e) / Ausführung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Topic aufzeichnen</strong></td>
+                        <td><code>ros2 bag record &lt;topic_name&gt;</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aufzeichnung abspielen</strong></td>
+                        <td><code>ros2 bag play &lt;bag_file_name&gt;</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>Code-Beispiel: Parameter deklarieren und lesen (<code>turtle_args.py</code>)</strong></p>
+            <pre><code class="language-python">class TurtleController(Node):
+    def __init__(self, verbose: bool) -> None:
+        super().__init__("controller")
+        
+        # Parameter deklarieren
+        self.declare_parameter("output_topic", "/turtle1/cmd_vel")
+        self.declare_parameter("max_linear_vel", 1.0) 
+        
+        # Parameterwerte auslesen
+        topic_name = self.get_parameter("output_topic").value
+        max_linear_vel = float(self.get_parameter("max_linear_vel").value)</code></pre>
+        </section>
+
+        <section>
+            <h2>5. ROS 2 Netzwerk, Middleware (DDS) & QoS</h2>
+            <div class="image-placeholder"></div>
+
+            <h3>Middleware: DDS (Data Distribution Service)</h3>
+            <p>DDS ist das Rückgrat der ROS 2 Kommunikation.</p>
+            <ul>
+                <li><strong>FastDDS (eProsima):</strong> Die Standard-Middleware in vielen ROS 2 Versionen.</li>
+                <li><strong>CycloneDDS (Eclipse):</strong> Eine beliebte Alternative (oft stabiler in WLAN-Netzwerken).
+                </li>
+                <li><strong>Wechseln der Middleware:</strong></li>
+            </ul>
+            <pre><code class="language-bash"># Zu CycloneDDS wechseln (muss installiert sein: ros-&lt;distro&gt;-rmw-cyclonedds-cpp)
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+# Zurück zu FastDDS wechseln
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp</code></pre>
+
+            <h3>QoS (Quality of Service)</h3>
+            <p>Regelwerk für die Datenübertragung bei instabilen Netzwerken (z. B. WLAN, LTE).</p>
+            <ul>
+                <li><strong>Reliability:</strong> <em>Reliable</em> (garantiert Zustellung) vs. <em>Best Effort</em>
+                    (sendet einmal).</li>
+                <li><strong>History:</strong> <em>Keep Last</em> (speichert N Nachrichten) vs. <em>Keep All</em>
+                    (speichert alle).</li>
+                <li><strong>Durability:</strong> <em>Volatile</em> (keine alten Daten) vs. <em>Transient Local</em>
+                    (Speichert für Late-Joiner).</li>
+                <li><strong>Telemetrie:</strong> VPNs (OpenVPN/WireGuard) oder <em>Dronebridge-radio</em> empfohlen.
+                </li>
+            </ul>
+
+            <p><strong>Code-Beispiel: Publisher/Subscriber mit QoS-Profil (<code>qos_pub.py</code> /
+                    <code>qos_sub.py</code>)</strong></p>
+            <pre><code class="language-python">from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
+
+my_qos = QoSProfile(
+    history = QoSHistoryPolicy.KEEP_LAST,
+    depth = 10,
+    reliability = QoSReliabilityPolicy.BEST_EFFORT,
+    durability = QoSDurabilityPolicy.VOLATILE
+)
+
+# Im Publisher Node:
+self.__pub = self.create_publisher(Counter, "/counter_topic_name", my_qos)
+
+# Im Subscriber Node:
+self.__sub = self.create_subscription(Counter, "/counter_topic_name", self.counter_callback, my_qos)</code></pre>
+        </section>
+
+        <section>
+            <h2>6. ROS 2 TF2 (Transformationen & Frames)</h2>
+            <div class="image-placeholder"></div>
+            <p>TF2 verfolgt die relativen Positionen und Orientierungen (Koordinatensysteme) aller Roboterteile.</p>
+            <ul>
+                <li><strong>Frames:</strong> Koordinatensysteme (z. B. <code>map</code>, <code>odom</code>,
+                    <code>base_link</code>, <code>laser_frame</code>).</li>
+                <li><strong>TF2:</strong> Berechnet automatisch relative Koordinaten.</li>
+                <li><strong>tf_static:</strong> Für Frames, die sich <em>nicht</em> zueinander bewegen. Spart
+                    Bandbreite.</li>
+                <li><strong>Broadcaster:</strong> Sendet Transformationen an das System.</li>
+            </ul>
+
+            <p><strong>Kommandozeilen-Beispiel (Statischen Frame über CLI senden):</strong></p>
+            <pre><code class="language-bash">ros2 run tf2_ros static_transform_publisher 0.1 0 0.2 0 0 0 base_link laser_frame</code></pre>
+
+            <p><strong>Code-Beispiel: Statischer TF Broadcaster (Python)</strong></p>
+            <pre><code class="language-python">import rclpy
+from rclpy.node import Node
+from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
+from geometry_msgs.msg import TransformStamped
+
+class StaticFramePublisher(Node):
+    def __init__(self):
+        super().__init__('static_tf_broadcaster')
+        self._broadcaster = StaticTransformBroadcaster(self)
+        
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = 'base_link'    # Ursprung
+        t.child_frame_id = 'laser_frame'   # Ziel
+        
+        # Translation (Verschiebung in Metern)
+        t.transform.translation.x = 0.1
+        t.transform.translation.y = 0.0
+        t.transform.translation.z = 0.2
+        
+        # Rotation (Quaternion)
+        t.transform.rotation.w = 1.0 # Keine Drehung
+        
+        self._broadcaster.sendTransform(t)
+
+def main():
+    rclpy.init()
+    node = StaticFramePublisher()
+    rclpy.spin(node)
+    rclpy.shutdown()</code></pre>
+        </section>
+
+        <section>
+            <h2>7. ROS 2 Control (<code>ros2_control</code>)</h2>
+            <div class="image-placeholder"></div>
+            <p>Ein Framework zur echtzeitfähigen Steuerung von Robotern. Es trennt Hardware und abstrakte Logik.</p>
+            <ul>
+                <li><strong>Hardware Interfaces:</strong> Die Treiber-Schicht. Kommuniziert direkt mit echten
+                    Motoren/Sensoren.</li>
+                <li><strong>Controller:</strong> Die Logik-Schicht. (z.B. <code>diff_drive_controller</code>). Nehmen
+                    Befehle (<code>cmd_vel</code>) an und wandeln sie um.</li>
+                <li><strong>Controller Manager:</strong> Das Herzstück. Verwaltet Hardware Interfaces und Controller.
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>8. ROS 2 Aufgaben & Ausführungs-Befehle</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aufgabe</th>
+                        <th>Terminal 1</th>
+                        <th>Terminal 2 (und weitere)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Aufgabe 1: Pub/Sub</strong></td>
+                        <td><code>ros2 run python_basics publisher</code></td>
+                        <td><code>ros2 run python_basics subscriber</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aufgabe 2: Turtlesim Kreis</strong></td>
+                        <td><code>ros2 run turtlesim turtlesim_node</code></td>
+                        <td><code>ros2 run python_basics circle_turtle_node</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aufgabe 3: Service Calls</strong></td>
+                        <td><code>ros2 run turtlesim turtlesim_node</code><br><code>ros2 run python_basics circle_turtle_node</code>
+                        </td>
+                        <td><code>ros2 run rqt_service_caller rqt_service_caller</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aufgabe 4: Action Server/Client</strong></td>
+                        <td><code>ros2 run python_basics action_server</code></td>
+                        <td><code>ros2 run python_basics action_client</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aufgabe 5: QoS Profile</strong></td>
+                        <td><code>ros2 run python_basics qos_pub</code></td>
+                        <td><code>ros2 run python_basics qos_sub</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aufgabe 6: Parameter</strong></td>
+                        <td><code>ros2 run python_basics turtle_args --verbose --ros-args -p output_topic:="/new/output" -p max_linear_vel:=3.0</code>
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aufgabe 7: Remapping</strong></td>
+                        <td><code>ros2 run turtlesim turtlesim_node</code></td>
+                        <td><code>ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap cmd_vel:=turtle1/cmd_vel</code><br><em>(Alternativ:
+                                <code>--ros-args --remap __ns:=/turtle1</code>)</em></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aufgabe 8: Launch File</strong></td>
+                        <td><code>ros2 launch python_basics start.launch.py visualization:=true</code></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>Code-Beispiel zu Aufgabe 2: Turtlesim Kreis fahren (<code>draw_circle.py</code>)</strong></p>
+            <pre><code class="language-python">class CircleTurtleNode(Node):
+    def __init__(self):
+        super().__init__('circle_turtle')
+        self.publisher_ = self.create_publisher(Twist, '/turtle1/cmd_vel', 10)
+        self.timer = self.create_timer(0.5, self.timer_callback)
+
+    def timer_callback(self):
+        msg = Twist()
+        msg.linear.x = 1.0 # Geschwindigkeit nach vorne
+        msg.angular.z = 1.0 # Drehgeschwindigkeit
+        self.publisher_.publish(msg)</code></pre>
+
+            <p><strong>Code-Beispiel zu Aufgabe 3: Turtle Steuerung via Services
+                    (<code>turtle_controller.py</code>)</strong></p>
+            <pre><code class="language-python">class TurtleController(Node):
+    def __init__(self):
+        super().__init__('turtle_controller')
+        self.is_moving = False
+        self.publisher_ = self.create_publisher(Twist, "/turtle1/cmd_vel", 10)
+        self.timer = self.create_timer(0.1, self.timer_callback)
+        self.srv_start = self.create_service(Trigger, '/start', self.start_callback)
+        self.srv_stop = self.create_service(Trigger, '/stop', self.stop_callback)
+
+    def start_callback(self, request, response):
+        self.is_moving = True
+        response.success = True
+        return response
+
+    def stop_callback(self, request, response):
+        self.is_moving = False
+        stop_msg = Twist()
+        self.publisher_.publish(stop_msg)
+        response.success = True
+        return response
+
+    def timer_callback(self):
+        if self.is_moving:
+            msg = Twist()
+            msg.linear.x, msg.angular.z = 1.0, 1.0
+            self.publisher_.publish(msg)</code></pre>
+
+            <p><strong>Code-Beispiel zu Aufgabe 8: Erweitertes Launch-File mit Argumenten
+                    (<code>start.launch.py</code>)</strong><br>
+                Dieses Skript zeigt <code>LaunchDescription</code>, Deklaration von Argumenten,
+                <code>OpaqueFunction</code> für Laufzeitlogik und <code>IfCondition</code> für das bedingte Starten von
+                Nodes (wie RViz).</p>
+            <pre><code class="language-python">from launch import LaunchDescription
+from launch.actions import LogInfo, DeclareLaunchArgument, OpaqueFunction
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.conditions import IfCondition
+from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
+
+def launch_setup(context, *args, **kwargs):
+    """
+    Diese Funktion wird zur LAUFZEIT ausgeführt. 
+    Hier kann man auf den Wert von LaunchConfigurations zugreifen.
+    """
+    vis_value = LaunchConfiguration("visualization").perform(context)
+    
+    if vis_value.lower() == "true":
+        return [
+            LogInfo(msg="Visualisierung ist aktiviert, RViz wird gestartet..."),
+            LogInfo(msg=" ")
+        ]
+    else:
+        return [
+            LogInfo(msg="Visualisierung ist deaktiviert."),
+            LogInfo(msg=" ")  
+        ]
+
+def generate_launch_description():
+    ld = LaunchDescription()
+
+    # 1. Deklarationen
+    ld.add_action(LogInfo(msg="Hello from the launch-System..."))
+
+    vis_arg = DeclareLaunchArgument(
+        "visualization", 
+        default_value="false",
+        description="Start Rviz (true/false)"
+    )
+    ld.add_action(vis_arg)
+
+    # 2. Nodes (Statisch)
+    turtlesim_node = Node(
+        package="turtlesim",
+        executable="turtlesim_node",
+        name="marius"        
+    )
+    ld.add_action(turtlesim_node)
+
+    draw_circle_node = Node(
+        package="python_basics",
+        executable="draw_circle",
+        name="rene"
+    )
+    ld.add_action(draw_circle_node)
+
+    # 3. OpaqueFunction (Laufzeit-Funktion aufrufen)
+    ld.add_action(OpaqueFunction(function=launch_setup))
+
+    # 4. RViz Pfad-Konstruktion
+    rviz_config_path = PathJoinSubstitution([
+        FindPackageShare("python_basics"),
+        "rviz",
+        "default.rviz"
+    ])
+
+    # 5. RViz Node mit IfCondition
+    rviz_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        condition=IfCondition(LaunchConfiguration("visualization")),
+        arguments=["-d", rviz_config_path]
+    )
+    ld.add_action(rviz_node)
+
+    return ld</code></pre>
+        </section>
+
+        <section>
+            <h2>9. Benutzerumgebung (<code>.bashrc</code>)</h2>
+            <p>Die <code>~/.bashrc</code> wird bei jedem Öffnen eines neuen Terminals ausgeführt. Sie dient dem
+                automatischen Setzen von Pfaden und Aliases.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aktion</th>
+                        <th>Befehl(e) / Ausführung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong><code>.bashrc</code> im Editor öffnen</strong></td>
+                        <td><code>nano ~/.bashrc</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Konfiguration sofort neu laden</strong></td>
+                        <td><code>source ~/.bashrc</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Umgebungsvariable zeigen / setzen</strong></td>
+                        <td><code>echo $PATH</code> / <code>export VAR=value</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aktuellen Nutzer anzeigen</strong></td>
+                        <td><code>whoami</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>Code-Beispiel: Eigene <code>.bashrc</code> Konfiguration</strong></p>
+            <pre><code class="language-bash"># Lade grundlegendes ROS 2 System (Underlay)
+source /opt/ros/humble/setup.bash
+
+# Lade eigenen Workspace (Overlay)
+source ~/ros2_ws/install/setup.bash
+
+# Standard Middleware setzen (Optional, z.B. CycloneDDS)
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+# Eigene Aliases (Kurzbefehle)
+alias cw="cd ~/ros2_ws"
+alias cb="cd ~/ros2_ws && colcon build --symlink-install"</code></pre>
+        </section>
+
+        <section>
+            <h2>10. Linux Basis-Befehle (Cheatsheet)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kategorie</th>
+                        <th>Befehl</th>
+                        <th>Erklärung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Navigation</strong></td>
+                        <td><code>pwd</code><br><code>ls -lah</code><br><code>cd /path</code><br><code>mkdir -p a/b/c</code>
+                        </td>
+                        <td>Aktuellen Pfad anzeigen<br>Dateien detailliert auflisten (inkl. versteckter)<br>Verzeichnis
+                            wechseln<br>Verschachtelte Ordner erstellen</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Datei-Handling</strong></td>
+                        <td><code>cp -r &lt;src&gt; &lt;dst&gt;</code><br><code>mv &lt;alt&gt; &lt;neu&gt;</code><br><code>rm -rf &lt;dir&gt;</code><br><code>cat &lt;file&gt;</code><br><code>tail -f &lt;file.log&gt;</code>
+                        </td>
+                        <td>Dateien / Ordner kopieren<br>Verschieben oder Umbenennen<br>Ordner erzwingend
+                            löschen<br>Dateiinhalt komplett anzeigen<br>Log-Datei live mitlesen</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Suchen</strong></td>
+                        <td><code>find . -name "*.log"</code><br><code>grep -R "Text" .</code></td>
+                        <td>Dateien nach Namen suchen<br>Text rekursiv im Ordner suchen</td>
+                    </tr>
+                    <tr>
+                        <td><strong>System & Leistung</strong></td>
+                        <td><code>chmod +x &lt;file&gt;</code><br><code>ps aux</code><br><code>kill -9 &lt;pid&gt;</code><br><code>top</code><br><code>df -h</code><br><code>free -h</code>
+                        </td>
+                        <td>Datei ausführbar machen<br>Laufende Prozesse anzeigen<br>Prozess über ID erzwingend
+                            beenden<br>Laufende Prozesse live anzeigen<br>Festplatten-Speicherplatz
+                            anzeigen<br>RAM-Auslastung anzeigen</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Netzwerk</strong></td>
+                        <td><code>ip a</code><br><code>ping -c 4 &lt;ip&gt;</code></td>
+                        <td>IP-Adressen anzeigen<br>Verbindungstest (4 Pakete)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pipes & Links</strong></td>
+                        <td><code>ln -s &lt;ziel&gt; &lt;link&gt;</code><br><code>cmd1 | cmd2</code><br><code>cmd &gt; file.txt</code><br><code>cmd &gt;&gt; file.txt</code>
+                        </td>
+                        <td>Symbolischen Link erstellen<br>Ausgabe von <code>cmd1</code> in <code>cmd2</code>
+                            weiterleiten<br>Ausgabe in Datei schreiben (überschreiben)<br>Ausgabe an Datei anhängen</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+    <script>
+        // Führt das Highlighting für alle <pre><code> Blöcke aus
+        if (typeof hljs !== 'undefined') {
+            hljs.highlightAll();
+        }
+    </script>
+
+</div>
+</div>

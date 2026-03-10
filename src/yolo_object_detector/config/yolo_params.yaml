@@ -1,0 +1,39 @@
+yolo_object_detector:
+  ros__parameters:
+    # --- WICHTIG: Passe diese Parameter an dein Setup an ---
+
+    # Absoluter Pfad zu deiner YOLOv8-Modelldatei (.pt).
+    # Ändere dies zum Pfad deines EIGENEN Modells.
+    # Beispiel: "/home/mk/yolo_models/mein_super_modell.pt"
+    model_path: "/home/mk/dev_ws/src/yolo_object_detector/models/best.pt"
+
+    # URL des Videostreams. MJPEG-Streams (.mjpg) sind performanter.
+    # Beispiel: "http://192.168.0.124/stream.mjpg"
+    stream_url: "http://192.168.0.125/html/cam_pic_new.php"
+
+    # Liste der Objektklassen, die erkannt und angezeigt werden sollen.
+    # Diese müssen exakt mit den Klassen übereinstimmen, auf die dein Modell trainiert wurde.
+    target_classes: ["red rectangle", "blue cube", "green cylinder"]
+
+    # --- NEU: Parameter für die 3D-Positionsberechnung ---
+    # Definiert die bekannten realen Abmessungen der Objekte in Metern.
+    # Die Namen müssen exakt mit den `target_classes` übereinstimmen.
+    # Trage hier die ECHTE Breite deiner Objekte ein.
+    known_objects:
+      red rectangle:
+        width_m: 0.06  # Beispiel: 6 cm breites Rechteck
+      blue cube:
+        width_m: 0.03  # Beispiel: 3 cm breiter Würfel
+      green cylinder:
+        width_m: 0.03  # Beispiel: 3 cm breiter Zylinder
+
+
+    # --- Optionale Parameter zur Feinabstimmung ---
+
+    # Mindest-Konfidenz-Schwelle (0.0 bis 1.0), um eine Erkennung als gültig zu betrachten.
+    # Ein Wert von 0.5 bedeutet, dass das Modell zu 50% sicher sein muss.
+    confidence_threshold: 0.8
+
+    # IoU (Intersection over Union) Schwelle für Non-Maximum Suppression.
+    # Hilft dabei, doppelte Bounding Boxes für dasselbe Objekt zu unterdrücken.
+    iou_threshold: 0.8
