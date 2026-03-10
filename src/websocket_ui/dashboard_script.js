@@ -3,9 +3,32 @@ let network = null;
 let visNodes = new vis.DataSet();
 let visEdges = new vis.DataSet();
 let codeRequestPub = null;
+let nodeDetailReqPub = null;
 let currentRequestedPath = "";
 
 let expandedFolders = new Set(['dev_ws/src']);
+
+let loadingCountdown = 10;
+let isLoadingLock = true;
+
+function startLoadingTimer() {
+    const countdownInterval = setInterval(() => {
+        if (loadingCountdown > 0) {
+            loadingCountdown--;
+            const timerEl = document.getElementById('loading-timer');
+            if (timerEl) timerEl.textContent = loadingCountdown;
+        } else {
+            isLoadingLock = false;
+            clearInterval(countdownInterval);
+            // Wenn der Timer abgelaufen ist, rendern wir die (im Hintergrund empfangenen) Daten
+            if (Object.keys(workspaceData).length > 0) {
+                updateNodeList();
+                if (typeof renderLaunchFiles === 'function') renderLaunchFiles();
+                if (!document.getElementById('nodes-overview-view').classList.contains('hidden')) showNodesOverview();
+            }
+        }
+    }, 1000);
+}
 
 window.toggleFolder = function (event, path) {
     event.stopPropagation();
@@ -79,11 +102,17 @@ function updateNodeList() {
     const proj_keys = Object.keys(workspaceData.project_files || {}).sort();
 
     if (nodes.length === 0 && proj_keys.length === 0) {
-        listEl.innerHTML = '<li class="empty-state">Keine Nodes gefunden</li>';
+        // Falls noch gar nichts geladen wurde (Initialzustand)
+        listEl.innerHTML = `
+            <li class="empty-state" style="display:flex; align-items:center; justify-content:center; padding: 20px;">
+                <span class="loading-text">Lade Nodes...</span>
+                <div class="spinner-small"></div>
+            </li>`;
         return;
     }
 
-    const currentNodesStr = JSON.stringify({ n: nodes, p: proj_keys });
+    const runningState = nodes.map(n => workspaceData.nodes[n].is_actually_running ? '1' : '0').join('');
+    const currentNodesStr = JSON.stringify({ n: nodes, p: proj_keys, r: runningState });
     if (listEl.dataset.cachedNodes === currentNodesStr && !listEl.querySelector('.empty-state')) {
         return;
     }
@@ -249,7 +278,11 @@ function updateNodeList() {
             const hasChildren = h.children && h.children.length > 0;
             const nodeClass = isSystem ? 'sys-node' : 'ws-node';
             const iconMain = isSystem ? 'fa-share-nodes' : 'fa-diagram-project';
-            const statusPulse = '<span class="status-pulse" style="width: 6px; height: 6px; margin: 0 8px 0 0; background-color: rgb(34, 197, 94);"></span>';
+            
+            const isNodeRunning = (workspaceData.nodes && workspaceData.nodes[h.name]) ? 
+                                 (workspaceData.nodes[h.name].is_actually_running !== false) : true;
+            const pulseColor = isNodeRunning ? 'rgb(34, 197, 94)' : 'rgb(100, 116, 139)';
+            const statusPulse = `<span class="status-pulse" style="width: 6px; height: 6px; margin: 0 8px 0 0; background-color: ${pulseColor};"></span>`;
 
             if (h.isVirtual && hasChildren) {
                 // Virtueller Parent (z.B. für System Daemons, Container)
@@ -264,10 +297,15 @@ function updateNodeList() {
                 h.children.forEach(child => {
                     const activeClass = (child === activeNodeName) ? 'active' : '';
                     const childPkg = getPackageForNode(child);
+                    const isChildRunning = (workspaceData.nodes && workspaceData.nodes[child]) ? 
+                                          (workspaceData.nodes[child].is_actually_running !== false) : true;
+                    const cPulseColor = isChildRunning ? 'rgb(34, 197, 94)' : 'rgb(100, 116, 139)';
+                    const cStatusPulse = `<span class="status-pulse" style="width: 6px; height: 6px; margin: 0 8px 0 0; background-color: ${cPulseColor};"></span>`;
+
                     outHtml += `<li class="${nodeClass} node-card sub-node-item ${activeClass}" data-name="${child}" onclick="selectNode('${child}')">
                                 <div class="node-card-content" style="padding-left: 20px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                     <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                        ${statusPulse}
+                                        ${cStatusPulse}
                                         <img src="node-icon.svg" style="width: 14px; height: 14px; margin-right: 12px; filter: opacity(0.7);" alt="Node">
                                         <span class="node-name-text" style="font-size: 0.85rem; color: #cbd5e1;">${child}</span>
                                     </div>
@@ -473,7 +511,7 @@ function findConnections(targetNode) {
     return { connectedTo, connectedFrom };
 }
 
-function selectNode(nodeName) {
+function selectNode(nodeName, skipRequest = false) {
     const items = document.getElementById('dynamic-node-list').getElementsByTagName('li');
     for (let i = 0; i < items.length; i++) {
         items[i].classList.remove('active');
@@ -483,6 +521,11 @@ function selectNode(nodeName) {
     document.getElementById('global-graph-view').classList.add('hidden');
     document.getElementById('nodes-overview-view').classList.add('hidden');
     document.getElementById('node-details-view').classList.remove('hidden');
+
+    // On-Demand Details vom Backend anfordern (nur wenn nicht durch Update getriggert)
+    if (nodeDetailReqPub && !skipRequest) {
+        nodeDetailReqPub.publish(new ROSLIB.Message({ data: nodeName }));
+    }
 
     const data = getNodeData(nodeName);
     if (!data) return;
@@ -607,6 +650,25 @@ function selectNode(nodeName) {
                            title="Dieser Node empfängt Daten direkt von der Hardware (z.B. Tastatur/Gamepad) über das Betriebssystem und nicht über das ROS-Netzwerk."></i>
                     </span>
                 </div>`;
+            } else if (data.services && data.services.length > 0) {
+                // Zeige Services (Eingehend) falls keine Topic-Eingänge
+                data.services.forEach(s => {
+                    const serviceBadge = `<div style='background: rgba(139, 92, 246, 0.1); color: #a78bfa; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>SRV</div>`;
+                    const topicsWrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+                                            ${serviceBadge}
+                                            <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center;">
+                                                <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); color: #c084fc;">${s.name}</span>
+                                            </div>
+                                          </div>`;
+                    connInHtml += `<div class='conn-card rx-card' style="border-left: 4px solid #8b5cf6;">
+                        <span class='card-hz-display' style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2);">Hosted Service</span>
+                        <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
+                            <span style="display:inline-block; width: 18px; height: 18px; margin-right:8px; background-color: #8b5cf6; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain;"></span>
+                            Eingehender Service-Provider
+                        </span>
+                        <div class='topics-wrapper'>${topicsWrapper}</div>
+                    </div>`;
+                });
             } else {
                 connInHtml = "<div style='color:#64748b; font-style:italic; text-align:center; padding: 20px;'>Empfängt keine Daten!</div>";
             }
@@ -648,7 +710,28 @@ function selectNode(nodeName) {
     if (flowOutEl) {
         let connOutHtml = '';
         if (conns.connectedTo.length === 0) {
-            connOutHtml = "<div style='color:#64748b; font-style:italic; text-align:center; padding: 20px;'>Sendet keine Daten!</div>";
+            if (data.clients && data.clients.length > 0) {
+                // Zeige Clients (Ausgehend) falls keine Topic-Ausgänge
+                data.clients.forEach(c => {
+                    const clientBadge = `<div style='background: rgba(139, 92, 246, 0.1); color: #a78bfa; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>REQ</div>`;
+                    const topicsWrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+                                            ${clientBadge}
+                                            <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center;">
+                                                <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); color: #c084fc;">${c.name}</span>
+                                            </div>
+                                          </div>`;
+                    connOutHtml += `<div class='conn-card tx-card' style="border-left: 4px solid #8b5cf6;">
+                        <span class='card-hz-display' style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2);">Service</span>
+                        <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
+                            <span style="display:inline-block; width: 18px; height: 18px; margin-right:8px; background-color: #8b5cf6; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain;"></span>
+                            Ausgehender Service-Aufruf
+                        </span>
+                        <div class='topics-wrapper'>${topicsWrapper}</div>
+                    </div>`;
+                });
+            } else {
+                connOutHtml = "<div style='color:#64748b; font-style:italic; text-align:center; padding: 20px;'>Sendet keine Daten!</div>";
+            }
         } else {
             conns.connectedTo.forEach(c => {
                 const topicsBadges = `<div style="display: flex; gap: 8px; align-items: stretch;">
@@ -842,6 +925,25 @@ function showNodesOverview() {
     }
 
     const grid = document.getElementById('nodes-overview-grid');
+    if (!grid) return;
+
+    // Falls noch keine Nodes geladen sind, zeige großen Spinner
+    const nodes = Object.keys(workspaceData.nodes || {});
+    const projs = Object.keys(workspaceData.project_files || {});
+    
+    if (nodes.length === 0 && projs.length === 0) {
+        grid.innerHTML = `
+            <div class="spinner-container" style="padding-top: 100px;">
+                <div class="spinner-large"></div>
+                <div class="loading-text" style="font-size: 1.4rem; margin-top: 10px;">Initialisiere - Dashboard...</div>
+                <div id="loading-timer-container" style="color: var(--accent-primary); font-size: 2.5rem; font-weight: bold; font-family: 'JetBrains Mono', monospace; margin: 10px 0; text-shadow: 0 0 15px rgba(139, 92, 246, 0.5);">
+                    <span id="loading-timer">${loadingCountdown}</span>s
+                </div>
+                <div style="color: var(--text-secondary); opacity: 0.6; font-size: 0.9rem;">Warte auf Daten von ROS 2 Bridge</div>
+            </div>`;
+        return;
+    }
+
     let gridHtml = '';
 
     const wsNodeElements = document.querySelectorAll('#dynamic-node-list li.ws-node');
@@ -1013,6 +1115,11 @@ async function loadExternalViews() {
     });
 
     await Promise.all(promises);
+
+    // Initialisiere Lade-Zustand (Spinner/Timer) SOFORT nach dem Injezieren der HTML-Teile
+    updateNodeList();
+    showNodesOverview();
+    startLoadingTimer();
 
     // After all views have been injected into the DOM, initialize dynamic elements
     if (typeof initCopyButtons === 'function') {
@@ -1345,6 +1452,7 @@ window.onload = function () {
     }, 2000);
 
     codeRequestPub = new ROSLIB.Topic({ ros: ros, name: '/ui/request_file_content', messageType: 'std_msgs/String' });
+    nodeDetailReqPub = new ROSLIB.Topic({ ros: ros, name: '/ui/request_node_details', messageType: 'std_msgs/String' });
     window.openExplorerPub = new ROSLIB.Topic({ ros: window.ros, name: '/ui/request_open_explorer', messageType: 'std_msgs/String' });
 
     new ROSLIB.Topic({ ros: ros, name: '/ui/file_content', messageType: 'std_msgs/String' }).subscribe((msg) => {
@@ -1358,7 +1466,38 @@ window.onload = function () {
 
     new ROSLIB.Topic({ ros: ros, name: '/dashboard/workspace_metadata', messageType: 'std_msgs/String' }).subscribe((msg) => {
         try {
-            workspaceData = JSON.parse(msg.data);
+            const incoming = JSON.parse(msg.data);
+
+            // Speichern der Daten im Hintergrund, aber UI-Update blockieren wenn Lock aktiv
+            if (incoming.type !== 'node_pulse') {
+                workspaceData = incoming;
+            }
+
+            if (isLoadingLock) return;
+            if (incoming.type === 'node_pulse') {
+                if (incoming.active_nodes && workspaceData.nodes) {
+                    const activeSet = new Set(incoming.active_nodes);
+                    Object.keys(workspaceData.nodes).forEach(n => {
+                        workspaceData.nodes[n].is_actually_running = activeSet.has(n);
+                    });
+                    updateNodeList();
+                    
+                    // Auch den Live-Status des gerade angezeigten Nodes im Center updaten
+                    const activeLi = document.querySelector('#dynamic-node-list li.active');
+                    if (activeLi) {
+                        const curName = activeLi.dataset.name;
+                        const centerNodeBox = document.querySelector('.center-node-box');
+                        if (centerNodeBox) {
+                            if (activeSet.has(curName)) centerNodeBox.classList.add('node-is-live');
+                            else centerNodeBox.classList.remove('node-is-live');
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Fall 2: Komplette Metadaten (alle 10s oder on-demand)
+            workspaceData = incoming;
 
             // Roboter Status Detektion
             const isRobotOnline = workspaceData.robot_hardware_connected === true;
@@ -1386,7 +1525,8 @@ window.onload = function () {
                 const currentNodeActiveEl = document.querySelector('#dynamic-node-list li.active');
                 if (currentNodeActiveEl) {
                     const currentNodeName = currentNodeActiveEl.dataset.name;
-                    if (getNodeData(currentNodeName)) selectNode(currentNodeName);
+                    // Nutze skipRequest = true um Endlosschleife zu verhindern
+                    if (getNodeData(currentNodeName)) selectNode(currentNodeName, true);
                 }
             } else if (!document.getElementById('nodes-overview-view').classList.contains('hidden')) {
                 showNodesOverview();

@@ -56,66 +56,48 @@ class WorkspaceAnalyzer(Node):
         self.index_workspace()
         
         # Regelmäßige Updates
-        self.timer = self.create_timer(3.0, self.publish_metadata)
-        self.cli_timer = self.create_timer(5.0, self._update_cli_data) # Alle 5s CLI-Daten asynchron holen
+        self.timer = self.create_timer(10.0, self.publish_metadata) # Full Metadata alle 10s
+        self.pulse_timer = self.create_timer(2.0, self.publish_active_nodes_pulse) # Live-Status alle 2s
+        
+        # On-Demand Detail Abfrage für selektierten Node
+        self.node_detail_sub = self.create_subscription(String, '/ui/request_node_details', self.handle_node_detail_request, 10)
         
         self._exe_cache_refresh_done = False
         self.create_timer(30.0, self._delayed_exe_cache_refresh)
 
-    def _run_cli_command(self, cmd):
-        """Hilfsfunktion zum Ausführen von ROS 2 CLI Befehlen."""
-        try:
-            result = subprocess.run(
-                f'source /opt/ros/humble/setup.bash && {cmd}',
-                shell=True, executable='/bin/bash', capture_output=True, text=True, timeout=5
-            )
-            return result.stdout.strip().splitlines()
-        except Exception as e:
-            self.get_logger().debug(f"CLI Befehl fehlgeschlagen '{cmd}': {e}")
-            return []
+    def handle_node_detail_request(self, msg):
+        """Wird aufgerufen, wenn im Dashboard ein Node ausgewählt wird."""
+        node_name = msg.data.strip()
+        if not node_name: return
+        
+        # Extrahiere Namespace und Name
+        parts = node_name.rsplit('/', 1)
+        ns = parts[0] if len(parts) > 1 else '/'
+        if not ns: ns = '/'
+        name = parts[1] if len(parts) > 1 else parts[0]
 
-    def _update_cli_data(self):
-        """Nutzt ros2 node info um verlässliche Live-Daten zu holen."""
+        self.get_logger().info(f"On-Demand Details angefordert für: {node_name}")
+        
+        # Hole exakte Live-Daten über rclpy
         try:
-            # 1. Hole alle laufenden Nodes über CLI
-            running_nodes = self._run_cli_command('ros2 node list')
-            current_nodes = set(n.strip() for n in running_nodes if n.strip() and not n.startswith('WARNING'))
+            pubs = self.get_publisher_names_and_types_by_node(name, ns)
+            subs = self.get_subscriber_names_and_types_by_node(name, ns)
+            srvs = self.get_service_names_and_types_by_node(name, ns)
+            clients = self.get_client_names_and_types_by_node(name, ns)
             
-            # Bereinige Cache von toten Nodes
-            dead_nodes = set(self.cli_node_cache.keys()) - current_nodes
-            for dn in dead_nodes:
-                del self.cli_node_cache[dn]
-                
-            # 2. Aktualisiere Node Infos (nur max. 3 pro Durchlauf um CPU zu sparen)
-            nodes_to_update = [n for n in current_nodes if n not in self.cli_node_cache][:3]
+            # Formatiere für Cache
+            node_data = {
+                "publishers": [{"topic": t[0], "types": t[1]} for t in pubs],
+                "subscribers": [{"topic": t[0], "types": t[1]} for t in subs],
+                "services": [{"name": t[0], "types": t[1]} for t in srvs],
+                "clients": [{"name": t[0], "types": t[1]} for t in clients]
+            }
             
-            for node_name in nodes_to_update:
-                info_lines = self._run_cli_command(f'ros2 node info {node_name}')
-                node_data = {"publishers": [], "subscribers": [], "services": [], "clients": []}
-                
-                current_section = None
-                for line in info_lines:
-                    if not line.strip(): continue
-                    if line.startswith('  Subscribers:'): current_section = 'subscribers'; continue
-                    if line.startswith('  Publishers:'): current_section = 'publishers'; continue
-                    if line.startswith('  Service Servers:'): current_section = 'services'; continue
-                    if line.startswith('  Service Clients:'): current_section = 'clients'; continue
-                    if line.startswith('  Action Servers:') or line.startswith('  Action Clients:'):
-                        current_section = None; continue
-                        
-                    if current_section and line.startswith('    '):
-                        parts = line.strip().split(': ')
-                        if len(parts) == 2:
-                            topic, t_type = parts[0], parts[1]
-                            if current_section in ['publishers', 'subscribers']:
-                                node_data[current_section].append({"topic": topic, "types": [t_type]})
-                            elif current_section in ['services', 'clients']:
-                                node_data[current_section].append({"name": topic, "types": [t_type]})
-                                
-                self.cli_node_cache[node_name] = node_data
-                
+            self.cli_node_cache[node_name] = node_data
+            # Sofortiges Metadata-Update triggern
+            self.publish_metadata()
         except Exception as e:
-            self.get_logger().debug(f"Fehler beim CLI Update: {e}")
+            self.get_logger().error(f"Fehler bei On-Demand Abfrage: {e}")
 
     # --- Standard Handlers & Helper Methods ---
     def handle_open_explorer(self, msg):
@@ -198,11 +180,27 @@ class WorkspaceAnalyzer(Node):
         self.last_publish_time = current_time
         if not self.tracked_topics: return
         activity_data = {}
+        found_active_in_msg = False
         for topic, count in self.message_counts.items():
             hz = count / dt if dt > 0 else 0
-            activity_data[topic] = {"hz": round(hz, 1), "active": count > 0, "last_msg": self.last_messages.get(topic, "")}
+            is_active = count > 0
+            if is_active: found_active_in_msg = True
+            activity_data[topic] = {"hz": round(hz, 1), "active": is_active, "last_msg": self.last_messages.get(topic, "")}
             self.message_counts[topic] = 0
-        self.activity_pub.publish(String(data=json.dumps(activity_data)))
+        
+        # Nur publishen wenn wir getrackte Topics haben oder sich was geändert hat
+        # (Um Bandbreite zu sparen wenn das Node-Panel geschlossen ist)
+        if activity_data:
+            self.activity_pub.publish(String(data=json.dumps(activity_data)))
+
+    def publish_active_nodes_pulse(self):
+        """Schickt nur die Liste der aktiven Node-Namen für Sidebar-Punkte (leichtgewicht)."""
+        try:
+            node_names_and_ns = self.get_node_names_and_namespaces()
+            running_names = [f"{ns}/{n}".replace('//', '/') for n, ns in node_names_and_ns]
+            pulse_data = {"type": "node_pulse", "active_nodes": running_names}
+            self.publisher_.publish(String(data=json.dumps(pulse_data)))
+        except Exception: pass
 
     def build_file_tree(self, path):
         tree = {"name": os.path.basename(path), "type": "folder", "children": []}
@@ -474,22 +472,49 @@ class WorkspaceAnalyzer(Node):
             
             node_names_and_namespaces = self.get_node_names_and_namespaces()
             active_launch_files = set()
+            
+            # Bereinige Cache von toten Nodes
+            current_running_full_names = set(f"{namespace}/{name}".replace('//', '/') for name, namespace in node_names_and_namespaces)
+            dead_nodes = set(self.cli_node_cache.keys()) - current_running_full_names
+            for dn in dead_nodes: 
+                if dn != 'workspace_analyzer': del self.cli_node_cache[dn]
+
+            # Hole komplette Topologie in einem Rutsch (via Topic-Lookup)
+            # Das ist effizienter als für jeden Node einzeln info() aufzurufen
+            topology = {}
+            try:
+                topic_names_and_types = self.get_topic_names_and_types()
+                for t_name, t_types in topic_names_and_types:
+                    pub_info = self.get_publishers_info_by_topic(t_name)
+                    sub_info = self.get_subscriptions_info_by_topic(t_name)
+                    
+                    for p in pub_info:
+                        n_full = f"{p.node_namespace}/{p.node_name}".replace('//', '/')
+                        if n_full not in topology: topology[n_full] = {"publishers": [], "subscribers": []}
+                        topology[n_full]["publishers"].append({"topic": t_name, "types": t_types})
+                        
+                    for s in sub_info:
+                        n_full = f"{s.node_namespace}/{s.node_name}".replace('//', '/')
+                        if n_full not in topology: topology[n_full] = {"publishers": [], "subscribers": []}
+                        topology[n_full]["subscribers"].append({"topic": t_name, "types": t_types})
+            except Exception: pass
 
             for name, namespace in node_names_and_namespaces:
                 full_name = f"{namespace}/{name}".replace('//', '/')
                 
-                # Hole grundlegende Daten über rclpy
-                try: pubs, subs = self.get_publisher_names_and_types_by_node(name, namespace), self.get_subscriber_names_and_types_by_node(name, namespace)
-                except Exception: pubs, subs = [], []
-                try: srvs, clients = self.get_service_names_and_types_by_node(name, namespace), self.get_client_names_and_types_by_node(name, namespace)
-                except Exception: srvs, clients = [], []
+                # Nutze cached topology (Topics)
+                node_topo = topology.get(full_name, {"publishers": [], "subscribers": []})
+                pubs, subs = node_topo["publishers"], node_topo["subscribers"]
+                
+                # Services/Clients nur aus Cache (On-Demand gefüllt)
+                srvs, clients = [], []
                 
                 info = self.resolve_node_info(name)
                 
-                all_pubs = {t[0]: t[1] for t in pubs}
-                all_subs = {t[0]: t[1] for t in subs}
-                all_srvs = {t[0]: t[1] for t in srvs}
-                all_clients = {t[0]: t[1] for t in clients}
+                all_pubs = {t["topic"]: t["types"] for t in pubs}
+                all_subs = {t["topic"]: t["types"] for t in subs}
+                all_srvs = {}
+                all_clients = {}
 
                 # Nutze präzise CLI Daten falls vorhanden
                 if full_name in self.cli_node_cache:
