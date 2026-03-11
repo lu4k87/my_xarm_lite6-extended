@@ -1,0 +1,114 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/vs2015.min.css">
+
+<style>
+    .ports-wiki-container {
+        /* Kühles, modernes Dark Theme */
+        --bg-body: #0d1117;
+        --bg-section: #161b22;
+        --text-main: #c9d1d9;
+        --text-heading: #58a6ff;
+        --text-subheading: #79c0ff;
+        --border-color: #30363d;
+        --bg-inline-code: rgba(110, 118, 129, 0.25);
+        --text-inline-code: #a5d6ff;
+        --text-strong: #ffffff;
+
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: var(--text-main);
+        background-color: var(--bg-body);
+        padding: 30px 20px;
+    }
+
+    .ports-wiki-container .container {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .ports-wiki-container h1 {
+        text-align: center;
+        color: var(--text-heading);
+        font-size: 2.6em;
+        margin-bottom: 40px;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 15px;
+        font-weight: 600;
+        margin-top: 0;
+    }
+
+    .ports-wiki-container section {
+        padding: 35px 40px;
+        margin-bottom: 35px;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-section);
+    }
+
+    .ports-wiki-container h2 {
+        color: var(--text-heading);
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        margin-top: 0;
+        font-size: 1.8em;
+        font-weight: 500;
+    }
+
+    .ports-wiki-container p {
+        margin-bottom: 15px;
+        font-size: 1.05em;
+    }
+
+    .ports-wiki-container ul {
+        margin-bottom: 20px;
+        padding-left: 25px;
+        font-size: 1.05em;
+    }
+
+    .ports-wiki-container li {
+        margin-bottom: 12px;
+    }
+
+    .ports-wiki-container strong {
+        color: var(--text-strong);
+        font-weight: 600;
+    }
+
+    .ports-wiki-container code {
+        background-color: var(--bg-inline-code);
+        color: var(--text-inline-code);
+        padding: 3px 7px;
+        border-radius: 6px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.95em;
+        border: 1px solid var(--border-color);
+    }
+</style>
+
+<div class="ports-wiki-container">
+    <div class="container">
+        <h1>Dashboard Web-Anbindung (Ports)</h1>
+
+        <section>
+            <h2>Warum zwei verschiedene Ports?</h2>
+            <p>Das ROS 2 Dashboard nutzt zwei unterschiedliche Ports (<strong>8080</strong> und <strong>9090</strong>), um sicher und performant zu funktionieren. Hierbei handelt es sich um eine gängige Architektur für moderne Web-Anwendungen, die Echtzeitdaten verarbeiten:</p>
+            
+            <ul>
+                <li>
+                    <strong>Port 8080 (Der Datei-Lieferant)</strong><br>
+                    Gestartet durch <code>python3 -m http.server 8080</code>.<br>
+                    Das ist ein statischer Webserver. Er lädt lediglich das visuelle Grundgerüst des Dashboards (die nackten HTML-, CSS- und JavaScript-Dateien) in deinen Browser. Er hat <em>keinerlei</em> Ahnung von ROS 2, Nodes oder dem Roboter.
+                </li>
+                <li>
+                    <strong>Port 9090 (Der Live-Daten-Tunnel)</strong><br>
+                    Gestartet durch <code>ros2 launch rosbridge_server rosbridge_websocket_launch.xml</code>.<br>
+                    Sobald dein Browser das Dashboard von Port 8080 geladen hat, führt er den JavaScript-Code aus. Dieser Code baut dann im Hintergrund eine dauerhafte WebSocket-Verbindung (<code>ws://localhost:9090</code>) zur ROS-Bridge auf. Über diesen Tunnel strömen ab sofort alle Live-Informationen (Topics, Frequenzen, Ping) in ständiger Bewegung hin und her.
+                </li>
+            </ul>
+
+            <p>
+                <strong>Fazit:</strong> Du öffnest im Browser immer die <code>:8080</code>, um das Dashboard überhaupt erst "anzusehen". Das Dashboard holt sich dann seine "Seele" (die Livedaten) still und heimlich über die <code>:9090</code>.
+            </p>
+        </section>
+    </div>
+</div>

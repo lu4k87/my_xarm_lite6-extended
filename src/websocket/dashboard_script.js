@@ -665,7 +665,7 @@ function selectNode(nodeName, skipRequest = false) {
                                     ${badge}
                                     <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; flex-grow: 1;">
                                         <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); color: #c084fc; text-align: center; cursor: pointer;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
-                                            ${count} Service Server (bereitgestellt)
+                                            ${count} Service Server${count > 1 ? 's' : ''}
                                             <i class="fa-solid fa-arrow-down" style="margin-left: 8px; font-size: 0.8em; opacity: 0.7;"></i>
                                         </span>
                                     </div>
@@ -674,7 +674,7 @@ function selectNode(nodeName, skipRequest = false) {
                     <span class='card-hz-display' style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2);">RES (Server)</span>
                     <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
                         <span style="display:inline-block; width: 18px; height: 18px; margin-right:8px; background-color: #8b5cf6; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain;"></span>
-                        Service Server (Bereitgestellt)
+                        Service Server
                     </span>
                     <div class='topics-wrapper'>${wrapper}</div>
                 </div>`;
@@ -696,7 +696,7 @@ function selectNode(nodeName, skipRequest = false) {
                     <span class='card-hz-display' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">RES (Server)</span>
                     <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
                         <i class="fa-solid fa-bolt" style="margin-right:8px; color: #ef4444;"></i>
-                        Action Server (Bereitgestellt)
+                        Action Server
                     </span>
                     <div class='topics-wrapper'>${wrapper}</div>
                 </div>`;

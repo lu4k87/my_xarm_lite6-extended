@@ -388,9 +388,9 @@ class WorkspaceAnalyzer(Node):
         }
 
         if clean_name == "workspace_analyzer":
-            info["package"] = "websocket_ui"
+            info["package"] = "websocket"
             info["source_file"] = "workspace_analyzer.py"
-            info["file_path"] = "src/websocket_ui/workspace_analyzer.py"
+            info["file_path"] = "src/websocket/workspace_analyzer.py"
             info["is_workspace"] = True
 
         for launch in self.launch_details_cache:

@@ -198,7 +198,8 @@
             <ul>
                 <li><strong><code>package.xml</code>:</strong> Enthält Metadaten (Name, Version, Autor) und
                     <strong>Abhängigkeiten</strong> (Dependencies), die das System zum Ausführen benötigt (z.B.
-                    <code>rclpy</code>, <code>std_msgs</code>). Wird auch von <code>rosdep</code> gelesen.</li>
+                    <code>rclpy</code>, <code>std_msgs</code>). Wird auch von <code>rosdep</code> gelesen.
+                </li>
                 <li><strong><code>setup.py</code>:</strong> Das Bau-Skript. Hier werden Launch-Files registriert
                     (<code>data_files</code>) und die <strong>Entry Points</strong> definiert. Ein Entry Point sagt dem
                     System genau, welcher Aufrufname im Terminal zu welcher <code>.py</code>-Datei und welcher Funktion
@@ -287,13 +288,15 @@ entry_points={
             <p>Diese Bausteine definieren, wie Nodes strukturiert sind und wie sie im Hintergrund arbeiten:</p>
             <ul>
                 <li><strong>Namespace:</strong> Ein Präfix zur Gruppierung von Nodes und Topics (z. B.
-                    <code>/turtle1/cmd_vel</code>). Verhindert Namenskonflikte in komplexen Systemen.</li>
+                    <code>/turtle1/cmd_vel</code>). Verhindert Namenskonflikte in komplexen Systemen.
+                </li>
                 <li><strong>Spin:</strong> Eine Endlosschleife, die den Node aktiv hält, um auf Daten und Ereignisse zu
                     reagieren.</li>
                 <li><strong>Callback:</strong> Eine Funktion, die bei einem bestimmten Ereignis (z. B. beim Empfang
                     einer Nachricht) automatisch ausgelöst wird.</li>
                 <li><strong>Executors & Callback Groups:</strong> Der Mechanismus "unter der Haube", der entscheidet,
-                    <em>wann</em> welcher Callback ausgeführt wird (z. B. Single-Threaded vs. Multi-Threaded).</li>
+                    <em>wann</em> welcher Callback ausgeführt wird (z. B. Single-Threaded vs. Multi-Threaded).
+                </li>
                 <li><strong>Future:</strong> Ein Platzhalter-Objekt für das Ergebnis einer asynchronen Operation, das
                     erst zu einem späteren Zeitpunkt verfügbar ist.</li>
                 <li><strong>Synchron vs. Asynchron:</strong> <em>Synchron</em> blockiert den laufenden Prozess, bis eine
@@ -566,7 +569,8 @@ class ActionClientNode(Node):
                     <tr>
                         <td><strong>Wert auslesen / setzen</strong></td>
                         <td><code>ros2 param get &lt;node&gt; &lt;param&gt;</code> /
-                            <code>ros2 param set &lt;node&gt; &lt;param&gt; &lt;wert&gt;</code></td>
+                            <code>ros2 param set &lt;node&gt; &lt;param&gt; &lt;wert&gt;</code>
+                        </td>
                     </tr>
                     <tr>
                         <td><strong>Alle Parameter speichern</strong></td>
@@ -704,7 +708,8 @@ self.__sub = self.create_subscription(Counter, "/counter_topic_name", self.count
             <p>TF2 verfolgt die relativen Positionen und Orientierungen (Koordinatensysteme) aller Roboterteile.</p>
             <ul>
                 <li><strong>Frames:</strong> Koordinatensysteme (z. B. <code>map</code>, <code>odom</code>,
-                    <code>base_link</code>, <code>laser_frame</code>).</li>
+                    <code>base_link</code>, <code>laser_frame</code>).
+                </li>
                 <li><strong>TF2:</strong> Berechnet automatisch relative Koordinaten.</li>
                 <li><strong>tf_static:</strong> Für Frames, die sich <em>nicht</em> zueinander bewegen. Spart
                     Bandbreite.</li>
@@ -864,7 +869,8 @@ def main():
                     (<code>start.launch.py</code>)</strong><br>
                 Dieses Skript zeigt <code>LaunchDescription</code>, Deklaration von Argumenten,
                 <code>OpaqueFunction</code> für Laufzeitlogik und <code>IfCondition</code> für das bedingte Starten von
-                Nodes (wie RViz).</p>
+                Nodes (wie RViz).
+            </p>
             <pre><code class="language-python">from launch import LaunchDescription
 from launch.actions import LogInfo, DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution

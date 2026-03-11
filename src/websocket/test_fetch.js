@@ -2,7 +2,7 @@ const fs = require('fs');
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
 
-const html = fs.readFileSync('/home/mk1/dev_ws/src/websocket_ui/dashboard_index.html', 'utf8');
+const html = fs.readFileSync('/home/mk1/dev_ws/src/websocket/dashboard_index.html', 'utf8');
 const dom = new JSDOM(html);
 const document = dom.window.document;
 
