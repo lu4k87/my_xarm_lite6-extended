@@ -1,38 +1,42 @@
 <div class="header-bar">
     <h2><i class="fa-solid fa-book" style="color: var(--accent-primary); margin-right: 10px;"></i>
-        Wiki: Git Online Repository</h2>
+        Wiki: Git Online Repository (SSH Setup)</h2>
 </div>
 
 <div class="wiki-content" style="padding: 20px; overflow-y: auto;">
-    <h3 style="color: var(--accent-primary); margin-top: 0;">Lokales Git mit Online-Server verbinden</h3>
-    <p style="color: var(--text-secondary); line-height: 1.6;">Um das lokale Git-Repository online zu sichern (z.B. auf GitHub oder GitLab) und KI-Agenten Updates bzw. Sicherungen machen zu lassen, muss es mit einem "Remote-Repository" (einem Online-Speicher) verknüpft werden.</p>
+    <h3 style="color: var(--accent-primary); margin-top: 0;">Lokales Repository (Workspace) mit GitHub verbinden</h3>
+    <p style="color: var(--text-secondary); line-height: 1.6;">Die beste Art, deinen Workspace (~/dev_ws) zu sichern und mit Antigravity an mehreren PCs zu arbeiten, ist die Verwendung von <b>SSH</b>. Dies verhindert ständige Passwortabfragen.</p>
     
-    <h4 style="margin-top: 25px; color: #fff;">Schritt 1: Ein leeres Repository online erstellen</h4>
-    <p style="color: var(--text-secondary);">Erstelle auf GitHub ein neues Repository <b style="color: #fbbf24;">ohne</b> README, <code>.gitignore</code> oder Lizenz. Es muss komplett leer sein.</p>
-    
-    <h4 style="margin-top: 20px; color: #fff;">Schritt 2: Die Online-URL kopieren</h4>
-    <p style="color: var(--text-secondary);">Kopiere die HTTPS oder SSH URL des neuen Repositories (z.B. <code>https://github.com/DeinName/dein-repo.git</code>).</p>
-    
-    <h4 style="margin-top: 20px; color: #fff;">Schritt 3: Das lokale Git verknüpfen & hochladen</h4>
+    <h4 style="margin-top: 25px; color: #fff;">Schritt 1: SSH-Key generieren & bei GitHub hinterlegen</h4>
+    <p style="color: var(--text-secondary);">Um ohne Passwort zu arbeiten, muss für jeden PC ein SSH-Schlüssel erstellt werden:</p>
     <div class="widget" style="padding: 15px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
-        <pre style="margin: 0; padding: 10px; background: #0f172a; border-radius: 6px;"><code class="language-bash" style="color: #38bdf8;"># Den Online-Server als "origin" hinzufügen
-git remote add origin &lt;DEINE_URL&gt;
+        <pre style="margin: 0; padding: 10px; background: #0f172a; border-radius: 6px;"><code class="language-bash" style="color: #38bdf8;"># 1. Key generieren (E-Mail anpassen)
+ssh-keygen -t ed25519 -C "antigravity-pc"
 
-# Den aktuellen Branch auf "main" umbenennen (falls "master")
+# 2. Public Key anzeigen und bei GitHub (Settings -> SSH Keys) einfügen
+cat ~/.ssh/id_ed25519.pub</code></pre>
+    </div>
+    
+    <h4 style="margin-top: 20px; color: #fff;">Schritt 2: Das lokale Git direkt im Workspace verknüpfen</h4>
+    <p style="color: var(--text-secondary);">Wir verknüpfen das Repo direkt mit <code>~/dev_ws</code>, damit auch Dateien wie <code>start.sh</code> gesichert werden:</p>
+    <div class="widget" style="padding: 15px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
+        <pre style="margin: 0; padding: 10px; background: #0f172a; border-radius: 6px;"><code class="language-bash" style="color: #38bdf8;">cd ~/dev_ws
+git init
+git remote add origin git@github.com:Username/Repo-Name.git
 git branch -M main
-
-# Die Daten hochladen und origin als Standard festlegen
 git push -u origin main</code></pre>
     </div>
     
-    <h3 style="margin-top: 35px; color: var(--accent-primary);">So arbeitet der KI-Assistent damit (Antigravity):</h3>
-    <p style="color: var(--text-secondary);">Sobald dieser erste Push funktioniert hat, kann der Assistent den Code verwalten. Du kannst einfach sagen:</p>
+    <h3 style="margin-top: 35px; color: var(--accent-primary);">Zusammenarbeit mit Antigravity:</h3>
+    <p style="color: var(--text-secondary);">Sobald SSH steht, kann Antigravity alles für dich erledigen. Nutze einfach Befehle wie:</p>
     <ul style="color: var(--text-secondary); line-height: 1.8; margin-top: 10px;">
-        <li><i>"Speichere die heutigen Änderungen und lade sie auf Git hoch"</i></li>
-        <li><i>"Lade den neuesten Code von GitHub herunter"</i></li>
-        <li><i>"Checke den aktuellen Git Status"</i></li>
-        <li><i>"Welche Commits wurden heute gemacht?"</i></li>
+        <li><i>"Pushe meine aktuellen Änderungen an der start.sh"</i></li>
+        <li><i>"Hole den aktuellen Stand von GitHub (Pull)"</i></li>
+        <li><i>"Richte GitHub via SSH auf meinem 2. PC ein"</i></li>
     </ul>
     
-    <button class="code-btn" style="margin-top: 25px;" onclick="copyToClipboard('git remote add origin YOUR_URL_HERE && git branch -M main && git push -u origin main')"><i class="fa-solid fa-copy" style="margin-right: 8px;"></i> Befehle kopieren (URL dann manuell ersetzen)</button>
+    <h4 style="margin-top: 25px; color: #fbbf24;"><i class="fa-solid fa-triangle-exclamation"></i> Wichtiger Hinweis:</h4>
+    <p style="color: var(--text-secondary);">Achte darauf, dass vertrauliche Dateien oder große Binärdaten in der <code>.gitignore</code> stehen, bevor du den ersten Push machst!</p>
+
+    <button class="code-btn" style="margin-top: 25px;" onclick="copyToClipboard('ssh-keygen -t ed25519 && cat ~/.ssh/id_ed25519.pub')"><i class="fa-solid fa-copy" style="margin-right: 8px;"></i> SSH-Befehle kopieren</button>
 </div>
