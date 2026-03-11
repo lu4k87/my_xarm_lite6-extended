@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ND-Flow Redesign Concept</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0a0a0c;
+            --bg-surface: rgba(23, 23, 26, 0.7);
+            --accent-primary: #00d2ff;
+            --accent-secondary: #9d50bb;
+            --color-rx: #10b981;
+            --color-tx: #f59e0b;
+            --color-service: #8b5cf6;
+            --color-action: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-glow: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(12px);
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 210, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(157, 80, 187, 0.05) 0%, transparent 40%);
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: -1px;
+            margin-bottom: 60px;
+            color: var(--text-secondary);
+        }
+
+        .nd-flow-diagram {
+            display: flex;
+            align-items: stretch;
+            gap: 40px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .flow-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .flow-col-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Glass Card Styles */
+        .glass-card {
+            background: var(--bg-surface);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Node Names */
+        .node-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        /* Topic Badges */
+        /* Badge Styles */
+        .type-badge {
+            font-size: 0.6rem;
+            font-weight: 800;
+            padding: 2px 4px;
+            border-radius: 4px;
+            margin-right: 10px;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            border: 1px solid transparent;
+        }
+
+        .badge-pub { background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+        .badge-sub { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+        .badge-res, .badge-req { background: rgba(139, 92, 246, 0.1); color: #a78bfa; border-color: rgba(139, 92, 246, 0.3); }
+
+        .topic-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .topic-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            border: 1px solid transparent;
+        }
+
+        .topic-meta {
+            display: flex;
+            align-items: center;
+        }
+
+        .topic-name {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+        }
+
+        .hz-tag {
+            font-size: 0.7rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+            background: rgba(0, 210, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Accent Styles */
+        .card-rx { border-left: 4px solid var(--color-rx); }
+        .card-rx .hz-tag { color: var(--color-rx); background: rgba(16, 185, 129, 0.1); }
+        .card-rx.is-live { border-color: var(--color-rx); box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
+
+        .card-tx { border-left: 4px solid var(--color-tx); }
+        .card-tx .hz-tag { color: var(--color-tx); background: rgba(245, 158, 11, 0.1); }
+        .card-tx.is-live { border-color: var(--color-tx); box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+
+        /* Central Node */
+        .center-node {
+            flex: 0.8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .center-box {
+            width: 200px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .center-node-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 10px var(--accent-glow));
+        }
+
+        .center-box .node-name {
+            text-align: center;
+            font-size: 1.1rem;
+            margin: 0;
+            color: white;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Arrows & Anim */
+        .flow-connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+            flex-shrink: 0;
+            width: 80px;
+        }
+
+        .chevron-anim {
+            font-size: 1.5rem;
+            opacity: 0.1;
+            margin-left: -10px;
+            animation: flow-glow 2s infinite linear;
+        }
+
+        .chevron-anim:first-child {
+            margin-left: 0;
+        }
+
+        .arrow-rx .chevron-anim {
+            color: var(--color-rx);
+            animation-name: flow-glow-rx;
+        }
+
+        .arrow-tx .chevron-anim {
+            color: var(--color-tx);
+            animation-name: flow-glow-tx;
+        }
+
+        @keyframes flow-glow-rx {
+            0%, 100% { opacity: 0.1; text-shadow: none; }
+            15% { opacity: 1; text-shadow: 0 0 15px var(--color-rx); }
+        }
+
+        @keyframes flow-glow-tx {
+            0%, 100% { opacity: 0.1; text-shadow: none; }
+            15% { opacity: 1; text-shadow: 0 0 15px var(--color-tx); }
+        }
+
+        /* Staggered animation for 3 chevrons */
+        .chevron-anim:nth-child(2) { animation-delay: 0.2s; }
+        .chevron-anim:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Service & Action Styling */
+        .service-badge, .action-badge {
+            background: rgba(139, 92, 246, 0.1);
+            color: #a78bfa;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        /* Pulsing indicator */
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--color-rx);
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            box-shadow: 0 0 10px var(--color-rx);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .section-tag {
+            margin-top: 30px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ND-Flow Visual Concept</h1>
+
+    <div class="nd-flow-diagram">
+        <!-- Input Column -->
+        <div class="flow-col">
+            <div class="flow-col-header">
+                <i class="fa-solid fa-arrow-right-to-bracket" style="color: var(--color-rx);"></i>
+                Datenquellen
+            </div>
+
+            <div class="glass-card card-rx is-live">
+                <div class="live-dot"></div>
+                <span class="node-name">/camera_node</span>
+                <div class="topic-container">
+                    <div class="topic-item">
+                        <div class="topic-meta">
+                            <span class="type-badge badge-pub">PUB</span>
+                            <span class="topic-name">/image_raw</span>
+                        </div>
+                        <span class="hz-tag">30.0 Hz</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card card-rx">
+                <span class="node-name">/lidar_sensor</span>
+                <div class="topic-container">
+                    <div class="topic-item">
+                        <div class="topic-meta">
+                            <span class="type-badge badge-pub">PUB</span>
+                            <span class="topic-name">/scan</span>
+                        </div>
+                        <span class="hz-tag">10.5 Hz</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-tag">Services & Actions</div>
+            <div class="glass-card" style="border-left: 4px solid var(--color-service);">
+                <span class="node-name">/map_server</span>
+                <div class="topic-item">
+                    <div class="topic-meta">
+                        <span class="type-badge badge-res">RES</span>
+                        <span class="topic-name">/get_map</span>
+                    </div>
+                    <span class="service-badge">SRV</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connector -->
+        <div class="flow-connector arrow-rx">
+            <i class="fa-solid fa-chevron-right chevron-anim"></i>
+            <i class="fa-solid fa-chevron-right chevron-anim"></i>
+            <i class="fa-solid fa-chevron-right chevron-anim"></i>
+        </div>
+
+        <!-- Target Center -->
+        <div class="center-node">
+            <div class="center-box">
+                <img src="node-icon.svg" class="center-node-icon" alt="Node">
+                <span class="node-name">/perception_engine</span>
+            </div>
+        </div>
+
+        <!-- Connector -->
+        <div class="flow-connector arrow-tx">
+            <i class="fa-solid fa-chevron-right chevron-anim"></i>
+            <i class="fa-solid fa-chevron-right chevron-anim"></i>
+            <i class="fa-solid fa-chevron-right chevron-anim"></i>
+        </div>
+
+        <!-- Output Column -->
+        <div class="flow-col">
+            <div class="flow-col-header">
+                <i class="fa-solid fa-arrow-up-right-from-square" style="color: var(--color-tx);"></i>
+                Datenempfänger
+            </div>
+
+            <div class="glass-card card-tx is-live">
+                <div class="live-dot" style="background: var(--color-tx); box-shadow: 0 0 10px var(--color-tx);"></div>
+                <span class="node-name">/motion_planner</span>
+                <div class="topic-container">
+                    <div class="topic-item">
+                        <div class="topic-meta">
+                            <span class="type-badge badge-sub">SUB</span>
+                            <span class="topic-name">/detected_objects</span>
+                        </div>
+                        <span class="hz-tag">25.0 Hz</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card card-tx">
+                <span class="node-name">/rviz_visualizer</span>
+                <div class="topic-container">
+                    <div class="topic-item">
+                        <div class="topic-meta">
+                            <span class="type-badge badge-sub">SUB</span>
+                            <span class="topic-name">/debug_markers</span>
+                        </div>
+                        <span class="hz-tag">5.0 Hz</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-tag">Target Actions</div>
+            <div class="glass-card" style="border-left: 4px solid var(--color-action);">
+                <span class="node-name">/base_controller</span>
+                <div class="topic-item">
+                    <div class="topic-meta">
+                        <span class="type-badge badge-res">RES</span>
+                        <span class="topic-name">/follow_path</span>
+                    </div>
+                    <span class="action-badge">ACTION</span>
+                </div>
+            </div>
+            <!-- Added REQ example -->
+            <div class="glass-card" style="border-left: 4px solid var(--color-action); margin-top: 10px;">
+                <span class="node-name">/status_monitor</span>
+                <div class="topic-item">
+                    <div class="topic-meta">
+                        <span class="type-badge badge-req">REQ</span>
+                        <span class="topic-name">/health_check</span>
+                    </div>
+                    <span class="service-badge">SRV</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+
+</body>
+</html>

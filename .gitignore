@@ -2,6 +2,7 @@
 build/
 install/
 log/
+.vscode/
 
 # Python caching
 __pycache__/
@@ -11,6 +12,7 @@ __pycache__/
 *.zip
 *.sh.copy
 start (copy).sh
+
 
 # OS files
 .DS_Store

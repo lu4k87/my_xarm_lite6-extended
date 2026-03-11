@@ -8,7 +8,7 @@ let currentRequestedPath = "";
 
 let expandedFolders = new Set(['dev_ws/src']);
 
-let loadingCountdown = 10;
+let loadingCountdown = 5;
 let isLoadingLock = true;
 
 function startLoadingTimer() {
@@ -278,9 +278,9 @@ function updateNodeList() {
             const hasChildren = h.children && h.children.length > 0;
             const nodeClass = isSystem ? 'sys-node' : 'ws-node';
             const iconMain = isSystem ? 'fa-share-nodes' : 'fa-diagram-project';
-            
-            const isNodeRunning = (workspaceData.nodes && workspaceData.nodes[h.name]) ? 
-                                 (workspaceData.nodes[h.name].is_actually_running !== false) : true;
+
+            const isNodeRunning = (workspaceData.nodes && workspaceData.nodes[h.name]) ?
+                (workspaceData.nodes[h.name].is_actually_running !== false) : true;
             const pulseColor = isNodeRunning ? 'rgb(34, 197, 94)' : 'rgb(100, 116, 139)';
             const statusPulse = `<span class="status-pulse" style="width: 6px; height: 6px; margin: 0 8px 0 0; background-color: ${pulseColor};"></span>`;
 
@@ -297,8 +297,8 @@ function updateNodeList() {
                 h.children.forEach(child => {
                     const activeClass = (child === activeNodeName) ? 'active' : '';
                     const childPkg = getPackageForNode(child);
-                    const isChildRunning = (workspaceData.nodes && workspaceData.nodes[child]) ? 
-                                          (workspaceData.nodes[child].is_actually_running !== false) : true;
+                    const isChildRunning = (workspaceData.nodes && workspaceData.nodes[child]) ?
+                        (workspaceData.nodes[child].is_actually_running !== false) : true;
                     const cPulseColor = isChildRunning ? 'rgb(34, 197, 94)' : 'rgb(100, 116, 139)';
                     const cStatusPulse = `<span class="status-pulse" style="width: 6px; height: 6px; margin: 0 8px 0 0; background-color: ${cPulseColor};"></span>`;
 
@@ -639,17 +639,19 @@ function selectNode(nodeName, skipRequest = false) {
 
     if (flowInEl) {
         let connInHtml = '';
-        
+
         // 1. Hardware Input (Special Case)
         const checkNodeName = nodeName.startsWith('/') ? nodeName.substring(1) : nodeName;
         if (HARDWARE_INPUT_NODES.includes(checkNodeName)) {
-            connInHtml += `<div class='conn-card unbound-card rx-card'>
-                <span class='card-hz-display'>Local OS</span>
-                <span class='conn-node-name'>
-                    <i class="fa-brands fa-linux" style="margin-right:8px; color: #94a3b8;" title="OS-Ebene Input"></i>Input-Stream Linux-Systemebene
-                    <i class="fa-solid fa-circle-info tooltip-icon" style="margin-left:8px; color: var(--color-warning); font-size: 0.9em;" 
-                       title="Dieser Node empfängt Daten direkt von der Hardware (z.B. Tastatur/Gamepad) über das Betriebssystem und nicht über das ROS-Netzwerk."></i>
-                </span>
+            connInHtml += `<div class='conn-card unbound-card rx-card d-flex flex-column gap-2'>
+                <div class='d-flex justify-content-between align-items-center w-100'>
+                    <span class='conn-node-name m-0' title='Input-Stream Linux-Systemebene'>
+                        <i class="fa-brands fa-linux me-2" style="color: #94a3b8;"></i><span class="text-truncate">Input-Stream Linux-Systemebene</span>
+                        <i class="fa-solid fa-circle-info tooltip-icon ms-2" style="color: var(--color-warning); font-size: 0.9em;" 
+                           title="Dieser Node empfängt Daten direkt von der Hardware (z.B. Tastatur/Gamepad) über das Betriebssystem und nicht über das ROS-Netzwerk."></i>
+                    </span>
+                    <span class='card-hz-display'>Local OS</span>
+                </div>
             </div>`;
         }
 
@@ -660,45 +662,47 @@ function selectNode(nodeName, skipRequest = false) {
 
             if (regularServices.length > 0) {
                 const count = regularServices.length;
-                const badge = `<div style='background: rgba(139, 92, 246, 0.1); color: #a78bfa; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>RES</div>`;
-                const wrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+                const badge = `<div class='comm-badge badge-res'>RES</div>`;
+                const wrapper = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
                                     ${badge}
-                                    <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; flex-grow: 1;">
-                                        <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); color: #c084fc; text-align: center; cursor: pointer;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
+                                    <div class="d-flex flex-column gap-1 flex-grow-1 justify-content-center">
+                                        <span class='conn-topic-badge text-center cursor-pointer p-2 m-0' style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); color: #c084fc;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
                                             ${count} Service Server${count > 1 ? 's' : ''}
-                                            <i class="fa-solid fa-arrow-down" style="margin-left: 8px; font-size: 0.8em; opacity: 0.7;"></i>
+                                            <i class="fa-solid fa-arrow-down ms-2" style="font-size: 0.8em; opacity: 0.7;"></i>
                                         </span>
                                     </div>
                                   </div>`;
-                connInHtml += `<div class='conn-card rx-card' style="border-left: 4px solid #8b5cf6;">
-                    <span class='card-hz-display' style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2);">RES (Server)</span>
-                    <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
-                        <span style="display:inline-block; width: 18px; height: 18px; margin-right:8px; background-color: #8b5cf6; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain;"></span>
-                        Service Server
-                    </span>
-                    <div class='topics-wrapper'>${wrapper}</div>
+                connInHtml += `<div class='conn-card rx-card d-flex flex-column gap-2'>
+                    <div class='d-flex justify-content-between align-items-center w-100'>
+                        <span class='conn-node-name m-0' title='Service Server'>
+                            <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #8b5cf6; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Server</span>
+                        </span>
+                        <span class='card-hz-display' style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2);">RES (Server)</span>
+                    </div>
+                    <div class='topics-wrapper w-100'>${wrapper}</div>
                 </div>`;
             }
 
             if (actionServers.length > 0) {
                 const actionCount = Math.max(1, Math.ceil(actionServers.length / 5));
-                const badge = `<div style='background: rgba(239, 68, 68, 0.1); color: #f87171; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>ACT</div>`;
-                const wrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+                const badge = `<div class='comm-badge badge-act'>ACT</div>`;
+                const wrapper = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
                                     ${badge}
-                                    <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; flex-grow: 1;">
-                                        <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; text-align: center; cursor: pointer;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
+                                    <div class="d-flex flex-column gap-1 flex-grow-1 justify-content-center">
+                                        <span class='conn-topic-badge topic-badge-act text-center cursor-pointer p-2 m-0' onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
                                             ${actionCount} Action Server aktiv
-                                            <i class="fa-solid fa-arrow-down" style="margin-left: 8px; font-size: 0.8em; opacity: 0.7;"></i>
+                                            <i class="fa-solid fa-arrow-down ms-2" style="font-size: 0.8em; opacity: 0.7;"></i>
                                         </span>
                                     </div>
                                   </div>`;
-                connInHtml += `<div class='conn-card rx-card' style="border-left: 4px solid #ef4444;">
-                    <span class='card-hz-display' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">RES (Server)</span>
-                    <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
-                        <i class="fa-solid fa-bolt" style="margin-right:8px; color: #ef4444;"></i>
-                        Action Server
-                    </span>
-                    <div class='topics-wrapper'>${wrapper}</div>
+                connInHtml += `<div class='conn-card rx-card d-flex flex-column gap-2'>
+                    <div class='d-flex justify-content-between align-items-center w-100'>
+                        <span class='conn-node-name m-0' title='Action Server'>
+                            <i class="fa-solid fa-bolt me-2" style="color: #ef4444; flex-shrink: 0;"></i><span class="text-truncate">Action Server</span>
+                        </span>
+                        <span class='card-hz-display' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">RES (Server)</span>
+                    </div>
+                    <div class='topics-wrapper w-100'>${wrapper}</div>
                 </div>`;
             }
         }
@@ -706,21 +710,23 @@ function selectNode(nodeName, skipRequest = false) {
         // 3. Topic Connections
         if (conns.connectedFrom.length > 0) {
             conns.connectedFrom.forEach(c => {
-                const topicsBadges = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
-                                        <div style='background: rgba(16, 185, 129, 0.1); color: #34d399; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>PUB</div>
-                                        <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center;">
-                                            ${c.topics.map(t => `<span class='conn-topic-badge' data-topic='${t}' style="margin: 0; padding: 6px 10px;">${t}</span>`).join('')}
+                const topicsBadges = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
+                                        <div class='comm-badge badge-pub'>PUB</div>
+                                        <div class="d-flex flex-column gap-1 justify-content-center w-100">
+                                            ${c.topics.map(t => `<span class='conn-topic-badge p-2 m-0 w-100' data-topic='${t}'>${t}</span>`).join('')}
                                         </div>
                                       </div>`;
                 const cardClass = c.isUnbound ? 'unbound-card rx-card live-trackable' : 'rx-card active-flow-rx live-trackable';
                 const nodeIcon = c.isUnbound
-                    ? '<i class="fa-solid fa-wifi" style="margin-right:8px; color: #64748b;" title="Offener Endpunkt"></i>'
-                    : '<span class="flow-icon-pulse" style="display:inline-block; width: 14px; height: 14px; margin-right:8px; background-color: var(--color-rx); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;" title="Empfängt Daten von"></span>';
+                    ? '<i class="fa-solid fa-wifi me-2" style="color: #64748b;" title="Offener Endpunkt"></i>'
+                    : '<span class="flow-icon-pulse me-2" style="display:inline-block; width: 28px; height: 28px; background-color: var(--color-rx); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;" title="Empfängt Daten von"></span>';
 
-                connInHtml += `<div class='conn-card ${cardClass}' data-topics='${JSON.stringify(c.topics)}'>
-                    <span class='card-hz-display'>-- Hz</span>
-                    <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>${nodeIcon}${c.node}</span>
-                    <div class='topics-wrapper'>${topicsBadges}</div>
+                connInHtml += `<div class='conn-card ${cardClass} d-flex flex-column gap-2' data-topics='${JSON.stringify(c.topics)}'>
+                    <div class='d-flex justify-content-between align-items-center w-100'>
+                        <span class='conn-node-name m-0' title='${c.node}'>${nodeIcon.replace('>', ' style="flex-shrink: 0;">')}<span class="text-truncate">${c.node}</span></span>
+                        <span class='card-hz-display'>-- Hz</span>
+                    </div>
+                    <div class='topics-wrapper w-100'>${topicsBadges}</div>
                 </div>`;
 
                 c.topics.forEach(t => allRelevantTopics.push({ topic: t, type: "Unbekannt" }));
@@ -736,10 +742,10 @@ function selectNode(nodeName, skipRequest = false) {
         if (arrowRxEl) {
             arrowRxEl.innerHTML = `
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.3s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.6s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.9s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.4s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.8s"></i>
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.2s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.6s"></i>
             `;
         }
     }
@@ -753,65 +759,69 @@ function selectNode(nodeName, skipRequest = false) {
 
         if (regularClients.length > 0) {
             const count = regularClients.length;
-            const badge = `<div style='background: rgba(56, 189, 248, 0.1); color: #38bdf8; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>REQ</div>`;
-            const wrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+            const badge = `<div class='comm-badge badge-req'>REQ</div>`;
+            const wrapper = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
                                     ${badge}
-                                    <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; flex-grow: 1;">
-                                        <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); color: #0ea5e9; text-align: center; cursor: pointer;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
+                                    <div class="d-flex flex-column gap-1 flex-grow-1 justify-content-center">
+                                        <span class='conn-topic-badge topic-badge-req text-center cursor-pointer p-2 m-0' onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
                                             ${count} Service Client (Anfrage)
-                                            <i class="fa-solid fa-arrow-down" style="margin-left: 8px; font-size: 0.8em; opacity: 0.7;"></i>
+                                            <i class="fa-solid fa-arrow-down ms-2" style="font-size: 0.8em; opacity: 0.7;"></i>
                                         </span>
                                     </div>
                                   </div>`;
-            connOutHtml += `<div class='conn-card tx-card' style="border-left: 4px solid #0ea5e9;">
-                <span class='card-hz-display' style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.2);">REQ (Client)</span>
-                <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
-                    <span style="display:inline-block; width: 18px; height: 18px; margin-right:8px; background-color: #0ea5e9; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain;"></span>
-                    Service Client (Aufrufe)
-                </span>
-                <div class='topics-wrapper'>${wrapper}</div>
+            connOutHtml += `<div class='conn-card tx-card d-flex flex-column gap-2'>
+                <div class='d-flex justify-content-between align-items-center w-100'>
+                    <span class='conn-node-name m-0' title='Service Client'>
+                        <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #38bdf8; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Client</span>
+                    </span>
+                    <span class='card-hz-display' style="color: #38bdf8; border-color: rgba(14, 165, 233, 0.2);">REQ (Client)</span>
+                </div>
+                <div class='topics-wrapper w-100'>${wrapper}</div>
             </div>`;
         }
 
         if (actionClients.length > 0) {
             const actionCount = Math.max(1, Math.ceil(actionClients.length / 5));
-            const badge = `<div style='background: rgba(239, 68, 68, 0.1); color: #f87171; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>ACT</div>`;
-            const wrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+            const badge = `<div class='comm-badge badge-act'>ACT</div>`;
+            const wrapper = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
                                     ${badge}
-                                    <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; flex-grow: 1;">
-                                        <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; text-align: center; cursor: pointer;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
+                                    <div class="d-flex flex-column gap-1 flex-grow-1 justify-content-center">
+                                        <span class='conn-topic-badge topic-badge-act text-center cursor-pointer p-2 m-0' onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
                                             ${actionCount} Action Client aktiv
-                                            <i class="fa-solid fa-arrow-down" style="margin-left: 8px; font-size: 0.8em; opacity: 0.7;"></i>
+                                            <i class="fa-solid fa-arrow-down ms-2" style="font-size: 0.8em; opacity: 0.7;"></i>
                                         </span>
                                     </div>
                                   </div>`;
-            connOutHtml += `<div class='conn-card tx-card' style="border-left: 4px solid #ef4444;">
-                <span class='card-hz-display' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">REQ (Client)</span>
-                <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
-                    <i class="fa-solid fa-bolt" style="margin-right:8px; color: #ef4444;"></i>
-                    Action Client (Aufrufe)
-                </span>
-                <div class='topics-wrapper'>${wrapper}</div>
+            connOutHtml += `<div class='conn-card tx-card d-flex flex-column gap-2'>
+                <div class='d-flex justify-content-between align-items-center w-100'>
+                    <span class='conn-node-name m-0' title='Action Client'>
+                        <i class="fa-solid fa-bolt me-2" style="color: #ef4444; flex-shrink: 0;"></i><span class="text-truncate">Action Client</span>
+                    </span>
+                    <span class='card-hz-display' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">REQ (Client)</span>
+                </div>
+                <div class='topics-wrapper w-100'>${wrapper}</div>
             </div>`;
         }
 
         // 2. Topic Connections
         if (conns.connectedTo.length > 0) {
             conns.connectedTo.forEach(c => {
-                const topicsBadges = `<div style="display: flex; gap: 8px; align-items: stretch;">
-                                        <div style='background: rgba(245, 158, 11, 0.1); color: #f59e0b; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>SUB</div>
-                                        <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center;">
-                                            ${c.topics.map(t => `<span class='conn-topic-badge' data-topic='${t}' style="margin: 0; padding: 6px 10px;">${t}</span>`).join('')}
+                const topicsBadges = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
+                                        <div class='comm-badge badge-sub'>SUB</div>
+                                        <div class="d-flex flex-column gap-1 justify-content-center w-100">
+                                            ${c.topics.map(t => `<span class='conn-topic-badge p-2 m-0 w-100' data-topic='${t}'>${t}</span>`).join('')}
                                         </div>
                                       </div>`;
                 const cardClass = c.isUnbound ? 'unbound-card tx-card live-trackable' : 'tx-card active-flow-tx live-trackable';
                 const nodeIcon = c.isUnbound
-                    ? '<i class="fa-solid fa-satellite-dish" style="margin-right:8px; color: #64748b;" title="Offener Endpunkt"></i>'
-                    : '<span class="flow-icon-pulse" style="display:inline-block; width: 14px; height: 14px; margin-right:8px; background-color: var(--color-tx); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;" title="Sendet Daten an"></span>';
-                connOutHtml += `<div class='conn-card ${cardClass}' data-topics='${JSON.stringify(c.topics)}'>
-                    <span class='card-hz-display'>-- Hz</span>
-                    <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>${nodeIcon}${c.node}</span>
-                    <div class='topics-wrapper'>${topicsBadges}</div>
+                    ? '<i class="fa-solid fa-satellite-dish me-2" style="color: #64748b;" title="Offener Endpunkt"></i>'
+                    : '<span class="flow-icon-pulse me-2" style="display:inline-block; width: 28px; height: 28px; background-color: var(--color-tx); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;" title="Sendet Daten an"></span>';
+                connOutHtml += `<div class='conn-card ${cardClass} d-flex flex-column gap-2' data-topics='${JSON.stringify(c.topics)}'>
+                    <div class='d-flex justify-content-between align-items-center w-100'>
+                        <span class='conn-node-name m-0' title='${c.node}'>${nodeIcon.replace('>', ' style="flex-shrink: 0;">')}<span class="text-truncate">${c.node}</span></span>
+                        <span class='card-hz-display'>-- Hz</span>
+                    </div>
+                    <div class='topics-wrapper w-100'>${topicsBadges}</div>
                 </div>`;
 
                 c.topics.forEach(t => allRelevantTopics.push({ topic: t, type: "Unbekannt" }));
@@ -827,10 +837,10 @@ function selectNode(nodeName, skipRequest = false) {
         if (arrowTxEl) {
             arrowTxEl.innerHTML = `
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.3s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.6s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.9s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.4s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.8s"></i>
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.2s"></i>
+                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.6s"></i>
             `;
         }
     }
@@ -973,7 +983,7 @@ function selectNode(nodeName, skipRequest = false) {
                 const borderColor = isAction ? 'rgba(239, 68, 68, 0.3)' : 'rgba(56, 189, 248, 0.3)';
                 const labelColor = isAction ? '#f87171' : '#38bdf8';
                 const labelText = isAction ? 'Action Client:' : 'Service Client:';
-                
+
                 return `<div class='topic-item' style='border-color: ${borderColor};'>
                             <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>${labelText}</span><span class="topic-val" title="${c.name}">${c.name}</span></div>
                             <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
@@ -1009,7 +1019,7 @@ function showNodesOverview() {
     // Falls noch keine Nodes geladen sind, zeige großen Spinner
     const nodes = Object.keys(workspaceData.nodes || {});
     const projs = Object.keys(workspaceData.project_files || {});
-    
+
     if (nodes.length === 0 && projs.length === 0) {
         grid.innerHTML = `
             <div class="spinner-container" style="padding-top: 100px;">
@@ -1078,7 +1088,6 @@ function showNodesOverview() {
 }
 
 function refreshNodeGraph() {
-    closeNodeDetails();
     if (!window.ros) return;
     const nodeNames = Object.keys(workspaceData.nodes || {});
     if (nodeNames.length === 0) return;
@@ -1560,7 +1569,7 @@ window.onload = function () {
                         workspaceData.nodes[n].is_actually_running = activeSet.has(n);
                     });
                     updateNodeList();
-                    
+
                     // Auch den Live-Status des gerade angezeigten Nodes im Center updaten
                     const activeLi = document.querySelector('#dynamic-node-list li.active');
                     if (activeLi) {
