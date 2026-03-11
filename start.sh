@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # start.sh - Workspace Launcher
-#Test
+#Test NEU
 #!/bin/bash
 
 # Prüfen, ob das Verzeichnis existiert
