@@ -4,6 +4,7 @@
 #Test NEU push test von lab pc
 # test NEU pull vom repo  
 # test NEUU push von laptop pc
+### TEST TELLI
 #!/bin/bash
 
 # Prüfen, ob das Verzeichnis existiert
@@ -16,9 +17,9 @@ echo "Starte ROS 2 Nodes aus dem Workspace: ~/dev_ws"
 echo "----------------------------------------------"
 
 # Fenster 1:
-#echo "Starte[NODE]: [X-Arm - MOVEIT SERVO für Lite6]"
-#gnome-terminal --geometry=2560x1440 --title="[NODE]: X-Arm MOVEIT SERVO" -- bash -c "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 #add_gripper:=true report_type:=dev; exec bash"
-#sleep 1
+echo "Starte[NODE]: [X-Arm - MOVEIT SERVO für Lite6]"
+gnome-terminal --geometry=2560x1440 --title="[NODE]: X-Arm MOVEIT SERVO" -- bash -c "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 #add_gripper:=true report_type:=dev; exec bash"
+sleep 1
 
 
 # Fenster 2:
