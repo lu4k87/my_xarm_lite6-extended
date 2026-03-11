@@ -27,6 +27,23 @@ git branch -M main
 git push -u origin main</code></pre>
     </div>
     
+    <h3 style="margin-top: 35px; color: var(--accent-primary);">Die wichtigsten Git-Befehle (Push & Pull)</h3>
+    <p style="color: var(--text-secondary);">Führe diese Befehle <strong>immer</strong> aus dem Hauptverzeichnis (<code>~/dev_ws</code>) aus. Deine Ordnerstruktur (wie <code>src/</code>) bleibt dabei automatisch exakt intakt!</p>
+    
+    <h4 style="margin-top: 15px; color: #fff;"><i class="fa-solid fa-cloud-arrow-down" style="margin-right:8px;"></i>PULL (Vom Server laden)</h4>
+    <div class="widget" style="padding: 15px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
+        <pre style="margin: 0; padding: 10px; background: #0f172a; border-radius: 6px;"><code class="language-bash" style="color: #38bdf8;">cd ~/dev_ws
+git pull origin main</code></pre>
+    </div>
+
+    <h4 style="margin-top: 25px; color: #fff;"><i class="fa-solid fa-cloud-arrow-up" style="margin-right:8px;"></i>PUSH (Zum Server senden)</h4>
+    <div class="widget" style="padding: 15px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
+        <pre style="margin: 0; padding: 10px; background: #0f172a; border-radius: 6px;"><code class="language-bash" style="color: #38bdf8;">cd ~/dev_ws
+git add -A
+git commit -m "Hier kurze Beschreibung eintragen"
+git push origin main</code></pre>
+    </div>
+
     <h3 style="margin-top: 35px; color: var(--accent-primary);">Zusammenarbeit mit Antigravity:</h3>
     <p style="color: var(--text-secondary);">Sobald SSH steht, kann Antigravity alles für dich erledigen. Nutze einfach Befehle wie:</p>
     <ul style="color: var(--text-secondary); line-height: 1.8; margin-top: 10px;">
