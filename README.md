@@ -13,6 +13,7 @@ Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github
 | **`ros2_whisper`** | Lokale Speech-to-Text Engine. Nimmt den Audio-Stream des Mikrofons auf und streamt in Echtzeit unformatierte Text-Transkripte in das ROS-Netzwerk. |
 | **`voice_command_listener`** | Subscribt die Rohtexte, wendet Regex-Muster an (z. B. "move to red"), übernimmt das Entprellen (Refractory/Cooldown) und leitet saubere Action-Intents an den Coordinator und das UI weiter. |
 | **`rviz_marker`** | Konvertiert die vom Vision-System erkannten 3D-Koordinaten aus den `PoseArray`-Topics in interaktive Rviz2 Marker zur Live-Visualisierung im 3D-Raum. |
+| **`xarm_moveit_servo`** | (xarm_ros2) Echtzeit-Steuerungskomponente. Verarbeitet kontinuierliche Raum- oder Gelenkgeschwindigkeiten (z.B. vom Gamepad) und streamt diese latenzarm an den Hardware-Controller. |
 | **`websocket`** | Python-Backend des Dashboards. Bietet den `workspace_analyzer`, publiziert Metadaten der aktiven Nodes an JS-Clients und serviert die statischen Webdateien auf Port 8080. |
 | **`rosbridge_server`** | (ROS-Standard) Öffnet einen direkten Websocket-Kanal (Port 9090), über den das JavaScript-Frontend nativ auf ROS 2 Topics und Services zugreifen kann. |
 
