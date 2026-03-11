@@ -22,18 +22,18 @@ Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github
 Das Projekt ist grob in das offizielle xArm-Repository und die eigenen Erweiterungen unterteilt:
 
 ```text
-my_xarm_lite6-extended/
-├── ./                           # Globale Workspace-Launcher (z. B. start.sh, lite6.sh)
-└── src/                         # Quellcode aller Pakete
-    ├── collision_check/         # Kollisionsberechnungen und Environment-Setup
-    ├── motion_sequence/         # Definition komplexer Roboter-Pfade
-    ├── move_to_coordinator/     # Zielkoordinierung für MoveIt 2
-    ├── ros2_whisper/            # Sprachmodelle und Erkennung (Whisper)
-    ├── rviz_marker/             # Rviz2 Visualisierungs-Tools
-    ├── voice_command_listener/  # Verarbeitung der erkannten Voice-Commands
-    ├── websocket/               # Dashboard UI System & Workspace Analyzer
-    ├── xarm_ros2/               # Offizielle Pakete der xArm-Developer
-    └── yolo_object_detector/    # YOLO Integration & Computer Vision
+/dev_ws/
+    ├── start.sh                     # Globale Workspace-Launcher (z. B. start.sh, lite6.sh)
+    └── src/                         # Quellcode aller Pakete
+        ├── collision_check/         # Kollisionsberechnungen und Environment-Setup
+        ├── motion_sequence/         # Definition komplexer Roboter-Pfade
+        ├── move_to_coordinator/     # Zielkoordinierung für MoveIt 2
+        ├── ros2_whisper/            # Sprachmodelle und Erkennung (Whisper)
+        ├── rviz_marker/             # Rviz2 Visualisierungs-Tools
+        ├── voice_command_listener/  # Verarbeitung der erkannten Voice-Commands
+        ├── websocket/               # Dashboard UI System & Workspace Analyzer
+        ├── xarm_ros2/               # Offizielle Pakete der xArm-Developer
+        └── yolo_object_detector/    # YOLO Integration & Computer Vision
 ```
 
 ## 🛠️ Voraussetzungen
