@@ -6,15 +6,15 @@ Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github
 
 | Paket / Node | Funktion |
 | :--- | :--- |
-| **`yolo_object_detector`** | Erkennt Objekte im Kamerabild via YOLO und publiziert transformierte 3D-Koordinaten. |
-| **`collision_check`** | Erstellt programmgesteuert statische Kollisionsobjekte (z. B. Tische) im MoveIt Planning Scene. |
-| **`motion_sequence`** | Reiht komplexe Bewegungsabläufe (Wegpunkte und Greifer-Aktionen) in Sequenzen aneinander. |
-| **`move_to_coordinator`** | Empfängt Zielkoordinaten und plant Gelenk-Bewegungen für den Roboterarm über MoveIt 2. |
-| **`ros2_whisper`** | Nimmt Audiosignale auf und übersetzt Sprache mithilfe von WhisperAI lokal in Rohtext. |
-| **`voice_command_listener`** | Wertet Sprachtext aus und löst konkrete Roboter-Aktionen aus (z. B. "Gehe zur Grundposition"). |
-| **`rviz_marker`** | Visualisiert erkannte Objekte und Zielpositionen als interaktive 3D-Marker in RViz2. |
-| **`websocket`** | Hostet das Web-Dashboard und streamt Workspace-Metadaten via Websocket an den Browser. |
-| **`rosbridge_server`** | Bindeglied (Tunnel), das die bidirektionale Kommunikation via Websocket in das ROS 2-System ermöglicht. |
+| **`yolo_object_detector`** | Erkennt trainierte Objekte und ArUco-Marker im Kamerastream (YOLO), berechnet deren 3D-Bodenkoordinaten über eine Homographie-Matrix und publiziert diese als `PoseArray`. |
+| **`collision_check`** | Überwacht die Z-Position des Endeffektors und Gamepad-Eingaben. Berechnet vorausschauend die Trajektorie und blockiert Abwärtsbewegungen (Trigger) vor Erreichen des Tisches (Z-Limit: 96.5mm). |
+| **`motion_sequence`** | Führt asynchrone Bewegungsabläufe aus. Übernimmt das sichere Umschalten der xArm-Controller-Zustände (Servo, POSE-Mode) für saubere Transitionen bei direkter Koordinatenansteuerung. |
+| **`move_to_coordinator`** | Zentraler Logik-Knotenpunkt: Verbindet Sprachbefehle mit den 3D-Koordinaten aus dem Vision-System, managt Queues/Timeouts und sendet die finalen Fahrbefehle an die `motion_sequence`. |
+| **`ros2_whisper`** | Lokale Speech-to-Text Engine. Nimmt den Audio-Stream des Mikrofons auf und streamt in Echtzeit unformatierte Text-Transkripte in das ROS-Netzwerk. |
+| **`voice_command_listener`** | Subscribt die Rohtexte, wendet Regex-Muster an (z. B. "move to red"), übernimmt das Entprellen (Refractory/Cooldown) und leitet saubere Action-Intents an den Coordinator und das UI weiter. |
+| **`rviz_marker`** | Konvertiert die vom Vision-System erkannten 3D-Koordinaten aus den `PoseArray`-Topics in interaktive Rviz2 Marker zur Live-Visualisierung im 3D-Raum. |
+| **`websocket`** | Python-Backend des Dashboards. Bietet den `workspace_analyzer`, publiziert Metadaten der aktiven Nodes an JS-Clients und serviert die statischen Webdateien auf Port 8080. |
+| **`rosbridge_server`** | (ROS-Standard) Öffnet einen direkten Websocket-Kanal (Port 9090), über den das JavaScript-Frontend nativ auf ROS 2 Topics und Services zugreifen kann. |
 
 ## 📂 Repository-Struktur
 
