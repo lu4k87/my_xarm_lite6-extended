@@ -4,13 +4,17 @@ Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github
 
 ## 🚀 Kernfunktionen & Integrationen
 
-| Modul | Beschreibung | Technologie |
-| :--- | :--- | :--- |
-| **Vision & Objekterkennung** | Erkennung von spezifischen Objekten im Sichtfeld der Kamera mittels eines eigenen `custom_model`. | YOLO (`yolo_object_detector`) |
-| **Roboterbewegung & Kollision** | Koordinierung komplexer Bewegungsabläufe und Kollisionsvermeidung in Rviz2. | MoveIt 2 (`collision_check`, `move_to_coordinator`) |
-| **Sprachsteuerung** | Intuitive Interaktion und Befehlseingabe über natürliche Sprache. | WhisperAI (`ros2_whisper`, `voice_command_listener`) |
-| **Web-Integration** | Bidirektionale Websocket-Kommunikation zwischen dem ROS 2-System und externen Web-Clients. | ROS Bridge (`rosbridge_server`) |
-| **Dashboard & UI** | Ein benutzerfreundliches Web-Interface zur Systemüberwachung sowie ein Knoten-Explorer und Teleoperations-System. | HTML/JS / Python (`websocket`) |
+| Paket / Node | Funktion |
+| :--- | :--- |
+| **`yolo_object_detector`** | Erkennt Objekte im Kamerabild via YOLO und publiziert transformierte 3D-Koordinaten. |
+| **`collision_check`** | Erstellt programmgesteuert statische Kollisionsobjekte (z. B. Tische) im MoveIt Planning Scene. |
+| **`motion_sequence`** | Reiht komplexe Bewegungsabläufe (Wegpunkte und Greifer-Aktionen) in Sequenzen aneinander. |
+| **`move_to_coordinator`** | Empfängt Zielkoordinaten und plant Gelenk-Bewegungen für den Roboterarm über MoveIt 2. |
+| **`ros2_whisper`** | Nimmt Audiosignale auf und übersetzt Sprache mithilfe von WhisperAI lokal in Rohtext. |
+| **`voice_command_listener`** | Wertet Sprachtext aus und löst konkrete Roboter-Aktionen aus (z. B. "Gehe zur Grundposition"). |
+| **`rviz_marker`** | Visualisiert erkannte Objekte und Zielpositionen als interaktive 3D-Marker in RViz2. |
+| **`websocket`** | Hostet das Web-Dashboard und streamt Workspace-Metadaten via Websocket an den Browser. |
+| **`rosbridge_server`** | Bindeglied (Tunnel), das die bidirektionale Kommunikation via Websocket in das ROS 2-System ermöglicht. |
 
 ## 📂 Repository-Struktur
 
@@ -72,13 +76,13 @@ Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert 
 
 Der Workspace wird bevorzugt über die globalen Shell-Skripte im Hauptverzeichnis gestartet, die das Dashboard hochziehen und die ROS-Umgebung vorbereiten.
 
-* **Gesamtes System & UI starten (Simulation/Fake):** 
+* **Gesamtes System starten (Simulation/Fake):** 
   ```bash
-  ./start_test.sh
+  ./start.sh
   ```
   *(Startet den lokalen Webserver, die ROS Bridge, den Analyzer und den MoveIt Servo in einer Mock-Umgebung für Entwicklungs-Checks).*
 
-* **Echten Lite6 Roboter & UI starten:** 
+* **Echten Lite6 Roboter starten:** 
   ```bash
   ./lite6.sh
   ```
