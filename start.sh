@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # start.sh - Workspace Launcher
-#Test NEU puh test von lab pc
+#Test NEU push test von lab pc
+# test NEU pull vom repo 
 #!/bin/bash
 
 # Prüfen, ob das Verzeichnis existiert
