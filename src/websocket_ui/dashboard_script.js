@@ -639,40 +639,72 @@ function selectNode(nodeName, skipRequest = false) {
 
     if (flowInEl) {
         let connInHtml = '';
-        if (conns.connectedFrom.length === 0) {
-            const checkNodeName = nodeName.startsWith('/') ? nodeName.substring(1) : nodeName;
-            if (HARDWARE_INPUT_NODES.includes(checkNodeName)) {
-                connInHtml = `<div class='conn-card unbound-card rx-card'>
-                    <span class='card-hz-display'>Local OS</span>
-                    <span class='conn-node-name'>
-                        <i class="fa-brands fa-linux" style="margin-right:8px; color: #94a3b8;" title="OS-Ebene Input"></i>Input-Stream Linux-Systemebene
-                        <i class="fa-solid fa-circle-info tooltip-trigger" style="margin-left:8px; color: var(--color-warning); font-size: 0.9em;" 
-                           title="Dieser Node empfängt Daten direkt von der Hardware (z.B. Tastatur/Gamepad) über das Betriebssystem und nicht über das ROS-Netzwerk."></i>
+        
+        // 1. Hardware Input (Special Case)
+        const checkNodeName = nodeName.startsWith('/') ? nodeName.substring(1) : nodeName;
+        if (HARDWARE_INPUT_NODES.includes(checkNodeName)) {
+            connInHtml += `<div class='conn-card unbound-card rx-card'>
+                <span class='card-hz-display'>Local OS</span>
+                <span class='conn-node-name'>
+                    <i class="fa-brands fa-linux" style="margin-right:8px; color: #94a3b8;" title="OS-Ebene Input"></i>Input-Stream Linux-Systemebene
+                    <i class="fa-solid fa-circle-info tooltip-icon" style="margin-left:8px; color: var(--color-warning); font-size: 0.9em;" 
+                       title="Dieser Node empfängt Daten direkt von der Hardware (z.B. Tastatur/Gamepad) über das Betriebssystem und nicht über das ROS-Netzwerk."></i>
+                </span>
+            </div>`;
+        }
+
+        // 2. Grouped Services / Action Servers (Incoming)
+        if (data.services && data.services.length > 0) {
+            const actionServers = data.services.filter(s => s.name.includes('/_action/'));
+            const regularServices = data.services.filter(s => !s.name.includes('/_action/'));
+
+            if (regularServices.length > 0) {
+                const count = regularServices.length;
+                const badge = `<div style='background: rgba(139, 92, 246, 0.1); color: #a78bfa; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>RES</div>`;
+                const wrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+                                    ${badge}
+                                    <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; flex-grow: 1;">
+                                        <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); color: #c084fc; text-align: center; cursor: pointer;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
+                                            ${count} Service Server (bereitgestellt)
+                                            <i class="fa-solid fa-arrow-down" style="margin-left: 8px; font-size: 0.8em; opacity: 0.7;"></i>
+                                        </span>
+                                    </div>
+                                  </div>`;
+                connInHtml += `<div class='conn-card rx-card' style="border-left: 4px solid #8b5cf6;">
+                    <span class='card-hz-display' style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2);">RES (Server)</span>
+                    <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
+                        <span style="display:inline-block; width: 18px; height: 18px; margin-right:8px; background-color: #8b5cf6; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain;"></span>
+                        Service Server (Bereitgestellt)
                     </span>
+                    <div class='topics-wrapper'>${wrapper}</div>
                 </div>`;
-            } else if (data.services && data.services.length > 0) {
-                // Zeige Services (Eingehend) falls keine Topic-Eingänge
-                data.services.forEach(s => {
-                    const serviceBadge = `<div style='background: rgba(139, 92, 246, 0.1); color: #a78bfa; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>SRV</div>`;
-                    const topicsWrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
-                                            ${serviceBadge}
-                                            <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center;">
-                                                <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); color: #c084fc;">${s.name}</span>
-                                            </div>
-                                          </div>`;
-                    connInHtml += `<div class='conn-card rx-card' style="border-left: 4px solid #8b5cf6;">
-                        <span class='card-hz-display' style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2);">Hosted Service</span>
-                        <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
-                            <span style="display:inline-block; width: 18px; height: 18px; margin-right:8px; background-color: #8b5cf6; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain;"></span>
-                            Eingehender Service-Provider
-                        </span>
-                        <div class='topics-wrapper'>${topicsWrapper}</div>
-                    </div>`;
-                });
-            } else {
-                connInHtml = "<div style='color:#64748b; font-style:italic; text-align:center; padding: 20px;'>Empfängt keine Daten!</div>";
             }
-        } else {
+
+            if (actionServers.length > 0) {
+                const actionCount = Math.max(1, Math.ceil(actionServers.length / 5));
+                const badge = `<div style='background: rgba(239, 68, 68, 0.1); color: #f87171; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>ACT</div>`;
+                const wrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+                                    ${badge}
+                                    <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; flex-grow: 1;">
+                                        <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; text-align: center; cursor: pointer;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
+                                            ${actionCount} Action Server aktiv
+                                            <i class="fa-solid fa-arrow-down" style="margin-left: 8px; font-size: 0.8em; opacity: 0.7;"></i>
+                                        </span>
+                                    </div>
+                                  </div>`;
+                connInHtml += `<div class='conn-card rx-card' style="border-left: 4px solid #ef4444;">
+                    <span class='card-hz-display' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">RES (Server)</span>
+                    <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
+                        <i class="fa-solid fa-bolt" style="margin-right:8px; color: #ef4444;"></i>
+                        Action Server (Bereitgestellt)
+                    </span>
+                    <div class='topics-wrapper'>${wrapper}</div>
+                </div>`;
+            }
+        }
+
+        // 3. Topic Connections
+        if (conns.connectedFrom.length > 0) {
             conns.connectedFrom.forEach(c => {
                 const topicsBadges = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
                                         <div style='background: rgba(16, 185, 129, 0.1); color: #34d399; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>PUB</div>
@@ -694,6 +726,11 @@ function selectNode(nodeName, skipRequest = false) {
                 c.topics.forEach(t => allRelevantTopics.push({ topic: t, type: "Unbekannt" }));
             });
         }
+
+        if (connInHtml === '') {
+            connInHtml = "<div style='color:#64748b; font-style:italic; text-align:center; padding: 20px;'>Empfängt keine Daten!</div>";
+        }
+
         flowInEl.innerHTML = connInHtml;
         const arrowRxEl = document.querySelector('.flow-arrow.color-rx');
         if (arrowRxEl) {
@@ -709,30 +746,57 @@ function selectNode(nodeName, skipRequest = false) {
 
     if (flowOutEl) {
         let connOutHtml = '';
-        if (conns.connectedTo.length === 0) {
-            if (data.clients && data.clients.length > 0) {
-                // Zeige Clients (Ausgehend) falls keine Topic-Ausgänge
-                data.clients.forEach(c => {
-                    const clientBadge = `<div style='background: rgba(139, 92, 246, 0.1); color: #a78bfa; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.3); display: flex; align-items: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>REQ</div>`;
-                    const topicsWrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
-                                            ${clientBadge}
-                                            <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center;">
-                                                <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); color: #c084fc;">${c.name}</span>
-                                            </div>
-                                          </div>`;
-                    connOutHtml += `<div class='conn-card tx-card' style="border-left: 4px solid #8b5cf6;">
-                        <span class='card-hz-display' style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2);">Service</span>
-                        <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
-                            <span style="display:inline-block; width: 18px; height: 18px; margin-right:8px; background-color: #8b5cf6; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain;"></span>
-                            Ausgehender Service-Aufruf
-                        </span>
-                        <div class='topics-wrapper'>${topicsWrapper}</div>
-                    </div>`;
-                });
-            } else {
-                connOutHtml = "<div style='color:#64748b; font-style:italic; text-align:center; padding: 20px;'>Sendet keine Daten!</div>";
-            }
-        } else {
+
+        // 1. Grouped Service Clients / Action Clients (Outgoing)
+        const actionClients = (data.clients || []).filter(c => c.name.includes('/_action/'));
+        const regularClients = (data.clients || []).filter(c => !c.name.includes('/_action/'));
+
+        if (regularClients.length > 0) {
+            const count = regularClients.length;
+            const badge = `<div style='background: rgba(56, 189, 248, 0.1); color: #38bdf8; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>REQ</div>`;
+            const wrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+                                    ${badge}
+                                    <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; flex-grow: 1;">
+                                        <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); color: #0ea5e9; text-align: center; cursor: pointer;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
+                                            ${count} Service Client (Anfrage)
+                                            <i class="fa-solid fa-arrow-down" style="margin-left: 8px; font-size: 0.8em; opacity: 0.7;"></i>
+                                        </span>
+                                    </div>
+                                  </div>`;
+            connOutHtml += `<div class='conn-card tx-card' style="border-left: 4px solid #0ea5e9;">
+                <span class='card-hz-display' style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.2);">REQ (Client)</span>
+                <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
+                    <span style="display:inline-block; width: 18px; height: 18px; margin-right:8px; background-color: #0ea5e9; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain;"></span>
+                    Service Client (Aufrufe)
+                </span>
+                <div class='topics-wrapper'>${wrapper}</div>
+            </div>`;
+        }
+
+        if (actionClients.length > 0) {
+            const actionCount = Math.max(1, Math.ceil(actionClients.length / 5));
+            const badge = `<div style='background: rgba(239, 68, 68, 0.1); color: #f87171; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>ACT</div>`;
+            const wrapper = `<div style="display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px;">
+                                    ${badge}
+                                    <div style="display: flex; flex-direction: column; gap: 4px; justify-content: center; flex-grow: 1;">
+                                        <span class='conn-topic-badge' style="margin: 0; padding: 6px 10px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; text-align: center; cursor: pointer;" onclick="document.getElementById('nd-services-section').scrollIntoView({behavior: 'smooth'})">
+                                            ${actionCount} Action Client aktiv
+                                            <i class="fa-solid fa-arrow-down" style="margin-left: 8px; font-size: 0.8em; opacity: 0.7;"></i>
+                                        </span>
+                                    </div>
+                                  </div>`;
+            connOutHtml += `<div class='conn-card tx-card' style="border-left: 4px solid #ef4444;">
+                <span class='card-hz-display' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">REQ (Client)</span>
+                <span class='conn-node-name' style='margin-bottom: 12px; margin-top: 0;'>
+                    <i class="fa-solid fa-bolt" style="margin-right:8px; color: #ef4444;"></i>
+                    Action Client (Aufrufe)
+                </span>
+                <div class='topics-wrapper'>${wrapper}</div>
+            </div>`;
+        }
+
+        // 2. Topic Connections
+        if (conns.connectedTo.length > 0) {
             conns.connectedTo.forEach(c => {
                 const topicsBadges = `<div style="display: flex; gap: 8px; align-items: stretch;">
                                         <div style='background: rgba(245, 158, 11, 0.1); color: #f59e0b; font-weight: bold; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.9rem; font-family: "JetBrains Mono", monospace;'>SUB</div>
@@ -753,6 +817,11 @@ function selectNode(nodeName, skipRequest = false) {
                 c.topics.forEach(t => allRelevantTopics.push({ topic: t, type: "Unbekannt" }));
             });
         }
+
+        if (connOutHtml === '') {
+            connOutHtml = "<div style='color:#64748b; font-style:italic; text-align:center; padding: 20px;'>Sendet keine Daten!</div>";
+        }
+
         flowOutEl.innerHTML = connOutHtml;
         const arrowTxEl = document.querySelector('.flow-arrow.color-tx');
         if (arrowTxEl) {
@@ -878,10 +947,15 @@ function selectNode(nodeName, skipRequest = false) {
             srvsContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Services bereitgestellt</div>";
         } else {
             srvsContainer.innerHTML = validSrvs.map(s => {
+                const isAction = s.name.includes('/_action/');
                 const typeStr = (s.types && s.types.length > 0) ? s.types.join(', ') : "Unbekannt";
-                return `<div class='topic-item' style='border-color: rgba(168, 85, 247, 0.3);'>
-                            <div class="topic-info-row"><span class="topic-lbl" style='color: #a855f7;'>Service:</span><span class="topic-val" title="${s.name}">${s.name}</span></div>
-                            <div class="topic-info-row"><span class="topic-lbl" style='color: #a855f7;'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
+                const borderColor = isAction ? 'rgba(239, 68, 68, 0.3)' : 'rgba(168, 85, 247, 0.3)';
+                const labelColor = isAction ? '#f87171' : '#a855f7';
+                const labelText = isAction ? 'Action Server:' : 'Service Server:';
+
+                return `<div class='topic-item' style='border-color: ${borderColor};'>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>${labelText}</span><span class="topic-val" title="${s.name}">${s.name}</span></div>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
                         </div>`;
             }).join('');
         }
@@ -889,15 +963,20 @@ function selectNode(nodeName, skipRequest = false) {
 
     const cliContainer = document.getElementById('nd-clients');
     if (cliContainer) {
-        const validCli = (data.clients || []);
-        if (validCli.length === 0) {
+        const clients = (data.clients || []);
+        if (clients.length === 0) {
             cliContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Clients vorhanden</div>";
         } else {
-            cliContainer.innerHTML = validCli.map(c => {
+            cliContainer.innerHTML = clients.map(c => {
+                const isAction = c.name.includes('/_action/');
                 const typeStr = (c.types && c.types.length > 0) ? c.types.join(', ') : "Unbekannt";
-                return `<div class='topic-item' style='border-color: rgba(56, 189, 248, 0.3);'>
-                            <div class="topic-info-row"><span class="topic-lbl" style='color: #38bdf8;'>Client:</span><span class="topic-val" title="${c.name}">${c.name}</span></div>
-                            <div class="topic-info-row"><span class="topic-lbl" style='color: #38bdf8;'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
+                const borderColor = isAction ? 'rgba(239, 68, 68, 0.3)' : 'rgba(56, 189, 248, 0.3)';
+                const labelColor = isAction ? '#f87171' : '#38bdf8';
+                const labelText = isAction ? 'Action Client:' : 'Service Client:';
+                
+                return `<div class='topic-item' style='border-color: ${borderColor};'>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>${labelText}</span><span class="topic-val" title="${c.name}">${c.name}</span></div>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
                         </div>`;
             }).join('');
         }
