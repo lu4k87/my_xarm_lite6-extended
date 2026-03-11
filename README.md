@@ -23,8 +23,8 @@ Das Projekt ist grob in das offizielle xArm-Repository und die eigenen Erweiteru
 
 ```text
 my_xarm_lite6-extended/
-├── ./                  # Globale Workspace-Launcher (z. B. start.sh, lite6.sh)
-└── src/                # Quellcode aller Pakete
+├── ./                           # Globale Workspace-Launcher (z. B. start.sh, lite6.sh)
+└── src/                         # Quellcode aller Pakete
     ├── collision_check/         # Kollisionsberechnungen und Environment-Setup
     ├── motion_sequence/         # Definition komplexer Roboter-Pfade
     ├── move_to_coordinator/     # Zielkoordinierung für MoveIt 2
@@ -40,11 +40,11 @@ my_xarm_lite6-extended/
 
 Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert sind:
 
-* **OS:** Ubuntu 22.04
+* **OS:** Ubuntu 22.04.5 (Jammy Jellyfish)
 * **ROS:** ROS 2 Humble
 * **Python:** Python 3.10+
 * **Zusätzliche Bibliotheken:**
-    * `ultralytics` (für YOLO)
+    * `ultralytics` (für YOLO Object Detection) x.x
     * `opencv-python` (für die Bildverarbeitung)
     * `openai-whisper` (für die Spracherkennung)
     * `rosbridge_suite` (für die Websocket-Kommunikation)
@@ -76,6 +76,8 @@ Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert 
 ## 🎮 Nutzung & Launch
 
 Der Workspace wird bevorzugt über die globalen Shell-Skripte im Hauptverzeichnis gestartet, die das Dashboard hochziehen und die ROS-Umgebung vorbereiten.
+
+- (.sh) hier werdern die Ros2 Nodes gestartet und die Websocket-Kommunikation aufgebaut
 
 * **Gesamtes System starten (Simulation/Fake):** 
   ```bash
