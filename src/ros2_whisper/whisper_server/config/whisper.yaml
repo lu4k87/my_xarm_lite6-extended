@@ -26,13 +26,12 @@ whisper:
         #   speech_pad_ms: 100
 
         print_progress: false
-        n_threads: 4
+        n_threads: 8
 
       cparams:
-        flash_attn: true
-        gpu_device: 0
-        use_gpu: true
+        flash_attn: false
+        use_gpu: false
 
       # Reaktionsfreudigkeit (kannst Du feinjustieren)
       buffer_capacity: 8        # kleiner = schnellere Entscheidungen (z.B. 6–10)
-      callback_ms: 250          # häufigere Rückmeldungen (z.B. 200–300 ms)
+      callback_ms: 3000         # CPU braucht ~2-3s pro Inference, daher 3000ms
