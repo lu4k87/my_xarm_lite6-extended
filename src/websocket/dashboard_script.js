@@ -685,6 +685,10 @@ function selectNode(nodeName, skipRequest = false) {
 
             if (actionServers.length > 0) {
                 const actionCount = Math.max(1, Math.ceil(actionServers.length / 5));
+                // Derive unique feedback topics from server-side _action entries
+                const actionFeedbackTopics = [...new Set(
+                    actionServers.map(s => s.name.replace(/\/_action\/.*$/, '/_action/feedback'))
+                )];
                 const badge = `<div class='comm-badge badge-act'>ACT</div>`;
                 const wrapper = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
                                     ${badge}
@@ -695,15 +699,18 @@ function selectNode(nodeName, skipRequest = false) {
                                         </span>
                                     </div>
                                   </div>`;
-                connInHtml += `<div class='conn-card rx-card d-flex flex-column gap-2'>
+                connInHtml += `<div class='conn-card rx-card action-trackable d-flex flex-column gap-2' data-action-feedback='${JSON.stringify(actionFeedbackTopics)}'>
                     <div class='d-flex justify-content-between align-items-center w-100'>
                         <span class='conn-node-name m-0' title='Action Server'>
                             <i class="fa-solid fa-bolt me-2" style="color: #ef4444; flex-shrink: 0;"></i><span class="text-truncate">Action Server</span>
                         </span>
-                        <span class='card-hz-display' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">RES (Server)</span>
+                        <span class='card-hz-display action-hz' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">RES (Server)</span>
                     </div>
                     <div class='topics-wrapper w-100'>${wrapper}</div>
                 </div>`;
+
+                // Add feedback topics to the global tracker
+                actionFeedbackTopics.forEach(t => allRelevantTopics.push({ topic: t, type: 'Unbekannt' }));
             }
         }
 
@@ -782,6 +789,10 @@ function selectNode(nodeName, skipRequest = false) {
 
         if (actionClients.length > 0) {
             const actionCount = Math.max(1, Math.ceil(actionClients.length / 5));
+            // Derive unique action base names, e.g. '/whisper/inference' from '/whisper/inference/_action/send_goal'
+            const actionFeedbackTopics = [...new Set(
+                actionClients.map(c => c.name.replace(/\/_action\/.*$/, '/_action/feedback'))
+            )];
             const badge = `<div class='comm-badge badge-act'>ACT</div>`;
             const wrapper = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
                                     ${badge}
@@ -792,15 +803,18 @@ function selectNode(nodeName, skipRequest = false) {
                                         </span>
                                     </div>
                                   </div>`;
-            connOutHtml += `<div class='conn-card tx-card d-flex flex-column gap-2'>
+            connOutHtml += `<div class='conn-card tx-card action-trackable d-flex flex-column gap-2' data-action-feedback='${JSON.stringify(actionFeedbackTopics)}'>
                 <div class='d-flex justify-content-between align-items-center w-100'>
                     <span class='conn-node-name m-0' title='Action Client'>
                         <i class="fa-solid fa-bolt me-2" style="color: #ef4444; flex-shrink: 0;"></i><span class="text-truncate">Action Client</span>
                     </span>
-                    <span class='card-hz-display' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">REQ (Client)</span>
+                    <span class='card-hz-display action-hz' style="color: #f87171; border-color: rgba(239, 68, 68, 0.2);">REQ (Client)</span>
                 </div>
                 <div class='topics-wrapper w-100'>${wrapper}</div>
             </div>`;
+
+            // Add feedback topics to the global tracker
+            actionFeedbackTopics.forEach(t => allRelevantTopics.push({ topic: t, type: 'Unbekannt' }));
         }
 
         // 2. Topic Connections
@@ -1278,7 +1292,7 @@ window.openInExplorer = function (path) {
     if (!path || path.includes('Pfad unbekannt') || path.includes('System')) return;
 
     if (!window.openExplorerPub) {
-        window.openExplorerPub = new ROSLIB.Topic({ ros: window.ros, name: '/ui/request_open_explorer', messageType: 'std_msgs/String' });
+        window.openExplorerPub = new ROSLIB.Topic({ ros: window.ros, name: '/dashboard/request_open_explorer', messageType: 'std_msgs/String' });
     }
     window.openExplorerPub.publish(new ROSLIB.Message({ data: path.trim() }));
 };
@@ -1539,11 +1553,11 @@ window.onload = function () {
         }
     }, 2000);
 
-    codeRequestPub = new ROSLIB.Topic({ ros: ros, name: '/ui/request_file_content', messageType: 'std_msgs/String' });
+    codeRequestPub = new ROSLIB.Topic({ ros: ros, name: '/dashboard/request_file_content', messageType: 'std_msgs/String' });
     nodeDetailReqPub = new ROSLIB.Topic({ ros: ros, name: '/ui/request_node_details', messageType: 'std_msgs/String' });
-    window.openExplorerPub = new ROSLIB.Topic({ ros: window.ros, name: '/ui/request_open_explorer', messageType: 'std_msgs/String' });
+    window.openExplorerPub = new ROSLIB.Topic({ ros: window.ros, name: '/dashboard/request_open_explorer', messageType: 'std_msgs/String' });
 
-    new ROSLIB.Topic({ ros: ros, name: '/ui/file_content', messageType: 'std_msgs/String' }).subscribe((msg) => {
+    new ROSLIB.Topic({ ros: ros, name: '/dashboard/file_content', messageType: 'std_msgs/String' }).subscribe((msg) => {
         try {
             const response = JSON.parse(msg.data);
             if (response.path === currentRequestedPath || response.original_request === currentRequestedPath) {
@@ -1655,7 +1669,7 @@ window.onload = function () {
     };
 
     // Sub to see live data and animate CSS classes
-    window.topicActivityPub = new ROSLIB.Topic({ ros: ros, name: '/ui/request_topic_activity', messageType: 'std_msgs/String' });
+    window.topicActivityPub = new ROSLIB.Topic({ ros: ros, name: '/dashboard/request_topic_activity', messageType: 'std_msgs/String' });
 
     new ROSLIB.Topic({ ros: ros, name: '/dashboard/topic_activity', messageType: 'std_msgs/String' }).subscribe((msg) => {
         try {
@@ -1692,6 +1706,41 @@ window.onload = function () {
                     card.classList.add('live-pulsing');
                 } else {
                     card.classList.remove('live-pulsing');
+                }
+            });
+
+            // --- Action Activity: Red pulse for action cards ---
+            document.querySelectorAll('.action-trackable').forEach(card => {
+                let actionActive = false;
+                let maxActionHz = 0;
+                try {
+                    const feedbackTopics = JSON.parse(card.dataset.actionFeedback || '[]');
+                    feedbackTopics.forEach(t => {
+                        const activity = data[t];
+                        if (activity) {
+                            if (activity.hz > maxActionHz) maxActionHz = activity.hz;
+                            if (activity.active) actionActive = true;
+                        }
+                    });
+                } catch (e) { }
+
+                const hzEl = card.querySelector('.action-hz');
+                if (hzEl) {
+                    if (maxActionHz > 0) {
+                        hzEl.textContent = `${maxActionHz} Hz`;
+                        hzEl.style.fontWeight = '700';
+                    } else {
+                        // Restore label when idle
+                        hzEl.textContent = card.classList.contains('tx-card') ? 'REQ (Client)' : 'RES (Server)';
+                        hzEl.style.fontWeight = '';
+                    }
+                }
+
+                if (actionActive) {
+                    card.classList.add('action-pulsing');
+                    card.classList.remove('live-pulsing');
+                } else {
+                    card.classList.remove('action-pulsing');
                 }
             });
 

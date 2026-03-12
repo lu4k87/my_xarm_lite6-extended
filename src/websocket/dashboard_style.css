@@ -1418,6 +1418,25 @@ body {
     }
 }
 
+/* --- Action Activity: Red Pulse (distinct from green topic pulse) --- */
+.action-trackable.action-pulsing {
+    animation: pulse-glow-action 1.2s infinite alternate;
+}
+
+@keyframes pulse-glow-action {
+    0% {
+        box-shadow: 0 0 5px rgba(239, 68, 68, 0.1);
+        background: rgba(239, 68, 68, 0.03);
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    100% {
+        box-shadow: 0 0 22px rgba(239, 68, 68, 0.55);
+        background: rgba(239, 68, 68, 0.10);
+        border-color: #ef4444;
+    }
+}
+
 .flow-center {
     flex: 0 0 auto;
     justify-content: center;

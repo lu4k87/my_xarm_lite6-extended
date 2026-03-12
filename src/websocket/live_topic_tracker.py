@@ -9,7 +9,7 @@ from rosidl_runtime_py.utilities import get_message
 class LiveTopicTracker(Node):
     def __init__(self):
         super().__init__('live_topic_tracker')
-        self.cmd_sub = self.create_subscription(String, '/ui/request_topic_activity', self.handle_request, 10)
+        self.cmd_sub = self.create_subscription(String, '/dashboard/request_topic_activity', self.handle_request, 10)
         self.activity_pub = self.create_publisher(String, '/dashboard/topic_activity', 10)
         
         self.tracked_topics = []

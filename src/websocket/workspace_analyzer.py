@@ -17,9 +17,9 @@ class WorkspaceAnalyzer(Node):
         super().__init__('workspace_analyzer')
         
         self.publisher_ = self.create_publisher(String, '/dashboard/workspace_metadata', 10)
-        self.code_req_sub = self.create_subscription(String, '/ui/request_file_content', self.handle_code_request, 10)
-        self.code_pub = self.create_publisher(String, '/ui/file_content', 10)
-        self.explorer_sub = self.create_subscription(String, '/ui/request_open_explorer', self.handle_open_explorer, 10)
+        self.code_req_sub = self.create_subscription(String, '/dashboard/request_file_content', self.handle_code_request, 10)
+        self.code_pub = self.create_publisher(String, '/dashboard/file_content', 10)
+        self.explorer_sub = self.create_subscription(String, '/dashboard/request_open_explorer', self.handle_open_explorer, 10)
         
         self.workspace_path = os.path.expanduser('~/dev_ws/src')
         self.base_ws_path = os.path.expanduser('~/dev_ws')
@@ -44,7 +44,7 @@ class WorkspaceAnalyzer(Node):
         self.last_cli_update = 0
         
         # Topic Activity
-        self.cmd_sub = self.create_subscription(String, '/ui/request_topic_activity', self.handle_activity_request, 10)
+        self.cmd_sub = self.create_subscription(String, '/dashboard/request_topic_activity', self.handle_activity_request, 10)
         self.activity_pub = self.create_publisher(String, '/dashboard/topic_activity', 10)
         self.activity_timer = self.create_timer(0.5, self.publish_activity)
 
