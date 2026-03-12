@@ -8,26 +8,22 @@ let currentRequestedPath = "";
 
 let expandedFolders = new Set(['dev_ws/src']);
 
-let loadingCountdown = 5;
-let isLoadingLock = true;
+function wrapNodeTooltip(name, customClass = "") {
+    // Falls Name > 20 Zeichen, Tooltip-Struktur verwenden (außer bei Hardware-Input)
+    if (name.length > 20 && name !== "Input-Stream Linux-Systemebene") {
+        return `<div class="tooltip-container ${customClass}">
+                    <span class="text-truncate">${name}</span>
+                    <div class="tooltip-text tooltip-text-node">${name}</div>
+                </div>`;
+    }
+    return `<span class="text-truncate ${customClass}">${name}</span>`;
+}
+
+let loadingCountdown = 0;
+let isLoadingLock = false;
 
 function startLoadingTimer() {
-    const countdownInterval = setInterval(() => {
-        if (loadingCountdown > 0) {
-            loadingCountdown--;
-            const timerEl = document.getElementById('loading-timer');
-            if (timerEl) timerEl.textContent = loadingCountdown;
-        } else {
-            isLoadingLock = false;
-            clearInterval(countdownInterval);
-            // Wenn der Timer abgelaufen ist, rendern wir die (im Hintergrund empfangenen) Daten
-            if (Object.keys(workspaceData).length > 0) {
-                updateNodeList();
-                if (typeof renderLaunchFiles === 'function') renderLaunchFiles();
-                if (!document.getElementById('nodes-overview-view').classList.contains('hidden')) showNodesOverview();
-            }
-        }
-    }, 1000);
+    // Timer entfernt
 }
 
 window.toggleFolder = function (event, path) {
@@ -307,7 +303,7 @@ function updateNodeList() {
                                     <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                         ${cStatusPulse}
                                         <img src="node-icon.svg" style="width: 14px; height: 14px; margin-right: 12px; filter: opacity(0.7);" alt="Node">
-                                        <span class="node-name-text" style="font-size: 0.85rem; color: #cbd5e1;">${child}</span>
+                                        ${wrapNodeTooltip(child, "node-name-text")}
                                     </div>
                                     <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkg}</span>
                                 </div>
@@ -335,7 +331,7 @@ function updateNodeList() {
                                         ${caretHtml}
                                         ${statusPulse}
                                         <img src="node-icon.svg" style="width: 18px; height: 18px; margin-right: 12px; filter: opacity(0.8);" alt="Node">
-                                        <span class="node-name-text">${h.name}</span>
+                                        ${wrapNodeTooltip(h.name, "node-name-text")}
                                     </div>
                                     <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkg}</span>
                                 </div>
@@ -351,7 +347,7 @@ function updateNodeList() {
                                         <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                             ${statusPulse}
                                             <img src="node-icon.svg" style="width: 14px; height: 14px; margin-right: 12px; filter: opacity(0.7);" alt="Node">
-                                            <span class="node-name-text" style="font-size: 0.85rem; color: #cbd5e1;">${child}</span>
+                                            ${wrapNodeTooltip(child, "node-name-text")}
                                         </div>
                                         <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkgInner}</span>
                                     </div>
@@ -534,7 +530,16 @@ function selectNode(nodeName, skipRequest = false) {
     if (elTitle) elTitle.textContent = (data.active_node_name) ? data.active_node_name : (data.file_name ? data.file_name : nodeName);
 
     const elCenter = document.getElementById('nd-flow-center-name');
-    if (elCenter) elCenter.textContent = (data.active_node_name) ? data.active_node_name : (data.file_name ? data.file_name : nodeName);
+    const displayName = (data.active_node_name) ? data.active_node_name : (data.file_name ? data.file_name : nodeName);
+    if (elCenter) {
+        elCenter.innerHTML = wrapNodeTooltip(displayName);
+    }
+
+    const elHeaderNode = document.getElementById('nd-header-node-label');
+    if (elHeaderNode) {
+        const displayName = (data.active_node_name) ? data.active_node_name : (data.file_name ? data.file_name : nodeName);
+        elHeaderNode.innerHTML = `<img src="node-icon.svg" style="width: 14px; height: 14px; opacity: 0.6;"> [node]: ${wrapNodeTooltip(displayName)}`;
+    }
 
     const elPkg = document.getElementById('nd-pkg');
     if (elPkg) elPkg.textContent = data.package || 'Unbekannt';
@@ -675,9 +680,9 @@ function selectNode(nodeName, skipRequest = false) {
                 connInHtml += `<div class='conn-card rx-card d-flex flex-column gap-2'>
                     <div class='d-flex justify-content-between align-items-center w-100'>
                         <span class='conn-node-name m-0' title='Service Server'>
-                            <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #8b5cf6; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Server</span>
+                            <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #f59e0b; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Server</span>
                         </span>
-                        <span class='card-hz-display' style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2);">RES (Server)</span>
+                        <span class='card-hz-display' style="color: #f59e0b; border-color: rgba(245, 158, 11, 0.2);">RES (Server)</span>
                     </div>
                     <div class='topics-wrapper w-100'>${wrapper}</div>
                 </div>`;
@@ -729,8 +734,8 @@ function selectNode(nodeName, skipRequest = false) {
                     : '<span class="flow-icon-pulse me-2" style="display:inline-block; width: 28px; height: 28px; background-color: var(--color-rx); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;" title="Empfängt Daten von"></span>';
 
                 connInHtml += `<div class='conn-card ${cardClass} d-flex flex-column gap-2' data-topics='${JSON.stringify(c.topics)}'>
-                    <div class='d-flex justify-content-between align-items-center w-100'>
-                        <span class='conn-node-name m-0' title='${c.node}'>${nodeIcon.replace('>', ' style="flex-shrink: 0;">')}<span class="text-truncate">${c.node}</span></span>
+                    <div class='d-flex justify-content-between align-items-center w-100' style="position: relative;">
+                        <span class='conn-node-name m-0'>${nodeIcon.replace('>', ' style="flex-shrink: 0;">')}${wrapNodeTooltip(c.node)}</span>
                         <span class='card-hz-display'>-- Hz</span>
                     </div>
                     <div class='topics-wrapper w-100'>${topicsBadges}</div>
@@ -779,9 +784,9 @@ function selectNode(nodeName, skipRequest = false) {
             connOutHtml += `<div class='conn-card tx-card d-flex flex-column gap-2'>
                 <div class='d-flex justify-content-between align-items-center w-100'>
                     <span class='conn-node-name m-0' title='Service Client'>
-                        <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #38bdf8; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Client</span>
+                        <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #10b981; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Client</span>
                     </span>
-                    <span class='card-hz-display' style="color: #38bdf8; border-color: rgba(14, 165, 233, 0.2);">REQ (Client)</span>
+                    <span class='card-hz-display' style="color: #10b981; border-color: rgba(16, 185, 129, 0.2);">REQ (Client)</span>
                 </div>
                 <div class='topics-wrapper w-100'>${wrapper}</div>
             </div>`;
@@ -832,7 +837,7 @@ function selectNode(nodeName, skipRequest = false) {
                     : '<span class="flow-icon-pulse me-2" style="display:inline-block; width: 28px; height: 28px; background-color: var(--color-tx); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;" title="Sendet Daten an"></span>';
                 connOutHtml += `<div class='conn-card ${cardClass} d-flex flex-column gap-2' data-topics='${JSON.stringify(c.topics)}'>
                     <div class='d-flex justify-content-between align-items-center w-100'>
-                        <span class='conn-node-name m-0' title='${c.node}'>${nodeIcon.replace('>', ' style="flex-shrink: 0;">')}<span class="text-truncate">${c.node}</span></span>
+                        <span class='conn-node-name m-0'>${nodeIcon.replace('>', ' style="flex-shrink: 0;">')}${wrapNodeTooltip(c.node)}</span>
                         <span class='card-hz-display'>-- Hz</span>
                     </div>
                     <div class='topics-wrapper w-100'>${topicsBadges}</div>
@@ -938,7 +943,7 @@ function selectNode(nodeName, skipRequest = false) {
                 const typeStr = (s.types && s.types.length > 0) ? s.types.join(', ') : "Unbekannt";
                 return `<div class='topic-item live-trackable rx-card' data-topics='["${s.topic}"]' style='position: relative; transition: box-shadow 0.3s, border-color 0.3s;'>
                             <span class='card-hz-display' style='position:absolute; top: -10px; right: -5px; background: #0f172a; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.65rem;'>-- Hz</span>
-                            <div class="topic-info-row"><span class="topic-lbl">Topic:</span><i class="fa-solid fa-circle-dot topic-icon" id="icon-sub-${s.topic.replace(/\//g, '-')}" style="margin-right: 6px; color: var(--text-secondary); transition: color 0.3s, text-shadow 0.3s;"></i><span class="topic-val" title="${s.topic}">${s.topic}</span></div>
+                            <div class="topic-info-row"><span class="topic-lbl">Topic:</span><i class="fa-solid fa-circle-dot topic-icon" id="icon-sub-${s.topic.replace(/\//g, '-')}" style="margin-right: 6px; color: var(--text-secondary); transition: color 0.3s, text-shadow 0.3s;"></i>${wrapNodeTooltip(s.topic, "topic-val")}</div>
                             <div class="topic-info-row"><span class="topic-lbl">Type:</span><span class="topic-type-badge">${typeStr}</span></div>
                             <div class="topic-info-row msg-content" id="msg-${s.topic.replace(/\//g, '-')}"><span class="topic-lbl">Msg:</span><span class="topic-val" title="Wartet auf Daten..." style="color:var(--text-secondary); font-size:0.8rem;">Wartet auf Daten...</span></div>
                         </div>`;
@@ -956,7 +961,7 @@ function selectNode(nodeName, skipRequest = false) {
                 const typeStr = (p.types && p.types.length > 0) ? p.types.join(', ') : "Unbekannt";
                 return `<div class='topic-item live-trackable tx-card' data-topics='["${p.topic}"]' style='position: relative; transition: box-shadow 0.3s, border-color 0.3s;'>
                             <span class='card-hz-display' style='position:absolute; top: -10px; right: -5px; background: #0f172a; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.65rem;'>-- Hz</span>
-                            <div class="topic-info-row"><span class="topic-lbl">Topic:</span><i class="fa-solid fa-circle-dot topic-icon" id="icon-pub-${p.topic.replace(/\//g, '-')}" style="margin-right: 6px; color: var(--text-secondary); transition: color 0.3s, text-shadow 0.3s;"></i><span class="topic-val" title="${p.topic}">${p.topic}</span></div>
+                            <div class="topic-info-row"><span class="topic-lbl">Topic:</span><i class="fa-solid fa-circle-dot topic-icon" id="icon-pub-${p.topic.replace(/\//g, '-')}" style="margin-right: 6px; color: var(--text-secondary); transition: color 0.3s, text-shadow 0.3s;"></i>${wrapNodeTooltip(p.topic, "topic-val")}</div>
                             <div class="topic-info-row"><span class="topic-lbl">Type:</span><span class="topic-type-badge">${typeStr}</span></div>
                             <div class="topic-info-row msg-content" id="msg-${p.topic.replace(/\//g, '-')}"><span class="topic-lbl">Msg:</span><span class="topic-val" title="Wartet auf Daten..." style="color:var(--text-secondary); font-size:0.8rem;">Wartet auf Daten...</span></div>
                         </div>`;
@@ -964,22 +969,18 @@ function selectNode(nodeName, skipRequest = false) {
         }
     }
 
+    // --- SERVICES ---
     const srvsContainer = document.getElementById('nd-services');
     if (srvsContainer) {
-        const validSrvs = (data.services || []);
-        if (validSrvs.length === 0) {
+        const regularServices = (data.services || []).filter(s => !s.name.includes('/_action/'));
+        if (regularServices.length === 0) {
             srvsContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Services bereitgestellt</div>";
         } else {
-            srvsContainer.innerHTML = validSrvs.map(s => {
-                const isAction = s.name.includes('/_action/');
+            srvsContainer.innerHTML = regularServices.map(s => {
                 const typeStr = (s.types && s.types.length > 0) ? s.types.join(', ') : "Unbekannt";
-                const borderColor = isAction ? 'rgba(239, 68, 68, 0.3)' : 'rgba(168, 85, 247, 0.3)';
-                const labelColor = isAction ? '#f87171' : '#a855f7';
-                const labelText = isAction ? 'Action Server:' : 'Service Server:';
-
-                return `<div class='topic-item' style='border-color: ${borderColor};'>
-                            <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>${labelText}</span><span class="topic-val" title="${s.name}">${s.name}</span></div>
-                            <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
+                return `<div class='topic-item' style='border-color: rgba(168, 85, 247, 0.3);'>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #a855f7;'>Server:</span>${wrapNodeTooltip(s.name, "topic-val")}</div>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #a855f7;'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
                         </div>`;
             }).join('');
         }
@@ -987,20 +988,61 @@ function selectNode(nodeName, skipRequest = false) {
 
     const cliContainer = document.getElementById('nd-clients');
     if (cliContainer) {
-        const clients = (data.clients || []);
-        if (clients.length === 0) {
+        const regularClients = (data.clients || []).filter(c => !c.name.includes('/_action/'));
+        if (regularClients.length === 0) {
             cliContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Clients vorhanden</div>";
         } else {
-            cliContainer.innerHTML = clients.map(c => {
-                const isAction = c.name.includes('/_action/');
+            cliContainer.innerHTML = regularClients.map(c => {
                 const typeStr = (c.types && c.types.length > 0) ? c.types.join(', ') : "Unbekannt";
-                const borderColor = isAction ? 'rgba(239, 68, 68, 0.3)' : 'rgba(56, 189, 248, 0.3)';
-                const labelColor = isAction ? '#f87171' : '#38bdf8';
-                const labelText = isAction ? 'Action Client:' : 'Service Client:';
+                return `<div class='topic-item' style='border-color: rgba(56, 189, 248, 0.3);'>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #38bdf8;'>Client:</span>${wrapNodeTooltip(c.name, "topic-val")}</div>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #38bdf8;'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
+                        </div>`;
+            }).join('');
+        }
+    }
 
-                return `<div class='topic-item' style='border-color: ${borderColor};'>
-                            <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>${labelText}</span><span class="topic-val" title="${c.name}">${c.name}</span></div>
-                            <div class="topic-info-row"><span class="topic-lbl" style='color: ${labelColor};'>Type:</span><span class="topic-type-badge">${typeStr}</span></div>
+    // --- ACTIONS ---
+    const actSrvContainer = document.getElementById('nd-act-server');
+    if (actSrvContainer) {
+        const actionServices = (data.services || []).filter(s => s.name.includes('/_action/'));
+        if (actionServices.length === 0) {
+            actSrvContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Action-Server</div>";
+        } else {
+            // Group actions by base name (remove /_action/...)
+            const grouped = {};
+            actionServices.forEach(s => {
+                const base = s.name.replace(/\/_action\/.*$/, '');
+                if (!grouped[base]) grouped[base] = [];
+                grouped[base].push(s);
+            });
+            actSrvContainer.innerHTML = Object.keys(grouped).map(base => {
+                const types = [...new Set(grouped[base].flatMap(s => s.types))];
+                return `<div class='topic-item' style='border-color: rgba(239, 68, 68, 0.3);'>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #ef4444;'>Action:</span>${wrapNodeTooltip(base, "topic-val")}</div>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #ef4444;'>Type:</span><span class="topic-type-badge">${types.join(', ')}</span></div>
+                        </div>`;
+            }).join('');
+        }
+    }
+
+    const actCliContainer = document.getElementById('nd-act-client');
+    if (actCliContainer) {
+        const actionClients = (data.clients || []).filter(c => c.name.includes('/_action/'));
+        if (actionClients.length === 0) {
+            actCliContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Action-Clients</div>";
+        } else {
+            const grouped = {};
+            actionClients.forEach(c => {
+                const base = c.name.replace(/\/_action\/.*$/, '');
+                if (!grouped[base]) grouped[base] = [];
+                grouped[base].push(c);
+            });
+            actCliContainer.innerHTML = Object.keys(grouped).map(base => {
+                const types = [...new Set(grouped[base].flatMap(c => c.types))];
+                return `<div class='topic-item' style='border-color: rgba(239, 68, 68, 0.3);'>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #f87171;'>Action:</span>${wrapNodeTooltip(base, "topic-val")}</div>
+                            <div class="topic-info-row"><span class="topic-lbl" style='color: #f87171;'>Type:</span><span class="topic-type-badge">${types.join(', ')}</span></div>
                         </div>`;
             }).join('');
         }
@@ -1039,10 +1081,7 @@ function showNodesOverview() {
             <div class="spinner-container">
                 <div class="spinner-large"></div>
                 <div class="loading-text" style="font-size: 1.4rem; margin-top: 10px;">Initialisiere - Dashboard...</div>
-                <div id="loading-timer-container" style="color: var(--accent-primary); font-size: 2.5rem; font-weight: bold; font-family: 'JetBrains Mono', monospace; margin: 10px 0; text-shadow: 0 0 15px rgba(139, 92, 246, 0.5);">
-                    <span id="loading-timer">${loadingCountdown}</span>s
-                </div>
-                <div style="color: var(--text-secondary); opacity: 0.6; font-size: 0.9rem;">Warte auf Daten von ROS 2 Bridge</div>
+                <div style="color: var(--text-secondary); opacity: 0.6; font-size: 0.9rem; margin-top: 15px;">Warte auf Daten von ROS 2 Bridge</div>
             </div>`;
         return;
     }
@@ -1221,7 +1260,7 @@ async function loadExternalViews() {
     // Initialisiere Lade-Zustand (Spinner/Timer) SOFORT nach dem Injezieren der HTML-Teile
     updateNodeList();
     showNodesOverview();
-    startLoadingTimer();
+    // startLoadingTimer(); // Entfernt
 
     // After all views have been injected into the DOM, initialize dynamic elements
     if (typeof initCopyButtons === 'function') {
@@ -1575,7 +1614,7 @@ window.onload = function () {
                 workspaceData = incoming;
             }
 
-            if (isLoadingLock) return;
+            // if (isLoadingLock) return; // Entfernt
             if (incoming.type === 'node_pulse') {
                 if (incoming.active_nodes && workspaceData.nodes) {
                     const activeSet = new Set(incoming.active_nodes);
