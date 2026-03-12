@@ -60,7 +60,7 @@ class WorkspaceAnalyzer(Node):
         self.pulse_timer = self.create_timer(2.0, self.publish_active_nodes_pulse) # Live-Status alle 2s
         
         # On-Demand Detail Abfrage für selektierten Node
-        self.node_detail_sub = self.create_subscription(String, '/ui/request_node_details', self.handle_node_detail_request, 10)
+        self.node_detail_sub = self.create_subscription(String, '/dashboard/request_node_details', self.handle_node_detail_request, 10)
         
         self._exe_cache_refresh_done = False
         self.create_timer(30.0, self._delayed_exe_cache_refresh)
@@ -363,9 +363,9 @@ class WorkspaceAnalyzer(Node):
                             # s_subs += [(t[0].replace('::', '/'), t[1]) for t in re.findall(r'create_subscription\s*<\s*([A-Za-z0-9_:]+)\s*>\s*\(\s*([^\s,\)]+)', content)]
                             # info["subscribers"] = [{"topic": self._resolve_static_topic(t[1], content), "types": [t[0]]} for t in s_subs]
                             # Services und Clients ebenfalls regexen (wie bisher)
-                            print(f"[✅] Indexed Workspace File {t_file:<30}")
+                            print(f"[OK] Indexed Workspace File {t_file:<30}")
                     except Exception: 
-                        print(f"[❌] Error parsing {t_file}", flush=True)
+                        print(f"[X] Error parsing {t_file}", flush=True)
             self.project_files_cache[t_file] = info
 
     def get_package_for_file(self, file_path):
@@ -600,9 +600,9 @@ class WorkspaceAnalyzer(Node):
             except Exception: pass
             
             self.publisher_.publish(String(data=json.dumps(metadata)))
-            print(f"[✅] Metadata published successfully: {len(metadata['nodes'])} nodes", flush=True)
+            print(f"[OK] Metadata published successfully: {len(metadata['nodes'])} nodes", flush=True)
         except Exception as e:
-            print(f"[❌] Exception in publish_metadata: {traceback.format_exc()}", flush=True)
+            print(f"[X] Exception in publish_metadata: {traceback.format_exc()}", flush=True)
 
 def main(args=None):
     rclpy.init(args=args)

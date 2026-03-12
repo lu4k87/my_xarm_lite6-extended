@@ -1036,7 +1036,7 @@ function showNodesOverview() {
 
     if (nodes.length === 0 && projs.length === 0) {
         grid.innerHTML = `
-            <div class="spinner-container" style="padding-top: 100px;">
+            <div class="spinner-container">
                 <div class="spinner-large"></div>
                 <div class="loading-text" style="font-size: 1.4rem; margin-top: 10px;">Initialisiere - Dashboard...</div>
                 <div id="loading-timer-container" style="color: var(--accent-primary); font-size: 2.5rem; font-weight: bold; font-family: 'JetBrains Mono', monospace; margin: 10px 0; text-shadow: 0 0 15px rgba(139, 92, 246, 0.5);">

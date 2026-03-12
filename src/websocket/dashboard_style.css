@@ -122,16 +122,60 @@ body {
 }
 
 .brand {
-    padding: 25px 20px;
-    font-size: 1.5rem;
-    font-weight: 600;
+    padding: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 15px;
     color: white;
     border-bottom: 1px solid var(--border-color);
     white-space: nowrap;
+}
+
+.brand-text-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+    gap: 4px;
+}
+
+.brand-text-stack span:first-child {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--accent-primary);
+    letter-spacing: 2px;
+}
+
+.brand-text-stack span:last-child {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: white;
+    letter-spacing: 5px;
+    opacity: 1;
+    margin-top: 2px;
+}
+
+.brand-logo {
+    height: 3.6rem;
+    width: auto;
+    filter: drop-shadow(0 0 5px var(--accent-glow));
+    animation: logo-pulse 2s infinite ease-in-out;
+}
+
+@keyframes logo-pulse {
+    0% {
+        filter: drop-shadow(0 0 5px var(--accent-glow)) brightness(1);
+        transform: scale(1);
+    }
+    50% {
+        filter: drop-shadow(0 0 15px var(--accent-primary)) brightness(1.2) sepia(1) hue-rotate(190deg) saturate(5);
+        transform: scale(1.05);
+    }
+    100% {
+        filter: drop-shadow(0 0 5px var(--accent-glow)) brightness(1);
+        transform: scale(1);
+    }
 }
 
 .brand i {
@@ -1274,9 +1318,31 @@ body {
     flex-grow: 1;
 }
 
-.conn-node-name span.text-truncate {
+.conn-node-name span.text-truncate,
+.center-node-name span#nd-flow-center-name {
     display: inline-block;
-    max-width: 100%;
+    max-width: 25ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    vertical-align: middle;
+}
+
+.conn-node-name:hover span.text-truncate,
+.center-node-name:hover span#nd-flow-center-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: 500px;
+    background: rgba(15, 23, 42, 0.98);
+    padding: 4px 12px;
+    border-radius: 6px;
+    position: relative;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    border: 1px solid var(--accent-primary);
+    transform: translateY(-2px);
 }
 
 .conn-topic-badge {
@@ -2674,6 +2740,7 @@ body {
     flex-direction: column;
     gap: 15px;
     padding-top: 10px;
+    flex-grow: 1;
 }
 
 .mini-node-card {

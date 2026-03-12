@@ -1,10 +1,10 @@
-window.onload = function() {
+window.onload = function () {
 
-    const server_ip = window.location.hostname; 
+    const server_ip = window.location.hostname;
     const final_ip = server_ip ? server_ip : 'localhost';
     const rosbridge_url = 'ws://' + final_ip + ':9090';
-    
-    var ros = new ROSLIB.Ros({ url : rosbridge_url });
+
+    var ros = new ROSLIB.Ros({ url: rosbridge_url });
     const statusValueElement = document.getElementById('status-value-text');
 
     ros.on('connection', () => {
@@ -13,7 +13,7 @@ window.onload = function() {
     });
 
     ros.on('error', () => {
-        statusValueElement.textContent = 'Fehler'; 
+        statusValueElement.textContent = 'Fehler';
         statusValueElement.className = 'status-value status-error';
     });
 
@@ -61,11 +61,11 @@ window.onload = function() {
         iconY.classList.add('active');
         setTimeout(() => iconY.classList.remove('active'), 3000);
     }
-    
+
     function handleXActivation() {
         iconX.classList.toggle('active');
     }
-    
+
     function handleAActivation() {
         isGripperActive = !isGripperActive;
         iconA.classList.toggle('active', isGripperActive);
@@ -118,8 +118,8 @@ window.onload = function() {
 
     // --- AKTUALISIERTER VOICE FEEDBACK LISTENER ---
     var voiceFeedbackListener = new ROSLIB.Topic({ ros: ros, name: '/ui/voice_feedback', messageType: 'std_msgs/String' });
-    voiceFeedbackListener.subscribe((message) => { 
-        updateSpeechStatus(message.data); 
+    voiceFeedbackListener.subscribe((message) => {
+        updateSpeechStatus(message.data);
     });
 
     var collisionListener = new ROSLIB.Topic({ ros: ros, name: '/ui/collision_msg', messageType: 'std_msgs/String' });

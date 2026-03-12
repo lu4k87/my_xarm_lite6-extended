@@ -10,7 +10,7 @@ Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github
 | **`collision_check`** | Überwacht die Z-Position des Endeffektors und Gamepad-Eingaben. Berechnet vorausschauend die Trajektorie und blockiert Abwärtsbewegungen (Trigger) vor Erreichen des Tisches (Z-Limit: 96.5mm). |
 | **`motion_sequence`** | Führt asynchrone Bewegungsabläufe aus. Übernimmt das sichere Umschalten der xArm-Controller-Zustände (Servo, POSE-Mode) für saubere Transitionen bei direkter Koordinatenansteuerung. |
 | **`move_to_coordinator`** | Zentraler Logik-Knotenpunkt: Verbindet Sprachbefehle mit den 3D-Koordinaten aus dem Vision-System, managt Queues/Timeouts und sendet die finalen Fahrbefehle an die `motion_sequence`. |
-| **`ros2_whisper`** | Lokale Speech-to-Text Engine. Nimmt den Audio-Stream des Mikrofons auf und streamt in Echtzeit unformatierte Text-Transkripte in das ROS-Netzwerk. |
+| [**`ros2_whisper`**](https://github.com/ros-ai/ros2_whisper) | Lokale Speech-to-Text Engine. Nimmt den Audio-Stream des Mikrofons auf und streamt in Echtzeit unformatierte Text-Transkripte in das ROS-Netzwerk. |
 | **`voice_command_listener`** | Subscribt die Rohtexte, wendet Regex-Muster an (z. B. "move to red"), übernimmt das Entprellen (Refractory/Cooldown) und leitet saubere Action-Intents an den Coordinator und das UI weiter. |
 | **`rviz_marker`** | Konvertiert die vom Vision-System erkannten 3D-Koordinaten aus den `PoseArray`-Topics in interaktive Rviz2 Marker zur Live-Visualisierung im 3D-Raum. |
 | **`xarm_moveit_servo`** | (xarm_ros2) Echtzeit-Steuerungskomponente. Verarbeitet kontinuierliche Raum- oder Gelenkgeschwindigkeiten (z.B. vom Gamepad) und streamt diese latenzarm an den Hardware-Controller. |
@@ -40,16 +40,17 @@ Das Projekt ist grob in das offizielle xArm-Repository und die eigenen Erweiteru
 
 Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert sind:
 
+* **Das offizielle Repository:** [xarm_ros2 (Official)](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`)
 * **OS:** Ubuntu 22.04.5 (Jammy Jellyfish)
 * **ROS:** ROS 2 Humble
 * **Python:** Python 3.10+
-* **System-Abhängigkeiten:** `portaudio19-dev` (für Audio-Input)
+* **System-Abhängigkeiten:** `portaudio19-dev` (für Audio-Input)??[to proof]
 * **Zusätzliche Bibliotheken:**
     * `pyaudio` (für Spracherfassung)
     * `ultralytics` (für YOLO Object Detection) x.x
     * `opencv-python` (für die Bildverarbeitung)
-    * `openai-whisper` (für die Spracherkennung)
     * `rosbridge_suite` (für die Websocket-Kommunikation)
+    * [ros2_whisper (Original-Repo)](https://github.com/ros-ai/ros2_whisper)
 
 ## ⚙️ Installation & Setup
 
