@@ -43,7 +43,9 @@ Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert 
 * **OS:** Ubuntu 22.04.5 (Jammy Jellyfish)
 * **ROS:** ROS 2 Humble
 * **Python:** Python 3.10+
+* **System-Abhängigkeiten:** `portaudio19-dev` (für Audio-Input)
 * **Zusätzliche Bibliotheken:**
+    * `pyaudio` (für Spracherfassung)
     * `ultralytics` (für YOLO Object Detection) x.x
     * `opencv-python` (für die Bildverarbeitung)
     * `openai-whisper` (für die Spracherkennung)
