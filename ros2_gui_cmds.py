@@ -11,13 +11,17 @@ import shlex
 def run_cmd(command, title="ROS 2 Terminal", ws_path="~/dev_ws"):
     """Führt einen ROS-Befehl aus und zeigt den vollständigen Ablauf im Terminal."""
     
-    # ROS 2 Basis-Setup entfernt, da es bereits über die ~/.bashrc geladen wird.
-    display_cmd = f"cd {ws_path} && source install/setup.bash && {command}"
+    # ROS 2 Basis-Setup explizit erzwingen, da gnome-terminal -- bash -c oft keine .bashrc lädt
+    ros_setup = "source /opt/ros/humble/setup.bash"
+    ws_setup = f"source {ws_path}/install/setup.bash"
+    
+    display_cmd = f"{ros_setup} && {ws_setup} && cd {ws_path} && {command}"
     
     # FIX: Verhindert, dass Anführungszeichen/Sonderzeichen im Befehl den Bash-Echo-Befehl zerstören
     safe_display = display_cmd.replace('\\', '\\\\').replace('"', '\\"')
     
-    script_content = f"""source {ws_path}/install/setup.bash 2>/dev/null || true
+    script_content = f"""{ros_setup} 2>/dev/null || true
+{ws_setup} 2>/dev/null || true
 cd {ws_path} 2>/dev/null || true
 
 clear
@@ -36,10 +40,14 @@ echo -e "\\033[1;33m============================================================
 def run_interactive_cmd(command, title="System Tool"):
     """Führt System-/Interaktive Befehle aus und zeigt sie lückenlos an."""
     
+    # ROS 2 Basis-Setup explizit erzwingen
+    ros_setup = "source /opt/ros/humble/setup.bash"
+    
     # FIX: Maskierung für die korrekte Anzeige im Terminal
     safe_display = command.replace('\\', '\\\\').replace('"', '\\"')
     
-    script_content = f"""clear
+    script_content = f"""{ros_setup} 2>/dev/null || true
+clear
 echo -e "\\033[36m[Script laeuft im Terminal: $(tty), PID: $$]\\033[0m"
 echo "---------------------------------------------------------"
 echo -e "\\033[1;33m========================================================================\\033[0m"
@@ -196,7 +204,7 @@ ttk.Label(tab_build, text="Workspace: ~/dev_ws", style="Header.TLabel").pack(anc
 ttk.Button(tab_build, text="Colcon Build (--symlink-install)", command=lambda: run_cmd("colcon build --symlink-install", "Colcon Build", "~/dev_ws"), style="Start.TButton").pack(fill="x", pady=5)
 
 ttk.Label(tab_build, text="Wartung & Reset", style="Header.TLabel").pack(anchor="w", pady=(15,0))
-ttk.Button(tab_build, text="ALLE ROS-Prozesse beenden", command=lambda: run_bg_cmd("pkill -f 'rosbridge_server' && pkill -f 'workspace_analyzer' && pkill -f 'lite6' && pkill -f 'http.server'"), style="Action.TButton").pack(fill="x", pady=5)
+ttk.Button(tab_build, text="ALLE ROS-Prozesse beenden", command=lambda: run_bg_cmd("pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'"), style="Action.TButton").pack(fill="x", pady=5)
 
 # --- TAB 4: Nodes (MIT SCROLLBAR) ---
 tab_robot = create_tab("Nodes")

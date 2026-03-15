@@ -524,6 +524,16 @@ class WorkspaceAnalyzer(Node):
                     for sr in cli_data.get('services', []): all_srvs[sr['name']] = sr['types']
                     for c in cli_data.get('clients', []): all_clients[c['name']] = c['types']
                 
+                # Action-Erkennung: Zähle eindeutige Action-Basen (z.B. /move_to/_action/feedback -> Action "/move_to")
+                # Wir schauen sowohl in Pubs als auch Subs nach /_action/ Mustern
+                action_bases = set()
+                for t in pubs + subs:
+                    t_name = t["topic"]
+                    if "/_action/" in t_name:
+                        # Extrahiere Basis-Namen (alles vor /_action/)
+                        base = t_name.split("/_action/")[0]
+                        action_bases.add(base)
+
                 metadata["nodes"][full_name] = {
                     "package": info["package"],
                     "source_file": info["source_file"],
@@ -535,6 +545,8 @@ class WorkspaceAnalyzer(Node):
                     "subscribers": [{"topic": k, "types": v} for k, v in all_subs.items()],
                     "services": [{"name": k, "types": v} for k, v in all_srvs.items()],
                     "clients": [{"name": k, "types": v} for k, v in all_clients.items()],
+                    "actions": list(action_bases),
+                    "action_count": len(action_bases),
                     "dependencies": self.pkg_dependencies_cache.get(info["package"], [])
                 }
 

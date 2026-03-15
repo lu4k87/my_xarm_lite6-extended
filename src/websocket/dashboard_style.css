@@ -2763,51 +2763,128 @@ body {
 }
 
 .mini-node-card {
-    background: var(--node-bg);
-    border: 1px solid var(--node-border);
-    padding: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 16px 20px;
     border-radius: 12px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+.mini-node-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: transparent;
+    transition: background 0.3s;
+}
+
+.mini-node-card.ws-card-accent::before {
+    background: var(--accent-primary);
+}
+
+.mini-node-card.sys-card-accent::before {
+    background: #64748b;
 }
 
 .mini-node-card:hover {
-    border-color: var(--accent-primary);
-    background: var(--bg-surface-hover);
-    box-shadow: 0 5px 20px var(--accent-glow);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateX(5px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .mini-node-icon {
-    font-size: 1.5rem;
-    color: var(--text-secondary);
-    width: 25px;
-    text-align: center;
-    transition: color 0.3s;
+    width: 36px !important;
+    height: 36px !important;
+    opacity: 0.8;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .mini-node-card:hover .mini-node-icon {
-    color: var(--accent-primary);
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+.mini-node-info-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0; /* Enable truncation */
 }
 
 .mini-node-title {
-    font-size: 1.0rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    word-break: break-all;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
 }
 
 .mini-node-type {
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 4px;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.mini-stats-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.mini-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 45px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+}
+
+.mini-stat-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 3px;
+}
+
+.mini-stat-lbl {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+/* Color Accents for Stats - User-assigned from existing dashboard colors */
+.mini-stat-pubs .mini-stat-val { color: #38bdf8; } /* Blau (accent-primary) */
+.mini-stat-subs .mini-stat-val { color: #34d399; } /* Grün (badge-sub/emerald) */
+.mini-stat-srvs .mini-stat-val { color: #fbbf24; } /* Gold (badge-pub/amber) */
+.mini-stat-actions .mini-stat-val { color: #f87171; } /* Pink/Rot (badge-act/rose) */
+
+.mini-node-card:hover .mini-stat-item {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Topic Icon Glow Effect */

@@ -1094,35 +1094,69 @@ function showNodesOverview() {
     const generateCard = (el, isWs) => {
         const nodeName = el.dataset.name;
         if (!nodeName) return '';
-        const icon = isWs ? "fa-diagram-project" : "fa-share-nodes";
-        const typeStr = isWs ? "Workspace Node" : "System Node";
         const nodeData = getNodeData(nodeName) || {};
 
         const pubs = nodeData.publishers ? nodeData.publishers.length : 0;
         const subs = nodeData.subscribers ? nodeData.subscribers.length : 0;
         const srvs = nodeData.services ? nodeData.services.length : 0;
+        
+        // Actions aus Metadaten oder Fallback
+        let actions = nodeData.action_count || 0;
+        if (actions === 0 && (nodeData.publishers || nodeData.subscribers)) {
+            const allTopics = [...(nodeData.publishers || []), ...(nodeData.subscribers || [])];
+            const actionBases = new Set();
+            allTopics.forEach(t => {
+                if (t.topic.includes('/_action/')) {
+                    actionBases.add(t.topic.split('/_action/')[0]);
+                }
+            });
+            actions = actionBases.size;
+        }
 
         const isLive = isWs ? Object.keys(workspaceData.nodes || {}).includes(nodeName) : true;
+        const accentClass = isWs ? 'ws-card-accent' : 'sys-card-accent';
+        const typeStr = isWs ? "Workspace Node" : "System Node";
+
         const badgeHtml = isLive
-            ? `<div style="background: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94); border: 1px solid rgba(34, 197, 94, 0.3); font-size: 0.70rem; padding: 2px 8px; border-radius: 12px; display:inline-flex; align-items:center; gap: 6px;"><span class="status-pulse" style="width:6px; height:6px;"></span>LÄUFT</div>`
-            : `<div style="background: rgba(100, 116, 139, 0.1); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3); font-size: 0.70rem; padding: 2px 8px; border-radius: 12px; display:inline-flex; align-items:center; gap: 6px;"><span style="width:6px; height:6px; background-color:#64748b; border-radius:50%; display:inline-block;"></span>INAKTIV</div>`;
+            ? `<div style="background: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94); border: 1px solid rgba(34, 197, 94, 0.2); font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; display:inline-flex; align-items:center; gap: 5px; font-weight: 600; letter-spacing: 0.5px;"><span class="status-pulse" style="width:5px; height:5px;"></span>LÄUFT</div>`
+            : `<div style="background: rgba(100, 116, 139, 0.1); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.2); font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; display:inline-flex; align-items:center; gap: 5px; font-weight: 500;"><span style="width:5px; height:5px; background-color:#64748b; border-radius:50%; display:inline-block;"></span>INAKTIV</div>`;
 
         return `
-            <div class="mini-node-card" onclick="selectNode('${nodeName}')" style="position: relative; ${!isLive ? 'opacity: 0.8;' : ''}">
-                <img src="node-icon.svg" class="mini-node-icon" style="width: 32px; height: 32px; margin-right: 10px;" alt="Node">
-                <div style="flex-grow: 1;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                        <div class="mini-node-title" style="font-size: 1.2rem;">${nodeName}</div>
+            <div class="mini-node-card ${accentClass}" onclick="selectNode('${nodeName}')" style="${!isLive ? 'opacity: 0.7;' : ''}">
+                <img src="node-icon.svg" class="mini-node-icon" alt="Node">
+                <div class="mini-node-info-main">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="mini-node-title" title="${nodeName}">${nodeName}</span>
                         ${badgeHtml}
                     </div>
-                    <div class="mini-node-type" style="font-size: 0.85rem;">${typeStr}</div>
+                    <div class="mini-node-type">${typeStr}</div>
                 </div>
-                <div style="display: flex; gap: 20px; color: var(--text-secondary); font-size: 0.9rem; text-align: center;">
-                    <div><div style="font-weight: bold; color: white;">${pubs}</div>Pubs</div>
-                    <div><div style="font-weight: bold; color: white;">${subs}</div>Subs</div>
-                    <div><div style="font-weight: bold; color: white;">${srvs}</div>Srvs</div>
+                <div class="mini-stats-container">
+                    <div class="mini-stat-item mini-stat-pubs">
+                        <span class="mini-stat-val">${pubs}</span>
+                        <span class="mini-stat-lbl">Pubs</span>
+                    </div>
+                    <div class="mini-stat-item mini-stat-subs">
+                        <span class="mini-stat-val">${subs}</span>
+                        <span class="mini-stat-lbl">Subs</span>
+                    </div>
+                    <div class="mini-stat-item mini-stat-srvs">
+                        <span class="mini-stat-val">${srvs}</span>
+                        <span class="mini-stat-lbl">Srvs</span>
+                    </div>
+                    ${actions > 0 ? `
+                        <div class="mini-stat-item mini-stat-actions">
+                            <span class="mini-stat-val">${actions}</span>
+                            <span class="mini-stat-lbl">Actions</span>
+                        </div>
+                    ` : `
+                        <div class="mini-stat-item" style="opacity: 0.3;">
+                            <span class="mini-stat-val">0</span>
+                            <span class="mini-stat-lbl">Acts</span>
+                        </div>
+                    `}
                 </div>
-                <i class="fa-solid fa-chevron-right" style="color: var(--text-secondary); margin-left: 20px;"></i>
+                <i class="fa-solid fa-chevron-right" style="color: var(--text-secondary); opacity: 0.5; margin-left: 10px; font-size: 0.8rem;"></i>
             </div>
         `;
     };
