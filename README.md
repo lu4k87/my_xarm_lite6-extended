@@ -50,7 +50,7 @@ Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert 
     * `ultralytics` (für YOLO Object Detection) x.x
     * `opencv-python` (für die Bildverarbeitung)
     * `rosbridge_suite` (für die Websocket-Kommunikation)
-    * [ros2_whisper (Original-Repo)](https://github.com/ros-ai/ros2_whisper)
+    * `ros2 whisper` (https://github.com/ros-ai/ros2_whisper)
 
 ## ⚙️ Installation & Setup
 
