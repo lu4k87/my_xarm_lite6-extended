@@ -300,12 +300,12 @@ function updateNodeList() {
 
                     outHtml += `<li class="${nodeClass} node-card sub-node-item ${activeClass}" data-name="${child}" onclick="selectNode('${child}')">
                                 <div class="node-card-content" style="padding-left: 20px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                    <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <div style="display: flex; align-items: center;">
                                         ${cStatusPulse}
                                         <img src="node-icon.svg" style="width: 14px; height: 14px; margin-right: 12px; filter: opacity(0.7);" alt="Node">
                                         ${wrapNodeTooltip(child, "node-name-text")}
                                     </div>
-                                    <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkg}</span>
+                                    <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkg}</span>
                                 </div>
                              </li>`;
                 });
@@ -327,13 +327,13 @@ function updateNodeList() {
                 const pkg = getPackageForNode(h.name);
                 outHtml += `<li class="${nodeClass} node-card ${activeClass}" data-name="${h.name}" ${clickAction}>
                                 <div class="node-card-content" style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-                                    <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <div style="display: flex; align-items: center;">
                                         ${caretHtml}
                                         ${statusPulse}
                                         <img src="node-icon.svg" style="width: 18px; height: 18px; margin-right: 12px; filter: opacity(0.8);" alt="Node">
                                         ${wrapNodeTooltip(h.name, "node-name-text")}
                                     </div>
-                                    <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkg}</span>
+                                    <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkg}</span>
                                 </div>
                              </li>`;
 
@@ -344,12 +344,12 @@ function updateNodeList() {
                         const childPkgInner = getPackageForNode(child);
                         outHtml += `<li class="${nodeClass} node-card sub-node-item ${childActiveClass}" data-name="${child}" onclick="selectNode('${child}')">
                                     <div class="node-card-content" style="padding-left: 35px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                        <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        <div style="display: flex; align-items: center;">
                                             ${statusPulse}
                                             <img src="node-icon.svg" style="width: 14px; height: 14px; margin-right: 12px; filter: opacity(0.7);" alt="Node">
                                             ${wrapNodeTooltip(child, "node-name-text")}
                                         </div>
-                                        <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkgInner}</span>
+                                        <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkgInner}</span>
                                     </div>
                                  </li>`;
                     });
@@ -405,12 +405,12 @@ function updateNodeList() {
             const pkg = workspaceData.project_files[n]?.package || 'Unknown';
             html += `<li class="ws-inactive-node node-card ${activeClass}" style="opacity: 0.7;" data-name="${n}" onclick="selectNode('${n}')">
                         <div class="node-card-content" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                            <div style="display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <div style="display: flex; align-items: center;">
                                 ${statusPulse}
                                 <i class="fa-solid fa-file" style="color: ${iconColor}; margin-right: 12px; font-size: 1.1rem;"></i>
                                 <span class="node-name-text" style="color: #cbd5e1;">${n}</span>
                             </div>
-                            <span style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkg}</span>
+                            <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkg}</span>
                         </div>
                      </li>`;
         });

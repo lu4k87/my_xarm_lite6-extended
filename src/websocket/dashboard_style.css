@@ -116,9 +116,25 @@ body {
 
 .sidebar.collapsed {
     margin-left: -309px;
-    border-right: 2px solid var(--accent-primary);
+    border-right: 5px solid var(--accent-primary);
     box-shadow: 2px 0 15px var(--accent-glow);
     cursor: e-resize;
+    animation: sidebar-pulse 3s infinite alternate ease-in-out;
+}
+
+@keyframes sidebar-pulse {
+    0% {
+        border-right-color: var(--accent-primary);
+        box-shadow: 2px 0 10px var(--accent-glow);
+    }
+    50% {
+        border-right-color: var(--accent-secondary);
+        box-shadow: 2px 0 25px var(--accent-secondary-glow);
+    }
+    100% {
+        border-right-color: var(--accent-primary);
+        box-shadow: 2px 0 10px var(--accent-glow);
+    }
 }
 
 .brand {
@@ -700,6 +716,15 @@ body {
 
 .node-list-panel:hover {
     width: 450px;
+}
+
+.node-list-panel .node-package-badge {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.node-list-panel:hover .node-package-badge {
+    opacity: 1;
 }
 
 .search-box {
