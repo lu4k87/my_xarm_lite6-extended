@@ -10,7 +10,7 @@ Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github
 | **`collision_check`** | Überwacht die Z-Position des Endeffektors und Gamepad-Eingaben. Berechnet vorausschauend die Trajektorie und blockiert Abwärtsbewegungen (Trigger) vor Erreichen des Tisches (Z-Limit: 96.5mm). |
 | **`motion_sequence`** | Führt asynchrone Bewegungsabläufe aus. Übernimmt das sichere Umschalten der xArm-Controller-Zustände (Servo, POSE-Mode) für saubere Transitionen bei direkter Koordinatenansteuerung. |
 | **`move_to_coordinator`** | Zentraler Logik-Knotenpunkt: Verbindet Sprachbefehle mit den 3D-Koordinaten aus dem Vision-System, managt Queues/Timeouts und sendet die finalen Fahrbefehle an die `motion_sequence`. |
-| **`move_to_coordinator`** | [**`ros2_whisper`**](https://github.com/ros-ai/ros2_whisper) | Lokale Speech-to-Text Engine. Nimmt den Audio-Stream des Mikrofons auf und streamt in Echtzeit unformatierte Text-Transkripte in das ROS-Netzwerk. |
+| **`ros2_whisper`** | Lokale Speech-to-Text Engine. Nimmt den Audio-Stream des Mikrofons auf und streamt in Echtzeit unformatierte Text-Transkripte in das ROS-Netzwerk. |
 | **`voice_command_listener`** | Subscribt die Rohtexte, wendet Regex-Muster an (z. B. "move to red"), übernimmt das Entprellen (Refractory/Cooldown) und leitet saubere Action-Intents an den Coordinator und das UI weiter. |
 | **`rviz_marker`** | Konvertiert die vom Vision-System erkannten 3D-Koordinaten aus den `PoseArray`-Topics in interaktive Rviz2 Marker zur Live-Visualisierung im 3D-Raum. |
 | **`xarm_moveit_servo`** | (xarm_ros2) Echtzeit-Steuerungskomponente. Verarbeitet kontinuierliche Raum- oder Gelenkgeschwindigkeiten (z.B. vom Gamepad) und streamt diese latenzarm an den Hardware-Controller. |
@@ -48,7 +48,7 @@ Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert 
 * **Zusätzliche Bibliotheken:**
     * `pyaudio` (Spracherfassung)
     * `ultralytics` (YOLO Object Detection) x.x
-    * `opencv-python` ( Bildverarbeitung)
+    * `opencv-python` (Bildverarbeitung)
     * `rosbridge_suite` (Websocket-Kommunikation)
     * `ros2 whisper` (Sprachkommandos)(https://github.com/ros-ai/ros2_whisper)
 
