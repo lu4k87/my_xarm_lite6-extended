@@ -46,11 +46,11 @@ Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert 
 * **Python:** Python 3.10+
 * **System-Abhängigkeiten:** `portaudio19-dev` (für Audio-Input)??[to proof]
 * **Zusätzliche Bibliotheken:**
-    * `pyaudio` (für Spracherfassung)
-    * `ultralytics` (für YOLO Object Detection) x.x
-    * `opencv-python` (für die Bildverarbeitung)
-    * `rosbridge_suite` (für die Websocket-Kommunikation)
-    * `ros2 whisper` (https://github.com/ros-ai/ros2_whisper)
+    * `pyaudio` (Spracherfassung)
+    * `ultralytics` (YOLO Object Detection) x.x
+    * `opencv-python` ( Bildverarbeitung)
+    * `rosbridge_suite` (Websocket-Kommunikation)
+    * `ros2 whisper` (Sprachkommandos)(https://github.com/ros-ai/ros2_whisper)
 
 ## ⚙️ Installation & Setup
 
