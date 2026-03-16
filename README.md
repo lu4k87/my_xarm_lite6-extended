@@ -26,7 +26,7 @@ Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github
 Das Projekt ist grob in das offizielle xArm-Repository und die eigenen Erweiterungen unterteilt:
 
 ```text
-/dev_ws/
+~/dev_ws/
     ├── start.sh                     # Globale Workspace-Launcher (z. B. start.sh, lite6.sh)
     └── src/                         # Quellcode aller Pakete
         ├── collision_check/         # Kollisionsberechnungen und Environment-Setup
