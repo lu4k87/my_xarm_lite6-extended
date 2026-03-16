@@ -85,6 +85,28 @@ class WorkspaceAnalyzer(Node):
             srvs = self.get_service_names_and_types_by_node(name, ns)
             clients = self.get_client_names_and_types_by_node(name, ns)
             
+            # --- NEU: Detailliertes Terminal Logging ---
+            print("\n" + "="*50)
+            print(f"🔍 [DETAILS] Node: {node_name}")
+            print("-"*50)
+            
+            if pubs:
+                print(f"  📤 Publishers ({len(pubs)}):")
+                for p_topic, p_types in pubs:
+                    print(f"    • {p_topic} [{', '.join(p_types)}]")
+            else:
+                print("  📤 Publishers: Keine")
+                
+            if subs:
+                print(f"  📥 Subscribers ({len(subs)}):")
+                for s_topic, s_types in subs:
+                    print(f"    • {s_topic} [{', '.join(s_types)}]")
+            else:
+                print("  📥 Subscribers: Keine")
+                
+            print("="*50 + "\n", flush=True)
+            # --------------------------------------------
+
             # Formatiere für Cache
             node_data = {
                 "publishers": [{"topic": t[0], "types": t[1]} for t in pubs],
