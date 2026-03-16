@@ -85,7 +85,7 @@ class ROS2MasterControl(ctk.CTk):
         super().__init__()
 
         self.title("ROS 2 Master Control")
-        self.geometry("665x1000") # Breite um weitere 10% erhöht (665px)
+        self.geometry("600x1000") # Breite um 10% reduziert (von 665 auf 600)
         self.configure(fg_color=COLOR_BG_MAIN)
 
         # UI LAYOUT
@@ -252,8 +252,9 @@ class ROS2MasterControl(ctk.CTk):
         btn = ctk.CTkButton(master, text=text, command=command, 
                             fg_color=fg_color, text_color=text_color,
                             hover_color="#334155", height=48, font=("Helvetica", 14, "bold"),
+                            width=280, # Ca. 50% der Fensterbreite
                             corner_radius=10)
-        btn.pack(fill="x", pady=pady)
+        btn.pack(pady=pady)
 
     def add_footer_button(self, master, text, command, fg_color=COLOR_BG_SURFACE):
         btn = ctk.CTkButton(master, text=text, command=command,
