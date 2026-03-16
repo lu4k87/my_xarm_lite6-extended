@@ -31,24 +31,18 @@
                 <img src="node-icon.svg" alt="ROS2 Logo" class="brand-logo">
             </div>
             <div class="system-status">
-                <div class="status-row-horizontal">
-                    <div class="status-col">
-                        <div class="status-row">
-                            <div class="status-indicator" id="dashboard-status-dot"></div>
-                            <div class="status-info">
-                                <div class="status-label">Dashboard</div>
-                                <div id="dashboard-status-text">Offline</div>
-                            </div>
-                        </div>
+                <div class="status-section">
+                    <div class="status-label">Dashboard</div>
+                    <div class="status-group">
+                        <div class="status-indicator" id="dashboard-status-dot"></div>
+                        <div id="dashboard-status-text">Offline</div>
                     </div>
-                    <div class="status-col">
-                        <div class="status-row">
-                            <div class="status-indicator" id="robot-status-dot"></div>
-                            <div class="status-info">
-                                <div class="status-label">Roboter</div>
-                                <div id="robot-status-text">Offline</div>
-                            </div>
-                        </div>
+                </div>
+                <div class="status-section">
+                    <div class="status-label">Roboter</div>
+                    <div class="status-group">
+                        <div class="status-indicator" id="robot-status-dot"></div>
+                        <div id="robot-status-text">Offline</div>
                     </div>
                 </div>
                 <div class="ping-text" id="bridge-ping">-- ms</div>
