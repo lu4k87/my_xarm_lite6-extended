@@ -1,6 +1,6 @@
 # xArm ROS 2 Extended Workspace (Humble)
 
-Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`) um einen eigenen Development-Workspace (`/dev_ws/`). Der Fokus liegt auf der Integration von Computer Vision zur Object Detection und Lokalisierung, Sprachsteuerung um Sprachbefehle an den Roboter zu senden und webbasierten Teleoperations-Schnittstellen für die xArm-Roboter (insbesondere Lite6). Zur einfachen Steuerung dient das [**`ROS 2 GUI Control Script`**]).
+Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`) um einen eigenen Development-Workspace (`/dev_ws/`). Der Fokus liegt auf der Integration von Computer Vision zur Object Detection und Lokalisierung, Sprachsteuerung um Sprachbefehle an den Roboter zu senden und webbasierten Teleoperations-Schnittstellen für die xArm-Roboter (insbesondere Lite6). Zur einfachen Steuerung dient das **`ROS 2 GUI Control Script`**).
 
 ## 🚀 Kernfunktionen & Integrationen
 
