@@ -1018,18 +1018,18 @@ body {
 .nd-section-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #5eead4;
+    color: #38bdf8;
     margin-bottom: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 12px;
     padding: 14px 20px;
-    background: linear-gradient(90deg, rgba(45, 212, 191, 0.2) 0%, rgba(45, 212, 191, 0.05) 40%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.15) 30%, rgba(56, 189, 248, 0.15) 70%, transparent 100%);
     border-radius: 12px;
     letter-spacing: 1px;
     text-transform: uppercase;
-    text-shadow: 0 0 15px rgba(45, 212, 191, 0.6);
+    text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
 }
 
 .nd-content-block {
@@ -1337,7 +1337,15 @@ body {
     align-items: center;
     min-width: 0;
     position: relative;
-    z-index: 2; /* Ensure nodes are above grid */
+    z-index: 2;
+}
+
+.flow-rx {
+    align-items: flex-end !important;
+}
+
+.flow-tx {
+    align-items: flex-start !important;
 }
 
 .flow-col-header {
