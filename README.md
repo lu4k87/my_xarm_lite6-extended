@@ -1,6 +1,6 @@
 # xArm ROS 2 Extended Workspace (Humble)
 
-Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`) um einen eigenen Development-Workspace (`/dev_ws/`). Der Fokus liegt auf der Integration von Computer Vision zur Object Detection und Lokalisierung, Sprachsteuerung um Sprachbefehle an den Roboter zu senden und webbasierten Teleoperations-Schnittstellen für die xArm-Roboter (insbesondere Lite6). Zur einfachen Steuerung dient das **`ROS 2 GUI Control Script`**).
+Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`) um einen eigenen Development-Workspace (`/dev_ws/`). Der Fokus liegt auf der Integration von Computer Vision zur Object Detection und Lokalisierung, Sprachsteuerung um Sprachbefehle an den Roboter zu senden und webbasierten Teleoperations-Schnittstellen für die xArm-Roboter (insbesondere Lite6). Zur einfachen Steuerung dient das [**ROS 2 GUI Control Script**](#-ros-2-gui-control) und das interaktive [**Dashboard**](#-dashboard-ui--workspace-analyzer).
 
 ## 🚀 Kernfunktionen & Integrationen
 
@@ -112,3 +112,18 @@ Starten des Scripts:
 ```bash
 python3 ros2_gui_cmds.py
 ```
+
+## 📊 Dashboard UI & Workspace Analyzer
+
+Das Dashboard ist eine webbasierte Schnittstelle zur Live-Überwachung des ROS 2 Netzwerks und des Workspace-Status.
+
+### Komponenten & Funktionen:
+- **Backend (`src/websocket/workspace_analyzer.py`)**: Analysiert kontinuierlich den Workspace, erkennt neue Pakete, Launch-Files und Nodes. Es stellt die Metadaten über einen Websocket bereit.
+- **Live-Visualisierung**: Zeigt die Abhängigkeiten zwischen Nodes, Topics und Services in einem modernen Flow-Chart an.
+- **Node-Details**: Bietet tiefere Einblicke in einzelne Nodes (Dependencies, Publisher/Subscriber, Services).
+- **Workspace-Browser**: Ein interaktiver Datei-Explorer für den `src`-Ordner mit automatischer Ordner-Expansion.
+- **Starten der Web-Komponenten**:
+  - Websocket-Backend: `python3 src/websocket/workspace_analyzer.py`
+  - Webserver: `python3 -m http.server 8080 -d src/websocket`
+
+Das Dashboard ist nach dem Start unter `http://localhost:8080/dashboard_index.html` erreichbar.
