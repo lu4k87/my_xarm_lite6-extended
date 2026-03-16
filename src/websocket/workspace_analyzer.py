@@ -434,6 +434,10 @@ class WorkspaceAnalyzer(Node):
                     info["file_path"] = f"install/{pkg}/"
                     break
 
+        # Letzte Instanz: Wenn der Pfad dev_ws enthält, ist es Workspace
+        if "/dev_ws/" in info.get("file_path", ""):
+            info["is_workspace"] = True
+
         # Falls launch file nicht über parsed_nodes gefunden wurde, Regex fallback für launched_by
         if info["launched_by"] == "Terminal / Sub-Prozess":
             for launch in self.launch_files_cache:
@@ -441,9 +445,12 @@ class WorkspaceAnalyzer(Node):
                     with open(launch, 'r', encoding='utf-8', errors='ignore') as f:
                         if re.search(rf'[\'"]{re.escape(clean_name)}[\'"]', f.read()):
                             info["launched_by"] = os.path.basename(launch)
-                            info["is_workspace"] = True
-                            if info["package"] == "ROS 2 System":
-                                info["package"] = self.get_package_for_file(launch)
+                            # Wenn das startende Launch-File im Workspace ist, schauen wir genauer hin
+                            if "/dev_ws/" in launch:
+                                # Wir behalten is_workspace nur bei, wenn wir wirklich sicher sind (z.B. Paketmatch)
+                                # aber wir setzen den Pfad und das Paket falls noch "System"
+                                if info["package"] == "ROS 2 System":
+                                    info["package"] = self.get_package_for_file(launch)
                             break
                 except Exception: pass
 
@@ -590,10 +597,8 @@ class WorkspaceAnalyzer(Node):
                         if inc not in relevant_launch_names:
                             relevant_launch_names.add(inc); added_new = True
 
-            # Erzwinge is_workspace = True für alle Nodes, die direkt aus start.sh oder dessen Kind-Launches stammen
-            for full_name, n_info in metadata["nodes"].items():
-                if n_info["launched_by"] in relevant_launch_names:
-                    n_info["is_workspace"] = True
+            # Entferne das automatische Erzwingen von is_workspace für alle Nodes aus start.sh.
+            # Stattdessen vertrauen wir auf die granularere Erkennung in resolve_node_info.
 
             filtered_launches = []
             for l in self.launch_details_cache:

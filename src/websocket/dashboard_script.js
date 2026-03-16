@@ -7,6 +7,16 @@ let nodeDetailReqPub = null;
 let currentRequestedPath = "";
 
 let expandedFolders = new Set(['dev_ws/src']);
+let isTreeFullyExpanded = false;
+
+function expandTreeRecursively(treeNode, currentPath = "") {
+    if (!treeNode || treeNode.type !== 'folder') return;
+    const nodePath = currentPath ? `${currentPath}/${treeNode.name}` : treeNode.name;
+    expandedFolders.add(nodePath);
+    if (treeNode.children) {
+        treeNode.children.forEach(child => expandTreeRecursively(child, nodePath));
+    }
+}
 
 function wrapNodeTooltip(name, customClass = "") {
     // Falls Name > 20 Zeichen, Tooltip-Struktur verwenden (außer bei Hardware-Input)
@@ -1463,7 +1473,7 @@ function renderLaunchFiles() {
                 <div class="tree-card">
                     <div class="tree-card-header">
                         <span class="tree-card-title">${nodeName.startsWith('/') ? nodeName.substring(1) : nodeName}</span>
-                        <span class="tree-card-pkg" style="opacity: 0.7;">(${pkg})</span>
+                        <span class="tree-card-pkg">${pkg}</span>
                         <div class="tree-card-badges">
                             ${badge}
                         </div>
@@ -1518,11 +1528,14 @@ function renderLaunchFiles() {
                     <div class="tree-card-header">
                         ${iconHtml}
                         <span class="tree-card-title">${launch.file_name}</span>
-                        <span class="tree-card-pkg" style="opacity: 0.7;">(${pkgObj})</span>
+                        <span class="tree-card-pkg">${pkgObj}</span>
                         <div class="tree-card-path" onclick="openInExplorer('${launch.path}')">
                             <i class="fa-regular fa-folder-open"></i> ${displayPath}
                         </div>
-                        ${badgeHtml}
+                        <div class="tree-card-badges">
+                            ${badgeHtml}
+                            ${!isRoot ? '<span class="t-badge badge-launch">LAUNCH</span>' : ''}
+                        </div>
                     </div>
                 </div>
         `;
@@ -1692,6 +1705,10 @@ window.onload = function () {
             if (typeof renderLaunchFiles === 'function') renderLaunchFiles();
 
             if (workspaceData.tree) {
+                if (!isTreeFullyExpanded) {
+                    expandTreeRecursively(workspaceData.tree);
+                    isTreeFullyExpanded = true;
+                }
                 document.getElementById('ws-tree-container').innerHTML = renderWorkspaceTree(workspaceData.tree);
             }
 

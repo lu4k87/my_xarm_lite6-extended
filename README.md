@@ -1,6 +1,6 @@
 # xArm ROS 2 Extended Workspace (Humble)
 
-Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`) um einen eigenen Development-Workspace (`/dev_ws/`). Der Fokus liegt auf der Integration von Computer Vision zur Object Detection und Lokalisierung, Sprachsteuerung um Sprachbefehle an den Roboter zu senden und webbasierten Teleoperations-Schnittstellen für die xArm-Roboter (insbesondere Lite6).
+Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`) um einen eigenen Development-Workspace (`/dev_ws/`). Der Fokus liegt auf der Integration von Computer Vision zur Object Detection und Lokalisierung, Sprachsteuerung um Sprachbefehle an den Roboter zu senden und webbasierten Teleoperations-Schnittstellen für die xArm-Roboter (insbesondere Lite6). Zur einfachen Steuerung dient das [**ROS 2 GUI Control Script**](#-ros-2-gui-control).
 
 ## 🚀 Kernfunktionen & Integrationen
 
@@ -97,3 +97,18 @@ Alternativ können einzelne Module wie gewohnt über ROS 2 Befehle gestartet wer
 
 * **Starten der Objekterkennung:** `ros2 run yolo_object_detector yolo_tracker_node`
 * **Starten der ROS Bridge manuell:** `ros2 launch rosbridge_server rosbridge_websocket_launch.xml`
+
+## 🖥️ ROS 2 GUI Control
+
+Das Script `ros2_gui_cmds.py` bietet eine moderne, benutzerfreundliche Oberfläche (basierend auf `customtkinter`), um die wichtigsten ROS 2 Befehle und Workspace-Skripte mit einem Klick auszuführen.
+
+### Funktionen:
+- **Zentraler Launcher**: Startet `start.sh`, `lite6.sh` und andere Workspace-Skripte in separaten Terminals.
+- **Node-Management**: Schneller Zugriff auf häufig genutzte ROS 2 `run` und `launch` Befehle.
+- **Modernes Design**: Dunkles "Midnight"-Theme mit intuitiver Tab-Navigation.
+- **System-Status**: Überblick über laufende Prozesse und einfache Bedienung ohne tiefere Terminal-Kenntnisse.
+
+Starten des Scripts:
+```bash
+python3 ros2_gui_cmds.py
+```

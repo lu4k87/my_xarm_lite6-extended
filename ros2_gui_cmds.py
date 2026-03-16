@@ -1,23 +1,33 @@
-import tkinter as tk
-from tkinter import ttk
+import customtkinter as ctk
 import subprocess
 import sys
 import os
 import shlex
 
 # ==========================================
+# APPEARANCE & THEME (Premium Midnight)
+# ==========================================
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
+
+# Midnight Theme Palette
+COLOR_BG_MAIN = "#0f172a"      # Deep Navy/Slate
+COLOR_BG_SURFACE = "#1e293b"   # Slate Blue Surface
+COLOR_FG_TEXT = "#f8fafc"      # Near White
+COLOR_FG_MUTED = "#64748b"     # Muted Slate
+COLOR_ACCENT_BLUE = "#3b82f6"  # Vibrant Primary Blue
+COLOR_ACCENT_ORANGE = "#f59e0b" # Modern Orange instead of Pink
+COLOR_ACCENT_GREEN = "#10b981" # Success Green
+
+# ==========================================
 # BACKEND FUNKTIONEN
 # ==========================================
+# ... (rest of backend functions remains same)
 def run_cmd(command, title="ROS 2 Terminal", ws_path="~/dev_ws"):
     """Führt einen ROS-Befehl aus und zeigt den vollständigen Ablauf im Terminal."""
-    
-    # ROS 2 Basis-Setup explizit erzwingen, da gnome-terminal -- bash -c oft keine .bashrc lädt
     ros_setup = "source /opt/ros/humble/setup.bash"
     ws_setup = f"source {ws_path}/install/setup.bash"
-    
     display_cmd = f"{ros_setup} && {ws_setup} && cd {ws_path} && {command}"
-    
-    # FIX: Verhindert, dass Anführungszeichen/Sonderzeichen im Befehl den Bash-Echo-Befehl zerstören
     safe_display = display_cmd.replace('\\', '\\\\').replace('"', '\\"')
     
     script_content = f"""{ros_setup} 2>/dev/null || true
@@ -39,11 +49,7 @@ echo -e "\\033[1;33m============================================================
 
 def run_interactive_cmd(command, title="System Tool"):
     """Führt System-/Interaktive Befehle aus und zeigt sie lückenlos an."""
-    
-    # ROS 2 Basis-Setup explizit erzwingen
     ros_setup = "source /opt/ros/humble/setup.bash"
-    
-    # FIX: Maskierung für die korrekte Anzeige im Terminal
     safe_display = command.replace('\\', '\\\\').replace('"', '\\"')
     
     script_content = f"""{ros_setup} 2>/dev/null || true
@@ -72,198 +78,190 @@ def reload_app():
     os.execl(python, python, *sys.argv)
 
 # ==========================================
-# HAUPTFENSTER & THEME (Dracula Dark)
+# MAIN APPLICATION CLASS
 # ==========================================
-root = tk.Tk()
-root.title("ROS 2 Master Control")
-root.geometry("650x900")
+class ROS2MasterControl(ctk.CTk):
+    def __init__(self):
+        super().__init__()
 
-bg_main = "#282A36"
-bg_surface = "#44475A"
-fg_text = "#F8F8F2"
-fg_muted = "#6272A4"
-accent_cyan = "#8BE9FD"
-accent_pink = "#FF79C6"
-accent_green = "#50FA7B"
-border_col = "#6272A4"
+        self.title("ROS 2 Master Control")
+        self.geometry("500x1000") # Breite auf ca. 60% (500px) angepasst
+        self.configure(fg_color=COLOR_BG_MAIN)
 
-root.configure(bg=bg_main)
-style = ttk.Style()
-style.theme_use('clam')
+        # UI LAYOUT
+        self.setup_tabs()
+        self.setup_footer()
 
-# Basis-Konfiguration
-style.configure(".", background=bg_main, foreground=fg_text, font=("Helvetica", 10))
+    def setup_tabs(self):
+        self.tabview = ctk.CTkTabview(self, 
+                                     fg_color="transparent",
+                                     segmented_button_fg_color=COLOR_BG_SURFACE,
+                                     segmented_button_selected_color=COLOR_ACCENT_BLUE,
+                                     segmented_button_selected_hover_color="#60a5fa",
+                                     segmented_button_unselected_color=COLOR_BG_SURFACE,
+                                     segmented_button_unselected_hover_color="#334155",
+                                     text_color=COLOR_FG_TEXT)
+        self.tabview.pack(expand=True, fill="both", padx=20, pady=(10, 20))
 
-# Tabs
-style.configure("TNotebook", background=bg_main, borderwidth=0)
-style.configure("TNotebook.Tab", font=("Helvetica", 10, "bold"), padding=[15, 10], background=bg_surface, foreground=fg_text, borderwidth=0)
-style.map("TNotebook.Tab", background=[("selected", bg_main)], foreground=[("selected", accent_cyan)], expand=[("selected", [0, 0, 0, 0])])
+        # FORCE WIDER TABS: Wir nutzen das interne SegmentedButton Widget
+        self.tabview._segmented_button.configure(
+            font=("Helvetica", 15, "bold"),
+            height=45,
+            corner_radius=8
+        )
+        
+        # Tabs hinzufügen mit extra Padding im Namen für Breite
+        self.tab_daily = self.tabview.add("   Daily Tools   ")
+        self.tab_info = self.tabview.add("   ROS Info   ")
+        self.tab_build = self.tabview.add("   Build   ")
+        self.tab_nodes = self.tabview.add("   Nodes   ")
+        self.tab_web = self.tabview.add("   Web   ")
 
-# Buttons
-style.configure("TButton", font=("Helvetica", 10, "bold"), background=bg_surface, foreground=fg_text, borderwidth=1, bordercolor=border_col, padding=8, focuscolor=bg_main)
-style.map("TButton", background=[("active", "#6272A4")], foreground=[("active", "#FFFFFF")])
+        self.tabview.set("   Daily Tools   ")
 
-style.configure("Action.TButton", foreground=accent_pink)
-style.map("Action.TButton", background=[("active", accent_pink)], foreground=[("active", bg_main)])
+        self.create_daily_tab()
+        self.create_info_tab()
+        self.create_build_tab()
+        self.create_nodes_tab()
+        self.create_web_tab()
 
-style.configure("Start.TButton", foreground=accent_green)
-style.map("Start.TButton", background=[("active", accent_green)], foreground=[("active", bg_main)])
+    def create_daily_tab(self):
+        frame = self.tab_daily
+        self.add_header(frame, "System & Netzwerk")
+        self.add_button(frame, "Eigene IP-Adresse anzeigen", 
+                        lambda: run_interactive_cmd("echo -e '\\033[1;32mNetzwerk-Schnittstellen:\\033[0m'; ip -brief address show; echo ''; echo 'Druecke Enter zum Schliessen.'; read", "IP Adresse"))
+        
+        cmd_find = 'read -p "Welcher Dateiname (oder Teil davon) wird gesucht?: " st; echo -e "\\n\\033[1;36mSuche im gesamten System nach: *${st}* ... (Das kann dauern!)\\033[0m\\n"; find / -iname "*${st}*" 2>/dev/null'
+        self.add_button(frame, "Datei im System suchen (find)", lambda: run_interactive_cmd(cmd_find, "System Suche"))
 
-# Text-Labels
-style.configure("Header.TLabel", font=("Helvetica", 12, "bold"), foreground=accent_cyan, background=bg_main, padding=(0, 15, 0, 5))
-style.configure("Sub.TLabel", font=("Courier", 9), foreground=fg_muted, background=bg_main)
+        self.add_header(frame, "Umgebung (.bashrc)", pady=(20, 0))
+        self.add_button(frame, "~/.bashrc neu laden (source)", 
+                        lambda: run_interactive_cmd("source ~/.bashrc && echo -e '\\033[1;32m.bashrc erfolgreich neu geladen!\\033[0m'; sleep 2", "Source Bashrc"))
 
-# ==========================================
-# FOOTER
-# ==========================================
-footer_frame = ttk.Frame(root)
-footer_frame.pack(side="bottom", fill="x", pady=15, padx=20)
+    def create_info_tab(self):
+        scroll_frame = ctk.CTkScrollableFrame(self.tab_info, fg_color="transparent")
+        scroll_frame.pack(expand=True, fill="both")
 
-ttk.Separator(footer_frame, orient="horizontal").pack(fill="x", pady=(0, 5))
+        self.add_header(scroll_frame, "Listen & Status")
+        items = [
+            ("Aktive Nodes (node list)", "ros2 node list", "Nodes"),
+            ("Aktive Topics (topic list -t)", "ros2 topic list -t", "Topics"),
+            ("Aktive Services (service list)", "ros2 service list", "Services"),
+            ("Globale Parameter (param list)", "ros2 param list", "Parameter"),
+            ("Alle ROS 2 Pakete auflisten (pkg list)", "ros2 pkg list", "Packages"),
+        ]
+        for text, cmd, title in items:
+            self.add_button(scroll_frame, text, lambda c=cmd, t=title: run_cmd(c, t), pady=4)
 
-btn_frame = ttk.Frame(footer_frame)
-btn_frame.pack(pady=10)
+        self.add_header(scroll_frame, "Visualisierung", pady=(20, 0))
+        self.add_button(scroll_frame, "RViz2 starten", lambda: run_cmd("rviz2", "RViz2"), fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN, pady=4)
+        self.add_button(scroll_frame, "RQT Graph (Node-Netzwerk)", lambda: run_cmd("rqt_graph", "RQT Graph"), pady=4)
+        self.add_button(scroll_frame, "RQT (Generelle GUI)", lambda: run_cmd("rqt", "RQT"), pady=4)
 
-ttk.Button(btn_frame, text="~/.bashrc bearbeiten (nano)", command=lambda: run_interactive_cmd("nano ~/.bashrc", "Bashrc Editor")).pack(side="left", padx=5)
-ttk.Button(btn_frame, text="Code anpassen", command=open_editor).pack(side="left", padx=5)
-ttk.Button(btn_frame, text="App neu laden", command=reload_app, style="Action.TButton").pack(side="left", padx=5)
+        self.add_header(scroll_frame, "Live-Debugging (Interaktiv)", pady=(20, 0))
+        cmd_echo = 'read -p "Welches Topic willst du abhoeren?: " tp; echo -e "\\n\\033[1;36mHoere $tp ab...\\033[0m\\n"; ros2 topic echo $tp'
+        self.add_button(scroll_frame, "Topic Echo (Live-Daten lesen)", lambda: run_interactive_cmd(cmd_echo, "Topic Echo"), pady=4)
 
-# ==========================================
-# NOTEBOOK (Tabs) 
-# ==========================================
-notebook = ttk.Notebook(root)
-notebook.pack(expand=True, fill="both", side="top", padx=15, pady=10)
+        cmd_hz = 'read -p "Topic fuer Frequenzmessung eingeben: " tp; echo -e "\\n\\033[1;36mRate von $tp...\\033[0m\\n"; ros2 topic hz $tp'
+        self.add_button(scroll_frame, "Topic Hz (Publish-Rate messen)", lambda: run_interactive_cmd(cmd_hz, "Topic Hz"), pady=4)
 
-def create_tab(name):
-    frame = ttk.Frame(notebook, padding=15)
-    notebook.add(frame, text=name)
-    return frame
+        cmd_msg = 'read -p "Message-Typ (z.B. sensor_msgs/msg/Joy): " msg; echo -e "\\n\\033[1;36mStruktur:\\033[0m\\n"; ros2 interface show $msg; echo ""; read -p "Druecke Enter zum Schliessen."'
+        self.add_button(scroll_frame, "Interface/Message Aufbau anzeigen", lambda: run_interactive_cmd(cmd_msg, "Interface Info"), pady=4)
 
-# --- TAB 1: Daily Tools ---
-tab_daily = create_tab("Daily Tools")
+        self.add_header(scroll_frame, "Diagnose Tools", pady=(20, 0))
+        self.add_button(scroll_frame, "System Check (ros2 doctor)", lambda: run_cmd("ros2 doctor", "ROS Doctor"), pady=4)
 
-ttk.Label(tab_daily, text="System & Netzwerk", style="Header.TLabel").pack(anchor="w")
-ttk.Button(tab_daily, text="Eigene IP-Adresse anzeigen", command=lambda: run_interactive_cmd("echo -e '\\033[1;32mNetzwerk-Schnittstellen:\\033[0m'; ip -brief address show; echo ''; echo 'Druecke Enter zum Schliessen.'; read", "IP Adresse")).pack(fill="x", pady=5)
-cmd_find = 'read -p "Welcher Dateiname (oder Teil davon) wird gesucht?: " st; echo -e "\\n\\033[1;36mSuche im gesamten System nach: *${st}* ... (Das kann dauern!)\\033[0m\\n"; find / -iname "*${st}*" 2>/dev/null'
-ttk.Button(tab_daily, text="Datei im System suchen (find)", command=lambda: run_interactive_cmd(cmd_find, "System Suche")).pack(fill="x", pady=5)
+    def create_build_tab(self):
+        frame = self.tab_build
+        self.add_header(frame, "Workspace: ~/dev_ws")
+        self.add_button(frame, "Colcon Build (--symlink-install)", 
+                        lambda: run_cmd("colcon build --symlink-install", "Colcon Build", "~/dev_ws"), 
+                        fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN)
 
-ttk.Label(tab_daily, text="Umgebung (.bashrc)", style="Header.TLabel").pack(anchor="w", pady=(10,0))
-ttk.Button(tab_daily, text="~/.bashrc neu laden (source)", command=lambda: run_interactive_cmd("source ~/.bashrc && echo -e '\\033[1;32m.bashrc erfolgreich neu geladen!\\033[0m'; sleep 2", "Source Bashrc")).pack(fill="x", pady=5)
+        self.add_header(frame, "Wartung & Reset", pady=(30, 0))
+        kill_cmd = "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'"
+        self.add_button(frame, "ALLE ROS-Prozesse beenden", lambda: run_bg_cmd(kill_cmd), fg_color=COLOR_ACCENT_ORANGE, text_color=COLOR_BG_MAIN)
 
-# --- TAB 2: ROS Info ---
-tab_sys = create_tab("ROS Info")
+    def create_nodes_tab(self):
+        scroll_frame = ctk.CTkScrollableFrame(self.tab_nodes, fg_color="transparent")
+        scroll_frame.pack(expand=True, fill="both")
 
-sys_canvas = tk.Canvas(tab_sys, bg=bg_main, highlightthickness=0)
-sys_scrollbar = ttk.Scrollbar(tab_sys, orient="vertical", command=sys_canvas.yview)
-sys_scroll_frame = ttk.Frame(sys_canvas)
+        self.add_header(scroll_frame, "Controller (Joy)")
+        joy_payload = '"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"'
+        self.add_button(scroll_frame, "Pub /joy (Rate 10)", 
+                        lambda: run_cmd(f"ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy {joy_payload}", "Joy Pub"), 
+                        fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN, pady=4)
+        self.add_button(scroll_frame, "Pub /joy_check (Rate 10)", 
+                        lambda: run_cmd(f"ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy {joy_payload}", "Joy Check Pub"), pady=4)
 
-sys_scroll_frame.bind("<Configure>", lambda e: sys_canvas.configure(scrollregion=sys_canvas.bbox("all")))
-sys_canvas.create_window((0, 0), window=sys_scroll_frame, anchor="nw", width=580)
-sys_canvas.configure(yscrollcommand=sys_scrollbar.set)
-sys_canvas.pack(side="left", fill="both", expand=True)
-sys_scrollbar.pack(side="right", fill="y")
+        self.add_header(scroll_frame, "Robotik & MoveIt", pady=(20, 0))
+        self.add_button(scroll_frame, "Real Move Launch (X-Arm Servo)", 
+                        lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", "Real Move"), 
+                        fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN, pady=4)
+        self.add_button(scroll_frame, "Fake Move Launch (Simulation)", 
+                        lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py", "Fake Move"), pady=4)
+        self.add_button(scroll_frame, "Keyboard Input Node", 
+                        lambda: run_cmd("ros2 run xarm_moveit_servo xarm_keyboard_input", "Keyboard Input"), pady=4)
 
-def _bind_sys_mouse(event=None):
-    sys_canvas.bind_all("<Button-4>", lambda e: sys_canvas.yview_scroll(-1, "units"))
-    sys_canvas.bind_all("<Button-5>", lambda e: sys_canvas.yview_scroll(1, "units"))
-def _unbind_sys_mouse(event=None):
-    sys_canvas.unbind_all("<Button-4>")
-    sys_canvas.unbind_all("<Button-5>")
+        self.add_header(scroll_frame, "Planung & Logik", pady=(20, 0))
+        self.add_button(scroll_frame, "Move To Coordinator Node", 
+                        lambda: run_cmd("ros2 run move_to_coordinator move_to_coordinator", "Coordinator"), pady=4)
+        self.add_button(scroll_frame, "Motion Sequence Launch", 
+                        lambda: run_cmd("ros2 launch motion_sequence motion_sequence_launch.py", "Motion Sequence"), pady=4)
+        self.add_button(scroll_frame, "Collision Check Node", 
+                        lambda: run_cmd("ros2 run collision_check checker", "Collision Check"), pady=4)
 
-sys_canvas.bind('<Enter>', _bind_sys_mouse)
-sys_canvas.bind('<Leave>', _unbind_sys_mouse)
+        self.add_header(scroll_frame, "Vision & Voice", pady=(20, 0))
+        self.add_button(scroll_frame, "YOLO Homographie Node", lambda: run_cmd("ros2 run yolo_object_detector yolo_homography_node", "YOLO"), pady=4)
+        self.add_button(scroll_frame, "RViz Marker Publisher Node", lambda: run_cmd("ros2 run rviz_marker marker_publisher", "RViz Marker"), pady=4)
+        self.add_button(scroll_frame, "Whisper Bringup Launch", lambda: run_cmd("ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", "Whisper Bringup"), pady=4)
+        self.add_button(scroll_frame, "Whisper Stream Demo Node", lambda: run_cmd("ros2 run whisper_demos whisper_on_key", "Whisper Demo"), pady=4)
+        self.add_button(scroll_frame, "Voice Command Listener Node", lambda: run_cmd("ros2 run voice_command_listener listener", "Voice Listener"), pady=4)
 
-ttk.Label(sys_scroll_frame, text="Listen & Status", style="Header.TLabel").pack(anchor="w")
-ttk.Button(sys_scroll_frame, text="Aktive Nodes (node list)", command=lambda: run_cmd("ros2 node list", "Nodes")).pack(fill="x", pady=3)
-ttk.Button(sys_scroll_frame, text="Aktive Topics (topic list -t)", command=lambda: run_cmd("ros2 topic list -t", "Topics")).pack(fill="x", pady=3)
-ttk.Button(sys_scroll_frame, text="Aktive Services (service list)", command=lambda: run_cmd("ros2 service list", "Services")).pack(fill="x", pady=3)
-ttk.Button(sys_scroll_frame, text="Globale Parameter (param list)", command=lambda: run_cmd("ros2 param list", "Parameter")).pack(fill="x", pady=3)
-ttk.Button(sys_scroll_frame, text="Alle ROS 2 Pakete auflisten (pkg list)", command=lambda: run_cmd("ros2 pkg list", "Packages")).pack(fill="x", pady=3)
+    def create_web_tab(self):
+        frame = self.tab_web
+        self.add_header(frame, "Backend & Server")
+        self.add_button(frame, "ROS Bridge Launch (Websocket)", lambda: run_cmd("ros2 launch rosbridge_server rosbridge_websocket_launch.xml", "ROS Bridge"), pady=5)
+        self.add_button(frame, "Workspace Analyzer Script", lambda: run_cmd("python3 src/websocket/workspace_analyzer.py", "Workspace Analyzer"), pady=5)
+        self.add_button(frame, "Webserver starten (Port 8080)", lambda: run_cmd("python3 -m http.server 8080 -d src/websocket", "Webserver"), pady=5)
 
-ttk.Label(sys_scroll_frame, text="Visualisierung", style="Header.TLabel").pack(anchor="w", pady=(10,0))
-ttk.Button(sys_scroll_frame, text="RViz2 starten", command=lambda: run_cmd("rviz2", "RViz2"), style="Start.TButton").pack(fill="x", pady=3)
-ttk.Button(sys_scroll_frame, text="RQT Graph (Node-Netzwerk)", command=lambda: run_cmd("rqt_graph", "RQT Graph")).pack(fill="x", pady=3)
-ttk.Button(sys_scroll_frame, text="RQT (Generelle GUI)", command=lambda: run_cmd("rqt", "RQT")).pack(fill="x", pady=3)
+        self.add_header(frame, "Frontend", pady=(20, 0))
+        self.add_button(frame, "Dashboard im Browser oeffnen", 
+                        lambda: run_bg_cmd("xdg-open http://localhost:8080/dashboard_index.html"), 
+                        fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN, pady=12)
+        self.add_button(frame, "OBS Studio", lambda: run_cmd("obs", "OBS Studio"), pady=5)
 
-ttk.Label(sys_scroll_frame, text="Live-Debugging (Interaktiv)", style="Header.TLabel").pack(anchor="w", pady=(10,0))
-cmd_echo = 'read -p "Welches Topic willst du abhoeren?: " tp; echo -e "\\n\\033[1;36mHoere $tp ab...\\033[0m\\n"; ros2 topic echo $tp'
-ttk.Button(sys_scroll_frame, text="Topic Echo (Live-Daten lesen)", command=lambda: run_interactive_cmd(cmd_echo, "Topic Echo")).pack(fill="x", pady=3)
+    def setup_footer(self):
+        footer = ctk.CTkFrame(self, fg_color="transparent")
+        footer.pack(side="bottom", fill="x", padx=20, pady=25)
 
-cmd_hz = 'read -p "Topic fuer Frequenzmessung eingeben: " tp; echo -e "\\n\\033[1;36mRate von $tp...\\033[0m\\n"; ros2 topic hz $tp'
-ttk.Button(sys_scroll_frame, text="Topic Hz (Publish-Rate messen)", command=lambda: run_interactive_cmd(cmd_hz, "Topic Hz")).pack(fill="x", pady=3)
+        ctk.CTkLabel(footer, text="", height=2, fg_color=COLOR_FG_MUTED).pack(fill="x", pady=(0, 20))
 
-cmd_msg = 'read -p "Message-Typ (z.B. sensor_msgs/msg/Joy): " msg; echo -e "\\n\\033[1;36mStruktur:\\033[0m\\n"; ros2 interface show $msg; echo ""; read -p "Druecke Enter zum Schliessen."'
-ttk.Button(sys_scroll_frame, text="Interface/Message Aufbau anzeigen", command=lambda: run_interactive_cmd(cmd_msg, "Interface Info")).pack(fill="x", pady=3)
+        btn_frame = ctk.CTkFrame(footer, fg_color="transparent")
+        btn_frame.pack()
 
-ttk.Label(sys_scroll_frame, text="Diagnose Tools", style="Header.TLabel").pack(anchor="w", pady=(10,0))
-ttk.Button(sys_scroll_frame, text="System Check (ros2 doctor)", command=lambda: run_cmd("ros2 doctor", "ROS Doctor")).pack(fill="x", pady=3)
+        self.add_footer_button(btn_frame, "~/.bashrc bearbeiten", lambda: run_interactive_cmd("nano ~/.bashrc", "Bashrc Editor"))
+        self.add_footer_button(btn_frame, "Code anpassen", open_editor)
+        self.add_footer_button(btn_frame, "App neu laden", reload_app, fg_color=COLOR_ACCENT_ORANGE)
 
-# --- TAB 3: Build & Clean ---
-tab_build = create_tab("Build")
-ttk.Label(tab_build, text="Workspace: ~/dev_ws", style="Header.TLabel").pack(anchor="w")
-ttk.Button(tab_build, text="Colcon Build (--symlink-install)", command=lambda: run_cmd("colcon build --symlink-install", "Colcon Build", "~/dev_ws"), style="Start.TButton").pack(fill="x", pady=5)
+    def add_header(self, master, text, pady=(0, 10)):
+        label = ctk.CTkLabel(master, text=text, font=("Helvetica", 20, "bold"), text_color=COLOR_ACCENT_BLUE)
+        label.pack(anchor="w", pady=pady)
 
-ttk.Label(tab_build, text="Wartung & Reset", style="Header.TLabel").pack(anchor="w", pady=(15,0))
-ttk.Button(tab_build, text="ALLE ROS-Prozesse beenden", command=lambda: run_bg_cmd("pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'"), style="Action.TButton").pack(fill="x", pady=5)
+    def add_button(self, master, text, command, fg_color=COLOR_BG_SURFACE, text_color=COLOR_FG_TEXT, pady=6):
+        btn = ctk.CTkButton(master, text=text, command=command, 
+                            fg_color=fg_color, text_color=text_color,
+                            hover_color="#334155", height=48, font=("Helvetica", 14, "bold"),
+                            corner_radius=10)
+        btn.pack(fill="x", pady=pady)
 
-# --- TAB 4: Nodes (MIT SCROLLBAR) ---
-tab_robot = create_tab("Nodes")
+    def add_footer_button(self, master, text, command, fg_color=COLOR_BG_SURFACE):
+        btn = ctk.CTkButton(master, text=text, command=command,
+                            fg_color=fg_color, text_color=COLOR_FG_TEXT,
+                            hover_color="#334155", height=42, font=("Helvetica", 13, "bold"),
+                            corner_radius=8)
+        btn.pack(side="left", padx=10)
 
-canvas = tk.Canvas(tab_robot, bg=bg_main, highlightthickness=0)
-scrollbar = ttk.Scrollbar(tab_robot, orient="vertical", command=canvas.yview)
-scrollable_frame = ttk.Frame(canvas)
-
-scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=580)
-canvas.configure(yscrollcommand=scrollbar.set)
-
-def _bind_mouse(event=None):
-    canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
-    canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
-def _unbind_mouse(event=None):
-    canvas.unbind_all("<Button-4>")
-    canvas.unbind_all("<Button-5>")
-
-canvas.bind('<Enter>', _bind_mouse)
-canvas.bind('<Leave>', _unbind_mouse)
-
-canvas.pack(side="left", fill="both", expand=True)
-scrollbar.pack(side="right", fill="y")
-
-# --- Inhalt des Scroll-Frames ---
-ttk.Label(scrollable_frame, text="Controller (Joy)", style="Header.TLabel").pack(anchor="w")
-
-joy_payload = '"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"'
-
-ttk.Button(scrollable_frame, text="Pub /joy (Rate 10)", command=lambda: run_cmd(f"ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy {joy_payload}", "Joy Pub", "~/dev_ws"), style="Start.TButton").pack(fill="x", pady=3)
-ttk.Button(scrollable_frame, text="Pub /joy_check (Rate 10)", command=lambda: run_cmd(f"ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy {joy_payload}", "Joy Check Pub", "~/dev_ws")).pack(fill="x", pady=3)
-
-ttk.Label(scrollable_frame, text="Robotik & MoveIt", style="Header.TLabel").pack(anchor="w", pady=(10,0))
-ttk.Button(scrollable_frame, text="Real Move Launch (X-Arm Servo)", command=lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", "Real Move", "~/dev_ws"), style="Start.TButton").pack(fill="x", pady=3)
-ttk.Button(scrollable_frame, text="Fake Move Launch (Simulation)", command=lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py", "Fake Move", "~/dev_ws")).pack(fill="x", pady=3)
-ttk.Button(scrollable_frame, text="Keyboard Input Node", command=lambda: run_cmd("ros2 run xarm_moveit_servo xarm_keyboard_input", "Keyboard Input", "~/dev_ws")).pack(fill="x", pady=3)
-
-ttk.Label(scrollable_frame, text="Planung & Logik", style="Header.TLabel").pack(anchor="w", pady=(10,0))
-ttk.Button(scrollable_frame, text="Move To Coordinator Node", command=lambda: run_cmd("ros2 run move_to_coordinator move_to_coordinator", "Coordinator", "~/dev_ws")).pack(fill="x", pady=3)
-ttk.Button(scrollable_frame, text="Motion Sequence Launch", command=lambda: run_cmd("ros2 launch motion_sequence motion_sequence_launch.py", "Motion Sequence", "~/dev_ws")).pack(fill="x", pady=3)
-ttk.Button(scrollable_frame, text="Collision Check Node", command=lambda: run_cmd("ros2 run collision_check checker", "Collision Check", "~/dev_ws")).pack(fill="x", pady=3)
-
-ttk.Label(scrollable_frame, text="Vision & Voice", style="Header.TLabel").pack(anchor="w", pady=(10,0))
-ttk.Button(scrollable_frame, text="YOLO Homographie Node", command=lambda: run_cmd("ros2 run yolo_object_detector yolo_homography_node", "YOLO", "~/dev_ws")).pack(fill="x", pady=3)
-ttk.Button(scrollable_frame, text="RViz Marker Publisher Node", command=lambda: run_cmd("ros2 run rviz_marker marker_publisher", "RViz Marker", "~/dev_ws")).pack(fill="x", pady=3)
-ttk.Button(scrollable_frame, text="Whisper Bringup Launch", command=lambda: run_cmd("ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", "Whisper Bringup", "~/dev_ws")).pack(fill="x", pady=3)
-ttk.Button(scrollable_frame, text="Whisper Stream Demo Node", command=lambda: run_cmd("ros2 run whisper_demos whisper_on_key", "Whisper Demo", "~/dev_ws")).pack(fill="x", pady=3)
-ttk.Button(scrollable_frame, text="Voice Command Listener Node", command=lambda: run_cmd("ros2 run voice_command_listener listener", "Voice Listener", "~/dev_ws")).pack(fill="x", pady=3)
-
-# --- TAB 5: Web ---
-tab_web = create_tab("Web")
-ttk.Label(tab_web, text="Backend & Server", style="Header.TLabel").pack(anchor="w")
-ttk.Button(tab_web, text="ROS Bridge Launch (Websocket)", command=lambda: run_cmd("ros2 launch rosbridge_server rosbridge_websocket_launch.xml", "ROS Bridge", "~/dev_ws")).pack(fill="x", pady=4)
-ttk.Button(tab_web, text="Workspace Analyzer Script", command=lambda: run_cmd("python3 src/websocket/workspace_analyzer.py", "Workspace Analyzer", "~/dev_ws")).pack(fill="x", pady=4)
-ttk.Button(tab_web, text="Webserver starten (Port 8080)", command=lambda: run_cmd("python3 -m http.server 8080 -d src/websocket", "Webserver", "~/dev_ws")).pack(fill="x", pady=4)
-
-ttk.Label(tab_web, text="Frontend", style="Header.TLabel").pack(anchor="w", pady=(10,0))
-ttk.Button(tab_web, text="Dashboard im Browser oeffnen", command=lambda: run_bg_cmd("xdg-open http://localhost:8080/dashboard_index.html"), style="Start.TButton").pack(fill="x", pady=10)
-ttk.Button(tab_web, text="OBS Studio", command=lambda: run_cmd("obs", "OBS Studio")).pack(fill="x", pady=4)
-
-root.mainloop()
+if __name__ == "__main__":
+    app = ROS2MasterControl()
+    app.mainloop()

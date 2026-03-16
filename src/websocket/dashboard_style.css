@@ -1019,8 +1019,22 @@ body {
     padding: 10px 18px;
     border-left: 3px solid var(--accent-primary);
     background: linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, transparent 100%);
-    border-radius: 4px 12px 12px 4px;
+    border-radius: 4px 12px 0 0; /* Adjusted for block container */
     letter-spacing: 0.5px;
+}
+
+.nd-content-block {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.nd-content-block .nd-section-title {
+    margin: -20px -20px 20px -20px; /* Offset parent padding */
+    border-radius: 11px 11px 0 0;
 }
 
 .nd-workspace-grid {
@@ -1281,7 +1295,7 @@ body {
     align-items: center;
     gap: 25px;
     background: rgba(0, 0, 0, 0.4);
-    padding: 60px 25px 30px 25px;
+    padding: 40px 25px; /* Symmetrical padding for better vertical centering */
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(5px);
@@ -1603,6 +1617,21 @@ body {
     }
 }
 
+.center-node-box img {
+    animation: icon-pulse 2s infinite ease-in-out alternate;
+}
+
+@keyframes icon-pulse {
+    0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
+    }
+    100% {
+        transform: scale(1.08);
+        filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
+    }
+}
+
 .center-node-active img {
     animation: pulse-svg-center 1.5s infinite alternate;
 }
@@ -1782,34 +1811,34 @@ body {
     padding: 15px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Increased opacity for base column */
     transition: all 0.3s ease;
 }
 
 .col-subs {
     background: rgba(245, 158, 11, 0.03);
-    border-color: rgba(245, 158, 11, 0.15);
+    border-color: rgb(245, 158, 11); /* Full strength orange */
 }
 
 .col-pubs {
     background: rgba(16, 185, 129, 0.03);
-    border-color: rgba(16, 185, 129, 0.15);
+    border-color: rgb(16, 185, 129); /* Full strength green */
 }
 
 .col-services {
     background: rgba(168, 85, 247, 0.05); /* Purple */
-    border-color: rgba(168, 85, 247, 0.2);
+    border-color: rgb(168, 85, 247); /* Full strength purple */
 }
 
 .col-clients {
     background: rgba(56, 189, 248, 0.05); /* Blue */
-    border-color: rgba(56, 189, 248, 0.2);
+    border-color: rgb(56, 189, 248); /* Full strength blue */
 }
 
 .col-act-server,
 .col-act-client {
     background: rgba(239, 68, 68, 0.05); /* Red */
-    border-color: rgba(239, 68, 68, 0.2);
+    border-color: rgb(239, 68, 68); /* Full strength red */
 }
 
 .topic-col:hover {
