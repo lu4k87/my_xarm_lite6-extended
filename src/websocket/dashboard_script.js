@@ -518,6 +518,10 @@ function findConnections(targetNode) {
 }
 
 function selectNode(nodeName, skipRequest = false) {
+    // Set video playback speed
+    const video = document.querySelector('.nd-flow-video');
+    if (video) video.playbackRate = 0.5;
+
     const items = document.getElementById('dynamic-node-list').getElementsByTagName('li');
     for (let i = 0; i < items.length; i++) {
         items[i].classList.remove('active');
