@@ -85,7 +85,7 @@ class ROS2MasterControl(ctk.CTk):
         super().__init__()
 
         self.title("ROS 2 Master Control")
-        self.geometry("500x1000") # Breite auf ca. 60% (500px) angepasst
+        self.geometry("665x1000") # Breite um weitere 10% erhöht (665px)
         self.configure(fg_color=COLOR_BG_MAIN)
 
         # UI LAYOUT
@@ -112,18 +112,18 @@ class ROS2MasterControl(ctk.CTk):
         
         # Tabs hinzufügen mit extra Padding im Namen für Breite
         self.tab_daily = self.tabview.add("   Daily Tools   ")
-        self.tab_info = self.tabview.add("   ROS Info   ")
-        self.tab_build = self.tabview.add("   Build   ")
         self.tab_nodes = self.tabview.add("   Nodes   ")
-        self.tab_web = self.tabview.add("   Web   ")
+        self.tab_web = self.tabview.add("   Web Service   ")
+        self.tab_info = self.tabview.add("   ROS - Info   ")
+        self.tab_build = self.tabview.add("   Build & Source   ")
 
         self.tabview.set("   Daily Tools   ")
 
         self.create_daily_tab()
-        self.create_info_tab()
-        self.create_build_tab()
         self.create_nodes_tab()
         self.create_web_tab()
+        self.create_info_tab()
+        self.create_build_tab()
 
     def create_daily_tab(self):
         frame = self.tab_daily
@@ -173,7 +173,7 @@ class ROS2MasterControl(ctk.CTk):
 
     def create_build_tab(self):
         frame = self.tab_build
-        self.add_header(frame, "Workspace: ~/dev_ws")
+        self.add_header(frame, "Build & Workspace (dev_ws)")
         self.add_button(frame, "Colcon Build (--symlink-install)", 
                         lambda: run_cmd("colcon build --symlink-install", "Colcon Build", "~/dev_ws"), 
                         fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN)
