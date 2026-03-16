@@ -113,10 +113,12 @@
     }
 
     .tree-card-badges {
-        margin-left: auto;
+        margin-right: auto;
+        margin-left: 0;
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
+        order: -1;
     }
 
     .t-badge {
@@ -185,8 +187,10 @@
     }
 </style>
 
-<div class="header-bar">
-    <h2>Ausgeführte Launch-Files (dashboard.sh)</h2>
+<div class="header-widget widget" style="padding: 15px; margin-bottom: 20px;">
+    <div class="header-bar" style="margin-bottom: 0;">
+        <h2 style="font-size: 1.6rem;">Ausgeführte Launch-Files (dashboard.sh)</h2>
+    </div>
 </div>
 
 <div class="widget" style="height: calc(100vh - 120px); overflow-y: auto; padding-right: 15px;">
