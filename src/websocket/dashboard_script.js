@@ -520,7 +520,7 @@ function findConnections(targetNode) {
 function selectNode(nodeName, skipRequest = false) {
     // Set video playback speed
     const video = document.querySelector('.nd-flow-video');
-    if (video) video.playbackRate = 0.5;
+    if (video) video.playbackRate = 0.3;
 
     const items = document.getElementById('dynamic-node-list').getElementsByTagName('li');
     for (let i = 0; i < items.length; i++) {
@@ -1113,7 +1113,7 @@ function showNodesOverview() {
         const pubs = nodeData.publishers ? nodeData.publishers.length : 0;
         const subs = nodeData.subscribers ? nodeData.subscribers.length : 0;
         const srvs = nodeData.services ? nodeData.services.length : 0;
-        
+
         // Actions aus Metadaten oder Fallback
         let actions = nodeData.action_count || 0;
         if (actions === 0 && (nodeData.publishers || nodeData.subscribers)) {
