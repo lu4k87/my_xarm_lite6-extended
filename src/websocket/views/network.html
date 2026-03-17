@@ -22,35 +22,36 @@
             <div class="nodes-overview-grid" id="nodes-overview-grid"></div>
         </div>
         <div class="node-details-dashboard hidden" id="node-details-view">
-            <div class="nd-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-                <div class="nd-title-group">
-                    <span style="display:inline-block; width: 44px; height: 44px; background-color: var(--accent-primary); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain; flex-shrink:0;"></span>
-                    <h2 class="code-font" id="nd-title" style="margin: 0;">/node_name</h2>
+            <div class="nd-header" style="display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; overflow: hidden;">
+                <!-- Node Icon + Titel -->
+                <div class="nd-title-group" style="flex-shrink: 0;">
+                    <span style="display:inline-block; width: 34px; height: 34px; background-color: var(--accent-primary); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain; flex-shrink:0;"></span>
+                    <h2 class="code-font" id="nd-title" style="margin: 0; font-size: 1rem; white-space: nowrap;">/node_name</h2>
                 </div>
-                <!-- Paket + Pfad kompakt im Header rechts -->
-                <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; max-width: 55%;">
-                    <div class="ws-card" style="padding: 8px 12px; gap: 8px;">
-                        <i class="fa-solid fa-box-archive ws-icon" style="font-size: 1rem;"></i>
-                        <div class="ws-info" style="padding-right: 0;">
-                            <span class="ws-lbl" style="font-size: 0.7rem;">ROS 2 Paket</span>
-                            <span class="ws-val" id="nd-pkg" style="font-size: 0.88rem;">...</span>
-                        </div>
-                    </div>
-                    <div class="ws-card ws-card-interactive" style="padding: 8px 12px; gap: 8px;"
-                        onclick="openInExplorer(document.getElementById('nd-path').textContent)"
-                        title="Im Datei-Explorer öffnen">
-                        <i class="fa-regular fa-folder-open ws-icon" style="font-size: 1rem;"></i>
-                        <div class="ws-info" style="padding-right: 48px;">
-                            <span class="ws-lbl" style="font-size: 0.7rem;">Dateipfad</span>
-                            <span class="ws-val path-text code-font" id="nd-path" style="font-size: 0.82rem;">...</span>
-                        </div>
-                        <button class="code-btn" id="btn-show-code"
-                            onclick="event.stopPropagation(); requestSourceCode()" title="Quellcode"><i
-                                class="fa-solid fa-code"></i></button>
+                <!-- Paket-Chip -->
+                <div class="ws-card" style="padding: 4px 10px; gap: 6px; flex-shrink: 0; white-space: nowrap; min-width: 0;">
+                    <i class="fa-solid fa-box-archive" style="font-size: 0.8rem; color: var(--accent-primary); opacity:0.8;"></i>
+                    <div class="ws-info" style="padding: 0; gap: 2px;">
+                        <span class="ws-lbl" style="font-size: 0.62rem; line-height: 1;">ROS 2 Paket</span>
+                        <span class="ws-val" id="nd-pkg" style="font-size: 0.82rem; line-height: 1.2;">...</span>
                     </div>
                 </div>
-                <button class="action-btn" onclick="refreshNodeGraph()" style="font-size: 0.9rem; padding: 6px 12px; flex-shrink:0;"><i
-                        class="fa-solid fa-rotate"></i> Reset View</button>
+                <!-- Pfad-Chip -->
+                <div class="ws-card ws-card-interactive" style="padding: 4px 10px; gap: 6px; flex: 1; min-width: 0; overflow: hidden;"
+                    onclick="openInExplorer(document.getElementById('nd-path').textContent)"
+                    title="Im Datei-Explorer öffnen">
+                    <i class="fa-regular fa-folder-open" style="font-size: 0.8rem; color: var(--accent-primary); opacity:0.8; flex-shrink:0;"></i>
+                    <div class="ws-info" style="padding: 0; gap: 2px; min-width: 0; overflow: hidden;">
+                        <span class="ws-lbl" style="font-size: 0.62rem; line-height: 1;">Dateipfad</span>
+                        <span class="ws-val path-text code-font" id="nd-path" style="font-size: 0.78rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">...</span>
+                    </div>
+                    <button class="code-btn" id="btn-show-code" style="flex-shrink:0;"
+                        onclick="event.stopPropagation(); requestSourceCode()" title="Quellcode"><i
+                            class="fa-solid fa-code"></i></button>
+                </div>
+                <!-- Reset Button -->
+                <button class="action-btn" onclick="refreshNodeGraph()" style="font-size: 0.85rem; padding: 5px 10px; flex-shrink:0; white-space: nowrap;"><i
+                        class="fa-solid fa-rotate"></i> Reset</button>
             </div>
             <div class="nd-scroll-area">
                 <div
