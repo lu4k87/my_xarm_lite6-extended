@@ -1079,23 +1079,26 @@ body {
 
 .nd-header-meta-content {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
     min-width: 0;
 }
 
 .nd-header-meta-label {
-    font-size: 0.65rem;
+    font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text-secondary);
     letter-spacing: 0.8px;
     line-height: 1;
-    margin-bottom: 3px;
-    opacity: 0.8;
+    margin-bottom: 0;
+    opacity: 0.7;
+    white-space: nowrap;
 }
 
 .nd-header-meta-value {
-    font-size: 0.88rem;
+    font-size: 1.0rem;
     color: #f1f5f9;
     font-weight: 500;
     white-space: nowrap;
@@ -1108,6 +1111,7 @@ body {
 
 .nd-header-pkg {
     flex: 0 0 320px;
+    margin-left: auto;
 }
 
 .nd-header-path {
