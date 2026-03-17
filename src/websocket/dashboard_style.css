@@ -1639,6 +1639,8 @@ body {
 .topic-name-truncated {
     position: relative;
     display: inline-block;
+    cursor: help;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.4);
 }
 
 .topic-full-tooltip {
