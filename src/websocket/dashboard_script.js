@@ -9,6 +9,17 @@ let currentRequestedPath = "";
 let expandedFolders = new Set(['dev_ws/src']);
 let isTreeFullyExpanded = false;
 
+// ── Debounce-Helper ──────────────────────────────────────────────────────────
+// Verhindert Burst-Anfragen wenn der User schnell zwischen Nodes wechselt.
+function debounce(fn, delay) {
+    let timer = null;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+
 function expandTreeRecursively(treeNode, currentPath = "") {
     if (!treeNode || treeNode.type !== 'folder') return;
     const nodePath = currentPath ? `${currentPath}/${treeNode.name}` : treeNode.name;
@@ -1420,24 +1431,22 @@ function closeCodeViewer() {
 }
 
 function renderCode(rawCode, path) {
-    let esc = rawCode.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const isPython = path.endsWith('.py');
-    const isCpp = path.endsWith('.cpp') || path.endsWith('.hpp') || path.endsWith('.h');
-
-    if (isPython) {
-        esc = esc.replace(/(#.*)/g, '<span class="sh-comment">$1</span>');
-        esc = esc.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, '<span class="sh-string">$&</span>');
-        esc = esc.replace(/\b(def|class|import|from|return|if|elif|else|try|except|with|as|for|in|while|pass|True|False|None|and|or|not)\b/g, '<span class="sh-keyword">$1</span>');
-        esc = esc.replace(/\bdef\s+([a-zA-Z_]\w*)/g, 'def <span class="sh-function">$1</span>');
-        esc = esc.replace(/\b(\d+)\b/g, '<span class="sh-number">$1</span>');
-    } else if (isCpp) {
-        esc = esc.replace(/(\/\/.*)/g, '<span class="sh-comment">$1</span>');
-        esc = esc.replace(/(['"])(?:(?=(\\?))\2.)*?\1/g, '<span class="sh-string">$&</span>');
-        esc = esc.replace(/\b(int|void|float|double|char|bool|class|struct|public|private|protected|return|if|else|for|while|include|using|namespace|new|delete)\b/g, '<span class="sh-keyword">$1</span>');
-        esc = esc.replace(/\b([a-zA-Z_]\w*)\s*\(/g, '<span class="sh-function">$1</span>(');
-        esc = esc.replace(/\b(\d+)\b/g, '<span class="sh-number">$1</span>');
+    const el = document.getElementById('code-modal-text');
+    // highlight.js nutzen falls vorhanden (exakter, sicherer als Regex)
+    if (typeof hljs !== 'undefined') {
+        const lang = path.endsWith('.py')  ? 'python'
+                   : path.endsWith('.cpp') || path.endsWith('.hpp') || path.endsWith('.h') ? 'cpp'
+                   : path.endsWith('.xml') ? 'xml'
+                   : path.endsWith('.yaml') || path.endsWith('.yml') ? 'yaml'
+                   : 'plaintext';
+        try {
+            const result = hljs.highlight(rawCode, { language: lang, ignoreIllegals: true });
+            el.innerHTML = result.value;
+            return;
+        } catch (e) { /* Fallback unten */ }
     }
-    document.getElementById('code-modal-text').innerHTML = esc;
+    // Fallback: einfaches HTML-Escaping ohne Highlighting
+    el.innerHTML = rawCode.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function renderLaunchFiles() {
@@ -1612,27 +1621,36 @@ function logToTerminal(message, type = 'info') {
     term.scrollTop = term.scrollHeight;
 }
 
-window.onload = function () {
+// ── WebSocket Reconnect State ────────────────────────────────────────────────
+let rosRetryDelay = 3000;  // Startzeitraum in ms (exponentieller Backoff)
+
+// ── Gedebounctes Topic-Activity-Request ──────────────────────────────────────
+// Verhindert Burst-Requests beim schnellen Wechseln zwischen Nodes (250 ms).
+const _sendTopicActivityRequest = debounce(function (topics) {
+    if (window._topicActivityPub && window.ros && window.ros.isConnected) {
+        window._topicActivityPub.publish(new ROSLIB.Message({
+            data: JSON.stringify({ topics })
+        }));
+    }
+}, 250);
+
+function initRosConnection() {
     const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
     window.ros = ros;
 
     const statusText = document.getElementById('dashboard-status-text');
-    const statusDot = document.getElementById('dashboard-status-dot');
-    const robotText = document.getElementById('robot-status-text');
-    const robotDot = document.getElementById('robot-status-dot');
+    const statusDot  = document.getElementById('dashboard-status-dot');
+    const robotText  = document.getElementById('robot-status-text');
+    const robotDot   = document.getElementById('robot-status-dot');
 
-    // Dashboard Topics
-    window.topicActivityPub = new ROSLIB.Topic({ ros: ros, name: '/dashboard/request_topic_activity', messageType: 'std_msgs/String' });
+    // Topic-Activity Publisher
+    window._topicActivityPub = new ROSLIB.Topic({
+        ros, name: '/dashboard/request_topic_activity', messageType: 'std_msgs/String'
+    });
+    // Öffentliche API – intern debounced
+    window.topicActivityPub      = window._topicActivityPub;
+    window.requestTopicActivity  = _sendTopicActivityRequest;
 
-    // Sendet eine Tracking-Anfrage ans Backend für die Topics des aktuell selektierten Nodes.
-    // Wird in selectNode() aufgerufen, sobald alle relevanten Topics gesammelt wurden.
-    window.requestTopicActivity = function(topics) {
-        if (window.topicActivityPub && ros.isConnected) {
-            window.topicActivityPub.publish(new ROSLIB.Message({
-                data: JSON.stringify({ topics: topics })
-            }));
-        }
-    };
 
     // Sub to see live data and animate CSS classes
     new ROSLIB.Topic({ ros: ros, name: '/dashboard/topic_activity', messageType: 'std_msgs/String' }).subscribe((msg) => {
@@ -1716,14 +1734,29 @@ window.onload = function () {
         }
     });
 
-    ros.on('connection', () => { statusText.textContent = 'Online'; statusDot.className = 'status-indicator online'; logToTerminal("WebSocket Verbindung etabliert.", "info"); });
-    ros.on('error', () => { statusText.textContent = 'Error'; statusDot.className = 'status-indicator offline'; });
+    ros.on('connection', () => {
+        statusText.textContent = 'Online';
+        statusDot.className    = 'status-indicator online';
+        logToTerminal("WebSocket Verbindung etabliert.", "info");
+        rosRetryDelay = 3000;   // Reset Backoff bei erfolgreicher Verbindung
+    });
+    ros.on('error', () => {
+        statusText.textContent = 'Error';
+        statusDot.className    = 'status-indicator offline';
+    });
     ros.on('close', () => {
         statusText.textContent = 'Offline';
-        statusDot.className = 'status-indicator offline';
-        robotText.textContent = 'Offline';
-        robotDot.className = 'status-indicator offline';
+        statusDot.className    = 'status-indicator offline';
+        robotText.textContent  = 'Offline';
+        robotDot.className     = 'status-indicator offline';
         document.getElementById('bridge-ping').textContent = '-- ms';
+        logToTerminal(`WebSocket getrennt – Reconnect in ${rosRetryDelay / 1000}s...`, 'warn');
+        setTimeout(() => {
+            logToTerminal('Versuche Reconnect...', 'info');
+            initRosConnection();
+        }, rosRetryDelay);
+        // Exponentieller Backoff: max 30 s
+        rosRetryDelay = Math.min(rosRetryDelay * 1.5, 30000);
     });
 
     // Ping Measurement
@@ -1846,4 +1879,7 @@ window.onload = function () {
         if (!text) return;
         if (text.includes('Kollision')) { alertBanner.classList.remove('hidden'); logToTerminal(`CRITICAL: ${text}`, "collision"); }
     });
-};
+}
+
+// Initialer Verbindungsaufbau beim Laden der Seite
+window.onload = initRosConnection;
