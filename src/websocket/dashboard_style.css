@@ -1547,6 +1547,38 @@ body {
     transform: translateX(3px);
 }
 
+/* Topic-Name Truncation + Hover-Tooltip */
+.topic-name-truncated {
+    position: relative;
+    display: inline-block;
+}
+
+.topic-full-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    white-space: nowrap;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+
+.topic-name-truncated:hover .topic-full-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
 /* Redesigned Communication Badges */
 .comm-badge {
     font-weight: 700;

@@ -40,6 +40,20 @@ function wrapNodeTooltip(name, customClass = "") {
     return `<span class="text-truncate ${customClass}">${name}</span>`;
 }
 
+function truncateTopic(topic, maxLen = 20) {
+    // Kürzt Topic-Namen und zeigt den vollständigen Namen als Hover-Tooltip
+    if (!topic || topic.length <= maxLen) {
+        return `<span style="font-family:'JetBrains Mono',monospace; font-size:0.82rem;">${topic}</span>`;
+    }
+    const short = topic.slice(0, maxLen - 1) + '\u2026'; // … Unicode
+    return `<span class="topic-name-truncated" title="${topic}" style="
+        font-family:'JetBrains Mono',monospace; font-size:0.82rem;
+        cursor: help;
+        border-bottom: 1px dashed rgba(255,255,255,0.25);
+        white-space: nowrap;
+    ">${short}<span class="topic-full-tooltip">${topic}</span></span>`;
+}
+
 let loadingCountdown = 0;
 let isLoadingLock = false;
 
@@ -777,7 +791,7 @@ function selectNode(nodeName, skipRequest = false) {
                 const topicsBadges = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
                                         <div class='comm-badge badge-pub'>PUB</div>
                                         <div class="d-flex flex-column gap-1 justify-content-center w-100">
-                                            ${c.topics.map(t => `<span class='conn-topic-badge p-2 m-0 w-100' data-topic='${t}'>${t}</span>`).join('')}
+                                            ${c.topics.map(t => `<span class='conn-topic-badge p-2 m-0 w-100' data-topic='${t}'>${truncateTopic(t)}</span>`).join('')}
                                         </div>
                                       </div>`;
                 const cardClass = c.isUnbound ? 'unbound-card rx-card live-trackable' : 'rx-card active-flow-rx live-trackable';
@@ -880,7 +894,7 @@ function selectNode(nodeName, skipRequest = false) {
                 const topicsBadges = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
                                         <div class='comm-badge badge-sub'>SUB</div>
                                         <div class="d-flex flex-column gap-1 justify-content-center w-100">
-                                            ${c.topics.map(t => `<span class='conn-topic-badge p-2 m-0 w-100' data-topic='${t}'>${t}</span>`).join('')}
+                                            ${c.topics.map(t => `<span class='conn-topic-badge p-2 m-0 w-100' data-topic='${t}'>${truncateTopic(t)}</span>`).join('')}
                                         </div>
                                       </div>`;
                 const cardClass = c.isUnbound ? 'unbound-card tx-card live-trackable' : 'tx-card active-flow-tx live-trackable';
