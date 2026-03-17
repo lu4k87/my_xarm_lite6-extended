@@ -1760,7 +1760,7 @@ function initRosConnection() {
     });
 
     // Ping Measurement
-    const pingTopic = new ROSLIB.Topic({ ros: ros, name: '/ui/ping', messageType: 'std_msgs/Float64' });
+    const pingTopic = new ROSLIB.Topic({ ros: ros, name: '/dashboard/ping', messageType: 'std_msgs/Float64' });
     pingTopic.subscribe((msg) => {
         const latency = Date.now() - msg.data;
         document.getElementById('bridge-ping').textContent = latency + ' ms';
