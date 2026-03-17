@@ -114,6 +114,9 @@ Das Script `ros2_gui_cmds.py` bietet eine moderne, benutzerfreundliche Oberfläc
 
 Starten des Scripts:
 ```bash
+cd dev_ws
+```
+```bash
 python3 ros2_gui_cmds.py
 ```
 
