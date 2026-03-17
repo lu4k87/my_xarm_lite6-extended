@@ -40,7 +40,7 @@ function wrapNodeTooltip(name, customClass = "") {
     return `<span class="text-truncate ${customClass}">${name}</span>`;
 }
 
-function truncateTopic(topic, maxLen = 20) {
+function truncateTopic(topic, maxLen = 25) {
     // Kürzt Topic-Namen und zeigt den vollständigen Namen als Hover-Tooltip
     if (!topic || topic.length <= maxLen) {
         return `<span style="font-family:'JetBrains Mono',monospace; font-size:0.82rem;">${topic}</span>`;
