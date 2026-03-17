@@ -22,7 +22,6 @@ COLOR_ACCENT_GREEN = "#10b981" # Success Green
 # ==========================================
 # BACKEND FUNKTIONEN
 # ==========================================
-# ... (rest of backend functions remains same)
 def run_cmd(command, title="ROS 2 Terminal", ws_path="~/dev_ws"):
     """Führt einen ROS-Befehl aus und zeigt den vollständigen Ablauf im Terminal."""
     ros_setup = "source /opt/ros/humble/setup.bash"
@@ -154,7 +153,8 @@ class ROS2MasterControl(ctk.CTk):
             self.add_button(scroll_frame, text, lambda c=cmd, t=title: run_cmd(c, t), pady=4)
 
         self.add_header(scroll_frame, "Visualisierung", pady=(20, 0))
-        self.add_button(scroll_frame, "RViz2 starten", lambda: run_cmd("rviz2", "RViz2"), fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN, pady=4)
+        # HIER WURDE DIE FARBE ENTFERNT
+        self.add_button(scroll_frame, "RViz2 starten", lambda: run_cmd("rviz2", "RViz2"), pady=4)
         self.add_button(scroll_frame, "RQT Graph (Node-Netzwerk)", lambda: run_cmd("rqt_graph", "RQT Graph"), pady=4)
         self.add_button(scroll_frame, "RQT (Generelle GUI)", lambda: run_cmd("rqt", "RQT"), pady=4)
 
@@ -188,16 +188,20 @@ class ROS2MasterControl(ctk.CTk):
 
         self.add_header(scroll_frame, "Controller (Joy)")
         joy_payload = '"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"'
+        
         self.add_button(scroll_frame, "Pub /joy (Rate 10)", 
                         lambda: run_cmd(f"ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy {joy_payload}", "Joy Pub"), 
-                        fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN, pady=4)
+                        pady=4)
+                        
         self.add_button(scroll_frame, "Pub /joy_check (Rate 10)", 
                         lambda: run_cmd(f"ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy {joy_payload}", "Joy Check Pub"), pady=4)
 
         self.add_header(scroll_frame, "Robotik & MoveIt", pady=(20, 0))
+        
         self.add_button(scroll_frame, "Real Move Launch (X-Arm Servo)", 
                         lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", "Real Move"), 
-                        fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN, pady=4)
+                        pady=4)
+                        
         self.add_button(scroll_frame, "Fake Move Launch (Simulation)", 
                         lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py", "Fake Move"), pady=4)
         self.add_button(scroll_frame, "Keyboard Input Node", 
@@ -222,8 +226,8 @@ class ROS2MasterControl(ctk.CTk):
         frame = self.tab_web
         self.add_header(frame, "Backend & Server")
         self.add_button(frame, "ROS Bridge Launch (Websocket)", lambda: run_cmd("ros2 launch rosbridge_server rosbridge_websocket_launch.xml", "ROS Bridge"), pady=5)
-        self.add_button(frame, "Workspace Analyzer Script", lambda: run_cmd("python3 src/websocket/workspace_analyzer.py", "Workspace Analyzer"), pady=5)
         self.add_button(frame, "Webserver starten (Port 8080)", lambda: run_cmd("python3 -m http.server 8080 -d src/websocket", "Webserver"), pady=5)
+        self.add_button(frame, "Workspace Analyzer Script", lambda: run_cmd("python3 src/websocket/workspace_analyzer.py", "Workspace Analyzer"), pady=5)
 
         self.add_header(frame, "Frontend", pady=(20, 0))
         self.add_button(frame, "Dashboard im Browser oeffnen", 
