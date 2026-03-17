@@ -1107,11 +1107,12 @@ body {
 }
 
 .nd-header-pkg {
-    flex: 0 0 180px;
+    flex: 0 0 280px;
 }
 
 .nd-header-path {
     flex: 1;
+    min-width: 0;
     position: relative;
 }
 
