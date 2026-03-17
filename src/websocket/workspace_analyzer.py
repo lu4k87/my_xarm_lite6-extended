@@ -505,95 +505,163 @@ class WorkspaceAnalyzer(Node):
                 best_match, best_pkg = pkg_dir, pkg_name
         return best_pkg
 
+    def classify_node_category(self, pkg_name, launched_by):
+        """Gibt die Kategorie eines Nodes zurück:
+          'workspace'         → Eigener Code in ~/dev_ws/src/
+          'system_via_launch' → System-Paket, aber via WS-Launch-File gestartet
+          'system'            → Reiner ROS 2 System-Node
+        """
+        if pkg_name in self.pkg_cache.values():
+            return 'workspace'
+        if launched_by and launched_by != 'Terminal / Sub-Prozess':
+            return 'system_via_launch'
+        return 'system'
+
+    def _find_cpp_source(self, executable_name, pkg_name):
+        """Versucht den C++-Quellpfad (src/) für eine Binary zu finden."""
+        # Muster: src/{pkg}/{pkg}/{name}.cpp  oder  src/{pkg}/src/{name}.cpp
+        candidates = [
+            os.path.join(self.workspace_path, pkg_name, pkg_name, f"{executable_name}.cpp"),
+            os.path.join(self.workspace_path, pkg_name, 'src', f"{executable_name}.cpp"),
+        ]
+        # Breite Suche im pkg-Ordner
+        pkg_src_dir = os.path.join(self.workspace_path, pkg_name)
+        if os.path.isdir(pkg_src_dir):
+            for root, _, files in os.walk(pkg_src_dir):
+                for f in files:
+                    if f == f"{executable_name}.cpp" or f == f"{executable_name}_node.cpp":
+                        candidates.append(os.path.join(root, f))
+        for c in candidates:
+            if os.path.exists(c):
+                return os.path.relpath(c, self.base_ws_path)
+        return None
+
     # ═══════════════════════════════════════════════════════════════════════════
-    # NODE INFO RESOLUTION
+    # NODE INFO RESOLUTION  (3-Stufen-Kategorisierung)
     # ═══════════════════════════════════════════════════════════════════════════
     def resolve_node_info(self, raw_node_name):
+        """Löst Paket, Dateipfad und Kategorie für einen Node auf.
+        Kategorien: 'workspace' | 'system_via_launch' | 'system'
+        """
         clean_name = raw_node_name.lstrip('/')
         if clean_name in self.node_info_cache:
             return self.node_info_cache[clean_name]
 
         info = {
-            "package":     "ROS 2 System",
-            "source_file": "Kompilierte Binary / System",
-            "file_path":   "System-Pfad (/opt/ros/humble)",
-            "launched_by": "Terminal / Sub-Prozess",
-            "is_workspace": False,
+            "package":      "ROS 2 System",
+            "source_file":  "Kompilierte Binary",
+            "file_path":    "/opt/ros/humble/...",
+            "launched_by":  "Terminal / Sub-Prozess",
+            "is_workspace": False,     # Leagcy-Kompatibilität
+            "category":     "system",  # Neue eindeutige Kategorie
         }
 
+        # ── Spezialfall: workspace_analyzer selbst ───────────────────────────
         if clean_name == "workspace_analyzer":
             info.update({
                 "package":      "websocket",
                 "source_file":  "workspace_analyzer.py",
                 "file_path":    "src/websocket/workspace_analyzer.py",
                 "is_workspace": True,
+                "category":     "workspace",
             })
+            self.node_info_cache[clean_name] = info
+            return info
 
-        # Launch-Datei-Zuordnung
+        # ── Stufe 1: Direkte Source-Datei suchen (Python) ────────────────────
+        # z.B. Node-Name stimmt mit Dateiname überein: collision_check → collision_check.py
+        for src in self.source_files_cache:
+            try:
+                base_name = os.path.splitext(os.path.basename(src))[0]
+                # Exakter Match oder _node-Suffix-Match
+                if clean_name == base_name or clean_name.rstrip('_node') == base_name:
+                    pkg = self.get_package_for_file(src)
+                    if pkg != 'Unbekannt' and pkg in self.pkg_cache.values():
+                        rel = os.path.relpath(src, self.base_ws_path)
+                        info.update({
+                            "package":      pkg,
+                            "source_file":  os.path.basename(src),
+                            "file_path":    rel,
+                            "is_workspace": True,
+                            "category":     "workspace",
+                        })
+                        break
+            except Exception:
+                pass
+
+        # ── Stufe 2: Launch-Datei-Zuordnung ─────────────────────────────────
+        # Prüft, ob der Node in einem Workspace-Launch-File referenziert wird
         for launch in self.launch_details_cache:
             for l_node in launch.get("parsed_nodes", []):
-                if l_node.get("name") == clean_name:
-                    info["package"]     = l_node.get("package")
-                    info["source_file"] = f"Launch: {launch['file_name']}"
-                    info["file_path"]   = launch.get("path", "Unbekannt")
+                l_name = l_node.get("name", "")
+                l_exec = l_node.get("executable", "")
+                if l_name == clean_name or l_exec == clean_name:
+                    l_pkg = l_node.get("package", "")
                     info["launched_by"] = launch["file_name"]
-                    if info["package"] in self.pkg_cache.values():
+                    info["package"]    = l_pkg
+                    # Ist das Paket ein Workspace-Paket?
+                    if l_pkg in self.pkg_cache.values():
                         info["is_workspace"] = True
+                        info["category"]     = "workspace"
+                        # Source-Pfad noch nicht gesetzt → versuche C++-Pfad
+                        if not info["file_path"].startswith("src/"):
+                            cpp_path = self._find_cpp_source(l_exec, l_pkg)
+                            if cpp_path:
+                                info["source_file"] = os.path.basename(cpp_path)
+                                info["file_path"]   = cpp_path
+                            else:
+                                info["source_file"] = f"Launch: {launch['file_name']}"
+                                info["file_path"]   = launch.get("path", "/opt/ros/humble/...")
+                    else:
+                        # System-Paket, aber via WS-Launch gestartet
+                        info["category"]     = "system_via_launch"
+                        info["is_workspace"] = False
+                        info["source_file"]  = f"gestartet via: {launch['file_name']}"
+                        info["file_path"]    = launch.get("path", "/opt/ros/humble/...")
                     break
+            if info["launched_by"] != "Terminal / Sub-Prozess":
+                break
 
-        # Source-Datei Fallback
-        if not info["is_workspace"]:
-            for src in self.source_files_cache:
-                try:
-                    base_name = os.path.splitext(os.path.basename(src))[0]
-                    if clean_name == base_name or clean_name.replace('_node', '') == base_name:
-                        info["source_file"] = os.path.basename(src)
-                        info["file_path"]   = os.path.relpath(src, self.base_ws_path)
-                        info["package"]     = self.get_package_for_file(src)
-                        info["is_workspace"] = True
-                        break
-                except Exception:
-                    pass
-
-        # Executable-Cache Fallback (Thread-safe read)
-        if not info["is_workspace"]:
+        # ── Stufe 3: Executable-Cache (Thread-safe) ──────────────────────────
+        # Workspace-Paket via `ros2 pkg executables`
+        if info["category"] == "system":
             with self._exe_cache_lock:
                 exe_map = self.executable_pkg_map
             if clean_name in exe_map:
-                info["is_workspace"] = True
-                info["package"]      = exe_map[clean_name]
-                info["source_file"]  = "C++ Binary (ROS 2)"
-                info["file_path"]    = f"install/{info['package']}/lib/{info['package']}/{clean_name}"
+                ws_pkg = exe_map[clean_name]
+                # Nur als workspace wenn Paket wirklich in dev_ws/src liegt
+                if ws_pkg in self.pkg_cache.values():
+                    cpp_path = self._find_cpp_source(clean_name, ws_pkg)
+                    info.update({
+                        "package":      ws_pkg,
+                        "source_file":  os.path.basename(cpp_path) if cpp_path else f"{clean_name} (C++ Binary)",
+                        "file_path":    cpp_path if cpp_path else f"src/{ws_pkg}/",
+                        "is_workspace": True,
+                        "category":     "workspace",
+                    })
 
-        # Paket-Prefix Fallback
-        if not info["is_workspace"]:
-            sorted_pkgs = sorted(set(self.pkg_cache.values()), key=len, reverse=True)
-            for pkg in sorted_pkgs:
-                if (clean_name.startswith(pkg) or
-                        clean_name.replace('_node', '').startswith(pkg.replace('_node', ''))):
-                    info["is_workspace"] = True
-                    info["package"]      = pkg
-                    info["source_file"]  = "Dynamischer Node (C++/Python)"
-                    info["file_path"]    = f"install/{pkg}/"
-                    break
-
-        if "/dev_ws/" in info.get("file_path", ""):
-            info["is_workspace"] = True
-
-        # Letzter Fallback: Regex-Suche in Launch-Files (gecacht aus launch_details_cache)
+        # ── Stufe 4: Regex-Suche in Launch-Files ─────────────────────────────
+        # Letzter Versuch: Node-Name im Quelltext der Launch-Files suchen
         if info["launched_by"] == "Terminal / Sub-Prozess":
             for launch in self.launch_details_cache:
-                launch_text_path = launch.get("path", "")
                 try:
-                    full_l = os.path.join(self.base_ws_path, launch_text_path)
+                    full_l = os.path.join(self.base_ws_path, launch.get("path", ""))
                     with open(full_l, 'r', encoding='utf-8', errors='ignore') as f:
-                        if re.search(rf'[\'"]{re.escape(clean_name)}[\'"]', f.read()):
+                        if re.search(rf'[\'"{re.escape(clean_name)}\'"]', f.read()):
                             info["launched_by"] = launch["file_name"]
-                            if "/dev_ws/" in full_l and info["package"] == "ROS 2 System":
-                                info["package"] = self.get_package_for_file(full_l)
+                            if info["category"] == "system":
+                                # Paket des Launch-Files prüfen
+                                lf_pkg = self.get_package_for_file(full_l)
+                                if lf_pkg in self.pkg_cache.values():
+                                    info["category"] = "system_via_launch"
+                                    info["source_file"] = f"gestartet via: {launch['file_name']}"
+                                    info["file_path"]   = launch.get("path", "/opt/ros/humble/...")
                             break
                 except Exception:
                     pass
+
+        # Legacy-Feld synchron halten
+        info["is_workspace"] = (info["category"] == "workspace")
 
         self.node_info_cache[clean_name] = info
         return info
@@ -701,6 +769,7 @@ class WorkspaceAnalyzer(Node):
                     "file_path":         info["file_path"],
                     "launched_by":       info["launched_by"],
                     "is_workspace":      info["is_workspace"],
+                    "category":          info.get("category", "system"),  # 'workspace' | 'system_via_launch' | 'system'
                     "filtered_subs_count": 0,
                     "publishers":        [{"topic": k, "types": v} for k, v in all_pubs.items()],
                     "subscribers":       [{"topic": k, "types": v} for k, v in all_subs.items()],

@@ -567,15 +567,42 @@ function selectNode(nodeName, skipRequest = false) {
     }
 
     const elPkg = document.getElementById('nd-pkg');
-    if (elPkg) elPkg.textContent = data.package || 'Unbekannt';
+    if (elPkg) {
+        const category = data.category || (data.is_workspace ? 'workspace' : 'system');
+        const catBadge = {
+            'workspace':         { icon: 'fa-code-branch',    color: 'var(--accent-primary)',   label: '' },
+            'system_via_launch': { icon: 'fa-rocket',         color: '#f59e0b',                 label: ' · via Launch' },
+            'system':            { icon: 'fa-microchip',      color: 'var(--text-secondary)',   label: ' · ROS 2 System' },
+        }[category] || { icon: 'fa-box', color: 'var(--text-secondary)', label: '' };
+
+        elPkg.innerHTML = `<i class="fa-solid ${catBadge.icon}" style="margin-right:6px; color:${catBadge.color};"></i>${data.package || 'Unbekannt'}<span style="font-size:0.8rem; opacity:0.6; margin-left:6px;">${catBadge.label}</span>`;
+    }
 
     const elPath = document.getElementById('nd-path');
-    if (elPath) elPath.textContent = data.file_path || 'Pfad unbekannt';
+    if (elPath) {
+        const category = data.category || (data.is_workspace ? 'workspace' : 'system');
+        elPath.textContent = data.file_path || 'Pfad unbekannt';
+        // Für System-Nodes: Pfad dezenter stylen und click-through deaktivieren
+        const wsCard = elPath.closest('.ws-card-interactive');
+        if (wsCard) {
+            if (category === 'workspace') {
+                wsCard.style.opacity = '1';
+                wsCard.style.cursor = 'pointer';
+                wsCard.style.pointerEvents = '';
+            } else {
+                wsCard.style.opacity = '0.55';
+                wsCard.style.cursor = 'default';
+                wsCard.style.pointerEvents = 'none';
+            }
+        }
+    }
 
     const codeBtn = document.getElementById('btn-show-code');
     if (codeBtn) {
-        if (data.file_path && !data.file_path.includes('Pfad unbekannt') && !data.file_path.includes('System')) {
-            codeBtn.style.display = 'block';
+        const category = data.category || (data.is_workspace ? 'workspace' : 'system');
+        const hasPath = data.file_path && !data.file_path.startsWith('/opt/ros') && !data.file_path.includes('...');
+        if (category === 'workspace' && hasPath) {
+            codeBtn.style.display = 'flex';
         } else {
             codeBtn.style.display = 'none';
         }
