@@ -517,20 +517,29 @@ class WorkspaceAnalyzer(Node):
             return 'system_via_launch'
         return 'system'
 
-    def _find_cpp_source(self, executable_name, pkg_name):
-        """Versucht den C++-Quellpfad (src/) für eine Binary zu finden."""
-        # Muster: src/{pkg}/{pkg}/{name}.cpp  oder  src/{pkg}/src/{name}.cpp
-        candidates = [
-            os.path.join(self.workspace_path, pkg_name, pkg_name, f"{executable_name}.cpp"),
-            os.path.join(self.workspace_path, pkg_name, 'src', f"{executable_name}.cpp"),
-        ]
-        # Breite Suche im pkg-Ordner
+    def _find_source_file(self, executable_name, pkg_name):
+        """Sucht den Quellpfad (src/) für einen Node – sowohl .py als auch .cpp."""
+        exts = ['.py', '.cpp']
         pkg_src_dir = os.path.join(self.workspace_path, pkg_name)
+
+        # Direkte Kandidaten-Pfade
+        candidates = []
+        for ext in exts:
+            candidates += [
+                os.path.join(self.workspace_path, pkg_name, pkg_name, f"{executable_name}{ext}"),
+                os.path.join(self.workspace_path, pkg_name, 'src', f"{executable_name}{ext}"),
+                os.path.join(self.workspace_path, pkg_name, f"{executable_name}{ext}"),
+            ]
+
+        # Breite Suche im pkg-Verzeichnis (Dateiname stimmt überein)
         if os.path.isdir(pkg_src_dir):
             for root, _, files in os.walk(pkg_src_dir):
                 for f in files:
-                    if f == f"{executable_name}.cpp" or f == f"{executable_name}_node.cpp":
+                    name_no_ext = os.path.splitext(f)[0]
+                    if (name_no_ext == executable_name or name_no_ext == f"{executable_name}_node") \
+                            and f.endswith(tuple(exts)):
                         candidates.append(os.path.join(root, f))
+
         for c in candidates:
             if os.path.exists(c):
                 return os.path.relpath(c, self.base_ws_path)
@@ -603,12 +612,12 @@ class WorkspaceAnalyzer(Node):
                     if l_pkg in self.pkg_cache.values():
                         info["is_workspace"] = True
                         info["category"]     = "workspace"
-                        # Source-Pfad noch nicht gesetzt → versuche C++-Pfad
+                        # Source-Pfad noch nicht gesetzt → versuche Quellpfad (.py oder .cpp)
                         if not info["file_path"].startswith("src/"):
-                            cpp_path = self._find_cpp_source(l_exec, l_pkg)
-                            if cpp_path:
-                                info["source_file"] = os.path.basename(cpp_path)
-                                info["file_path"]   = cpp_path
+                            src_path = self._find_source_file(l_exec, l_pkg)
+                            if src_path:
+                                info["source_file"] = os.path.basename(src_path)
+                                info["file_path"]   = src_path
                             else:
                                 info["source_file"] = f"Launch: {launch['file_name']}"
                                 info["file_path"]   = launch.get("path", "/opt/ros/humble/...")
@@ -631,11 +640,11 @@ class WorkspaceAnalyzer(Node):
                 ws_pkg = exe_map[clean_name]
                 # Nur als workspace wenn Paket wirklich in dev_ws/src liegt
                 if ws_pkg in self.pkg_cache.values():
-                    cpp_path = self._find_cpp_source(clean_name, ws_pkg)
+                    src_path = self._find_source_file(clean_name, ws_pkg)
                     info.update({
                         "package":      ws_pkg,
-                        "source_file":  os.path.basename(cpp_path) if cpp_path else f"{clean_name} (C++ Binary)",
-                        "file_path":    cpp_path if cpp_path else f"src/{ws_pkg}/",
+                        "source_file":  os.path.basename(src_path) if src_path else f"{clean_name} (Binary)",
+                        "file_path":    src_path if src_path else f"src/{ws_pkg}/",
                         "is_workspace": True,
                         "category":     "workspace",
                     })
