@@ -1687,6 +1687,38 @@ body {
     }
 }
 
+/* --- Topic-Liste (Subscriber/Publisher) Pulse: Aktive Topics pulsieren --- */
+.rx-card.live-pulsing {
+    animation: pulse-glow-rx 1.5s infinite alternate;
+}
+
+.tx-card.live-pulsing {
+    animation: pulse-glow-tx 1.5s infinite alternate;
+}
+
+/* Aktives Topic-Dot-Icon leuchtet in der zugehörigen Farbe auf */
+.rx-card.live-pulsing .topic-icon {
+    color: var(--color-rx) !important;
+    text-shadow: 0 0 8px var(--color-rx);
+    animation: blink-icon-rx 1.5s infinite alternate;
+}
+
+.tx-card.live-pulsing .topic-icon {
+    color: var(--color-tx) !important;
+    text-shadow: 0 0 8px var(--color-tx);
+    animation: blink-icon-tx 1.5s infinite alternate;
+}
+
+@keyframes blink-icon-rx {
+    0% { opacity: 0.5; text-shadow: none; }
+    100% { opacity: 1; text-shadow: 0 0 10px var(--color-rx); }
+}
+
+@keyframes blink-icon-tx {
+    0% { opacity: 0.5; text-shadow: none; }
+    100% { opacity: 1; text-shadow: 0 0 10px var(--color-tx); }
+}
+
 /* --- Action Activity: Red Pulse (distinct from green topic pulse) --- */
 .action-trackable.action-pulsing {
     animation: pulse-glow-action 1.2s infinite alternate;
@@ -1736,8 +1768,27 @@ body {
 }
 
 .center-node-box.node-is-live {
-    border-color: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    border-color: rgba(56, 189, 248, 0.9);
+    animation: pulse-center-node 1.4s infinite alternate;
+}
+
+@keyframes pulse-center-node {
+    0% {
+        box-shadow:
+            0 0 8px rgba(56, 189, 248, 0.15),
+            0 0 0 0 rgba(56, 189, 248, 0.0),
+            inset 0 0 6px rgba(56, 189, 248, 0.02);
+        border-color: rgba(56, 189, 248, 0.5);
+        background: rgba(255, 255, 255, 0.03);
+    }
+    100% {
+        box-shadow:
+            0 0 25px rgba(56, 189, 248, 0.55),
+            0 0 55px rgba(56, 189, 248, 0.2),
+            inset 0 0 18px rgba(56, 189, 248, 0.06);
+        border-color: rgba(56, 189, 248, 1.0);
+        background: rgba(56, 189, 248, 0.05);
+    }
 }
 
 .center-node-box i {

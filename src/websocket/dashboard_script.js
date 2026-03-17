@@ -1621,6 +1621,101 @@ window.onload = function () {
     const robotText = document.getElementById('robot-status-text');
     const robotDot = document.getElementById('robot-status-dot');
 
+    // Dashboard Topics
+    window.topicActivityPub = new ROSLIB.Topic({ ros: ros, name: '/dashboard/request_topic_activity', messageType: 'std_msgs/String' });
+
+    // Sendet eine Tracking-Anfrage ans Backend für die Topics des aktuell selektierten Nodes.
+    // Wird in selectNode() aufgerufen, sobald alle relevanten Topics gesammelt wurden.
+    window.requestTopicActivity = function(topics) {
+        if (window.topicActivityPub && ros.isConnected) {
+            window.topicActivityPub.publish(new ROSLIB.Message({
+                data: JSON.stringify({ topics: topics })
+            }));
+        }
+    };
+
+    // Sub to see live data and animate CSS classes
+    new ROSLIB.Topic({ ros: ros, name: '/dashboard/topic_activity', messageType: 'std_msgs/String' }).subscribe((msg) => {
+        try {
+            const data = JSON.parse(msg.data);
+            let anyActive = false;
+
+            // Loop through all trackable cards
+            document.querySelectorAll('.live-trackable').forEach(card => {
+                let cardActive = false;
+                let maxHz = 0;
+                try {
+                    const cardTopics = JSON.parse(card.dataset.topics || "[]");
+                    cardTopics.forEach(t => {
+                        const activity = data[t];
+                        if (activity) {
+                            if (activity.hz > maxHz) maxHz = activity.hz;
+                            if (activity.active) {
+                                cardActive = true;
+                                anyActive = true;
+                            }
+                        }
+                    });
+                } catch (e) { }
+
+                const hzDisplay = card.querySelector('.card-hz-display');
+                if (hzDisplay) {
+                    if (maxHz > 0) {
+                        hzDisplay.textContent = `${maxHz} Hz`;
+                        hzDisplay.classList.add('hz-active');
+                    } else {
+                        hzDisplay.textContent = "-- Hz";
+                        hzDisplay.classList.remove('hz-active');
+                    }
+                }
+
+                if (cardActive) {
+                    card.classList.add('live-pulsing');
+                } else {
+                    card.classList.remove('live-pulsing');
+                }
+            });
+
+            // --- Action Activity: Red pulse for action cards ---
+            document.querySelectorAll('.action-trackable').forEach(card => {
+                let actionActive = false;
+                let maxActionHz = 0;
+                try {
+                    const actionTopics = JSON.parse(card.dataset.actionFeedback || "[]");
+                    actionTopics.forEach(t => {
+                        const activity = data[t];
+                        if (activity) {
+                            if (activity.hz > maxActionHz) maxActionHz = activity.hz;
+                            if (activity.active) {
+                                actionActive = true;
+                            }
+                        }
+                    });
+                } catch (e) { }
+
+                const actionHzDisplay = card.querySelector('.action-hz');
+                if (actionHzDisplay) {
+                    if (maxActionHz > 0) {
+                        actionHzDisplay.textContent = "AKTIV";
+                        actionHzDisplay.classList.add('active');
+                    } else {
+                        actionHzDisplay.textContent = "RES (Server)";
+                        actionHzDisplay.classList.remove('active');
+                    }
+                }
+
+                if (actionActive) {
+                    card.classList.add('action-pulsing');
+                } else {
+                    card.classList.remove('action-pulsing');
+                }
+            });
+
+        } catch (e) {
+            console.error("Error parsing topic activity:", e);
+        }
+    });
+
     ros.on('connection', () => { statusText.textContent = 'Online'; statusDot.className = 'status-indicator online'; logToTerminal("WebSocket Verbindung etabliert.", "info"); });
     ros.on('error', () => { statusText.textContent = 'Error'; statusDot.className = 'status-indicator offline'; });
     ros.on('close', () => {
@@ -1644,7 +1739,7 @@ window.onload = function () {
     }, 2000);
 
     codeRequestPub = new ROSLIB.Topic({ ros: ros, name: '/dashboard/request_file_content', messageType: 'std_msgs/String' });
-    nodeDetailReqPub = new ROSLIB.Topic({ ros: ros, name: '/ui/request_node_details', messageType: 'std_msgs/String' });
+    nodeDetailReqPub = new ROSLIB.Topic({ ros: ros, name: '/dashboard/request_node_details', messageType: 'std_msgs/String' });
     window.openExplorerPub = new ROSLIB.Topic({ ros: window.ros, name: '/dashboard/request_open_explorer', messageType: 'std_msgs/String' });
 
     new ROSLIB.Topic({ ros: ros, name: '/dashboard/file_content', messageType: 'std_msgs/String' }).subscribe((msg) => {
@@ -1750,158 +1845,5 @@ window.onload = function () {
         const text = msg.data.trim();
         if (!text) return;
         if (text.includes('Kollision')) { alertBanner.classList.remove('hidden'); logToTerminal(`CRITICAL: ${text}`, "collision"); }
-    });
-
-    let liveActivityTimeout;
-
-    // Publish a request to track the selected node's topics
-    window.requestTopicActivity = function (topics) {
-        if (!window.ros || !window.topicActivityPub) return;
-        window.topicActivityPub.publish(new ROSLIB.Message({
-            data: JSON.stringify({ topics: topics })
-        }));
-    };
-
-    // Sub to see live data and animate CSS classes
-    window.topicActivityPub = new ROSLIB.Topic({ ros: ros, name: '/dashboard/request_topic_activity', messageType: 'std_msgs/String' });
-
-    new ROSLIB.Topic({ ros: ros, name: '/dashboard/topic_activity', messageType: 'std_msgs/String' }).subscribe((msg) => {
-        try {
-            const data = JSON.parse(msg.data);
-            let anyActive = false;
-
-            // Loop through all trackable cards
-            document.querySelectorAll('.live-trackable').forEach(card => {
-                let cardActive = false;
-                let maxHz = 0;
-                try {
-                    const cardTopics = JSON.parse(card.dataset.topics || "[]");
-                    cardTopics.forEach(t => {
-                        const activity = data[t];
-                        if (activity) {
-                            if (activity.hz > maxHz) maxHz = activity.hz;
-                            if (activity.active) {
-                                cardActive = true;
-                                anyActive = true;
-                            }
-                        }
-                    });
-                } catch (e) { }
-
-                const hzDisplay = card.querySelector('.card-hz-display');
-                if (hzDisplay) {
-                    if (maxHz > 0) {
-                        hzDisplay.textContent = `${maxHz} Hz`;
-                        hzDisplay.classList.add('hz-active');
-                    }
-                }
-
-                if (cardActive) {
-                    card.classList.add('live-pulsing');
-                } else {
-                    card.classList.remove('live-pulsing');
-                }
-            });
-
-            // --- Action Activity: Red pulse for action cards ---
-            document.querySelectorAll('.action-trackable').forEach(card => {
-                let actionActive = false;
-                let maxActionHz = 0;
-                try {
-                    const feedbackTopics = JSON.parse(card.dataset.actionFeedback || '[]');
-                    feedbackTopics.forEach(t => {
-                        const activity = data[t];
-                        if (activity) {
-                            if (activity.hz > maxActionHz) maxActionHz = activity.hz;
-                            if (activity.active) actionActive = true;
-                        }
-                    });
-                } catch (e) { }
-
-                const hzEl = card.querySelector('.action-hz');
-                if (hzEl) {
-                    if (maxActionHz > 0) {
-                        hzEl.textContent = `${maxActionHz} Hz`;
-                        hzEl.style.fontWeight = '700';
-                    } else {
-                        // Restore label when idle
-                        hzEl.textContent = card.classList.contains('tx-card') ? 'REQ (Client)' : 'RES (Server)';
-                        hzEl.style.fontWeight = '';
-                    }
-                }
-
-                if (actionActive) {
-                    card.classList.add('action-pulsing');
-                    card.classList.remove('live-pulsing');
-                } else {
-                    card.classList.remove('action-pulsing');
-                }
-            });
-
-            // Update topic message contents
-            Object.keys(data).forEach(t => {
-                const activity = data[t];
-                const safeId = t.replace(/\//g, '-');
-
-                if (activity.active) {
-                    const iconSub = document.getElementById(`icon-sub-${safeId}`);
-                    if (iconSub) {
-                        iconSub.classList.add('topic-icon-glow');
-                        iconSub.closest('.topic-item').classList.add('topic-item-glow');
-                    }
-                    const iconPub = document.getElementById(`icon-pub-${safeId}`);
-                    if (iconPub) {
-                        iconPub.classList.add('topic-icon-glow');
-                        iconPub.closest('.topic-item').classList.add('topic-item-glow');
-                    }
-
-                    // Also apply glow to the flow diagram badges
-                    document.querySelectorAll(`.conn-topic-badge[data-topic='${t}']`).forEach(badge => {
-                        badge.classList.add('topic-item-glow');
-                    });
-                } else {
-                    document.querySelectorAll(`.conn-topic-badge[data-topic='${t}']`).forEach(badge => {
-                        badge.classList.remove('topic-item-glow');
-                    });
-                }
-
-                if (activity.last_msg) {
-                    const msgEl = document.getElementById(`msg-${safeId}`);
-                    if (msgEl) {
-                        const valEl = msgEl.querySelector('.topic-val');
-                        if (valEl) {
-                            valEl.textContent = activity.last_msg;
-                            valEl.title = activity.last_msg;
-                            valEl.style.color = "var(--text-primary)";
-                        }
-                    }
-                }
-            });
-
-            const centerBox = document.querySelector('.center-node-box');
-            if (centerBox) {
-                if (anyActive) centerBox.classList.add('center-node-active');
-                else centerBox.classList.remove('center-node-active');
-            }
-
-            clearTimeout(liveActivityTimeout);
-            liveActivityTimeout = setTimeout(() => {
-                document.querySelectorAll('.live-pulsing').forEach(el => {
-                    el.classList.remove('live-pulsing');
-                });
-                document.querySelectorAll('.topic-icon-glow').forEach(el => {
-                    el.classList.remove('topic-icon-glow');
-                });
-                document.querySelectorAll('.topic-item-glow').forEach(el => {
-                    el.classList.remove('topic-item-glow');
-                });
-                if (centerBox) centerBox.classList.remove('center-node-active');
-                document.querySelectorAll('.card-hz-display').forEach(el => {
-                    el.textContent = '-- Hz';
-                    el.classList.remove('hz-active');
-                });
-            }, 1000);
-
-        } catch (e) { }
     });
 };

@@ -29,7 +29,8 @@ def run_cmd(command, title="ROS 2 Terminal", ws_path="~/dev_ws"):
     display_cmd = f"{ros_setup} && {ws_setup} && cd {ws_path} && {command}"
     safe_display = display_cmd.replace('\\', '\\\\').replace('"', '\\"')
     
-    script_content = f"""{ros_setup} 2>/dev/null || true
+    script_content = f"""source ~/.bashrc 2>/dev/null || true
+{ros_setup} 2>/dev/null || true
 {ws_setup} 2>/dev/null || true
 cd {ws_path} 2>/dev/null || true
 
@@ -51,7 +52,8 @@ def run_interactive_cmd(command, title="System Tool"):
     ros_setup = "source /opt/ros/humble/setup.bash"
     safe_display = command.replace('\\', '\\\\').replace('"', '\\"')
     
-    script_content = f"""{ros_setup} 2>/dev/null || true
+    script_content = f"""source ~/.bashrc 2>/dev/null || true
+{ros_setup} 2>/dev/null || true
 clear
 echo -e "\\033[36m[Script laeuft im Terminal: $(tty), PID: $$]\\033[0m"
 echo "---------------------------------------------------------"

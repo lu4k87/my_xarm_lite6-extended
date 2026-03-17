@@ -14,7 +14,7 @@ sleep 1
 gnome-terminal --title="[NODE]: ROS Bridge (Websocket)" -- bash -c "source /opt/ros/humble/setup.bash; source ~/dev_ws/install/setup.bash; ros2 launch rosbridge_server rosbridge_websocket_launch.xml; exec bash"
 
 # 2. Terminal: Lokaler Webserver (für UI)
-gnome-terminal --title="[PROGRAM]: Webserver (Dashboard UI)" -- bash -c "cd ~/dev_ws/src/websocket; python3 -m http.server 8080; exec bash"
+gnome-terminal --title="[PROGRAM]: Webserver (Dashboard UI)" -- bash -c "source /opt/ros/humble/setup.bash; source ~/dev_ws/install/setup.bash; cd ~/dev_ws/src/websocket; python3 -m http.server 8080; exec bash"
 
 # 3. Terminal: Workspace Analyzer
 gnome-terminal --title="[SCRIPT]: Workspace Analyzer" -- bash -c "source /opt/ros/humble/setup.bash; source ~/dev_ws/install/setup.bash; cd ~/dev_ws/src/websocket; python3 workspace_analyzer.py; exec bash"

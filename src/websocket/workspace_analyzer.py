@@ -178,14 +178,24 @@ class WorkspaceAnalyzer(Node):
                     msg_class = get_message(topic_type_str)
                     if msg_class:
                         self.message_counts[topic_name] = 0
+                        print(f"DEBUG: Subscribing to {topic_name} [{topic_type_str}]")
                         def make_cb(t_name):
                             def cb(msg):
+                                # print(f"DEBUG: Received message on {t_name}")
                                 self.message_counts[t_name] += 1
-                                self.last_messages[t_name] = str(msg)
+                                msg_str = str(msg)
+                                # Limit message size to prevent OOM with high-bandwidth data (YOLO, Camera)
+                                if len(msg_str) > 2000:
+                                    msg_str = msg_str[:2000] + "... [TRUNCATED]"
+                                self.last_messages[t_name] = msg_str
                             return cb
                         self.subs[topic_name] = self.create_subscription(msg_class, topic_name, make_cb(topic_name), qos)
-                except Exception: pass
-        except Exception: pass
+                    else:
+                        print(f"DEBUG: Failed to get message class for {topic_type_str}")
+                except Exception as e:
+                    print(f"DEBUG: Error subscribing to {topic_name}: {e}")
+        except Exception as e:
+            print(f"DEBUG: Error in handle_activity_request: {e}")
 
     @staticmethod
     def _strip_comments(content):
@@ -508,24 +518,19 @@ class WorkspaceAnalyzer(Node):
             for dn in dead_nodes: 
                 if dn != 'workspace_analyzer': del self.cli_node_cache[dn]
 
-            # Hole komplette Topologie in einem Rutsch (via Topic-Lookup)
-            # Das ist effizienter als für jeden Node einzeln info() aufzurufen
+            # DYNAMIC TOPOLOGY: Get all info in fewer calls by iterating over nodes instead of topics
             topology = {}
             try:
-                topic_names_and_types = self.get_topic_names_and_types()
-                for t_name, t_types in topic_names_and_types:
-                    pub_info = self.get_publishers_info_by_topic(t_name)
-                    sub_info = self.get_subscriptions_info_by_topic(t_name)
+                for n_name, n_ns in node_names_and_namespaces:
+                    full_n = f"{n_ns}/{n_name}".replace('//', '/')
+                    topology[full_n] = {"publishers": [], "subscribers": []}
                     
-                    for p in pub_info:
-                        n_full = f"{p.node_namespace}/{p.node_name}".replace('//', '/')
-                        if n_full not in topology: topology[n_full] = {"publishers": [], "subscribers": []}
-                        topology[n_full]["publishers"].append({"topic": t_name, "types": t_types})
-                        
-                    for s in sub_info:
-                        n_full = f"{s.node_namespace}/{s.node_name}".replace('//', '/')
-                        if n_full not in topology: topology[n_full] = {"publishers": [], "subscribers": []}
-                        topology[n_full]["subscribers"].append({"topic": t_name, "types": t_types})
+                    # Get info for this specific node
+                    pubs_and_types = self.get_publisher_names_and_types_by_node(n_name, n_ns)
+                    subs_and_types = self.get_subscriber_names_and_types_by_node(n_name, n_ns)
+                    
+                    topology[full_n]["publishers"] = [{"topic": t, "types": types} for t, types in pubs_and_types]
+                    topology[full_n]["subscribers"] = [{"topic": t, "types": types} for t, types in subs_and_types]
             except Exception: pass
 
             for name, namespace in node_names_and_namespaces:
