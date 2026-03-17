@@ -93,10 +93,11 @@ class ROS2MasterControl(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("ROS 2 Master Control")
-        # Exakt 50% Breite (Ganzzahl-Division)
+        # Exakt 20% Breite (in Pixeln berechnet)
         sw = self.winfo_screenwidth()
         sh = self.winfo_screenheight()
-        self.geometry(f"{sw // 2}x{sh}+0+0") # +0+0 erzwingt linke Seite
+        width = int(sw * 0.2)
+        self.geometry(f"{width}x{sh}+0+0") # +0+0 erzwingt linke Seite
         self.configure(fg_color=COLOR_BG_MAIN)
         self.setup_tabs()
         self.setup_footer()
