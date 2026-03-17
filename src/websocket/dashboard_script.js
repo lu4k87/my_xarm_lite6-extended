@@ -1748,6 +1748,17 @@ function initRosConnection() {
                 } else {
                     card.classList.remove('live-pulsing');
                 }
+
+                // Toggle individual topic badge pulses inside the card
+                const isRx = card.classList.contains('rx-card');
+                card.querySelectorAll('.conn-topic-badge').forEach(badge => {
+                    const t = badge.dataset.topic;
+                    if (t && data[t] && data[t].active) {
+                        badge.classList.add(isRx ? 'topic-pulsing-rx' : 'topic-pulsing-tx');
+                    } else {
+                        badge.classList.remove('topic-pulsing-rx', 'topic-pulsing-tx');
+                    }
+                });
             });
 
             // --- Action Activity: Red pulse for action cards ---

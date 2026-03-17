@@ -57,6 +57,7 @@ class WorkspaceAnalyzer(Node):
         self.message_counts   = {}          # topic → int
         self.last_messages    = {}          # topic → str
         self.last_publish_time = time.time()
+        self.last_topology_update = 0        # Timestamp für Topology-Vollrefreh
 
         self.cmd_sub      = self.create_subscription(String, '/dashboard/request_topic_activity', self.handle_activity_request, 10)
         self.activity_pub = self.create_publisher  (String, '/dashboard/topic_activity',          10)
@@ -269,10 +270,17 @@ class WorkspaceAnalyzer(Node):
         """Schickt nur die Liste der aktiven Node-Namen für Sidebar-Punkte."""
         try:
             node_names_and_ns = self.get_node_names_and_namespaces()
-            running_names     = [f"{ns}/{n}".replace('//', '/') for n, ns in node_names_and_ns]
+            running_names     = {f"{ns}/{n}".replace('//', '/') for n, ns in node_names_and_ns}
+            
+            # Sofortiges Metadaten-Update triggern, wenn sich die Node-Liste geändert hat
+            if running_names != self._last_known_nodes:
+                self.get_logger().info(f"Node-Change im Pulse erkannt ({len(self._last_known_nodes)} -> {len(running_names)}). Trigger Metadata...")
+                self.publish_metadata()
+                return # publish_metadata schickt bereits den Pulse mit
+
             self.publisher_.publish(String(data=json.dumps({
                 "type": "node_pulse",
-                "active_nodes": running_names,
+                "active_nodes": list(running_names),
             })))
         except Exception:
             pass
@@ -313,12 +321,15 @@ class WorkspaceAnalyzer(Node):
             try:
                 with open(xml_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                match = re.search(r'<name>(.*?)</name>', content)
+                # Robustes Parsing von Name und Dependencies (auch mit Attributen oder Zeilenumbrüchen)
+                match = re.search(r'<name(?:\s+[^>]*)?>(.*?)</name>', content, re.DOTALL)
                 if match:
-                    pkg_name = match.group(1)
-                found_deps = re.findall(
-                    r'<(depend|build_depend|build_export_depend|exec_depend|test_depend|buildtool_depend)>(.*?)</\1>',
-                    content)
+                    pkg_name = match.group(1).strip()
+                
+                # Tags: depend, build_depend, etc.
+                pattern = r'<(depend|build_depend|build_export_depend|exec_depend|test_depend|buildtool_depend)(?:\s+[^>]*)?>(.*?)</\1>'
+                found_deps = re.findall(pattern, content, re.DOTALL)
+                
                 seen = set()
                 for dtype, dname in found_deps:
                     dname = dname.strip()
@@ -707,26 +718,42 @@ class WorkspaceAnalyzer(Node):
                 f"{ns}/{n}".replace('//', '/') for n, ns in node_names_and_namespaces
             }
 
-            # ── Topology nur neu abfragen wenn sich die Node-Menge geändert hat ──
+            # ── Topology neu abfragen wenn nötig (alle 10s oder bei Node-Änderung) ──
             nodes_changed = (current_full_names != self._last_known_nodes)
-            if nodes_changed:
-                self.get_logger().info(
-                    f"Node-Änderung erkannt ({len(self._last_known_nodes)} → "
-                    f"{len(current_full_names)}), baue Topology neu.")
+            time_since_last = time.time() - self.last_topology_update
+            
+            if nodes_changed or time_since_last > 10.0:
+                if nodes_changed:
+                    self.get_logger().info(f"Node-Änderung erkannt: {len(current_full_names)} Nodes.")
+                
                 self._last_known_nodes = current_full_names
+                self.last_topology_update = time.time()
 
                 new_topology = {}
-                try:
-                    for n_name, n_ns in node_names_and_namespaces:
-                        full_n = f"{n_ns}/{n_name}".replace('//', '/')
-                        pubs   = self.get_publisher_names_and_types_by_node(n_name, n_ns)
-                        subs   = self.get_subscriber_names_and_types_by_node(n_name, n_ns)
+                for n_name, n_ns in node_names_and_namespaces:
+                    full_n = f"{n_ns}/{n_name}".replace('//', '/')
+                    try:
+                        pubs = self.get_publisher_names_and_types_by_node(n_name, n_ns)
+                        subs = self.get_subscriber_names_and_types_by_node(n_name, n_ns)
+                        
+                        # --- Stabilitäts-Check (Anti-Blink) ---
+                        # Falls Node gerade 0 Topics meldet, aber er vorher welche hatte:
+                        # Behalte die alten Daten für max. 1 Zyklus (Hysterese)
+                        if not pubs and not subs and full_n in self._topology_cache:
+                            old = self._topology_cache[full_n]
+                            if old.get("publishers") or old.get("subscribers"):
+                                self.get_logger().debug(f"Topology-Hysterese für {full_n} (0 Topics gemeldet, nutze Cache).")
+                                new_topology[full_n] = old
+                                continue
+
                         new_topology[full_n] = {
                             "publishers":  [{"topic": t, "types": types} for t, types in pubs],
                             "subscribers": [{"topic": t, "types": types} for t, types in subs],
                         }
-                except Exception as e:
-                    self.get_logger().warning(f"Topology-Fehler: {e}")
+                    except Exception as e:
+                        self.get_logger().warning(f"Topology-Fehler für {full_n}: {e}")
+                        if full_n in self._topology_cache:
+                            new_topology[full_n] = self._topology_cache[full_n]
 
                 self._topology_cache = new_topology
 
