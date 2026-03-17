@@ -107,19 +107,20 @@ class ROS2MasterControl(ctk.CTk):
         self.tabview = ctk.CTkTabview(
             self,
             fg_color="transparent",
-            segmented_button_fg_color="#040812",
-            segmented_button_selected_color=COLOR_ACCENT,
-            segmented_button_selected_hover_color="#06b6d4",
-            segmented_button_unselected_color="#040812",
-            segmented_button_unselected_hover_color="#081022",
-            text_color=COLOR_FG_MUTED,
+            segmented_button_fg_color="#0c1425",
+            segmented_button_selected_color=COLOR_ACCENT_AMBER,
+            segmented_button_selected_hover_color="#d97706",
+            segmented_button_unselected_color="#111b2e",
+            segmented_button_unselected_hover_color="#1a2c4e",
+            text_color=COLOR_FG_TEXT,
         )
         self.tabview.pack(expand=True, fill="both", padx=18, pady=(14, 0))
 
         self.tabview._segmented_button.configure(
-            font=("Helvetica", 15, "bold"),
-            height=62,
-            corner_radius=14,
+            font=("Helvetica", 20, "bold"),
+            height=250,
+            corner_radius=6,
+            border_width=1,
         )
 
         # Erhöhtes Spacing durch Padding-Leerzeichen (Zentrierung gewahrt)
@@ -286,6 +287,9 @@ class ROS2MasterControl(ctk.CTk):
             lambda: run_cmd("python3 src/websocket/workspace_analyzer.py", "Workspace Analyzer"),
             copy_cmd="python3 src/websocket/workspace_analyzer.py")
 
+        # Weiße Trennlinie mit Abstand über dem Text "Frontend"
+        ctk.CTkFrame(f, height=1, fg_color=COLOR_FG_TEXT).pack(fill="x", pady=(80, 10), padx=30)
+
         card2 = self.make_card(f, "Frontend", ">")
         self.add_button(card2, "Dashboard im Browser öffnen",
             lambda: run_bg_cmd("xdg-open http://localhost:8080/dashboard_index.html"),
@@ -319,7 +323,7 @@ class ROS2MasterControl(ctk.CTk):
 
         # Header: zentriert, große Schrift
         ctk.CTkLabel(outer, text=title,
-                     text_color=COLOR_FG_HEADER,
+                     text_color=COLOR_ACCENT, # Helleres Cyber-Cyan (#22d3ee)
                      font=("Helvetica", 22, "bold")).pack(pady=(0, 8))
 
         # Card-Body mit Border
