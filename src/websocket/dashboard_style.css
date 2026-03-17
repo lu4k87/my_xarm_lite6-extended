@@ -1041,17 +1041,28 @@ body {
     color: white;
 }
 
-/* Neue kompakte Header-Elemente */
+/* Neue kompakte Header-Elemente - Premium Redesign */
 .nd-header-meta-chip {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 4px 12px;
-    gap: 10px;
+    border-radius: 10px;
+    padding: 6px 14px;
+    gap: 12px;
     min-width: 0;
-    transition: all 0.2s ease;
+    height: 42px; /* Fixe Höhe für perfektes Alignment */
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+}
+
+.nd-header-meta-chip i.chip-main-icon {
+    font-size: 1.1rem;
+    color: var(--accent-primary);
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 .nd-header-meta-chip.interactive:hover {
@@ -1073,22 +1084,26 @@ body {
 }
 
 .nd-header-meta-label {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
+    font-weight: 700;
     text-transform: uppercase;
     color: var(--text-secondary);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
     line-height: 1;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
+    opacity: 0.8;
 }
 
 .nd-header-meta-value {
-    font-size: 0.85rem;
-    color: #e2e8f0;
+    font-size: 0.88rem;
+    color: #f1f5f9;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.2;
+    line-height: 1.1;
+    display: flex;
+    align-items: center;
 }
 
 .nd-header-pkg {

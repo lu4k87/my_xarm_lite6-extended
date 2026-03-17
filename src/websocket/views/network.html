@@ -25,13 +25,13 @@
             <div class="nd-header">
                 <!-- Node Icon + Titel -->
                 <div class="nd-title-group">
-                    <span style="display:inline-block; width: 34px; height: 34px; background-color: var(--accent-primary); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;"></span>
+                    <span id="nd-header-icon" style="display:inline-block; width: 34px; height: 34px; background-color: var(--accent-primary); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span>
                     <h2 id="nd-title">/node_name</h2>
                 </div>
 
                 <!-- Paket-Chip -->
                 <div class="nd-header-meta-chip nd-header-pkg">
-                    <i class="fa-solid fa-box-archive"></i>
+                    <i class="fa-solid fa-box-archive chip-main-icon" id="nd-pkg-icon"></i>
                     <div class="nd-header-meta-content">
                         <span class="nd-header-meta-label">ROS 2 Paket</span>
                         <span class="nd-header-meta-value" id="nd-pkg">...</span>
@@ -42,21 +42,21 @@
                 <div class="nd-header-meta-chip nd-header-path interactive" 
                      onclick="openInExplorer(document.getElementById('nd-path').textContent)"
                      title="Im Datei-Explorer öffnen">
-                    <i class="fa-regular fa-folder-open"></i>
+                    <i class="fa-regular fa-folder-open chip-main-icon"></i>
                     <div class="nd-header-meta-content">
                         <span class="nd-header-meta-label">Dateipfad</span>
                         <span class="nd-header-meta-value code-font" id="nd-path">...</span>
                     </div>
                     <button class="code-btn" id="btn-show-code"
-                        onclick="event.stopPropagation(); requestSourceCode()" title="Quellcode">
+                        onclick="event.stopPropagation(); requestSourceCode()" title="Quellcode ansehen">
                         <i class="fa-solid fa-code"></i>
                     </button>
                 </div>
 
                 <!-- Aktionen (Reset) -->
                 <div class="nd-header-actions">
-                    <button class="action-btn" onclick="refreshNodeGraph()" style="font-size: 0.85rem; padding: 5px 12px;">
-                        <i class="fa-solid fa-rotate"></i> Reset
+                    <button class="action-btn" onclick="refreshNodeGraph()" title="Ansicht zurücksetzen">
+                        <i class="fa-solid fa-rotate"></i>
                     </button>
                 </div>
             </div>

@@ -581,32 +581,47 @@ function selectNode(nodeName, skipRequest = false) {
     }
 
     const elPkg = document.getElementById('nd-pkg');
+    const elPkgIcon = document.getElementById('nd-pkg-icon');
+    const elHeaderIcon = document.getElementById('nd-header-icon');
     if (elPkg) {
         const category = data.category || (data.is_workspace ? 'workspace' : 'system');
         const catBadge = {
             'workspace':         { icon: 'fa-code-branch',    color: 'var(--accent-primary)',   label: '' },
-            'system_via_launch': { icon: 'fa-rocket',         color: '#f59e0b',                 label: ' · via Launch' },
-            'system':            { icon: 'fa-microchip',      color: 'var(--text-secondary)',   label: ' · ROS 2 System' },
+            'system_via_launch': { icon: 'fa-rocket',         color: '#f59e0b',                 label: ' (via Launch)' },
+            'system':            { icon: 'fa-microchip',      color: 'var(--text-secondary)',   label: ' (ROS 2 System)' },
         }[category] || { icon: 'fa-box', color: 'var(--text-secondary)', label: '' };
 
-        elPkg.innerHTML = `<i class="fa-solid ${catBadge.icon}" style="margin-right:6px; color:${catBadge.color};"></i>${data.package || 'Unbekannt'}<span style="font-size:0.8rem; opacity:0.6; margin-left:6px;">${catBadge.label}</span>`;
+        // 1. Paketname + Label
+        elPkg.innerHTML = `${data.package || 'Unbekannt'}<span style="font-size:0.65rem; opacity:0.6; margin-left:6px; font-weight:400;">${catBadge.label}</span>`;
+        
+        // 2. Icon im Chip
+        if (elPkgIcon) {
+            elPkgIcon.className = `fa-solid ${catBadge.icon} chip-main-icon`;
+            elPkgIcon.style.color = catBadge.color;
+        }
+
+        // 3. Farbe des Haupt-Node-Icons im Header
+        if (elHeaderIcon) {
+            elHeaderIcon.style.backgroundColor = catBadge.color;
+        }
     }
 
     const elPath = document.getElementById('nd-path');
     if (elPath) {
         const category = data.category || (data.is_workspace ? 'workspace' : 'system');
         elPath.textContent = data.file_path || 'Pfad unbekannt';
-        // Für System-Nodes: Pfad dezenter stylen und click-through deaktivieren
-        const wsCard = elPath.closest('.ws-card-interactive');
-        if (wsCard) {
+        
+        // Interaktivität des Pfad-Chips (neu: .nd-header-path)
+        const pathChip = document.querySelector('.nd-header-path');
+        if (pathChip) {
             if (category === 'workspace') {
-                wsCard.style.opacity = '1';
-                wsCard.style.cursor = 'pointer';
-                wsCard.style.pointerEvents = '';
+                pathChip.classList.add('interactive');
+                pathChip.style.opacity = '1';
+                pathChip.style.pointerEvents = '';
             } else {
-                wsCard.style.opacity = '0.55';
-                wsCard.style.cursor = 'default';
-                wsCard.style.pointerEvents = 'none';
+                pathChip.classList.remove('interactive');
+                pathChip.style.opacity = '0.55';
+                pathChip.style.pointerEvents = 'none';
             }
         }
     }
