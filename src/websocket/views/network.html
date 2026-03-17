@@ -22,36 +22,43 @@
             <div class="nodes-overview-grid" id="nodes-overview-grid"></div>
         </div>
         <div class="node-details-dashboard hidden" id="node-details-view">
-            <div class="nd-header" style="display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; overflow: hidden;">
+            <div class="nd-header">
                 <!-- Node Icon + Titel -->
-                <div class="nd-title-group" style="flex-shrink: 0;">
-                    <span style="display:inline-block; width: 34px; height: 34px; background-color: var(--accent-primary); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain; flex-shrink:0;"></span>
-                    <h2 class="code-font" id="nd-title" style="margin: 0; font-size: 1rem; white-space: nowrap;">/node_name</h2>
+                <div class="nd-title-group">
+                    <span style="display:inline-block; width: 34px; height: 34px; background-color: var(--accent-primary); -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;"></span>
+                    <h2 id="nd-title">/node_name</h2>
                 </div>
+
                 <!-- Paket-Chip -->
-                <div class="ws-card" style="padding: 4px 10px; gap: 6px; flex: 0 0 180px; white-space: nowrap; min-width: 0;">
-                    <i class="fa-solid fa-box-archive" style="font-size: 0.8rem; color: var(--accent-primary); opacity:0.8;"></i>
-                    <div class="ws-info" style="padding: 0; gap: 2px;">
-                        <span class="ws-lbl" style="font-size: 0.62rem; line-height: 1;">ROS 2 Paket</span>
-                        <span class="ws-val" id="nd-pkg" style="font-size: 0.82rem; line-height: 1.2;">...</span>
+                <div class="nd-header-meta-chip nd-header-pkg">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <div class="nd-header-meta-content">
+                        <span class="nd-header-meta-label">ROS 2 Paket</span>
+                        <span class="nd-header-meta-value" id="nd-pkg">...</span>
                     </div>
                 </div>
+
                 <!-- Pfad-Chip -->
-                <div class="ws-card ws-card-interactive" style="padding: 4px 10px; gap: 6px; flex: 1; min-width: 0; overflow: hidden;"
-                    onclick="openInExplorer(document.getElementById('nd-path').textContent)"
-                    title="Im Datei-Explorer öffnen">
-                    <i class="fa-regular fa-folder-open" style="font-size: 0.8rem; color: var(--accent-primary); opacity:0.8; flex-shrink:0;"></i>
-                    <div class="ws-info" style="padding: 0; gap: 2px; min-width: 0; overflow: hidden;">
-                        <span class="ws-lbl" style="font-size: 0.62rem; line-height: 1;">Dateipfad</span>
-                        <span class="ws-val path-text code-font" id="nd-path" style="font-size: 0.78rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">...</span>
+                <div class="nd-header-meta-chip nd-header-path interactive" 
+                     onclick="openInExplorer(document.getElementById('nd-path').textContent)"
+                     title="Im Datei-Explorer öffnen">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <div class="nd-header-meta-content">
+                        <span class="nd-header-meta-label">Dateipfad</span>
+                        <span class="nd-header-meta-value code-font" id="nd-path">...</span>
                     </div>
-                    <button class="code-btn" id="btn-show-code" style="flex-shrink:0;"
-                        onclick="event.stopPropagation(); requestSourceCode()" title="Quellcode"><i
-                            class="fa-solid fa-code"></i></button>
+                    <button class="code-btn" id="btn-show-code"
+                        onclick="event.stopPropagation(); requestSourceCode()" title="Quellcode">
+                        <i class="fa-solid fa-code"></i>
+                    </button>
                 </div>
-                <!-- Reset Button -->
-                <button class="action-btn" onclick="refreshNodeGraph()" style="font-size: 0.85rem; padding: 5px 10px; flex-shrink:0; white-space: nowrap;"><i
-                        class="fa-solid fa-rotate"></i> Reset</button>
+
+                <!-- Aktionen (Reset) -->
+                <div class="nd-header-actions">
+                    <button class="action-btn" onclick="refreshNodeGraph()" style="font-size: 0.85rem; padding: 5px 12px;">
+                        <i class="fa-solid fa-rotate"></i> Reset
+                    </button>
+                </div>
             </div>
             <div class="nd-scroll-area">
                 <div
