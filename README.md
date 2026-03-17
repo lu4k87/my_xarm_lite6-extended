@@ -75,8 +75,9 @@ Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert 
     colcon build --symlink-install
     ```
 
-4.  Source den Workspace:
+4.  Source den Ros2 + Workspace:
     ```bash
+    source /opt/ros/humble/setup.bash
     source install/setup.bash
     ```
 
