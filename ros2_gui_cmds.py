@@ -11,20 +11,21 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 # ─── Farb-Palette ──────────────────────────────────────
-COLOR_BG_MAIN     = "#060c18"   # Tiefes Space-Schwarz
-COLOR_BG_SURFACE  = "#0a1525"   # Untergrund-Ebene
-COLOR_BG_CARD     = "#0f1e33"   # Karten-Hintergrund
-COLOR_BG_BTN      = "#152338"   # Button-Hintergrund
-COLOR_BORDER      = "#1a3050"   # Subtile Umrandung
-COLOR_HOVER       = "#1e3a58"   # Hover-Zustand
+# ─── Farb-Palette 2.0 (Deep Space) ──────────────────────
+COLOR_BG_MAIN     = "#02040a"   # Ultramarin-Schwarz
+COLOR_BG_SURFACE  = "#080c16"   # Tiefer Untergrund
+COLOR_BG_CARD     = "#0c1425"   # Navy-Card
+COLOR_BG_BTN      = "#121d33"   # Button-Depth
+COLOR_BORDER      = "#1a2c4e"   # Subtile Struktur
+COLOR_HOVER       = "#1e3a5f"   # Leuchtender Hover
 
-COLOR_FG_TEXT     = "#d4e4f5"   # Haupttext
-COLOR_FG_MUTED    = "#3e5a78"   # Gedämpft
-COLOR_FG_HEADER   = "#4e6e90"   # Sektions-Header
+COLOR_FG_TEXT     = "#e2e8f0"   # Kristall-Weiß
+COLOR_FG_MUTED    = "#64748b"   # Slate-Gedämpft
+COLOR_FG_HEADER   = "#94a3b8"   # Header-Slate
 
-COLOR_ACCENT      = "#0ea5e9"   # Sky-Blue (Primär)
-COLOR_ACCENT_AMBER= "#f59e0b"   # Amber (Warnung)
-COLOR_ACCENT_GREEN= "#22c55e"   # Grün (Erfolg)
+COLOR_ACCENT      = "#22d3ee"   # Cyber-Cyan
+COLOR_ACCENT_AMBER= "#fbbf24"   # Electric-Amber
+COLOR_ACCENT_GREEN= "#4ade80"   # Neon-Green
 
 # ══════════════════════════════════════════════════════
 #  BACKEND-FUNKTIONEN
@@ -92,9 +93,10 @@ class ROS2MasterControl(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("ROS 2 Master Control")
+        # Exakt 50% Breite (Ganzzahl-Division)
         sw = self.winfo_screenwidth()
         sh = self.winfo_screenheight()
-        self.geometry(f"{sw // 2}x{sh}")
+        self.geometry(f"{sw // 2}x{sh}+0+0") # +0+0 erzwingt linke Seite
         self.configure(fg_color=COLOR_BG_MAIN)
         self.setup_tabs()
         self.setup_footer()
@@ -104,11 +106,11 @@ class ROS2MasterControl(ctk.CTk):
         self.tabview = ctk.CTkTabview(
             self,
             fg_color="transparent",
-            segmented_button_fg_color="#060c18",
+            segmented_button_fg_color="#040812",
             segmented_button_selected_color=COLOR_ACCENT,
-            segmented_button_selected_hover_color="#38bdf8",
-            segmented_button_unselected_color="#060c18",
-            segmented_button_unselected_hover_color="#0c1a30",
+            segmented_button_selected_hover_color="#06b6d4",
+            segmented_button_unselected_color="#040812",
+            segmented_button_unselected_hover_color="#081022",
             text_color=COLOR_FG_MUTED,
         )
         self.tabview.pack(expand=True, fill="both", padx=18, pady=(14, 0))
@@ -119,12 +121,13 @@ class ROS2MasterControl(ctk.CTk):
             corner_radius=14,
         )
 
-        self.tab_daily = self.tabview.add("  Daily  ")
-        self.tab_nodes = self.tabview.add("  Nodes  ")
-        self.tab_web   = self.tabview.add("  Web  ")
-        self.tab_info  = self.tabview.add("  Info  ")
-        self.tab_build = self.tabview.add("  Build  ")
-        self.tabview.set("  Daily  ")
+        # Erhöhtes Spacing durch Padding-Leerzeichen (Zentrierung gewahrt)
+        self.tab_daily = self.tabview.add("    Daily    ")
+        self.tab_nodes = self.tabview.add("    Nodes    ")
+        self.tab_web   = self.tabview.add("     Web     ")
+        self.tab_info  = self.tabview.add("     Info    ")
+        self.tab_build = self.tabview.add("    Build    ")
+        self.tabview.set("    Daily    ")
 
         # Oberer Innenabstand je Tab
         for tab in [self.tab_daily, self.tab_nodes, self.tab_web, self.tab_info, self.tab_build]:
