@@ -4,121 +4,131 @@ import sys
 import os
 import shlex
 
-# ==========================================
-# APPEARANCE & THEME (Premium Midnight)
-# ==========================================
+# ══════════════════════════════════════════════════════
+#  APPEARANCE & THEME  —  "Deep Space"
+# ══════════════════════════════════════════════════════
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
-# Midnight Theme Palette
-COLOR_BG_MAIN = "#0f172a"      # Deep Navy/Slate
-COLOR_BG_SURFACE = "#1e293b"   # Slate Blue Surface
-COLOR_FG_TEXT = "#f8fafc"      # Near White
-COLOR_FG_MUTED = "#64748b"     # Muted Slate
-COLOR_ACCENT_BLUE = "#3b82f6"  # Vibrant Primary Blue
-COLOR_ACCENT_ORANGE = "#f59e0b" # Modern Orange instead of Pink
-COLOR_ACCENT_GREEN = "#10b981" # Success Green
+# ─── Farb-Palette ──────────────────────────────────────
+COLOR_BG_MAIN     = "#060c18"   # Tiefes Space-Schwarz
+COLOR_BG_SURFACE  = "#0a1525"   # Untergrund-Ebene
+COLOR_BG_CARD     = "#0f1e33"   # Karten-Hintergrund
+COLOR_BG_BTN      = "#152338"   # Button-Hintergrund
+COLOR_BORDER      = "#1a3050"   # Subtile Umrandung
+COLOR_HOVER       = "#1e3a58"   # Hover-Zustand
 
-# ==========================================
-# BACKEND FUNKTIONEN
-# ==========================================
+COLOR_FG_TEXT     = "#d4e4f5"   # Haupttext
+COLOR_FG_MUTED    = "#3e5a78"   # Gedämpft
+COLOR_FG_HEADER   = "#4e6e90"   # Sektions-Header
+
+COLOR_ACCENT      = "#0ea5e9"   # Sky-Blue (Primär)
+COLOR_ACCENT_AMBER= "#f59e0b"   # Amber (Warnung)
+COLOR_ACCENT_GREEN= "#22c55e"   # Grün (Erfolg)
+
+# ══════════════════════════════════════════════════════
+#  BACKEND-FUNKTIONEN
+# ══════════════════════════════════════════════════════
 def run_cmd(command, title="ROS 2 Terminal", ws_path="~/dev_ws"):
-    """Führt einen ROS-Befehl aus und zeigt den vollständigen Ablauf im Terminal."""
+    """Öffnet ein Terminal und führt einen ROS-Befehl aus."""
     ros_setup = "source /opt/ros/humble/setup.bash"
-    ws_setup = f"source {ws_path}/install/setup.bash"
-    display_cmd = f"{ros_setup} && {ws_setup} && cd {ws_path} && {command}"
-    safe_display = display_cmd.replace('\\', '\\\\').replace('"', '\\"')
-    
-    script_content = f"""source ~/.bashrc 2>/dev/null || true
+    ws_setup  = f"source {ws_path}/install/setup.bash"
+    display   = f"{ros_setup} && {ws_setup} && cd {ws_path} && {command}"
+    safe_disp = display.replace('\\', '\\\\').replace('"', '\\"')
+
+    script = f"""source ~/.bashrc 2>/dev/null || true
 {ros_setup} 2>/dev/null || true
 {ws_setup} 2>/dev/null || true
 cd {ws_path} 2>/dev/null || true
-
 clear
-echo -e "\\033[36m[Script laeuft im Terminal: $(tty), PID: $$]\\033[0m"
-echo -e "\\033[1;33m========================================================================\\033[0m"
-echo -e "\\033[1;32m[VOLLSTAENDIGER BEFEHL]:\\033[0m"
-echo -e "\\033[1;37m{safe_display}\\033[0m"
-echo -e "\\033[1;33m========================================================================\\033[0m\\n"
-
+echo -e "\\033[36m[Terminal: $(tty)  PID: $$]\\033[0m"
+echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m"
+echo -e "\\033[1;32m CMD:\\033[0m"
+echo -e "\\033[1;37m {safe_disp}\\033[0m"
+echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m\\n"
 {command}
 """
-    safe_script = shlex.quote(script_content)
-    terminal_cmd = f"gnome-terminal --title=\"{title}\" -- bash -c 'eval \"$1\"; exec bash' _ {safe_script}"
-    subprocess.Popen(terminal_cmd, shell=True)
+    safe = shlex.quote(script)
+    subprocess.Popen(f'gnome-terminal --title="{title}" -- bash -c \'eval "$1"; exec bash\' _ {safe}', shell=True)
+
 
 def run_interactive_cmd(command, title="System Tool"):
-    """Führt System-/Interaktive Befehle aus und zeigt sie lückenlos an."""
+    """Öffnet ein interaktives Terminal."""
     ros_setup = "source /opt/ros/humble/setup.bash"
-    safe_display = command.replace('\\', '\\\\').replace('"', '\\"')
-    
-    script_content = f"""source ~/.bashrc 2>/dev/null || true
+    safe_disp = command.replace('\\', '\\\\').replace('"', '\\"')
+
+    script = f"""source ~/.bashrc 2>/dev/null || true
 {ros_setup} 2>/dev/null || true
 clear
-echo -e "\\033[36m[Script laeuft im Terminal: $(tty), PID: $$]\\033[0m"
-echo "---------------------------------------------------------"
-echo -e "\\033[1;33m========================================================================\\033[0m"
-echo -e "\\033[1;32m[VOLLSTAENDIGER BEFEHL]:\\033[0m"
-echo -e "\\033[1;37m{safe_display}\\033[0m"
-echo -e "\\033[1;33m========================================================================\\033[0m\\n"
-
+echo -e "\\033[36m[Terminal: $(tty)  PID: $$]\\033[0m"
+echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m"
+echo -e "\\033[1;32m CMD:\\033[0m"
+echo -e "\\033[1;37m {safe_disp}\\033[0m"
+echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m\\n"
 {command}
 """
-    safe_script = shlex.quote(script_content)
-    terminal_cmd = f"gnome-terminal --title=\"{title}\" -- bash -c 'eval \"$1\"; exec bash' _ {safe_script}"
-    subprocess.Popen(terminal_cmd, shell=True)
+    safe = shlex.quote(script)
+    subprocess.Popen(f'gnome-terminal --title="{title}" -- bash -c \'eval "$1"; exec bash\' _ {safe}', shell=True)
+
 
 def run_bg_cmd(command):
-    subprocess.Popen(command, shell=True)
+    env = os.environ.copy()
+    env.setdefault("DISPLAY", ":0")
+    subprocess.Popen(command, shell=True, env=env)
 
 def open_editor():
     run_interactive_cmd("nano ~/dev_ws/ros2_gui_cmds.py", "[EDIT] GUI Code")
 
 def reload_app():
+    os.environ.setdefault("DISPLAY", ":0")
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
-# ==========================================
-# MAIN APPLICATION CLASS
-# ==========================================
+
+# ══════════════════════════════════════════════════════
+#  MAIN APPLICATION
+# ══════════════════════════════════════════════════════
 class ROS2MasterControl(ctk.CTk):
     def __init__(self):
         super().__init__()
-
         self.title("ROS 2 Master Control")
-        self.geometry("600x1000") # Breite um 10% reduziert (von 665 auf 600)
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        self.geometry(f"{sw // 2}x{sh}")
         self.configure(fg_color=COLOR_BG_MAIN)
-
-        # UI LAYOUT
         self.setup_tabs()
         self.setup_footer()
 
+    # ── Tabs ────────────────────────────────────────
     def setup_tabs(self):
-        self.tabview = ctk.CTkTabview(self, 
-                                     fg_color="transparent",
-                                     segmented_button_fg_color=COLOR_BG_SURFACE,
-                                     segmented_button_selected_color=COLOR_ACCENT_BLUE,
-                                     segmented_button_selected_hover_color="#60a5fa",
-                                     segmented_button_unselected_color=COLOR_BG_SURFACE,
-                                     segmented_button_unselected_hover_color="#334155",
-                                     text_color=COLOR_FG_TEXT)
-        self.tabview.pack(expand=True, fill="both", padx=20, pady=(10, 20))
+        self.tabview = ctk.CTkTabview(
+            self,
+            fg_color="transparent",
+            segmented_button_fg_color="#060c18",
+            segmented_button_selected_color=COLOR_ACCENT,
+            segmented_button_selected_hover_color="#38bdf8",
+            segmented_button_unselected_color="#060c18",
+            segmented_button_unselected_hover_color="#0c1a30",
+            text_color=COLOR_FG_MUTED,
+        )
+        self.tabview.pack(expand=True, fill="both", padx=18, pady=(14, 0))
 
-        # FORCE WIDER TABS: Wir nutzen das interne SegmentedButton Widget
         self.tabview._segmented_button.configure(
             font=("Helvetica", 15, "bold"),
-            height=45,
-            corner_radius=8
+            height=62,
+            corner_radius=14,
         )
-        
-        # Tabs hinzufügen mit extra Padding im Namen für Breite
-        self.tab_daily = self.tabview.add("   Daily Tools   ")
-        self.tab_nodes = self.tabview.add("   Nodes   ")
-        self.tab_web = self.tabview.add("   Web Service   ")
-        self.tab_info = self.tabview.add("   ROS - Info   ")
-        self.tab_build = self.tabview.add("   Build & Source   ")
 
-        self.tabview.set("   Daily Tools   ")
+        self.tab_daily = self.tabview.add("  Daily  ")
+        self.tab_nodes = self.tabview.add("  Nodes  ")
+        self.tab_web   = self.tabview.add("  Web  ")
+        self.tab_info  = self.tabview.add("  Info  ")
+        self.tab_build = self.tabview.add("  Build  ")
+        self.tabview.set("  Daily  ")
+
+        # Oberer Innenabstand je Tab
+        for tab in [self.tab_daily, self.tab_nodes, self.tab_web, self.tab_info, self.tab_build]:
+            ctk.CTkLabel(tab, text="", height=8, fg_color="transparent").pack()
 
         self.create_daily_tab()
         self.create_nodes_tab()
@@ -126,148 +136,250 @@ class ROS2MasterControl(ctk.CTk):
         self.create_info_tab()
         self.create_build_tab()
 
+    # ── Tab: Daily Tools ────────────────────────────
     def create_daily_tab(self):
-        frame = self.tab_daily
-        self.add_header(frame, "System & Netzwerk")
-        self.add_button(frame, "Eigene IP-Adresse anzeigen", 
-                        lambda: run_interactive_cmd("echo -e '\\033[1;32mNetzwerk-Schnittstellen:\\033[0m'; ip -brief address show; echo ''; echo 'Druecke Enter zum Schliessen.'; read", "IP Adresse"))
-        
-        cmd_find = 'read -p "Welcher Dateiname (oder Teil davon) wird gesucht?: " st; echo -e "\\n\\033[1;36mSuche im gesamten System nach: *${st}* ... (Das kann dauern!)\\033[0m\\n"; find / -iname "*${st}*" 2>/dev/null'
-        self.add_button(frame, "Datei im System suchen (find)", lambda: run_interactive_cmd(cmd_find, "System Suche"))
+        f = self.tab_daily
 
-        self.add_header(frame, "Umgebung (.bashrc)", pady=(20, 0))
-        self.add_button(frame, "~/.bashrc neu laden (source)", 
-                        lambda: run_interactive_cmd("source ~/.bashrc && echo -e '\\033[1;32m.bashrc erfolgreich neu geladen!\\033[0m'; sleep 2", "Source Bashrc"))
+        card = self.make_card(f, "Netzwerk & System", ">")
+        self.add_button(card, "Eigene IP-Adresse anzeigen",
+            lambda: run_interactive_cmd(
+                "echo -e '\\033[1;32mNetzwerk-Schnittstellen:\\033[0m'; ip -brief address show; echo ''; read -p 'Enter zum Schliessen...'",
+                "IP Adresse"),
+            copy_cmd="ip -brief address show")
+        cmd_find = 'read -p "Welcher Dateiname?: " st; find / -iname "*${st}*" 2>/dev/null'
+        self.add_button(card, "Datei im System suchen",
+            lambda: run_interactive_cmd(cmd_find, "System Suche"),
+            copy_cmd='find / -iname "*<NAME>*" 2>/dev/null')
 
+        card2 = self.make_card(f, "Umgebung (.bashrc)", ">")
+        self.add_button(card2, "~/.bashrc neu laden (source)",
+            lambda: run_interactive_cmd(
+                "source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2",
+                "Source Bashrc"),
+            copy_cmd="source ~/.bashrc")
+
+    # ── Tab: ROS-Info ───────────────────────────────
     def create_info_tab(self):
-        scroll_frame = ctk.CTkScrollableFrame(self.tab_info, fg_color="transparent")
-        scroll_frame.pack(expand=True, fill="both")
+        scroll = ctk.CTkScrollableFrame(self.tab_info, fg_color="transparent")
+        scroll.pack(expand=True, fill="both")
 
-        self.add_header(scroll_frame, "Listen & Status")
-        items = [
-            ("Aktive Nodes (node list)", "ros2 node list", "Nodes"),
-            ("Aktive Topics (topic list -t)", "ros2 topic list -t", "Topics"),
-            ("Aktive Services (service list)", "ros2 service list", "Services"),
-            ("Globale Parameter (param list)", "ros2 param list", "Parameter"),
-            ("Alle ROS 2 Pakete auflisten (pkg list)", "ros2 pkg list", "Packages"),
-        ]
-        for text, cmd, title in items:
-            self.add_button(scroll_frame, text, lambda c=cmd, t=title: run_cmd(c, t), pady=4)
+        card = self.make_card(scroll, "Listen & Status", ">")
+        for text, cmd, title in [
+            ("Aktive Nodes",          "ros2 node list",     "Nodes"),
+            ("Aktive Topics",         "ros2 topic list -t", "Topics"),
+            ("Aktive Services",       "ros2 service list",  "Services"),
+            ("Globale Parameter",     "ros2 param list",    "Parameter"),
+            ("Alle ROS 2 Pakete",     "ros2 pkg list",      "Packages"),
+        ]:
+            self.add_button(card, text, lambda c=cmd, t=title: run_cmd(c, t), copy_cmd=cmd)
 
-        self.add_header(scroll_frame, "Visualisierung", pady=(20, 0))
-        # HIER WURDE DIE FARBE ENTFERNT
-        self.add_button(scroll_frame, "RViz2 starten", lambda: run_cmd("rviz2", "RViz2"), pady=4)
-        self.add_button(scroll_frame, "RQT Graph (Node-Netzwerk)", lambda: run_cmd("rqt_graph", "RQT Graph"), pady=4)
-        self.add_button(scroll_frame, "RQT (Generelle GUI)", lambda: run_cmd("rqt", "RQT"), pady=4)
+        card2 = self.make_card(scroll, "Visualisierung", ">")
+        self.add_button(card2, "RViz2 starten",             lambda: run_cmd("rviz2",      "RViz2"),     copy_cmd="rviz2")
+        self.add_button(card2, "RQT Graph (Node-Netzwerk)", lambda: run_cmd("rqt_graph",  "RQT Graph"), copy_cmd="rqt_graph")
+        self.add_button(card2, "RQT (Generelle GUI)",       lambda: run_cmd("rqt",        "RQT"),       copy_cmd="rqt")
 
-        self.add_header(scroll_frame, "Live-Debugging (Interaktiv)", pady=(20, 0))
-        cmd_echo = 'read -p "Welches Topic willst du abhoeren?: " tp; echo -e "\\n\\033[1;36mHoere $tp ab...\\033[0m\\n"; ros2 topic echo $tp'
-        self.add_button(scroll_frame, "Topic Echo (Live-Daten lesen)", lambda: run_interactive_cmd(cmd_echo, "Topic Echo"), pady=4)
+        card3 = self.make_card(scroll, "Live-Debugging", ">")
+        cmd_echo = 'read -p "Topic: " tp; ros2 topic echo $tp'
+        self.add_button(card3, "Topic Echo (Live-Daten)",
+            lambda: run_interactive_cmd(cmd_echo, "Topic Echo"),
+            copy_cmd="ros2 topic echo <TOPIC>")
+        cmd_hz = 'read -p "Topic: " tp; ros2 topic hz $tp'
+        self.add_button(card3, "Topic Hz (Publish-Rate)",
+            lambda: run_interactive_cmd(cmd_hz, "Topic Hz"),
+            copy_cmd="ros2 topic hz <TOPIC>")
+        cmd_msg = 'read -p "Message-Typ: " msg; ros2 interface show $msg; echo ""; read -p "Enter..."'
+        self.add_button(card3, "Interface / Message Aufbau",
+            lambda: run_interactive_cmd(cmd_msg, "Interface Info"),
+            copy_cmd="ros2 interface show <TYPE>")
+        self.add_button(card3, "System Check  (ros2 doctor)",
+            lambda: run_cmd("ros2 doctor", "ROS Doctor"),
+            copy_cmd="ros2 doctor")
 
-        cmd_hz = 'read -p "Topic fuer Frequenzmessung eingeben: " tp; echo -e "\\n\\033[1;36mRate von $tp...\\033[0m\\n"; ros2 topic hz $tp'
-        self.add_button(scroll_frame, "Topic Hz (Publish-Rate messen)", lambda: run_interactive_cmd(cmd_hz, "Topic Hz"), pady=4)
-
-        cmd_msg = 'read -p "Message-Typ (z.B. sensor_msgs/msg/Joy): " msg; echo -e "\\n\\033[1;36mStruktur:\\033[0m\\n"; ros2 interface show $msg; echo ""; read -p "Druecke Enter zum Schliessen."'
-        self.add_button(scroll_frame, "Interface/Message Aufbau anzeigen", lambda: run_interactive_cmd(cmd_msg, "Interface Info"), pady=4)
-
-        self.add_header(scroll_frame, "Diagnose Tools", pady=(20, 0))
-        self.add_button(scroll_frame, "System Check (ros2 doctor)", lambda: run_cmd("ros2 doctor", "ROS Doctor"), pady=4)
-
+    # -- Tab: Build --
     def create_build_tab(self):
-        frame = self.tab_build
-        self.add_header(frame, "Build & Workspace (dev_ws)")
-        self.add_button(frame, "Colcon Build (--symlink-install)", 
-                        lambda: run_cmd("colcon build --symlink-install", "Colcon Build", "~/dev_ws"), 
-                        fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN)
+        f = self.tab_build
 
-        self.add_header(frame, "Wartung & Reset", pady=(30, 0))
-        kill_cmd = "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'"
-        self.add_button(frame, "ALLE ROS-Prozesse beenden", lambda: run_bg_cmd(kill_cmd), fg_color=COLOR_ACCENT_ORANGE, text_color=COLOR_BG_MAIN)
+        card = self.make_card(f, "Build & Workspace", ">")
+        self.add_button(card, "Colcon Build  (--symlink-install)",
+            lambda: run_cmd("colcon build --symlink-install", "Colcon Build", "~/dev_ws"),
+            fg_color=COLOR_ACCENT_GREEN, text_color="#022c1a",
+            copy_cmd="colcon build --symlink-install")
 
+        card2 = self.make_card(f, "Wartung & Reset", "!")
+        kill_cmd = ("pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && "
+                    "pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && "
+                    "pkill -9 -f 'lite6' && pkill -9 -f 'http.server'")
+        self.add_button(card2, "ALLE ROS-Prozesse beenden",
+            lambda: run_bg_cmd(kill_cmd),
+            fg_color=COLOR_ACCENT_AMBER, text_color="#1a0e00",
+            copy_cmd=kill_cmd)
+
+    # ── Tab: Nodes ──────────────────────────────────
     def create_nodes_tab(self):
-        scroll_frame = ctk.CTkScrollableFrame(self.tab_nodes, fg_color="transparent")
-        scroll_frame.pack(expand=True, fill="both")
+        scroll = ctk.CTkScrollableFrame(self.tab_nodes, fg_color="transparent")
+        scroll.pack(expand=True, fill="both")
 
-        self.add_header(scroll_frame, "Controller (Joy)")
-        joy_payload = '"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"'
-        
-        self.add_button(scroll_frame, "Pub /joy (Rate 10)", 
-                        lambda: run_cmd(f"ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy {joy_payload}", "Joy Pub"), 
-                        pady=4)
-                        
-        self.add_button(scroll_frame, "Pub /joy_check (Rate 10)", 
-                        lambda: run_cmd(f"ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy {joy_payload}", "Joy Check Pub"), pady=4)
+        card = self.make_card(scroll, "Controller (Joy)", ">")
+        joy = '"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"'
+        self.add_button(card, "Pub  /joy  (Rate 10)",
+            lambda: run_cmd(f"ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy {joy}", "Joy Pub"),
+            copy_cmd=f"ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy {joy}")
+        self.add_button(card, "Pub  /joy_check  (Rate 10)",
+            lambda: run_cmd(f"ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy {joy}", "Joy Check Pub"),
+            copy_cmd=f"ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy {joy}")
 
-        self.add_header(scroll_frame, "Robotik & MoveIt", pady=(20, 0))
-        
-        self.add_button(scroll_frame, "Real Move Launch (X-Arm Servo)", 
-                        lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", "Real Move"), 
-                        pady=4)
-                        
-        self.add_button(scroll_frame, "Fake Move Launch (Simulation)", 
-                        lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py", "Fake Move"), pady=4)
-        self.add_button(scroll_frame, "Keyboard Input Node", 
-                        lambda: run_cmd("ros2 run xarm_moveit_servo xarm_keyboard_input", "Keyboard Input"), pady=4)
+        card2 = self.make_card(scroll, "Robotik & MoveIt", ">")
+        self.add_button(card2, "Real Move Launch  (X-Arm Servo)",
+            lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", "Real Move"),
+            copy_cmd="ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev")
+        self.add_button(card2, "Fake Move Launch  (Simulation)",
+            lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py", "Fake Move"),
+            copy_cmd="ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py")
+        self.add_button(card2, "Keyboard Input Node",
+            lambda: run_cmd("ros2 run xarm_moveit_servo xarm_keyboard_input", "Keyboard Input"),
+            copy_cmd="ros2 run xarm_moveit_servo xarm_keyboard_input")
 
-        self.add_header(scroll_frame, "Planung & Logik", pady=(20, 0))
-        self.add_button(scroll_frame, "Move To Coordinator Node", 
-                        lambda: run_cmd("ros2 run move_to_coordinator move_to_coordinator", "Coordinator"), pady=4)
-        self.add_button(scroll_frame, "Motion Sequence Launch", 
-                        lambda: run_cmd("ros2 launch motion_sequence motion_sequence_launch.py", "Motion Sequence"), pady=4)
-        self.add_button(scroll_frame, "Collision Check Node", 
-                        lambda: run_cmd("ros2 run collision_check checker", "Collision Check"), pady=4)
+        card3 = self.make_card(scroll, "Planung & Logik", ">")
+        self.add_button(card3, "Move To Coordinator Node",
+            lambda: run_cmd("ros2 run move_to_coordinator move_to_coordinator", "Coordinator"),
+            copy_cmd="ros2 run move_to_coordinator move_to_coordinator")
+        self.add_button(card3, "Motion Sequence Launch",
+            lambda: run_cmd("ros2 launch motion_sequence motion_sequence_launch.py", "Motion Sequence"),
+            copy_cmd="ros2 launch motion_sequence motion_sequence_launch.py")
+        self.add_button(card3, "Collision Check Node",
+            lambda: run_cmd("ros2 run collision_check checker", "Collision Check"),
+            copy_cmd="ros2 run collision_check checker")
 
-        self.add_header(scroll_frame, "Vision & Voice", pady=(20, 0))
-        self.add_button(scroll_frame, "YOLO Homographie Node", lambda: run_cmd("ros2 run yolo_object_detector yolo_homography_node", "YOLO"), pady=4)
-        self.add_button(scroll_frame, "RViz Marker Publisher Node", lambda: run_cmd("ros2 run rviz_marker marker_publisher", "RViz Marker"), pady=4)
-        self.add_button(scroll_frame, "Whisper Bringup Launch", lambda: run_cmd("ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", "Whisper Bringup"), pady=4)
-        self.add_button(scroll_frame, "Whisper Stream Demo Node", lambda: run_cmd("ros2 run whisper_demos whisper_on_key", "Whisper Demo"), pady=4)
-        self.add_button(scroll_frame, "Voice Command Listener Node", lambda: run_cmd("ros2 run voice_command_listener listener", "Voice Listener"), pady=4)
+        card4 = self.make_card(scroll, "Vision & Voice", ">")
+        self.add_button(card4, "YOLO Homographie Node",
+            lambda: run_cmd("ros2 run yolo_object_detector yolo_homography_node", "YOLO"),
+            copy_cmd="ros2 run yolo_object_detector yolo_homography_node")
+        self.add_button(card4, "RViz Marker Publisher Node",
+            lambda: run_cmd("ros2 run rviz_marker marker_publisher", "RViz Marker"),
+            copy_cmd="ros2 run rviz_marker marker_publisher")
+        self.add_button(card4, "Whisper Bringup Launch",
+            lambda: run_cmd("ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", "Whisper Bringup"),
+            copy_cmd="ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True")
+        self.add_button(card4, "Whisper Stream Demo Node",
+            lambda: run_cmd("ros2 run whisper_demos whisper_on_key", "Whisper Demo"),
+            copy_cmd="ros2 run whisper_demos whisper_on_key")
+        self.add_button(card4, "Voice Command Listener Node",
+            lambda: run_cmd("ros2 run voice_command_listener listener", "Voice Listener"),
+            copy_cmd="ros2 run voice_command_listener listener")
 
+    # ── Tab: Web Service ────────────────────────────
     def create_web_tab(self):
-        frame = self.tab_web
-        self.add_header(frame, "Backend & Server")
-        self.add_button(frame, "ROS Bridge Launch (Websocket)", lambda: run_cmd("ros2 launch rosbridge_server rosbridge_websocket_launch.xml", "ROS Bridge"), pady=5)
-        self.add_button(frame, "Webserver starten (Port 8080)", lambda: run_cmd("python3 -m http.server 8080 -d src/websocket", "Webserver"), pady=5)
-        self.add_button(frame, "Workspace Analyzer Script", lambda: run_cmd("python3 src/websocket/workspace_analyzer.py", "Workspace Analyzer"), pady=5)
+        f = self.tab_web
 
-        self.add_header(frame, "Frontend", pady=(20, 0))
-        self.add_button(frame, "Dashboard im Browser oeffnen", 
-                        lambda: run_bg_cmd("xdg-open http://localhost:8080/dashboard_index.html"), 
-                        fg_color=COLOR_ACCENT_GREEN, text_color=COLOR_BG_MAIN, pady=12)
-        self.add_button(frame, "OBS Studio", lambda: run_cmd("obs", "OBS Studio"), pady=5)
+        card = self.make_card(f, "Backend & Server", ">")
+        self.add_button(card, "ROS Bridge Launch  (Websocket)",
+            lambda: run_cmd("ros2 launch rosbridge_server rosbridge_websocket_launch.xml", "ROS Bridge"),
+            copy_cmd="ros2 launch rosbridge_server rosbridge_websocket_launch.xml")
+        self.add_button(card, "Webserver starten  (Port 8080)",
+            lambda: run_cmd("python3 -m http.server 8080 -d src/websocket", "Webserver"),
+            copy_cmd="python3 -m http.server 8080 -d src/websocket")
+        self.add_button(card, "Workspace Analyzer Script",
+            lambda: run_cmd("python3 src/websocket/workspace_analyzer.py", "Workspace Analyzer"),
+            copy_cmd="python3 src/websocket/workspace_analyzer.py")
 
+        card2 = self.make_card(f, "Frontend", ">")
+        self.add_button(card2, "Dashboard im Browser öffnen",
+            lambda: run_bg_cmd("xdg-open http://localhost:8080/dashboard_index.html"),
+            fg_color=COLOR_ACCENT_GREEN, text_color="#022c1a",
+            copy_cmd="xdg-open http://localhost:8080/dashboard_index.html")
+        self.add_button(card2, "OBS Studio",
+            lambda: run_cmd("obs", "OBS Studio"),
+            copy_cmd="obs")
+
+    # ── Footer ──────────────────────────────────────
     def setup_footer(self):
-        footer = ctk.CTkFrame(self, fg_color="transparent")
-        footer.pack(side="bottom", fill="x", padx=20, pady=25)
+        footer = ctk.CTkFrame(self, fg_color=COLOR_BG_SURFACE, height=70, corner_radius=0)
+        footer.pack(side="bottom", fill="x")
+        footer.pack_propagate(False)
 
-        ctk.CTkLabel(footer, text="", height=2, fg_color=COLOR_FG_MUTED).pack(fill="x", pady=(0, 20))
+        # Dezente Trennlinie
+        ctk.CTkFrame(footer, height=1, fg_color=COLOR_BORDER).pack(fill="x")
 
         btn_frame = ctk.CTkFrame(footer, fg_color="transparent")
-        btn_frame.pack()
+        btn_frame.pack(expand=True)
 
-        self.add_footer_button(btn_frame, "~/.bashrc bearbeiten", lambda: run_interactive_cmd("nano ~/.bashrc", "Bashrc Editor"))
-        self.add_footer_button(btn_frame, "Code anpassen", open_editor)
-        self.add_footer_button(btn_frame, "App neu laden", reload_app, fg_color=COLOR_ACCENT_ORANGE)
+        self._footer_btn(btn_frame, "✎  bashrc",   lambda: run_interactive_cmd("nano ~/.bashrc", "Bashrc Editor"))
+        self._footer_btn(btn_frame, "⌨  Code",     open_editor)
+        self._footer_btn(btn_frame, "↻  Neu laden", reload_app, fg_color=COLOR_ACCENT_AMBER, text_color="#1a0e00")
 
-    def add_header(self, master, text, pady=(0, 10)):
-        label = ctk.CTkLabel(master, text=text, font=("Helvetica", 20, "bold"), text_color=COLOR_ACCENT_BLUE)
-        label.pack(anchor="w", pady=pady)
+    # ── Widget-Helpers ──────────────────────────────
+    def make_card(self, master, title, icon="▸"):
+        """Erstellt eine visuell abgegrenzte Section-Card."""
+        outer = ctk.CTkFrame(master, fg_color="transparent")
+        outer.pack(fill="x", pady=(14, 0), padx=4)
 
-    def add_button(self, master, text, command, fg_color=COLOR_BG_SURFACE, text_color=COLOR_FG_TEXT, pady=6):
-        btn = ctk.CTkButton(master, text=text, command=command, 
-                            fg_color=fg_color, text_color=text_color,
-                            hover_color="#334155", height=48, font=("Helvetica", 14, "bold"),
-                            width=280, # Ca. 50% der Fensterbreite
-                            corner_radius=10)
-        btn.pack(pady=pady)
+        # Header: zentriert, große Schrift
+        ctk.CTkLabel(outer, text=title,
+                     text_color=COLOR_FG_HEADER,
+                     font=("Helvetica", 22, "bold")).pack(pady=(0, 8))
 
-    def add_footer_button(self, master, text, command, fg_color=COLOR_BG_SURFACE):
-        btn = ctk.CTkButton(master, text=text, command=command,
-                            fg_color=fg_color, text_color=COLOR_FG_TEXT,
-                            hover_color="#334155", height=42, font=("Helvetica", 13, "bold"),
-                            corner_radius=8)
-        btn.pack(side="left", padx=10)
+        # Card-Body mit Border
+        card_body = ctk.CTkFrame(outer, fg_color=COLOR_BG_CARD,
+                                 corner_radius=14, border_width=1, border_color=COLOR_BORDER)
+        card_body.pack(fill="x")
+        inner = ctk.CTkFrame(card_body, fg_color="transparent")
+        inner.pack(fill="x", padx=12, pady=10)
+        return inner
+
+    def add_button(self, master, text, command,
+                   fg_color=COLOR_BG_BTN, text_color=COLOR_FG_TEXT, copy_cmd=None):
+        if copy_cmd is not None:
+            row = ctk.CTkFrame(master, fg_color="transparent")
+            row.pack(fill="x", pady=3)
+
+            btn = ctk.CTkButton(
+                row, text=text, command=command,
+                fg_color=fg_color, text_color=text_color,
+                hover_color=COLOR_HOVER, height=48,
+                font=("Helvetica", 15, "bold"),
+                border_width=1, border_color=COLOR_BORDER,
+                corner_radius=10,
+            )
+            btn.pack(side="left", fill="x", expand=True)
+
+            copy_btn = ctk.CTkButton(
+                row, text="⧉", width=44, height=48,
+                fg_color=COLOR_BG_CARD, text_color=COLOR_FG_MUTED,
+                hover_color=COLOR_HOVER,
+                border_width=1, border_color=COLOR_BORDER,
+                corner_radius=10, font=("Helvetica", 17),
+                command=lambda c=copy_cmd, b=None: self._copy_to_clipboard(c, copy_btn_ref),
+            )
+            copy_btn.pack(side="left", padx=(4, 0))
+            copy_btn_ref = copy_btn
+        else:
+            ctk.CTkButton(
+                master, text=text, command=command,
+                fg_color=fg_color, text_color=text_color,
+                hover_color=COLOR_HOVER, height=48,
+                font=("Helvetica", 15, "bold"),
+                border_width=1, border_color=COLOR_BORDER,
+                corner_radius=10,
+            ).pack(fill="x", pady=3)
+
+    def _copy_to_clipboard(self, text, btn):
+        self.clipboard_clear()
+        self.clipboard_append(text)
+        orig_text  = btn.cget("text")
+        orig_color = btn.cget("text_color")
+        btn.configure(text="✓", text_color=COLOR_ACCENT_GREEN)
+        self.after(1300, lambda: btn.configure(text=orig_text, text_color=orig_color))
+
+    def _footer_btn(self, master, text, command, fg_color=COLOR_BG_CARD, text_color=COLOR_FG_TEXT):
+        ctk.CTkButton(
+            master, text=text, command=command,
+            fg_color=fg_color, text_color=text_color,
+            hover_color=COLOR_HOVER, height=40,
+            font=("Helvetica", 12, "bold"),
+            border_width=1, border_color=COLOR_BORDER,
+            corner_radius=9,
+        ).pack(side="left", padx=8, pady=15)
+
 
 if __name__ == "__main__":
     app = ROS2MasterControl()
