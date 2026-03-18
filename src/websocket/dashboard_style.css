@@ -743,9 +743,10 @@ body {
 
 .network-layout {
     display: flex;
-    gap: 24px;
+    gap: 8px;
     flex-grow: 1;
     min-height: 0;
+    margin-right: -20px;
 }
 
 .node-list-panel {
@@ -1724,15 +1725,15 @@ body {
 }
 
 .badge-pub {
-    background: rgba(245, 158, 11, 0.12);
-    color: #fbbf24;
-    border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.badge-sub {
     background: rgba(16, 185, 129, 0.12);
     color: #34d399;
     border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-sub {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .badge-rpc,
@@ -1943,7 +1944,8 @@ body {
 }
 
 .center-node-box.node-is-live {
-    border-color: rgba(56, 189, 248, 0.9);
+    border-width: 3px;
+    border-color: rgba(56, 189, 248, 0.6);
     animation: pulse-center-node 1.4s infinite alternate;
 }
 
@@ -1953,7 +1955,7 @@ body {
             0 0 8px rgba(56, 189, 248, 0.15),
             0 0 0 0 rgba(56, 189, 248, 0.0),
             inset 0 0 6px rgba(56, 189, 248, 0.02);
-        border-color: rgba(56, 189, 248, 0.5);
+        border-color: rgba(56, 189, 248, 0.4);
         background: rgba(255, 255, 255, 0.03);
     }
 
@@ -1962,7 +1964,7 @@ body {
             0 0 25px rgba(56, 189, 248, 0.55),
             0 0 55px rgba(56, 189, 248, 0.2),
             inset 0 0 18px rgba(56, 189, 248, 0.06);
-        border-color: rgba(56, 189, 248, 1.0);
+        border-color: rgba(56, 189, 248, 0.7);
         background: rgba(56, 189, 248, 0.05);
     }
 }

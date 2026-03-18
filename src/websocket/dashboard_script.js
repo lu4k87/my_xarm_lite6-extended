@@ -504,6 +504,21 @@ function filterValidTopics(topicsArray) {
     return (topicsArray || []).filter(t => !IGNORE_TOPICS.includes(t));
 }
 
+const IGNORE_SERVICES = [
+    'describe_parameters',
+    'get_parameter_types',
+    'get_parameters',
+    'list_parameters',
+    'set_parameters',
+    'set_parameters_atomically'
+];
+
+function filterValidServices(servicesArray) {
+    return (servicesArray || []).filter(s => {
+        return !IGNORE_SERVICES.some(ignore => s.name.endsWith('/' + ignore) || s.name === ignore);
+    });
+}
+
 function getNodeData(name) {
     if (workspaceData.nodes && workspaceData.nodes[name]) return workspaceData.nodes[name];
     if (workspaceData.project_files && workspaceData.project_files[name]) return workspaceData.project_files[name];
@@ -592,14 +607,14 @@ function selectNode(nodeName, skipRequest = false) {
     if (elPkg) {
         const category = data.category || (data.is_workspace ? 'workspace' : 'system');
         const catBadge = {
-            'workspace':         { icon: 'fa-code-branch',    color: 'var(--accent-primary)',   label: '' },
-            'system_via_launch': { icon: 'fa-rocket',         color: '#f59e0b',                 label: ' (via Launch)' },
-            'system':            { icon: 'fa-microchip',      color: 'var(--text-secondary)',   label: ' (ROS 2 System)' },
+            'workspace': { icon: 'fa-code-branch', color: 'var(--accent-primary)', label: '' },
+            'system_via_launch': { icon: 'fa-rocket', color: '#f59e0b', label: ' (via Launch)' },
+            'system': { icon: 'fa-microchip', color: 'var(--text-secondary)', label: ' (ROS 2 System)' },
         }[category] || { icon: 'fa-box', color: 'var(--text-secondary)', label: '' };
 
         // 1. Paketname + Label
         elPkg.innerHTML = `${data.package || 'Unbekannt'}<span style="font-size:0.65rem; opacity:0.6; margin-left:6px; font-weight:400;">${catBadge.label}</span>`;
-        
+
         // 2. Icon im Chip
         if (elPkgIcon) {
             elPkgIcon.className = `fa-solid ${catBadge.icon} chip-main-icon`;
@@ -616,7 +631,7 @@ function selectNode(nodeName, skipRequest = false) {
     if (elPath) {
         const category = data.category || (data.is_workspace ? 'workspace' : 'system');
         elPath.textContent = data.file_path || 'Pfad unbekannt';
-        
+
         // Interaktivität des Pfad-Chips (neu: .nd-header-path)
         const pathChip = document.querySelector('.nd-header-path');
         if (pathChip) {
@@ -726,9 +741,9 @@ function selectNode(nodeName, skipRequest = false) {
                                 </div>
                                 <div class="nd-dependencies-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
                                     ${group.deps.map(d => {
-                                        const config = typeColorMap[d.type] || { label: "Dep", colorClass: "dep-general" };
-                                        return `<span class='dep-badge ${config.colorClass}' style="box-shadow: 0 4px 10px rgba(0,0,0,0.15);"><i class="fa-solid fa-box-open"></i> ${d.name}</span>`;
-                                    }).join('')}
+                            const config = typeColorMap[d.type] || { label: "Dep", colorClass: "dep-general" };
+                            return `<span class='dep-badge ${config.colorClass}' style="box-shadow: 0 4px 10px rgba(0,0,0,0.15);"><i class="fa-solid fa-box-open"></i> ${d.name}</span>`;
+                        }).join('')}
                                 </div>
                             </div>
                         `;
@@ -771,8 +786,9 @@ function selectNode(nodeName, skipRequest = false) {
 
         // 2. Grouped Services / Action Servers (Incoming)
         if (data.services && data.services.length > 0) {
-            const actionServers = data.services.filter(s => s.name.includes('/_action/'));
-            const regularServices = data.services.filter(s => !s.name.includes('/_action/'));
+            const filteredServices = filterValidServices(data.services);
+            const actionServers = filteredServices.filter(s => s.name.includes('/_action/'));
+            const regularServices = filteredServices.filter(s => !s.name.includes('/_action/'));
 
             if (regularServices.length > 0) {
                 const count = regularServices.length;
@@ -786,12 +802,12 @@ function selectNode(nodeName, skipRequest = false) {
                                         </span>
                                     </div>
                                   </div>`;
-                connInHtml += `<div class='conn-card rx-card d-flex flex-column gap-2'>
+                connInHtml += `<div class='conn-card rx-card d-flex flex-column gap-2' style='border-color: rgba(168, 85, 247, 0.5);'>
                     <div class='d-flex justify-content-between align-items-center w-100'>
                         <span class='conn-node-name m-0' title='Service Server'>
-                            <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #f59e0b; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Server</span>
+                            <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #a855f7; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Server</span>
                         </span>
-                        <span class='card-hz-display' style="color: #f59e0b; border-color: rgba(245, 158, 11, 0.2);">RES (Server)</span>
+                        <span class='card-hz-display' style="color: #a855f7; border-color: rgba(168, 85, 247, 0.2);">RES (Server)</span>
                     </div>
                     <div class='topics-wrapper w-100'>${wrapper}</div>
                 </div>`;
@@ -813,7 +829,7 @@ function selectNode(nodeName, skipRequest = false) {
                                         </span>
                                     </div>
                                   </div>`;
-                connInHtml += `<div class='conn-card rx-card action-trackable d-flex flex-column gap-2' data-action-feedback='${JSON.stringify(actionFeedbackTopics)}'>
+                connInHtml += `<div class='conn-card rx-card action-trackable d-flex flex-column gap-2' data-action-feedback='${JSON.stringify(actionFeedbackTopics)}' style='border-color: rgba(239, 68, 68, 0.5);'>
                     <div class='d-flex justify-content-between align-items-center w-100'>
                         <span class='conn-node-name m-0' title='Action Server'>
                             <i class="fa-solid fa-bolt me-2" style="color: #ef4444; flex-shrink: 0;"></i><span class="text-truncate">Action Server</span>
@@ -831,11 +847,12 @@ function selectNode(nodeName, skipRequest = false) {
         // 3. Topic Connections
         if (conns.connectedFrom.length > 0) {
             conns.connectedFrom.forEach(c => {
-                const topicsBadges = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
-                                        <div class='comm-badge badge-pub'>PUB</div>
-                                        <div class="d-flex flex-column gap-1 justify-content-center w-100">
-                                            ${c.topics.map(t => `<span class='conn-topic-badge p-2 m-0 w-100' data-topic='${t}'>${truncateTopic(t)}</span>`).join('')}
-                                        </div>
+                const topicsBadges = `<div class="d-flex flex-column gap-1 mb-2 w-100">
+                                        ${c.topics.map(t => `
+                                        <div class="d-flex gap-2 align-items-stretch w-100">
+                                            <div class='comm-badge badge-pub'>PUB</div>
+                                            <span class='conn-topic-badge p-2 m-0 flex-grow-1 w-100' data-topic='${t}'>${truncateTopic(t)}</span>
+                                        </div>`).join('')}
                                       </div>`;
                 const cardClass = c.isUnbound ? 'unbound-card rx-card live-trackable' : 'rx-card active-flow-rx live-trackable';
                 const nodeIcon = c.isUnbound
@@ -862,6 +879,7 @@ function selectNode(nodeName, skipRequest = false) {
         const arrowRxEl = document.querySelector('.flow-arrow.color-rx');
         if (arrowRxEl) {
             arrowRxEl.innerHTML = `
+                <div class="comm-badge" style="position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">SUB</div>
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.4s"></i>
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.8s"></i>
@@ -875,8 +893,9 @@ function selectNode(nodeName, skipRequest = false) {
         let connOutHtml = '';
 
         // 1. Grouped Service Clients / Action Clients (Outgoing)
-        const actionClients = (data.clients || []).filter(c => c.name.includes('/_action/'));
-        const regularClients = (data.clients || []).filter(c => !c.name.includes('/_action/'));
+        const filteredClients = filterValidServices(data.clients || []);
+        const actionClients = filteredClients.filter(c => c.name.includes('/_action/'));
+        const regularClients = filteredClients.filter(c => !c.name.includes('/_action/'));
 
         if (regularClients.length > 0) {
             const count = regularClients.length;
@@ -890,12 +909,12 @@ function selectNode(nodeName, skipRequest = false) {
                                         </span>
                                     </div>
                                   </div>`;
-            connOutHtml += `<div class='conn-card tx-card d-flex flex-column gap-2'>
+            connOutHtml += `<div class='conn-card tx-card d-flex flex-column gap-2' style='border-color: rgba(56, 189, 248, 0.5);'>
                 <div class='d-flex justify-content-between align-items-center w-100'>
                     <span class='conn-node-name m-0' title='Service Client'>
-                        <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #10b981; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Client</span>
+                        <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #38bdf8; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Client</span>
                     </span>
-                    <span class='card-hz-display' style="color: #10b981; border-color: rgba(16, 185, 129, 0.2);">REQ (Client)</span>
+                    <span class='card-hz-display' style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.2);">REQ (Client)</span>
                 </div>
                 <div class='topics-wrapper w-100'>${wrapper}</div>
             </div>`;
@@ -917,7 +936,7 @@ function selectNode(nodeName, skipRequest = false) {
                                         </span>
                                     </div>
                                   </div>`;
-            connOutHtml += `<div class='conn-card tx-card action-trackable d-flex flex-column gap-2' data-action-feedback='${JSON.stringify(actionFeedbackTopics)}'>
+            connOutHtml += `<div class='conn-card tx-card action-trackable d-flex flex-column gap-2' data-action-feedback='${JSON.stringify(actionFeedbackTopics)}' style='border-color: rgba(239, 68, 68, 0.5);'>
                 <div class='d-flex justify-content-between align-items-center w-100'>
                     <span class='conn-node-name m-0' title='Action Client'>
                         <i class="fa-solid fa-bolt me-2" style="color: #ef4444; flex-shrink: 0;"></i><span class="text-truncate">Action Client</span>
@@ -934,11 +953,12 @@ function selectNode(nodeName, skipRequest = false) {
         // 2. Topic Connections
         if (conns.connectedTo.length > 0) {
             conns.connectedTo.forEach(c => {
-                const topicsBadges = `<div class="d-flex gap-2 align-items-stretch mb-2 w-100">
-                                        <div class='comm-badge badge-sub'>SUB</div>
-                                        <div class="d-flex flex-column gap-1 justify-content-center w-100">
-                                            ${c.topics.map(t => `<span class='conn-topic-badge p-2 m-0 w-100' data-topic='${t}'>${truncateTopic(t)}</span>`).join('')}
-                                        </div>
+                const topicsBadges = `<div class="d-flex flex-column gap-1 mb-2 w-100">
+                                        ${c.topics.map(t => `
+                                        <div class="d-flex gap-2 align-items-stretch w-100">
+                                            <div class='comm-badge badge-sub'>SUB</div>
+                                            <span class='conn-topic-badge p-2 m-0 flex-grow-1 w-100' data-topic='${t}'>${truncateTopic(t)}</span>
+                                        </div>`).join('')}
                                       </div>`;
                 const cardClass = c.isUnbound ? 'unbound-card tx-card live-trackable' : 'tx-card active-flow-tx live-trackable';
                 const nodeIcon = c.isUnbound
@@ -964,6 +984,7 @@ function selectNode(nodeName, skipRequest = false) {
         const arrowTxEl = document.querySelector('.flow-arrow.color-tx');
         if (arrowTxEl) {
             arrowTxEl.innerHTML = `
+                <div class="comm-badge" style="position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">PUB</div>
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.4s"></i>
                 <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.8s"></i>
@@ -1081,7 +1102,8 @@ function selectNode(nodeName, skipRequest = false) {
     // --- SERVICES ---
     const srvsContainer = document.getElementById('nd-services');
     if (srvsContainer) {
-        const regularServices = (data.services || []).filter(s => !s.name.includes('/_action/'));
+        const filteredServices = filterValidServices(data.services || []);
+        const regularServices = filteredServices.filter(s => !s.name.includes('/_action/'));
         if (regularServices.length === 0) {
             srvsContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Services bereitgestellt</div>";
         } else {
@@ -1097,7 +1119,8 @@ function selectNode(nodeName, skipRequest = false) {
 
     const cliContainer = document.getElementById('nd-clients');
     if (cliContainer) {
-        const regularClients = (data.clients || []).filter(c => !c.name.includes('/_action/'));
+        const filteredClients = filterValidServices(data.clients || []);
+        const regularClients = filteredClients.filter(c => !c.name.includes('/_action/'));
         if (regularClients.length === 0) {
             cliContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:center; color:var(--text-secondary); font-style:italic;'>Keine Clients vorhanden</div>";
         } else {
@@ -1225,7 +1248,7 @@ function showNodesOverview() {
 
         const isLive = isWs ? Object.keys(workspaceData.nodes || {}).includes(nodeName) : true;
         const accentClass = isWs ? 'ws-card-accent' : 'sys-card-accent';
-        
+
         // NEU: Paketname als Typ-String
         const typeStr = nodeData.package || (isWs ? "Workspace Node" : "System Node");
 
@@ -1525,11 +1548,11 @@ function renderCode(rawCode, path) {
     const el = document.getElementById('code-modal-text');
     // highlight.js nutzen falls vorhanden (exakter, sicherer als Regex)
     if (typeof hljs !== 'undefined') {
-        const lang = path.endsWith('.py')  ? 'python'
-                   : path.endsWith('.cpp') || path.endsWith('.hpp') || path.endsWith('.h') ? 'cpp'
-                   : path.endsWith('.xml') ? 'xml'
-                   : path.endsWith('.yaml') || path.endsWith('.yml') ? 'yaml'
-                   : 'plaintext';
+        const lang = path.endsWith('.py') ? 'python'
+            : path.endsWith('.cpp') || path.endsWith('.hpp') || path.endsWith('.h') ? 'cpp'
+                : path.endsWith('.xml') ? 'xml'
+                    : path.endsWith('.yaml') || path.endsWith('.yml') ? 'yaml'
+                        : 'plaintext';
         try {
             const result = hljs.highlight(rawCode, { language: lang, ignoreIllegals: true });
             el.innerHTML = result.value;
@@ -1730,17 +1753,17 @@ function initRosConnection() {
     window.ros = ros;
 
     const statusText = document.getElementById('dashboard-status-text');
-    const statusDot  = document.getElementById('dashboard-status-dot');
-    const robotText  = document.getElementById('robot-status-text');
-    const robotDot   = document.getElementById('robot-status-dot');
+    const statusDot = document.getElementById('dashboard-status-dot');
+    const robotText = document.getElementById('robot-status-text');
+    const robotDot = document.getElementById('robot-status-dot');
 
     // Topic-Activity Publisher
     window._topicActivityPub = new ROSLIB.Topic({
         ros, name: '/dashboard/request_topic_activity', messageType: 'std_msgs/String'
     });
     // Öffentliche API – intern debounced
-    window.topicActivityPub      = window._topicActivityPub;
-    window.requestTopicActivity  = _sendTopicActivityRequest;
+    window.topicActivityPub = window._topicActivityPub;
+    window.requestTopicActivity = _sendTopicActivityRequest;
 
 
     // Sub to see live data and animate CSS classes
@@ -1762,6 +1785,17 @@ function initRosConnection() {
                             if (activity.active) {
                                 cardActive = true;
                                 anyActive = true;
+                            }
+
+                            // --- NEUER CODE: Message Content in der UI updaten ---
+                            if (activity.last_msg !== undefined && activity.last_msg !== "") {
+                                const safeTopicId = t.replace(/\//g, '-');
+                                const msgValEl = document.querySelector(`#msg-${safeTopicId} .topic-val`);
+                                if (msgValEl) {
+                                    msgValEl.textContent = activity.last_msg;
+                                    msgValEl.title = activity.last_msg;
+                                    msgValEl.style.color = "var(--text-primary)";
+                                }
                             }
                         }
                     });
@@ -1838,19 +1872,19 @@ function initRosConnection() {
 
     ros.on('connection', () => {
         statusText.textContent = 'Online';
-        statusDot.className    = 'status-indicator online';
+        statusDot.className = 'status-indicator online';
         logToTerminal("WebSocket Verbindung etabliert.", "info");
         rosRetryDelay = 3000;   // Reset Backoff bei erfolgreicher Verbindung
     });
     ros.on('error', () => {
         statusText.textContent = 'Error';
-        statusDot.className    = 'status-indicator offline';
+        statusDot.className = 'status-indicator offline';
     });
     ros.on('close', () => {
         statusText.textContent = 'Offline';
-        statusDot.className    = 'status-indicator offline';
-        robotText.textContent  = 'Offline';
-        robotDot.className     = 'status-indicator offline';
+        statusDot.className = 'status-indicator offline';
+        robotText.textContent = 'Offline';
+        robotDot.className = 'status-indicator offline';
         document.getElementById('bridge-ping').textContent = '-- ms';
         logToTerminal(`WebSocket getrennt – Reconnect in ${rosRetryDelay / 1000}s...`, 'warn');
         setTimeout(() => {

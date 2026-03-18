@@ -110,9 +110,9 @@ class ROS2MasterControl(ctk.CTk):
             segmented_button_fg_color="#0c1425",
             segmented_button_selected_color=COLOR_ACCENT_AMBER,
             segmented_button_selected_hover_color="#d97706",
-            segmented_button_unselected_color="#111b2e",
-            segmented_button_unselected_hover_color="#1a2c4e",
-            text_color=COLOR_FG_TEXT,
+            segmented_button_unselected_color="#94a3b8",       # Heller für Lesbarkeit der schwarzen Schrift
+            segmented_button_unselected_hover_color="#cbd5e1", # Noch heller beim Hover
+            text_color="#000000",                              # Schwarze Schrift für alle Tabs
         )
         self.tabview.pack(expand=True, fill="both", padx=18, pady=(14, 0))
 
@@ -120,7 +120,7 @@ class ROS2MasterControl(ctk.CTk):
             font=("Helvetica", 20, "bold"),
             height=250,
             corner_radius=6,
-            border_width=1,
+            border_width=1
         )
 
         # Erhöhtes Spacing durch Padding-Leerzeichen (Zentrierung gewahrt)
@@ -383,7 +383,7 @@ class ROS2MasterControl(ctk.CTk):
             master, text=text, command=command,
             fg_color=fg_color, text_color=text_color,
             hover_color=COLOR_HOVER, height=40,
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 24, "bold"), # Große Schrift!
             border_width=1, border_color=COLOR_BORDER,
             corner_radius=9,
         ).pack(side="left", padx=8, pady=15)
