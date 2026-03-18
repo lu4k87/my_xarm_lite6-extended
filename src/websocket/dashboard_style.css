@@ -3332,25 +3332,30 @@ body {
 
 /* Color Accents for Stats - User-assigned from existing dashboard colors */
 .mini-stat-pubs .mini-stat-val {
+    color: #10b981;
+}
+
+/* Green (Success) */
+.mini-stat-subs .mini-stat-val {
+    color: #f59e0b;
+}
+
+/* Orange (Warning) */
+.mini-stat-srvs .mini-stat-val {
+    color: #a855f7;
+}
+
+/* Lila (Accent Secondary) */
+.mini-stat-clients .mini-stat-val {
     color: #38bdf8;
 }
 
-/* Blau (accent-primary) */
-.mini-stat-subs .mini-stat-val {
-    color: #34d399;
-}
-
-/* Grün (badge-sub/emerald) */
-.mini-stat-srvs .mini-stat-val {
-    color: #fbbf24;
-}
-
-/* Gold (badge-pub/amber) */
+/* Blue (Accent Primary) */
 .mini-stat-actions .mini-stat-val {
-    color: #f87171;
+    color: #ef4444;
 }
 
-/* Pink/Rot (badge-act/rose) */
+/* Red (Danger) */
 
 .mini-node-card:hover .mini-stat-item {
     background: rgba(255, 255, 255, 0.06);

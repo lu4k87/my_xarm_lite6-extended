@@ -1207,7 +1207,8 @@ function showNodesOverview() {
 
         const pubs = nodeData.publishers ? nodeData.publishers.length : 0;
         const subs = nodeData.subscribers ? nodeData.subscribers.length : 0;
-        const srvs = nodeData.services ? nodeData.services.length : 0;
+        const srvs = (nodeData.services || []).filter(s => !s.name.includes('/_action/')).length;
+        const srvc = (nodeData.clients || []).filter(c => !c.name.includes('/_action/')).length;
 
         // Actions aus Metadaten oder Fallback
         let actions = nodeData.action_count || 0;
@@ -1227,7 +1228,6 @@ function showNodesOverview() {
         
         // NEU: Paketname als Typ-String
         const typeStr = nodeData.package || (isWs ? "Workspace Node" : "System Node");
-        const depsCount = (nodeData.dependencies || []).length;
 
         const badgeHtml = isLive
             ? `<div style="background: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94); border: 1px solid rgba(34, 197, 94, 0.2); font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; display:inline-flex; align-items:center; gap: 5px; font-weight: 600; letter-spacing: 0.5px;"><span class="status-pulse" style="width:5px; height:5px;"></span>LÄUFT</div>`
@@ -1246,33 +1246,31 @@ function showNodesOverview() {
                 <div class="mini-stats-container">
                     <div class="mini-stat-item mini-stat-pubs">
                         <span class="mini-stat-val">${pubs}</span>
-                        <span class="mini-stat-lbl">Pubs</span>
+                        <span class="mini-stat-lbl">PUBS</span>
                     </div>
                     <div class="mini-stat-item mini-stat-subs">
                         <span class="mini-stat-val">${subs}</span>
-                        <span class="mini-stat-lbl">Subs</span>
+                        <span class="mini-stat-lbl">SUBS</span>
                     </div>
                     <div class="mini-stat-item mini-stat-srvs">
                         <span class="mini-stat-val">${srvs}</span>
-                        <span class="mini-stat-lbl">Srvs</span>
+                        <span class="mini-stat-lbl">SRVS</span>
+                    </div>
+                    <div class="mini-stat-item mini-stat-clients">
+                        <span class="mini-stat-val">${srvc}</span>
+                        <span class="mini-stat-lbl">SRVC</span>
                     </div>
                     ${actions > 0 ? `
                         <div class="mini-stat-item mini-stat-actions">
                             <span class="mini-stat-val">${actions}</span>
-                            <span class="mini-stat-lbl">Acts</span>
+                            <span class="mini-stat-lbl">ACTS</span>
                         </div>
                     ` : `
                         <div class="mini-stat-item" style="opacity: 0.3;">
                             <span class="mini-stat-val">0</span>
-                            <span class="mini-stat-lbl">Acts</span>
+                            <span class="mini-stat-lbl">ACTS</span>
                         </div>
                     `}
-                    ${isWs ? `
-                        <div class="mini-stat-item" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 10px;">
-                            <span class="mini-stat-val" style="color: #a855f7;">${depsCount}</span>
-                            <span class="mini-stat-lbl">Deps</span>
-                        </div>
-                    ` : ''}
                 </div>
                 <i class="fa-solid fa-chevron-right" style="color: var(--text-secondary); opacity: 0.5; margin-left: 10px; font-size: 0.8rem;"></i>
             </div>
