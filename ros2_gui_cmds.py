@@ -129,7 +129,7 @@ class ROS2MasterControl(ctk.CTk):
         self.tab_web   = self.tabview.add("     Web     ")
         self.tab_info  = self.tabview.add("     Info    ")
         self.tab_build = self.tabview.add("    Build    ")
-        self.tabview.set("    Daily    ")
+        self.tabview.set("    Nodes    ")
 
         # Oberer Innenabstand je Tab
         for tab in [self.tab_daily, self.tab_nodes, self.tab_web, self.tab_info, self.tab_build]:

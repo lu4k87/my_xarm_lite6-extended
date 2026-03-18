@@ -3,10 +3,6 @@
         <ul class="node-list" id="dynamic-node-list">
             <li class="empty-state">Lade Nodes...</li>
         </ul>
-        <div class="search-box" style="margin-top: 8px; margin-bottom: 0;">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input id="node-search" onkeyup="filterNodes()" placeholder="Node suchen..." type="text" />
-        </div>
     </div>
     <div class="main-explorer-area">
         <div class="widget network-widget hidden" id="global-graph-view">
@@ -74,9 +70,7 @@
                             style="margin-right: 8px; color: var(--color-tx);"></i> Sendet Daten an</div>
                 </div>
                 <div class="nd-flow-diagram" style="margin-top: 15px;">
-                    <video autoplay loop muted playsinline class="nd-flow-video">
-                        <source src="vecteezy_dynamic-data-flow.mp4" type="video/mp4">
-                    </video>
+                    <img src="vecteezy_dynamic-data-flow.gif" class="nd-flow-video" alt="Flow Animation">
                     <div class="flow-col flow-rx">
                         <div class="flow-content" id="nd-flow-in"></div>
                     </div>

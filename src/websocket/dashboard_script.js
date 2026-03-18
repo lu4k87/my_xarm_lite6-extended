@@ -401,7 +401,13 @@ function updateNodeList() {
                     <i class="fa-solid fa-table-cells-large" style="color: var(--accent-primary); margin-right: 12px; font-size: 1.1rem;"></i>
                     <span class="node-name-text" style="font-weight: 600;">Nodes - Übersicht</span>
                 </div>
-             </li>`;
+             </li>
+             
+             <!-- NEU: Suche DAZWISCHEN -->
+             <div class="search-box" style="margin-top: 15px; margin-bottom: 15px; width: 100%;">
+                 <i class="fa-solid fa-magnifying-glass"></i>
+                 <input id="node-search" onkeyup="filterNodes()" placeholder="Node suchen..." type="text" />
+             </div>`;
 
     if (activeWsNodes.length > 0) {
         html += `<div class="node-group-container">
@@ -642,7 +648,7 @@ function selectNode(nodeName, skipRequest = false) {
         if (data.is_workspace || (data.dependencies && data.dependencies.length > 0)) {
             const deps = data.dependencies || [];
             if (deps.length === 0) {
-                depContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:left; color:var(--text-secondary); font-style:italic; width:100%;'>Keine Abhängigkeiten in package.xml gefunden</div>";
+                depContainer.innerHTML = "<div class='empty-state'>Keine Abhängigkeiten in package.xml gefunden</div>";
             } else {
                 const typeColorMap = {
                     "depend": { label: "General", colorClass: "dep-general" },
@@ -654,63 +660,85 @@ function selectNode(nodeName, skipRequest = false) {
                 };
 
                 const legendHtml = `
-                    <div class="dep-legend" style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; width: 100%;">
-                        <span style="font-size: 0.8rem; color: var(--text-secondary); margin-right: 5px; flex-shrink: 0;"><i class="fa-solid fa-list" style="margin-right: 4px;"></i> Legende:</span>
+                    <div class="dep-legend" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap; width: 100%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); margin-right: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-layer-group" style="margin-right: 6px; color: var(--accent-primary);"></i> Legende:</span>
                         
-                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 4px;">
-                            <span class="dep-badge dep-build" style="padding: 1px 6px; font-size: 0.75rem;"><i class="fa-solid fa-code"></i> Build/Tool</span>
-                            <i class="fa-solid fa-circle-info tooltip-icon" style="font-size: 0.75rem;"></i>
-                            <div class="tooltip-text">
-                                <b>&lt;buildtool_depend&gt;:</b> Werkzeuge zum Bauen (z.B. ament_cmake)<br><br>
-                                <b>&lt;build_depend&gt;:</b> Pakete zur Kompilierung (z.B. Header)<br><br>
-                                <b>&lt;build_export_depend&gt;:</b> Transitive Header für andere Pakete
+                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 6px;">
+                            <span class="dep-badge dep-build" style="padding: 2px 10px; font-size: 0.78rem; font-weight: 600;"><i class="fa-solid fa-hammer"></i> Build</span>
+                            <div class="tooltip-text" style="width: 280px; padding: 12px; line-height: 1.5;">
+                                <b style="color: #10b981;">Build-Phase:</b><br>
+                                • <b>buildtool:</b> Benötigt zum Kompilieren (CMake/Ament)<br>
+                                • <b>build:</b> Header/Bibliotheken zur Compile-Zeit<br>
+                                • <b>build_export:</b> Wird von abhängigen Paketen benötigt
                             </div>
                         </div>
 
-                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 4px;">
-                            <span class="dep-badge dep-exec" style="padding: 1px 6px; font-size: 0.75rem;"><i class="fa-solid fa-play"></i> Exec</span>
-                            <i class="fa-solid fa-circle-info tooltip-icon" style="font-size: 0.75rem;"></i>
-                            <div class="tooltip-text">
-                                <b>&lt;exec_depend&gt;:</b> Pakete, die nur zur Laufzeit benötigt werden.
+                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 6px;">
+                            <span class="dep-badge dep-exec" style="padding: 2px 10px; font-size: 0.78rem; font-weight: 600;"><i class="fa-solid fa-play"></i> Run</span>
+                            <div class="tooltip-text" style="width: 280px; padding: 12px; line-height: 1.5;">
+                                <b style="color: var(--accent-secondary);">Laufzeit:</b><br>
+                                Pakete, die während der Ausführung des Nodes geladen oder gestartet werden müssen.
                             </div>
                         </div>
 
-                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 4px;">
-                            <span class="dep-badge dep-general" style="padding: 1px 6px; font-size: 0.75rem;"><i class="fa-solid fa-cube"></i> General</span>
-                            <i class="fa-solid fa-circle-info tooltip-icon" style="font-size: 0.75rem;"></i>
-                            <div class="tooltip-text">
-                                <b>&lt;depend&gt;:</b> All-in-One Tag für Build, Export & Execution.
+                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 6px;">
+                            <span class="dep-badge dep-general" style="padding: 2px 10px; font-size: 0.78rem; font-weight: 600;"><i class="fa-solid fa-link"></i> Core</span>
+                            <div class="tooltip-text" style="width: 280px; padding: 12px; line-height: 1.5;">
+                                <b style="color: var(--accent-primary);">Kombiniert:</b><br>
+                                Standard-ROS-Abhängigkeit (Build+Run+Export).
                             </div>
                         </div>
 
-                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 4px;">
-                            <span class="dep-badge dep-test" style="padding: 1px 6px; font-size: 0.75rem;"><i class="fa-solid fa-vial"></i> Test</span>
-                            <i class="fa-solid fa-circle-info tooltip-icon" style="font-size: 0.75rem;"></i>
-                            <div class="tooltip-text">
-                                <b>&lt;test_depend&gt;:</b> Ausschließlich für Unit-Tests nötig (z.B. ament_lint_auto oder gtest).
+                        <div class="tooltip-container" style="display: flex; align-items: center; gap: 6px;">
+                            <span class="dep-badge dep-test" style="padding: 2px 10px; font-size: 0.78rem; font-weight: 600;"><i class="fa-solid fa-microscope"></i> Test</span>
+                            <div class="tooltip-text" style="width: 280px; padding: 12px; line-height: 1.5;">
+                                <b style="color: #f59e0b;">Test-Umgebung:</b><br>
+                                Nur für Unit-Tests oder Linting erforderlich.
                             </div>
                         </div>
                     </div>
                 `;
 
-                // Sort dependencies by type (General -> Exec -> Build -> Test) then alphabetically
-                deps.sort((a, b) => {
-                    const order = ["depend", "exec_depend", "build_depend", "build_export_depend", "buildtool_depend", "test_depend"];
-                    const indexA = order.indexOf(a.type);
-                    const indexB = order.indexOf(b.type);
-                    if (indexA !== indexB) return indexA - indexB;
-                    return a.name.localeCompare(b.name);
+                // Categorization logic
+                const groups = {
+                    "Core": { deps: [], icon: "fa-cube", color: "var(--accent-primary)" },
+                    "Build & Tools": { deps: [], icon: "fa-screwdriver-wrench", color: "#10b981" },
+                    "Laufzeit (Runtime)": { deps: [], icon: "fa-play", color: "var(--accent-secondary)" },
+                    "Test": { deps: [], icon: "fa-microscope", color: "#f59e0b" }
+                };
+
+                deps.forEach(d => {
+                    if (d.type === "depend") groups["Core"].deps.push(d);
+                    else if (d.type === "exec_depend") groups["Laufzeit (Runtime)"].deps.push(d);
+                    else if (d.type === "test_depend") groups["Test"].deps.push(d);
+                    else groups["Build & Tools"].deps.push(d);
                 });
 
-                const depsHtml = deps.map(d => {
-                    const config = typeColorMap[d.type] || { label: "Dep", colorClass: "dep-general" };
-                    return `<span class='dep-badge ${config.colorClass}'><i class="fa-solid fa-box-open"></i> ${d.name} <span style="opacity:0.6; font-size: 0.70rem; margin-left: 6px; font-family: Inter;">${config.label}</span></span>`;
-                }).join('');
+                let categorizedHtml = '';
+                for (const [title, group] of Object.entries(groups)) {
+                    if (group.deps.length > 0) {
+                        group.deps.sort((a, b) => a.name.localeCompare(b.name));
+                        categorizedHtml += `
+                            <div class="dep-category-group" style="margin-bottom: 25px; border-left: 3px solid ${group.color}; padding-left: 15px; background: rgba(255,255,255,0.01); border-radius: 0 8px 8px 0; padding-top: 5px; padding-bottom: 10px;">
+                                <div style="font-size: 0.75rem; color: ${group.color}; text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+                                    <i class="fa-solid ${group.icon}"></i> ${title}
+                                    <span style="background: ${group.color}; color: #000; padding: 1px 6px; border-radius: 10px; font-size: 0.65rem; margin-left: 5px;">${group.deps.length}</span>
+                                </div>
+                                <div class="nd-dependencies-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    ${group.deps.map(d => {
+                                        const config = typeColorMap[d.type] || { label: "Dep", colorClass: "dep-general" };
+                                        return `<span class='dep-badge ${config.colorClass}' style="box-shadow: 0 4px 10px rgba(0,0,0,0.15);"><i class="fa-solid fa-box-open"></i> ${d.name}</span>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
 
-                depContainer.innerHTML = legendHtml + '<div class="nd-dependencies-list">' + depsHtml + '</div>';
+                depContainer.innerHTML = legendHtml + categorizedHtml;
             }
         } else {
-            depContainer.innerHTML = "<div class='empty-state' style='padding:15px; text-align:left; color:var(--text-secondary); font-style:italic; width:100%;'>System Node - keine lokalen Abhängigkeiten</div>";
+            depContainer.innerHTML = "<div class='empty-state'>System Node - keine lokalen Abhängigkeiten</div>";
         }
     }
 
@@ -1196,7 +1224,10 @@ function showNodesOverview() {
 
         const isLive = isWs ? Object.keys(workspaceData.nodes || {}).includes(nodeName) : true;
         const accentClass = isWs ? 'ws-card-accent' : 'sys-card-accent';
-        const typeStr = isWs ? "Workspace Node" : "System Node";
+        
+        // NEU: Paketname als Typ-String
+        const typeStr = nodeData.package || (isWs ? "Workspace Node" : "System Node");
+        const depsCount = (nodeData.dependencies || []).length;
 
         const badgeHtml = isLive
             ? `<div style="background: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94); border: 1px solid rgba(34, 197, 94, 0.2); font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; display:inline-flex; align-items:center; gap: 5px; font-weight: 600; letter-spacing: 0.5px;"><span class="status-pulse" style="width:5px; height:5px;"></span>LÄUFT</div>`
@@ -1228,7 +1259,7 @@ function showNodesOverview() {
                     ${actions > 0 ? `
                         <div class="mini-stat-item mini-stat-actions">
                             <span class="mini-stat-val">${actions}</span>
-                            <span class="mini-stat-lbl">Actions</span>
+                            <span class="mini-stat-lbl">Acts</span>
                         </div>
                     ` : `
                         <div class="mini-stat-item" style="opacity: 0.3;">
@@ -1236,6 +1267,12 @@ function showNodesOverview() {
                             <span class="mini-stat-lbl">Acts</span>
                         </div>
                     `}
+                    ${isWs ? `
+                        <div class="mini-stat-item" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 10px;">
+                            <span class="mini-stat-val" style="color: #a855f7;">${depsCount}</span>
+                            <span class="mini-stat-lbl">Deps</span>
+                        </div>
+                    ` : ''}
                 </div>
                 <i class="fa-solid fa-chevron-right" style="color: var(--text-secondary); opacity: 0.5; margin-left: 10px; font-size: 0.8rem;"></i>
             </div>

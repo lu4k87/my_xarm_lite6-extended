@@ -676,12 +676,16 @@ class WorkspaceAnalyzer(Node):
                                     info["category"] = "system_via_launch"
                                     info["source_file"] = f"gestartet via: {launch['file_name']}"
                                     info["file_path"]   = launch.get("path", "/opt/ros/humble/...")
-                            break
                 except Exception:
                     pass
-
         # Legacy-Feld synchron halten
         info["is_workspace"] = (info["category"] == "workspace")
+        
+        # NEU: Abhängigkeiten direkt in die Info-Daten einbetten
+        if info["package"] != "Unbekannt":
+            info["dependencies"] = self.pkg_dependencies_cache.get(info["package"], [])
+        else:
+            info["dependencies"] = []
 
         self.node_info_cache[clean_name] = info
         return info
