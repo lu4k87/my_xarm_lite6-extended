@@ -630,10 +630,10 @@ function selectNode(nodeName, skipRequest = false) {
     if (elPkg) {
         const category = data.category || (data.is_workspace ? 'workspace' : 'system');
         const catBadge = {
-            'workspace': { icon: 'fa-code-branch', color: 'var(--accent-primary)', label: '' },
-            'system_via_launch': { icon: 'fa-rocket', color: '#f59e0b', label: ' (via Launch)' },
-            'system': { icon: 'fa-microchip', color: 'var(--text-secondary)', label: ' (ROS 2 System)' },
-        }[category] || { icon: 'fa-box', color: 'var(--text-secondary)', label: '' };
+            'workspace': { icon: 'fa-code-branch', color: '#ffffff', label: '' },
+            'system_via_launch': { icon: 'fa-rocket', color: '#ef4444', label: ' (via Launch)' },
+            'system': { icon: 'fa-microchip', color: '#ef4444', label: ' (ROS 2 System)' },
+        }[category] || { icon: 'fa-box', color: '#ef4444', label: '' };
 
         // Rahmen für Paket-Chip
         const pkgChip = document.querySelector('.nd-header-pkg');
@@ -641,8 +641,16 @@ function selectNode(nodeName, skipRequest = false) {
             pkgChip.style.border = "1px solid rgba(255, 255, 255, 0.4)";
         }
 
-        // 1. Paketname + Label
-        elPkg.innerHTML = `${data.package || 'Unbekannt'}<span style="font-size:0.65rem; opacity:0.6; margin-left:6px; font-weight:400;">${catBadge.label}</span>`;
+        // 1. Paketname + Label (Dopplung verhindern)
+        let displayPkg = data.package || 'Unbekannt';
+        let displayLabel = catBadge.label;
+
+        // Verhindert "ROS 2 System (ROS 2 System)"
+        if (displayPkg === "ROS 2 System" && displayLabel.includes("ROS 2 System")) {
+            displayLabel = "";
+        }
+
+        elPkg.innerHTML = `${displayPkg}<span style="font-size:0.65rem; opacity:0.6; margin-left:6px; font-weight:400;">${displayLabel}</span>`;
 
         // 2. Icon im Chip
         if (elPkgIcon) {

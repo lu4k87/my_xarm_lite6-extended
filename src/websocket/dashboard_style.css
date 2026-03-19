@@ -1107,10 +1107,15 @@ body {
     line-height: 1.1;
     display: flex;
     align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400px;
+
 }
 
 .nd-header-pkg {
-    flex: 0 0 320px;
+    flex: 0 1 auto;
+    min-width: 200px;
     margin-left: auto;
 }
 
