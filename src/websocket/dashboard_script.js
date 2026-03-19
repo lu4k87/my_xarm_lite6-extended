@@ -675,7 +675,7 @@ function selectNode(nodeName, skipRequest = false) {
                 };
 
                 const legendHtml = `
-                    <div class="dep-legend" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap; width: 100%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                    <div class="dep-legend" style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; background: rgba(0, 0, 0, 0); padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.32); flex-wrap: wrap; width: 100%; box-shadow: inset 0 2px 4px rgba(165, 165, 165, 0.2);">
                         <span style="font-size: 0.85rem; color: var(--text-secondary); margin-right: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-layer-group" style="margin-right: 6px; color: var(--accent-primary);"></i> Legende:</span>
                         
                         <div class="tooltip-container" style="display: flex; align-items: center; gap: 6px;">
@@ -734,11 +734,8 @@ function selectNode(nodeName, skipRequest = false) {
                     if (group.deps.length > 0) {
                         group.deps.sort((a, b) => a.name.localeCompare(b.name));
                         categorizedHtml += `
-                            <div class="dep-category-group" style="margin-bottom: 25px; border-left: 3px solid ${group.color}; padding-left: 15px; background: rgba(255,255,255,0.01); border-radius: 0 8px 8px 0; padding-top: 5px; padding-bottom: 10px;">
-                                <div style="font-size: 0.75rem; color: ${group.color}; text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-                                    <i class="fa-solid ${group.icon}"></i> ${title}
-                                    <span style="background: ${group.color}; color: #000; padding: 1px 6px; border-radius: 10px; font-size: 0.65rem; margin-left: 5px;">${group.deps.length}</span>
-                                </div>
+                            <div class="dep-category-group" style="margin-bottom: 5px; border-left: 0px solid ${group.color}; padding-left: 15px; background: rgba(255,255,255,0.01); border-radius: 0 8px 8px 0; padding-top: 2px; padding-bottom: 0px;">
+                            
                                 <div class="nd-dependencies-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
                                     ${group.deps.map(d => {
                             const config = typeColorMap[d.type] || { label: "Dep", colorClass: "dep-general" };
@@ -879,12 +876,14 @@ function selectNode(nodeName, skipRequest = false) {
         const arrowRxEl = document.querySelector('.flow-arrow.color-rx');
         if (arrowRxEl) {
             arrowRxEl.innerHTML = `
-                <div class="comm-badge" style="position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">SUB</div>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.4s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.8s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.2s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.6s"></i>
+                <div style="display: flex; align-items: center;">
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.4s"></i>
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.8s"></i>
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.2s"></i>
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.6s"></i>
+                </div>
+                <div class="comm-badge" style="margin-left: 20px; background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">SUB</div>
             `;
         }
     }
@@ -984,12 +983,14 @@ function selectNode(nodeName, skipRequest = false) {
         const arrowTxEl = document.querySelector('.flow-arrow.color-tx');
         if (arrowTxEl) {
             arrowTxEl.innerHTML = `
-                <div class="comm-badge" style="position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">PUB</div>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.4s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.8s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.2s"></i>
-                <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.6s"></i>
+                <div class="comm-badge" style="margin-right: 20px; background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">PUB</div>
+                <div style="display: flex; align-items: center;">
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.0s"></i>
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.4s"></i>
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 0.8s"></i>
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.2s"></i>
+                    <i class="fa-solid fa-chevron-right chevron-anim" style="animation-delay: 1.6s"></i>
+                </div>
             `;
         }
     }
