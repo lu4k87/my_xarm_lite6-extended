@@ -36,7 +36,8 @@
         top: 0;
         left: 0;
         width: 2px;
-        height: calc(100% - 22px); /* Stops at the last horizontal line */
+        height: calc(100% - 22px);
+        /* Stops at the last horizontal line */
         background: rgba(255, 255, 255, 0.1);
     }
 
@@ -85,7 +86,8 @@
 
     .tree-card.is-launch {
         background: rgba(255, 255, 255, 0.04);
-        border-left: 4px solid #f59e0b; /* Orange for injected launches */
+        border-left: 4px solid #f59e0b;
+        /* Orange for injected launches */
     }
 
     .tree-card-header {
@@ -177,7 +179,8 @@
         background: rgba(15, 23, 42, 0.6);
         border: 1px solid rgba(255, 255, 255, 0.03);
         transition: all 0.2s;
-        order: 2; /* Push it to second row if wrapped */
+        order: 2;
+        /* Push it to second row if wrapped */
     }
 
     .tree-card-path:hover {
@@ -195,10 +198,10 @@
 
 <div class="widget" style="height: calc(100vh - 120px); overflow-y: auto; padding-right: 15px;">
 
-    <!-- LEGENDE -->
     <div
         style="margin-bottom: 30px; font-size: 0.8rem; color: #94a3b8; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); padding: 18px 25px;">
-        <strong style="color: #f8fafc; font-size: 0.85rem;"><i class="fa-solid fa-circle-info" style="margin-right: 8px; color: #0ea5e9;"></i>
+        <strong style="color: #f8fafc; font-size: 0.85rem;"><i class="fa-solid fa-circle-info"
+                style="margin-right: 8px; color: #0ea5e9;"></i>
             Legende:</strong>
         <div style="display: flex; align-items: center; gap: 8px;">
             <span class="t-badge badge-entry">ENTRY POINT</span>
@@ -218,8 +221,10 @@
         </div>
     </div>
 
-    <!-- DYNAMISCHER INHALT -->
     <div id="dynamic-launch-container">
-        <div class="empty-state" style="padding: 30px;">Warte auf Workspace Analyzer...</div>
+        <div class="empty-state" style="padding: 30px;">
+            No Content!<br>
+            ..In progress...
+        </div>
     </div>
 </div>

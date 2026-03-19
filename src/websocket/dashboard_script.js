@@ -6,7 +6,7 @@ let codeRequestPub = null;
 let nodeDetailReqPub = null;
 let currentRequestedPath = "";
 
-let expandedFolders = new Set(['dev_ws/src']);
+let expandedFolders = new Set(['dev_ws', 'dev_ws/src', 'src']);
 let isTreeFullyExpanded = false;
 
 // ── Debounce-Helper ──────────────────────────────────────────────────────────
@@ -61,12 +61,35 @@ function startLoadingTimer() {
     // Timer entfernt
 }
 
+function findNodeByPath(node, targetPath, currentPath = "") {
+    if (!node) return null;
+    const nodePath = currentPath ? `${currentPath}/${node.name}` : node.name;
+    if (nodePath === targetPath) return node;
+    if (node.children) {
+        for (let child of node.children) {
+            let found = findNodeByPath(child, targetPath, nodePath);
+            if (found) return found;
+        }
+    }
+    return null;
+}
+
 window.toggleFolder = function (event, path) {
     event.stopPropagation();
     if (expandedFolders.has(path)) {
         expandedFolders.delete(path);
     } else {
-        expandedFolders.add(path);
+        if (workspaceData.tree) {
+            const targetNode = findNodeByPath(workspaceData.tree, path);
+            if (targetNode) {
+                const parentPath = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : "";
+                expandTreeRecursively(targetNode, parentPath);
+            } else {
+                expandedFolders.add(path);
+            }
+        } else {
+            expandedFolders.add(path);
+        }
     }
     if (workspaceData.tree) {
         document.getElementById('ws-tree-container').innerHTML = renderWorkspaceTree(workspaceData.tree);
@@ -1974,10 +1997,6 @@ function initRosConnection() {
             if (typeof renderLaunchFiles === 'function') renderLaunchFiles();
 
             if (workspaceData.tree) {
-                if (!isTreeFullyExpanded) {
-                    expandTreeRecursively(workspaceData.tree);
-                    isTreeFullyExpanded = true;
-                }
                 document.getElementById('ws-tree-container').innerHTML = renderWorkspaceTree(workspaceData.tree);
             }
 
