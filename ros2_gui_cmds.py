@@ -117,7 +117,7 @@ class ROS2MasterControl(ctk.CTk):
         self.tabview.pack(expand=True, fill="both", padx=18, pady=(14, 0))
 
         self.tabview._segmented_button.configure(
-            font=("Helvetica", 20, "bold"),
+            font=("Helvetica", 18, "bold"),
             height=250,
             corner_radius=6,
             border_width=1
@@ -378,16 +378,16 @@ class ROS2MasterControl(ctk.CTk):
         btn.configure(text="✓", text_color=COLOR_ACCENT_GREEN)
         self.after(1300, lambda: btn.configure(text=orig_text, text_color=orig_color))
 
+   # ── Footer-Button Helfer (angepasst auf 70% Textgröße) ──
     def _footer_btn(self, master, text, command, fg_color=COLOR_BG_CARD, text_color=COLOR_FG_TEXT):
         ctk.CTkButton(
             master, text=text, command=command,
             fg_color=fg_color, text_color=text_color,
             hover_color=COLOR_HOVER, height=40,
-            font=("Helvetica", 24, "bold"), # Große Schrift!
+            font=("Helvetica", 14, "bold"), # Von 24 auf 17 reduziert (~70%)
             border_width=1, border_color=COLOR_BORDER,
             corner_radius=9,
         ).pack(side="left", padx=8, pady=15)
-
 
 if __name__ == "__main__":
     app = ROS2MasterControl()
