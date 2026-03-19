@@ -1020,7 +1020,7 @@ body {
 
 .nd-title-group h2 {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 1.27rem;
     color: white;
     font-weight: 600;
     white-space: nowrap;
@@ -2953,14 +2953,20 @@ body {
     font-weight: bold;
 }
 
-/* --- COMMANDS SECTION STYLES --- */
-.cmd-list-container {
+
+.cmd-list-container.widget {
     display: flex;
     flex-direction: column;
+    width: 90%;
+    max-width: 1800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .cmd-item {
     transition: background-color 0.2s;
+    grid-column: span 4;
+    width: 100%;
 }
 
 .cmd-item:hover {

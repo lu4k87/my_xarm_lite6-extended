@@ -1,307 +1,349 @@
+<style>
+    /* Überschreibt die Standard-Breiten für diese spezifische Ansicht */
+    #script-docs .header-bar,
+    #script-docs .exec-scroll-area {
+        max-width: 96% !important;
+        margin: 0 auto;
+    }
+
+    /* Neues internes Grid für breite Karten */
+    .card-inner-split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        align-items: start;
+    }
+
+    @media (max-width: 1200px) {
+        .card-inner-split {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+    }
+</style>
+
 <div class="header-bar">
     <h2>Node &amp; Skript Referenz</h2>
 </div>
 
-
 <div class="exec-scroll-area">
-    <p class="exec-intro">Detaillierte Übersicht der Kernfunktionen, Parameter, Schwellenwerte und
-        Topic-Mappings deiner wichtigsten System-Nodes.</p>
+    <p class="exec-intro" style="margin-bottom: 40px;">Detaillierte Übersicht der Kernfunktionen, Parameter,
+        Schwellenwerte und Topic-Mappings deiner wichtigsten System-Nodes.</p>
+
     <div class="exec-category">
-        <h3 class="exec-cat-title"><i class="fa-solid fa-robot" style="color: var(--accent-secondary);"></i> 1.
-            Motion &amp; Kinematik</h3>
+        <h3 class="exec-cat-title"><i class="fa-solid fa-robot" style="color: var(--accent-secondary);"></i> 1. Motion
+            &amp; Kinematik</h3>
         <div class="exec-grid">
+
             <div class="exec-card" style="grid-column: span 2;">
                 <div class="exec-card-header">
                     <h4><i class="fa-brands fa-python"></i> motion_sequence.py</h4>
                 </div>
-                <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
-                    <div class="script-path launch-clickable-path"
-                        onclick="openInExplorer('src/motion_sequence/motion_sequence_node.py')"
-                        style="margin-bottom: 0; margin-right: 0; flex-grow: 1; width: 0; padding: 6px 10px;"
-                        title="Im Ubuntu Explorer öffnen">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <span class="launch-path-text">src/motion_sequence/motion_sequence_node.py</span>
-                    </div>
-                    <button class="code-btn" onclick="requestFileContent('src/motion_sequence/motion_sequence_node.py')"
-                        title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
-                </div>
-                <div class="exec-cmd code-font"
-                    style="color: var(--text-secondary); background: transparent; padding: 0; border: none; font-size: 0.85rem; margin-bottom: 15px;">
-                    Führt asynchrone Bewegungssequenzen aus. Schaltet den Controller sicher zwischen
-                    SERVO-Modus (Joystick) und POSE-Modus (Auto-Fahrt) um.
-                </div>
-                <div class="exec-params">
-                    <div class="param-badge" title="Sichere Z-Höhe vor X/Y Fahrten"><span
-                            class="p-key">safe_z_height</span><span class="p-eq">=</span><span
-                            class="p-val number">150.0 mm</span></div>
-                    <div class="param-badge" title="Schwellenwert: Ab hier wird direkt gefahren"><span
-                            class="p-key">check_threshold</span><span class="p-eq">=</span><span
-                            class="p-val number">95.0 mm</span></div>
-                    <div class="param-badge" title="Akzeptierte Abweichung zum Ziel"><span
-                            class="p-key">position_tolerance</span><span class="p-eq">=</span><span
-                            class="p-val number">5.0 mm</span></div>
-                    <div class="param-badge" title="Maximale Wartezeit auf Service"><span
-                            class="p-key">timeout_sec</span><span class="p-eq">=</span><span class="p-val time">60.0
-                            s</span></div>
-                    <div class="param-badge" title="Fahrt-Geschwindigkeit"><span class="p-key">speed</span><span
-                            class="p-eq">=</span><span class="p-val number">200.0</span></div>
-                    <div class="param-badge" title="Fahrt-Beschleunigung"><span class="p-key">acc</span><span
-                            class="p-eq">=</span><span class="p-val number">500.0</span></div>
-                    <div class="param-badge" title="Feste Home/Scan Pose"><span class="p-key">target_pose</span><span
-                            class="p-eq">=</span><span class="p-val string">[260, 0, 520, 3.14, 0, 0]</span></div>
-                </div>
-                <div style="display: flex; gap: 30px; margin-top: 15px;">
-                    <div style="flex: 1;">
+
+                <div class="card-inner-split">
+                    <div>
+                        <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
+                            <div class="script-path launch-clickable-path"
+                                onclick="openInExplorer('src/motion_sequence/motion_sequence_node.py')"
+                                style="margin: 0; flex-grow: 1; padding: 8px 12px;" title="Im Ubuntu Explorer öffnen">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <span class="launch-path-text">src/motion_sequence/motion_sequence_node.py</span>
+                            </div>
+                            <button class="code-btn"
+                                onclick="requestFileContent('src/motion_sequence/motion_sequence_node.py')"
+                                title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
+                        </div>
+
+                        <div class="exec-cmd code-font"
+                            style="color: var(--text-secondary); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+                            Führt asynchrone Bewegungssequenzen aus. Schaltet den Controller sicher zwischen SERVO-Modus
+                            (Joystick) und POSE-Modus (Auto-Fahrt) um.
+                        </div>
+
                         <h5
-                            style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">
+                            style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+                            State-Machine Ablauf:</h5>
+                        <div class="workflow-path">
+                            <span class="workflow-step"><i class="fa-solid fa-stop"></i> Stop Servo</span> <i
+                                class="fa-solid fa-angle-right workflow-arrow"></i>
+                            <span class="workflow-step"><i class="fa-solid fa-power-off"></i> Deactivate Ctrl</span> <i
+                                class="fa-solid fa-angle-right workflow-arrow"></i>
+                            <span class="workflow-step"><i class="fa-solid fa-sliders"></i> POSE Mode (0)</span> <i
+                                class="fa-solid fa-angle-right workflow-arrow"></i>
+                            <span class="workflow-step"><i class="fa-solid fa-arrows-up-down-left-right"></i> Move (Z,
+                                XY)</span> <i class="fa-solid fa-angle-right workflow-arrow"></i>
+                            <span class="workflow-step"><i class="fa-solid fa-gamepad"></i> SERVO Mode (1)</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h5 style="color: white; margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">Parameter
+                            &amp; Schwellenwerte</h5>
+                        <div class="exec-params" style="margin-bottom: 25px;">
+                            <div class="param-badge" title="Sichere Z-Höhe vor X/Y Fahrten"><span
+                                    class="p-key">safe_z_height</span><span class="p-eq">=</span><span
+                                    class="p-val number">150.0 mm</span></div>
+                            <div class="param-badge" title="Schwellenwert: Ab hier wird direkt gefahren"><span
+                                    class="p-key">check_threshold</span><span class="p-eq">=</span><span
+                                    class="p-val number">95.0 mm</span></div>
+                            <div class="param-badge" title="Akzeptierte Abweichung zum Ziel"><span
+                                    class="p-key">position_tolerance</span><span class="p-eq">=</span><span
+                                    class="p-val number">5.0 mm</span></div>
+                            <div class="param-badge" title="Maximale Wartezeit auf Service"><span
+                                    class="p-key">timeout_sec</span><span class="p-eq">=</span><span
+                                    class="p-val time">60.0 s</span></div>
+                            <div class="param-badge" title="Fahrt-Geschwindigkeit"><span class="p-key">speed</span><span
+                                    class="p-eq">=</span><span class="p-val number">200.0</span></div>
+                            <div class="param-badge" title="Fahrt-Beschleunigung"><span class="p-key">acc</span><span
+                                    class="p-eq">=</span><span class="p-val number">500.0</span></div>
+                            <div class="param-badge" title="Feste Home/Scan Pose"><span
+                                    class="p-key">target_pose</span><span class="p-eq">=</span><span
+                                    class="p-val string">[260, 0, 520, 3.14, 0, 0]</span></div>
+                        </div>
+
+                        <h5
+                            style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
                             Bereitgestellte Services:</h5>
                         <div class="feature-list">
                             <div class="feature-item"><i class="fa-solid fa-location-dot feature-icon"></i>
-                                <div><strong>/execute_motion_to_pose:</strong> Nimmt dynamische
-                                    MoveCartesian XYZ-Koordinaten entgegen.</div>
+                                <div><strong>/execute_motion_to_pose:</strong> Nimmt dynamische MoveCartesian
+                                    XYZ-Koordinaten entgegen.</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-house feature-icon"></i>
-                                <div><strong>/execute_motion_sequence_Y:</strong> Fährt zur festen
-                                    Scan-Pose (Home).</div>
-                            </div>
-                            <div class="feature-item"><i class="fa-solid fa-wave-square feature-icon"></i>
-                                <div><strong>/get_motion_busy:</strong> Gibt <code>IDLE</code> oder
-                                    <code>BUSY</code> Status zurück.
+                                <div><strong>/execute_motion_sequence_Y:</strong> Fährt zur festen Scan-Pose (Home).
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div style="flex: 1;">
-                        <h5
-                            style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">
-                            State-Machine Ablauf:</h5>
-                        <div class="workflow-path">
-                            <span class="workflow-step"><i class="fa-solid fa-stop"></i> Stop
-                                Servo</span> <i class="fa-solid fa-angle-right workflow-arrow"></i>
-                            <span class="workflow-step"><i class="fa-solid fa-power-off"></i> Deactivate
-                                Ctrl</span> <i class="fa-solid fa-angle-right workflow-arrow"></i>
-                            <span class="workflow-step"><i class="fa-solid fa-sliders"></i> POSE Mode
-                                (0)</span> <i class="fa-solid fa-angle-right workflow-arrow"></i>
-                            <span class="workflow-step"><i class="fa-solid fa-arrows-up-down-left-right"></i>
-                                Move (Z, dann
-                                XY)</span> <i class="fa-solid fa-angle-right workflow-arrow"></i>
-                            <span class="workflow-step"><i class="fa-solid fa-gamepad"></i> SERVO Mode
-                                (1)</span>
+                            <div class="feature-item"><i class="fa-solid fa-wave-square feature-icon"></i>
+                                <div><strong>/get_motion_busy:</strong> Gibt <code>IDLE</code> oder <code>BUSY</code>
+                                    Status zurück.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
             <div class="exec-card" style="grid-column: span 2;">
                 <div class="exec-card-header">
                     <h4><i class="fa-solid fa-sliders"></i> xarm_moveit_servo_config.yaml</h4>
                 </div>
-                <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
-                    <div class="script-path launch-clickable-path"
-                        onclick="openInExplorer('src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml')"
-                        style="margin-bottom: 0; margin-right: 0; flex-grow: 1; width: 0; padding: 6px 10px;"
-                        title="Im Ubuntu Explorer öffnen">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <span class="launch-path-text">config/xarm_moveit_servo_config.yaml</span>
-                    </div>
-                    <button class="code-btn"
-                        onclick="requestFileContent('src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml')"
-                        title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
-                </div>
-                <div class="exec-cmd code-font"
-                    style="color: var(--text-secondary); background: transparent; padding: 0; border: none; font-size: 0.85rem; margin-bottom: 15px;">
-                    Konfiguriert die Echtzeit-Servoing-Eigenschaften von MoveIt, Skalierung und das
-                    Kollisions-Verhalten.
-                </div>
-                <div class="exec-params">
-                    <div class="param-badge" title="Rate: ca 30 Hz"><span class="p-key">publish_period</span><span
-                            class="p-eq">=</span><span class="p-val time">0.034 s</span></div>
-                    <div class="param-badge" title="Maximale lineare Geschwindigkeit"><span
-                            class="p-key">scale.linear</span><span class="p-eq">=</span><span class="p-val number">0.4
-                            m/s</span></div>
-                    <div class="param-badge" title="Glättung für Joystick Input"><span
-                            class="p-key">low_pass_filter_coeff</span><span class="p-eq">=</span><span
-                            class="p-val number">2.0</span></div>
-                    <div class="param-badge" title="Kollisions-Verhalten (Erlaubt Rückwärtsfahren)">
-                        <span class="p-key">collision_check_type</span><span class="p-eq">=</span><span
-                            class="p-val mode">stop_distance</span>
-                    </div>
-                    <div class="param-badge" title="Minimaler Abstand bei Kollisionsgefahr"><span
-                            class="p-key">min_allowable_collision_distance</span><span class="p-eq">=</span><span
-                            class="p-val number">0.01 m</span></div>
-                </div>
-                <div class="feature-list" style="margin-top: 10px;">
-                    <div class="feature-item"><i class="fa-solid fa-satellite-dish feature-icon"></i>
-                        <div><strong>Input Topic:</strong> <code>~/delta_twist_cmds</code> (Cartesian)
+
+                <div class="card-inner-split">
+                    <div>
+                        <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
+                            <div class="script-path launch-clickable-path"
+                                onclick="openInExplorer('src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml')"
+                                style="margin: 0; flex-grow: 1; padding: 8px 12px;" title="Im Ubuntu Explorer öffnen">
+                                <i class="fa-solid fa-folder-open"></i><span
+                                    class="launch-path-text">config/xarm_moveit_servo_config.yaml</span>
+                            </div>
+                            <button class="code-btn"
+                                onclick="requestFileContent('src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml')"
+                                title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
+                        </div>
+                        <div class="exec-cmd code-font"
+                            style="color: var(--text-secondary); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+                            Konfiguriert die Echtzeit-Servoing-Eigenschaften von MoveIt, Skalierung und das
+                            Kollisions-Verhalten.
+                        </div>
+                        <div class="feature-list">
+                            <div class="feature-item"><i class="fa-solid fa-satellite-dish feature-icon"></i>
+                                <div><strong>Input Topic:</strong> <code>~/delta_twist_cmds</code> (Cartesian)</div>
+                            </div>
+                            <div class="feature-item"><i class="fa-solid fa-robot feature-icon"></i>
+                                <div><strong>Output Topic:</strong> <code>/xarm7_traj_controller/joint_trajectory</code>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="feature-item"><i class="fa-solid fa-robot feature-icon"></i>
-                        <div><strong>Output Topic:</strong>
-                            <code>/xarm7_traj_controller/joint_trajectory</code>
+
+                    <div>
+                        <h5 style="color: white; margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">
+                            Servo-Parameter</h5>
+                        <div class="exec-params">
+                            <div class="param-badge" title="Rate: ca 30 Hz"><span
+                                    class="p-key">publish_period</span><span class="p-eq">=</span><span
+                                    class="p-val time">0.034 s</span></div>
+                            <div class="param-badge" title="Maximale lineare Geschwindigkeit"><span
+                                    class="p-key">scale.linear</span><span class="p-eq">=</span><span
+                                    class="p-val number">0.4 m/s</span></div>
+                            <div class="param-badge" title="Glättung für Joystick Input"><span
+                                    class="p-key">low_pass_filter_coeff</span><span class="p-eq">=</span><span
+                                    class="p-val number">2.0</span></div>
+                            <div class="param-badge" title="Kollisions-Verhalten (Erlaubt Rückwärtsfahren)"><span
+                                    class="p-key">collision_check_type</span><span class="p-eq">=</span><span
+                                    class="p-val mode">stop_distance</span></div>
+                            <div class="param-badge" title="Minimaler Abstand bei Kollisionsgefahr"><span
+                                    class="p-key">min_allowable_collision_distance</span><span
+                                    class="p-eq">=</span><span class="p-val number">0.01 m</span></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="exec-card" style="grid-column: span 2;">
+
+    <div class="exec-card" style="grid-column: span 2; margin-bottom: 40px; border-top: 3px solid #10b981;">
         <div class="exec-card-header">
             <h4><i class="fa-solid fa-terminal"></i> Direktbefehl: Joint Trajectory (Manuell)</h4>
         </div>
-        <div class="exec-cmd code-font"
-            style="color: var(--text-secondary); background: transparent; padding: 0; border: none; font-size: 0.85rem; margin-bottom: 15px;">
-            Sendet eine Gelenkwinkelposition <strong>direkt</strong> an den <code>lite6_traj_controller</code> —
-            <em>ohne MoveIt</em>.
-            Nützlich zum Testen einzelner Posen, zum Debuggen und für Situationen ohne aktiven Servo-Modus.
-            Der Roboter fährt die angegebenen 6 Gelenke (<code>joint1–joint6</code>) innerhalb von
-            <code>3 Sekunden</code> an.
-        </div>
-        <div class="feature-list" style="margin-bottom: 15px;">
-            <div class="feature-item"><i class="fa-solid fa-circle-info feature-icon"></i>
-                <div>Typ: <code>trajectory_msgs/msg/JointTrajectory</code> — ein einzelner Punkt mit Gelenkwinkeln
-                    (Radiant) und einer Zeitangabe.</div>
+        <div class="card-inner-split">
+            <div>
+                <div class="exec-cmd code-font"
+                    style="color: var(--text-secondary); background: transparent; padding: 0; border: none; font-size: 0.85rem; margin-bottom: 15px;">
+                    Sendet eine Gelenkwinkelposition <strong>direkt</strong> an den <code>lite6_traj_controller</code> —
+                    <em>ohne MoveIt</em>. Nützlich zum Testen einzelner Posen, zum Debuggen und für Situationen ohne
+                    aktiven Servo-Modus.
+                </div>
+                <div class="feature-list" style="margin-bottom: 15px;">
+                    <div class="feature-item"><i class="fa-solid fa-triangle-exclamation feature-icon"
+                            style="color: #f59e0b;"></i>
+                        <div><strong>Achtung:</strong> Kein Kollisionscheck durch MoveIt! Nur im freigeräumten
+                            Arbeitsbereich verwenden.</div>
+                    </div>
+                </div>
+                <div class="cmd-snippet" id="cmd-joint-traj" style="position: relative;">
+                    <button class="copy-btn-overlay" onclick="copyCommand('cmd-joint-traj')" title="Kopieren"><i
+                            class="fa-regular fa-copy"></i></button>
+                    <code
+                        style="display: block; background: #000; padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: var(--accent-primary); word-break: break-all;">ros2 topic pub --once /lite6_traj_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{joint_names: ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6'], points: [{positions: [0.0, -0.5, 0.5, 0.0, 0.0, 0.0], time_from_start: {sec: 3, nanosec: 0}}]}"</code>
+                </div>
             </div>
-            <div class="feature-item"><i class="fa-solid fa-triangle-exclamation feature-icon"
-                    style="color: #f59e0b;"></i>
-                <div><strong>Achtung:</strong> Kein Kollisionscheck durch MoveIt! Nur im freigeräumten Arbeitsbereich
-                    verwenden.</div>
-            </div>
-        </div>
-        <div class="cmd-snippet" id="cmd-joint-traj" style="position: relative;">
-            <button class="copy-btn" onclick="copyCommand('cmd-joint-traj')" title="Kopieren"><i
-                    class="fa-regular fa-copy"></i></button>
-            <code>ros2 topic pub --once /lite6_traj_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{joint_names: ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6'], points: [{positions: [0.0, -0.5, 0.5, 0.0, 0.0, 0.0], time_from_start: {sec: 3, nanosec: 0}}]}"</code>
-        </div>
-        <div class="exec-params" style="margin-top: 15px;">
-            <div class="param-badge" title="Joint 1 Winkel in Radiant"><span class="p-key">joint1</span><span
-                    class="p-eq">=</span><span class="p-val number">0.0 rad</span></div>
-            <div class="param-badge" title="Joint 2 Winkel in Radiant"><span class="p-key">joint2</span><span
-                    class="p-eq">=</span><span class="p-val number">-0.5 rad</span></div>
-            <div class="param-badge" title="Joint 3 Winkel in Radiant"><span class="p-key">joint3</span><span
-                    class="p-eq">=</span><span class="p-val number">0.5 rad</span></div>
-            <div class="param-badge" title="Gelenke 4-6 in Nullstellung"><span class="p-key">joint4–6</span><span
-                    class="p-eq">=</span><span class="p-val number">0.0 rad</span></div>
-            <div class="param-badge" title="Zeit bis Zielposition erreicht ist"><span
-                    class="p-key">time_from_start</span><span class="p-eq">=</span><span class="p-val time">3 s</span>
+            <div>
+                <h5 style="color: white; margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">Payload Parameter
+                </h5>
+                <div class="exec-params" style="margin-top: 0;">
+                    <div class="param-badge" title="Joint 1 Winkel in Radiant"><span class="p-key">joint1</span><span
+                            class="p-eq">=</span><span class="p-val number">0.0 rad</span></div>
+                    <div class="param-badge" title="Joint 2 Winkel in Radiant"><span class="p-key">joint2</span><span
+                            class="p-eq">=</span><span class="p-val number">-0.5 rad</span></div>
+                    <div class="param-badge" title="Joint 3 Winkel in Radiant"><span class="p-key">joint3</span><span
+                            class="p-eq">=</span><span class="p-val number">0.5 rad</span></div>
+                    <div class="param-badge" title="Gelenke 4-6 in Nullstellung"><span
+                            class="p-key">joint4–6</span><span class="p-eq">=</span><span class="p-val number">0.0
+                            rad</span></div>
+                    <div class="param-badge" title="Zeit bis Zielposition erreicht ist"><span
+                            class="p-key">time_from_start</span><span class="p-eq">=</span><span class="p-val time">3
+                            s</span></div>
+                </div>
             </div>
         </div>
     </div>
+
     <div class="exec-category">
-        <h3 class="exec-cat-title"><i class="fa-solid fa-gamepad" style="color: var(--accent-secondary);"></i>
-            2. Manuelle Steuerung (Joystick)</h3>
+        <h3 class="exec-cat-title"><i class="fa-solid fa-gamepad" style="color: var(--accent-secondary);"></i> 2.
+            Manuelle Steuerung (Joystick)</h3>
         <div class="exec-grid">
             <div class="exec-card" style="grid-column: span 2;">
                 <div class="exec-card-header">
                     <h4><i class="fa-solid fa-c"></i> xarm_joystick_input.cpp</h4>
                 </div>
-                <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
-                    <div class="script-path launch-clickable-path"
-                        onclick="openInExplorer('src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp')"
-                        style="margin-bottom: 0; margin-right: 0; flex-grow: 1; width: 0; padding: 6px 10px;"
-                        title="Im Ubuntu Explorer öffnen">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <span
-                            class="launch-path-text">src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp</span>
+
+                <div class="card-inner-split">
+                    <div>
+                        <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
+                            <div class="script-path launch-clickable-path"
+                                onclick="openInExplorer('src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp')"
+                                style="margin: 0; flex-grow: 1; padding: 8px 12px;" title="Im Ubuntu Explorer öffnen">
+                                <i class="fa-solid fa-folder-open"></i><span
+                                    class="launch-path-text">src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp</span>
+                            </div>
+                            <button class="code-btn"
+                                onclick="requestFileContent('src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp')"
+                                title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
+                        </div>
+
+                        <div class="exec-cmd code-font"
+                            style="color: var(--text-secondary); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+                            Herzstück der manuellen Steuerung. Übersetzt Gamepad-Signale (Twist/Jog), steuert den
+                            Greifer und triggert die Whisper AI Sprachsteuerung.
+                        </div>
+
+                        <h5
+                            style="color: white; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+                            ROS Topics &amp; Frames</h5>
+                        <div class="exec-params">
+                            <div class="param-badge" title="Lauscht auf Joystick Signale"><span
+                                    class="p-key">joy_topic</span><span class="p-eq">=</span><span
+                                    class="p-val topic">/joy_check</span></div>
+                            <div class="param-badge" title="Sendet kartesische Kommandos an Servo"><span
+                                    class="p-key">cartesian_cmd</span><span class="p-eq">=</span><span
+                                    class="p-val topic">/servo_server/delta_twist_cmds</span></div>
+                            <div class="param-badge" title="Sendet Joint-Kommandos an Servo"><span
+                                    class="p-key">joint_cmd</span><span class="p-eq">=</span><span
+                                    class="p-val topic">/servo_server/delta_joint_cmds</span></div>
+                            <div class="param-badge" title="Basis-Koordinatensystem"><span
+                                    class="p-key">robot_link_command_frame</span><span class="p-eq">=</span><span
+                                    class="p-val string">link_base</span></div>
+                            <div class="param-badge" title="Endeffektor-Koordinatensystem"><span
+                                    class="p-key">ee_frame_name</span><span class="p-eq">=</span><span
+                                    class="p-val string">link_eef</span></div>
+                        </div>
+
+                        <h5
+                            style="color: white; margin-top: 15px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+                            Eigenschaften</h5>
+                        <div class="exec-params">
+                            <div class="param-badge" title="Degrees of Freedom des Roboters"><span
+                                    class="p-key">dof</span><span class="p-eq">=</span><span
+                                    class="p-val number">7</span></div>
+                            <div class="param-badge" title="Controller Typ (1 = Xbox)"><span
+                                    class="p-key">joystick_type</span><span class="p-eq">=</span><span
+                                    class="p-val mode">JOYSTICK_xbox (1)</span></div>
+                            <div class="param-badge" title="Anzahl der wählbaren Stufen"><span
+                                    class="p-key">speed_levels</span><span class="p-eq">=</span><span
+                                    class="p-val number">5 Stufen</span></div>
+                            <div class="param-badge" title="Verhindert Ruckeln bei Controller-Input"><span
+                                    class="p-key">smoothing_factor</span><span class="p-eq">=</span><span
+                                    class="p-val number">0.5</span></div>
+                            <div class="param-badge" title="Verhindert ungewolltes Driften (Stick-Toleranz)"><span
+                                    class="p-key">JOYSTICK_DEADZONE</span><span class="p-eq">=</span><span
+                                    class="p-val number">0.1</span></div>
+                            <div class="param-badge" title="Maximale Audio-Aufnahmezeit"><span
+                                    class="p-key">whisper_timeout</span><span class="p-eq">=</span><span
+                                    class="p-val time">5.0 s</span></div>
+                        </div>
                     </div>
-                    <button class="code-btn"
-                        onclick="requestFileContent('src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp')"
-                        title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
-                </div>
-                <div class="exec-cmd code-font"
-                    style="color: var(--text-secondary); background: transparent; padding: 0; border: none; font-size: 0.85rem; margin-bottom: 15px;">
-                    Herzstück der manuellen Steuerung. Übersetzt Gamepad-Signale (Twist/Jog), steuert
-                    den Greifer und triggert die Whisper AI Sprachsteuerung.
-                </div>
-                <h5 style="color: white; margin-top: 15px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500;">
-                    Wichtige Variablen &amp; Parameter</h5>
-                <div class="exec-params">
-                    <div class="param-badge" title="Degrees of Freedom des Roboters"><span class="p-key">dof</span><span
-                            class="p-eq">=</span><span class="p-val number">7</span></div>
-                    <div class="param-badge" title="Controller Typ (1 = Xbox)"><span
-                            class="p-key">joystick_type</span><span class="p-eq">=</span><span
-                            class="p-val mode">JOYSTICK_xbox (1)</span></div>
-                    <div class="param-badge" title="Anzahl der wählbaren Stufen"><span
-                            class="p-key">speed_levels</span><span class="p-eq">=</span><span class="p-val number">5
-                            Stufen</span></div>
-                    <div class="param-badge" title="Verhindert Ruckeln bei Controller-Input"><span
-                            class="p-key">smoothing_factor</span><span class="p-eq">=</span><span
-                            class="p-val number">0.5</span></div>
-                    <div class="param-badge" title="Verhindert ungewolltes Driften (Stick-Toleranz)">
-                        <span class="p-key">JOYSTICK_DEADZONE</span><span class="p-eq">=</span><span
-                            class="p-val number">0.1</span>
-                    </div>
-                    <div class="param-badge" title="Maximale Audio-Aufnahmezeit"><span
-                            class="p-key">whisper_timeout</span><span class="p-eq">=</span><span class="p-val time">5.0
-                            s</span></div>
-                    <div class="param-badge" title="Standard Frame für Bewegungen"><span
-                            class="p-key">planning_frame</span><span class="p-eq">=</span><span
-                            class="p-val string">link_base</span></div>
-                </div>
-                <h5 style="color: white; margin-top: 15px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500;">
-                    ROS Topics &amp; Frames</h5>
-                <div class="exec-params">
-                    <div class="param-badge" title="Lauscht auf Joystick Signale"><span
-                            class="p-key">joy_topic</span><span class="p-eq">=</span><span
-                            class="p-val topic">/joy_check</span></div>
-                    <div class="param-badge" title="Sendet kartesische Kommandos an Servo"><span
-                            class="p-key">cartesian_cmd</span><span class="p-eq">=</span><span
-                            class="p-val topic">/servo_server/delta_twist_cmds</span></div>
-                    <div class="param-badge" title="Sendet Joint-Kommandos an Servo"><span
-                            class="p-key">joint_cmd</span><span class="p-eq">=</span><span
-                            class="p-val topic">/servo_server/delta_joint_cmds</span></div>
-                    <div class="param-badge" title="Basis-Koordinatensystem"><span
-                            class="p-key">robot_link_command_frame</span><span class="p-eq">=</span><span
-                            class="p-val string">link_base</span></div>
-                    <div class="param-badge" title="Endeffektor-Koordinatensystem"><span
-                            class="p-key">ee_frame_name</span><span class="p-eq">=</span><span
-                            class="p-val string">link_eef</span></div>
-                </div>
-                <div style="display: flex; gap: 30px; margin-top: 15px;">
-                    <div style="flex: 1;">
+
+                    <div>
                         <h5
                             style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">
                             Aktions-Tasten:</h5>
-                        <div class="feature-list">
+                        <div class="feature-list" style="margin-bottom: 25px;">
                             <div class="feature-item"><i class="fa-solid fa-hand-back-fist feature-icon"></i>
-                                <div><strong>A Button:</strong> Greifer umschalten (Auf / Zu) über
-                                    <code>/ufactory/open_lite6_gripper</code>
-                                </div>
+                                <div><strong>A Button:</strong> Greifer umschalten (Auf/Zu) über
+                                    <code>/open_lite6_gripper</code></div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-stop-circle feature-icon"></i>
                                 <div><strong>B Button:</strong> Greifer-Motor sicher stoppen</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-microphone feature-icon"></i>
-                                <div><strong>X Button:</strong> Whisper Sprachaufnahme (Start/Stop) über
-                                    Action Client</div>
+                                <div><strong>X Button:</strong> Whisper Sprachaufnahme (Start/Stop)</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-house feature-icon"></i>
                                 <div><strong>Y Button:</strong> Fährt zur Initialposition (Home)</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-right-left feature-icon"></i>
-                                <div><strong>Start / Back:</strong> Wechselt Planungs-Frame
-                                    (<code>link_base</code> ↔ <code>link_eef</code>)</div>
+                                <div><strong>Start / Back:</strong> Wechselt Planungs-Frame (<code>link_base</code> ↔
+                                    <code>link_eef</code>)</div>
                             </div>
                         </div>
-                    </div>
-                    <div style="flex: 1;">
+
                         <h5
                             style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">
                             Fahr-Tasten:</h5>
                         <div class="feature-list">
                             <div class="feature-item"><i class="fa-solid fa-plus-minus feature-icon"></i>
                                 <div><strong>D-Pad <i class="fa-solid fa-arrows-up-down"></i> :</strong>
-                                    Fahr-Geschwindigkeit (Scale) anpassen +/-</div>
+                                    Fahr-Geschwindigkeit anpassen</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-arrows-up-down feature-icon"></i>
-                                <div><strong>Linker Stick (Hoch/Runter):</strong> Bewegung X-Achse
-                                    (Vor/Zurück)</div>
+                                <div><strong>Linker Stick (Y):</strong> Bewegung X-Achse (Vor/Zurück)</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-arrows-left-right feature-icon"></i>
-                                <div><strong>Linker Stick (Links/Rechts):</strong> Bewegung Y-Achse
-                                    (Links/Rechts)</div>
+                                <div><strong>Linker Stick (X):</strong> Bewegung Y-Achse (Links/Rechts)</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-up-down feature-icon"></i>
-                                <div><strong>Trigger (LT/RT):</strong> Bewegung Z-Achse (Runter/Hoch)
-                                </div>
+                                <div><strong>Trigger (LT/RT):</strong> Bewegung Z-Achse (Runter/Hoch)</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-rotate-right feature-icon"></i>
                                 <div><strong>Bumper (LB/RB):</strong> Rotation um Z-Achse (Gieren)</div>
@@ -312,10 +354,13 @@
             </div>
         </div>
     </div>
+
     <div class="exec-category">
         <h3 class="exec-cat-title"><i class="fa-solid fa-microphone-lines" style="color: var(--accent-secondary);"></i>
             3. Sprachsteuerung &amp; Koordinator</h3>
+
         <div class="exec-grid">
+
             <div class="exec-card">
                 <div class="exec-card-header">
                     <h4><i class="fa-brands fa-python"></i> voice_command_listener.py</h4>
@@ -323,20 +368,21 @@
                 <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
                     <div class="script-path launch-clickable-path"
                         onclick="openInExplorer('src/voice_command_listener/voice_command_listener.py')"
-                        style="margin-bottom: 0; margin-right: 0; flex-grow: 1; width: 0; padding: 6px 10px;"
-                        title="Im Ubuntu Explorer öffnen">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <span class="launch-path-text">src/voice_command_listener/voice_command_listener.py</span>
+                        style="margin: 0; flex-grow: 1; padding: 8px 12px;" title="Im Ubuntu Explorer öffnen">
+                        <i class="fa-solid fa-folder-open"></i><span
+                            class="launch-path-text">src/voice_command_listener/voice_command_listener.py</span>
                     </div>
                     <button class="code-btn"
                         onclick="requestFileContent('src/voice_command_listener/voice_command_listener.py')"
                         title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
                 </div>
+
                 <div class="exec-cmd code-font"
-                    style="color: var(--text-secondary); background: transparent; padding: 0; border: none; font-size: 0.85rem; margin-bottom: 15px;">
-                    Abonniert Whisper-Transkripte, nutzt NLP zur Textnormalisierung, erkennt Befehle via
-                    Regex und blockiert Doppel-Trigger.
+                    style="color: var(--text-secondary); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+                    Abonniert Whisper-Transkripte, nutzt NLP zur Textnormalisierung, erkennt Befehle via Regex und
+                    blockiert Doppel-Trigger.
                 </div>
+
                 <div class="exec-params">
                     <div class="param-badge" title="Globaler Schutz vor Stottern"><span
                             class="p-key">cooldown_sec</span><span class="p-eq">=</span><span class="p-val time">0.3
@@ -345,22 +391,21 @@
                             class="p-key">refractory_sec</span><span class="p-eq">=</span><span class="p-val time">1.5
                             s</span></div>
                     <div class="param-badge" title="Input Stream"><span class="p-key">whisper_topic</span><span
-                            class="p-eq">=</span><span class="p-val topic">/whisper/transcript_stream</span>
-                    </div>
+                            class="p-eq">=</span><span class="p-val topic">/whisper/transcript</span></div>
                 </div>
-                <div class="feature-list" style="margin-top: 10px;">
+
+                <div class="feature-list" style="margin-top: 15px;">
                     <div class="feature-item"><i class="fa-solid fa-filter feature-icon"></i>
-                        <div><strong>Logik:</strong> Ignoriert Noise (wie <code>[BLANK_AUDIO]</code>).
-                            Erlaubt de/en Befehle (<em>"move to red"</em>, <em>"bewege dich zu
-                                rot"</em>).</div>
+                        <div><strong>Logik:</strong> Ignoriert Noise (wie <code>[BLANK_AUDIO]</code>). Erlaubt de/en
+                            Befehle (<em>"bewege dich zu rot"</em>).</div>
                     </div>
                     <div class="feature-item"><i class="fa-solid fa-paper-plane feature-icon"></i>
                         <div><strong>Output:</strong> Sendet rohe Steuerbefehle an <span
-                                class="p-val topic">/voice_cmd</span> und Status-Updates an <span
-                                class="p-val topic">/ui/voice_feedback</span>.</div>
+                                class="p-val topic">/voice_cmd</span>.</div>
                     </div>
                 </div>
             </div>
+
             <div class="exec-card">
                 <div class="exec-card-header">
                     <h4><i class="fa-brands fa-python"></i> move_to_coordinator.py</h4>
@@ -368,132 +413,126 @@
                 <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
                     <div class="script-path launch-clickable-path"
                         onclick="openInExplorer('src/move_to_coordinator/move_to_coordinator.py')"
-                        style="margin-bottom: 0; margin-right: 0; flex-grow: 1; width: 0; padding: 6px 10px;"
-                        title="Im Ubuntu Explorer öffnen">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <span class="launch-path-text">src/move_to_coordinator/move_to_coordinator.py</span>
+                        style="margin: 0; flex-grow: 1; padding: 8px 12px;" title="Im Ubuntu Explorer öffnen">
+                        <i class="fa-solid fa-folder-open"></i><span
+                            class="launch-path-text">src/move_to_coordinator/move_to_coordinator.py</span>
                     </div>
                     <button class="code-btn"
                         onclick="requestFileContent('src/move_to_coordinator/move_to_coordinator.py')"
                         title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
                 </div>
+
                 <div class="exec-cmd code-font"
-                    style="color: var(--text-secondary); background: transparent; padding: 0; border: none; font-size: 0.85rem; margin-bottom: 15px;">
-                    High-Level State Machine. Wartet auf Sprachbefehl (Intent), holt sich visuelle
-                    Koordinaten der Kamera und triggert die Fahrt.
+                    style="color: var(--text-secondary); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+                    High-Level State Machine. Wartet auf Sprachbefehl (Intent), holt sich visuelle Koordinaten der
+                    Kamera und triggert die Fahrt.
                 </div>
+
                 <div class="exec-params">
                     <div class="param-badge" title="Sichere Greifhöhe (Z-Achse) am Tisch"><span
-                            class="p-key">TARGET_Z_MM</span><span class="p-eq">=</span><span class="p-val number">123.0
+                            class="p-key">TARGET_Z</span><span class="p-eq">=</span><span class="p-val number">123.0
                             mm</span></div>
                     <div class="param-badge" title="Wartezeit auf Kamera-Fokus nach der Safe-Pose"><span
-                            class="p-key">VISION_STABILIZE</span><span class="p-eq">=</span><span class="p-val time">2.0
+                            class="p-key">VISION_WAIT</span><span class="p-eq">=</span><span class="p-val time">2.0
                             s</span></div>
                     <div class="param-badge" title="Wartet maximal auf frische Objektdaten"><span
                             class="p-key">POSE_TIMEOUT</span><span class="p-eq">=</span><span class="p-val time">15.0
-                            s</span></div>
-                    <div class="param-badge" title="Globale Sperre gegen Command-Spam"><span
-                            class="p-key">GLOBAL_COOLDOWN</span><span class="p-eq">=</span><span class="p-val time">1.0
                             s</span></div>
                     <div class="param-badge" title="Dynamische Fahr-Geschwindigkeit"><span
                             class="p-key">SPEED</span><span class="p-eq">=</span><span class="p-val number">100.0</span>
                     </div>
                 </div>
+
                 <h5
-                    style="color: var(--accent-primary); margin-top: 15px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500;">
-                    Verarbeitungs-Ablauf:</h5>
+                    style="color: var(--accent-primary); margin-top: 15px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+                    Ablauf:</h5>
                 <div class="workflow-path">
                     <span class="workflow-step"><i class="fa-solid fa-list-ol"></i> Queue</span> <i
                         class="fa-solid fa-angle-right workflow-arrow"></i>
-                    <span class="workflow-step"><i class="fa-solid fa-shield-halved"></i>
-                        Safe-Pose</span> <i class="fa-solid fa-angle-right workflow-arrow"></i>
-                    <span class="workflow-step"><i class="fa-solid fa-hourglass-half"></i> Vision
-                        Fokus</span> <i class="fa-solid fa-angle-right workflow-arrow"></i>
-                    <span class="workflow-step"><i class="fa-solid fa-camera-retro"></i> Pose
-                        holen</span> <i class="fa-solid fa-angle-right workflow-arrow"></i>
-                    <span class="workflow-step"><i class="fa-solid fa-rocket"></i> MoveCartesian</span>
+                    <span class="workflow-step"><i class="fa-solid fa-shield-halved"></i> Safe-Pose</span> <i
+                        class="fa-solid fa-angle-right workflow-arrow"></i>
+                    <span class="workflow-step"><i class="fa-solid fa-camera-retro"></i> Fokus &amp; Pose</span> <i
+                        class="fa-solid fa-angle-right workflow-arrow"></i>
+                    <span class="workflow-step"><i class="fa-solid fa-rocket"></i> Move</span>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="exec-category">
-        <h3 class="exec-cat-title"><i class="fa-solid fa-eye" style="color: var(--accent-secondary);"></i> 4.
-            Vision &amp; Marker Transformation</h3>
+        <h3 class="exec-cat-title"><i class="fa-solid fa-eye" style="color: var(--accent-secondary);"></i> 4. Vision
+            &amp; Marker Transformation</h3>
         <div class="exec-grid">
+
             <div class="exec-card" style="grid-column: span 2;">
                 <div class="exec-card-header">
                     <h4><i class="fa-brands fa-python"></i> yolo_homography_node.py</h4>
                 </div>
-                <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
-                    <div class="script-path launch-clickable-path"
-                        onclick="openInExplorer('src/yolo_object_detector/yolo_homography_node.py')"
-                        style="margin-bottom: 0; margin-right: 0; flex-grow: 1; width: 0; padding: 6px 10px;"
-                        title="Im Ubuntu Explorer öffnen">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <span class="launch-path-text">src/yolo_object_detector/yolo_homography_node.py</span>
-                    </div>
-                    <button class="code-btn"
-                        onclick="requestFileContent('src/yolo_object_detector/yolo_homography_node.py')"
-                        title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
-                </div>
-                <div class="exec-cmd code-font"
-                    style="color: var(--text-secondary); background: transparent; padding: 0; border: none; font-size: 0.85rem; margin-bottom: 15px;">
-                    Erkennt Objekte (YOLOv8) &amp; wandelt Kamera-Pixel via ArUco in reale
-                    Roboter-Koordinaten (Homographie-Matrix) um.
-                </div>
-                <div class="exec-params">
-                    <div class="param-badge" title="Kamera IP Stream"><span class="p-key">STREAM_URL</span><span
-                            class="p-eq">=</span><span class="p-val string">.../cam_pic_new.php</span></div>
-                    <div class="param-badge" title="YOLO Model Datei"><span class="p-key">MODEL_PATH</span><span
-                            class="p-eq">=</span><span class="p-val string">models/best.pt</span></div>
-                    <div class="param-badge" title="YOLO Erkennungs-Sicherheit"><span
-                            class="p-key">conf_threshold</span><span class="p-eq">=</span><span
-                            class="p-val number">0.8</span></div>
-                    <div class="param-badge" title="Höhe der Tischplatte im ROS-Frame"><span
-                            class="p-key">TABLE_HEIGHT</span><span class="p-eq">=</span><span class="p-val number">0.090
-                            m</span></div>
-                    <div class="param-badge" title="Minimal nötige Marker für 2D-Fläche"><span
-                            class="p-key">MIN_MARKERS_FOR_H</span><span class="p-eq">=</span><span
-                            class="p-val number">4</span></div>
-                    <div class="param-badge" title="Wann die Matrix neu berechnet wird"><span
-                            class="p-key">H_UPDATE_INTERVAL</span><span class="p-eq">=</span><span class="p-val time">30
-                            Frames</span></div>
-                    <div class="param-badge" title="ArUco Visualisierung (OpenCV)"><span
-                            class="p-key">SHOW_ARUCO_POSITIONS</span><span class="p-eq">=</span><span
-                            class="p-val bool">True</span></div>
-                    <div class="param-badge" title="YOLO Bounding Box Visualisierung"><span
-                            class="p-key">SHOW_YOLO_DETECTIONS</span><span class="p-eq">=</span><span
-                            class="p-val bool">True</span></div>
-                    <div class="param-badge" title="Basis für Koordinaten"><span class="p-key">WORLD_FRAME</span><span
-                            class="p-eq">=</span><span class="p-val string">base_link</span></div>
-                </div>
-                <div style="display: flex; gap: 30px; margin-top: 15px;">
-                    <div style="flex: 1;">
+
+                <div class="card-inner-split">
+                    <div>
+                        <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
+                            <div class="script-path launch-clickable-path"
+                                onclick="openInExplorer('src/yolo_object_detector/yolo_homography_node.py')"
+                                style="margin: 0; flex-grow: 1; padding: 8px 12px;" title="Im Ubuntu Explorer öffnen">
+                                <i class="fa-solid fa-folder-open"></i><span
+                                    class="launch-path-text">src/yolo_object_detector/yolo_homography_node.py</span>
+                            </div>
+                            <button class="code-btn"
+                                onclick="requestFileContent('src/yolo_object_detector/yolo_homography_node.py')"
+                                title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
+                        </div>
+
+                        <div class="exec-cmd code-font"
+                            style="color: var(--text-secondary); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+                            Erkennt Objekte (YOLOv8) &amp; wandelt Kamera-Pixel via ArUco in reale Roboter-Koordinaten
+                            (Homographie-Matrix) um.
+                        </div>
+
                         <h5
-                            style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">
+                            style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
                             Funktionsweise:</h5>
                         <div class="feature-list">
                             <div class="feature-item"><i class="fa-solid fa-qrcode feature-icon"></i>
-                                <div><strong>ArUco Config:</strong> Verwendet <code>DICT_4X4_50</code>.
-                                    Insgesamt 12 feste Marker verankern den Tisch im Raum.</div>
+                                <div><strong>ArUco Config:</strong> Verwendet <code>DICT_4X4_50</code>. Insgesamt 12
+                                    feste Marker verankern den Tisch im Raum.</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-crop-simple feature-icon"></i>
-                                <div><strong>Referenzrahmen:</strong> Transformiert 2D-Bildpunkte
-                                    <code>(U,V)</code> präzise in das 3D-Koordinatensystem
-                                    <code>base_link</code>.
-                                </div>
+                                <div><strong>Referenzrahmen:</strong> Transformiert 2D-Bildpunkte <code>(U,V)</code>
+                                    präzise in das 3D-System <code>base_link</code>.</div>
                             </div>
                             <div class="feature-item"><i class="fa-solid fa-broadcast-tower feature-icon"></i>
-                                <div><strong>Publish Topics:</strong> Streamt die berechneten
-                                    Weltkoordinaten z.B. auf <span
-                                        class="p-val topic">/objects/red_rectangle/world_poses</span>.
-                                </div>
+                                <div><strong>Publish Topics:</strong> Streamt die Weltkoordinaten z.B. auf <span
+                                        class="p-val topic">/objects/red/world_poses</span>.</div>
                             </div>
                         </div>
                     </div>
-                    <div style="flex: 1;">
+
+                    <div>
+                        <h5 style="color: white; margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">Parameter
+                            &amp; Settings</h5>
+                        <div class="exec-params" style="margin-bottom: 20px;">
+                            <div class="param-badge" title="YOLO Model Datei"><span class="p-key">MODEL_PATH</span><span
+                                    class="p-eq">=</span><span class="p-val string">models/best.pt</span></div>
+                            <div class="param-badge" title="YOLO Erkennungs-Sicherheit"><span
+                                    class="p-key">conf_threshold</span><span class="p-eq">=</span><span
+                                    class="p-val number">0.8</span></div>
+                            <div class="param-badge" title="Höhe der Tischplatte im ROS-Frame"><span
+                                    class="p-key">TABLE_HEIGHT</span><span class="p-eq">=</span><span
+                                    class="p-val number">0.090 m</span></div>
+                            <div class="param-badge" title="Minimal nötige Marker für 2D-Fläche"><span
+                                    class="p-key">MIN_MARKERS</span><span class="p-eq">=</span><span
+                                    class="p-val number">4</span></div>
+                            <div class="param-badge" title="Wann die Matrix neu berechnet wird"><span
+                                    class="p-key">H_UPDATE_INT</span><span class="p-eq">=</span><span
+                                    class="p-val time">30 Frames</span></div>
+                            <div class="param-badge" title="Basis für Koordinaten"><span
+                                    class="p-key">WORLD_FRAME</span><span class="p-eq">=</span><span
+                                    class="p-val string">base_link</span></div>
+                        </div>
+
                         <h5
-                            style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">
+                            style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
                             ArUco Map (MARKERS_ROBOT_XY):</h5>
                         <div class="feature-list">
                             <div class="feature-item"><i class="fa-solid fa-border-top-left feature-icon"></i>
@@ -512,53 +551,65 @@
                     </div>
                 </div>
             </div>
+
             <div class="exec-card" style="grid-column: span 2;">
                 <div class="exec-card-header">
                     <h4><i class="fa-brands fa-python"></i> marker_publisher.py</h4>
                 </div>
-                <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
-                    <div class="script-path launch-clickable-path"
-                        onclick="openInExplorer('src/rviz_marker/marker_publisher.py')"
-                        style="margin-bottom: 0; margin-right: 0; flex-grow: 1; width: 0; padding: 6px 10px;"
-                        title="Im Ubuntu Explorer öffnen">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <span class="launch-path-text">src/rviz_marker/marker_publisher.py</span>
-                    </div>
-                    <button class="code-btn" onclick="requestFileContent('src/rviz_marker/marker_publisher.py')"
-                        title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
-                </div>
-                <div class="exec-cmd code-font"
-                    style="color: var(--text-secondary); background: transparent; padding: 0; border: none; font-size: 0.85rem; margin-bottom: 15px;">
-                    Generiert die virtuelle Arbeitsumgebung in RViz (Bodenplatte, Raster) und meldet
-                    reale Kollisionsobjekte an MoveIt.
-                </div>
-                <div class="exec-params">
-                    <div class="param-badge" title="Größe der Raster-Kacheln in RViz"><span
-                            class="p-key">GRID_RESOLUTION</span><span class="p-eq">=</span><span class="p-val number">50
-                            mm</span></div>
-                    <div class="param-badge" title="Toleranzradius für visuelles Feedback (Farbumschlag)"><span
-                            class="p-key">POSITION_TOLERANCE</span><span class="p-eq">=</span><span
-                            class="p-val number">10.0 mm</span></div>
-                    <div class="param-badge" title="Update-Rate der Marker"><span class="p-key">UPDATE_RATE</span><span
-                            class="p-eq">=</span><span class="p-val time">0.5 s</span></div>
-                    <div class="param-badge" title="Virtuelle Schablonen-Dicke"><span
-                            class="p-key">PLANE_THICKNESS</span><span class="p-eq">=</span><span
-                            class="p-val number">5.0 mm</span></div>
-                </div>
-                <div class="feature-list" style="margin-top: 10px;">
-                    <div class="feature-item"><i class="fa-solid fa-shield feature-icon"></i>
-                        <div><strong>Kollisionsschutz:</strong> Erzeugt dynamisch einen physikalischen
-                            MoveIt-Block an <code>X: 0.35m</code> zum Schutz der Kamera/Ausrüstung.
+
+                <div class="card-inner-split">
+                    <div>
+                        <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 15px;">
+                            <div class="script-path launch-clickable-path"
+                                onclick="openInExplorer('src/rviz_marker/marker_publisher.py')"
+                                style="margin: 0; flex-grow: 1; padding: 8px 12px;" title="Im Ubuntu Explorer öffnen">
+                                <i class="fa-solid fa-folder-open"></i><span
+                                    class="launch-path-text">src/rviz_marker/marker_publisher.py</span>
+                            </div>
+                            <button class="code-btn" onclick="requestFileContent('src/rviz_marker/marker_publisher.py')"
+                                title="Quellcode ansehen"><i class="fa-solid fa-code"></i></button>
+                        </div>
+
+                        <div class="exec-cmd code-font"
+                            style="color: var(--text-secondary); background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+                            Generiert die virtuelle Arbeitsumgebung in RViz (Bodenplatte, Raster) und meldet reale
+                            Kollisionsobjekte an MoveIt.
+                        </div>
+
+                        <div class="feature-list">
+                            <div class="feature-item"><i class="fa-solid fa-shield feature-icon"></i>
+                                <div><strong>Kollisionsschutz:</strong> Erzeugt dynamisch einen physikalischen
+                                    MoveIt-Block an <code>X: 0.35m</code> zum Schutz der Kamera/Ausrüstung.</div>
+                            </div>
+                            <div class="feature-item"><i class="fa-solid fa-ruler feature-icon"></i>
+                                <div><strong>TF Listener:</strong> Beobachtet den Abstand zwischen
+                                    <code>link_base</code> und Greifer <code>link_eef</code> für dynamisches Feedback.
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="feature-item"><i class="fa-solid fa-ruler feature-icon"></i>
-                        <div><strong>TF Listener:</strong> Beobachtet den Abstand zwischen
-                            <code>link_base</code> und Greifer <code>link_eef</code> für dynamisches
-                            Feedback.
+
+                    <div>
+                        <h5 style="color: white; margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">Visuelle
+                            &amp; Physikalische Settings</h5>
+                        <div class="exec-params">
+                            <div class="param-badge" title="Größe der Raster-Kacheln in RViz"><span
+                                    class="p-key">GRID_RESOLUTION</span><span class="p-eq">=</span><span
+                                    class="p-val number">50 mm</span></div>
+                            <div class="param-badge" title="Toleranzradius für visuelles Feedback (Farbumschlag)"><span
+                                    class="p-key">POSITION_TOLERANCE</span><span class="p-eq">=</span><span
+                                    class="p-val number">10.0 mm</span></div>
+                            <div class="param-badge" title="Update-Rate der Marker"><span
+                                    class="p-key">UPDATE_RATE</span><span class="p-eq">=</span><span
+                                    class="p-val time">0.5 s</span></div>
+                            <div class="param-badge" title="Virtuelle Schablonen-Dicke"><span
+                                    class="p-key">PLANE_THICKNESS</span><span class="p-eq">=</span><span
+                                    class="p-val number">5.0 mm</span></div>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

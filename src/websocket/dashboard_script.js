@@ -42,17 +42,16 @@ function wrapNodeTooltip(name, customClass = "") {
 }
 
 function truncateTopic(topic, maxLen = 35) {
-    // Kürzt Topic-Namen und zeigt den vollständigen Namen als Hover-Tooltip
+    // Kürzt Topic-Namen und nutzt nun den globalen coolen Hover-Effekt
     if (!topic || topic.length <= maxLen) {
         return `<span style="font-family:'JetBrains Mono',monospace; font-size:0.82rem;">${topic}</span>`;
     }
     const short = topic.slice(0, maxLen - 1) + '\u2026'; // … Unicode
-    return `<span class="topic-name-truncated" title="${topic}" style="
-        font-family:'JetBrains Mono',monospace; font-size:0.82rem;
-        cursor: help;
-        border-bottom: 1px dashed rgba(255,255,255,0.25);
-        white-space: nowrap;
-    ">${short}<span class="topic-full-tooltip">${topic}</span></span>`;
+
+    return `<div class="tooltip-container" style="display: inline-flex; vertical-align: bottom;">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:0.82rem; cursor: help; border-bottom: 1px dashed rgba(255,255,255,0.25); white-space: nowrap;">${short}</span>
+                <div class="tooltip-text" style="width: max-content; max-width: 400px; word-break: break-all; z-index: 9999; font-family:'JetBrains Mono',monospace; font-size:0.75rem;">${topic}</div>
+            </div>`;
 }
 
 let loadingCountdown = 0;
@@ -651,9 +650,13 @@ function selectNode(nodeName, skipRequest = false) {
             elPkgIcon.style.color = catBadge.color;
         }
 
-        // 3. Farbe des Haupt-Node-Icons im Header
+        // 3. Farbe des Haupt-Node-Icons im Header (Ganz links)
         if (elHeaderIcon) {
-            elHeaderIcon.style.backgroundColor = catBadge.color;
+            if (category === 'workspace') {
+                elHeaderIcon.style.backgroundColor = '#ffffff'; // Weiß für Workspace
+            } else {
+                elHeaderIcon.style.backgroundColor = '#ef4444'; // Rot für System
+            }
         }
     }
 
@@ -678,8 +681,8 @@ function selectNode(nodeName, skipRequest = false) {
                 pathChip.onmouseleave = () => pathChip.style.border = "1px solid rgba(255, 255, 255, 0.4)";
             } else {
                 pathChip.classList.remove('interactive');
-                pathChip.style.opacity = '0.55';
-                pathChip.style.pointerEvents = 'none';
+                pathChip.style.opacity = '1'; /* Jetzt genauso leuchtend wie Workspace Nodes */
+                pathChip.style.pointerEvents = 'none'; /* Bleibt nicht-klickbar, da System-Pfad */
 
                 pathChip.onmouseenter = null;
                 pathChip.onmouseleave = null;
@@ -774,7 +777,7 @@ function selectNode(nodeName, skipRequest = false) {
                     if (group.deps.length > 0) {
                         group.deps.sort((a, b) => a.name.localeCompare(b.name));
                         categorizedHtml += `
-                            <div class="dep-category-group" style="margin-bottom: 5px; border-left: 0px solid ${group.color}; padding-left: 15px; background: rgba(255,255,255,0.01); border-radius: 0 8px 8px 0; padding-top: 2px; padding-bottom: 0px;">
+                            <div class="dep-category-group" style="margin-bottom: 0px; border-left: 0px solid ${group.color}; padding-left: 15px; background: rgba(255,255,255,0.01); border-radius: 0 8px 8px 0; padding-top: 2px; padding-bottom: 0px;">
                             
                                 <div class="nd-dependencies-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
                                     ${group.deps.map(d => {
@@ -811,7 +814,7 @@ function selectNode(nodeName, skipRequest = false) {
         if (HARDWARE_INPUT_NODES.includes(checkNodeName)) {
             connInHtml += `<div class='conn-card unbound-card rx-card d-flex flex-column gap-2'>
                 <div class='d-flex justify-content-between align-items-center w-100'>
-                    <span class='conn-node-name m-0' title='Input-Stream Linux-Systemebene'>
+                    <span class='conn-node-name m-0' title='Linux-Hardware-Input'>
                         <img src="linux-icon.png" class="me-2" style="width: 32px; height: 32px; vertical-align: middle; object-fit: contain;" alt="Linux"><span class="multiline-label">Input-Stream <br> Linux-Systemebene</span>
                         <i class="fa-solid fa-circle-info tooltip-icon ms-2" style="color: var(--color-warning); font-size: 0.9em;" 
                            title="Dieser Node empfängt Daten direkt von der Hardware (z.B. Tastatur/Gamepad) über das Betriebssystem und nicht über das ROS-Netzwerk."></i>
@@ -1116,7 +1119,13 @@ function selectNode(nodeName, skipRequest = false) {
                             <span class='card-hz-display' style='position:absolute; top: -10px; right: -5px; background: #0f172a; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.65rem;'>-- Hz</span>
                             <div class="topic-info-row"><span class="topic-lbl">Topic:</span><i class="fa-solid fa-circle-dot topic-icon" id="icon-sub-${s.topic.replace(/\//g, '-')}" style="margin-right: 6px; color: var(--text-secondary); transition: color 0.3s, text-shadow 0.3s;"></i>${wrapNodeTooltip(s.topic, "topic-val")}</div>
                             <div class="topic-info-row"><span class="topic-lbl">Type:</span><span class="topic-type-badge">${typeStr}</span></div>
-                            <div class="topic-info-row msg-content" id="msg-${s.topic.replace(/\//g, '-')}"><span class="topic-lbl">Msg:</span><span class="topic-val" title="Wartet auf Daten..." style="color:var(--text-secondary); font-size:0.8rem;">Wartet auf Daten...</span></div>
+                            <div class="topic-info-row msg-content" id="msg-${s.topic.replace(/\//g, '-')}">
+                                <span class="topic-lbl">Msg:</span>
+                                <div class="tooltip-container" style="display: inline-flex; max-width: 75%; vertical-align: bottom;">
+                                    <span class="topic-val text-truncate" style="color:var(--text-secondary); font-size:0.8rem; cursor: help; border-bottom: 1px dashed rgba(255,255,255,0.25);">Wartet auf Daten...</span>
+                                    <div class="tooltip-text msg-tooltip" style="width: max-content; max-width: 350px; white-space: pre-wrap; word-break: break-word; z-index: 9999; left: 0; transform: none; top: 100%; margin-top: 5px;">Wartet auf Daten...</div>
+                                </div>
+                            </div>
                         </div>`;
             }).join('');
         }
@@ -1134,7 +1143,13 @@ function selectNode(nodeName, skipRequest = false) {
                             <span class='card-hz-display' style='position:absolute; top: -10px; right: -5px; background: #0f172a; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.65rem;'>-- Hz</span>
                             <div class="topic-info-row"><span class="topic-lbl">Topic:</span><i class="fa-solid fa-circle-dot topic-icon" id="icon-pub-${p.topic.replace(/\//g, '-')}" style="margin-right: 6px; color: var(--text-secondary); transition: color 0.3s, text-shadow 0.3s;"></i>${wrapNodeTooltip(p.topic, "topic-val")}</div>
                             <div class="topic-info-row"><span class="topic-lbl">Type:</span><span class="topic-type-badge">${typeStr}</span></div>
-                            <div class="topic-info-row msg-content" id="msg-${p.topic.replace(/\//g, '-')}"><span class="topic-lbl">Msg:</span><span class="topic-val" title="Wartet auf Daten..." style="color:var(--text-secondary); font-size:0.8rem;">Wartet auf Daten...</span></div>
+                            <div class="topic-info-row msg-content" id="msg-${p.topic.replace(/\//g, '-')}">
+                                <span class="topic-lbl">Msg:</span>
+                                <div class="tooltip-container" style="display: inline-flex; max-width: 75%; vertical-align: bottom;">
+                                    <span class="topic-val text-truncate" style="color:var(--text-secondary); font-size:0.8rem; cursor: help; border-bottom: 1px dashed rgba(255,255,255,0.25);">Wartet auf Daten...</span>
+                                    <div class="tooltip-text msg-tooltip" style="width: max-content; max-width: 350px; white-space: pre-wrap; word-break: break-word; z-index: 9999; left: 0; transform: none; top: 100%; margin-top: 5px;">Wartet auf Daten...</div>
+                                </div>
+                            </div>
                         </div>`;
             }).join('');
         }
@@ -1342,12 +1357,12 @@ function showNodesOverview() {
     };
 
     if (wsNodeElements.length > 0) {
-        gridHtml += `<div class="nd-section-title" style="margin-top: 10px;">Workspace Nodes</div>`;
+        gridHtml += `<div class="nd-section-title" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 50%, transparent 100%); margin-top: 10px; margin-bottom: 15px; color: #ffffff; display: flex; justify-content: center; align-items: center;">Workspace Nodes</div>`;
         wsNodeElements.forEach(el => gridHtml += generateCard(el, true));
     }
 
     if (sysNodeElements.length > 0) {
-        gridHtml += `<div class="nd-section-title" style="margin-top: 30px;">System Nodes</div>`;
+        gridHtml += `<div class="nd-section-title" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 50%, transparent 100%); margin-top: 30px; margin-bottom: 15px; color: #ffffff; display: flex; justify-content: center; align-items: center;">System Nodes</div>`;
         sysNodeElements.forEach(el => gridHtml += generateCard(el, false));
     }
 
@@ -1913,8 +1928,14 @@ function initRosConnection() {
                                 const msgValEl = document.querySelector(`#msg-${safeTopicId} .topic-val`);
                                 if (msgValEl) {
                                     msgValEl.textContent = activity.last_msg;
-                                    msgValEl.title = activity.last_msg;
+                                    msgValEl.removeAttribute('title'); // Veralteten Standard-Tooltip deaktivieren
                                     msgValEl.style.color = "var(--text-primary)";
+                                }
+
+                                // Den neuen, stylischen Hover-Tooltip mit den Livedaten füttern
+                                const msgTooltipEl = document.querySelector(`#msg-${safeTopicId} .msg-tooltip`);
+                                if (msgTooltipEl) {
+                                    msgTooltipEl.textContent = activity.last_msg;
                                 }
                             }
                         }
