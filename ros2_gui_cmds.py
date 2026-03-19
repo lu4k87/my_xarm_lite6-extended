@@ -32,16 +32,25 @@ COLOR_ACCENT_GREEN= "#4ade80"   # Neon-Green
 # ══════════════════════════════════════════════════════
 def run_cmd(command, title="ROS 2 Terminal", ws_path="~/dev_ws"):
     """Öffnet ein Terminal und führt einen ROS-Befehl aus."""
+    # Direkt aus der Hauptumgebung der GUI auslesen
+    domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
+    rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
+
     ros_setup = "source /opt/ros/humble/setup.bash"
     ws_setup  = f"source {ws_path}/install/setup.bash"
     display   = f"{ros_setup} && {ws_setup} && cd {ws_path} && {command}"
     safe_disp = display.replace('\\', '\\\\').replace('"', '\\"')
 
-    script = f"""source ~/.bashrc 2>/dev/null || true
+    # Variablen im Terminal erzwingen, selbst wenn die .bashrc abbricht
+    script = f"""export ROS_DOMAIN_ID={domain_id}
+export RMW_IMPLEMENTATION={rmw_impl}
+export ROS_LOCALHOST_ONLY=0
+source ~/.bashrc 2>/dev/null || true
 {ros_setup} 2>/dev/null || true
 {ws_setup} 2>/dev/null || true
 cd {ws_path} 2>/dev/null || true
 clear
+echo -e "\\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\\033[0m"
 echo -e "\\033[36m[Terminal: $(tty)  PID: $$]\\033[0m"
 echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m"
 echo -e "\\033[1;32m CMD:\\033[0m"
@@ -55,12 +64,21 @@ echo -e "\\033[1;33m════════════════════
 
 def run_interactive_cmd(command, title="System Tool"):
     """Öffnet ein interaktives Terminal."""
+    # Direkt aus der Hauptumgebung der GUI auslesen
+    domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
+    rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
+
     ros_setup = "source /opt/ros/humble/setup.bash"
     safe_disp = command.replace('\\', '\\\\').replace('"', '\\"')
 
-    script = f"""source ~/.bashrc 2>/dev/null || true
+    # Variablen im Terminal erzwingen
+    script = f"""export ROS_DOMAIN_ID={domain_id}
+export RMW_IMPLEMENTATION={rmw_impl}
+export ROS_LOCALHOST_ONLY=0
+source ~/.bashrc 2>/dev/null || true
 {ros_setup} 2>/dev/null || true
 clear
+echo -e "\\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\\033[0m"
 echo -e "\\033[36m[Terminal: $(tty)  PID: $$]\\033[0m"
 echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m"
 echo -e "\\033[1;32m CMD:\\033[0m"

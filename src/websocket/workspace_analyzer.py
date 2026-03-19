@@ -660,24 +660,14 @@ class WorkspaceAnalyzer(Node):
                         "category":     "workspace",
                     })
 
-        # ── Stufe 4: Regex-Suche in Launch-Files ─────────────────────────────
-        # Letzter Versuch: Node-Name im Quelltext der Launch-Files suchen
-        if info["launched_by"] == "Terminal / Sub-Prozess":
-            for launch in self.launch_details_cache:
-                try:
-                    full_l = os.path.join(self.base_ws_path, launch.get("path", ""))
-                    with open(full_l, 'r', encoding='utf-8', errors='ignore') as f:
-                        if re.search(rf'[\'"{re.escape(clean_name)}\'"]', f.read()):
-                            info["launched_by"] = launch["file_name"]
-                            if info["category"] == "system":
-                                # Paket des Launch-Files prüfen
-                                lf_pkg = self.get_package_for_file(full_l)
-                                if lf_pkg in self.pkg_cache.values():
-                                    info["category"] = "system_via_launch"
-                                    info["source_file"] = f"gestartet via: {launch['file_name']}"
-                                    info["file_path"]   = launch.get("path", "/opt/ros/humble/...")
-                except Exception:
-                    pass
+        # ── Stufe 4: Bereinigung für System-Nodes ─────────────────────────────
+        # Falls bis hierhin kein Workspace-Bezug gefunden wurde, stellen wir sicher,
+        # dass kein falscher Pfad aus der Launch-Suche hängen bleibt.
+        if info["category"] == "system":
+            info["source_file"] = "Kompilierte Binary"
+            info["file_path"]   = "/opt/ros/humble/..."
+            info["is_workspace"] = False
+            
         # Legacy-Feld synchron halten
         info["is_workspace"] = (info["category"] == "workspace")
         
@@ -774,6 +764,7 @@ class WorkspaceAnalyzer(Node):
                 "bashrc":        self.parse_bashrc(),
                 "tree":          self.workspace_tree_cache,
                 "launches":      [],
+                "all_launches":  self.launch_details_cache,
             }
 
             active_launch_files = set()

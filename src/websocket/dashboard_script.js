@@ -1,4 +1,5 @@
 let workspaceData = {};
+let hasRenderedLaunches = false;
 let network = null;
 let visNodes = new vis.DataSet();
 let visEdges = new vis.DataSet();
@@ -635,6 +636,12 @@ function selectNode(nodeName, skipRequest = false) {
             'system': { icon: 'fa-microchip', color: 'var(--text-secondary)', label: ' (ROS 2 System)' },
         }[category] || { icon: 'fa-box', color: 'var(--text-secondary)', label: '' };
 
+        // Rahmen für Paket-Chip
+        const pkgChip = document.querySelector('.nd-header-pkg');
+        if (pkgChip) {
+            pkgChip.style.border = "1px solid rgba(255, 255, 255, 0.4)";
+        }
+
         // 1. Paketname + Label
         elPkg.innerHTML = `${data.package || 'Unbekannt'}<span style="font-size:0.65rem; opacity:0.6; margin-left:6px; font-weight:400;">${catBadge.label}</span>`;
 
@@ -655,17 +662,27 @@ function selectNode(nodeName, skipRequest = false) {
         const category = data.category || (data.is_workspace ? 'workspace' : 'system');
         elPath.textContent = data.file_path || 'Pfad unbekannt';
 
-        // Interaktivität des Pfad-Chips (neu: .nd-header-path)
+        // Interaktivität und Rahmen des Pfad-Chips
         const pathChip = document.querySelector('.nd-header-path');
         if (pathChip) {
+            // Standard: Weißer Rahmen
+            pathChip.style.border = "1px solid rgba(255, 255, 255, 0.4)";
+
             if (category === 'workspace') {
                 pathChip.classList.add('interactive');
                 pathChip.style.opacity = '1';
                 pathChip.style.pointerEvents = '';
+
+                // LÖSUNG: Bei Hover den Inline-Rahmen löschen, damit die CSS-Hover-Klasse (Glow) greift
+                pathChip.onmouseenter = () => pathChip.style.border = "";
+                pathChip.onmouseleave = () => pathChip.style.border = "1px solid rgba(255, 255, 255, 0.4)";
             } else {
                 pathChip.classList.remove('interactive');
                 pathChip.style.opacity = '0.55';
                 pathChip.style.pointerEvents = 'none';
+
+                pathChip.onmouseenter = null;
+                pathChip.onmouseleave = null;
             }
         }
     }
@@ -795,7 +812,7 @@ function selectNode(nodeName, skipRequest = false) {
             connInHtml += `<div class='conn-card unbound-card rx-card d-flex flex-column gap-2'>
                 <div class='d-flex justify-content-between align-items-center w-100'>
                     <span class='conn-node-name m-0' title='Input-Stream Linux-Systemebene'>
-                        <i class="fa-brands fa-linux me-2" style="color: #94a3b8;"></i><span class="multiline-label">Input-Stream <br> Linux-Systemebene</span>
+                        <img src="linux-icon.png" class="me-2" style="width: 32px; height: 32px; vertical-align: middle; object-fit: contain;" alt="Linux"><span class="multiline-label">Input-Stream <br> Linux-Systemebene</span>
                         <i class="fa-solid fa-circle-info tooltip-icon ms-2" style="color: var(--color-warning); font-size: 0.9em;" 
                            title="Dieser Node empfängt Daten direkt von der Hardware (z.B. Tastatur/Gamepad) über das Betriebssystem und nicht über das ROS-Netzwerk."></i>
                     </span>
@@ -825,7 +842,7 @@ function selectNode(nodeName, skipRequest = false) {
                 connInHtml += `<div class='conn-card rx-card d-flex flex-column gap-2' style='border-color: rgba(168, 85, 247, 0.5);'>
                     <div class='d-flex justify-content-between align-items-center w-100'>
                         <span class='conn-node-name m-0' title='Service Server'>
-                            <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #a855f7; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Server</span>
+                            <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #ffffff; -webkit-mask: url(service-icon.png) no-repeat center / contain; mask: url(service-icon.png) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Server</span>
                         </span>
                         <span class='card-hz-display' style="color: #a855f7; border-color: rgba(168, 85, 247, 0.2);">RES (Server)</span>
                     </div>
@@ -934,7 +951,7 @@ function selectNode(nodeName, skipRequest = false) {
             connOutHtml += `<div class='conn-card tx-card d-flex flex-column gap-2' style='border-color: rgba(56, 189, 248, 0.5);'>
                 <div class='d-flex justify-content-between align-items-center w-100'>
                     <span class='conn-node-name m-0' title='Service Client'>
-                        <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #38bdf8; -webkit-mask: url(service-icon.svg) no-repeat center / contain; mask: url(service-icon.svg) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Client</span>
+                        <span class="me-2" style="display:inline-block; width: 18px; height: 18px; background-color: #ffffff; -webkit-mask: url(service-icon.png) no-repeat center / contain; mask: url(service-icon.png) no-repeat center / contain; flex-shrink: 0;"></span><span class="text-truncate">Service Client</span>
                     </span>
                     <span class='card-hz-display' style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.2);">REQ (Client)</span>
                 </div>
@@ -1339,28 +1356,47 @@ function showNodesOverview() {
 
 function refreshNodeGraph() {
     if (!window.ros) return;
+
+    // 1. Globalen Graphen aktualisieren
     const nodeNames = Object.keys(workspaceData.nodes || {});
-    if (nodeNames.length === 0) return;
+    if (nodeNames.length > 0) {
+        const container = document.getElementById('vis-container');
+        if (container) {
+            visNodes.clear();
+            visEdges.clear();
 
-    const container = document.getElementById('vis-container');
-    visNodes.clear(); visEdges.clear();
+            visNodes.add(nodeNames.map((name) => ({
+                id: name, label: name, shape: 'image', image: 'node-icon.svg', size: 24,
+                font: { color: '#f8fafc', face: 'Inter' }
+            })));
 
-    visNodes.add(nodeNames.map((name) => ({ id: name, label: name, shape: 'image', image: 'node-icon.svg', size: 24, font: { color: '#f8fafc', face: 'Inter' } })));
+            nodeNames.forEach(name => {
+                const conns = findConnections(name);
+                conns.connectedTo.forEach(target => {
+                    if (!target.isUnbound) {
+                        visEdges.add({ from: name, to: target.node, arrows: 'to', color: { color: 'rgba(56, 189, 248, 0.5)' } });
+                    }
+                });
+            });
 
-    nodeNames.forEach(name => {
-        const conns = findConnections(name);
-        conns.connectedTo.forEach(target => {
-            if (!target.isUnbound) {
-                visEdges.add({ from: name, to: target.node, arrows: 'to', color: { color: 'rgba(56, 189, 248, 0.5)' } });
-            }
-        });
-    });
+            if (network) network.destroy();
+            network = new vis.Network(container, { nodes: visNodes, edges: visEdges }, { physics: { stabilization: true, barnesHut: { springLength: 200 } } });
+            network.on("click", function (params) {
+                if (params.nodes.length > 0) selectNode(params.nodes[0]);
+            });
+        }
+    }
 
-    if (network) network.destroy();
-    network = new vis.Network(container, { nodes: visNodes, edges: visEdges }, { physics: { stabilization: true, barnesHut: { springLength: 200 } } });
-    network.on("click", function (params) {
-        if (params.nodes.length > 0) selectNode(params.nodes[0]);
-    });
+    // 2. Aktuelle Detailseite refreshen
+    const activeLi = document.querySelector('#dynamic-node-list li.active');
+    if (activeLi) {
+        const currentNodeName = activeLi.dataset.name;
+        console.log("Refreshing details for active node:", currentNodeName);
+        // Ruft selectNode auf, um die Ansicht mit den neuesten workspaceData zu füllen
+        selectNode(currentNodeName);
+    }
+
+    logToTerminal("Ansicht und Graph manuell aktualisiert.", "info");
 }
 
 function restartSystemNode(nodeName) {
@@ -1588,43 +1624,106 @@ function renderCode(rawCode, path) {
 }
 
 function renderLaunchFiles() {
-    const container = document.getElementById('dynamic-launch-container');
-    if (!container) return;
+    if (hasRenderedLaunches) return; // Bricht ab, wenn bereits 1x gerendert
 
-    if (!workspaceData.launches || workspaceData.launches.length === 0) {
-        container.innerHTML = "<div class='empty-state' style='padding: 30px;'>Keine aktiven Launch-Files gefunden.</div>";
+    const listContainer = document.getElementById('launch-list-container');
+    const detailContainer = document.getElementById('dynamic-launch-container');
+    if (!listContainer || !detailContainer) return;
+
+    if (!workspaceData.all_launches || workspaceData.all_launches.length === 0) {
+        listContainer.innerHTML = "<div class='empty-state' style='padding: 15px;'>Keine gefunden.</div>";
+        detailContainer.innerHTML = "<div class='empty-state' style='padding: 30px;'>Keine lokalen Launch-Files gefunden.</div>";
         return;
     }
 
     const launchesMap = {};
     const allIncluded = new Set();
 
-    workspaceData.launches.forEach(l => {
+    workspaceData.all_launches.forEach(l => {
         launchesMap[l.file_name] = l;
         (l.parsed_includes || []).forEach(inc => {
             allIncluded.add(inc);
         });
     });
 
-    const rootLaunches = workspaceData.launches.filter(l => !allIncluded.has(l.file_name));
+    // Global sichern, damit die Click-Funktion darauf zugreifen kann
+    window.currentLaunchesMap = launchesMap;
 
-    let html = '';
+    const rootLaunches = workspaceData.all_launches.filter(l => !allIncluded.has(l.file_name));
 
-    function buildNodeHtml(nodeName) {
-        const nodeInfo = getNodeData(nodeName) || {};
-        const pkg = nodeInfo.package || 'Unbekannt';
+    // LINKE SEITE (Liste) aufbauen
+    if (rootLaunches.length > 0) {
+        let listHtml = '';
+        rootLaunches.forEach((root, index) => {
+            let pkgObj = root.path ? root.path.split('/')[2] : 'Unbekannt';
+            if (root.path && root.path.startsWith('opt')) {
+                pkgObj = root.path.split('/')[4] || 'System';
+                if (root.path.includes('share/')) {
+                    pkgObj = root.path.split('share/')[1].split('/')[0];
+                }
+            } else if (root.path && root.path.includes('src/')) {
+                const parts = root.path.split('/');
+                const srcIdx = parts.indexOf('src');
+                if (parts.length > srcIdx + 2) {
+                    const launchIdx = parts.indexOf('launch');
+                    if (launchIdx > 0) {
+                        pkgObj = parts[launchIdx - 1];
+                    }
+                }
+            }
+
+            listHtml += `
+                <li class="ws-node node-card" id="launch-li-${index}" onclick="selectLaunchFile('${root.file_name}', ${index})" style="cursor: pointer; margin-bottom: 8px;">
+                    <div class="node-card-content" style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                        <div style="display: flex; align-items: center; overflow: hidden; min-width: 0;">
+                            <i class="fa-solid fa-play" style="color: #38bdf8; margin-right: 12px; flex-shrink: 0;"></i>
+                            <span class="node-name-text text-truncate" title="${root.file_name}">${root.file_name}</span>
+                        </div>
+                        <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkgObj}</span>
+                    </div>
+                </li>
+            `;
+        });
+        listContainer.innerHTML = listHtml;
+        hasRenderedLaunches = true;
+
+        // Wähle automatisch das erste Element in der Liste aus
+        setTimeout(() => selectLaunchFile(rootLaunches[0].file_name, 0), 100);
+    } else {
+        listContainer.innerHTML = "<div class='empty-state' style='padding: 15px;'>Keine Root-Launches.</div>";
+        detailContainer.innerHTML = "<div class='empty-state' style='padding: 30px;'>Keine lokalen Launch-Files gefunden.</div>";
+    }
+}
+
+// RECHTE SEITE (Baum rendern beim Klicken auf die Liste)
+window.selectLaunchFile = function (fileName, index) {
+    // Liste markieren
+    const items = document.querySelectorAll('#launch-list-container li');
+    items.forEach(item => item.classList.remove('active'));
+    const activeItem = document.getElementById(`launch-li-${index}`);
+    if (activeItem) activeItem.classList.add('active');
+
+    const container = document.getElementById('dynamic-launch-container');
+    if (!container || !window.currentLaunchesMap) return;
+
+    function buildNodeHtml(nodeObj) {
+        let nodeName = nodeObj.name || nodeObj.executable;
+        let pkg = nodeObj.package || 'Unbekannt';
 
         let badge = `<span class="t-badge badge-node"><i class="fa-solid fa-microchip"></i> NODE</span>`;
         if (pkg.includes('component_container') || nodeName.includes('_container')) {
             badge = `<span class="t-badge badge-container"><i class="fa-solid fa-box-open"></i> CONTAINER</span>`;
         }
 
+        // Bessere, responsive Karten für Nodes
         return `
-            <li>
-                <div class="tree-card">
-                    <div class="tree-card-header">
-                        <span class="tree-card-title">${nodeName.startsWith('/') ? nodeName.substring(1) : nodeName}</span>
-                        <span class="tree-card-pkg">${pkg}</span>
+            <li style="margin-bottom: 12px;">
+                <div class="tree-card" style="border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3px solid #c084fc; background: rgba(0,0,0,0.2);">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 12px; width: 100%;">
+                        <div class="d-flex align-items-center" style="gap: 12px; min-width: 0; flex: 1;">
+                            <span class="tree-card-title text-truncate" title="${nodeName}" style="font-size: 0.95rem;">${nodeName}</span>
+                            <span class="tree-card-pkg">${pkg}</span>
+                        </div>
                         <div class="tree-card-badges">
                             ${badge}
                         </div>
@@ -1638,17 +1737,17 @@ function renderLaunchFiles() {
         if (visited.has(launchFileName)) return '';
         visited.add(launchFileName);
 
-        const launch = launchesMap[launchFileName];
+        const launch = window.currentLaunchesMap[launchFileName];
         if (!launch) return '';
 
         let badgeClass = isRoot ? 'is-entry' : 'is-launch';
         let badgeHtml = isRoot
             ? `<div class="tree-card-badges"><span class="t-badge badge-entry">ENTRY POINT</span></div>`
-            : '';
+            : ``;
 
         let iconHtml = isRoot
-            ? `<i class="fa-solid fa-play" style="color: #38bdf8;"></i>`
-            : `<i class="fa-solid fa-rocket" style="color: var(--accent-secondary);"></i>`;
+            ? `<i class="fa-solid fa-play" style="color: #38bdf8; font-size: 1.2rem;"></i>`
+            : `<i class="fa-solid fa-rocket" style="color: var(--accent-secondary); font-size: 1.1rem;"></i>`;
 
         let pkgObj = launch.path ? launch.path.split('/')[2] : 'Unbekannt';
         if (launch.path && launch.path.startsWith('opt')) {
@@ -1668,64 +1767,61 @@ function renderLaunchFiles() {
         }
 
         let displayPath = launch.path || 'Pfad unbekannt';
-        if (displayPath.length > 55) {
+        if (displayPath.length > 65) {
             const parts = displayPath.split('/');
             displayPath = parts.slice(0, 3).join('/') + '/.../' + parts[parts.length - 1];
         }
 
-        let html = `
-            <li>
-                <div class="tree-card ${badgeClass}">
-                    <div class="tree-card-header">
-                        ${iconHtml}
-                        <span class="tree-card-title">${launch.file_name}</span>
-                        <span class="tree-card-pkg">${pkgObj}</span>
-                        <div class="tree-card-path" onclick="openInExplorer('${launch.path}')">
-                            <i class="fa-regular fa-folder-open"></i> ${displayPath}
+        // Bessere, responsive Karten für Launch-Includes
+        let treeHtml = `
+            <li style="margin-bottom: 20px;">
+                <div class="tree-card ${badgeClass}" style="border: 1px solid ${isRoot ? 'rgba(14, 165, 233, 0.4)' : 'rgba(255, 255, 255, 0.1)'}; background: ${isRoot ? 'rgba(14, 165, 233, 0.05)' : 'rgba(255, 255, 255, 0.02)'}; padding: 18px;">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap" style="gap: 15px; width: 100%;">
+                        <div class="d-flex align-items-center" style="gap: 15px; min-width: 0; flex: 1;">
+                            ${iconHtml}
+                            <span class="tree-card-title text-truncate" style="font-size: 1.1rem; font-weight: 600;" title="${launch.file_name}">${launch.file_name}</span>
+                            <span class="tree-card-pkg">${pkgObj}</span>
                         </div>
-                        <div class="tree-card-badges">
+                        <div class="tree-card-badges d-flex align-items-center" style="gap: 10px;">
                             ${badgeHtml}
                             ${!isRoot ? '<span class="t-badge badge-launch">LAUNCH</span>' : ''}
                         </div>
                     </div>
+                    <div class="tree-card-path" onclick="openInExplorer('${launch.path}')" style="display: inline-flex; width: fit-content; background: rgba(0,0,0,0.3); margin-top: 15px; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 6px 12px; cursor: pointer;">
+                        <i class="fa-regular fa-folder-open" style="margin-right: 8px;"></i> ${displayPath}
+                    </div>
                 </div>
         `;
 
-        if ((launch.active_nodes && launch.active_nodes.length > 0) || (launch.parsed_includes && launch.parsed_includes.length > 0)) {
-            html += `<ul>`;
+        if ((launch.parsed_nodes && launch.parsed_nodes.length > 0) || (launch.parsed_includes && launch.parsed_includes.length > 0)) {
+            treeHtml += `<ul style="border-left: 2px solid rgba(255,255,255,0.05); padding-left: 25px; margin-left: 15px; margin-top: 15px;">`;
 
-            if (launch.active_nodes) {
-                const sortedNodes = [...launch.active_nodes].sort();
-                sortedNodes.forEach(node => {
-                    html += buildNodeHtml(node);
+            if (launch.parsed_nodes) {
+                launch.parsed_nodes.forEach(n => {
+                    treeHtml += buildNodeHtml(n);
                 });
             }
 
             if (launch.parsed_includes) {
                 launch.parsed_includes.forEach(inc => {
-                    html += buildTreeHtml(inc, false, new Set(visited));
+                    treeHtml += buildTreeHtml(inc, false, new Set(visited));
                 });
             }
 
-            html += `</ul>`;
+            treeHtml += `</ul>`;
         }
 
-        html += `</li>`;
-        return html;
+        treeHtml += `</li>`;
+        return treeHtml;
     }
 
-    if (rootLaunches.length > 0) {
-        rootLaunches.forEach(root => {
-            html += `<div class="launch-tree-container"><ul class="modern-tree">`;
-            html += buildTreeHtml(root.file_name, true);
-            html += `</ul></div>`;
-        });
-    } else {
-        html = "<div class='empty-state' style='padding: 30px;'>Es laufen derzeit keine Launch-Files.</div>";
-    }
+    // Baum zusammenbauen und rechts anzeigen
+    let rightHtml = `<div class="launch-tree-container" style="background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); padding: 30px; border-radius: 16px;"><ul class="modern-tree" style="margin: 0; padding: 0;">`;
+    rightHtml += buildTreeHtml(fileName, true);
+    rightHtml += `</ul></div>`;
 
-    container.innerHTML = html;
-}
+    container.innerHTML = rightHtml;
+};
 
 function renderBashrc(bashrcArray) {
     const container = document.getElementById('bashrc-content');
@@ -2036,6 +2132,30 @@ function initRosConnection() {
         if (text.includes('Kollision')) { alertBanner.classList.remove('hidden'); logToTerminal(`CRITICAL: ${text}`, "collision"); }
     });
 }
+
+// --- Suchfunktion für lokale Launch-Files ---
+window.filterLaunches = function () {
+    const input = document.getElementById('launch-search');
+    if (!input) return;
+
+    const filter = input.value.toLowerCase();
+    const listContainer = document.getElementById('launch-list-container');
+    if (!listContainer) return;
+
+    const items = listContainer.getElementsByTagName('li');
+
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].classList.contains('empty-state')) continue;
+
+        const text = items[i].textContent || items[i].innerText;
+        if (text.toLowerCase().indexOf(filter) > -1) {
+            items[i].style.display = "flex";
+        } else {
+            items[i].style.display = "none";
+        }
+    }
+};
+
 
 // Initialer Verbindungsaufbau beim Laden der Seite
 window.onload = initRosConnection;
