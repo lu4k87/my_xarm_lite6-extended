@@ -32,23 +32,35 @@
                 <img src="node-icon.svg" alt="ROS2 Logo" class="brand-logo">
             </div>
             <div class="system-status">
-                <div class="status-row-container">
-                    <div class="status-section">
-                        <div class="status-label">Dashboard</div>
-                        <div class="status-group">
+                <div
+                    style="text-align: center; margin-top: 15px; font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; letter-spacing: 1px;">
+                    ROS2-DOMAIN ID: <span id="val-domain-id"
+                        style="color: var(--accent-primary); font-family: 'JetBrains Mono', monospace; font-weight: bold;">?</span>
+                </div>
+                <div class="status-row-container" style="flex-direction: column; gap: 10px;">
+                    <div class="status-section"
+                        style="flex-direction: row; justify-content: space-between; padding: 10px 16px; width: 100%;">
+                        <div class="status-label" style="margin: 0; font-size: 0.85rem; text-align: left;">Dashboard
+                        </div>
+                        <div class="status-group" style="gap: 8px;">
                             <div class="status-indicator" id="dashboard-status-dot"></div>
                             <div id="dashboard-status-text">Offline</div>
+                            <div class="ping-text" id="bridge-ping"
+                                style="padding: 0; margin: 0; font-size: 0.75rem; min-width: 45px; text-align: right;">
+                                -- ms</div>
                         </div>
                     </div>
-                    <div class="status-section">
-                        <div class="status-label">Roboter</div>
-                        <div class="status-group">
+                    <div class="status-section"
+                        style="flex-direction: row; justify-content: space-between; padding: 10px 16px; width: 100%;">
+                        <div class="status-label" style="margin: 0; font-size: 0.85rem; text-align: left;">Roboter</div>
+                        <div class="status-group" style="gap: 8px;">
                             <div class="status-indicator" id="robot-status-dot"></div>
                             <div id="robot-status-text">Offline</div>
+                            <div style="min-width: 45px;"></div>
                         </div>
                     </div>
                 </div>
-                <div class="ping-text" id="bridge-ping">-- ms</div>
+
             </div>
             <nav class="nav-menu">
                 <button class="nav-btn" onclick="switchView('telemetry')"><i class="fa-solid fa-gauge-high"></i>

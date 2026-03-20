@@ -369,6 +369,8 @@ body {
     align-items: center;
     gap: 8px;
     padding: 5px 0;
+    border: #cbd5e1 1px solid;
+    border-radius: 10px;
 }
 
 .status-group {
@@ -1204,7 +1206,6 @@ body {
     position: relative;
     display: inline-flex;
     align-items: center;
-    cursor: pointer;
 }
 
 .tooltip-icon {

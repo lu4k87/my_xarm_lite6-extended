@@ -49,7 +49,7 @@ function truncateTopic(topic, maxLen = 35) {
     const short = topic.slice(0, maxLen - 1) + '\u2026'; // … Unicode
 
     return `<div class="tooltip-container" style="display: inline-flex; vertical-align: bottom;">
-                <span style="font-family:'JetBrains Mono',monospace; font-size:0.82rem; cursor: help; border-bottom: 1px dashed rgba(255,255,255,0.25); white-space: nowrap;">${short}</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:0.82rem; border-bottom: 1px dashed rgba(255,255,255,0.25); white-space: nowrap;">${short}</span>
                 <div class="tooltip-text" style="width: max-content; max-width: 400px; word-break: break-all; z-index: 9999; font-family:'JetBrains Mono',monospace; font-size:0.75rem;">${topic}</div>
             </div>`;
 }
@@ -1130,7 +1130,7 @@ function selectNode(nodeName, skipRequest = false) {
                             <div class="topic-info-row msg-content" id="msg-${s.topic.replace(/\//g, '-')}">
                                 <span class="topic-lbl">Msg:</span>
                                 <div class="tooltip-container" style="display: inline-flex; max-width: 75%; vertical-align: bottom;">
-                                    <span class="topic-val text-truncate" style="color:var(--text-secondary); font-size:0.8rem; cursor: help; border-bottom: 1px dashed rgba(255,255,255,0.25);">Wartet auf Daten...</span>
+                                    <span class="topic-val text-truncate" style="color:var(--text-secondary); font-size:0.8rem; border-bottom: 1px dashed rgba(255,255,255,0.25);">Wartet auf Daten...</span>
                                     <div class="tooltip-text msg-tooltip" style="width: max-content; max-width: 350px; white-space: pre-wrap; word-break: break-word; z-index: 9999; left: 0; transform: none; top: 100%; margin-top: 5px;">Wartet auf Daten...</div>
                                 </div>
                             </div>
@@ -2103,6 +2103,11 @@ function initRosConnection() {
 
             // Fall 2: Komplette Metadaten (alle 10s oder on-demand)
             workspaceData = incoming;
+
+            const domainEl = document.getElementById('val-domain-id');
+            if (domainEl && incoming.ros_domain_id !== undefined) {
+                domainEl.textContent = incoming.ros_domain_id;
+            }
 
             // Roboter Status Detektion
             const isRobotOnline = workspaceData.robot_hardware_connected === true;

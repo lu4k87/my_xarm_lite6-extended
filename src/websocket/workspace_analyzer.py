@@ -765,6 +765,7 @@ class WorkspaceAnalyzer(Node):
                 "tree":          self.workspace_tree_cache,
                 "launches":      [],
                 "all_launches":  self.launch_details_cache,
+                "ros_domain_id": os.environ.get("ROS_DOMAIN_ID", "0"),
             }
 
             active_launch_files = set()

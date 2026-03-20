@@ -38,8 +38,14 @@ def run_cmd(command, title="ROS 2 Terminal", ws_path="~/dev_ws"):
 
     ros_setup = "source /opt/ros/humble/setup.bash"
     ws_setup  = f"source {ws_path}/install/setup.bash"
-    display   = f"{ros_setup} && {ws_setup} && cd {ws_path} && {command}"
-    safe_disp = display.replace('\\', '\\\\').replace('"', '\\"')
+    
+    # Befehl in Einzelteile zerlegen für schöne Anzeige
+    display_str = f"{ros_setup} && {ws_setup} && cd {ws_path} && {command}"
+    cmd_parts = [p.strip() for p in display_str.split('&&')]
+    
+    # Vor JEDEN Part ein "CMD:" setzen
+    formatted_disp = "\\n".join([f" \\033[1;36mCMD:\\033[0m \\033[1;37m{part}\\033[0m" for part in cmd_parts])
+    safe_disp = formatted_disp.replace('"', '\\"')
 
     # Variablen im Terminal erzwingen, selbst wenn die .bashrc abbricht
     script = f"""export ROS_DOMAIN_ID={domain_id}
@@ -53,8 +59,7 @@ clear
 echo -e "\\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\\033[0m"
 echo -e "\\033[36m[Terminal: $(tty)  PID: $$]\\033[0m"
 echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m"
-echo -e "\\033[1;32m CMD:\\033[0m"
-echo -e "\\033[1;37m {safe_disp}\\033[0m"
+echo -e "{safe_disp}"
 echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m\\n"
 {command}
 """
@@ -69,7 +74,13 @@ def run_interactive_cmd(command, title="System Tool"):
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
 
     ros_setup = "source /opt/ros/humble/setup.bash"
-    safe_disp = command.replace('\\', '\\\\').replace('"', '\\"')
+    
+    # Befehl in Einzelteile zerlegen für schöne Anzeige
+    cmd_parts = [p.strip() for p in command.split('&&')]
+    
+    # Vor JEDEN Part ein "CMD:" setzen
+    formatted_disp = "\\n".join([f" \\033[1;36mCMD:\\033[0m \\033[1;37m{part}\\033[0m" for part in cmd_parts])
+    safe_disp = formatted_disp.replace('"', '\\"')
 
     # Variablen im Terminal erzwingen
     script = f"""export ROS_DOMAIN_ID={domain_id}
@@ -81,8 +92,7 @@ clear
 echo -e "\\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\\033[0m"
 echo -e "\\033[36m[Terminal: $(tty)  PID: $$]\\033[0m"
 echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m"
-echo -e "\\033[1;32m CMD:\\033[0m"
-echo -e "\\033[1;37m {safe_disp}\\033[0m"
+echo -e "{safe_disp}"
 echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m\\n"
 {command}
 """
