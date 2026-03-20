@@ -501,7 +501,7 @@ body {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 
     /* Centered 50% layout */
-    width: 50%;
+    width: 70%;
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
@@ -761,6 +761,7 @@ body {
 
 .node-list-panel .node-package-badge {
     opacity: 1;
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .search-box {

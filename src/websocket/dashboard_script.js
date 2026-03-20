@@ -823,7 +823,7 @@ function selectNode(nodeName, skipRequest = false) {
             connInHtml += `<div class='conn-card unbound-card rx-card d-flex flex-column gap-2'>
                 <div class='d-flex justify-content-between align-items-center w-100'>
                     <span class='conn-node-name m-0' title='Linux-Hardware-Input'>
-                        <img src="linux-icon.png" class="me-2" style="width: 32px; height: 32px; vertical-align: middle; object-fit: contain;" alt="Linux"><span class="multiline-label">Input-Stream <br> Linux-Systemebene</span>
+                        <img src="linux-icon.png" class="me-2" style="width: 32px; height: 32px; vertical-align: middle; object-fit: contain;" alt="Linux"><span class="multiline-label">Linux-Hardware-Input </span>
                         <i class="fa-solid fa-circle-info tooltip-icon ms-2" style="color: var(--color-warning); font-size: 0.9em;" 
                            title="Dieser Node empfängt Daten direkt von der Hardware (z.B. Tastatur/Gamepad) über das Betriebssystem und nicht über das ROS-Netzwerk."></i>
                     </span>
