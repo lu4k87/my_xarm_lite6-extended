@@ -1734,14 +1734,21 @@ window.selectLaunchFile = function (fileName, index) {
         let pkg = nodeObj.package || 'Unbekannt';
 
         let badge = `<span class="t-badge badge-node"><i class="fa-solid fa-microchip"></i> NODE</span>`;
-        if (pkg.includes('component_container') || nodeName.includes('_container')) {
-            badge = `<span class="t-badge badge-container"><i class="fa-solid fa-box-open"></i> CONTAINER</span>`;
+        let borderStyle = "border-left: 3px solid #34d399;"; // Grün für Node
+        let marginStyle = "margin-bottom: 12px;";
+
+        if (nodeObj.is_container || pkg.includes('component_container') || nodeName.includes('_container')) {
+            badge = `<span class="t-badge badge-container"><i class="fa-solid fa-layer-group"></i> CONTAINER</span>`;
+            borderStyle = "border-left: 3px solid #fbbf24;"; // Gelb/Orange für Container
+        } else if (nodeObj.is_component) {
+            badge = `<span class="t-badge badge-component"><i class="fa-solid fa-puzzle-piece"></i> COMPONENT</span>`;
+            borderStyle = "border-left: 3px solid #f43f5e; margin-left: 20px;"; // Rot und eingerückt!
+            marginStyle = "margin-bottom: 8px;";
         }
 
-        // Bessere, responsive Karten für Nodes
         return `
-            <li style="margin-bottom: 12px;">
-                <div class="tree-card" style="border: 1px solid rgba(255, 255, 255, 0.1); border-left: 3px solid #c084fc; background: rgba(0,0,0,0.2);">
+            <li style="${marginStyle}">
+                <div class="tree-card" style="border: 1px solid rgba(255, 255, 255, 0.1); ${borderStyle} background: rgba(0,0,0,0.2); padding: 10px;">
                     <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 12px; width: 100%;">
                         <div class="d-flex align-items-center" style="gap: 12px; min-width: 0; flex: 1;">
                             <span class="tree-card-title text-truncate" title="${nodeName}" style="font-size: 0.95rem;">${nodeName}</span>

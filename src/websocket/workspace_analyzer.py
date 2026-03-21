@@ -386,17 +386,46 @@ class WorkspaceAnalyzer(Node):
                         "description": "",
                     })
 
+                # Kommentare entfernen, um sauberes Parsing zu garantieren
+                clean_content = re.sub(r'#.*', '', content)
+                
                 nodes_list = []
-                for node_match in re.finditer(r'Node\s*\((.*?)\)', content, re.DOTALL):
-                    n_str  = node_match.group(1)
+                # Finde alle Einstiegspunkte (Instanziierungen)
+                matches = list(re.finditer(r'\b(Node|ComposableNodeContainer|ComposableNode)\s*\(', clean_content))
+                
+                for i, match in enumerate(matches):
+                    node_type = match.group(1)
+                    start_idx = match.end()
+                    # Ende des Suchbereichs ist der Start des nächsten Nodes oder das Dateiende
+                    end_idx = matches[i+1].start() if i + 1 < len(matches) else len(clean_content)
+                    
+                    n_str = clean_content[start_idx:end_idx]
+                    
                     pkg    = re.search(r'package\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
                     exe    = re.search(r'executable\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
+                    plugin = re.search(r'plugin\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
                     name_m = re.search(r'name\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
-                    if pkg and exe:
+                    
+                    if node_type == 'ComposableNode':
+                        exe_val = plugin.group(1).split('::')[-1] if plugin else "component"
+                        is_cont = False
+                        is_comp = True
+                    elif node_type == 'ComposableNodeContainer':
+                        exe_val = exe.group(1) if exe else "component_container"
+                        is_cont = True
+                        is_comp = False
+                    else:
+                        exe_val = exe.group(1) if exe else "unknown"
+                        is_cont = False
+                        is_comp = False
+                    
+                    if pkg and exe_val != "unknown":
                         nodes_list.append({
-                            "package":    pkg.group(1),
-                            "executable": exe.group(1),
-                            "name":       name_m.group(1) if name_m else exe.group(1),
+                            "package":      pkg.group(1),
+                            "executable":   exe_val,
+                            "name":         name_m.group(1) if name_m else exe_val,
+                            "is_container": is_cont,
+                            "is_component": is_comp
                         })
 
                 for node_match in re.finditer(r'<node\s+([^>]+)>', content):
