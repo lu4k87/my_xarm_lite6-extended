@@ -76,41 +76,41 @@
                     Workspace</button>
                 <button class="nav-btn" onclick="switchView('launch-files')"><i class="fa-solid fa-rocket"></i>
                     Launch-Files</button>
-                <button class="nav-btn btn-execution" onclick="switchView('execution')" style="margin-bottom: 20px;"><i
+                <button class="nav-btn btn-execution" onclick="switchView('execution')"><i
                         class="fa-solid fa-terminal"></i> Execution (lite6.sh)</button>
                 <!-- NEUE SECTION: COMMANDS -->
                 <div class="wiki-group">
-                    <div class="wiki-header" style="color: var(--accent-primary);"><i
+                    <div class="wiki-header" style="color: var(--accent-primary); cursor: pointer;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';"><i
                             class="fa-solid fa-laptop-code"></i> Commands &gt;&gt;</div>
-                    <ul class="wiki-list">
+                    <ul class="wiki-list" style="display: none;">
                         <li onclick="switchView('cmd-system')">Linux System</li>
                         <li onclick="switchView('cmd-ros2')">ROS 2 CLI</li>
                         <li onclick="switchView('cmd-colcon')">Colcon Build</li>
                         <li onclick="switchView('cmd-rqt')">rqt Tools (Interaktiv)</li>
                         <li onclick="switchView('cmd-git')">Git &amp; Versioning</li>
                     </ul>
-                    <!-- WIKI SECTION -->
-                    <div class="wiki-group" style="margin-top: 15px;">
-                        <div class="wiki-header"><i class="fa-solid fa-book"></i> Wiki &gt;&gt;</div>
-                        <ul class="wiki-list">
-                            <li onclick="switchView('wiki-dashboard')">Dashboard Architektur</li>
-                            <li onclick="switchView('wiki-ports')">Architektur Ports (8080/9090)</li>
-                            <li onclick="switchView('wiki-bootcamp')">ROS 2 Bootcamp Summary</li>
-                            <li onclick="switchView('wiki-git')">Git Setup</li>
-                            <li onclick="switchView('wiki-intro')">Introduction</li>
-                            <li onclick="switchView('wiki-install')">Installation</li>
-                            <li onclick="switchView('wiki-ros2')">Ros2</li>
-                            <li onclick="switchView('wiki-vision')">Vision</li>
-                            <li onclick="switchView('wiki-object')">Object Detection</li>
-                            <li onclick="switchView('wiki-rviz2')">Rviz2</li>
-                            <li onclick="switchView('wiki-isaacsim')">Isaac Sim</li>
-                            <li onclick="switchView('wiki-isaaclab')">Isaac Lab</li>
-                            <li onclick="switchView('wiki-stereovision')">Stereo Vision (3D)</li>
-                            <li onclick="switchView('wiki-koordinaten')">Koordinaten Transformation</li>
-                            <li onclick="switchView('wiki-pointcloud')">Pointcloud</li>
-                            <li onclick="switchView('wiki-octomap')">Octomap</li>
-                        </ul>
-                    </div>
+                </div>
+                <!-- WIKI SECTION -->
+                <div class="wiki-group">
+                    <div class="wiki-header" style="cursor: pointer;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';"><i class="fa-solid fa-book"></i> Wiki &gt;&gt;</div>
+                    <ul class="wiki-list" style="display: none;">
+                        <li onclick="switchView('wiki-dashboard')">Dashboard Architektur</li>
+                        <li onclick="switchView('wiki-ports')">Architektur Ports (8080/9090)</li>
+                        <li onclick="switchView('wiki-bootcamp')">ROS 2 Bootcamp Summary</li>
+                        <li onclick="switchView('wiki-git')">Git Setup</li>
+                        <li onclick="switchView('wiki-intro')">Introduction</li>
+                        <li onclick="switchView('wiki-install')">Installation</li>
+                        <li onclick="switchView('wiki-ros2')">Ros2</li>
+                        <li onclick="switchView('wiki-vision')">Vision</li>
+                        <li onclick="switchView('wiki-object')">Object Detection</li>
+                        <li onclick="switchView('wiki-rviz2')">Rviz2</li>
+                        <li onclick="switchView('wiki-isaacsim')">Isaac Sim</li>
+                        <li onclick="switchView('wiki-isaaclab')">Isaac Lab</li>
+                        <li onclick="switchView('wiki-stereovision')">Stereo Vision (3D)</li>
+                        <li onclick="switchView('wiki-koordinaten')">Koordinaten Transformation</li>
+                        <li onclick="switchView('wiki-pointcloud')">Pointcloud</li>
+                        <li onclick="switchView('wiki-octomap')">Octomap</li>
+                    </ul>
                 </div>
             </nav>
         </aside>

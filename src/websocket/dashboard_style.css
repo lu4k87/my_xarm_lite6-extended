@@ -1,8 +1,8 @@
 :root {
-    /* ULTRA MODERN DARK THEME */
-    --bg-base: #050505;
-    --bg-surface: #121212;
-    --bg-surface-hover: #1e1e1e;
+    /* ULTRA MODERN DARK THEME - Aufgehellt */
+    --bg-base: #11141d;
+    --bg-surface: #1a1e2b;
+    --bg-surface-hover: #262c3f;
 
     /* NEUE HAUPTFARBEN (Blau & Violett) */
     --accent-primary: #38bdf8;
@@ -84,8 +84,8 @@ h6,
 
 body {
     background-color: var(--bg-base);
-    /* Dein aktueller Background als Backup */
-    background-image: url('bg.jpg');
+    /* Dein aktueller Background mit hellem Gradient-Overlay */
+    background-image: linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.07)), url('bg.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -103,6 +103,8 @@ body {
 .app-container {
     display: flex;
     height: 100vh;
+    background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.7) 0%, rgba(168, 85, 247, 0.25) 30%, transparent 70%),
+        radial-gradient(circle at bottom left, rgba(56, 189, 248, 0.7) 0%, rgba(56, 189, 248, 0.25) 30%, transparent 70%);
 }
 
 /* Sidebar mit Gradient-Logo */
@@ -111,7 +113,9 @@ body {
     max-width: 324px;
     width: 324px;
     flex-shrink: 0;
-    background-color: var(--bg-surface);
+    background-color: rgba(18, 18, 18, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
@@ -145,10 +149,10 @@ body {
 }
 
 .brand {
-    padding: 20px;
+    padding: 20px 35px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 15px;
     color: white;
     border-bottom: 1px solid var(--border-color);
@@ -156,6 +160,7 @@ body {
     position: relative;
     overflow: hidden;
     min-height: 100px;
+    background-color: var(--bg-surface);
 }
 
 .brand-video {
@@ -192,38 +197,61 @@ body {
     font-weight: 800;
     color: var(--accent-primary);
     letter-spacing: 2px;
+    animation: blue-neon-pulse 2.5s infinite alternate ease-in-out;
 }
 
 .brand-text-stack span:last-child {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 600;
     color: white;
     letter-spacing: 5px;
     opacity: 1;
     margin-top: 2px;
+    animation: gold-neon-pulse 3s infinite alternate ease-in-out;
 }
 
 .brand-logo {
-    height: 3.6rem;
+    height: 4.0rem;
     width: auto;
+    margin-right: -10px;
     filter: drop-shadow(0 0 5px var(--accent-glow));
     animation: logo-pulse 2s infinite ease-in-out;
 }
 
 @keyframes logo-pulse {
     0% {
-        filter: drop-shadow(0 0 5px var(--accent-glow)) brightness(1);
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)) brightness(1.2);
         transform: scale(1);
     }
 
     50% {
-        filter: drop-shadow(0 0 15px var(--accent-primary)) brightness(1.2) sepia(1) hue-rotate(190deg) saturate(5);
-        transform: scale(1.05);
+        filter: drop-shadow(0 0 18px var(--accent-primary)) brightness(1) sepia(1) hue-rotate(190deg) saturate(5);
+        transform: scale(1.08);
     }
 
     100% {
-        filter: drop-shadow(0 0 5px var(--accent-glow)) brightness(1);
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)) brightness(1.2);
         transform: scale(1);
+    }
+}
+
+@keyframes blue-neon-pulse {
+    0% {
+        text-shadow: 0 0 4px rgba(56, 189, 248, 0.4), 0 0 10px rgba(56, 189, 248, 0.2);
+    }
+
+    100% {
+        text-shadow: 0 0 15px rgba(56, 189, 248, 0.9), 0 0 25px rgba(56, 189, 248, 0.7), 0 0 35px rgba(56, 189, 248, 0.5);
+    }
+}
+
+@keyframes gold-neon-pulse {
+    0% {
+        text-shadow: 0 0 4px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 215, 0, 0.2);
+    }
+
+    100% {
+        text-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.4);
     }
 }
 
@@ -292,7 +320,7 @@ body {
 }
 
 .wiki-group {
-    margin-top: auto;
+    margin-top: 20px;
     border-top: 1px solid var(--border-color);
     padding-top: 15px;
     display: flex;
@@ -394,8 +422,11 @@ body {
 }
 
 .status-indicator.online {
-    background: #10b981;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    width: 12px;
+    height: 12px;
+    background: #00ff88;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+    animation: pulse-dot 3s infinite ease-in-out;
 }
 
 .status-indicator.offline {
@@ -443,8 +474,6 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
-    background: radial-gradient(circle at top right, var(--accent-glow), transparent 30%),
-        radial-gradient(circle at bottom left, var(--accent-secondary-glow), transparent 30%);
     z-index: 1;
 }
 
@@ -499,7 +528,7 @@ body {
 }
 
 .widget {
-    background: rgba(18, 18, 18, 0.6);
+    background: rgba(18, 18, 18, 0.4);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -764,6 +793,7 @@ body {
     padding: 15px;
     margin-left: 10px;
     margin-right: 6px;
+    background: rgba(18, 18, 18, 0.4) !important;
 }
 
 .node-list-panel .node-package-badge {
@@ -925,15 +955,18 @@ body {
 
 @keyframes pulse-dot {
     0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.6), 0 0 12px rgba(0, 255, 136, 0.8);
     }
 
-    70% {
-        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    50% {
+        opacity: 0.4;
+        box-shadow: 0 0 0 10px rgba(0, 255, 136, 0), 0 0 25px rgba(0, 255, 136, 0.3);
     }
 
     100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(0, 255, 136, 0), 0 0 12px rgba(0, 255, 136, 0);
     }
 }
 
@@ -973,6 +1006,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 0;
+    background: rgba(18, 18, 18, 0.4) !important;
 }
 
 .network-widget.hidden {
@@ -988,7 +1022,7 @@ body {
 .node-details-dashboard {
     width: 100%;
     height: 100%;
-    background: rgba(18, 18, 18, 0.85);
+    background: rgba(18, 18, 18, 0.35);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1004,7 +1038,7 @@ body {
 }
 
 .nd-header {
-    background: rgba(0, 0, 0, 0.4);
+    background: transparent;
     padding: 12px 20px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -1054,7 +1088,7 @@ body {
 .nd-header-meta-chip {
     display: flex;
     align-items: center;
-    background: rgba(15, 23, 42, 0.4);
+    background: rgba(45, 55, 75, 0.5);
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
@@ -1248,6 +1282,7 @@ body {
     pointer-events: none;
     word-break: break-all;
     max-width: 300px;
+    cursor: default !important; /* Kein Fragezeichen etc. */
 }
 
 .tooltip-text-node {
@@ -1480,7 +1515,7 @@ body {
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
-    max-width: 20ch;
+    max-width: 25ch;
 }
 
 .flow-arrow {
@@ -2291,12 +2326,19 @@ body {
     flex-direction: column;
     gap: 8px;
     transition: transform 0.2s ease, border-color 0.2s ease;
+    
+    /* Stacking Context für überlappende Tooltips */
+    position: relative;
+    z-index: 1;
 }
 
 .topic-item:hover {
     border-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
     background: rgba(15, 23, 42, 0.6);
+    
+    /* Stacking Context beim Hover anheben, um Tooltips über Nachbarn zu legen */
+    z-index: 100;
 }
 
 .topic-info-row {
@@ -2325,6 +2367,36 @@ body {
     max-width: 350px;
     display: inline-block;
     vertical-align: bottom;
+}
+
+.node-details-dashboard .topic-val,
+.node-details-dashboard .text-truncate {
+    max-width: none !important; /* Alle festen Limits aufheben */
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    cursor: default !important;
+}
+
+.node-details-dashboard .tooltip-container {
+    flex: 1;
+    min-width: 0;
+    max-width: none !important;
+    cursor: default !important;
+}
+
+/* Speziell für MSG-Inhalte im Node Explorer: Wiederherstellung der 65ch Grenze */
+.node-details-dashboard .msg-content .topic-val,
+.node-details-dashboard .msg-content .text-truncate,
+.node-details-dashboard .msg-content .tooltip-container {
+    max-width: 65ch !important;
+}
+
+.node-details-dashboard .tooltip-container:hover {
+    cursor: default !important;
 }
 
 .topic-type-badge {
@@ -2482,12 +2554,12 @@ body {
 }
 
 .status-pulse {
-    width: 8px;
-    height: 8px;
-    background-color: #10b981;
+    width: 12px;
+    height: 12px;
+    background-color: #00ff88;
     border-radius: 50%;
-    box-shadow: 0 0 8px #10b981;
-    animation: pulse-dot 2s infinite;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+    animation: pulse-dot 3s infinite ease-in-out;
 }
 
 /* KORREKTUR: overflow-Verhalten für Launch-Files gesichert */

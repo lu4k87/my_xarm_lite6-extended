@@ -31,8 +31,8 @@ function expandTreeRecursively(treeNode, currentPath = "") {
 }
 
 function wrapNodeTooltip(name, customClass = "") {
-    // Falls Name > 20 Zeichen, Tooltip-Struktur verwenden (außer bei Hardware-Input)
-    if (name.length > 20 && name !== "Input-Stream Linux-Systemebene") {
+    // Falls Name > 100 Zeichen, Tooltip-Struktur verwenden (außer bei Hardware-Input)
+    if (name.length > 100 && name !== "Input-Stream Linux-Systemebene") {
         return `<div class="tooltip-container ${customClass}">
                     <span class="text-truncate">${name}</span>
                     <div class="tooltip-text tooltip-text-node">${name}</div>
@@ -335,8 +335,8 @@ function updateNodeList() {
 
             const isNodeRunning = (workspaceData.nodes && workspaceData.nodes[h.name]) ?
                 (workspaceData.nodes[h.name].is_actually_running !== false) : true;
-            const pulseColor = isNodeRunning ? 'rgb(34, 197, 94)' : 'rgb(100, 116, 139)';
-            const statusPulse = `<span class="status-pulse" style="width: 6px; height: 6px; margin: 0 8px 0 0; background-color: ${pulseColor};"></span>`;
+            const pulseColor = isNodeRunning ? 'rgb(0, 255, 136)' : 'rgb(100, 116, 139)';
+            const statusPulse = `<span class="status-pulse" style="width: 10px; height: 10px; margin: 0 8px 0 0; background-color: ${pulseColor};"></span>`;
 
             if (h.isVirtual && hasChildren) {
                 // Virtueller Parent (z.B. für System Daemons, Container)
@@ -353,14 +353,13 @@ function updateNodeList() {
                     const childPkg = getPackageForNode(child);
                     const isChildRunning = (workspaceData.nodes && workspaceData.nodes[child]) ?
                         (workspaceData.nodes[child].is_actually_running !== false) : true;
-                    const cPulseColor = isChildRunning ? 'rgb(34, 197, 94)' : 'rgb(100, 116, 139)';
-                    const cStatusPulse = `<span class="status-pulse" style="width: 6px; height: 6px; margin: 0 8px 0 0; background-color: ${cPulseColor};"></span>`;
+                    const cPulseColor = isChildRunning ? 'rgb(0, 255, 136)' : 'rgb(100, 116, 139)';
+                    const cStatusPulse = `<span class="status-pulse" style="width: 10px; height: 10px; margin: 0 8px 0 0; background-color: ${cPulseColor};"></span>`;
 
                     outHtml += `<li class="${nodeClass} node-card sub-node-item ${activeClass}" data-name="${child}" onclick="selectNode('${child}')">
                                 <div class="node-card-content" style="padding-left: 20px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                     <div style="display: flex; align-items: center;">
                                         ${cStatusPulse}
-                                        <img src="node-icon.svg" style="width: 14px; height: 14px; margin-right: 12px; filter: opacity(0.7);" alt="Node">
                                         ${wrapNodeTooltip(child, "node-name-text")}
                                     </div>
                                     <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkg}</span>
@@ -388,7 +387,6 @@ function updateNodeList() {
                                     <div style="display: flex; align-items: center;">
                                         ${caretHtml}
                                         ${statusPulse}
-                                        <img src="node-icon.svg" style="width: 18px; height: 18px; margin-right: 12px; filter: opacity(0.8);" alt="Node">
                                         ${wrapNodeTooltip(h.name, "node-name-text")}
                                     </div>
                                     <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkg}</span>
@@ -404,7 +402,6 @@ function updateNodeList() {
                                     <div class="node-card-content" style="padding-left: 35px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                         <div style="display: flex; align-items: center;">
                                             ${statusPulse}
-                                            <img src="node-icon.svg" style="width: 14px; height: 14px; margin-right: 12px; filter: opacity(0.7);" alt="Node">
                                             ${wrapNodeTooltip(child, "node-name-text")}
                                         </div>
                                         <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${childPkgInner}</span>
@@ -464,7 +461,7 @@ function updateNodeList() {
         inactiveWsNodes.forEach(n => {
             const activeClass = (n === activeNodeName) ? 'active' : '';
             const iconColor = (n === activeNodeName) ? 'var(--accent-primary)' : '#64748b';
-            const statusPulse = '<span style="display:inline-block; width: 6px; height: 6px; margin: 0 8px 0 0; background-color: #64748b; border-radius: 50%;"></span>';
+            const statusPulse = '<span style="display:inline-block; width: 10px; height: 10px; margin: 0 8px 0 0; background-color: #64748b; border-radius: 50%;"></span>';
 
             const pkg = workspaceData.project_files[n]?.package || 'Unknown';
             html += `<li class="ws-inactive-node node-card ${activeClass}" style="opacity: 0.7;" data-name="${n}" onclick="selectNode('${n}')">
@@ -780,23 +777,17 @@ function selectNode(nodeName, skipRequest = false) {
                     else groups["Build & Tools"].deps.push(d);
                 });
 
-                let categorizedHtml = '';
+                let categorizedHtml = '<div class="nd-all-dependencies" style="display: flex; flex-wrap: wrap; gap: 8px;">';
                 for (const [title, group] of Object.entries(groups)) {
                     if (group.deps.length > 0) {
                         group.deps.sort((a, b) => a.name.localeCompare(b.name));
-                        categorizedHtml += `
-                            <div class="dep-category-group" style="margin-bottom: 0px; border-left: 0px solid ${group.color}; padding-left: 15px; background: rgba(255,255,255,0.01); border-radius: 0 8px 8px 0; padding-top: 2px; padding-bottom: 0px;">
-                            
-                                <div class="nd-dependencies-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                    ${group.deps.map(d => {
+                        categorizedHtml += group.deps.map(d => {
                             const config = typeColorMap[d.type] || { label: "Dep", colorClass: "dep-general" };
                             return `<span class='dep-badge ${config.colorClass}' style="box-shadow: 0 4px 10px rgba(0,0,0,0.15);"><i class="fa-solid fa-box-open"></i> ${d.name}</span>`;
-                        }).join('')}
-                                </div>
-                            </div>
-                        `;
+                        }).join('');
                     }
                 }
+                categorizedHtml += '</div>';
 
                 depContainer.innerHTML = legendHtml + categorizedHtml;
             }
@@ -1079,13 +1070,13 @@ function selectNode(nodeName, skipRequest = false) {
             const dot = centerNodeBox.querySelector('.node-status-dot');
             if (dot) {
                 dot.style.display = 'inline-block';
-                dot.style.width = '8px';
-                dot.style.height = '8px';
+                dot.style.width = '12px';
+                dot.style.height = '12px';
                 dot.style.borderRadius = '50%';
                 dot.style.marginRight = '8px';
-                dot.style.background = '#10b981';
-                dot.style.boxShadow = '0 0 8px rgba(16,185,129,0.8)';
-                dot.style.animation = 'pulse-dot 2s infinite';
+                dot.style.background = '#00ff88';
+                dot.style.boxShadow = '0 0 8px rgba(0,255,136,0.6)';
+                dot.style.animation = 'pulse-dot 3s infinite ease-in-out';
             }
         } else {
             centerNodeBox.classList.remove('node-is-live');
@@ -1129,7 +1120,7 @@ function selectNode(nodeName, skipRequest = false) {
                             <div class="topic-info-row"><span class="topic-lbl">Type:</span><span class="topic-type-badge">${typeStr}</span></div>
                             <div class="topic-info-row msg-content" id="msg-${s.topic.replace(/\//g, '-')}">
                                 <span class="topic-lbl">Msg:</span>
-                                <div class="tooltip-container" style="display: inline-flex; max-width: 75%; vertical-align: bottom;">
+                                <div class="tooltip-container" style="display: inline-flex; vertical-align: bottom;">
                                     <span class="topic-val text-truncate" style="color:var(--text-secondary); font-size:0.8rem; border-bottom: 1px dashed rgba(255,255,255,0.25);">Wartet auf Daten...</span>
                                     <div class="tooltip-text msg-tooltip" style="width: max-content; max-width: 350px; white-space: pre-wrap; word-break: break-word; z-index: 9999; left: 0; transform: none; top: 100%; margin-top: 5px;">Wartet auf Daten...</div>
                                 </div>
@@ -1153,8 +1144,8 @@ function selectNode(nodeName, skipRequest = false) {
                             <div class="topic-info-row"><span class="topic-lbl">Type:</span><span class="topic-type-badge">${typeStr}</span></div>
                             <div class="topic-info-row msg-content" id="msg-${p.topic.replace(/\//g, '-')}">
                                 <span class="topic-lbl">Msg:</span>
-                                <div class="tooltip-container" style="display: inline-flex; max-width: 75%; vertical-align: bottom;">
-                                    <span class="topic-val text-truncate" style="color:var(--text-secondary); font-size:0.8rem; cursor: help; border-bottom: 1px dashed rgba(255,255,255,0.25);">Wartet auf Daten...</span>
+                                <div class="tooltip-container" style="display: inline-flex; vertical-align: bottom;">
+                                    <span class="topic-val text-truncate" style="color:var(--text-secondary); font-size:0.8rem; border-bottom: 1px dashed rgba(255,255,255,0.25);">Wartet auf Daten...</span>
                                     <div class="tooltip-text msg-tooltip" style="width: max-content; max-width: 350px; white-space: pre-wrap; word-break: break-word; z-index: 9999; left: 0; transform: none; top: 100%; margin-top: 5px;">Wartet auf Daten...</div>
                                 </div>
                             </div>
@@ -1317,7 +1308,7 @@ function showNodesOverview() {
         const typeStr = nodeData.package || (isWs ? "Workspace Node" : "System Node");
 
         const badgeHtml = isLive
-            ? `<div style="background: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94); border: 1px solid rgba(34, 197, 94, 0.2); font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; display:inline-flex; align-items:center; gap: 5px; font-weight: 600; letter-spacing: 0.5px;"><span class="status-pulse" style="width:5px; height:5px;"></span>LÄUFT</div>`
+            ? `<div style="background: rgba(0, 255, 136, 0.1); color: rgb(0, 255, 136); border: 1px solid rgba(0, 255, 136, 0.3); font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; display:inline-flex; align-items:center; gap: 5px; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 0 10px rgba(0,255,136,0.15);"><span class="status-pulse" style="width:8px; height:8px;"></span>LÄUFT</div>`
             : `<div style="background: rgba(100, 116, 139, 0.1); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.2); font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; display:inline-flex; align-items:center; gap: 5px; font-weight: 500;"><span style="width:5px; height:5px; background-color:#64748b; border-radius:50%; display:inline-block;"></span>INAKTIV</div>`;
 
         return `
@@ -1365,12 +1356,12 @@ function showNodesOverview() {
     };
 
     if (wsNodeElements.length > 0) {
-        gridHtml += `<div class="nd-section-title" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 50%, transparent 100%); margin-top: 10px; margin-bottom: 15px; color: #ffffff; display: flex; justify-content: center; align-items: center;">Workspace Nodes</div>`;
+        gridHtml += `<div class="nd-section-title" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 50%, transparent 100%); margin-top: 10px; margin-bottom: 15px; color: #ffffff; display: flex; justify-content: center; align-items: center;"><span style="display:inline-block; width: 18px; height: 18px; margin-right: 10px; background-color: #ffffff; -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;"></span>Workspace Nodes</div>`;
         wsNodeElements.forEach(el => gridHtml += generateCard(el, true));
     }
 
     if (sysNodeElements.length > 0) {
-        gridHtml += `<div class="nd-section-title" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 50%, transparent 100%); margin-top: 30px; margin-bottom: 15px; color: #ffffff; display: flex; justify-content: center; align-items: center;">System Nodes</div>`;
+        gridHtml += `<div class="nd-section-title" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 50%, transparent 100%); margin-top: 30px; margin-bottom: 15px; color: #ffffff; display: flex; justify-content: center; align-items: center;"><span style="display:inline-block; width: 18px; height: 18px; margin-right: 10px; background-color: #ef4444; -webkit-mask: url(node-icon.svg) no-repeat center / contain; mask: url(node-icon.svg) no-repeat center / contain;"></span>System Nodes</div>`;
         sysNodeElements.forEach(el => gridHtml += generateCard(el, false));
     }
 
@@ -1677,35 +1668,62 @@ function renderLaunchFiles() {
     // LINKE SEITE (Liste) aufbauen
     if (rootLaunches.length > 0) {
         let listHtml = '';
+        const groups = {};
+        
         rootLaunches.forEach((root, index) => {
-            let pkgObj = root.path ? root.path.split('/')[2] : 'Unbekannt';
-            if (root.path && root.path.startsWith('opt')) {
-                pkgObj = root.path.split('/')[4] || 'System';
-                if (root.path.includes('share/')) {
-                    pkgObj = root.path.split('share/')[1].split('/')[0];
-                }
-            } else if (root.path && root.path.includes('src/')) {
-                const parts = root.path.split('/');
-                const srcIdx = parts.indexOf('src');
-                if (parts.length > srcIdx + 2) {
-                    const launchIdx = parts.indexOf('launch');
-                    if (launchIdx > 0) {
-                        pkgObj = parts[launchIdx - 1];
+            let groupName = root.file_name.split('_')[0];
+            if (!groupName) groupName = "Sonstige";
+            if (!groups[groupName]) groups[groupName] = [];
+            groups[groupName].push({ root, index });
+        });
+
+        const sortedGroups = Object.keys(groups).sort();
+
+        sortedGroups.forEach(groupName => {
+            listHtml += `
+                <li class="launch-group-header" onclick="const ul=this.nextElementSibling; const isHidden=ul.style.display==='none'; ul.style.display=isHidden?'block':'none'; this.querySelector('.fa-chevron-right').style.transform=isHidden?'rotate(90deg)':'rotate(0deg)';" style="cursor: pointer; margin-bottom: 5px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(56,189,248,0.1)'" onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+                    <i class="fa-solid fa-chevron-right" style="margin-right: 10px; font-size: 0.8rem; color: var(--accent-primary); transition: transform 0.2s;"></i>
+                    <i class="fa-regular fa-folder" style="margin-right: 10px; color: var(--text-secondary);"></i>
+                    <span>${groupName}</span>
+                    <span style="margin-left: auto; font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary);">${groups[groupName].length}</span>
+                </li>
+                <ul class="launch-group-list" style="display: none; padding-left: 15px; list-style: none; margin-bottom: 12px; margin-top: 5px;">
+            `;
+
+            groups[groupName].forEach(item => {
+                const root = item.root;
+                const index = item.index;
+
+                let pkgObj = root.path ? root.path.split('/')[2] : 'Unbekannt';
+                if (root.path && root.path.startsWith('opt')) {
+                    pkgObj = root.path.split('/')[4] || 'System';
+                    if (root.path.includes('share/')) {
+                        pkgObj = root.path.split('share/')[1].split('/')[0];
+                    }
+                } else if (root.path && root.path.includes('src/')) {
+                    const parts = root.path.split('/');
+                    const srcIdx = parts.indexOf('src');
+                    if (parts.length > srcIdx + 2) {
+                        const launchIdx = parts.indexOf('launch');
+                        if (launchIdx > 0) {
+                            pkgObj = parts[launchIdx - 1];
+                        }
                     }
                 }
-            }
 
-            listHtml += `
-                <li class="ws-node node-card" id="launch-li-${index}" onclick="selectLaunchFile('${root.file_name}', ${index})" style="cursor: pointer; margin-bottom: 8px;">
-                    <div class="node-card-content" style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-                        <div style="display: flex; align-items: center; overflow: hidden; min-width: 0;">
-                            <i class="fa-solid fa-play" style="color: #38bdf8; margin-right: 12px; flex-shrink: 0;"></i>
-                            <span class="node-name-text text-truncate" title="${root.file_name}">${root.file_name}</span>
+                listHtml += `
+                    <li class="ws-node node-card" id="launch-li-${index}" onclick="selectLaunchFile('${root.file_name}', ${index})" style="cursor: pointer; margin-bottom: 6px; padding: 10px 14px;">
+                        <div class="node-card-content" style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                            <div style="display: flex; align-items: center; overflow: hidden; min-width: 0;">
+                                <i class="fa-solid fa-play" style="color: #38bdf8; margin-right: 12px; flex-shrink: 0;"></i>
+                                <span class="node-name-text text-truncate" title="${root.file_name}" style="font-size: 0.9rem;">${root.file_name}</span>
+                            </div>
+                            <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkgObj}</span>
                         </div>
-                        <span class="node-package-badge" style="font-size: 0.7rem; color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 8px; flex-shrink: 0;">${pkgObj}</span>
-                    </div>
-                </li>
-            `;
+                    </li>
+                `;
+            });
+            listHtml += `</ul>`;
         });
         listContainer.innerHTML = listHtml;
         hasRenderedLaunches = true;
@@ -1721,7 +1739,7 @@ function renderLaunchFiles() {
 // RECHTE SEITE (Baum rendern beim Klicken auf die Liste)
 window.selectLaunchFile = function (fileName, index) {
     // Liste markieren
-    const items = document.querySelectorAll('#launch-list-container li');
+    const items = document.querySelectorAll('#launch-list-container li.node-card');
     items.forEach(item => item.classList.remove('active'));
     const activeItem = document.getElementById(`launch-li-${index}`);
     if (activeItem) activeItem.classList.add('active');
@@ -1734,21 +1752,24 @@ window.selectLaunchFile = function (fileName, index) {
         let pkg = nodeObj.package || 'Unbekannt';
 
         let badge = `<span class="t-badge badge-node"><i class="fa-solid fa-microchip"></i> NODE</span>`;
-        let borderStyle = "border-left: 3px solid #34d399;"; // Grün für Node
+        let borderStyle = ""; // Kein farbiger Rahmen mehr links
+        let bgStyle = "rgba(192, 132, 252, 0.15);"; // Standard Purple für Node
         let marginStyle = "margin-bottom: 12px;";
 
         if (nodeObj.is_container || pkg.includes('component_container') || nodeName.includes('_container')) {
             badge = `<span class="t-badge badge-container"><i class="fa-solid fa-layer-group"></i> CONTAINER</span>`;
-            borderStyle = "border-left: 3px solid #fbbf24;"; // Gelb/Orange für Container
+            borderStyle = ""; 
+            bgStyle = "rgba(45, 212, 191, 0.15);"; // Teal für Container
         } else if (nodeObj.is_component) {
             badge = `<span class="t-badge badge-component"><i class="fa-solid fa-puzzle-piece"></i> COMPONENT</span>`;
-            borderStyle = "border-left: 3px solid #f43f5e; margin-left: 20px;"; // Rot und eingerückt!
+            borderStyle = "margin-left: 20px;"; // Nur Einrückung behalten
+            bgStyle = "rgba(244, 63, 94, 0.15);"; // Red für Component
             marginStyle = "margin-bottom: 8px;";
         }
 
         return `
             <li style="${marginStyle}">
-                <div class="tree-card" style="border: 1px solid rgba(255, 255, 255, 0.1); ${borderStyle} background: rgba(0,0,0,0.2); padding: 10px;">
+                <div class="tree-card" style="border: 1px solid rgba(255, 255, 255, 0.15); border-left: none; ${borderStyle} background: ${bgStyle} padding: 10px;">
                     <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap: 12px; width: 100%;">
                         <div class="d-flex align-items-center" style="gap: 12px; min-width: 0; flex: 1;">
                             <span class="tree-card-title text-truncate" title="${nodeName}" style="font-size: 0.95rem;">${nodeName}</span>
@@ -1805,7 +1826,7 @@ window.selectLaunchFile = function (fileName, index) {
         // Bessere, responsive Karten für Launch-Includes
         let treeHtml = `
             <li style="margin-bottom: 20px;">
-                <div class="tree-card ${badgeClass}" style="border: 1px solid ${isRoot ? 'rgba(14, 165, 233, 0.4)' : 'rgba(255, 255, 255, 0.1)'}; background: ${isRoot ? 'rgba(14, 165, 233, 0.05)' : 'rgba(255, 255, 255, 0.02)'}; padding: 18px;">
+                <div class="tree-card ${badgeClass}" style="border: 1px solid ${isRoot ? 'rgba(14, 165, 233, 0.4)' : 'rgba(255, 255, 255, 0.15)'}; border-left: none; background: ${isRoot ? 'rgba(14, 165, 233, 0.15)' : 'rgba(245, 158, 11, 0.15)'}; padding: 18px;">
                     <div class="d-flex justify-content-between align-items-start flex-wrap" style="gap: 15px; width: 100%;">
                         <div class="d-flex align-items-center" style="gap: 15px; min-width: 0; flex: 1;">
                             ${iconHtml}

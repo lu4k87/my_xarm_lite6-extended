@@ -1,11 +1,13 @@
 <style>
     .launch-tree-container {
         padding: 30px;
-        background: rgba(0, 0, 0, 0.3);
+        background: rgba(18, 18, 18, 0.35);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         margin-bottom: 30px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
 
     .modern-tree {
@@ -57,6 +59,7 @@
         flex-direction: column;
         background: rgba(255, 255, 255, 0.02);
         border: 1px solid rgba(255, 255, 255, 0.08);
+        border-left: none;
         border-radius: 10px;
         padding: 12px 18px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -76,6 +79,7 @@
     .tree-card.is-entry {
         background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%);
         border: 1px solid rgba(14, 165, 233, 0.4);
+        border-left: none;
         box-shadow: 0 0 20px rgba(14, 165, 233, 0.1);
     }
 
@@ -86,8 +90,8 @@
 
     .tree-card.is-launch {
         background: rgba(255, 255, 255, 0.04);
-        border-left: 4px solid #f59e0b;
-        /* Orange for injected launches */
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-left: none;
     }
 
     .tree-card-header {
@@ -102,6 +106,10 @@
         font-weight: 600;
         color: #f8fafc;
         letter-spacing: 0.2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
     }
 
     .tree-card-pkg {
@@ -112,6 +120,10 @@
         padding: 2px 8px;
         border-radius: 4px;
         border: 1px solid rgba(255, 255, 255, 0.03);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
     }
 
     .tree-card-badges {
@@ -137,33 +149,33 @@
     }
 
     .badge-entry {
-        background: #0ea5e9;
-        color: #ffffff;
-        box-shadow: 0 0 10px rgba(14, 165, 233, 0.4);
+        color: #0ea5e9;
+        border: 1px solid rgba(14, 165, 233, 0.4);
+        background: rgba(14, 165, 233, 0.15);
     }
 
     .badge-node {
         color: #c084fc;
         border: 1px solid rgba(192, 132, 252, 0.4);
-        background: rgba(192, 132, 252, 0.1);
+        background: rgba(192, 132, 252, 0.15);
     }
 
     .badge-launch {
         color: #f59e0b;
         border: 1px solid rgba(245, 158, 11, 0.4);
-        background: rgba(245, 158, 11, 0.1);
+        background: rgba(245, 158, 11, 0.15);
     }
 
     .badge-container {
         color: #2dd4bf;
         border: 1px solid rgba(45, 212, 191, 0.4);
-        background: rgba(45, 212, 191, 0.1);
+        background: rgba(45, 212, 191, 0.15);
     }
 
     .badge-comp {
         color: #94a3b8;
         border: 1px solid rgba(148, 163, 184, 0.3);
-        background: rgba(148, 163, 184, 0.05);
+        background: rgba(148, 163, 184, 0.15);
     }
 
     .tree-card-path {
@@ -188,11 +200,17 @@
         background: rgba(15, 23, 42, 0.8);
         border-color: rgba(14, 165, 233, 0.3);
     }
+
+    /* Lokale Aufhebung der globalen 20ch-Begrenzung */
+    .node-list-panel .text-truncate,
+    .main-explorer-area .text-truncate {
+        max-width: none !important;
+    }
 </style>
 
 <div class="network-layout" style="height: calc(100vh - 80px);">
     <div class="node-list-panel widget"
-        style="width: 450px; min-width: 450px; margin-bottom: 0; padding: 15px; display: flex; flex-direction: column;">
+        style="width: 520px; min-width: 520px; margin-bottom: 0; padding: 15px; display: flex; flex-direction: column;">
         <div class="nd-section-title" style="margin-top: 0; margin-bottom: 15px; font-size: 1rem;">Launch-Dateien</div>
 
         <div class="search-box" style="margin-bottom: 15px; width: 100%;">
