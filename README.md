@@ -121,17 +121,26 @@ cd dev_ws
 python3 ros2_gui_cmds.py
 ```
 
-## 📊 Dashboard UI & Workspace Analyzer
+## 📊 Funktionsweise: Dashboard & Workspace Analyzer
 
-Das Dashboard ist eine webbasierte Schnittstelle zur Live-Überwachung des ROS 2 Netzwerks und des Workspace-Status.
+Das Monitoring-System besteht aus zwei eng verzahnten Hauptkomponenten, die statische Code-Analyse mit Live-Telemetrie aus dem laufenden ROS 2 System kombinieren.
 
-### Komponenten & Funktionen:
-- **Backend (`src/websocket/workspace_analyzer.py`)**: Analysiert kontinuierlich den Workspace, erkennt neue Pakete, Launch-Files und Nodes. Es stellt die Metadaten über einen Websocket bereit.
-- **Live-Visualisierung**: Zeigt die Abhängigkeiten zwischen Nodes, Topics und Services in einem modernen Flow-Chart an.
-- **Node-Details**: Bietet tiefere Einblicke in einzelne Nodes (Dependencies, Publisher/Subscriber, Services).
-- **Workspace-Browser**: Ein interaktiver Datei-Explorer für den `src`-Ordner mit automatischer Ordner-Expansion.
-- **Starten der Web-Komponenten**:
-  - Websocket-Backend: `python3 src/websocket/workspace_analyzer.py`
-  - Webserver: `python3 -m http.server 8080 -d src/websocket`
+### 1. Der Workspace Analyzer (Backend)
+Das Python-Skript (`src/websocket/workspace_analyzer.py`) ist das Herzstück der statischen Analyse. 
+- **Code-Parsing:** Es durchsucht den gesamten `src/`-Ordner nach `.py`, `.cpp`, `.launch.py` und XML-Dateien. Mithilfe von Python's `ast` (Abstract Syntax Tree) und Regex-Mustern analysiert es den Code tiefgreifend, *ohne* ihn ausführen zu müssen.
+- **Datenextraktion:** Es extrahiert automatisch ROS 2 Node-Namen, definierte Publisher, Subscriber, Services, Actions sowie Abhängigkeiten aus `package.xml` und Einstiegspunkte aus `setup.py` oder `CMakeLists.txt`.
+- **Kommunikation:** Die gesammelten Daten werden in einem strukturierten JSON-Format aufbereitet und über einen **Websocket-Server (Port 8765)** kontinuierlich an verbundene Clients gestreamt. Bei Code-Änderungen auf der Festplatte aktualisiert der Analyzer die Daten automatisch.
+
+### 2. Das Dashboard (Frontend)
+Das webbasierte Frontend (`dashboard_index.html` & `dashboard_script.js`) fungiert als zentraler Hub, der statische und dynamische Informationen zusammenführt.
+- **Duale Verbindung:** Das Frontend baut gleichzeitig zwei Websocket-Verbindungen auf:
+  1. Zum Workspace Analyzer (Port 8765), um die statische Projektstruktur und Launch-Files zu laden.
+  2. Zum `rosbridge_server` (Port 9090), um sich live in das laufende ROS 2 Netzwerk einzuklinken.
+- **Daten-Fusion:** Das Dashboard gleicht die statisch gefundenen Nodes (aus dem Code) mit den live laufenden Nodes (aus ROS) ab. Dadurch kann es anzeigen, welche programmierten Nodes gerade offline oder aktiv sind.
+- **Echtzeit-Interaktion:** Über die `roslib.js` Bibliothek abonniert das Dashboard aktive Topics, liest Nachrichten in Echtzeit aus, berechnet Frequenzen (Hz) und ermöglicht es sogar, Launch-Files (`start.sh`, `lite6.sh`) direkt aus dem Browserfenster heraus als Systembefehle auszuführen.
+
+### 3. Starten der Komponenten
+- Websocket-Backend: `python3 src/websocket/workspace_analyzer.py`
+- Webserver: `python3 -m http.server 8080 -d src/websocket`
 
 Das Dashboard ist nach dem Start unter `http://localhost:8080/dashboard_index.html` erreichbar.
