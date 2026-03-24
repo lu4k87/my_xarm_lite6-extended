@@ -8,11 +8,7 @@ This example shows live transcription of first minute of the 6'th chapter in ***
 ![harry_potter_sample](./doc/harry_potter_sample.gif)
 
 ## Build
-- Install `portaudio19-dev` (System) and `pyaudio` (Python).
-  ```bash
-  sudo apt-get install portaudio19-dev
-  pip install pyaudio
-  ```
+- Install `pyaudio`, see [install instructions](https://pypi.org/project/PyAudio/).
 - Build this repository, do
 ```shell
 mkdir -p ros-ai/src && cd ros-ai/src && \

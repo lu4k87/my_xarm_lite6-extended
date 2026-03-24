@@ -77,7 +77,7 @@ namespace xarm_moveit_servo
         joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(joy_topic_, ros_queue_size_, std::bind(&JoyToServoPub::_joy_callback, this, std::placeholders::_1));
         twist_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>(cartesian_command_in_topic_, ros_queue_size_);
         joint_pub_ = this->create_publisher<control_msgs::msg::JointJog>(joint_command_in_topic_, ros_queue_size_);
-        speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/ui/robot_control/current_speed", rclcpp::QoS(1).transient_local()); 
+	    speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/ui/robot_control/current_speed", rclcpp::QoS(1).transient_local()); 
         button_press_pub_ = this->create_publisher<std_msgs::msg::String>("/ui/joy_button_presses", 10);
 
         servo_start_client_ = this->create_client<std_srvs::srv::Trigger>("/servo_server/start_servo");

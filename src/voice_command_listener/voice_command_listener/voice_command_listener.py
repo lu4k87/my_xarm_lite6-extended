@@ -130,8 +130,7 @@ class VoiceCommandListener(Node):
         # ---- Subscriptions ----
         if HAS_WHISPER_IDL:
             self.create_subscription(AudioTranscript, self.whisper_topic, self.on_transcript_msg, 10)
-        else:
-            self.create_subscription(StringMsg, self.whisper_topic, self.on_transcript_string, 10)
+        self.create_subscription(StringMsg, self.whisper_topic, self.on_transcript_string, 10)
         self.create_subscription(StringMsg, "/whisper/transcript_manager/transcript", self.on_transcript_string, 10)
         self.create_subscription(StringMsg, "/whisper/inference", self.on_transcript_string, 10)
 

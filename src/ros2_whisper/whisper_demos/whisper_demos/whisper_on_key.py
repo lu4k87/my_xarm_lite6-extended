@@ -1,108 +1,178 @@
+#!/usr/bin/env python3
+"""
+Whisper On Key (ROS 2 Humble)
+- SPACE: Start/Stop (Stop via cancel_goal)
+- ESC: Beenden
+"""
+
 import sys
-import tty
-import termios
-import threading
+import time
+from typing import Optional, Any
 
 import rclpy
-from builtin_interfaces.msg import Duration
-from rclpy.action import ActionClient
 from rclpy.node import Node
+from rclpy.action import ActionClient
 from rclpy.task import Future
-from whisper_idl.action._inference import Inference_FeedbackMessage
+from builtin_interfaces.msg import Duration
+from pynput.keyboard import Key, Listener
 
+# >>> KORREKTER ACTION-IMPORT FÜR DEIN SETUP <<<
 from whisper_idl.action import Inference
 
 
-def read_key():
-    """Read a single keypress from the terminal (works under Wayland and X11)."""
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setraw(fd)
-        ch = sys.stdin.read(1)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return ch
-
-
 class WhisperOnKey(Node):
-    def __init__(self, node_name: str) -> None:
+    def __init__(self,
+                 node_name: str = "whisper_on_key",
+                 action_name: str = "/whisper/inference",
+                 max_duration_sec: int = 20,
+                 debounce_s: float = 0.20):
         super().__init__(node_name=node_name)
 
-        # whisper
-        self.batch_idx = -1
-        self.whisper_client = ActionClient(self, Inference, "/whisper/inference")
+        self._action_name = action_name
+        self._max_duration_sec = int(max_duration_sec)
+        self._debounce_s = float(debounce_s)
 
-        while not self.whisper_client.wait_for_server(1):
-            self.get_logger().warn(
-                f"Waiting for {self.whisper_client._action_name} action server.."
-            )
-        self.get_logger().info(
-            f"Action server {self.whisper_client._action_name} found."
-        )
+        # Zustände
+        self.is_listening: bool = False
+        self.current_goal_handle: Optional[Any] = None
+        self._last_space_ts = 0.0
 
-        self.get_logger().info(self.info_string())
+        # Action Client
+        self.whisper_client = ActionClient(self, Inference, self._action_name)
 
-        # Start keyboard listener in a separate thread
-        self._key_thread = threading.Thread(target=self._key_loop, daemon=True)
-        self._key_thread.start()
+        self.get_logger().info(f"Verbinde zu Action Server '{self._action_name}' ...")
+        while not self.whisper_client.wait_for_server(timeout_sec=1.0):
+            self.get_logger().warn(f"Warte auf Action Server '{self._action_name}' ...")
+        self.get_logger().info(f"Action Server '{self._action_name}' gefunden.")
 
-    def _key_loop(self) -> None:
-        """Listen for keypresses in a background thread."""
-        while rclpy.ok():
-            key = read_key()
-            if key == ' ':
+        # Keyboard Listener
+        self.key_listener = Listener(on_press=self.on_key)
+        self.key_listener.start()
+
+        self.get_logger().info("Bereit. SPACE: Start/Stop, ESC: Beenden")
+
+    # -------------------------
+    # Keyboard Handling
+    # -------------------------
+    def on_key(self, key: Key) -> None:
+        try:
+            if key == Key.esc:
+                self.get_logger().info("ESC gedrückt – beende.")
+                self._shutdown()
+                return
+
+            if key == Key.space:
+                now = time.time()
+                if now - self._last_space_ts < self._debounce_s:  # Debounce gegen Auto-Repeat
+                    return
+                self._last_space_ts = now
                 self.on_space()
-            elif key == '\x1b':  # ESC key
-                self.get_logger().info("ESC pressed, shutting down...")
-                rclpy.shutdown()
-                break
+        except Exception as e:
+            self.get_logger().error(f"Fehler im Key-Handler: {e}")
 
     def on_space(self) -> None:
-        goal_msg = Inference.Goal()
-        goal_msg.max_duration = Duration(sec=20, nanosec=0)
-        self.get_logger().info(
-            f"Requesting inference for {goal_msg.max_duration.sec} seconds..."
-        )
-        future = self.whisper_client.send_goal_async(
-            goal_msg, feedback_callback=self.on_feedback
-        )
-        future.add_done_callback(self.on_goal_accepted)
-
-    def on_goal_accepted(self, future: Future) -> None:
-        goal_handle = future.result()
-        if not goal_handle.accepted:
-            self.get_logger().error("Goal rejected.")
+        """Toggle: Startet neues Goal oder cancelt das laufende Goal."""
+        if self.is_listening and self.current_goal_handle is not None:
+            self.get_logger().info("SPACE: Stoppe Inference (Cancel Goal) ...")
+            future = self.current_goal_handle.cancel_goal_async()
+            future.add_done_callback(self._on_cancel_done)
             return
 
-        self.get_logger().info("Goal accepted.")
+        # Neues Goal
+        goal_msg = Inference.Goal()
+        # Häufiges Feld: max_duration (Duration). Falls dein Interface anders heißt, hier anpassen.
+        goal_msg.max_duration = Duration(sec=self._max_duration_sec, nanosec=0)
 
-        future = goal_handle.get_result_async()
-        future.add_done_callback(self.on_done)
+        self.get_logger().info(f"SPACE: Starte Inference für {self._max_duration_sec} s ...")
+        future = self.whisper_client.send_goal_async(goal_msg, feedback_callback=self.on_feedback)
+        future.add_done_callback(self.on_goal_accepted)
+
+    # -------------------------
+    # Action Callbacks
+    # -------------------------
+    def on_goal_accepted(self, future: Future) -> None:
+        try:
+            goal_handle = future.result()
+        except Exception as e:
+            self.get_logger().error(f"Goal-Akzeptanz fehlgeschlagen: {e}")
+            return
+
+        if not goal_handle or not goal_handle.accepted:
+            self.get_logger().error("Goal wurde vom Server abgelehnt.")
+            return
+
+        self.current_goal_handle = goal_handle
+        self.is_listening = True
+        self.get_logger().info("Goal akzeptiert. Lausche ... (erneut SPACE: Stop)")
+
+        result_future = goal_handle.get_result_async()
+        result_future.add_done_callback(self.on_done)
+
+    def _on_cancel_done(self, future: Future) -> None:
+        try:
+            cancel_response = future.result()
+            if getattr(cancel_response, "goals_canceling", []):
+                self.get_logger().info("Inference gestoppt (Cancel bestätigt).")
+            else:
+                self.get_logger().warn("Cancel ohne laufende Goals bestätigt (war evtl. schon fertig).")
+        except Exception as e:
+            self.get_logger().warn(f"Cancel-Callback-Fehler: {e}")
+        finally:
+            self.is_listening = False
+            self.current_goal_handle = None
+
+    def on_feedback(self, feedback_msg) -> None:
+        # Optional: Feedback-Felder deines Inference.Feedback hier loggen
+        # z.B.: self.get_logger().debug(f"Feedback: {feedback_msg.feedback.snr_db:.1f} dB")
+        pass
 
     def on_done(self, future: Future) -> None:
-        result: Inference.Result = future.result().result
-        self.get_logger().info(f"Result: {result.transcriptions}")
+        try:
+            result_wrapper = future.result()
+            result = getattr(result_wrapper, "result", result_wrapper)
+            # Häufiges Feld: transcriptions (Liste/String). Ggf. anpassen.
+            trans = getattr(result, "transcriptions", None)
+            if trans is not None:
+                self.get_logger().info(f"Result: {trans}")
+            else:
+                self.get_logger().info("Result empfangen (Felder ggf. anpassen).")
+        except Exception as e:
+            self.get_logger().error(f"Fehler im Result-Callback: {e}")
+        finally:
+            self.is_listening = False
+            self.current_goal_handle = None
 
-    def on_feedback(self, feedback_msg: Inference_FeedbackMessage) -> None:
-        if self.batch_idx != feedback_msg.feedback.batch_idx:
-            print("")
-            self.batch_idx = feedback_msg.feedback.batch_idx
-        sys.stdout.write("\033[K")
-        print(f"{feedback_msg.feedback.transcription}")
-        sys.stdout.write("\033[F")
-
-    def info_string(self) -> str:
-        return (
-            "\n\n"
-            "\tStarting demo.\n"
-            "\tPress ESC to exit.\n"
-            "\tPress SPACE to start listening.\n"
-            "\tPress SPACE again to stop listening.\n"
-        )
+    # -------------------------
+    # Shutdown
+    # -------------------------
+    def _shutdown(self):
+        try:
+            if self.key_listener and self.key_listener.running:
+                self.key_listener.stop()
+        except Exception:
+            pass
+        try:
+            rclpy.shutdown()
+        except Exception:
+            pass
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    whisper_on_key = WhisperOnKey(node_name="whisper_on_key")
-    rclpy.spin(whisper_on_key)
+def main(argv=None):
+    rclpy.init(args=argv)
+    node = WhisperOnKey(
+        node_name="whisper_on_key",
+        action_name="/whisper/inference",
+        max_duration_sec=20,
+        debounce_s=0.20,
+    )
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info("KeyboardInterrupt – beende.")
+    finally:
+        node._shutdown()
+
+
+if __name__ == "__main__":
+    main()
+
