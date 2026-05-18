@@ -1,14 +1,18 @@
 # xArm ROS 2 Extended Workspace (ROS2 Humble)
 
-Dieses Repository ist eine modular aufgebaute **Forschungs- und Evaluierungsplattform** für die Teleoperation und Mensch-Roboter-Interaktion (HCI), aufbauend auf dem offiziellen [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`). 
+Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Evaluierungsplattform** für die multimodale Teleoperation und Mensch-Roboter-Interaktion (HCI), aufbauend auf dem offiziellen [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`). 
 
-Das System dient als technische Grundlage zur Entwicklung und Evaluation robotergestützter Steuerungskonzepte, UI/GUI-Usability und multimodaler Eingabemethoden für den xArm Lite6 im Rahmen der "Human-in-the-Loop" Forschung.
+Klassische Teleoperation erfordert häufig eine kontinuierliche, kognitiv stark beanspruchende Mikromanipulation, welche hohe technische Eintrittsbarrieren für Anwender darstellt. Um diese Hürden im Kontext inklusiver Arbeitsumgebungen und der Industrie 5.0 abzubauen, implementiert dieses System einen **Shared-Control-Ansatz** unter dem Paradigma des **"Human-in-the-Loop"**. 
 
-### 🔬 Architektur/Prinzipien
+Durch die Kombination von latenzarmer Gamepad-Steuerung (MoveIt Servo) mit KI-gestützter Assistenz – visueller Szenenwahrnehmung (YOLOv8) und semantischer Sprachverarbeitung (OpenAI Whisper) – verschiebt das System die Interaktion von einer reinen Low-Level-Steuerung hin zu einer intentionsbasierten, geführten Aufgabenbewältigung. Nutzer können nahtlos zwischen abstrakten Sprachkommandos und präzisen manuellen Korrekturen wechseln. Die Plattform wird zudem stetig um moderne Paradigmen wie robotergestütztes Eye-Tracking und geplante Integrationen von Vision-Language-Action (VLA) Modellen erweitert.
 
-Die Infrastruktur ist nach folgenden Kernkriterien konzipiert:
+Das Gesamtsystem dient als reproduzierbarer, kosteneffizienter Proof-of-Concept, um multimodale Assistenzsysteme zur Förderung der Arbeitsplatzinklusion für Menschen mit unterschiedlichen physischen Voraussetzungen zu entwickeln und empirisch zu evaluieren.
+
+### 🔬 Architektur & Leitprinzipien
+
+*   **Shared Control & Kognitive Entlastung:** Reduktion der mentalen Beanspruchung durch den fließenden Wechsel zwischen manueller und KI-gestützter Steuerung.
 *   **Reproduzierbar & Open Source:** Transparente Codebasis zur Sicherstellung nachvollziehbarer und standardisierter wissenschaftlicher Experimente.
-*   **Kosteneffiziente Hardware:** Einsatz erschwinglicher Komponenten zur besseren Zugänglichkeit für Forschungsprojekte.
+*   **Kosteneffiziente Hardware:** Einsatz erschwinglicher Komponenten zur besseren Zugänglichkeit für Inklusions- und Forschungsprojekte.
 *   **Modular & Industriestandard:** Durchgehende Nutzung von ROS 2 Humble für die Kompatibilität mit etablierten Robotik-Frameworks.
 
 ### 🚀 Multimodale Technologien & Interaktionskonzepte
