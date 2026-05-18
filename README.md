@@ -1,6 +1,6 @@
 # xArm ROS 2 Extended Workspace (Humble)
 
-Dieses Repository ist eine modular aufgebaute **Forschungs- und Evaluierungsplattform** für die fortschrittliche Teleoperation und Mensch-Roboter-Interaktion (HCI), aufbauend auf dem offiziellen [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`). 
+Dieses Repository ist eine modular aufgebaute **Forschungs- und Evaluierungsplattform** für die Teleoperation und Mensch-Roboter-Interaktion (HCI), aufbauend auf dem offiziellen [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`). 
 
 Das Gesamtsystem (Hardware & Software) zielt darauf ab, optimale Rahmenbedingungen ("Human-in-the-Loop") für die robotergestützte Forschung zu schaffen. Es bietet ein Fundament, um neue Steuerungskonzepte, UI/GUI-Usability und multimodale Eingabemethoden für den xArm Lite6 zu entwickeln, zu testen und wissenschaftlich zu evaluieren.
 
@@ -14,7 +14,6 @@ Die Infrastruktur ist nach folgenden Kernkriterien konzipiert:
 ### 🚀 Interaktionskonzepte & Roadmap
 
 Die Plattform bündelt verschiedene Eingabemethoden und wird kontinuierlich weiterentwickelt:
-*   **MoveIt Servo & Gamepad (Basis):** Basiert auf der offiziellen UFACTORY xArm ROS 2 Implementierung für flüssige, latenzarme Echtzeit-Teleoperation per Controller.
 *   **Computer Vision:** 2D/3D-Objekterkennung (YOLO) und räumliche Lokalisierung.
 *   **Voice Control:** Lokale Sprachverarbeitung (Whisper AI) zur semantischen Steuerung.
 *   **Teleoperation & UI:** Echtzeit-Überwachung und Steuerung über Web-Dashboards und Custom-GUIs.
@@ -27,7 +26,6 @@ Die Plattform bündelt verschiedene Eingabemethoden und wird kontinuierlich weit
 - [**ROS 2 GUI Control Script**](#-ros-2-gui-control) - Moderne Desktop-Oberfläche zum schnellen Starten von Nodes und Workspace-Skripten.
 - [**Dashboard UI & Workspace Analyzer**](#-dashboard-ui--workspace-analyzer) - Webbasierte Echtzeit-Überwachung und Analyse des ROS-Netzwerks.
 
-
 ## 🚀 Kernfunktionen & ROS 2 Nodes
 
 Hier ist eine detaillierte Übersicht aller wesentlichen Pakete und Nodes in diesem Workspace. Jedes Modul ist nach seinem Zweck, seiner Aufgabe und seiner Funktionsweise strukturiert.
@@ -38,16 +36,6 @@ Hier ist eine detaillierte Übersicht aller wesentlichen Pakete und Nodes in die
 *   **Wozu dient er?** Objekterkennung und räumliche Lokalisierung von Zielobjekten (z.B. farbige Blöcke) im Kamerabild.
 *   **Was macht er?** Findet trainierte Objekte sowie ArUco-Marker im 2D-Bildstream und projiziert diese in den 3D-Raum des Roboters.
 *   **Wie funktioniert er?** Nutzt ein YOLO-Modell auf dem 2D-RGB-Stream der ZED-Kamera. Die erkannten 2D-Pixelkoordinaten werden über eine berechnete Homographie-Matrix auf die Z=0 Ebene (Tischplatte) transformiert und als 3D-Posen (`PoseArray`) im ROS-Netzwerk publiziert.
-
-#### `zed_wrapper`
-*   **Wozu dient er?** Offizielle Hardware-Schnittstelle zur Stereolabs ZEDm-Kamera.
-*   **Was macht er?** Erfasst die Umgebung in 3D und stellt visuelle Daten sowie Tiefeninformationen bereit.
-*   **Wie funktioniert er?** Nutzt das ZED SDK, um hochauflösende Stereobilder und dichte 3D-Punktwolken (PointClouds) zu generieren. Diese Daten bilden das Fundament für die Environment-Kartierung (z.B. via OctoMap) und die 2D-Objekterkennung.
-
-#### `zed-ros2-examples`
-*   **Wozu dient er?** Offizielle Tutorials und Anwendungsbeispiele von Stereolabs.
-*   **Was macht er?** Bietet eine Referenz-Sammlung vorgefertigter Nodes zur Demonstration der ZED-Kamera-Funktionen (z.B. Spatial Mapping, Body Tracking, Object Detection).
-*   **Wie funktioniert er?** Enthält C++ und Python Skripte, die zeigen, wie man die von `zed_wrapper` publizierten Topics (Depth, RGB, PointClouds) effektiv in eigenen ROS 2 Projekten verarbeitet und visualisiert.
 
 ### 🗣️ Sprachsteuerung & Interaktion
 
@@ -107,9 +95,14 @@ Hier ist eine detaillierte Übersicht aller wesentlichen Pakete und Nodes in die
 *   **Was macht er?** Ermöglicht dem Web-Dashboard, nativ mit dem Roboter zu kommunizieren (Lesen und Schreiben).
 *   **Wie funktioniert er?** Ein ROS-Standard-Paket, das einen Websocket-Kanal (Standard: Port 9090) öffnet. Webanwendungen können über die `roslib.js` Bibliothek direkt ROS-Topics abonnieren, Nachrichten publizieren oder ROS-Services aufrufen, als wären sie ein nativer Teil des C++/Python ROS-Netzwerks.
 
+#### `zed_wrapper`
+*   **Wozu dient er?** Offizielle Hardware-Schnittstelle zur Stereolabs ZEDm-Kamera.
+*   **Was macht er?** Erfasst die Umgebung in 3D und stellt visuelle Daten sowie Tiefeninformationen bereit.
+*   **Wie funktioniert er?** Nutzt das ZED SDK, um hochauflösende Stereobilder und dichte 3D-Punktwolken (PointClouds) zu generieren. Diese Daten bilden das Fundament für die Environment-Kartierung (z.B. via OctoMap) und die 2D-Objekterkennung.
+
 ## 📂 Repository-Struktur
 
-Das Projekt ist grob in das offizielle xArm-Repository und die eigenen Erweiterungen unterteilt:
+Das Projekt ist in das offizielle xArm-Repository und die eigenen Erweiterungen unterteilt:
 
 ```text
 ~/dev_ws/
