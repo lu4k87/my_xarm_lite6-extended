@@ -5,6 +5,7 @@ Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github
 ### Zentrale Steuerungselemente:
 - [**ROS 2 GUI Control Script**](#-ros-2-gui-control) - Moderne Desktop-Oberfläche zum schnellen Starten von Nodes und Workspace-Skripten.
 - [**Dashboard UI & Workspace Analyzer**](#-dashboard-ui--workspace-analyzer) - Webbasierte Echtzeit-Überwachung und Analyse des ROS-Netzwerks.
+- [**OctoMap Setup Guide**](octomap_anleitung.md) - Schritt-für-Schritt-Anleitung zur Erstellung einer 3D-Map aus den ZEDm PointClouds.
 
 ## 🚀 Kernfunktionen & Integrationen
 
@@ -16,7 +17,9 @@ Dieses Repository erweitert das offizielle [xarm_ros2 Repository](https://github
 | **`move_to_coordinator`** | Zentraler Logik-Knotenpunkt: Verbindet Sprachbefehle mit den 3D-Koordinaten aus dem Vision-System, managt Queues/Timeouts und sendet die finalen Fahrbefehle an die `motion_sequence`. |
 | **`ros2_whisper`** | Lokale Speech-to-Text Engine. Nimmt den Audio-Stream des Mikrofons auf und streamt in Echtzeit unformatierte Text-Transkripte in das ROS-Netzwerk. |
 | **`voice_command_listener`** | Subscribt die Rohtexte, wendet Regex-Muster an (z. B. "move to red"), übernimmt das Entprellen (Refractory/Cooldown) und leitet saubere Action-Intents an den Coordinator und das UI weiter. |
-| **`rviz_marker`** | Konvertiert die vom Vision-System erkannten 3D-Koordinaten aus den `PoseArray`-Topics in interaktive Rviz2 Marker zur Live-Visualisierung im 3D-Raum. |
+| **`rviz_marker`** | Konvertiert erkannte 3D-Koordinaten aus den `PoseArray`-Topics in interaktive Rviz2 Marker zur Live-Visualisierung im 3D-Raum. Beinhaltet auch STL-Meshes (ZEDm, RPi-Mount) für die Roboterzelle. |
+| **`eye_control`** | UI-Komponente für Robot Expressions: Stellt Augen auf einem Display dar und verarbeitet emotionale Befehle zur Interaktion. |
+| **`zed_wrapper`** | Offizielle ROS 2 Einbindung der Stereolabs ZEDm-Kamera. Liefert 3D-PointClouds für die Environment-Kartierung (via OctoMap) und Stereobild-Daten. |
 | **`xarm_moveit_servo`** | (xarm_ros2) Echtzeit-Steuerungskomponente. Verarbeitet kontinuierliche Raum- oder Gelenkgeschwindigkeiten (z.B. vom Gamepad) und streamt diese latenzarm an den Hardware-Controller. |
 | **`websocket`** | Python-Backend des Dashboards. Bietet den `workspace_analyzer`, publiziert Metadaten der aktiven Nodes an JS-Clients und serviert die statischen Webdateien auf Port 8080. |
 | **`rosbridge_server`** | (ROS-Standard) Öffnet einen direkten Websocket-Kanal (Port 9090), über den das JavaScript-Frontend nativ auf ROS 2 Topics und Services zugreifen kann. |
@@ -28,16 +31,20 @@ Das Projekt ist grob in das offizielle xArm-Repository und die eigenen Erweiteru
 ```text
 ~/dev_ws/
     ├── start.sh                     # Globale Workspace-Launcher (z. B. start.sh, lite6.sh)
+    ├── octomap_anleitung.md         # Dokumentation zur OctoMap-Umgebung und ZEDm
     └── src/                         # Quellcode aller Pakete
         ├── collision_check/         # Kollisionsberechnungen und Environment-Setup
+        ├── eye_control/             # Steuerung des Augen-UI / Robot Expressions
         ├── motion_sequence/         # Definition komplexer Roboter-Pfade
         ├── move_to_coordinator/     # Zielkoordinierung für MoveIt 2
         ├── ros2_whisper/            # Sprachmodelle und Erkennung (Whisper)
-        ├── rviz_marker/             # Rviz2 Visualisierungs-Tools
+        ├── rviz_marker/             # Rviz2 Visualisierungs-Tools & Kamera-Meshes
         ├── voice_command_listener/  # Verarbeitung der erkannten Voice-Commands
         ├── websocket/               # Dashboard UI System & Workspace Analyzer
         ├── xarm_ros2/               # Offizielle Pakete der xArm-Developer
-        └── yolo_object_detector/    # YOLO Integration & Computer Vision
+        ├── yolo_object_detector/    # YOLO Integration & Computer Vision
+        ├── zed-ros2-examples/       # Anwendungsbeispiele für die ZED Kamera
+        └── zed-ros2-wrapper/        # ROS 2 Wrapper für ZEDm PointCloud und Depth-Mapping
 ```
 
 ## 🛠️ Voraussetzungen
