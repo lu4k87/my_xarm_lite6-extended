@@ -2,20 +2,21 @@
 
 Dieses Repository ist eine modular aufgebaute **Forschungs- und Evaluierungsplattform** für die Teleoperation und Mensch-Roboter-Interaktion (HCI), aufbauend auf dem offiziellen [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`). 
 
-Das Gesamtsystem (Hardware & Software) zielt darauf ab, optimale Rahmenbedingungen ("Human-in-the-Loop") für die robotergestützte Forschung zu schaffen. Es bietet ein Fundament, um neue Steuerungskonzepte, UI/GUI-Usability und multimodale Eingabemethoden für den xArm Lite6 zu entwickeln, zu testen und wissenschaftlich zu evaluieren.
+Das System dient als technische Grundlage zur Entwicklung und Evaluation robotergestützter Steuerungskonzepte, UI/GUI-Usability und multimodaler Eingabemethoden für den xArm Lite6 im Rahmen der "Human-in-the-Loop" Forschung.
 
 ### 🔬 Architektur/Prinzipien
 
 Die Infrastruktur ist nach folgenden Kernkriterien konzipiert:
-*   **Reproduzierbar & Open Source:** Transparente Codebasis für verlässliche wissenschaftliche Arbeit. Transparenz und Wiederholbarkeit sind grundlegend für unser Vorgehen, um sicherzustellen, dass Experimente klar nachvollziehbar und wissenschaftlichen Standards genügen.
-*   **Low-Cost:** Fokus auf erschwingliche Komponenten, um Forschungsprojekte zugänglich zu halten. 
-*   **Modular & Industriestandard:** Basiert durchgehend auf ROS 2 (Humble), was die nahtlose Integration bestehender und moderner Robotik-Frameworks garantiert. 
+*   **Reproduzierbar & Open Source:** Transparente Codebasis zur Sicherstellung nachvollziehbarer und standardisierter wissenschaftlicher Experimente.
+*   **Kosteneffiziente Hardware:** Einsatz erschwinglicher Komponenten zur besseren Zugänglichkeit für Forschungsprojekte.
+*   **Modular & Industriestandard:** Durchgehende Nutzung von ROS 2 Humble für die Kompatibilität mit etablierten Robotik-Frameworks.
 
-### 🚀 Interaktionskonzepte & Roadmap
+### 🚀 Multimodale Technologien & Interaktionskonzepte
 
-Das multimodale Teleoperationssystem bündelt verschiedene Eingabemethoden zur Interaktion mit dem Roboter. Die Basis bildet hierfür, dass offizielle xarm-ROS2 repository.
+Das System bündelt multimodale Eingabemethoden für die Teleoperation, basierend auf dem offiziellen xarm_ros2 Repository.
 
-*   **Computer Vision:** 2D/3D-Objekterkennung (YOLO) und räumliche Lokalisierung. 
+*   **Koordinatentransformation & Kalibrierung:** Das System nutzt ArUco-Marker als zentrale Referenzpunkte zur Berechnung von Homographie-Matrizen. Hierüber werden sowohl die 3D-Weltkoordinaten von Objekten auf der Tischplatte (90 mm Höhe) aus der ZED-Kamera abgeleitet, als auch die Blickkoordinaten der Eye-Tracking-Brille exakt auf die Ränder der PyQt5-Desktopoberfläche projiziert.
+*   **Computer Vision:** Räumliche Lokalisierung von Objekten über 2D/3D-Objekterkennung mittels YOLO.
 *   **Voice Control:** Lokale Sprachverarbeitung (Whisper AI) zur semantischen Steuerung.
 *   **Teleoperation & UI:** Echtzeit-Überwachung und Steuerung über Web-Dashboards und Custom-GUIs.
 *   **Eye-Tracking (In Entwicklung):** Robotersteuerung und UI-Interaktion über Blickerfassung. 
@@ -34,9 +35,9 @@ Hier ist eine detaillierte Übersicht aller wesentlichen Pakete und Nodes in die
 ### 👁️ Computer Vision & Wahrnehmung
 
 #### `yolo_object_detector`
-*   **Wozu dient er?** Objekterkennung und räumliche Lokalisierung von Zielobjekten (Pick-and-Place Aufgabe: Würfel,Rechteck, Zylinder) im Kamerabild.
+*   **Wozu dient er?** Objekterkennung und räumliche Lokalisierung von Zielobjekten (Pick-and-Place Aufgabe: Würfel, Rechteck, Zylinder) im Kamerabild.
 *   **Was macht er?** Findet trainierte Objekte sowie ArUco-Marker im 2D-Bildstream und projiziert diese in den 3D-Raum des Roboters.
-*   **Wie funktioniert er?** Nutzt ein YOLO-Modell auf dem 2D-RGB-Stream der ZED-Kamera. Die erkannten 2D-Pixelkoordinaten werden über eine berechnete Homographie-Matrix auf die Z=0 Ebene (Tischplatte) transformiert und als 3D-Posen (`PoseArray`) im ROS-Netzwerk publiziert.
+*   **Wie funktioniert er?** Die Node liest Bilder über einen blockierungsfreien Background-Thread (HTTP/RTSP-Stream) ein. Die 2D-Pixelkoordinaten der erkannten YOLO-Bounding-Boxes werden mithilfe von `cv2.findHomography` und vier auf dem Tisch platzierten ArUco-Markern in den 3D-Raum (Z=90 mm) transformiert. Die Zielkoordinaten werden anschließend als `geometry_msgs/msg/PoseArray` klassenspezifisch unter Topics wie `/objects/<color>_<shape>/world_poses` publiziert.
 
 ### 🗣️ Sprachsteuerung & Interaktion
 
@@ -47,49 +48,54 @@ Hier ist eine detaillierte Übersicht aller wesentlichen Pakete und Nodes in die
 
 #### `voice_command_listener`
 *   **Wozu dient er?** Interpretation und Filterung der rohen Sprachtexte.
-*   **Was macht er?** Extrahiert handlungsrelevante Befehle aus den Sätzen (z.B. "Greife den roten Block") und blockiert Spam/Fehlerkennungen.
-*   **Wie funktioniert er?** Subscribt die Texte von `ros2_whisper`, wendet Regex-Muster an, um Kommandos zu identifizieren (Intent Detection). Ein Entprell-Mechanismus (Refractory/Cooldown) sorgt dafür, dass derselbe Befehl nicht mehrfach kurz hintereinander feuert. Saubere Befehle werden an den Coordinator weitergeleitet.
+*   **Was macht er?** Extrahiert handlungsrelevante Befehle aus den Sätzen (z.B. "move to red") und blockiert Spam/Fehlerkennungen. Gibt dem Nutzer visuelles Feedback über das Web-Dashboard.
+*   **Wie funktioniert er?** Die Node abonniert `/whisper/text` (`std_msgs/String`) und wendet Regex-Muster auf den Textstrom an. Zur Fehlervermeidung kommt ein Entprell-Mechanismus zum Einsatz: Ein Dictionary (`action_cooldown`) speichert den letzten Ausführungszeitpunkt pro Farbkategorie und blockiert redundante Befehle für standardmäßig 5,0 Sekunden. Valide Intents werden an `/voice_cmd` und User-Feedback-Strings an `/ui/voice_feedback` publiziert.
 
 #### `eye_control`
-*   **Wozu dient er?** Visuelles Feedback und Roboterausdruck (Robot Expressions).
-*   **Was macht er?** Zeigt animierte "Augen" auf einem angeschlossenen Display, um den Zustand des Roboters menschlicher zu kommunizieren.
-*   **Wie funktioniert er?** Ist eine UI-Komponente, die auf bestimmte ROS-Nachrichten oder Systemzustände lauscht und daraufhin grafische Animationen (z.B. Blinzeln, Fokussieren, "Schlafen") auf einem lokalen Bildschirm rendert.
+*   **Wozu dient er?** Robotersteuerung über Blickerfassung (Eye-Tracking) mittels UI-Interaktion.
+*   **Was macht er?** Ermöglicht die Steuerung durch reine Blickeingabe als "God-Mode" PyQt5-Benutzeroberfläche.
+*   **Wie funktioniert er?** Die Node parst einen eingehenden RTSP-Stream und extrahiert JSON-Gaze2D-Daten. Sie nutzt `cv2.aruco.detectMarkers`, um die physischen Ecken des Bildschirms zu identifizieren, und transformiert die Blickkoordinaten per Homographie in die UI-Fensterkoordinaten. Bei einer erfolgreichen Fixierung (Dwell-Time von 0,5 Sekunden) auf einem Steuerungs-Button publiziert die Node eine `geometry_msgs/msg/TwistStamped` Nachricht an `/servo_server/delta_twist_cmds`.
 
 ### 🧠 Logik & Koordination
 
 #### `move_to_coordinator`
 *   **Wozu dient er?** Das zentrale "Gehirn" für aufgabenbasierte Bewegungen.
-*   **Was macht er?** Führt die Befehle des Nutzers mit den Zieldaten der Kamera zusammen und gibt die endgültigen Fahrkommandos.
-*   **Wie funktioniert er?** Empfängt als zentraler Logik-Knoten die gefilterten Intents vom `voice_command_listener` (z.B. "move_to_red") und gleicht diese mit den aktuellen 3D-Koordinaten aus dem `yolo_object_detector` ab. Er verwaltet Warteschlangen (Queues) sowie Timeouts und triggert schließlich die Ausführung bei der `motion_sequence`.
+*   **Was macht er?** Führt die Befehle des Nutzers mit den Zieldaten der Kamera zusammen und gibt die endgültigen Fahrkommandos koordiniert aus.
+*   **Wie funktioniert er?** Die auf einer State-Machine basierende Node empfängt Intents von `/voice_cmd` und reiht diese in eine Queue ein. Pro Befehl triggert sie zunächst den Wechsel in den Status `WAITING_FOR_ROBOT_IDLE`, um den Roboter via `motion_sequence` in eine Scan-Pose zu befördern. Ein Timer blockiert die weitere Ausführung für 2,0 Sekunden zur Bildstabilisierung. Anschließend wird die eingehende `PoseArray` auf Frische geprüft (Timestamp-Abgleich mit dem Timer-Ablauf), bevor der finale Service-Call für die kartesische Zielbewegung ausgeführt wird.
 
 ### 🦾 Bewegung & Sicherheit
 
 #### `motion_sequence`
 *   **Wozu dient er?** Robuste Ausführung von Bewegungsabläufen und Zustandsmanagement des Roboter-Controllers.
-*   **Was macht er?** Steuert den Roboterarm physisch an vorgegebene Posen und sorgt für das richtige Umschalten der Steuerungs-Modi.
-*   **Wie funktioniert er?** Bietet ROS-Services (wie z.B. fahre zur Scan-Pose) an. Sobald getriggert, stoppt er ggf. laufende Servo-Kommandos, schaltet den xArm-Controller sicher in den POSE-Modus (Koordinatenansteuerung), führt asynchrone Bewegungen über MoveIt aus und wechselt bei Bedarf wieder in den Servo-Modus zurück.
+*   **Was macht er?** Steuert den Roboterarm physisch und extrem ausfallsicher an vorgegebene Posen und sorgt für das korrekte Umschalten der hardwarenahen Steuerungs-Modi.
+*   **Wie funktioniert er?** Bietet Action-Services wie `execute_motion_to_pose` an. Intern greift die Node auf die Hardware-Schnittstellen zurück (`/ufactory/set_mode` und `/ufactory/set_state`), um den Controller bei Triggerung von Servo- in den Pose-Modus (und zurück) zu schalten. Unterschreitet die aktuelle Endeffektor-Höhe 95 mm, wird vor der eigentlichen Bewegung ein proaktiver Call an `xarm_msgs/srv/MoveCartesian` gesendet, um den Arm sicher auf Z=150 mm anzuheben und seitliche Kollisionen mit Objekten zu verhindern.
 
 #### `collision_check`
 *   **Wozu dient er?** Aktive Unfallprävention und Schutz der Hardware (insbesondere der Tischplatte).
-*   **Was macht er?** Greift ein, bevor der Roboter mit dem Tisch oder sich selbst kollidiert, wenn er manuell per Gamepad gesteuert wird.
-*   **Wie funktioniert er?** Überwacht kontinuierlich die Z-Position des Endeffektors (via TF/Kinematik) in Relation zu den eingehenden Gamepad-Geschwindigkeitsbefehlen. Berechnet vorausschauend, ob der nächste Schritt das Z-Limit (z.B. 96.5mm) unterschreitet. Falls ja, werden die Abwärtsgeschwindigkeiten auf null genullt, bevor sie an den Controller geschickt werden.
+*   **Was macht er?** Greift schützend ein, bevor der Roboter bei der Gamepad-Steuerung mit dem Tisch kollidiert, und warnt den Benutzer.
+*   **Wie funktioniert er?** Die Node fungiert als Filter: Sie subscribt die rohen Controller-Daten (`/joy`) sowie die Positionsdaten des Endeffektors (`/ufactory/get_position`). Anhand der eingehenden Z-Achsen-Geschwindigkeit berechnet sie prädiktiv die zukünftige Höhe (`Z_neu = Z_aktuell + V_z * 0.1s`). Unterschreitet dieser Wert das Limit von 96,5 mm, wird die betroffene Joystick-Achse auf `0.0` genullt. Diese (bei Bedarf manipulierte) Eingabe wird dann auf dem Topic `/joy_check` weitergeleitet. Zudem warnt die Node den Nutzer via `/ui/collision_msg` und löst ein physisches Gamepad-Rumble über die `pygame.joystick` Bibliothek aus.
 
-#### `xarm_moveit_servo` (aus xarm_ros2)
-*   **Wozu dient er?** Echtzeit-Gamepadsteuerung des Roboters.
-*   **Was macht er?** Übersetzt kontinuierliche Eingaben (z.B. Joystick-Achsen) in weiche Roboterbewegungen.
-*   **Wie funktioniert er?** Empfängt Ziel-Geschwindigkeiten im Raum oder für einzelne Gelenke, berechnet über MoveIt Servo invers-kinematisch die benötigten Gelenkstellungen unter Berücksichtigung von Singularitäten und Kollisionen und streamt diese hochfrequent (latenzarm) an den Hardware-Controller.
+#### `xarm_joystick_input` (Teil von `xarm_moveit_servo`)
+*   **Wozu dient er?** Latenzarme Gamepad-Steuerung und Tasten-Mapping für den Roboter und Systemdienste.
+*   **Was macht er?** Eine in C++ geschriebene Node (`xarm_joystick_input.cpp`), die gefilterte Joy-Signale auswertet, glättet und in ROS-Befehle oder Service-Calls übersetzt.
+*   **Wie funktioniert er?** Die Node abonniert das Topic `/joy_check` (das gefilterte Signal des Collision-Checkers) und liest die Analog-Sticks und Trigger für kartesische Bewegungen (`TwistStamped`) aus. Sie wendet einen exponentiellen Glättungsfilter (`smoothing_factor_ = 0.5`) an, um ruckartige Eingaben weich an MoveIt Servo weiterzugeben. Sie beinhaltet umfangreiche Button-Logiken:
+    * **Steuerkreuz (D-Pad Up/Down):** Schaltet dynamisch zwischen 5 Geschwindigkeitsstufen (12,5% bis 100%) um.
+    * **Start / Back:** Wechselt den kartesischen Referenzrahmen "on the fly" zwischen Roboterbasis (`link_base`) und Endeffektor (`link_eef`).
+    * **A / B Tasten:** Steuert den Vakuum-Greifer über Hardware-Services (`/ufactory/open_lite6_gripper` etc.).
+    * **X Taste:** Triggert den Whisper-KI-Sprachassistenten asynchron über einen ROS Action Client (`whisper_idl::action::Inference`).
+    * **Y Taste:** Ruft die Service-Routine für die Initial-Pose auf (`/execute_motion_sequence_Y`).
 
 ### 🖥️ UI & Visualisierung
 
 #### `rviz_marker`
 *   **Wozu dient er?** Optische Echtzeit-Rückmeldung im 3D-Simulator (Rviz2).
-*   **Was macht er?** Macht die unsichtbaren Daten (wie berechnete Kamera-Ziele) in der Simulation für den Entwickler sichtbar.
-*   **Wie funktioniert er?** Liest die 3D-Koordinaten der erkannten Objekte und generiert daraus farbige, interaktive Rviz2-Marker (z.B. schwebende Würfel oder Zylinder). Zudem publiziert er statische Objekte und STL-Meshes (ZEDm-Kamera, Halterungen), um die URDF des Roboters in der Szene visuell zu vervollständigen.
+*   **Was macht er?** Erweitert die 3D-Simulationsoberfläche im RViz2 um visuelle Hilfsmittel und statische Umgebungsobjekte.
+*   **Wie funktioniert er?** Verfolgt den Endeffektor (`link_eef`) via `tf2_ros.Buffer.lookup_transform` zur Berechnung dynamischer Overlays. Publiziert kontinuierlich eine `visualization_msgs/msg/MarkerArray` an das Topic `/visualization_marker_array`. Diese beinhaltet statische Zielschablonen für Pick-and-Place Aufgaben (parametrisiert als `CUBE` oder `CYLINDER`) sowie 3D-Geometrien (`MESH_RESOURCE` wie z.B. die ZED-Kamera), um den Workspace in der Simulation ohne Live-YOLO-Daten visuell vollständig nachzubilden.
 
 #### `websocket` (Workspace Analyzer Backend)
 *   **Wozu dient er?** Datenquelle für das Web-Dashboard.
-*   **Was macht er?** Überwacht den Zustand des ROS-Netzwerks und analysiert den Quellcode des Workspaces.
-*   **Wie funktioniert er?** Startet einen statischen Webserver auf Port 8080 für das Frontend. Parallel analysiert ein Python-Skript per Abstract Syntax Tree (AST) den Code im `src/`-Ordner nach Nodes, Topics und Services. Diese Meta-Daten werden über einen Websocket auf Port 8765 kontinuierlich als JSON an das Dashboard gestreamt.
+*   **Was macht er?** Überwacht den Zustand des ROS-Netzwerks und analysiert dynamisch den Quellcode des Workspaces.
+*   **Wie funktioniert er?** Das Skript `workspace_analyzer.py` nutzt das Python-Modul `ast` (Abstract Syntax Tree), um den Quellcode im `src/`-Ordner ausführungsfrei nach Mustern wie `create_publisher` oder `create_subscription` zu durchsuchen. Es überwacht Dateisystemänderungen über `watchdog.observers.Observer` und triggert bei Bedarf automatisch Re-Analysen. Die extrahierten Metadaten werden als JSON an Standard-ROS-2-Topics (wie `/dashboard/workspace_metadata`) publiziert, woraufhin der separate `rosbridge_server` diese als Websocket für das Frontend bereitstellt.
 
 #### `rosbridge_server`
 *   **Wozu dient er?** Die Brücke zwischen der ROS 2 Welt und dem Web-Browser.
@@ -167,15 +173,13 @@ Stelle sicher, dass die folgenden Kernkomponenten auf deinem System installiert 
 
 ## 🎮 Nutzung & Launch
 
-Der Workspace wird bevorzugt über die globalen Shell-Skripte im Hauptverzeichnis gestartet, die das Dashboard hochziehen und die ROS-Umgebung vorbereiten.
-
-- (.sh) hier werdern die Ros2 Nodes gestartet und die Websocket-Kommunikation aufgebaut
+Der Workspace wird bevorzugt über die Shell-Skripte im Hauptverzeichnis gestartet. Diese Skripte initialisieren die benötigten ROS 2 Nodes sowie die Websocket-Kommunikation.
 
 * **Gesamtes System starten (Simulation/Fake):** 
   ```bash
   ./start.sh
   ```
-  *(Startet den lokalen Webserver, die ROS Bridge, den Analyzer und den MoveIt Servo in einer Mock-Umgebung für Entwicklungs-Checks).*
+  *(Startet den lokalen Webserver, den rosbridge_server, den Analyzer und den MoveIt Servo in einer Mock-Umgebung).*
 
 * **Echten Lite6 Roboter starten:** 
   ```bash
@@ -189,9 +193,9 @@ Alternativ können einzelne Module wie gewohnt über ROS 2 Befehle gestartet wer
 
 ## 🖥️ ROS 2 GUI Control (`ros2_gui_cmds.py`)
 
-*   **Wozu dient er?** Als zentrales, grafisches Control-Panel (Fernbedienung) für den gesamten Workspace.
-*   **Was macht er?** Bietet eine moderne Desktop-Oberfläche, um komplexe ROS 2 Befehle, Launch-Files und Bash-Skripte mit nur einem Klick zu starten, ohne tiefere Terminal-Kenntnisse vorauszusetzen.
-*   **Wie funktioniert er?** Basierend auf der Python-Bibliothek `customtkinter` rendert das Skript ein dunkles "Midnight"-Theme mit Tabs für verschiedene Aufgabengebiete (Nodes, Web-Services, Daily Tools). Ein Klick auf einen Button führt im Hintergrund Systemaufrufe (`subprocess`) aus und öffnet für jeden Node ein dediziertes, benanntes `gnome-terminal`. Dies hält die Prozesse sauber getrennt und erleichtert das Debugging.
+*   **Wozu dient er?** Als zentrales, grafisches Control-Panel für den gesamten Workspace.
+*   **Was macht er?** Desktop-Applikation zum Ausführen von ROS 2 Befehlen, Launch-Files und Bash-Skripten.
+*   **Wie funktioniert er?** Nutzt `customtkinter` für eine Tab-basierte Navigation (Nodes, Web-Services, Daily Tools). Befehle werden als isolierte `subprocess`-Aufrufe in separaten, benannten `gnome-terminal`-Fenstern ausgeführt, was das Prozessmanagement und Debugging vereinfacht.
 
 **Starten des Scripts:**
 ```bash
@@ -201,20 +205,18 @@ python3 ros2_gui_cmds.py
 
 ## 📊 Funktionsweise: Dashboard & Workspace Analyzer
 
-Das Monitoring-System besteht aus zwei eng verzahnten Hauptkomponenten, die statische Code-Analyse mit Live-Telemetrie aus dem laufenden ROS 2 System kombinieren.
+Das System verknüpft die statische Code-Analyse mit den Live-Telemetriedaten des ROS 2 Netzwerks.
 
 ### 1. Der Workspace Analyzer (Backend)
-Das Python-Skript (`src/websocket/workspace_analyzer.py`) ist das Herzstück der statischen Analyse. 
-- **Code-Parsing:** Es durchsucht den gesamten `src/`-Ordner nach `.py`, `.cpp`, `.launch.py` und XML-Dateien. Mithilfe von Python's `ast` (Abstract Syntax Tree) und Regex-Mustern analysiert es den Code tiefgreifend, *ohne* ihn ausführen zu müssen.
-- **Datenextraktion:** Es extrahiert automatisch ROS 2 Node-Namen, definierte Publisher, Subscriber, Services, Actions sowie Abhängigkeiten aus `package.xml` und Einstiegspunkte aus `setup.py` oder `CMakeLists.txt`.
-- **Kommunikation:** Die gesammelten Daten werden in einem strukturierten JSON-Format aufbereitet und über einen **Websocket-Server (Port 8765)** kontinuierlich an verbundene Clients gestreamt. Bei Code-Änderungen auf der Festplatte aktualisiert der Analyzer die Daten automatisch.
+Das Skript `workspace_analyzer.py` führt die statische Code-Analyse durch.
+- **Code-Parsing:** Es durchsucht den gesamten `src/`-Ordner nach `.py`, `.cpp`, `.launch.py` und XML-Dateien. Die Analyse erfolgt ausführungsfrei über Abstract Syntax Trees (AST) und Regex.
+- **Datenextraktion:** Es extrahiert ROS 2 Node-Namen, definierte Publisher, Subscriber, Services, Actions sowie Abhängigkeiten aus der `package.xml` und Einstiegspunkte aus `setup.py` oder `CMakeLists.txt`.
+- **Kommunikation:** Das Skript bereitet die gesammelten Daten als strukturiertes JSON auf und publiziert diese fortlaufend über Standard-ROS-2-Topics (z.B. `/dashboard/workspace_metadata`). Bei Festplatten-Änderungen im Code aktualisiert der Analyzer diese Topics automatisch.
 
 ### 2. Das Dashboard (Frontend)
-Das webbasierte Frontend (`dashboard_index.html` & `dashboard_script.js`) fungiert als zentraler Hub, der statische und dynamische Informationen zusammenführt.
-- **Duale Verbindung:** Das Frontend baut gleichzeitig zwei Websocket-Verbindungen auf:
-  1. Zum Workspace Analyzer (Port 8765), um die statische Projektstruktur und Launch-Files zu laden.
-  2. Zum `rosbridge_server` (Port 9090), um sich live in das laufende ROS 2 Netzwerk einzuklinken.
-- **Daten-Fusion:** Das Dashboard gleicht die statisch gefundenen Nodes (aus dem Code) mit den live laufenden Nodes (aus ROS) ab. Dadurch kann es anzeigen, welche programmierten Nodes gerade offline oder aktiv sind.
+Das webbasierte Frontend (`dashboard_index.html` & `dashboard_script.js`) fungiert als zentraler Hub für die bereitgestellten Daten.
+- **Websocket-Verbindung:** Das Frontend verbindet sich per Websocket ausschließlich mit dem `rosbridge_server` (Port 9090). Darüber liest es sowohl die statischen Metadaten des Analyzers als auch die laufenden ROS-Systemdaten in Echtzeit aus.
+- **Daten-Fusion:** Das Dashboard gleicht die statisch analysierten Nodes mit den aktiven Nodes ab, um den Zustand (offline/aktiv) visuell darzustellen.
 - **Echtzeit-Interaktion:** Über die `roslib.js` Bibliothek abonniert das Dashboard aktive Topics, liest Nachrichten in Echtzeit aus, berechnet Frequenzen (Hz) und ermöglicht es sogar, Launch-Files (`start.sh`, `lite6.sh`) direkt aus dem Browserfenster heraus als Systembefehle auszuführen.
 
 ### 3. Starten der Komponenten
