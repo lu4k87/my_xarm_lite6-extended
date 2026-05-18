@@ -17,14 +17,20 @@ Das Gesamtsystem dient als reproduzierbarer, kosteneffizienter Proof-of-Concept,
 
 ### 🚀 Multimodale Technologien & Interaktionskonzepte
 
-Das System bündelt multimodale Eingabemethoden für die Teleoperation, basierend auf dem offiziellen xarm_ros2 Repository.
+Das System bündelt verschiedene Eingabemethoden (Multimodalität) für die Teleoperation, basierend auf dem offiziellen xarm_ros2 Repository.
 
-*   **Computer Vision:** Räumliche Lokalisierung von Objekten über 2D/3D-Objekterkennung mittels YOLO.
-*   **Koordinatentransformation & Kalibrierung:** Das System nutzt ArUco-Marker als zentrale Referenzpunkte zur Berechnung von Homographie-Matrizen. Hierüber werden sowohl die 3D-Weltkoordinaten von Objekten auf der Tischplatte (90 mm Höhe) aus der ZED-Kamera abgeleitet, als auch die Blickkoordinaten der Eye-Tracking-Brille exakt auf die Ränder der PyQt5-Desktopoberfläche projiziert.
-*   **Voice Control:** Lokale Sprachverarbeitung (Whisper AI) zur semantischen Steuerung.
-*   **Teleoperation & UI:** Echtzeit-Überwachung und Steuerung über Web-Dashboards und Custom-GUIs.
-*   **Eye-Tracking (In Entwicklung):** Robotersteuerung und UI-Interaktion über Blickerfassung. 
-*   **VLA & Video Action Models (Geplant):** Integration von Vision-Language-Action Modellen zur KI-gestützten Handlungsplanung.  
+**Steuerungsmethoden:**
+*   **Gamepad-Teleoperation:** Latenzarme, kontinuierliche 3D-Steuerung mittels Xbox One Elite Series 2 Controller.
+*   **Voice Control:** Lokale Sprachverarbeitung (Whisper AI) zur semantischen, intentionsbasierten Steuerung über ein Mikrofon.
+*   **Eye-Tracking (Tobii Pro Glasses 3):** Robotersteuerung und UI-Interaktion über Blickerfassung (Gaze-Tracking).
+
+**Wahrnehmung & Assistenz:**
+*   **Computer Vision:** Räumliche Lokalisierung von Objekten über 2D-Objekterkennung mittels YOLO (aktuell über PiCameras).
+*   **Stereo Vision (Geplant):** Zukünftige Integration von echten 3D-Tiefendaten über eine ZED Mini (Stereolabs) Kamera.
+*   **VLA & Video Action Models (Geplant):** Integration von Vision-Language-Action Modellen zur KI-gestützten Handlungsplanung.
+
+**Koordinatentransformation & Kalibrierung:**
+*   **ArUco-Marker-System:** Das System nutzt ArUco-Marker als zentrale Referenzpunkte zur Berechnung von Homographie-Matrizen. Hierüber werden einerseits die 3D-Weltkoordinaten von Objekten auf der Tischplatte (90 mm Höhe) abgeleitet. Andererseits werden die Marker genutzt, um die Blickkoordinaten der Eye-Tracking-Brille exakt auf die Steuerungs-UI zu projizieren, sodass Blicke auf Bildschirmelemente in Roboterbefehle umgesetzt werden können.  
 
 ---
 
