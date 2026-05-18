@@ -27,8 +27,8 @@ CONFIG = {
 # Statische Szene (aus der URDF extrahiert)
 # Dimensions für Zylinder in Rviz: (Durchmesser_X, Durchmesser_Y, Höhe_Z)
 SCENE_MARKERS = [
-    # Orange transparente Arbeitsfläche (Radius 0.44 -> Durchmesser 0.88)
-    {"id": 10, "type": Marker.CYLINDER, "pos": (0.0, 0.0, -0.004), "dims": (0.88, 0.88, 0.001), "color": [1.0, 0.5, 0.0, 0.5]}, 
+    # Arbeitsbereich als weiße Kreislinie (Radius 0.44)
+    {"id": 10, "type": Marker.LINE_LIST, "radius": 0.44, "pos": (0.0, 0.0, -0.004), "dims": (0.003, 0.0, 0.0), "color": [1.0, 1.0, 1.0, 1.0]}, 
     # ZED Camera Stand (Aluminium)
     {"id": 11, "type": Marker.CUBE, "pos": (0.5, 0.5, 0.19), "dims": (0.02, 0.02, 0.38), "color": [0.7, 0.7, 0.7, 1.0]}, 
     # Template Plane (Aluminium)
@@ -40,7 +40,7 @@ SCENE_MARKERS = [
     # Wand Vorne (x = 2.0)
     {"id": 17, "type": Marker.CUBE, "pos": (2.0, 0.0, 1.0), "dims": (0.02, 4.0, 2.0), "color": [1.0, 1.0, 1.0, 1.0]},
     # Boden (Fläche zwischen den Wänden)
-    {"id": 18, "type": Marker.CUBE, "pos": (0.0, 0.0, -0.005), "dims": (4.0, 4.0, 0.001), "color": [1.0, 1.0, 1.0, 1.0]}
+    {"id": 18, "type": Marker.CUBE, "pos": (0.0, 0.0, -0.005), "dims": (4.0, 4.0, 0.001), "color": [0.0, 0.0, 0.0, 1.0]}
 ]
 
 # =========================================================
@@ -138,13 +138,18 @@ class DynamicSceneMarkerPublisher(Node):
 
         # 2. Statische Szene (Flächen, Ständer, Blöcke) zeichnen
         for scene_obj in SCENE_MARKERS:
+            pts = None
+            if scene_obj.get("type") == Marker.LINE_LIST and "radius" in scene_obj:
+                pts = self.calculate_cylinder_lines(scene_obj["radius"], 60)
+                
             m_scene = self.create_marker(
                 scene_obj["id"], 
                 scene_obj["type"], 
                 scene_obj["pos"], 
                 scene_obj["dims"], 
                 scene_obj["color"], 
-                namespace="static_scene"
+                namespace="static_scene",
+                points=pts
             )
             marker_array.markers.append(m_scene)
 
