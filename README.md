@@ -44,6 +44,11 @@ Hier ist eine detaillierte Übersicht aller wesentlichen Pakete und Nodes in die
 *   **Was macht er?** Erfasst die Umgebung in 3D und stellt visuelle Daten sowie Tiefeninformationen bereit.
 *   **Wie funktioniert er?** Nutzt das ZED SDK, um hochauflösende Stereobilder und dichte 3D-Punktwolken (PointClouds) zu generieren. Diese Daten bilden das Fundament für die Environment-Kartierung (z.B. via OctoMap) und die 2D-Objekterkennung.
 
+#### `zed-ros2-examples`
+*   **Wozu dient er?** Offizielle Tutorials und Anwendungsbeispiele von Stereolabs.
+*   **Was macht er?** Bietet eine Referenz-Sammlung vorgefertigter Nodes zur Demonstration der ZED-Kamera-Funktionen (z.B. Spatial Mapping, Body Tracking, Object Detection).
+*   **Wie funktioniert er?** Enthält C++ und Python Skripte, die zeigen, wie man die von `zed_wrapper` publizierten Topics (Depth, RGB, PointClouds) effektiv in eigenen ROS 2 Projekten verarbeitet und visualisiert.
+
 ### 🗣️ Sprachsteuerung & Interaktion
 
 #### `ros2_whisper`
