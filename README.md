@@ -26,7 +26,7 @@ Die Plattform bündelt verschiedene Eingabemethoden und wird kontinuierlich weit
 ### Zentrale Steuerungselemente:
 - [**ROS 2 GUI Control Script**](#-ros-2-gui-control) - Moderne Desktop-Oberfläche zum schnellen Starten von Nodes und Workspace-Skripten.
 - [**Dashboard UI & Workspace Analyzer**](#-dashboard-ui--workspace-analyzer) - Webbasierte Echtzeit-Überwachung und Analyse des ROS-Netzwerks.
-- [**OctoMap Setup Guide**](octomap_anleitung.md) - Schritt-für-Schritt-Anleitung zur Erstellung einer 3D-Map aus den ZEDm PointClouds.
+
 
 ## 🚀 Kernfunktionen & ROS 2 Nodes
 
