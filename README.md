@@ -107,7 +107,7 @@ Das Projekt ist in das offizielle xArm-Repository und die eigenen Erweiterungen 
 ```text
 ~/dev_ws/
     ├── start.sh                     # Start-Skripte für Simulation und echten Roboter
-    ├── octomap_anleitung.md         # Anleitung für 3D-Mapping mit der ZED-Kamera
+
     └── src/                         # ROS 2 Workspace (Eigene und offizielle Pakete)
         ├── collision_check/         # Aktive Kollisionsvermeidung für den Roboterarm
         ├── eye_control/             # Visuelles Feedback-Display (Animierte Augen)
