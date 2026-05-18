@@ -1,24 +1,25 @@
-# xArm ROS 2 Extended Workspace (Humble)
+# xArm ROS 2 Extended Workspace (ROS2 Humble)
 
 Dieses Repository ist eine modular aufgebaute **Forschungs- und Evaluierungsplattform** für die Teleoperation und Mensch-Roboter-Interaktion (HCI), aufbauend auf dem offiziellen [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`). 
 
 Das Gesamtsystem (Hardware & Software) zielt darauf ab, optimale Rahmenbedingungen ("Human-in-the-Loop") für die robotergestützte Forschung zu schaffen. Es bietet ein Fundament, um neue Steuerungskonzepte, UI/GUI-Usability und multimodale Eingabemethoden für den xArm Lite6 zu entwickeln, zu testen und wissenschaftlich zu evaluieren.
 
-### 🔬 Architektur & Prinzipien
+### 🔬 Architektur/Prinzipien
 
 Die Infrastruktur ist nach folgenden Kernkriterien konzipiert:
-*   **Reproduzierbar & Open Source:** Transparente Codebasis für verlässliche wissenschaftliche Arbeit.
-*   **Low-Cost:** Fokus auf erschwingliche Komponenten, um Forschungsprojekte zugänglich zu halten.
-*   **Modular & Industriestandard:** Basiert durchgehend auf ROS 2 (Humble), was die nahtlose Integration bestehender und moderner Robotik-Frameworks garantiert.
+*   **Reproduzierbar & Open Source:** Transparente Codebasis für verlässliche wissenschaftliche Arbeit. Transparenz und Wiederholbarkeit sind grundlegend für unser Vorgehen, um sicherzustellen, dass Experimente klar nachvollziehbar und wissenschaftlichen Standards genügen.
+*   **Low-Cost:** Fokus auf erschwingliche Komponenten, um Forschungsprojekte zugänglich zu halten. 
+*   **Modular & Industriestandard:** Basiert durchgehend auf ROS 2 (Humble), was die nahtlose Integration bestehender und moderner Robotik-Frameworks garantiert. 
 
 ### 🚀 Interaktionskonzepte & Roadmap
 
-Die Plattform bündelt verschiedene Eingabemethoden und wird kontinuierlich weiterentwickelt:
-*   **Computer Vision:** 2D/3D-Objekterkennung (YOLO) und räumliche Lokalisierung.
+Das multimodale Teleoperationssystem bündelt verschiedene Eingabemethoden zur Interaktion mit dem Roboter. Die Basis bildet hierfür, dass offizielle xarm-ROS2 repository.
+
+*   **Computer Vision:** 2D/3D-Objekterkennung (YOLO) und räumliche Lokalisierung. 
 *   **Voice Control:** Lokale Sprachverarbeitung (Whisper AI) zur semantischen Steuerung.
 *   **Teleoperation & UI:** Echtzeit-Überwachung und Steuerung über Web-Dashboards und Custom-GUIs.
-*   **Eye-Tracking (In Entwicklung):** Robotersteuerung und UI-Interaktion über Blickerfassung.
-*   **VLA & Video Action Models (Geplant):** Integration von Vision-Language-Action Modellen zur KI-gestützten Handlungsplanung.
+*   **Eye-Tracking (In Entwicklung):** Robotersteuerung und UI-Interaktion über Blickerfassung. 
+*   **VLA & Video Action Models (Geplant):** Integration von Vision-Language-Action Modellen zur KI-gestützten Handlungsplanung.  
 
 ---
 
@@ -33,7 +34,7 @@ Hier ist eine detaillierte Übersicht aller wesentlichen Pakete und Nodes in die
 ### 👁️ Computer Vision & Wahrnehmung
 
 #### `yolo_object_detector`
-*   **Wozu dient er?** Objekterkennung und räumliche Lokalisierung von Zielobjekten (z.B. farbige Blöcke) im Kamerabild.
+*   **Wozu dient er?** Objekterkennung und räumliche Lokalisierung von Zielobjekten (Pick-and-Place Aufgabe: Würfel,Rechteck, Zylinder) im Kamerabild.
 *   **Was macht er?** Findet trainierte Objekte sowie ArUco-Marker im 2D-Bildstream und projiziert diese in den 3D-Raum des Roboters.
 *   **Wie funktioniert er?** Nutzt ein YOLO-Modell auf dem 2D-RGB-Stream der ZED-Kamera. Die erkannten 2D-Pixelkoordinaten werden über eine berechnete Homographie-Matrix auf die Z=0 Ebene (Tischplatte) transformiert und als 3D-Posen (`PoseArray`) im ROS-Netzwerk publiziert.
 
@@ -74,16 +75,16 @@ Hier ist eine detaillierte Übersicht aller wesentlichen Pakete und Nodes in die
 *   **Wie funktioniert er?** Überwacht kontinuierlich die Z-Position des Endeffektors (via TF/Kinematik) in Relation zu den eingehenden Gamepad-Geschwindigkeitsbefehlen. Berechnet vorausschauend, ob der nächste Schritt das Z-Limit (z.B. 96.5mm) unterschreitet. Falls ja, werden die Abwärtsgeschwindigkeiten auf null genullt, bevor sie an den Controller geschickt werden.
 
 #### `xarm_moveit_servo` (aus xarm_ros2)
-*   **Wozu dient er?** Reibungslose Echtzeit-Teleoperation.
+*   **Wozu dient er?** Echtzeit-Gamepadsteuerung des Roboters.
 *   **Was macht er?** Übersetzt kontinuierliche Eingaben (z.B. Joystick-Achsen) in weiche Roboterbewegungen.
-*   **Wie funktioniert er?** Empfängt Ziel-Geschwindigkeiten im Raum oder für einzelne Gelenke, berechnet über MoveIt Servo invers-kinematisch die benötigten Gelenkstellungen unter Berücksichtigung von Singularitäten und streamt diese hochfrequent (latenzarm) an den Hardware-Controller.
+*   **Wie funktioniert er?** Empfängt Ziel-Geschwindigkeiten im Raum oder für einzelne Gelenke, berechnet über MoveIt Servo invers-kinematisch die benötigten Gelenkstellungen unter Berücksichtigung von Singularitäten und Kollisionen und streamt diese hochfrequent (latenzarm) an den Hardware-Controller.
 
 ### 🖥️ UI & Visualisierung
 
 #### `rviz_marker`
 *   **Wozu dient er?** Optische Echtzeit-Rückmeldung im 3D-Simulator (Rviz2).
 *   **Was macht er?** Macht die unsichtbaren Daten (wie berechnete Kamera-Ziele) in der Simulation für den Entwickler sichtbar.
-*   **Wie funktioniert er?** Liest die 3D-Koordinaten der erkannten Objekte (`PoseArray`) und generiert daraus farbige, interaktive Rviz2-Marker (z.B. schwebende Würfel oder Zylinder). Zudem publiziert er statische Kollisionsobjekte und STL-Meshes (ZEDm-Kamera, Halterungen), um die URDF des Roboters in der Szene visuell zu vervollständigen.
+*   **Wie funktioniert er?** Liest die 3D-Koordinaten der erkannten Objekte und generiert daraus farbige, interaktive Rviz2-Marker (z.B. schwebende Würfel oder Zylinder). Zudem publiziert er statische Objekte und STL-Meshes (ZEDm-Kamera, Halterungen), um die URDF des Roboters in der Szene visuell zu vervollständigen.
 
 #### `websocket` (Workspace Analyzer Backend)
 *   **Wozu dient er?** Datenquelle für das Web-Dashboard.
