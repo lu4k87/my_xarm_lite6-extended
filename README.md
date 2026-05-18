@@ -14,6 +14,7 @@ Die Infrastruktur ist nach folgenden Kernkriterien konzipiert:
 ### 🚀 Interaktionskonzepte & Roadmap
 
 Die Plattform bündelt verschiedene Eingabemethoden und wird kontinuierlich weiterentwickelt:
+*   **MoveIt Servo & Gamepad (Basis):** Basiert auf der offiziellen UFACTORY xArm ROS 2 Implementierung für flüssige, latenzarme Echtzeit-Teleoperation per Controller.
 *   **Computer Vision:** 2D/3D-Objekterkennung (YOLO) und räumliche Lokalisierung.
 *   **Voice Control:** Lokale Sprachverarbeitung (Whisper AI) zur semantischen Steuerung.
 *   **Teleoperation & UI:** Echtzeit-Überwachung und Steuerung über Web-Dashboards und Custom-GUIs.
