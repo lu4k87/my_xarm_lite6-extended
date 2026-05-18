@@ -19,8 +19,8 @@ Das Gesamtsystem dient als reproduzierbarer, kosteneffizienter Proof-of-Concept,
 
 Das System bündelt multimodale Eingabemethoden für die Teleoperation, basierend auf dem offiziellen xarm_ros2 Repository.
 
-*   **Koordinatentransformation & Kalibrierung:** Das System nutzt ArUco-Marker als zentrale Referenzpunkte zur Berechnung von Homographie-Matrizen. Hierüber werden sowohl die 3D-Weltkoordinaten von Objekten auf der Tischplatte (90 mm Höhe) aus der ZED-Kamera abgeleitet, als auch die Blickkoordinaten der Eye-Tracking-Brille exakt auf die Ränder der PyQt5-Desktopoberfläche projiziert.
 *   **Computer Vision:** Räumliche Lokalisierung von Objekten über 2D/3D-Objekterkennung mittels YOLO.
+*   **Koordinatentransformation & Kalibrierung:** Das System nutzt ArUco-Marker als zentrale Referenzpunkte zur Berechnung von Homographie-Matrizen. Hierüber werden sowohl die 3D-Weltkoordinaten von Objekten auf der Tischplatte (90 mm Höhe) aus der ZED-Kamera abgeleitet, als auch die Blickkoordinaten der Eye-Tracking-Brille exakt auf die Ränder der PyQt5-Desktopoberfläche projiziert.
 *   **Voice Control:** Lokale Sprachverarbeitung (Whisper AI) zur semantischen Steuerung.
 *   **Teleoperation & UI:** Echtzeit-Überwachung und Steuerung über Web-Dashboards und Custom-GUIs.
 *   **Eye-Tracking (In Entwicklung):** Robotersteuerung und UI-Interaktion über Blickerfassung. 
