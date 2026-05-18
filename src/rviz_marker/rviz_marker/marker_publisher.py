@@ -12,14 +12,6 @@ from tf2_ros import TransformException
 OBJECT_LINE_Z = 0.005        # Höhe der Hohlkörper-Unterkante
 LINE_THICKNESS = 0.002
 
-# Konfiguration des Linien-Rasters (50mm Schritte)
-GRID_RESOLUTION = 0.05       # 50 mm Schrittweite
-GRID_SIZE_X = 0.7            
-GRID_SIZE_Y = 1.0            
-GRID_CENTER_X = 0.55         
-GRID_CENTER_Y = 0.0
-GRID_LINE_THICKNESS = 0.001  # 1 mm Linienstärke für RViz
-
 # Frames und interaktive Schwellenwerte
 EEF_FRAME = 'link_eef'      
 TARGET_FRAME = 'link_base'  
@@ -32,13 +24,28 @@ CONFIG = {
     "GREEN_CYLINDER": {"pos": (0.374, 0.018), "dims": (0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
 }
 
+# Statische Szene (aus der URDF extrahiert)
+# Dimensions für Zylinder in Rviz: (Durchmesser_X, Durchmesser_Y, Höhe_Z)
+SCENE_MARKERS = [
+    # Orange transparente Arbeitsfläche (Radius 0.44 -> Durchmesser 0.88)
+    {"id": 10, "type": Marker.CYLINDER, "pos": (0.0, 0.0, -0.002), "dims": (0.88, 0.88, 0.002), "color": [1.0, 0.5, 0.0, 0.5]}, 
+    # ZED Camera Stand (Aluminium)
+    {"id": 11, "type": Marker.CUBE, "pos": (0.5, 0.5, 0.19), "dims": (0.02, 0.02, 0.38), "color": [0.7, 0.7, 0.7, 1.0]}, 
+    # Pi Stand (Aluminium)
+    {"id": 12, "type": Marker.CUBE, "pos": (0.25, 0.5, 0.1), "dims": (0.02, 0.02, 0.2), "color": [0.7, 0.7, 0.7, 1.0]}, 
+    # Collision Block (Dark Grey)
+    {"id": 13, "type": Marker.CUBE, "pos": (0.35, 0.0, 0.055), "dims": (0.01, 0.01, 0.1), "color": [0.2, 0.2, 0.2, 1.0]}, 
+    # Template Plane (Aluminium)
+    {"id": 14, "type": Marker.CUBE, "pos": (0.32, 0.0, 0.0025), "dims": (0.2, 0.3, 0.005), "color": [0.7, 0.7, 0.7, 1.0]} 
+]
+
 # =========================================================
 
 class DynamicSceneMarkerPublisher(Node):
     """
     Knoten für dynamische Visualisierungen:
-    - Zeichnet das präzise Liniennetz direkt über die orange URDF-Arbeitsplatte.
     - Überwacht den Roboter-Endeffektor und steuert interaktive Marker-Zustände.
+    - Rendert zudem die statischen Szenenelemente.
     """
     def __init__(self):
         super().__init__('fixed_marker_publisher')
@@ -53,7 +60,7 @@ class DynamicSceneMarkerPublisher(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         
-        self.get_logger().info('Dynamischer Marker- & Raster-Publisher erfolgreich aktiv.')
+        self.get_logger().info('Dynamischer Marker-Publisher erfolgreich aktiv.')
 
     # ---------------------------------------------------------
     # GEOMETRIE-BERECHNUNGEN (LINIENZÜGE)
@@ -92,32 +99,6 @@ class DynamicSceneMarkerPublisher(Node):
             points.append(Point(x=radius*math.cos(a2), y=radius*math.sin(a2), z=0.0))
         return points
 
-    def calculate_grid_lines(self):
-        """Generiert exakte Stützpunkte für das Linienraster bündig auf Z=0.0005."""
-        points = []
-        z_lines = 0.0005 
-        
-        min_x = round((GRID_CENTER_X - (GRID_SIZE_X / 2.0)) / GRID_RESOLUTION) * GRID_RESOLUTION
-        max_x = round((GRID_CENTER_X + (GRID_SIZE_X / 2.0)) / GRID_RESOLUTION) * GRID_RESOLUTION
-        min_y = round((GRID_CENTER_Y - (GRID_SIZE_Y / 2.0)) / GRID_RESOLUTION) * GRID_RESOLUTION
-        max_y = round((GRID_CENTER_Y + (GRID_SIZE_Y / 2.0)) / GRID_RESOLUTION) * GRID_RESOLUTION
-
-        # Gitterlinien entlang der Y-Achse
-        x = min_x
-        while x <= max_x + 1e-5:
-            points.append(Point(x=x, y=min_y, z=z_lines))
-            points.append(Point(x=x, y=max_y, z=z_lines))
-            x += GRID_RESOLUTION
-
-        # Gitterlinien entlang der X-Achse
-        y = min_y
-        while y <= max_y + 1e-5:
-            points.append(Point(x=min_x, y=y, z=z_lines))
-            points.append(Point(x=max_x, y=y, z=z_lines))
-            y += GRID_RESOLUTION
-
-        return points
-
     # ---------------------------------------------------------
     # PERIODISCHER UPDATE-CYCLE
     # ---------------------------------------------------------
@@ -151,18 +132,17 @@ class DynamicSceneMarkerPublisher(Node):
                                       (LINE_THICKNESS, 0.0, 0.0), color_rgb+[1.0], None, namespace="hollow_objects", points=pts)
             marker_array.markers.append(m)
 
-        # 2. Präzises Liniengitter hinzufügen
-        grid_lines_pts = self.calculate_grid_lines()
-        grid_lines_marker = self.create_marker(
-            id=101, 
-            marker_type=Marker.LINE_LIST, 
-            position=(0.0, 0.0, 0.0), 
-            scale=(GRID_LINE_THICKNESS, 0.0, 0.0), 
-            color=[0.25, 0.25, 0.25, 1.0], # Schönes, dezentes Anthrazit-Gitter
-            namespace="grid_system", 
-            points=grid_lines_pts
-        )
-        marker_array.markers.append(grid_lines_marker)
+        # 2. Statische Szene (Flächen, Ständer, Blöcke) zeichnen
+        for scene_obj in SCENE_MARKERS:
+            m_scene = self.create_marker(
+                scene_obj["id"], 
+                scene_obj["type"], 
+                scene_obj["pos"], 
+                scene_obj["dims"], 
+                scene_obj["color"], 
+                namespace="static_scene"
+            )
+            marker_array.markers.append(m_scene)
 
         # Komplettes Paket abschicken
         self.publisher_.publish(marker_array)

@@ -6,40 +6,9 @@
 
   <xacro:include filename="$(find xarm_description)/urdf/xarm_device.urdf.xacro" />
 
-  <material name="aluminum">
-    <color rgba="0.7 0.7 0.7 1.0"/>
-  </material>
   <material name="dark_grey">
     <color rgba="0.2 0.2 0.2 1.0"/>
   </material>
-  <material name="pi_grey">
-    <color rgba="0.3 0.3 0.3 1.0"/>
-  </material>
-  <material name="orange_plane_alpha">
-    <color rgba="1.0 0.5 0.0 0.5"/>
-  </material>
-
-  <link name="zed_camera_stand_link">
-    <visual>
-      <origin xyz="0 0 0.19" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.02 0.02 0.38"/>
-      </geometry>
-      <material name="aluminum"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0.19" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.02 0.02 0.38"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="world_to_zed_stand_joint" type="fixed">
-    <parent link="world"/> 
-    <child link="zed_camera_stand_link"/>
-    <origin xyz="0.5 0.5 0.0" rpy="0 0 0"/> 
-  </joint>
 
   <link name="zed_camera_link">
     <visual>
@@ -68,116 +37,6 @@
     <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
     <parent link="zed_camera_link"/>
     <child link="zed_optical_frame"/>
-  </joint>
-
-  <link name="pi_stand_link">
-    <visual>
-      <origin xyz="0 0 0.1" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.02 0.02 0.2"/>
-      </geometry>
-      <material name="aluminum"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0.1" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.02 0.02 0.2"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="world_to_pi_stand_joint" type="fixed">
-    <parent link="world"/>
-    <child link="pi_stand_link"/>
-    <origin xyz="0.25 0.5 0.0" rpy="0 0 0"/>
-  </joint>
-
-  <link name="pi_mount_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="package://rviz_marker/meshes/rpi-cameramount.stl" scale="0.001 0.001 0.001"/>
-      </geometry>
-      <material name="pi_grey"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="package://rviz_marker/meshes/rpi-cameramount.stl" scale="0.001 0.001 0.001"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="pi_stand_to_mount_joint" type="fixed">
-    <parent link="pi_stand_link"/>
-    <child link="pi_mount_link"/>
-    <origin xyz="0 0 0.2" rpy="0 0 0"/>
-  </joint>
-
-  <link name="workspace_plane_link">
-    <visual>
-      <origin xyz="0 0 -0.002" rpy="0 0 0"/>
-      <geometry>
-        <cylinder radius="0.44" length="0.002"/>
-      </geometry>
-      <material name="orange_plane_alpha"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 -0.002" rpy="0 0 0"/>
-      <geometry>
-        <cylinder radius="0.44" length="0.002"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="world_to_workspace_joint" type="fixed">
-    <parent link="world"/>
-    <child link="workspace_plane_link"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-  </joint>
-
-  <link name="collision_block_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.01 0.01 0.1"/>
-      </geometry>
-      <material name="dark_grey"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.01 0.01 0.1"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="world_to_collision_block_joint" type="fixed">
-    <parent link="world"/>
-    <child link="collision_block_link"/>
-    <origin xyz="0.35 0.0 0.055" rpy="0 0 0"/>
-  </joint>
-
-  <link name="template_plane_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.2 0.3 0.005"/>
-      </geometry>
-      <material name="aluminum"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.2 0.3 0.005"/>
-      </geometry>
-    </collision>
-  </link>
-
-  <joint name="world_to_template_plane_joint" type="fixed">
-    <parent link="world"/>
-    <child link="template_plane_link"/>
-    <origin xyz="0.32 0.0 0.0025" rpy="0 0 0"/>
   </joint>
 
 </robot>
