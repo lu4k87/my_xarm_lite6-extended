@@ -9,7 +9,7 @@ from tf2_ros import TransformException
 # =========================================================
 # GLOBALE KONSTANTEN
 # =========================================================
-OBJECT_LINE_Z = 0.005        # Höhe der Hohlkörper-Unterkante
+OBJECT_LINE_Z = -0.002       # Höhe der Hohlkörper-Unterkante (unterhalb des Grids bei Z=0)
 LINE_THICKNESS = 0.002
 
 # Frames und interaktive Schwellenwerte
@@ -28,15 +28,19 @@ CONFIG = {
 # Dimensions für Zylinder in Rviz: (Durchmesser_X, Durchmesser_Y, Höhe_Z)
 SCENE_MARKERS = [
     # Orange transparente Arbeitsfläche (Radius 0.44 -> Durchmesser 0.88)
-    {"id": 10, "type": Marker.CYLINDER, "pos": (0.0, 0.0, -0.002), "dims": (0.88, 0.88, 0.002), "color": [1.0, 0.5, 0.0, 0.5]}, 
+    {"id": 10, "type": Marker.CYLINDER, "pos": (0.0, 0.0, -0.004), "dims": (0.88, 0.88, 0.001), "color": [1.0, 0.5, 0.0, 0.5]}, 
     # ZED Camera Stand (Aluminium)
     {"id": 11, "type": Marker.CUBE, "pos": (0.5, 0.5, 0.19), "dims": (0.02, 0.02, 0.38), "color": [0.7, 0.7, 0.7, 1.0]}, 
-    # Pi Stand (Aluminium)
-    {"id": 12, "type": Marker.CUBE, "pos": (0.25, 0.5, 0.1), "dims": (0.02, 0.02, 0.2), "color": [0.7, 0.7, 0.7, 1.0]}, 
-    # Collision Block (Dark Grey)
-    {"id": 13, "type": Marker.CUBE, "pos": (0.35, 0.0, 0.055), "dims": (0.01, 0.01, 0.1), "color": [0.2, 0.2, 0.2, 1.0]}, 
     # Template Plane (Aluminium)
-    {"id": 14, "type": Marker.CUBE, "pos": (0.32, 0.0, 0.0025), "dims": (0.2, 0.3, 0.005), "color": [0.7, 0.7, 0.7, 1.0]} 
+    {"id": 14, "type": Marker.CUBE, "pos": (0.32, 0.0, -0.003), "dims": (0.2, 0.3, 0.001), "color": [0.7, 0.7, 0.7, 1.0]},
+    # Wand Links (y = 2.0)
+    {"id": 15, "type": Marker.CUBE, "pos": (0.0, 2.0, 1.0), "dims": (4.0, 0.02, 2.0), "color": [1.0, 1.0, 1.0, 1.0]},
+    # Wand Rechts (y = -2.0)
+    {"id": 16, "type": Marker.CUBE, "pos": (0.0, -2.0, 1.0), "dims": (4.0, 0.02, 2.0), "color": [1.0, 1.0, 1.0, 1.0]},
+    # Wand Vorne (x = 2.0)
+    {"id": 17, "type": Marker.CUBE, "pos": (2.0, 0.0, 1.0), "dims": (0.02, 4.0, 2.0), "color": [1.0, 1.0, 1.0, 1.0]},
+    # Boden (Fläche zwischen den Wänden)
+    {"id": 18, "type": Marker.CUBE, "pos": (0.0, 0.0, -0.005), "dims": (4.0, 4.0, 0.001), "color": [1.0, 1.0, 1.0, 1.0]}
 ]
 
 # =========================================================

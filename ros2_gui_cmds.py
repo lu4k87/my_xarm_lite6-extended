@@ -266,8 +266,8 @@ class ROS2MasterControl(ctk.CTk):
             lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", "Real Move"),
             copy_cmd="ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev")
         self.add_button(card2, "Fake Move Launch  (Simulation)",
-            lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py", "Fake Move"),
-            copy_cmd="ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py")
+            lambda: run_cmd("ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true", "Fake Move"),
+            copy_cmd="ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true")
         self.add_button(card2, "Keyboard Input Node",
             lambda: run_cmd("ros2 run xarm_moveit_servo xarm_keyboard_input", "Keyboard Input"),
             copy_cmd="ros2 run xarm_moveit_servo xarm_keyboard_input")
