@@ -12,6 +12,7 @@ Panels:
         - /MarkerArray1/Topic1
         - /Axes1
         - /Axes2
+        - /RobotModel2
       Splitter Ratio: 0.46875
     Tree Height: 814
   - Class: rviz_common/Selection
@@ -34,7 +35,7 @@ Visualization Manager:
       Cell Size: 0.0010000000474974513
       Class: rviz_default_plugins/Grid
       Color: 150; 150; 150
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.029999999329447746
         Value: Lines
@@ -47,7 +48,7 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 5000
       Reference Frame: <Fixed Frame>
-      Value: true
+      Value: false
     - Acceleration_Scaling_Factor: 0.1
       Class: moveit_rviz_plugin/MotionPlanning
       Enabled: true
@@ -316,8 +317,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        collision_visual: true
-        floor_plane: true
+        grid_system: true
         hollow_objects: true
       Topic:
         Depth: 5
@@ -340,6 +340,114 @@ Visualization Manager:
       Radius: 0.0020000000949949026
       Reference Frame: link_tcp
       Value: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /scene_description
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        collision_block_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link6:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_eef:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        pi_mount_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pi_stand_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        template_plane_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        workspace_plane_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        world:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed_camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        zed_camera_stand_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        zed_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: RobotModel
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -401,10 +509,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.07540054619312286
+      Pitch: 0.6904006600379944
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.731790542602539
+      Yaw: 3.566788911819458
     Saved: ~
 Window Geometry:
   Displays:

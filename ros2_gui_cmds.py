@@ -44,8 +44,8 @@ def run_cmd(command, title="ROS 2 Terminal", ws_path="~/dev_ws"):
     cmd_parts = [p.strip() for p in display_str.split('&&')]
     
     # Vor JEDEN Part ein "CMD:" setzen
-    formatted_disp = "\\n".join([f" \\033[1;36mCMD:\\033[0m \\033[1;37m{part}\\033[0m" for part in cmd_parts])
-    safe_disp = formatted_disp.replace('"', '\\"')
+    formatted_disp = "\n".join([f" \033[1;36mCMD:\033[0m \033[1;37m{part}\033[0m" for part in cmd_parts])
+    safe_disp = formatted_disp.replace('"', '\"')
 
     # Variablen im Terminal erzwingen, selbst wenn die .bashrc abbricht
     script = f"""export ROS_DOMAIN_ID={domain_id}
@@ -56,11 +56,11 @@ source ~/.bashrc 2>/dev/null || true
 {ws_setup} 2>/dev/null || true
 cd {ws_path} 2>/dev/null || true
 clear
-echo -e "\\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\\033[0m"
-echo -e "\\033[36m[Terminal: $(tty)  PID: $$]\\033[0m"
-echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m"
+echo -e "\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\033[0m"
+echo -e "\033[36m[Terminal: $(tty)  PID: $$]\033[0m"
+echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m"
 echo -e "{safe_disp}"
-echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m\\n"
+echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m\n"
 {command}
 """
     safe = shlex.quote(script)
@@ -79,8 +79,8 @@ def run_interactive_cmd(command, title="System Tool"):
     cmd_parts = [p.strip() for p in command.split('&&')]
     
     # Vor JEDEN Part ein "CMD:" setzen
-    formatted_disp = "\\n".join([f" \\033[1;36mCMD:\\033[0m \\033[1;37m{part}\\033[0m" for part in cmd_parts])
-    safe_disp = formatted_disp.replace('"', '\\"')
+    formatted_disp = "\n".join([f" \033[1;36mCMD:\033[0m \033[1;37m{part}\033[0m" for part in cmd_parts])
+    safe_disp = formatted_disp.replace('"', '\"')
 
     # Variablen im Terminal erzwingen
     script = f"""export ROS_DOMAIN_ID={domain_id}
@@ -89,11 +89,11 @@ export ROS_LOCALHOST_ONLY=0
 source ~/.bashrc 2>/dev/null || true
 {ros_setup} 2>/dev/null || true
 clear
-echo -e "\\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\\033[0m"
-echo -e "\\033[36m[Terminal: $(tty)  PID: $$]\\033[0m"
-echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m"
+echo -e "\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\033[0m"
+echo -e "\033[36m[Terminal: $(tty)  PID: $$]\033[0m"
+echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m"
 echo -e "{safe_disp}"
-echo -e "\\033[1;33m═══════════════════════════════════════════════════════════\\033[0m\\n"
+echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m\n"
 {command}
 """
     safe = shlex.quote(script)
@@ -176,7 +176,7 @@ class ROS2MasterControl(ctk.CTk):
         card = self.make_card(f, "Netzwerk & System", ">")
         self.add_button(card, "Eigene IP-Adresse anzeigen",
             lambda: run_interactive_cmd(
-                "echo -e '\\033[1;32mNetzwerk-Schnittstellen:\\033[0m'; ip -brief address show; echo ''; read -p 'Enter zum Schliessen...'",
+                "echo -e '\033[1;32mNetzwerk-Schnittstellen:\033[0m'; ip -brief address show; echo ''; read -p 'Enter zum Schliessen...'",
                 "IP Adresse"),
             copy_cmd="ip -brief address show")
         cmd_find = 'read -p "Welcher Dateiname?: " st; find / -iname "*${st}*" 2>/dev/null'
@@ -187,7 +187,7 @@ class ROS2MasterControl(ctk.CTk):
         card2 = self.make_card(f, "Umgebung (.bashrc)", ">")
         self.add_button(card2, "~/.bashrc neu laden (source)",
             lambda: run_interactive_cmd(
-                "source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2",
+                "source ~/.bashrc && echo -e '\033[1;32m.bashrc geladen!\033[0m'; sleep 2",
                 "Source Bashrc"),
             copy_cmd="source ~/.bashrc")
 
@@ -284,12 +284,18 @@ class ROS2MasterControl(ctk.CTk):
             copy_cmd="ros2 run collision_check checker")
 
         card4 = self.make_card(scroll, "Vision & Voice", ">")
+        self.add_button(card4, "Eye UI Node",
+            lambda: run_cmd("ros2 run eye_control eye_ui", "Eye UI"),
+            copy_cmd="ros2 run eye_control eye_ui")
         self.add_button(card4, "YOLO Homographie Node",
             lambda: run_cmd("ros2 run yolo_object_detector yolo_homography_node", "YOLO"),
             copy_cmd="ros2 run yolo_object_detector yolo_homography_node")
-        self.add_button(card4, "RViz Marker Publisher Node",
-            lambda: run_cmd("ros2 run rviz_marker marker_publisher", "RViz Marker"),
-            copy_cmd="ros2 run rviz_marker marker_publisher")
+        
+        # HIER IST DEINE ÄNDERUNG:
+        self.add_button(card4, "RViz Marker & Scene Launch",
+            lambda: run_cmd("ros2 launch rviz_marker rviz_marker.launch.py", "RViz Marker"),
+            copy_cmd="ros2 launch rviz_marker rviz_marker.launch.py")
+            
         self.add_button(card4, "Whisper Bringup Launch",
             lambda: run_cmd("ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", "Whisper Bringup"),
             copy_cmd="ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True")
