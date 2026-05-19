@@ -17,11 +17,11 @@ EEF_FRAME = 'link_eef'
 TARGET_FRAME = 'link_base'  
 POSITION_TOLERANCE = 0.01   # 10 mm Trigger-Radius für Farbumschlag
 
-# Bunte Hohlkörper-Ziele
+# Zielpositionen für die Hohlkörper
 CONFIG = {
-    "BLUE_CUBE": {"pos": (0.274, 0.082), "dims": (0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
-    "RED_RECTANGLE": {"pos": (0.319, -0.083), "dims": (0.03, 0.06), "color": [1.0, 0.0, 0.0], "type": Marker.CUBE, "id": 2}, 
-    "GREEN_CYLINDER": {"pos": (0.374, 0.018), "dims": (0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
+    "TARGET_BLUE_CUBE": {"pos": (0.274, 0.082), "dims": (0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
+    "TARGET_RED_RECTANGLE": {"pos": (0.319, -0.083), "dims": (0.03, 0.06), "color": [1.0, 0.0, 0.0], "type": Marker.CUBE, "id": 2}, 
+    "TARGET_GREEN_CYLINDER": {"pos": (0.374, 0.018), "dims": (0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
 }
 
 # Statische Szene (aus der URDF extrahiert)
