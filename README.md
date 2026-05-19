@@ -1,4 +1,4 @@
-# xArm ROS 2 Extended Workspace (ROS2 Humble)
+# xArm ROS 2 Extended Workspace (ROS2 Humble) *IN DEV*
 
 Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Evaluierungsplattform** für die multimodale Teleoperation und Mensch-Roboter-Interaktion (HCI), aufbauend auf dem offiziellen [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`). 
 
