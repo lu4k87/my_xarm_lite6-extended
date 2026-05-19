@@ -35,7 +35,7 @@ Das System bündelt verschiedene Eingabemethoden (Multimodalität) für die Tele
 ---
 
 ### Zentrale Steuerungselemente:
-- [**ROS 2 GUI Control Script**](#-ros-2-gui-control) - Moderne Desktop-Oberfläche zum schnellen Starten von Nodes und Workspace-Skripten.
+- [**ROS 2 Nexus**](#-ros-2-nexus) - Moderne Desktop-Oberfläche zum schnellen Starten von Nodes und Workspace-Skripten.
 - [**Dashboard UI & Workspace Analyzer**](#-dashboard-ui--workspace-analyzer) - Webbasierte Echtzeit-Überwachung und Analyse des ROS-Netzwerks.
 
 ## 🚀 Kernfunktionen & ROS 2 Nodes
@@ -201,7 +201,7 @@ Alternativ können einzelne Module wie gewohnt über ROS 2 Befehle gestartet wer
 * **Starten der Objekterkennung:** `ros2 run yolo_object_detector yolo_tracker_node`
 * **Starten der ROS Bridge manuell:** `ros2 launch rosbridge_server rosbridge_websocket_launch.xml`
 
-## 🖥️ ROS 2 GUI Control (`ros2_gui_cmds.py`)
+## 🖥️ ROS 2 Nexus (`ros2_nexus.py`)
 
 *   **Wozu dient er?** Als zentrales, grafisches Control-Panel für den gesamten Workspace.
 *   **Was macht er?** Desktop-Applikation zum Ausführen von ROS 2 Befehlen, Launch-Files und Bash-Skripten.
@@ -210,7 +210,7 @@ Alternativ können einzelne Module wie gewohnt über ROS 2 Befehle gestartet wer
 **Starten des Scripts:**
 ```bash
 cd ~/dev_ws
-python3 ros2_gui_cmds.py
+python3 ros2_nexus.py
 ```
 
 ## 📊 Funktionsweise: Dashboard & Workspace Analyzer
