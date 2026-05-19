@@ -10,6 +10,7 @@ from PyQt5.QtGui import QCursor
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped
+from xarm_msgs.srv import Call
 
 try:
     import av
@@ -37,17 +38,40 @@ class EyeRosNode(Node):
         super().__init__('eye_ui_ros2_node')
         self.twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
         self.speed_scale = 0.50 
+        
+        # Gripper clients
+        self.open_gripper_client = self.create_client(Call, '/ufactory/open_lite6_gripper')
+        self.close_gripper_client = self.create_client(Call, '/ufactory/close_lite6_gripper')
+        self.stop_gripper_client = self.create_client(Call, '/ufactory/stop_lite6_gripper')
+        self.gripper_state = "OFF"
+
+    def toggle_gripper(self):
+        req = Call.Request()
+        if self.gripper_state == "OPEN" or self.gripper_state == "OFF":
+            self.close_gripper_client.call_async(req)
+            self.gripper_state = "CLOSE"
+            return "CLOSE"
+        else: # state is "CLOSE"
+            self.open_gripper_client.call_async(req)
+            self.gripper_state = "OPEN"
+            return "OPEN"
+
+    def stop_gripper(self):
+        req = Call.Request()
+        self.stop_gripper_client.call_async(req)
+        self.gripper_state = "OFF"
+        return "OFF"
 
     def publish_twist(self, vector):
         msg = TwistStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = "link_base" 
-        msg.twist.linear.x = float(vector['x']) * self.speed_scale
-        msg.twist.linear.y = float(vector['y']) * self.speed_scale
-        msg.twist.linear.z = float(vector['z']) * self.speed_scale
+        msg.twist.linear.x = float(vector.get('x', 0.0)) * self.speed_scale
+        msg.twist.linear.y = float(vector.get('y', 0.0)) * self.speed_scale
+        msg.twist.linear.z = float(vector.get('z', 0.0)) * self.speed_scale
         msg.twist.angular.x = 0.0
         msg.twist.angular.y = 0.0
-        msg.twist.angular.z = 0.0
+        msg.twist.angular.z = float(vector.get('rz', 0.0))
         self.twist_pub.publish(msg)
 
 class EyeControlUI(QWidget):
@@ -66,7 +90,7 @@ class EyeControlUI(QWidget):
         self.is_driving = False   
         self.in_cooldown = False  
         
-        self.active_vector = {"x": 0.0, "y": 0.0, "z": 0.0} 
+        self.active_vector = {"x": 0.0, "y": 0.0, "z": 0.0, "rz": 0.0} 
         
         # Timer
         self.servo_publish_timer = QTimer(self)
@@ -106,18 +130,26 @@ class EyeControlUI(QWidget):
             }
         """)
         layout = QGridLayout()
+        layout.setSpacing(20)
+        layout.setContentsMargins(40, 40, 40, 40)
         
         self.buttons = []
         # Englisch + Links/Rechts Vektoren getauscht
         btns = [
-            ("⬆ FORWARD | X+", 0, 1, (1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
-            ("⬅ LEFT | Y+", 1, 0, (0.0, 1.0, 0.0), "rgba(52, 73, 94, 0.4)", False),  # Y-Werte invertiert
-            ("🛑 STOP", 1, 1, (0.0, 0.0, 0.0), "rgba(192, 57, 43, 0.5)", False),
-            ("➡ RIGHT | Y-", 1, 2, (0.0, -1.0, 0.0), "rgba(52, 73, 94, 0.4)", False), # Y-Werte invertiert
-            ("⬇ BACKWARD | X-", 2, 1, (-1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
-            ("⇈ UP | Z+", 0, 3, (0.0, 0.0, 1.0), "rgba(41, 128, 185, 0.4)", False),
-            ("⇊ DOWN | Z-", 2, 3, (0.0, 0.0, -1.0), "rgba(41, 128, 185, 0.4)", False),
-            ("SYSTEM", 2, 0, (0.0, 0.0, 0.0), "rgba(0,0,0,0)", True)
+            ("⟲ ROTATE | Z+", 0, 0, (0.0, 0.0, 0.0, 1.0), "rgba(142, 68, 173, 0.4)", False),
+            ("⬆ FORWARD | X+", 0, 1, (1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("⇈ UP | Z+", 0, 2, (0.0, 0.0, 1.0, 0.0), "rgba(41, 128, 185, 0.4)", False),
+            ("GRIPPER_TOGGLE", 0, 3, (0.0, 0.0, 0.0, 0.0), "rgba(243, 156, 18, 0.5)", False),
+            
+            ("⬅ LEFT | Y+", 1, 0, (0.0, 1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("🛑 STOP", 1, 1, (0.0, 0.0, 0.0, 0.0), "rgba(192, 57, 43, 0.5)", False),
+            ("➡ RIGHT | Y-", 1, 2, (0.0, -1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("GRIPPER_OFF", 1, 3, (0.0, 0.0, 0.0, 0.0), "rgba(230, 126, 34, 0.5)", False),
+            
+            ("⟳ ROTATE | Z-", 2, 0, (0.0, 0.0, 0.0, -1.0), "rgba(142, 68, 173, 0.4)", False),
+            ("⬇ BACKWARD | X-", 2, 1, (-1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("⇊ DOWN | Z-", 2, 2, (0.0, 0.0, -1.0, 0.0), "rgba(41, 128, 185, 0.4)", False),
+            ("SYSTEM", 2, 3, (0.0, 0.0, 0.0, 0.0), "rgba(0,0,0,0)", True)
         ]
         
         for text, r, c, vec, color, is_toggle in btns:
@@ -306,13 +338,17 @@ class EyeControlUI(QWidget):
                                 hovered_widget.setText(f"{base_text}\n{secs_left:.1f}s")
                             else:
                                 base_text = hovered_widget.property("default_text")
+                                if base_text == "GRIPPER_TOGGLE":
+                                    base_text = "GRIPPER OPEN" if self.ros_node.gripper_state == "CLOSE" else "GRIPPER CLOSE"
+                                elif base_text == "GRIPPER_OFF":
+                                    base_text = "GRIPPER OFF"
                                 hovered_widget.setText(f"{base_text}\n{secs_left:.1f}s")
                             
                             hovered_widget.setStyleSheet(f"""
                                 QPushButton {{
                                     background-color: rgba(241, 196, 15, 0.7); 
                                     color: white; 
-                                    font-size: 25px; 
+                                    font-size: 22px; 
                                     font-weight: bold; 
                                     border-radius: 15px; 
                                     border: 2px solid rgba(241, 196, 15, 1.0);
@@ -327,7 +363,7 @@ class EyeControlUI(QWidget):
                     QPushButton {
                         background-color: rgba(46, 204, 113, 0.9); 
                         color: white; 
-                        font-size: 32px; 
+                        font-size: 28px; 
                         font-weight: bold; 
                         border-radius: 15px; 
                         border: 4px solid rgba(255, 255, 255, 0.8);
@@ -338,7 +374,7 @@ class EyeControlUI(QWidget):
                     QPushButton {
                         background-color: rgba(46, 204, 113, 0.5); 
                         color: white; 
-                        font-size: 30px; 
+                        font-size: 26px; 
                         font-weight: bold; 
                         border-radius: 15px; 
                         border: 2px solid rgba(46, 204, 113, 0.8);
@@ -351,7 +387,7 @@ class EyeControlUI(QWidget):
     def stop_driving(self):
         self.servo_publish_timer.stop()
         self.pulse_timer.stop() 
-        self.ros_node.publish_twist({"x": 0.0, "y": 0.0, "z": 0.0}) 
+        self.ros_node.publish_twist({"x": 0.0, "y": 0.0, "z": 0.0, "rz": 0.0}) 
         if self.current_target:
             self.reset_button(self.current_target)
         self.is_driving = False
@@ -372,7 +408,7 @@ class EyeControlUI(QWidget):
                     QPushButton {
                         background-color: rgba(46, 204, 113, 0.4); 
                         color: rgba(255, 255, 255, 0.9); 
-                        font-size: 25px; 
+                        font-size: 22px; 
                         font-weight: bold; 
                         border-radius: 15px; 
                         border: 2px solid rgba(255, 255, 255, 0.15);
@@ -384,35 +420,45 @@ class EyeControlUI(QWidget):
                     QPushButton {
                         background-color: rgba(192, 57, 43, 0.4); 
                         color: rgba(255, 255, 255, 0.9); 
-                        font-size: 25px; 
+                        font-size: 22px; 
                         font-weight: bold; 
                         border-radius: 15px; 
                         border: 2px solid rgba(255, 255, 255, 0.15);
                     }
                 """)
         else:
+            text = btn.property("default_text")
+            is_off_btn = False
+            if text == "GRIPPER_TOGGLE":
+                text = "GRIPPER\nOPEN" if self.ros_node.gripper_state == "CLOSE" else "GRIPPER\nCLOSE"
+            elif text == "GRIPPER_OFF":
+                text = "GRIPPER\nOFF"
+                is_off_btn = True
+
             if not self.system_active:
-                text = btn.property("default_text")
                 btn.setText(text)
                 btn.setStyleSheet("""
                     QPushButton {
                         background-color: rgba(50, 50, 50, 0.2); 
                         color: rgba(255, 255, 255, 0.2); 
-                        font-size: 25px; 
+                        font-size: 22px; 
                         font-weight: bold; 
                         border-radius: 15px; 
                         border: 2px solid rgba(255, 255, 255, 0.05);
                     }
                 """)
             else:
-                text = btn.property("default_text")
                 color = btn.property("default_color")
+                # Grey out the OFF button if state is already OFF
+                if is_off_btn and self.ros_node.gripper_state == "OFF":
+                    color = "rgba(100, 100, 100, 0.4)"
+                    
                 btn.setText(text)
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: {color}; 
                         color: rgba(255, 255, 255, 0.9); 
-                        font-size: 25px; 
+                        font-size: 22px; 
                         font-weight: bold; 
                         border-radius: 15px; 
                         border: 2px solid rgba(255, 255, 255, 0.15);
@@ -430,24 +476,61 @@ class EyeControlUI(QWidget):
 
         cmd = btn.property("default_text")
         vec = btn.property("vec")
-        self.active_vector = {"x": vec[0], "y": vec[1], "z": vec[2]}
+        self.active_vector = {"x": vec[0], "y": vec[1], "z": vec[2], "rz": vec[3] if len(vec) > 3 else 0.0}
         
-        if "STOP" in cmd:
+        if cmd == "🛑 STOP":
             self.in_cooldown = True
             btn.setText("STOPPED!")
             btn.setStyleSheet("""
                 QPushButton {
                     background-color: rgba(192, 57, 43, 0.8); 
                     color: white; 
-                    font-size: 30px; 
+                    font-size: 26px; 
                     font-weight: bold; 
                     border-radius: 15px; 
                     border: 4px solid rgba(255, 255, 255, 0.8);
                 }
             """)
-            self.ros_node.publish_twist({"x": 0.0, "y": 0.0, "z": 0.0})
+            self.ros_node.publish_twist({"x": 0.0, "y": 0.0, "z": 0.0, "rz": 0.0})
             self.cooldown_timer.start(self.cooldown_time)
             print(f"[ROS 2] -> EMERGENCY STOP: {cmd}")
+        elif cmd == "GRIPPER_TOGGLE":
+            new_state = self.ros_node.toggle_gripper()
+            self.in_cooldown = True
+            
+            self.update_buttons_state()
+            
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(243, 156, 18, 0.8); 
+                    color: white; 
+                    font-size: 22px; 
+                    font-weight: bold; 
+                    border-radius: 15px; 
+                    border: 4px solid rgba(255, 255, 255, 0.8);
+                }
+            """)
+            self.cooldown_timer.start(1500)
+            print(f"[ROS 2] -> GRIPPER TOGGLED: {new_state}")
+            
+        elif cmd == "GRIPPER_OFF":
+            new_state = self.ros_node.stop_gripper()
+            self.in_cooldown = True
+            
+            self.update_buttons_state()
+            
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(230, 126, 34, 0.8); 
+                    color: white; 
+                    font-size: 22px; 
+                    font-weight: bold; 
+                    border-radius: 15px; 
+                    border: 4px solid rgba(255, 255, 255, 0.8);
+                }
+            """)
+            self.cooldown_timer.start(1500)
+            print(f"[ROS 2] -> GRIPPER STOPPED ({new_state})")
         else:
             self.is_driving = True
             btn.setText("DRIVING!")
@@ -456,7 +539,7 @@ class EyeControlUI(QWidget):
                 QPushButton {
                     background-color: rgba(46, 204, 113, 0.9); 
                     color: white; 
-                    font-size: 32px; 
+                    font-size: 28px; 
                     font-weight: bold; 
                     border-radius: 15px; 
                     border: 4px solid rgba(255, 255, 255, 0.8);
