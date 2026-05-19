@@ -30,7 +30,7 @@ Das System bündelt verschiedene Eingabemethoden (Multimodalität) für die Tele
 *   **VLA & Video Action Models (Geplant):** Integration von Vision-Language-Action Modellen zur KI-gestützten Handlungsplanung.
 
 **Koordinatentransformation & Kalibrierung:**
-*   **ArUco-Marker-System:** Das System nutzt ArUco-Marker als zentrale Referenzpunkte zur Berechnung von Homographie-Matrizen. Hierüber werden einerseits die 3D-Weltkoordinaten von Objekten auf der Tischplatte (90 mm Höhe) abgeleitet. Andererseits werden die Marker genutzt, um die Blickkoordinaten der Eye-Tracking-Brille exakt auf die Steuerungs-UI zu projizieren, sodass Blicke auf Bildschirmelemente in Roboterbefehle umgesetzt werden können.  
+*   **ArUco-Marker-System:** Das System nutzt ArUco-Marker als zentrale Referenzpunkte zur Berechnung von Homographie-Matrizen. Hierüber werden einerseits die 3D-Weltkoordinaten von Objekten auf der Arbeitsplatte (90 mm Höhe) des Roboters abgeleitet. Andererseits werden die Marker genutzt, um die Blickkoordinaten der Eye-Tracking-Brille exakt auf die Steuerungs-UI zu projizieren, sodass Blicke auf Bildschirmelemente in Roboterbefehle umgesetzt werden können.  
 
 ---
 
@@ -47,7 +47,7 @@ Hier ist eine detaillierte Übersicht aller wesentlichen Pakete und Nodes in die
 #### `yolo_object_detector`
 *   **Wozu dient er?** Objekterkennung und räumliche Lokalisierung von Zielobjekten (Pick-and-Place Aufgabe: Würfel, Rechteck, Zylinder) im Kamerabild.
 *   **Was macht er?** Findet trainierte Objekte sowie ArUco-Marker im 2D-Bildstream und projiziert diese in den 3D-Raum des Roboters.
-*   **Wie funktioniert er?** Die Node liest Bilder über einen blockierungsfreien Background-Thread (HTTP/RTSP-Stream) ein. Die 2D-Pixelkoordinaten der erkannten YOLO-Bounding-Boxes werden mithilfe von `cv2.findHomography` und vier auf dem Tisch platzierten ArUco-Markern in den 3D-Raum (Z=90 mm) transformiert. Die Zielkoordinaten werden anschließend als `geometry_msgs/msg/PoseArray` klassenspezifisch unter Topics wie `/objects/<color>_<shape>/world_poses` publiziert.
+*   **Wie funktioniert er?** Die Node liest Bilder über einen blockierungsfreien Background-Thread (HTTP/RTSP-Stream) ein. Die 2D-Pixelkoordinaten der erkannten YOLO-Bounding-Boxes werden mithilfe von `cv2.findHomography` und acht auf dem Tisch platzierten ArUco-Markern in den 3D-Raum (Z=90 mm) transformiert. Die Zielkoordinaten werden anschließend als `geometry_msgs/msg/PoseArray` klassenspezifisch unter Topics wie `/objects/<color>_<shape>/world_poses` publiziert.
 
 ### 🗣️ Sprachsteuerung & Interaktion
 
