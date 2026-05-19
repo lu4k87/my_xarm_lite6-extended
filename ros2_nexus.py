@@ -3,6 +3,7 @@ import subprocess
 import sys
 import os
 import shlex
+from PIL import Image, ImageTk
 
 # ══════════════════════════════════════════════════════
 #  APPEARANCE & THEME  —  "Deep Space"
@@ -32,22 +33,18 @@ COLOR_ACCENT_GREEN= "#4ade80"   # Neon-Green
 # ══════════════════════════════════════════════════════
 def run_cmd(command, title="ROS 2 Terminal", ws_path="~/dev_ws"):
     """Öffnet ein Terminal und führt einen ROS-Befehl aus."""
-    # Direkt aus der Hauptumgebung der GUI auslesen
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
 
     ros_setup = "source /opt/ros/humble/setup.bash"
     ws_setup  = f"source {ws_path}/install/setup.bash"
     
-    # Befehl in Einzelteile zerlegen für schöne Anzeige
     display_str = f"{ros_setup} && {ws_setup} && cd {ws_path} && {command}"
     cmd_parts = [p.strip() for p in display_str.split('&&')]
     
-    # Vor JEDEN Part ein "CMD:" setzen
     formatted_disp = "\n".join([f" \033[1;36mCMD:\033[0m \033[1;37m{part}\033[0m" for part in cmd_parts])
     safe_disp = formatted_disp.replace('"', '\"')
 
-    # Variablen im Terminal erzwingen, selbst wenn die .bashrc abbricht
     script = f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
 export ROS_LOCALHOST_ONLY=0
@@ -69,20 +66,16 @@ echo -e "\033[1;33m════════════════════�
 
 def run_interactive_cmd(command, title="System Tool"):
     """Öffnet ein interaktives Terminal."""
-    # Direkt aus der Hauptumgebung der GUI auslesen
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
 
     ros_setup = "source /opt/ros/humble/setup.bash"
     
-    # Befehl in Einzelteile zerlegen für schöne Anzeige
     cmd_parts = [p.strip() for p in command.split('&&')]
     
-    # Vor JEDEN Part ein "CMD:" setzen
     formatted_disp = "\n".join([f" \033[1;36mCMD:\033[0m \033[1;37m{part}\033[0m" for part in cmd_parts])
     safe_disp = formatted_disp.replace('"', '\"')
 
-    # Variablen im Terminal erzwingen
     script = f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
 export ROS_LOCALHOST_ONLY=0
@@ -106,7 +99,7 @@ def run_bg_cmd(command):
     subprocess.Popen(command, shell=True, env=env)
 
 def open_editor():
-    run_interactive_cmd("nano ~/dev_ws/ros2_gui_cmds.py", "[EDIT] GUI Code")
+    run_interactive_cmd("nano ~/dev_ws/ros2_nexus.py", "[EDIT] GUI Code")
 
 def reload_app():
     os.environ.setdefault("DISPLAY", ":0")
@@ -120,15 +113,30 @@ def reload_app():
 class ROS2MasterControl(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("ROS 2 Master Control")
+        self.title("ROS 2 Nexus")
         # Exakt 30% Breite (in Pixeln berechnet)
         sw = self.winfo_screenwidth()
         sh = self.winfo_screenheight()
         width = int(sw * 0.3)
         self.geometry(f"{width}x{sh}+0+0") # +0+0 erzwingt linke Seite
         self.configure(fg_color=COLOR_BG_MAIN)
+        
+        # KORRIGIERT: Sucht nun fehlerfrei nach der PNG-Datei
+        icon_path = self.resource_path("ros2_nexus_icon.png")
+        if os.path.exists(icon_path):
+            img = ImageTk.PhotoImage(Image.open(icon_path))
+            self.iconphoto(False, img)
+
         self.setup_tabs()
         self.setup_footer()
+
+    def resource_path(self, relative_path):
+        """ Gibt den absoluten Pfad zur Ressource zurück (für PyInstaller kompatibilität). """
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+        return os.path.join(base_path, relative_path)
 
     # ── Tabs ────────────────────────────────────────
     def setup_tabs(self):
@@ -138,9 +146,9 @@ class ROS2MasterControl(ctk.CTk):
             segmented_button_fg_color="#0c1425",
             segmented_button_selected_color=COLOR_ACCENT_AMBER,
             segmented_button_selected_hover_color="#d97706",
-            segmented_button_unselected_color="#94a3b8",       # Heller für Lesbarkeit der schwarzen Schrift
-            segmented_button_unselected_hover_color="#cbd5e1", # Noch heller beim Hover
-            text_color="#000000",                              # Schwarze Schrift für alle Tabs
+            segmented_button_unselected_color="#94a3b8",       
+            segmented_button_unselected_hover_color="#cbd5e1", 
+            text_color="#000000",                              
         )
         self.tabview.pack(expand=True, fill="both", padx=18, pady=(14, 0))
 
@@ -151,7 +159,6 @@ class ROS2MasterControl(ctk.CTk):
             border_width=1
         )
 
-        # Erhöhtes Spacing durch Padding-Leerzeichen (Zentrierung gewahrt)
         self.tab_daily = self.tabview.add("    Daily    ")
         self.tab_nodes = self.tabview.add("    Nodes    ")
         self.tab_web   = self.tabview.add("     Web     ")
@@ -159,7 +166,6 @@ class ROS2MasterControl(ctk.CTk):
         self.tab_build = self.tabview.add("    Build    ")
         self.tabview.set("    Nodes    ")
 
-        # Oberer Innenabstand je Tab
         for tab in [self.tab_daily, self.tab_nodes, self.tab_web, self.tab_info, self.tab_build]:
             ctk.CTkLabel(tab, text="", height=8, fg_color="transparent").pack()
 
@@ -290,12 +296,9 @@ class ROS2MasterControl(ctk.CTk):
         self.add_button(card4, "YOLO Homographie Node",
             lambda: run_cmd("ros2 run yolo_object_detector yolo_homography_node", "YOLO"),
             copy_cmd="ros2 run yolo_object_detector yolo_homography_node")
-        
-        # HIER IST DEINE ÄNDERUNG:
         self.add_button(card4, "RViz Marker & Scene Launch",
             lambda: run_cmd("ros2 launch rviz_marker rviz_marker.launch.py", "RViz Marker"),
             copy_cmd="ros2 launch rviz_marker rviz_marker.launch.py")
-            
         self.add_button(card4, "Whisper Bringup Launch",
             lambda: run_cmd("ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", "Whisper Bringup"),
             copy_cmd="ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True")
@@ -321,7 +324,6 @@ class ROS2MasterControl(ctk.CTk):
             lambda: run_cmd("python3 src/websocket/workspace_analyzer.py", "Workspace Analyzer"),
             copy_cmd="python3 src/websocket/workspace_analyzer.py")
 
-        # Weiße Trennlinie mit Abstand über dem Text "Frontend"
         ctk.CTkFrame(f, height=1, fg_color=COLOR_FG_TEXT).pack(fill="x", pady=(80, 10), padx=30)
 
         card2 = self.make_card(f, "Frontend", ">")
@@ -339,7 +341,6 @@ class ROS2MasterControl(ctk.CTk):
         footer.pack(side="bottom", fill="x")
         footer.pack_propagate(False)
 
-        # Dezente Trennlinie
         ctk.CTkFrame(footer, height=1, fg_color=COLOR_BORDER).pack(fill="x")
 
         btn_frame = ctk.CTkFrame(footer, fg_color="transparent")
@@ -351,16 +352,13 @@ class ROS2MasterControl(ctk.CTk):
 
     # ── Widget-Helpers ──────────────────────────────
     def make_card(self, master, title, icon="▸"):
-        """Erstellt eine visuell abgegrenzte Section-Card."""
         outer = ctk.CTkFrame(master, fg_color="transparent")
         outer.pack(fill="x", pady=(14, 0), padx=4)
 
-        # Header: zentriert, große Schrift
         ctk.CTkLabel(outer, text=title,
-                     text_color=COLOR_ACCENT, # Helleres Cyber-Cyan (#22d3ee)
+                     text_color=COLOR_ACCENT, 
                      font=("Helvetica", 22, "bold")).pack(pady=(0, 8))
 
-        # Card-Body mit Border
         card_body = ctk.CTkFrame(outer, fg_color=COLOR_BG_CARD,
                                  corner_radius=14, border_width=1, border_color=COLOR_BORDER)
         card_body.pack(fill="x")
@@ -412,13 +410,12 @@ class ROS2MasterControl(ctk.CTk):
         btn.configure(text="✓", text_color=COLOR_ACCENT_GREEN)
         self.after(1300, lambda: btn.configure(text=orig_text, text_color=orig_color))
 
-   # ── Footer-Button Helfer (angepasst auf 70% Textgröße) ──
     def _footer_btn(self, master, text, command, fg_color=COLOR_BG_CARD, text_color=COLOR_FG_TEXT):
         ctk.CTkButton(
             master, text=text, command=command,
             fg_color=fg_color, text_color=text_color,
             hover_color=COLOR_HOVER, height=40,
-            font=("Helvetica", 14, "bold"), # Von 24 auf 17 reduziert (~70%)
+            font=("Helvetica", 14, "bold"), 
             border_width=1, border_color=COLOR_BORDER,
             corner_radius=9,
         ).pack(side="left", padx=8, pady=15)

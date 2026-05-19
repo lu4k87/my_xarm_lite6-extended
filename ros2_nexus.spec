@@ -1,15 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = []
+# KORRIGIERT: Packt das echte PNG ein
+datas = [('ros2_nexus_icon.png', '.')] 
 binaries = []
 hiddenimports = []
 tmp_ret = collect_all('customtkinter')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+datas += tmp_ret[0]
+binaries += tmp_ret[1]
+hiddenimports += tmp_ret[2]
 
 
 a = Analysis(
-    ['ros2_gui_cmds.py'],
+    ['ros2_nexus.py'], 
     pathex=[],
     binaries=binaries,
     datas=datas,
@@ -29,7 +32,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='ros2_gui_cmds',
+    name='ros2_nexus', 
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
