@@ -1,8 +1,3 @@
-Hier ist der komplette, aktualisierte Text als Download-fähiger Code-Block für deine `.md`-Datei.
-
-Ich habe die neue Sektion `### Benutzeroberflächen (UI / GUI)` genau an der gewünschten Stelle unter den multimodalen Technologien eingefügt. Die holprigen Begriffe habe ich durch professionellere Bezeichnungen (wie "Präventive Kollisionswarnungen" und "System-Feedback zur Intent-Erkennung") ersetzt. Die Video-Livestreams und die 3D-Visualisierung habe ich so integriert, dass sie direkt eine Brücke zur Objekterkennung (Object Detection) schlagen.
-
-```markdown
 # xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
 Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Evaluierungsplattform** für die multimodale Teleoperation und **Mensch-Computer-Interaktion (HCI)**. Es baut auf dem offiziellen [xarm_ros2 Repository](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`) auf.
@@ -12,8 +7,8 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Ev
 ## 📋 Projektüberblick
 
 * **Konzept:** Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste **Usability**.
-* **Motivation (Assistenz und Teilhabe):** Klassische Teleoperation erfordert kognitiv anstrengende Mikromanipulation und bildet hohe technische Barrieren. Dieses Projekt zielt auf den Barriereabbau im Sinne der Industrie 5.0 ab, um Menschen mit unterschiedlichen physischen Voraussetzungen die produktive Teilhabe am Arbeitsplatz zu ermöglichen.
-* **Funktionsprinzip:** Das System nutzt einen **Shared-Control-Ansatz** ("Human-in-the-Loop"). Nutzer wechseln nahtlos zwischen intuitiven abstrakten Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad).
+* **Motivation (Assistenz und Teilhabe):** Klassische Teleoperation erfordert kognitiv anstrengende Feinsteuerung und bildet hohe technische Barrieren. Dieses Projekt zielt auf den Barriereabbau im Sinne der Industrie 5.0 ab, um Menschen mit unterschiedlichen physischen Voraussetzungen die produktive Teilhabe am Arbeitsplatz zu ermöglichen.
+* **Funktionsprinzip:** Das System nutzt einen **Shared-Control-Ansatz** ("Human-in-the-Loop"). Nutzer wechseln nahtlos zwischen intuitiven  Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad).
 * **Zielsetzung:** Als reproduzierbarer, kosteneffizienter Proof-of-Concept für Forschung und Inklusionsprojekte zur Entwicklung und empirischen Evaluierung assistiver Robotiksysteme.
 
 ---
@@ -133,28 +128,6 @@ Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, im
 
 ---
 
-## 📂 Repository-Struktur
-
-```text
-~/dev_ws/
-    ├── start.sh                     # Start-Skripte für Simulation und echten Roboter
-    └── src/                         # ROS 2 Workspace (Eigene und offizielle Pakete)
-        ├── collision_check/         # Aktive Kollisionsvermeidung für den Roboterarm
-        ├── eye_control/             # Visuelles Feedback-Display (Animierte Augen)
-        ├── motion_sequence/         # Sichere Ausführung von Bewegungsabläufen
-        ├── move_to_coordinator/     # Zentrale Logik (Verbindet Sprache & Vision mit Bewegung)
-        ├── ros2_whisper/            # Lokale Speech-to-Text Erkennung (Whisper AI)
-        ├── rviz_marker/             # 3D-Visualisierung (Rviz2) von Zielen und Hardware
-        ├── voice_command_listener/  # Filterung und Intent-Erkennung von Sprachbefehlen
-        ├── websocket/               # Web-Dashboard Backend und statische Code-Analyse
-        ├── xarm_ros2/               # Offizieller xArm Treiber und MoveIt-Konfigurationen
-        ├── yolo_object_detector/    # 2D-Objekterkennung und 3D-Lokalisierung (YOLO)
-        ├── zed-ros2-examples/       # Offizielle ZED Anwendungsbeispiele
-        └── zed-ros2-wrapper/        # Offizieller Hardware-Treiber für die Stereolabs ZEDm
-
-```
-
----
 
 ## 🛠️ Voraussetzungen
 
