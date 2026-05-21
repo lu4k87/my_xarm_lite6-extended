@@ -24,20 +24,20 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Ev
 
 ## 🔬 Architektur & Leitprinzipien
 
-**Shared Control & Kognitive Entlastung:** 
-*Fließender Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Beanspruchung. <br>
+**Shared Control & Kognitive Entlastung:** <br>
+* Fließender Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Beanspruchung. <br>
 
-**HCI & Usability-Fokus:** 
-*Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zur intentionsbasierten Aufgabenbewältigung.<br>
+**HCI & Usability-Fokus:** <br>
+* Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zur intentionsbasierten Aufgabenbewältigung.<br>
 
-**Reproduzierbar & Open Source:** 
-*Transparente Codebasis für standardisierte wissenschaftliche Experimente.<br>
+**Reproduzierbar & Open Source:** <br>
+* Transparente Codebasis für standardisierte wissenschaftliche Experimente.<br>
 
-**Kosteneffiziente Hardware:** 
-*Erschwingliche Komponenten verbessern die Zugänglichkeit für Inklusions- und Forschungsprojekte.<br>
+**Kosteneffiziente Hardware:** <br>
+* Erschwingliche Komponenten verbessern die Zugänglichkeit für Inklusions- und Forschungsprojekte.<br>
 
-**Modular & Industriestandard:** 
-*Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.<br>
+**Modular & Industriestandard:** <br>
+* Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.<br>
 
 ---
 
