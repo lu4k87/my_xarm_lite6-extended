@@ -74,7 +74,7 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte Forschungs- und Eval
 * Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsplatte (Z = 90 mm).
 * Exakte Projektion der Eye-Tracking-Blickkoordinaten auf die Steuerungs-**UI**, um Blicke in Roboterbefehle zu übersetzen.
 
-### Benutzeroberflächen (UI / GUI)
+### Benutzeroberflächen (UI/ GUI)
 Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, immersives User Interface bereitgestellt, das alle Systemzustände bündelt.
 
 **Telemetrie & Status:** <br> 
@@ -94,7 +94,7 @@ Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, im
 
 ---
 
-## 🖥️ Zentrale Steuerungselemente (GUI & UI)
+## 🖥️ Systemverwaltung, Workspace- & Node-Management
 
 * [**ROS 2 Nexus (GUI)**](#-ros-2-nexus-ros2_nexuspy) - Moderne Desktop-Oberfläche zum schnellen Starten von Nodes und Workspace-Skripten.
 * [**Dashboard UI & Workspace Analyzer**](#-funktionsweise-dashboard--workspace-analyzer) - Webbasierte Echtzeit-Überwachung und Analyse des ROS-Netzwerks.
