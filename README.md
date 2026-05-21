@@ -35,9 +35,16 @@ Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Framework
 ## 🚀 Multimodale Technologien & Interaktionskonzepte
 
 ### Steuerungsmethoden (Inputs)
-* **Gamepad-Teleoperation:** Latenzarme, kontinuierliche 3D-Steuerung mittels *Xbox One Elite Series 2 Controller*.
-* **Voice Control:** Lokale Sprachverarbeitung (*Whisper AI*) zur semantischen, intentionsbasierten Steuerung über Mikrofon.
-* **Eye-Tracking:** Robotersteuerung und **UI**-Interaktion (Gaze-Tracking) über *Tobii Pro Glasses 3*.
+* **Gamepad-Teleoperation:* **
+Latenzarme, kontinuierliche Feinsteuerung mittels Xbox One Elite Series 2 Controller.
+
+* **Voice Control: ** Lokale Sprachverarbeitung (Whisper AI) zur semantischen, intentionsbasierten Steuerung über Mikrofon.
+
+* **Eye-Tracking ** (in Bearbeitung...): Robotersteuerung und UI-Interaktion (Gaze-Tracking) über Tobii Pro Glasses 3.
+
+* **Gestensteuerung ** (in Bearbeitung...): Berührungslose, intuitive Hand- und Fingererkennung zur direkten räumlichen Manipulation und Posensteuerung mittels Leap Motion Controller.
+
+* **VR Controller Steuerung ** (in Bearbeitung...): Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
 
 ### Wahrnehmung & Assistenz (Perception)
 * **Computer Vision:** Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* (aktuell über PiCameras).
