@@ -7,7 +7,7 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Ev
 ## 📋 Projektüberblick
 
 **Konzept:** 
-Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste **Usability**.
+* Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste **Usability**.
 **Motivation (Assistenz und Teilhabe):** 
 Klassische Teleoperation erfordert kognitiv anstrengende Feinsteuerung und bildet hohe technische Barrieren. Dieses Projekt zielt auf den Barriereabbau im Sinne der Industrie 5.0 ab, um Menschen mit unterschiedlichen physischen Voraussetzungen die produktive Teilhabe am Arbeitsplatz zu ermöglichen.
 **Funktionsprinzip:** 
