@@ -4,7 +4,6 @@ Es baut auf dem offiziellen xarm_ros2 Repository: https://github.com/xArm-Develo
 
 
 ## 📋 Projektüberblick
----
 **`Konzept:`**
 * Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste Usability.
 
