@@ -1,195 +1,195 @@
 # xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
-Dieses Repository ist eine kontinuierlich weiterentwickelte Forschungs- und Evaluierungsplattform für die multimodale Teleoperation und Mensch-Computer-Interaktion (HCI). <br>
-Es baut auf dem offiziellen xarm_ros2 Repository: https://github.com/xArm-Developer/xarm_ros2/tree/humble (Branch: humble) auf.
+This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
+It builds upon the official xarm_ros2 repository: https://github.com/xArm-Developer/xarm_ros2/tree/humble (Branch: humble).
 
 
-## 📋 Projektüberblick
-**`Konzept:`**
-* Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste Usability.
+## 📋 Project Overview
+**`Concept:`**
+* A modular platform for controlling the xArm Lite 6 robot through multimodal input methods with a focus on maximum usability.
 
-**`Motivation (Assistenz und Teilhabe):`**
-* Klassische Teleoperation erfordert kognitiv anstrengende Feinsteuerung und bildet hohe technische Barrieren. 
-* Dieses Projekt zielt auf den Barriereabbau im Sinne der Industrie 5.0 ab, um Menschen mit unterschiedlichen physischen Voraussetzungen die produktive Teilhabe am Arbeitsplatz zu ermöglichen.
+**`Motivation (Assistance and Participation):`**
+* Classical teleoperation requires cognitively demanding fine control and creates high technical barriers. 
+* This project aims to reduce barriers in the spirit of Industry 5.0, enabling people with different physical abilities to participate productively in the workplace.
 
-**`Funktionsprinzip:`**
-* Das System nutzt einen Shared-Control-Ansatz ("Human-in-the-Loop"). 
-* Nutzer wechseln nahtlos zwischen intuitiven Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad).
+**`Operating Principle:`**
+* The system uses a Shared-Control approach ("Human-in-the-Loop"). 
+* Users seamlessly switch between intuitive commands (e.g., voice/gaze) and precise manual corrections (gamepad).
 
-**`Zielsetzung:`**
-* Als reproduzierbarer, kosteneffizienter Proof-of-Concept für Forschung und Inklusionsprojekte zur Entwicklung und empirischen Evaluierung assistiver Robotiksysteme.
+**`Objective:`**
+* As a reproducible, cost-efficient Proof-of-Concept for research and inclusion projects to develop and empirically evaluate assistive robotics systems.
 
-**`Bewertungslogik & Guidelines:`**
-* Entwicklung einer Bewertungslogik für die Interaktionsqualität. 
-* Daraus abgeleitete Richtlinien (Guidelines) sollen Unternehmen (z. B. bei der geplanten Einführung von Robotern) als Leitfaden dienen und die Frage beantworten: "Wie gehen wir dabei gemäß den Anforderungen der Industrie 5.0 vor?". 
-* Diese Guidelines können perspektivisch auch als monetarisierbare Dienstleistung für die Industrie zur Verfügung gestellt werden.
+**`Evaluation Logic & Guidelines:`**
+* Development of an evaluation logic for interaction quality. 
+* Guidelines derived from this are intended to serve companies (e.g., when planning to introduce robots) as a guide and answer the question: "How do we proceed in accordance with Industry 5.0 requirements?". 
+* These guidelines can also potentially be made available as a monetizable service for industry.
 
-## 🔬 Architektur & Leitprinzipien
-### Menschenzentrierte Automatisierung:
-* Nutzer sollen befähigt werden, die Systemzustände des automatisierten Systems kontinuierlich zu interpretieren und die Intention des technischen Systems zu antizipieren.
-* Dadurch können sie die richtigen Entscheidungen treffen und über die Zeit Vertrauen zum technischen System aufbauen.
+## 🔬 Architecture & Guiding Principles
+### Human-Centered Automation:
+* Users should be empowered to continuously interpret the system states of the automated system and anticipate the intention of the technical system.
+* This enables them to make the right decisions and build trust in the technical system over time.
 
-### Shared Control & Kognitive Entlastung: 
-* Fließender Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Beanspruchung.
+### Shared Control & Cognitive Relief: 
+* Seamless switching between manual and AI-assisted control minimizes mental workload.
 
-### HCI & Usability-Fokus:
-* Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zur intentionsbasierten Aufgabenbewältigung.
+### HCI & Usability Focus:
+* Interactions shift from complex low-level controls toward intention-based task completion.
 
-### Reproduzierbar & Open Source:
-* Transparente Codebasis für standardisierte wissenschaftliche Experimente.
+### Reproducible & Open Source:
+* Transparent codebase for standardized scientific experiments.
 
-### Kosteneffiziente Hardware: 
-* Erschwingliche Komponenten verbessern die Zugänglichkeit für Inklusions- und Forschungsprojekte.
+### Cost-Efficient Hardware: 
+* Affordable components improve accessibility for inclusion and research projects.
 
-### Modular & Industriestandard:
-* Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.
+### Modular & Industry Standard:
+* Full integration into ROS 2 Humble for compatibility with established frameworks.
 
 ---
 
-## 🚀 Multimodale Technologien & Interaktionskonzepte
+## 🚀 Multimodal Technologies & Interaction Concepts
 
-### Roboter-Steuerungsmethoden (Inputs)
-**Gamepad-Teleoperation:** <br> 
-* Latenzarme, kontinuierliche Feinsteuerung mittels Xbox One Elite Series 2 Controller (inkl. Haptischem feedback - Vibration bei Kollisionsgefahr.
+### Robot Control Methods (Inputs)
+**Gamepad Teleoperation:** <br> 
+* Low-latency, continuous fine control using Xbox One Elite Series 2 Controller (incl. haptic feedback - vibration on collision risk).
 
 **Voice Control:** <br> 
-* Lokale Sprachverarbeitung (Whisper AI) zur semantischen, intentionsbasierten Steuerung über Mikrofon.
+* Local speech processing (Whisper AI) for semantic, intention-based control via microphone.
 
-**Eye-Tracking** (in Bearbeitung...): <br> 
-* Robotersteuerung und UI-Interaktion (Gaze-Tracking) über Tobii Pro Glasses 3.
+**Eye-Tracking** (in progress...): <br> 
+* Robot control and UI interaction (gaze tracking) via Tobii Pro Glasses 3.
 
-**Gestensteuerung** (in Bearbeitung...): <br> 
-* Berührungslose, intuitive Hand- und Fingererkennung zur direkten räumlichen Manipulation und Gestensteuerung mittels Leap Motion.
+**Gesture Control** (in progress...): <br> 
+* Touchless, intuitive hand and finger recognition for direct spatial manipulation and gesture control using Leap Motion.
 
-**VR Controller Steuerung** (in Bearbeitung...): <br>
-* Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
+**VR Controller Control** (in progress...): <br>
+* Immersive, spatial teleoperation through precise 6DoF tracking (Six Degrees of Freedom) and haptic feedback using Virtual Reality controllers.
 
-### Wahrnehmung & Assistenz (Perception)
+### Perception & Assistance (Perception)
 **Computer Vision:** <br> 
-* Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* (aktuell über PiCameras).
-**Stereo Vision (Geplant):** <br>
-* Integration von echten 3D-Tiefendaten über eine *ZED Mini (Stereolabs)* Kamera.
-**VLA & Video Action Models (Geplant):** <br>
-* KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
+* Spatial 2D object detection and localization using *YOLO* (currently via PiCameras).
+**Stereo Vision (Planned):** <br>
+* Integration of true 3D depth data via a *ZED Mini (Stereolabs)* camera.
+**VLA & Video Action Models (Planned):** <br>
+* AI-assisted action planning through *Vision-Language-Action* models.
 
-### Koordinatentransformation & Kalibrierung
-**ArUco-Marker-System:** <br> 
-* Im Operationsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
-* Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsplatte (Z = 90 mm).
-* Exakte Projektion der Eye-Tracking-Blickkoordinaten auf die Steuerungs-**UI**, um Blicke in Roboterbefehle zu übersetzen.
+### Coordinate Transformation & Calibration
+**ArUco Marker System:** <br> 
+* Markers placed in the robot's operating area serve as reference for homography matrices.
+* Derivation of 3D world coordinates for objects on the work surface (Z = 90 mm).
+* Precise projection of eye-tracking gaze coordinates onto the control **UI** to translate gaze into robot commands.
 
-### Benutzeroberflächen (UI/ GUI)
-Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, immersives User Interface bereitgestellt, das alle Systemzustände bündelt.
+### User Interfaces (UI/GUI)
+For cognitively relieving teleoperation, the user is provided with a central, immersive user interface that consolidates all system states.
 
-**Telemetrie & Status:** <br> 
-* Fortlaufende Anzeige von Echtzeit-Telemetriedaten des Roboterarms.
+**Telemetry & Status:** <br> 
+* Continuous display of real-time telemetry data from the robot arm.
   
-**System-Feedback & Intent-Erkennung:** <br>
-* Direkte visuelle und akustische Rückmeldung bei manuellen Steuerungseingaben sowie bei erfolgreich geparsten Sprachbefehlen.
+**System Feedback & Intent Recognition:** <br>
+* Direct visual and acoustic feedback for manual control inputs as well as successfully parsed voice commands.
   
-**Präventive Kollisionswarnungen:** <br> 
-* Dynamische Warnhinweise bei Auslösung der softwareseitigen Kollisionsschutz-Maßnahmen (z.B. Unterschreiten des Z-Limits).
+**Preventive Collision Warnings:** <br> 
+* Dynamic warnings when software-based collision protection measures are triggered (e.g., falling below the Z-limit).
   
-**Visuelles Monitoring & Object Detection:** <br>
-* Nahtlose Integration von Video-Livestreams mit Live-Overlays der erkannten Zielobjekte (YOLO-Bounding-Boxes) sowie einer synchronisierten 3D-Visualisierung (Digital Twin) der Arbeitsumgebung.
+**Visual Monitoring & Object Detection:** <br>
+* Seamless integration of video livestreams with live overlays of detected target objects (YOLO bounding boxes) as well as a synchronized 3D visualization (Digital Twin) of the work environment.
 
-**Umsetzung via OBS Studio:**<br>
-* In *OBS Studio* werden alle Komponenten gebündelt und dem Nutzer als zentrale GUI für die Teleoperation des Roboters bereitgestellt.*
+**Implementation via OBS Studio:**<br>
+* In *OBS Studio*, all components are consolidated and provided to the user as a central GUI for robot teleoperation.*
 
 ---
 
-## 🖥️ Systemverwaltung, Workspace- & Node-Management
+## 🖥️ System Administration, Workspace & Node Management
 
-* [**ROS 2 Nexus (GUI)**](#-ros-2-nexus-ros2_nexuspy) - Moderne Desktop-Oberfläche zum schnellen Starten von Nodes und Workspace-Skripten.
-* [**Dashboard UI & Workspace Analyzer**](#-funktionsweise-dashboard--workspace-analyzer) - Webbasierte Echtzeit-Überwachung und Analyse des ROS-Netzwerks.
+* [**ROS 2 Nexus (GUI)**](#-ros-2-nexus-ros2_nexuspy) - Modern desktop interface for quickly launching nodes and workspace scripts.
+* [**Dashboard UI & Workspace Analyzer**](#-operating-principle-dashboard--workspace-analyzer) - Web-based real-time monitoring and analysis of the ROS network.
 
 ---
 
-## ⚙️ Kernfunktionen & ROS 2 Nodes
+## ⚙️ Core Features & ROS 2 Nodes
 
-### 👁️ Computer Vision & Wahrnehmung
+### 👁️ Computer Vision & Perception
 
 * **`yolo_object_detector`**
-    * **Zweck:** Objekterkennung und räumliche Lokalisierung (Würfel, Rechteck, Zylinder).
-    * **Aufgabe:** Findet trainierte Objekte und ArUco-Marker im 2D-Bildstream; projiziert diese in 3D.
-    * **Funktionsweise:** Liest RTSP/HTTP-Streams in einem Background-Thread. Transformiert YOLO-Bounding-Boxes via `cv2.findHomography` und ArUco-Markern in den 3D-Raum (Z=90 mm). Publiziert `PoseArray`-Nachrichten unter `/objects/<color>_<shape>/world_poses`.
+    * **Purpose:** Object detection and spatial localization (cube, rectangle, cylinder).
+    * **Task:** Finds trained objects and ArUco markers in the 2D image stream; projects them into 3D.
+    * **How it works:** Reads RTSP/HTTP streams in a background thread. Transforms YOLO bounding boxes via `cv2.findHomography` and ArUco markers into 3D space (Z=90 mm). Publishes `PoseArray` messages under `/objects/<color>_<shape>/world_poses`.
 
-### 🗣️ Sprachsteuerung & Interaktion
+### 🗣️ Voice Control & Interaction
 
 * **`ros2_whisper`**
-    * **Zweck:** Lokale Speech-to-Text Erkennung.
-    * **Aufgabe:** Wandelt gesprochene Nutzerbefehle in Text um.
-    * **Funktionsweise:** Führt das Whisper-KI-Modell kontinuierlich auf dem Mikrofon-Stream aus und publiziert das Rohtranskript als String.
+    * **Purpose:** Local Speech-to-Text recognition.
+    * **Task:** Converts spoken user commands into text.
+    * **How it works:** Runs the Whisper AI model continuously on the microphone stream and publishes the raw transcript as a String.
 * **`voice_command_listener`**
-    * **Zweck:** Interpretation und Filterung der Sprachtexte.
-    * **Aufgabe:** Extrahiert Intents (z. B. "move to red"), blockiert Spam und gibt visuelles Dashboard-Feedback.
-    * **Funktionsweise:** Abonniert `/whisper/text`, nutzt Regex-Filter und einen Entprell-Mechanismus (5 Sek. Cooldown im `action_cooldown` Dictionary), um redundante Befehle zu blockieren. Publiziert an `/voice_cmd` und `/ui/voice_feedback`.
+    * **Purpose:** Interpretation and filtering of speech text.
+    * **Task:** Extracts intents (e.g., "move to red"), blocks spam, and provides visual dashboard feedback.
+    * **How it works:** Subscribes to `/whisper/text`, uses regex filters and a debounce mechanism (5 sec. cooldown in the `action_cooldown` dictionary) to block redundant commands. Publishes to `/voice_cmd` and `/ui/voice_feedback`.
 * **`eye_control`**
-    * **Zweck:** Robotersteuerung über Blickerfassung (**UI**-Interaktion).
-    * **Aufgabe:** "God-Mode" PyQt5-Benutzeroberfläche zur reinen Blickeingabe.
-    * **Funktionsweise:** Extrahiert JSON-Gaze2D-Daten aus dem RTSP-Stream. Nutzt ArUco-Marker zur Bildschirmerkennung und transformiert Blickkoordinaten in die **UI**. Bei 0,5 Sek. Dwell-Time auf einem Button wird ein `TwistStamped`-Befehl publiziert.
+    * **Purpose:** Robot control via gaze detection (**UI** interaction).
+    * **Task:** "God-Mode" PyQt5 user interface for pure gaze input.
+    * **How it works:** Extracts JSON Gaze2D data from the RTSP stream. Uses ArUco markers for screen detection and transforms gaze coordinates into the **UI**. With a 0.5 sec. dwell time on a button, a `TwistStamped` command is published.
 
-### 🧠 Logik & Koordination
+### 🧠 Logic & Coordination
 
 * **`move_to_coordinator`**
-    * **Zweck:** Zentrales "Gehirn" für aufgabenbasierte Bewegungen im **Shared Control**.
-    * **Aufgabe:** Führt Sprach-/Blickbefehle mit Kameradaten zusammen und koordiniert Fahrkommandos.
-    * **Funktionsweise:** State-Machine basierend. Reiht Intents ein, schickt den Roboter in eine Scan-Pose (`WAITING_FOR_ROBOT_IDLE`), blockiert 2,0 Sek. zur Bildstabilisierung, prüft die Frische der `PoseArray` und führt den kartesischen Service-Call aus.
+    * **Purpose:** Central "brain" for task-based movements in **Shared Control**.
+    * **Task:** Merges voice/gaze commands with camera data and coordinates movement commands.
+    * **How it works:** State machine based. Queues intents, sends the robot to a scan pose (`WAITING_FOR_ROBOT_IDLE`), blocks 2.0 sec. for image stabilization, checks the freshness of the `PoseArray`, and executes the Cartesian service call.
 
-### 🦾 Bewegung & Sicherheit
+### 🦾 Motion & Safety
 
 * **`motion_sequence`**
-    * **Zweck:** Zustandsmanagement und ausfallsichere Ausführung von Bewegungen.
-    * **Aufgabe:** Physische Steuerung und Umschalten der Hardware-Modi.
-    * **Funktionsweise:** Bietet Action-Services (z. B. `execute_motion_to_pose`). Schaltet hardwarenah zwischen Servo- und Pose-Modus um. Bei Endeffektor-Höhe < 95 mm wird der Arm vor der Bewegung präventiv auf Z=150 mm angehoben (Kollisionsschutz).
+    * **Purpose:** State management and failsafe execution of movements.
+    * **Task:** Physical control and switching of hardware modes.
+    * **How it works:** Provides action services (e.g., `execute_motion_to_pose`). Switches between servo and pose mode at the hardware level. When end-effector height < 95 mm, the arm is preventively raised to Z=150 mm before movement (collision protection).
 * **`collision_check`**
-    * **Zweck:** Hardware-Schutz (Unfallprävention Tischplatte).
-    * **Aufgabe:** Prädiktiver Eingriff vor Kollisionen bei manueller Gamepad-Steuerung.
-    * **Funktionsweise:** Filtert `/joy` und `/ufactory/get_position`. Berechnet zukünftige Z-Höhe voraus (`Z_neu = Z_aktuell + V_z * 0.1s`). Bei < 96,5 mm wird die Joy-Achse auf `0.0` genullt, der Nutzer über die **UI** gewarnt und ein Gamepad-Rumble ausgelöst.
-* **`xarm_joystick_input`** *(Teil von `xarm_moveit_servo`)*
-    * **Zweck:** Gamepad-Steuerung & Tasten-Mapping.
-    * **Aufgabe:** C++ Node für gefilterte Joy-Signale und ROS-Service-Calls.
-    * **Funktionsweise:** Abonniert den gefilterten `/joy_check`. Glättet Signale exponentiell (`factor = 0.5`). Mappings:
-        * **D-Pad:** Geschwindigkeitsstufen (12,5% - 100%).
-        * **Start/Back:** Referenzrahmen-Wechsel (Basis vs. Endeffektor).
-        * **A/B:** Vakuum-Greifer-Steuerung.
-        * **X:** Asynchroner Whisper-KI Trigger.
-        * **Y:** Service-Call für Initial-Pose.
+    * **Purpose:** Hardware protection (table surface collision prevention).
+    * **Task:** Predictive intervention before collisions during manual gamepad control.
+    * **How it works:** Filters `/joy` and `/ufactory/get_position`. Calculates future Z-height in advance (`Z_new = Z_current + V_z * 0.1s`). Below 96.5 mm, the joy axis is zeroed to `0.0`, the user is warned via the **UI**, and a gamepad rumble is triggered.
+* **`xarm_joystick_input`** *(Part of `xarm_moveit_servo`)*
+    * **Purpose:** Gamepad control & button mapping.
+    * **Task:** C++ node for filtered joy signals and ROS service calls.
+    * **How it works:** Subscribes to the filtered `/joy_check`. Smooths signals exponentially (`factor = 0.5`). Mappings:
+        * **D-Pad:** Speed levels (12.5% - 100%).
+        * **Start/Back:** Reference frame switching (base vs. end-effector).
+        * **A/B:** Vacuum gripper control.
+        * **X:** Asynchronous Whisper AI trigger.
+        * **Y:** Service call for initial pose.
 
-### 🖥️ UI & Visualisierung
+### 🖥️ UI & Visualization
 
 * **`rviz_marker`**
-    * **Zweck:** Optische Echtzeit-Rückmeldung im Rviz2.
-    * **Aufgabe:** Visuelle Erweiterung der 3D-Simulation.
-    * **Funktionsweise:** Verfolgt `link_eef` via TF2. Publiziert `MarkerArray` mit Pick-and-Place-Zielen (Würfel, Zylinder) und statischen 3D-Meshes (z. B. ZED-Kamera) zur Simulation ohne Live-YOLO-Daten.
+    * **Purpose:** Real-time visual feedback in RViz2.
+    * **Task:** Visual enhancement of the 3D simulation.
+    * **How it works:** Tracks `link_eef` via TF2. Publishes `MarkerArray` with pick-and-place targets (cubes, cylinders) and static 3D meshes (e.g., ZED camera) for simulation without live YOLO data.
 * **`websocket`** *(Workspace Analyzer Backend)*
-    * **Zweck:** Datenquelle für das Web-Dashboard.
-    * **Aufgabe:** Überwacht das ROS-Netzwerk und den Quellcode.
-    * **Funktionsweise:** `workspace_analyzer.py` nutzt AST zur ausführungsfreien Code-Analyse (`src/`). Überwacht Dateiänderungen (Watchdog) und publiziert JSON-Metadaten an ROS-Topics (z.B. `/dashboard/workspace_metadata`).
+    * **Purpose:** Data source for the web dashboard.
+    * **Task:** Monitors the ROS network and source code.
+    * **How it works:** `workspace_analyzer.py` uses AST for execution-free code analysis (`src/`). Monitors file changes (Watchdog) and publishes JSON metadata to ROS topics (e.g., `/dashboard/workspace_metadata`).
 * **`rosbridge_server`**
-    * **Zweck:** Websocket-Brücke für Webbrowser.
-    * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
-    * **Funktionsweise:** Standardpaket für Websockets (Port 9090). Erlaubt es Webanwendungen, via `roslib.js` direkt mit dem ROS-Netzwerk zu interagieren.
+    * **Purpose:** WebSocket bridge for web browsers.
+    * **Task:** Native communication between dashboard and robot.
+    * **How it works:** Standard package for WebSockets (Port 9090). Allows web applications to interact directly with the ROS network via `roslib.js`.
 * **`zed_wrapper`**
-    * **Zweck:** Hardware-Treiber für Stereolabs ZEDm.
-    * **Aufgabe:** Bereitstellung von 3D-Tiefendaten und PointClouds für Environment-Kartierung und Erkennung.
+    * **Purpose:** Hardware driver for Stereolabs ZEDm.
+    * **Task:** Provision of 3D depth data and point clouds for environment mapping and detection.
 
 ---
 
 
-## 🛠️ Voraussetzungen
+## 🛠️ Prerequisites
 
-* **Das offizielle Repository:** [xarm_ros2 (Official)](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`)
+* **The official repository:** [xarm_ros2 (Official)](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`)
 * **OS:** Ubuntu 22.04.5 (Jammy Jellyfish)
 * **ROS:** ROS 2 Humble
 * **Python:** Python 3.10+
-* **System-Abhängigkeiten:** `portaudio19-dev` (für Audio-Input)
-* **Zusätzliche Bibliotheken:**
-* `pyaudio` (Spracherfassung)
+* **System Dependencies:** `portaudio19-dev` (for audio input)
+* **Additional Libraries:**
+* `pyaudio` (speech capture)
 * `ultralytics` (YOLO Object Detection)
-* `opencv-python` (Bildverarbeitung)
-* `rosbridge_suite` (Websocket-Kommunikation)
-* `ros2 whisper` (Sprachkommandos)
+* `opencv-python` (image processing)
+* `rosbridge_suite` (WebSocket communication)
+* `ros2 whisper` (voice commands)
 
 
 
@@ -197,7 +197,7 @@ Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, im
 
 ## ⚙️ Installation & Setup
 
-1. Kopiere das Repository:
+1. Clone the repository:
 ```bash
 git clone [https://github.com/lu4k87/my_xarm_lite6-extended.git](https://github.com/lu4k87/my_xarm_lite6-extended.git) dev_ws
 cd dev_ws
@@ -205,7 +205,7 @@ cd dev_ws
 ```
 
 
-2. Installiere alle ROS 2 Abhängigkeiten mit `rosdep`:
+2. Install all ROS 2 dependencies with `rosdep`:
 ```bash
 rosdep update
 rosdep install --from-paths src --ignore-src -r -y
@@ -213,7 +213,7 @@ rosdep install --from-paths src --ignore-src -r -y
 ```
 
 
-3. Baue den Workspace:
+3. Build the workspace:
 ```bash
 colcon build --symlink-install
 
@@ -223,7 +223,7 @@ colcon build --symlink-install
 
 
 ```
-4. Source den Ros2 + Workspace:
+4. Source ROS 2 + Workspace:
    ```bash
    source /opt/ros/humble/setup.bash
    source install/setup.bash
@@ -233,11 +233,11 @@ colcon build --symlink-install
 
 ---
 
-## 🎮 Nutzung & Launch
+## 🎮 Usage & Launch
 
-Der Start erfolgt bevorzugt über Skripte zur automatischen Initialisierung von Nodes und Websockets:
+Launching is preferably done via scripts for automatic initialization of nodes and WebSockets:
 
-* **Gesamtes System starten (Simulation/Fake):**
+* **Start the entire system (Simulation/Fake):**
 ```bash
 ./start.sh
 
@@ -247,17 +247,17 @@ Der Start erfolgt bevorzugt über Skripte zur automatischen Initialisierung von 
 
 
 ```
-  *(Startet Webserver, rosbridge_server, Analyzer & MoveIt Servo in Mock-Umgebung).*
+  *(Starts web server, rosbridge_server, Analyzer & MoveIt Servo in mock environment).*
 
-* **Echten Lite6 Roboter starten:**
+* **Start the real Lite6 robot:**
   ```bash
   ./lite6.sh
   
 
 ```
 
-* **Manueller Einzelstart (Beispiele):**
-* Objekterkennung: `ros2 run yolo_object_detector yolo_tracker_node`
+* **Manual individual launch (Examples):**
+* Object detection: `ros2 run yolo_object_detector yolo_tracker_node`
 * ROS Bridge: `ros2 launch rosbridge_server rosbridge_websocket_launch.xml`
 
 
@@ -266,11 +266,11 @@ Der Start erfolgt bevorzugt über Skripte zur automatischen Initialisierung von 
 
 ## 🖥️ ROS 2 Nexus (`ros2_nexus.py`)
 
-* **Konzept:** Eine zentrale **grafische Benutzeroberfläche (GUI)** für den gesamten Workspace. Ersetzt komplizierte CLI-Befehle durch direkte **Usability**.
-* **Funktion:** Startet ROS 2 Befehle, Launch-Files und Bash-Skripte über Desktop-Buttons.
-* **Technischer Ablauf:** Nutzt `customtkinter` für Tab-basierte Navigation. Befehle laufen als isolierte `subprocess`-Aufrufe in dedizierten `gnome-terminal`-Fenstern für besseres Debugging.
+* **Concept:** A central **graphical user interface (GUI)** for the entire workspace. Replaces complicated CLI commands with direct **usability**.
+* **Function:** Launches ROS 2 commands, launch files, and bash scripts via desktop buttons.
+* **Technical Flow:** Uses `customtkinter` for tab-based navigation. Commands run as isolated `subprocess` calls in dedicated `gnome-terminal` windows for better debugging.
 
-**Startbefehl:**
+**Launch Command:**
 
 ```bash
 cd ~/dev_ws
@@ -282,25 +282,25 @@ python3 ros2_nexus.py
 
 ## 📊 Dashboard & Workspace Analyzer
 
-Eine webbasierte **User Interface (UI)**, die statische Code-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks verknüpft.
+A web-based **User Interface (UI)** that combines static code analysis with live telemetry data from the ROS 2 network.
 
 ### 1. Workspace Analyzer (Backend)
 
-* Führt eine ausführungsfreie AST-Analyse (Abstract Syntax Trees) in `src/` nach ROS-Mustern durch.
-* Extrahiert Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten.
-* Publiziert diese strukturierten JSON-Metadaten kontinuierlich an `/dashboard/workspace_metadata` (mit Watchdog für Live-Updates bei Code-Änderungen).
+* Performs execution-free AST analysis (Abstract Syntax Trees) in `src/` for ROS patterns.
+* Extracts node names, publishers, subscribers, services, actions, and package dependencies.
+* Continuously publishes these structured JSON metadata to `/dashboard/workspace_metadata` (with Watchdog for live updates on code changes).
 
 ### 2. Dashboard (Frontend)
 
-* Verbindet sich via Websocket (`rosbridge_server` on Port 9090).
-* Gleicht statische Nodes visuell mit aktiven Nodes ab.
-* Liest Topics via `roslib.js` in Echtzeit aus, berechnet Hz-Frequenzen und erlaubt die direkte Ausführung von Systemskripten (`start.sh`, `lite6.sh`) aus der Browser-**UI**.
+* Connects via WebSocket (`rosbridge_server` on Port 9090).
+* Visually matches static nodes with active nodes.
+* Reads topics via `roslib.js` in real-time, calculates Hz frequencies, and allows direct execution of system scripts (`start.sh`, `lite6.sh`) from the browser **UI**.
 
-### 3. Startbefehle der UI-Komponenten
+### 3. UI Component Launch Commands
 
 * **Backend:** `python3 src/websocket/workspace_analyzer.py`
-* **Webserver:** `python3 -m http.server 8080 -d src/websocket`
-*(Dashboard erreichbar unter: `http://localhost:8080/dashboard_index.html`)*
+* **Web Server:** `python3 -m http.server 8080 -d src/websocket`
+*(Dashboard accessible at: `http://localhost:8080/dashboard_index.html`)*
 
 ```
 
