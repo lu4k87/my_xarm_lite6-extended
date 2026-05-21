@@ -44,15 +44,20 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Ev
 ## 🚀 Multimodale Technologien & Interaktionskonzepte
 
 ### Steuerungsmethoden (Inputs)
-* **Gamepad-Teleoperation:** <br> Latenzarme, kontinuierliche Feinsteuerung mittels Xbox One Elite Series 2 Controller.
+**Gamepad-Teleoperation:** <br> 
+* Latenzarme, kontinuierliche Feinsteuerung mittels Xbox One Elite Series 2 Controller (inkl. Haptischem feedback - Vibration bei Kollisionsgefahr.
 
-* **Voice Control:** <br> Lokale Sprachverarbeitung (Whisper AI) zur semantischen, intentionsbasierten Steuerung über Mikrofon.
+**Voice Control:** <br> 
+* Lokale Sprachverarbeitung (Whisper AI) zur semantischen, intentionsbasierten Steuerung über Mikrofon.
 
-* **Eye-Tracking** (in Bearbeitung...): <br> Robotersteuerung und UI-Interaktion (Gaze-Tracking) über Tobii Pro Glasses 3.
+**Eye-Tracking** (in Bearbeitung...): <br> 
+* Robotersteuerung und UI-Interaktion (Gaze-Tracking) über Tobii Pro Glasses 3.
 
-* **Gestensteuerung** (in Bearbeitung...): <br> Berührungslose, intuitive Hand- und Fingererkennung zur direkten räumlichen Manipulation und Posensteuerung mittels Leap Motion Controller.
+**Gestensteuerung** (in Bearbeitung...): <br> 
+* Berührungslose, intuitive Hand- und Fingererkennung zur direkten räumlichen Manipulation und Posensteuerung mittels Leap Motion Controller.
 
-* **VR Controller Steuerung** (in Bearbeitung...): <br> Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
+**VR Controller Steuerung** (in Bearbeitung...): <br>
+* Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
 
 ### Wahrnehmung & Assistenz (Perception)
 * **Computer Vision:** <br> Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* (aktuell über PiCameras).
