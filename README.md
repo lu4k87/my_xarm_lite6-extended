@@ -6,20 +6,29 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Ev
 
 ## 📋 Projektüberblick
 
-* **Konzept:** Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste **Usability**.
-* **Motivation (Assistenz und Teilhabe):** Klassische Teleoperation erfordert kognitiv anstrengende Feinsteuerung und bildet hohe technische Barrieren. Dieses Projekt zielt auf den Barriereabbau im Sinne der Industrie 5.0 ab, um Menschen mit unterschiedlichen physischen Voraussetzungen die produktive Teilhabe am Arbeitsplatz zu ermöglichen.
-* **Funktionsprinzip:** Das System nutzt einen **Shared-Control-Ansatz** ("Human-in-the-Loop"). Nutzer wechseln nahtlos zwischen intuitiven  Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad).
-* **Zielsetzung:** Als reproduzierbarer, kosteneffizienter Proof-of-Concept für Forschung und Inklusionsprojekte zur Entwicklung und empirischen Evaluierung assistiver Robotiksysteme.
+* **Konzept:** 
+Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste **Usability**.
+* **Motivation (Assistenz und Teilhabe):** 
+Klassische Teleoperation erfordert kognitiv anstrengende Feinsteuerung und bildet hohe technische Barrieren. Dieses Projekt zielt auf den Barriereabbau im Sinne der Industrie 5.0 ab, um Menschen mit unterschiedlichen physischen Voraussetzungen die produktive Teilhabe am Arbeitsplatz zu ermöglichen.
+* **Funktionsprinzip:** 
+Das System nutzt einen **Shared-Control-Ansatz** ("Human-in-the-Loop"). Nutzer wechseln nahtlos zwischen intuitiven  Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad).
+* **Zielsetzung:** 
+Als reproduzierbarer, kosteneffizienter Proof-of-Concept für Forschung und Inklusionsprojekte zur Entwicklung und empirischen Evaluierung assistiver Robotiksysteme.
 
 ---
 
 ## 🔬 Architektur & Leitprinzipien
 
-* **Shared Control & Kognitive Entlastung:** Fließender Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Beanspruchung.
-* **HCI & Usability-Fokus:** Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zur intentionsbasierten Aufgabenbewältigung.
-* **Reproduzierbar & Open Source:** Transparente Codebasis für standardisierte wissenschaftliche Experimente.
-* **Kosteneffiziente Hardware:** Erschwingliche Komponenten verbessern die Zugänglichkeit für Inklusions- und Forschungsprojekte.
-* **Modular & Industriestandard:** Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.
+* **Shared Control & Kognitive Entlastung:** 
+Fließender Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Beanspruchung.
+* **HCI & Usability-Fokus:** 
+Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zur intentionsbasierten Aufgabenbewältigung.
+* **Reproduzierbar & Open Source:** 
+Transparente Codebasis für standardisierte wissenschaftliche Experimente.
+* **Kosteneffiziente Hardware:** 
+Erschwingliche Komponenten verbessern die Zugänglichkeit für Inklusions- und Forschungsprojekte.
+* **Modular & Industriestandard:** 
+Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.
 
 ---
 
@@ -36,7 +45,7 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Ev
 * **VLA & Video Action Models (Geplant):** KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
 ### Koordinatentransformation & Kalibrierung
-* **ArUco-Marker-System:** 8 auf dem Tisch platzierte Marker dienen als Referenz für Homographie-Matrizen.
+* **ArUco-Marker-System:** Im Operationsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
     * Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsplatte (Z = 90 mm).
     * Exakte Projektion der Eye-Tracking-Blickkoordinaten auf die Steuerungs-**UI**, um Blicke in Roboterbefehle zu übersetzen.
 
