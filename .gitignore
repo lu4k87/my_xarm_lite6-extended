@@ -10,8 +10,7 @@ __pycache__/
 
 # Local backup files and zips
 *.zip
-*.sh.copy
-start (copy).sh
+
 
 
 # OS files
