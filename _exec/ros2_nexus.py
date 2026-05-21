@@ -99,7 +99,7 @@ def run_bg_cmd(command):
     subprocess.Popen(command, shell=True, env=env)
 
 def open_editor():
-    run_interactive_cmd("nano ~/dev_ws/ros2_nexus.py", "[EDIT] GUI Code")
+    run_interactive_cmd("nano ~/dev_ws/_exec/ros2_nexus.py", "[EDIT] GUI Code")
 
 def reload_app():
     os.environ.setdefault("DISPLAY", ":0")

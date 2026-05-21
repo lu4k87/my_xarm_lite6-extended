@@ -83,6 +83,13 @@ class EyeControlUI(QWidget):
         self.current_target = None
         self.current_dwell_time = 0
         
+        # --- EXAKTE OFFSET-BERECHNUNG FÜR WQHD (2560x1440) AUF 27 ZOLL ---
+        # 27 Zoll 16:9 = 59,77 cm Breite. 2560 / 59,77 = 42,83 Pixel/cm.
+        # Abstand vom Marker-Zentrum bis zum Display-Rand = 3 cm.
+        # 3 cm * 42,83 = ~129 Pixel.
+        self.offset_x = 129  
+        self.offset_y = 129  
+        
         # Master-Toggle für das gesamte System (Startet auf AUS für maximale Sicherheit)
         self.system_active = False
 
@@ -122,7 +129,7 @@ class EyeControlUI(QWidget):
         self.main_timer.start(self.timer_interval)
 
     def init_ui(self):
-        self.setWindowTitle("ROS 2 Control (God-Mode ArUco Mapping)")
+        self.setWindowTitle("ROS2 Nexus (God-Mode ArUco Mapping)")
         self.resize(1000, 600)
         self.setStyleSheet("""
             QWidget {
@@ -134,7 +141,6 @@ class EyeControlUI(QWidget):
         layout.setContentsMargins(40, 40, 40, 40)
         
         self.buttons = []
-        # Englisch + Links/Rechts Vektoren getauscht
         btns = [
             ("⟲ ROTATE | Z+", 0, 0, (0.0, 0.0, 0.0, 1.0), "rgba(142, 68, 173, 0.4)", False),
             ("⬆ FORWARD | X+", 0, 1, (1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
@@ -170,7 +176,6 @@ class EyeControlUI(QWidget):
         self.cursor_dot.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.cursor_dot.hide()
 
-        # Initialisiert die Buttons direkt im grauen "AUS"-Zustand
         self.update_buttons_state()
 
     def create_button(self, text, color, is_toggle):
@@ -234,6 +239,13 @@ class EyeControlUI(QWidget):
                                     else:
                                         corners, ids, _ = ARUCO_DETECTOR.detectMarkers(img)
                                         
+                                    # Subpixel-Genauigkeit zur Reduzierung von Kamera-Zittern anwenden
+                                    if ids is not None and len(ids) > 0:
+                                        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                                        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
+                                        for i in range(len(corners)):
+                                            cv2.cornerSubPix(gray, corners[i], (3, 3), (-1, -1), criteria)
+                                        
                                     ids_flat = [] if ids is None else ids.flatten().tolist()
                                     
                                     if ids is not None and len(ids_flat) >= 4:
@@ -252,11 +264,12 @@ class EyeControlUI(QWidget):
                                                 break
                                                 
                                         if found_all:
+                                            # Zielpunkte nutzen nun die korrekten Offsets für 6x6cm Marker auf 27 Zoll WQHD
                                             dst_pts = np.array([
-                                                [0, 0],
-                                                [self.width(), 0],
-                                                [self.width(), self.height()],
-                                                [0, self.height()]
+                                                [-self.offset_x, -self.offset_y],
+                                                [self.width() + self.offset_x, -self.offset_y],
+                                                [self.width() + self.offset_x, self.height() + self.offset_y],
+                                                [-self.offset_x, self.height() + self.offset_y]
                                             ], dtype=np.float32)
                                             
                                             H, _ = cv2.findHomography(src_pts, dst_pts)
@@ -279,7 +292,8 @@ class EyeControlUI(QWidget):
             return
 
         if self.gaze_active and self.target_mapped_x != -1.0:
-            alpha = 0.4 
+            # Alpha-Glättung auf 0.20 reduziert für stabilere Filterung
+            alpha = 0.20 
             if self.smoothed_x == -1.0: 
                 self.smoothed_x, self.smoothed_y = self.target_mapped_x, self.target_mapped_y
             else:
@@ -449,7 +463,6 @@ class EyeControlUI(QWidget):
                 """)
             else:
                 color = btn.property("default_color")
-                # Grey out the OFF button if state is already OFF
                 if is_off_btn and self.ros_node.gripper_state == "OFF":
                     color = "rgba(100, 100, 100, 0.4)"
                     
