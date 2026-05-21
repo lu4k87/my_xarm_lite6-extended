@@ -1,9 +1,10 @@
 Dieses Repository ist eine kontinuierlich weiterentwickelte Forschungs- und Evaluierungsplattform für die multimodale Teleoperation und Mensch-Computer-Interaktion (HCI). <br>
 Es baut auf dem offiziellen xarm_ros2 Repository: https://github.com/xArm-Developer/xarm_ros2/tree/humble (Branch: humble) auf.
 
----
+
 
 ## 📋 Projektüberblick
+---
 **`Konzept:`**
 * Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste Usability.
 
