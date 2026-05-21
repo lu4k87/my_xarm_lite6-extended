@@ -1,44 +1,44 @@
 Dieses Repository ist eine kontinuierlich weiterentwickelte Forschungs- und Evaluierungsplattform für die multimodale Teleoperation und Mensch-Computer-Interaktion (HCI). Es baut auf dem offiziellen xarm_ros2 Repository (Branch: humble) auf.
 
-## 📋 Projektüberblick**
+## 📋 Projektüberblick
 ### Konzept: 
 * Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste Usability.
 
-**Motivation (Assistenz und Teilhabe): **
-*Klassische Teleoperation erfordert kognitiv anstrengende Feinsteuerung und bildet hohe technische Barrieren. 
-*Dieses Projekt zielt auf den Barriereabbau im Sinne der Industrie 5.0 ab, um Menschen mit unterschiedlichen physischen Voraussetzungen die produktive Teilhabe am Arbeitsplatz zu ermöglichen.
+### Motivation (Assistenz und Teilhabe):
+* Klassische Teleoperation erfordert kognitiv anstrengende Feinsteuerung und bildet hohe technische Barrieren. 
+* Dieses Projekt zielt auf den Barriereabbau im Sinne der Industrie 5.0 ab, um Menschen mit unterschiedlichen physischen Voraussetzungen die produktive Teilhabe am Arbeitsplatz zu ermöglichen.
 
-**Funktionsprinzip: **
-*Das System nutzt einen Shared-Control-Ansatz ("Human-in-the-Loop"). 
-*Nutzer wechseln nahtlos zwischen intuitiven Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad).
+### Funktionsprinzip:
+* Das System nutzt einen Shared-Control-Ansatz ("Human-in-the-Loop"). 
+* Nutzer wechseln nahtlos zwischen intuitiven Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad).
 
-**Zielsetzung: **
-Als reproduzierbarer, kosteneffizienter Proof-of-Concept für Forschung und Inklusionsprojekte zur Entwicklung und empirischen Evaluierung assistiver Robotiksysteme.
+### Zielsetzung:
+* Als reproduzierbarer, kosteneffizienter Proof-of-Concept für Forschung und Inklusionsprojekte zur Entwicklung und empirischen Evaluierung assistiver Robotiksysteme.
 
-**Bewertungslogik & Guidelines:**
-*Entwicklung einer Bewertungslogik für die Interaktionsqualität. 
-*Daraus abgeleitete Richtlinien (Guidelines) sollen Unternehmen (z. B. bei der geplanten Einführung von Robotern) als Leitfaden dienen und die Frage beantworten: "Wie gehen wir dabei gemäß den Anforderungen der Industrie 5.0 vor?". 
-*Diese Guidelines können perspektivisch auch als monetarisierbare Dienstleistung für die Industrie zur Verfügung gestellt werden.
+### Bewertungslogik & Guidelines:
+* Entwicklung einer Bewertungslogik für die Interaktionsqualität. 
+* Daraus abgeleitete Richtlinien (Guidelines) sollen Unternehmen (z. B. bei der geplanten Einführung von Robotern) als Leitfaden dienen und die Frage beantworten: "Wie gehen wir dabei gemäß den Anforderungen der Industrie 5.0 vor?". 
+* Diese Guidelines können perspektivisch auch als monetarisierbare Dienstleistung für die Industrie zur Verfügung gestellt werden.
 
-**🔬 Architektur & Leitprinzipien**
-**Menschenzentrierte Automatisierung:**
-*Nutzer sollen befähigt werden, die Systemzustände des automatisierten Systems kontinuierlich zu interpretieren und die Intention des technischen Systems zu antizipieren. <br>
-*Dadurch können sie die richtigen Entscheidungen treffen und über die Zeit Vertrauen zum technischen System aufbauen.
+## 🔬 Architektur & Leitprinzipien
+### Menschenzentrierte Automatisierung:
+* Nutzer sollen befähigt werden, die Systemzustände des automatisierten Systems kontinuierlich zu interpretieren und die Intention des technischen Systems zu antizipieren.
+* Dadurch können sie die richtigen Entscheidungen treffen und über die Zeit Vertrauen zum technischen System aufbauen.
 
-**Shared Control & Kognitive Entlastung: **
-*Fließender Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Beanspruchung.
+### Shared Control & Kognitive Entlastung: 
+* Fließender Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Beanspruchung.
 
-**HCI & Usability-Fokus:**
-*Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zur intentionsbasierten Aufgabenbewältigung.
+### HCI & Usability-Fokus:
+* Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zur intentionsbasierten Aufgabenbewältigung.
 
-**Reproduzierbar & Open Source:**
-*Transparente Codebasis für standardisierte wissenschaftliche Experimente.
+### Reproduzierbar & Open Source:
+* Transparente Codebasis für standardisierte wissenschaftliche Experimente.
 
-**Kosteneffiziente Hardware: 
-*Erschwingliche Komponenten verbessern die Zugänglichkeit für Inklusions- und Forschungsprojekte.
+### Kosteneffiziente Hardware: 
+* Erschwingliche Komponenten verbessern die Zugänglichkeit für Inklusions- und Forschungsprojekte.
 
-**Modular & Industriestandard:**
-*Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.
+### Modular & Industriestandard:
+* Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.
 
 ---
 
