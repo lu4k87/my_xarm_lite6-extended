@@ -35,34 +35,33 @@ Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Framework
 ## 🚀 Multimodale Technologien & Interaktionskonzepte
 
 ### Steuerungsmethoden (Inputs)
-* **Gamepad-Teleoperation:* **
-Latenzarme, kontinuierliche Feinsteuerung mittels Xbox One Elite Series 2 Controller.
+* **Gamepad-Teleoperation:** <br> Latenzarme, kontinuierliche Feinsteuerung mittels Xbox One Elite Series 2 Controller.
 
-* **Voice Control: ** Lokale Sprachverarbeitung (Whisper AI) zur semantischen, intentionsbasierten Steuerung über Mikrofon.
+* **Voice Control:** <br> Lokale Sprachverarbeitung (Whisper AI) zur semantischen, intentionsbasierten Steuerung über Mikrofon.
 
-* **Eye-Tracking ** (in Bearbeitung...): Robotersteuerung und UI-Interaktion (Gaze-Tracking) über Tobii Pro Glasses 3.
+* **Eye-Tracking** (in Bearbeitung...): <br> Robotersteuerung und UI-Interaktion (Gaze-Tracking) über Tobii Pro Glasses 3.
 
-* **Gestensteuerung ** (in Bearbeitung...): Berührungslose, intuitive Hand- und Fingererkennung zur direkten räumlichen Manipulation und Posensteuerung mittels Leap Motion Controller.
+* **Gestensteuerung** (in Bearbeitung...): <br> Berührungslose, intuitive Hand- und Fingererkennung zur direkten räumlichen Manipulation und Posensteuerung mittels Leap Motion Controller.
 
-* **VR Controller Steuerung ** (in Bearbeitung...): Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
+* **VR Controller Steuerung** (in Bearbeitung...): <br> Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
 
 ### Wahrnehmung & Assistenz (Perception)
-* **Computer Vision:** Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* (aktuell über PiCameras).
-* **Stereo Vision (Geplant):** Integration von echten 3D-Tiefendaten über eine *ZED Mini (Stereolabs)* Kamera.
-* **VLA & Video Action Models (Geplant):** KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
+* **Computer Vision:** <br> Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* (aktuell über PiCameras).
+* **Stereo Vision (Geplant):** <br> Integration von echten 3D-Tiefendaten über eine *ZED Mini (Stereolabs)* Kamera.
+* **VLA & Video Action Models (Geplant):** <br> KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
 ### Koordinatentransformation & Kalibrierung
-* **ArUco-Marker-System:** Im Operationsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
+* **ArUco-Marker-System:** <br> Im Operationsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
     * Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsplatte (Z = 90 mm).
     * Exakte Projektion der Eye-Tracking-Blickkoordinaten auf die Steuerungs-**UI**, um Blicke in Roboterbefehle zu übersetzen.
 
 ### Benutzeroberflächen (UI / GUI)
 Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, immersives User Interface bereitgestellt, das alle Systemzustände bündelt.
-* **Umsetzung via OBS Studio:** Das Teleoperations-Dashboard wird aktuell flexibel über *OBS Studio* komponiert und an Monitore oder VR/AR-Headsets ausgespielt.
-* **Telemetrie & Status:** Fortlaufende Anzeige von Echtzeit-Telemetriedaten des Roboterarms.
-* **System-Feedback & Intent-Erkennung:** Direkte visuelle und akustische Rückmeldung bei manuellen Steuerungseingaben sowie bei erfolgreich geparsten Sprachbefehlen.
-* **Präventive Kollisionswarnungen:** Dynamische Warnhinweise bei Auslösung der softwareseitigen Kollisionsschutz-Maßnahmen (z.B. Unterschreiten des Z-Limits).
-* **Visuelles Monitoring & Object Detection:** Nahtlose Integration von Video-Livestreams mit Live-Overlays der erkannten Zielobjekte (YOLO-Bounding-Boxes) sowie einer synchronisierten 3D-Visualisierung (Digital Twin) der Arbeitsumgebung.
+* **Umsetzung via OBS Studio:** <br> Das Teleoperations-Dashboard wird aktuell flexibel über *OBS Studio* komponiert und an Monitore oder VR/AR-Headsets ausgespielt.
+* **Telemetrie & Status:** <br> Fortlaufende Anzeige von Echtzeit-Telemetriedaten des Roboterarms.
+* **System-Feedback & Intent-Erkennung:** <br> Direkte visuelle und akustische Rückmeldung bei manuellen Steuerungseingaben sowie bei erfolgreich geparsten Sprachbefehlen.
+* **Präventive Kollisionswarnungen:** <br> Dynamische Warnhinweise bei Auslösung der softwareseitigen Kollisionsschutz-Maßnahmen (z.B. Unterschreiten des Z-Limits).
+* **Visuelles Monitoring & Object Detection:** <br> Nahtlose Integration von Video-Livestreams mit Live-Overlays der erkannten Zielobjekte (YOLO-Bounding-Boxes) sowie einer synchronisierten 3D-Visualisierung (Digital Twin) der Arbeitsumgebung.
 
 ---
 
