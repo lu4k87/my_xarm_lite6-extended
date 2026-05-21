@@ -8,15 +8,15 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Ev
 
 **Konzept:** 
 * Eine modulare Plattform zur Steuerung des xArm Lite 6 Roboters durch multimodale Eingabemethoden mit Fokus auf höchste **Usability**. <br><br>
-
+<div style="border-top: 1px solid #777;"></div>
 **Motivation (Assistenz und Teilhabe):** 
 * Klassische Teleoperation erfordert kognitiv anstrengende Feinsteuerung und bildet hohe technische Barrieren. <br>
 * Das Projekt zielt auf den Barriereabbau im Sinne der Industrie 5.0 ab, um Menschen mit unterschiedlichen physischen Voraussetzungen die produktive Teilhabe am Arbeitsplatz zu ermöglichen. <br><br>
-
+<div style="border-top: 1px solid #777;"></div>
 **Funktionsprinzip:** 
 * Das System nutzt einen **Shared-Control-Ansatz** ("Human-in-the-Loop"). <br>
 * Nutzer wechseln nahtlos zwischen intuitiven  Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad). <br><br>
-
+<div style="border-top: 1px solid #777;"></div>
 **Zielsetzung:**
 * Als reproduzierbarer, kosteneffizienter Proof-of-Concept für Forschung und Inklusionsprojekte zur Entwicklung und empirischen Evaluierung assistiver Robotiksysteme. <br>
 
