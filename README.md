@@ -15,7 +15,8 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Ev
 
 **Funktionsprinzip:** 
 * Das System nutzt einen **Shared-Control-Ansatz** ("Human-in-the-Loop"). <br>
-* Nutzer wechseln nahtlos zwischen intuitiven  Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad). <br>
+* Nutzer wechseln nahtlos zwischen intuitiven  Befehlen (z. B. Sprache/Blick) und präzisen manuellen Korrekturen (Gamepad).
+
 **Zielsetzung:**
 * Als reproduzierbarer, kosteneffizienter Proof-of-Concept für Forschung und Inklusionsprojekte zur Entwicklung und empirischen Evaluierung assistiver Robotiksysteme. <br>
 
