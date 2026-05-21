@@ -57,8 +57,7 @@ Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Framework
 
 ### Benutzeroberflächen (UI / GUI)
 Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, immersives User Interface bereitgestellt, das alle Systemzustände bündelt.
-* **Umsetzung via OBS Studio:** <br> Das Teleoperations-Dashboard wird aktuell flexibel über *OBS Studio* komponiert und an Monitore oder VR/AR-Headsets ausgespielt.
-* **Telemetrie & Status:** <br> Fortlaufende Anzeige von Echtzeit-Telemetriedaten des Roboterarms.
+* **Umsetzung via OBS Studio:**<br>In *OBS Studio* werden alle Komponenten gebündelt und dem Nutzer als zentrale GUI für die Teleoperation des Roboters bereitgestellt.* **Telemetrie & Status:** <br> Fortlaufende Anzeige von Echtzeit-Telemetriedaten des Roboterarms.
 * **System-Feedback & Intent-Erkennung:** <br> Direkte visuelle und akustische Rückmeldung bei manuellen Steuerungseingaben sowie bei erfolgreich geparsten Sprachbefehlen.
 * **Präventive Kollisionswarnungen:** <br> Dynamische Warnhinweise bei Auslösung der softwareseitigen Kollisionsschutz-Maßnahmen (z.B. Unterschreiten des Z-Limits).
 * **Visuelles Monitoring & Object Detection:** <br> Nahtlose Integration von Video-Livestreams mit Live-Overlays der erkannten Zielobjekte (YOLO-Bounding-Boxes) sowie einer synchronisierten 3D-Visualisierung (Digital Twin) der Arbeitsumgebung.
