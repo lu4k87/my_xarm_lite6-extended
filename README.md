@@ -280,7 +280,7 @@ python3 ros2_nexus.py
 
 ---
 
-## 📊 Funktionsweise: Dashboard & Workspace Analyzer
+## 📊 Dashboard & Workspace Analyzer
 
 Eine webbasierte **User Interface (UI)**, die statische Code-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks verknüpft.
 
