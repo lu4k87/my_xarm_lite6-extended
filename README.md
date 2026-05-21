@@ -1,4 +1,4 @@
-Dieses Repository ist eine kontinuierlich weiterentwickelte Forschungs- und Evaluierungsplattform für die multimodale Teleoperation und Mensch-Computer-Interaktion (HCI). Es baut auf dem offiziellen xarm_ros2 Repository (Branch: humble) auf.
+Dieses Repository ist eine kontinuierlich weiterentwickelte Forschungs- und Evaluierungsplattform für die multimodale Teleoperation und Mensch-Computer-Interaktion (HCI). Es baut auf dem offiziellen xarm_ros2 Repository: https://github.com/xArm-Developer/xarm_ros2/tree/humble (Branch: humble) auf.
 
 ## 📋 Projektüberblick
 ### Konzept: 
