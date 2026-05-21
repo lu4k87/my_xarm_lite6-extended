@@ -17,23 +17,24 @@ Bewertungslogik & Guidelines:
 Entwicklung einer Bewertungslogik für die Interaktionsqualität. Daraus abgeleitete Richtlinien (Guidelines) sollen Unternehmen (z. B. bei der geplanten Einführung von Robotern) als Leitfaden dienen und die Frage beantworten: "Wie gehen wir dabei gemäß den Anforderungen der Industrie 5.0 vor?". Diese Guidelines können perspektivisch auch als monetarisierbare Dienstleistung für die Industrie zur Verfügung gestellt werden.
 
 🔬 Architektur & Leitprinzipien
-Menschenzentrierte Automatisierung:
-Nutzer sollen befähigt werden, die Systemzustände des automatisierten Systems kontinuierlich zu interpretieren und die Intention des technischen Systems zu antizipieren. Dadurch können sie die richtigen Entscheidungen treffen und über die Zeit Vertrauen zum technischen System aufbauen.
+**Menschenzentrierte Automatisierung:**
+*Nutzer sollen befähigt werden, die Systemzustände des automatisierten Systems kontinuierlich zu interpretieren und die Intention des technischen Systems zu antizipieren. <br>
+*Dadurch können sie die richtigen Entscheidungen treffen und über die Zeit Vertrauen zum technischen System aufbauen.
 
-Shared Control & Kognitive Entlastung: 
-Fließender Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Beanspruchung.
+**Shared Control & Kognitive Entlastung: **
+*Fließender Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Beanspruchung.
 
-HCI & Usability-Fokus: 
-Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zur intentionsbasierten Aufgabenbewältigung.
+**HCI & Usability-Fokus:**
+*Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zur intentionsbasierten Aufgabenbewältigung.
 
-Reproduzierbar & Open Source: 
-Transparente Codebasis für standardisierte wissenschaftliche Experimente.
+**Reproduzierbar & Open Source:**
+*Transparente Codebasis für standardisierte wissenschaftliche Experimente.
 
-Kosteneffiziente Hardware: 
-Erschwingliche Komponenten verbessern die Zugänglichkeit für Inklusions- und Forschungsprojekte.
+**Kosteneffiziente Hardware: 
+*Erschwingliche Komponenten verbessern die Zugänglichkeit für Inklusions- und Forschungsprojekte.
 
-Modular & Industriestandard: 
-Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.
+**Modular & Industriestandard:**
+*Volle Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.
 
 ---
 
