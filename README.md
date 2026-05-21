@@ -44,7 +44,7 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte Forschungs- und Eval
 
 ## 🚀 Multimodale Technologien & Interaktionskonzepte
 
-### Steuerungsmethoden (Inputs)
+### Roboter-Steuerungsmethoden (Inputs)
 **Gamepad-Teleoperation:** <br> 
 * Latenzarme, kontinuierliche Feinsteuerung mittels Xbox One Elite Series 2 Controller (inkl. Haptischem feedback - Vibration bei Kollisionsgefahr.
 
