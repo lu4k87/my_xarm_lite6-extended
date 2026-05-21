@@ -54,7 +54,7 @@ Dieses Repository ist eine kontinuierlich weiterentwickelte **Forschungs- und Ev
 * Robotersteuerung und UI-Interaktion (Gaze-Tracking) über Tobii Pro Glasses 3.
 
 **Gestensteuerung** (in Bearbeitung...): <br> 
-* Berührungslose, intuitive Hand- und Fingererkennung zur direkten räumlichen Manipulation und Posensteuerung mittels Leap Motion Controller.
+* Berührungslose, intuitive Hand- und Fingererkennung zur direkten räumlichen Manipulation und Gestensteuerung mittels Leap Motion.
 
 **VR Controller Steuerung** (in Bearbeitung...): <br>
 * Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
