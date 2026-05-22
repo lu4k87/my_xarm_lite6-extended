@@ -3,9 +3,17 @@ import json
 import threading
 import time
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QLabel
-from PyQt5.QtCore import QTimer, Qt, QPoint
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QLabel, QVBoxLayout
+from PyQt5.QtCore import QTimer, Qt, QPoint, QUrl
 from PyQt5.QtGui import QCursor
+
+try:
+    from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings
+    HAS_WEBENGINE = True
+except ImportError:
+    HAS_WEBENGINE = False
+    print("[WARNUNG] PyQt5.QtWebEngineWidgets nicht gefunden. Kein Livestream-Hintergrund.")
+    print("Installiere mit: sudo apt install python3-pyqt5.qtwebengine")
 
 import rclpy
 from rclpy.node import Node
@@ -132,43 +140,54 @@ class EyeControlUI(QWidget):
         self.setWindowTitle("ROS2 Nexus (God-Mode ArUco Mapping)")
         self.resize(1000, 600)
         self.setStyleSheet("""
-            QWidget {
+            QWidget#main_window {
                 background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #1a1a1a, stop:1 #2c3e50);
             }
         """)
-        layout = QGridLayout()
-        layout.setSpacing(20)
-        layout.setContentsMargins(40, 40, 40, 40)
-        
+        self.setObjectName("main_window")
+
+        # --- LIVESTREAM HINTERGRUND ---
+        self.web_view = None
+        if HAS_WEBENGINE:
+            self.web_view = QWebEngineView(self)
+            self.web_view.setUrl(QUrl("http://192.168.0.124/html/"))
+            # Scrollbars und Interaktion deaktivieren - nur Anzeige
+            self.web_view.setFocusPolicy(Qt.NoFocus)
+            self.web_view.setAttribute(Qt.WA_TransparentForMouseEvents)
+            self.web_view.setStyleSheet("background: black;")
+            # Web-Seite nach dem Laden so anpassen, dass der Body den gesamten Bereich füllt
+            self.web_view.loadFinished.connect(self._on_stream_loaded)
+            print("[STREAM] Livestream-Hintergrund wird geladen...")
+        else:
+            print("[STREAM] Kein WebEngine - Fallback auf Gradient-Hintergrund.")
+
+        # --- BUTTON OVERLAY ---
+        self.button_overlay = QWidget(self)
+        self.button_overlay.setStyleSheet("background: transparent;")
+        self.button_overlay.setAttribute(Qt.WA_TranslucentBackground)
+
         self.buttons = []
+        self.button_map = {}  # name -> button für Positionierung
         btns = [
-            ("⟲ ROTATE | Z+", 0, 0, (0.0, 0.0, 0.0, 1.0), "rgba(142, 68, 173, 0.4)", False),
-            ("⬆ FORWARD | X+", 0, 1, (1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
-            ("⇈ UP | Z+", 0, 2, (0.0, 0.0, 1.0, 0.0), "rgba(41, 128, 185, 0.4)", False),
-            ("GRIPPER_TOGGLE", 0, 3, (0.0, 0.0, 0.0, 0.0), "rgba(243, 156, 18, 0.5)", False),
-            
-            ("⬅ LEFT | Y+", 1, 0, (0.0, 1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
-            ("🛑 STOP", 1, 1, (0.0, 0.0, 0.0, 0.0), "rgba(192, 57, 43, 0.5)", False),
-            ("➡ RIGHT | Y-", 1, 2, (0.0, -1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
-            ("GRIPPER_OFF", 1, 3, (0.0, 0.0, 0.0, 0.0), "rgba(230, 126, 34, 0.5)", False),
-            
-            ("⟳ ROTATE | Z-", 2, 0, (0.0, 0.0, 0.0, -1.0), "rgba(142, 68, 173, 0.4)", False),
-            ("⬇ BACKWARD | X-", 2, 1, (-1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
-            ("⇊ DOWN | Z-", 2, 2, (0.0, 0.0, -1.0, 0.0), "rgba(41, 128, 185, 0.4)", False),
-            ("SYSTEM", 2, 3, (0.0, 0.0, 0.0, 0.0), "rgba(0,0,0,0)", True)
+            ("⟲ ROTATE | Z+", (0.0, 0.0, 0.0, 1.0), "rgba(142, 68, 173, 0.4)", False),
+            ("⟳ ROTATE | Z-", (0.0, 0.0, 0.0, -1.0), "rgba(142, 68, 173, 0.4)", False),
+            ("⬆ FORWARD | X+", (1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("⇈ UP | Z+", (0.0, 0.0, 1.0, 0.0), "rgba(41, 128, 185, 0.4)", False),
+            ("⇊ DOWN | Z-", (0.0, 0.0, -1.0, 0.0), "rgba(41, 128, 185, 0.4)", False),
+            ("⬅ LEFT | Y+", (0.0, 1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("➡ RIGHT | Y-", (0.0, -1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("GRIPPER_OFF", (0.0, 0.0, 0.0, 0.0), "rgba(230, 126, 34, 0.5)", False),
+            ("GRIPPER_TOGGLE", (0.0, 0.0, 0.0, 0.0), "rgba(243, 156, 18, 0.5)", False),
+            ("SYSTEM", (0.0, 0.0, 0.0, 0.0), "rgba(0,0,0,0)", True),
+            ("⬇ BACKWARD | X-", (-1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
         ]
         
-        for text, r, c, vec, color, is_toggle in btns:
+        for text, vec, color, is_toggle in btns:
             b = self.create_button(text, color, is_toggle)
+            b.setParent(self.button_overlay)
             b.setProperty("vec", vec)
-            
-            if "STOP" in text:
-                b.setProperty("dwell_time", 0)
-                
-            layout.addWidget(b, r, c)
+            self.button_map[text] = b
             self.buttons.append(b)
-            
-        self.setLayout(layout)
         
         self.cursor_dot = QLabel(self)
         self.cursor_dot.resize(60, 60)
@@ -180,13 +199,97 @@ class EyeControlUI(QWidget):
 
     def create_button(self, text, color, is_toggle):
         btn = QPushButton(text)
-        btn.setSizePolicy(btn.sizePolicy().Ignored, btn.sizePolicy().Ignored)
+        btn.setFixedSize(200, 120)
         btn.setProperty("default_text", text)
         btn.setProperty("default_color", color)
         btn.setProperty("dwell_time", 1500) 
         btn.setProperty("is_toggle", is_toggle)
         
         return btn
+
+    def _position_buttons(self):
+        """Positioniert alle Buttons absolut basierend auf der Fenstergröße."""
+        w = self.width()
+        h = self.height()
+        bw, bh = 200, 120
+        gap = 10  # kleiner Abstand zwischen gepaarten Buttons
+
+        positions = {
+            # Oben links: Rotate Z+ und Z- eng nebeneinander
+            "⟲ ROTATE | Z+":  (0, 0),
+            "⟳ ROTATE | Z-":  (bw + gap, 0),
+            # Oben mitte: Forward
+            "⬆ FORWARD | X+": (w // 2 - bw // 2, 0),
+            # Oben rechts: UP und DOWN eng nebeneinander
+            "⇈ UP | Z+":      (w - 2 * bw - gap, 0),
+            "⇊ DOWN | Z-":    (w - bw, 0),
+            # Mitte links / rechts
+            "⬅ LEFT | Y+":    (0, h // 2 - bh // 2),
+            "➡ RIGHT | Y-":   (w - bw, h // 2 - bh // 2),
+            # Unten links: Gripper OFF dann Gripper Close
+            "GRIPPER_OFF":     (0, h - bh),
+            "GRIPPER_TOGGLE":  (bw + gap, h - bh),
+            # Unten rechts: Eye Control / System
+            "SYSTEM":          (w - bw, h - bh),
+            # Unten mitte: Backward
+            "⬇ BACKWARD | X-": (w // 2 - bw // 2, h - bh),
+        }
+        
+        for name, (x, y) in positions.items():
+            if name in self.button_map:
+                self.button_map[name].move(x, y)
+
+    def resizeEvent(self, event):
+        """Hält WebView und Button-Overlay synchron mit dem Fenster."""
+        super().resizeEvent(event)
+        if self.web_view:
+            self.web_view.setGeometry(0, 0, self.width(), self.height())
+        self.button_overlay.setGeometry(0, 0, self.width(), self.height())
+        self.button_overlay.raise_()
+        self._position_buttons()
+
+    def _on_stream_loaded(self, ok):
+        """Wird aufgerufen wenn die Stream-Seite geladen ist. Scrollbars entfernen und Video strecken."""
+        if ok and self.web_view:
+            js = """
+            document.body.style.margin = '0';
+            document.body.style.padding = '0';
+            document.body.style.overflow = 'hidden';
+            document.body.style.background = 'black';
+
+            // RPi Cam Control Titelleiste und alle UI-Elemente ausblenden
+            var allElements = document.querySelectorAll('div, nav, header, footer, table, form, select, input, button, a, span, p, h1, h2, h3, h4');
+            for (var i = 0; i < allElements.length; i++) {
+                var el = allElements[i];
+                if (!el.querySelector('video, img, canvas, object, embed') 
+                    && el.tagName !== 'VIDEO' && el.tagName !== 'IMG' && el.tagName !== 'CANVAS') {
+                    el.style.display = 'none';
+                }
+            }
+
+            var videos = document.querySelectorAll('video');
+            for (var i = 0; i < videos.length; i++) {
+                videos[i].style.width = '100vw';
+                videos[i].style.height = '100vh';
+                videos[i].style.objectFit = 'cover';
+                videos[i].style.position = 'fixed';
+                videos[i].style.top = '0';
+                videos[i].style.left = '0';
+            }
+            var imgs = document.querySelectorAll('img');
+            for (var i = 0; i < imgs.length; i++) {
+                imgs[i].style.width = '100vw';
+                imgs[i].style.height = '100vh';
+                imgs[i].style.objectFit = 'cover';
+                imgs[i].style.position = 'fixed';
+                imgs[i].style.top = '0';
+                imgs[i].style.left = '0';
+            }
+            """
+            self.web_view.page().runJavaScript(js)
+            print("[STREAM] Livestream-Seite erfolgreich geladen und angepasst.")
+        else:
+            print("[STREAM] Livestream-Seite konnte nicht geladen werden.")
 
     def init_eye_tracker(self):
         self.g3_ip = "192.168.75.51"
@@ -491,23 +594,7 @@ class EyeControlUI(QWidget):
         vec = btn.property("vec")
         self.active_vector = {"x": vec[0], "y": vec[1], "z": vec[2], "rz": vec[3] if len(vec) > 3 else 0.0}
         
-        if cmd == "🛑 STOP":
-            self.in_cooldown = True
-            btn.setText("STOPPED!")
-            btn.setStyleSheet("""
-                QPushButton {
-                    background-color: rgba(192, 57, 43, 0.8); 
-                    color: white; 
-                    font-size: 26px; 
-                    font-weight: bold; 
-                    border-radius: 15px; 
-                    border: 4px solid rgba(255, 255, 255, 0.8);
-                }
-            """)
-            self.ros_node.publish_twist({"x": 0.0, "y": 0.0, "z": 0.0, "rz": 0.0})
-            self.cooldown_timer.start(self.cooldown_time)
-            print(f"[ROS 2] -> EMERGENCY STOP: {cmd}")
-        elif cmd == "GRIPPER_TOGGLE":
+        if cmd == "GRIPPER_TOGGLE":
             new_state = self.ros_node.toggle_gripper()
             self.in_cooldown = True
             
