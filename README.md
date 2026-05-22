@@ -183,7 +183,9 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 * **OS:** Ubuntu 22.04.5 (Jammy Jellyfish)
 * **ROS:** ROS 2 Humble
 * **Python:** Python 3.10+
-* **System Dependencies:** `portaudio19-dev` (for audio input)
+* **System Dependencies:**
+* `portaudio19-dev` (for audio input)
+* `python3-pyqt5.qtwebengine` (for embedded livestream in Eye Control UI)
 * **Additional Libraries:**
 * `pyaudio` (speech capture)
 * `ultralytics` (YOLO Object Detection)

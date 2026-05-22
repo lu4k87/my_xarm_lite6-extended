@@ -183,7 +183,9 @@ Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, im
 * **OS:** Ubuntu 22.04.5 (Jammy Jellyfish)
 * **ROS:** ROS 2 Humble
 * **Python:** Python 3.10+
-* **System-Abhängigkeiten:** `portaudio19-dev` (für Audio-Input)
+* **System-Abhängigkeiten:**
+* `portaudio19-dev` (für Audio-Input)
+* `python3-pyqt5.qtwebengine` (für eingebetteten Livestream in der Eye Control UI)
 * **Zusätzliche Bibliotheken:**
 * `pyaudio` (Spracherfassung)
 * `ultralytics` (YOLO Object Detection)
