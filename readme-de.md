@@ -183,15 +183,21 @@ Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, im
 * **OS:** Ubuntu 22.04.5 (Jammy Jellyfish)
 * **ROS:** ROS 2 Humble
 * **Python:** Python 3.10+
-* **System-Abhängigkeiten:**
-* `portaudio19-dev` (für Audio-Input)
-* `python3-pyqt5.qtwebengine` (für eingebetteten Livestream in der Eye Control UI)
-* **Zusätzliche Bibliotheken:**
-* `pyaudio` (Spracherfassung)
-* `ultralytics` (YOLO Object Detection)
-* `opencv-python` (Bildverarbeitung)
-* `rosbridge_suite` (Websocket-Kommunikation)
-* `ros2 whisper` (Sprachkommandos)
+* **System-Abhängigkeiten** *(via `sudo apt install ...`)*:
+  * `portaudio19-dev` (für Audio-Input)
+  * `python3-pyqt5.qtwebengine` (für eingebetteten Livestream in der Eye Control UI)
+  * `python3-opencv` (OpenCV-Systembibliothek für Bildverarbeitung)
+  * `python3-av` (PyAV – Hardware-beschleunigte Video-/Audio-Dekodierung)
+* **Zusätzliche Bibliotheken** *(via `pip install ...`)*:
+  * `pyaudio` (Spracherfassung) — `ros2_whisper/audio_listener/audio_listener/audio_listener.py`
+  * `ultralytics` (YOLO Object Detection) — `yolo_object_detector/yolo_object_detector/yolo_homography_node.py`
+  * `opencv-python` (Bildverarbeitung) — `yolo_object_detector/yolo_object_detector/yolo_homography_node.py`
+  * `numpy` (Numerische Berechnungen / Bildmatrizen) — `yolo_homography_node.py`, `eye_ui_node.py`, `audio_listener.py`
+  * `pygame` (Gamepad-Rumble / Haptisches Feedback) — `collision_check/collision_check/checker.py`
+  * `PyQt5` (Eye Control UI) — `eye_control/eye_control/eye_ui_node.py`
+  * `pyyaml` (Kamera-Kalibrierungsdaten) — `yolo_homography_node.py`, `calibrate_camera.py`
+  * `rosbridge_suite` (Websocket-Kommunikation)
+  * `ros2 whisper` (Sprachkommandos)
 
 
 
