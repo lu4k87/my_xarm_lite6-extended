@@ -1,4 +1,4 @@
-# xArm ROS 2 Extended Workspace ## (ROS2 Humble) **[IN DEV]**
+# xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
 
 This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
