@@ -282,7 +282,24 @@ Launching is preferably done via scripts for automatic initialization of nodes a
 
 ```bash
 cd ~/dev_ws
-python3 ros2_nexus.py
+python3 _exec/ros2_nexus.py
+
+```
+
+### 🌐 ROS 2 Nexus — Web Edition (`ros2_nexus_web.py`)
+
+An alternative version of the Nexus GUI that runs entirely in the browser — accessible from any device in the local network (phone, tablet, etc.).
+
+* **Same functionality** as the desktop version: all 5 tabs (Daily, Nodes, Web, Info, Build) with identical buttons.
+* **Why a backend?** A browser cannot execute shell commands directly (security restriction). The small Flask backend (`ros2_nexus_web.py`) acts as a bridge: it receives HTTP requests from the browser and calls `subprocess.Popen()` to open `gnome-terminal` windows on the host machine — exactly like the desktop version.
+* **Dependencies:** `pip install flask`
+
+**Launch Command:**
+
+```bash
+cd ~/dev_ws
+python3 _exec/ros2_nexus_web.py
+# → http://localhost:5000  (also reachable in LAN, e.g. http://192.168.x.x:5000)
 
 ```
 
