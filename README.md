@@ -242,6 +242,62 @@ colcon build --symlink-install
 
 ---
 
+## 💻 Environment Configuration (`~/.bashrc`)
+
+To ensure that the ROS 2 workspace, CUDA tools, and necessary environment variables are automatically loaded every time a new terminal is opened, the following configuration should be added to your `~/.bashrc` file. 
+
+You can edit the file by running:
+```bash
+nano ~/.bashrc
+```
+
+Add the following content at the end of the file:
+```bash
+# -------------------------------------------------------------------------
+# --- CUDA Configuration ---
+# Adds CUDA tools to the PATH
+export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
+# Enables the system to find CUDA libraries
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
+# --- ROS 2 Base Configuration ---
+# Sets the Domain ID for ROS network isolation
+export ROS_DOMAIN_ID=66
+# Defines the used distribution
+export ROS_DISTRO=humble
+# Forces CycloneDDS as middleware
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+# Allows communication beyond localhost (important for the Dashboard)
+export ROS_LOCALHOST_ONLY=0
+
+# --- ROS 2 Sourcing ---
+# Loads the global ROS 2 environment (default path)
+if [ -f /opt/ros/humble/setup.bash ]; then
+    source /opt/ros/humble/setup.bash
+fi
+
+# Loads the custom development workspace (if it exists)
+if [ -f ~/dev_ws/install/setup.bash ]; then
+    source ~/dev_ws/install/setup.bash
+fi
+
+# Optional: Confirmation when opening a terminal (helps with debugging)
+echo -e "\e[35mProzess-ID: $$ \e[0m\e[31m(Domain ID: $ROS_DOMAIN_ID, RMW: $RMW_IMPLEMENTATION)\e[0m"
+echo -e "\033[1;32msource /opt/ros/humble/setup.bash\033[0m"
+echo -e "\033[1;32msource ~/dev_ws/install/setup.bash\033[0m"
+echo -e "------------------------------------------------------------------------"
+# -------------------------------------------------------------------------
+```
+
+### Why is this needed?
+This configuration automates several critical steps:
+* **CUDA Paths:** Enables the system to find GPU tools, which is essential for fast YOLO object detection.
+* **Network Isolation:** `ROS_DOMAIN_ID=66` isolates your ROS 2 network so it doesn't conflict with other ROS systems on the same network.
+* **Middleware & Communication:** `RMW_IMPLEMENTATION` ensures the reliable CycloneDDS is used, and `ROS_LOCALHOST_ONLY=0` allows the Dashboard UI to communicate with ROS.
+* **Auto-Sourcing:** Automatically loads the base ROS 2 system and your custom `dev_ws` workspace, so you don't have to run `source` manually in every new terminal. The `echo` commands give you a helpful visual confirmation.
+
+---
+
 ## 🎮 Usage & Launch
 
 Launching is preferably done via scripts for automatic initialization of nodes and WebSockets:

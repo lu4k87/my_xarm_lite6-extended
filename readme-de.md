@@ -241,6 +241,62 @@ colcon build --symlink-install
 
 ---
 
+## 💻 Umgebungskonfiguration (`~/.bashrc`)
+
+Damit der ROS 2 Workspace, die CUDA-Tools und wichtige Umgebungsvariablen bei jedem Öffnen eines neuen Terminals automatisch geladen werden, sollte die folgende Konfiguration in die Datei `~/.bashrc` eingetragen werden.
+
+Du kannst die Datei mit folgendem Befehl bearbeiten:
+```bash
+nano ~/.bashrc
+```
+
+Füge den folgenden Inhalt am Ende der Datei ein:
+```bash
+# -------------------------------------------------------------------------
+# --- CUDA Konfiguration ---
+# Fügt CUDA-Tools zum Pfad hinzu
+export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
+# Ermöglicht dem System das Finden von CUDA-Bibliotheken
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
+# --- ROS 2 Basiskonfiguration ---
+# Setzt die Domain-ID zur Isolation von ROS-Netzwerken
+export ROS_DOMAIN_ID=66
+# Definiert die genutzte Distribution
+export ROS_DISTRO=humble
+# Erzwingt CycloneDDS als Middleware
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+# Erlaubt Kommunikation über das lokale Netzwerk hinaus (wichtig für Dashboard)
+export ROS_LOCALHOST_ONLY=0
+
+# --- ROS 2 Sourcing ---
+# Lädt die globale ROS 2 Umgebung (Standard-Pfad)
+if [ -f /opt/ros/humble/setup.bash ]; then
+    source /opt/ros/humble/setup.bash
+fi
+
+# Lädt den eigenen Entwicklungs-Workspace (falls vorhanden)
+if [ -f ~/dev_ws/install/setup.bash ]; then
+    source ~/dev_ws/install/setup.bash
+fi
+
+# Optional: Bestätigung beim Öffnen eines Terminals (hilft beim Debuggen)
+echo -e "\e[35mProzess-ID: $$ \e[0m\e[31m(Domain ID: $ROS_DOMAIN_ID, RMW: $RMW_IMPLEMENTATION)\e[0m"
+echo -e "\033[1;32msource /opt/ros/humble/setup.bash\033[0m"
+echo -e "\033[1;32msource ~/dev_ws/install/setup.bash\033[0m"
+echo -e "------------------------------------------------------------------------"
+# -------------------------------------------------------------------------
+```
+
+### Warum ist das notwendig?
+Diese Konfiguration automatisiert einige wichtige Schritte:
+* **CUDA Pfade:** Ermöglicht dem System das Finden der GPU-Tools, was essentiell für eine schnelle YOLO-Objekterkennung ist.
+* **Netzwerk-Isolation:** `ROS_DOMAIN_ID=66` isoliert dein ROS 2-Netzwerk, um Konflikte mit anderen ROS-Systemen im selben Netzwerk zu vermeiden.
+* **Middleware & Kommunikation:** `RMW_IMPLEMENTATION` erzwingt die zuverlässige CycloneDDS-Middleware und `ROS_LOCALHOST_ONLY=0` erlaubt dem Dashboard-UI die Kommunikation mit ROS.
+* **Auto-Sourcing:** Lädt automatisch die grundlegende ROS 2-Umgebung sowie deinen lokalen `dev_ws` Workspace, sodass du den `source`-Befehl nicht in jedem neuen Terminal manuell ausführen musst. Die `echo`-Befehle geben dir dabei eine nützliche optische Bestätigung.
+
+---
+
 ## 🎮 Nutzung & Launch
 
 Der Start erfolgt bevorzugt über Skripte zur automatischen Initialisierung von Nodes und Websockets:

@@ -63,7 +63,10 @@ COLOR_BTN_BG       = "#1e2638"
 COLOR_BTN_HOVER    = "#29354d"
 COLOR_BTN_TEXT     = "#e2e8f0"
 
-COLOR_BADGE_NODE   = "#2563eb"  # Blau
+COLOR_FOOTER_BTN_BG    = "#4f46e5"  # Indigo
+COLOR_FOOTER_BTN_HOVER = "#4338ca"
+
+COLOR_BADGE_NODE   = "#0284c7"  # Ein anderes, eigenständiges Blau (Ocean/Sky)
 COLOR_BADGE_LAUNCH = "#059669"  # Grün
 COLOR_BADGE_SYS    = "#9333ea"  # Lila
 COLOR_BADGE_KILL   = "#e11d48"  # Rot
@@ -142,8 +145,13 @@ class ROS2MasterControl(ctk.CTk):
         self.title("ROS 2 Nexus")
         sw = self.winfo_screenwidth()
         sh = self.winfo_screenheight()
-        w  = int(sw * 0.125)
+        
+        # Fensterbreite dynamisch berechnen, aber ein sinnvolles Minimum (800px) erzwingen,
+        # damit die Nav-Bar nicht horizontal zerdrückt wird.
+        w = max(800, int(sw * 0.15))
+        
         self.geometry(f"{w}x{sh}+0+0")
+        self.minsize(800, 600)
         self.configure(fg_color=COLOR_BG_MAIN)
 
         icon_path = os.path.join(os.path.abspath("."), "ros2_nexus_icon.png")
@@ -233,7 +241,7 @@ class ROS2MasterControl(ctk.CTk):
 
     # ── Header ──────────────────────────────────────
     def _build_header(self):
-        hdr = ctk.CTkFrame(self, fg_color=COLOR_BG_SURFACE, height=55, corner_radius=0)
+        hdr = ctk.CTkFrame(self, fg_color=COLOR_BG_SURFACE, height=65, corner_radius=0)
         hdr.pack(fill="x")
         hdr.pack_propagate(False)
         ctk.CTkFrame(hdr, height=1, fg_color=COLOR_BORDER).pack(side="bottom", fill="x")
@@ -244,7 +252,7 @@ class ROS2MasterControl(ctk.CTk):
 
         ctk.CTkLabel(row1, text="ROS 2 Nexus",
                      text_color=COLOR_ACCENT,
-                     font=("Helvetica", 18, "bold")).pack(side="left")
+                     font=("Helvetica", 20, "bold")).pack(side="left")
 
         # Container für die dynamischen System-Infos (rechtsbündig)
         info_container = ctk.CTkFrame(row1, fg_color="transparent")
@@ -268,31 +276,31 @@ class ROS2MasterControl(ctk.CTk):
         for part in info_parts:
             badge = ctk.CTkFrame(info_container, fg_color=COLOR_BG_SECTION, corner_radius=6, border_width=1, border_color=COLOR_BORDER)
             badge.pack(side="left", padx=(8, 0))
-            ctk.CTkLabel(badge, text=part, text_color="#ffffff", font=("Helvetica", 11, "bold")).pack(padx=10, pady=3)
+            ctk.CTkLabel(badge, text=part, text_color="#ffffff", font=("Helvetica", 12, "bold")).pack(padx=12, pady=4)
 
     # ── Tabs ────────────────────────────────────────
     def setup_tabs(self):
         self.tabview = ctk.CTkTabview(
             self, fg_color="transparent",
-            segmented_button_fg_color=COLOR_BG_SECTION,
-            segmented_button_selected_color="#f59e0b",
-            segmented_button_selected_hover_color="#d97706",
-            segmented_button_unselected_color=COLOR_BG_MAIN,
-            segmented_button_unselected_hover_color=COLOR_BG_SECTION,
-            text_color="#e2e8f0",
+            segmented_button_fg_color="#0f172a",          # Dunkler Leistenhintergrund
+            segmented_button_selected_color="#3b82f6",    # Kräftiges, modernes Blau für aktiven Tab
+            segmented_button_selected_hover_color="#2563eb",
+            segmented_button_unselected_color="#1e293b",
+            segmented_button_unselected_hover_color="#334155",
+            text_color="#ffffff",                         # Schrift immer weiß
             text_color_disabled=COLOR_TEXT_MUTED,
         )
-        self.tabview.pack(expand=True, fill="both", padx=12, pady=(5, 0))
+        self.tabview.pack(expand=True, fill="both", padx=12, pady=(8, 0))
         self.tabview._segmented_button.configure(
-            font=("Helvetica", 13, "bold"), height=44, corner_radius=10,
+            font=("Helvetica", 15, "bold"), height=52, corner_radius=10,
             border_width=1)
 
-        self.tab_robot  = self.tabview.add("Roboter")
-        self.tab_nodes  = self.tabview.add("Nodes/Launch")
-        self.tab_web    = self.tabview.add("Web")
-        self.tab_info   = self.tabview.add("ROS Info")
-        self.tab_system = self.tabview.add("System")
-        self.tabview.set("Roboter")
+        self.tab_robot  = self.tabview.add("     Roboter     ")
+        self.tab_nodes  = self.tabview.add("     Nodes/Launch     ")
+        self.tab_web    = self.tabview.add("     Web     ")
+        self.tab_info   = self.tabview.add("     ROS Info     ")
+        self.tab_system = self.tabview.add("     System     ")
+        self.tabview.set("     Roboter     ")
 
         self.create_robot_tab()
         self.create_nodes_tab()
@@ -411,7 +419,7 @@ class ROS2MasterControl(ctk.CTk):
         sec3 = self.make_section(scroll, "Umgebung & Build")
         self.add_action(sec3, "bashrc neu laden", lambda: run_interactive_cmd("source ~/.bashrc && echo -e '\033[1;32m.bashrc geladen!\033[0m'; sleep 2", "Source Bashrc"),
             "sys", "source ~/.bashrc")
-        self.add_action(sec3, "Colcon Build", lambda: run_cmd("colcon build --symlink-install", "Colcon Build", "~/dev_ws"),
+        self.add_action(sec3, "dev_ws -> colcon build", lambda: run_cmd("colcon build --symlink-install", "Colcon Build", "~/dev_ws"),
             "sys", "colcon build --symlink-install")
 
         sec4 = self.make_section(scroll, "Notfall")
@@ -425,7 +433,7 @@ class ROS2MasterControl(ctk.CTk):
 
     # ── Footer ──────────────────────────────────────
     def setup_footer(self):
-        footer = ctk.CTkFrame(self, fg_color=COLOR_BG_SURFACE, height=60, corner_radius=0)
+        footer = ctk.CTkFrame(self, fg_color=COLOR_BG_SURFACE, height=70, corner_radius=0)
         footer.pack(side="bottom", fill="x")
         footer.pack_propagate(False)
         ctk.CTkFrame(footer, height=1, fg_color=COLOR_BORDER).pack(fill="x")
@@ -434,14 +442,14 @@ class ROS2MasterControl(ctk.CTk):
         row.pack(expand=True)
         
         for text, cmd in [("~/.bashrc", lambda: run_interactive_cmd("nano ~/.bashrc", "Bashrc Editor")), 
-                          ("Code Editor", open_editor), 
+                          ("App Code", open_editor), 
                           ("App Reload", reload_app)]:
             ctk.CTkButton(row, text=text, command=cmd,
-                          fg_color=COLOR_BTN_BG, text_color=COLOR_BTN_TEXT,
-                          hover_color=COLOR_BTN_HOVER, height=36,
-                          font=("Helvetica", 12, "bold"),
+                          fg_color=COLOR_FOOTER_BTN_BG, text_color="#ffffff",
+                          hover_color=COLOR_FOOTER_BTN_HOVER, height=42,
+                          font=("Helvetica", 14, "bold"),
                           border_width=1, border_color=COLOR_BORDER,
-                          corner_radius=8).pack(side="left", padx=8, pady=12)
+                          corner_radius=8).pack(side="left", padx=10, pady=12)
 
     # ── Design Helpers ──────────────────────────────
     def make_section(self, master, title):
@@ -452,7 +460,7 @@ class ROS2MasterControl(ctk.CTk):
         
         # Cleaner Headertext für die Section
         title_lbl = ctk.CTkLabel(sec, text=title, text_color=COLOR_TEXT_MUTED, 
-                                 font=("Helvetica", 13, "bold"), anchor="w")
+                                 font=("Helvetica", 14, "bold"), anchor="w")
         title_lbl.pack(fill="x", padx=16, pady=(12, 4))
         
         # Innerer Frame für die Action-Buttons
@@ -503,19 +511,33 @@ class ROS2MasterControl(ctk.CTk):
 
         # Badge zuerst packen (rechts im Button, fixe Breite)
         badge = ctk.CTkLabel(btn_container, text=badge_text, fg_color=badge_color,
-                             text_color="#ffffff", font=("Helvetica", 10, "bold"),
-                             corner_radius=5, height=24, width=62)
-        badge.pack(side="right", padx=(4, 10), pady=6)
+                             text_color="#ffffff", font=("Helvetica", 11, "bold"),
+                             corner_radius=5, height=26, width=66)
+        badge.pack(side="right", padx=(4, 10), pady=8)
         badge.bind("<Button-1>", lambda e: cmd())
         badge.bind("<Enter>", _enter)
         badge.bind("<Leave>", _leave)
 
+        # Command-Text packen (links vom Badge, rechtsbündig)
+        cmd_label_ref = None
+        if copy_cmd:
+            display_cmd = copy_cmd if len(copy_cmd) < 55 else copy_cmd[:52] + "..."
+            cmd_label = ctk.CTkLabel(btn_container, text=display_cmd,
+                                     text_color="#f1f5f9",
+                                     font=("JetBrains Mono", 12),
+                                     anchor="e")
+            cmd_label.pack(side="right", padx=(8, 12), pady=8)
+            cmd_label.bind("<Button-1>", lambda e: cmd())
+            cmd_label.bind("<Enter>", _enter)
+            cmd_label.bind("<Leave>", _leave)
+            cmd_label_ref = cmd_label
+
         # Label (links im Button, füllt den Rest)
         btn_label = ctk.CTkLabel(btn_container, text=label,
                                  text_color=COLOR_BTN_TEXT,
-                                 font=("Helvetica", 13, "bold"),
-                                 anchor="center")
-        btn_label.pack(side="left", fill="x", expand=True, padx=(14, 8), pady=6)
+                                 font=("Helvetica", 15, "bold"),
+                                 anchor="w")
+        btn_label.pack(side="left", fill="x", expand=True, padx=(14, 8), pady=8)
         btn_label.bind("<Button-1>", lambda e: cmd())
         btn_label.bind("<Enter>", _enter)
         btn_label.bind("<Leave>", _leave)
@@ -525,6 +547,8 @@ class ROS2MasterControl(ctk.CTk):
         ToolTip(btn_container, hover_text)
         ToolTip(btn_label, hover_text)
         ToolTip(badge, hover_text)
+        if cmd_label_ref:
+            ToolTip(cmd_label_ref, hover_text)
         if copy_cmd and copy_btn_ref:
             ToolTip(copy_btn_ref, hover_text)
 
