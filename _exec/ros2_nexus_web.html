@@ -4,318 +4,276 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ROS 2 Nexus — Web Edition</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#02040a;--surf:#080c16;--card:#0c1425;--btn:#121d33;--brd:#1a2c4e;--hov:#1e3a5f;--txt:#e2e8f0;--mut:#64748b;--hdr:#94a3b8;--cy:#22d3ee;--am:#fbbf24;--gr:#4ade80;--am2:#1a0e00;--gr2:#022c1a}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column}
-header{background:var(--surf);border-bottom:1px solid var(--brd);padding:0 24px;height:64px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:100}
-.logo{display:flex;align-items:center;gap:10px;min-width:210px}
-.logo-icon{font-size:22px;color:var(--cy)}
-.logo-name{font-size:18px;font-weight:800}
-.logo-badge{font-size:10px;font-weight:700;background:var(--btn);color:var(--cy);border:1px solid var(--brd);padding:2px 8px;border-radius:99px}
-.tab-nav{display:flex;gap:4px;flex:1;justify-content:center}
-.tab-btn{background:transparent;border:1px solid transparent;color:var(--hdr);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:8px 24px;border-radius:8px;cursor:pointer;transition:all .15s}
-.tab-btn:hover{background:var(--btn);color:var(--txt);border-color:var(--brd)}
-.tab-btn.active{background:var(--am);color:var(--am2);border-color:transparent}
-.status{display:flex;align-items:center;gap:8px;min-width:150px;justify-content:flex-end}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--mut);transition:.3s}
-.dot.ok{background:var(--gr);box-shadow:0 0 6px var(--gr)}
-.dot.err{background:#f87171}
-.stxt{font-size:12px;color:var(--mut)}
-main{flex:1;padding:28px 32px;max-width:860px;margin:0 auto;width:100%}
-.panel{display:none}.panel.on{display:block}
-.card{margin-bottom:26px}
-.ctitle{color:var(--cy);font-size:16px;font-weight:700;margin-bottom:10px}
-.cbody{background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
-.brow{display:flex;gap:6px}
-.rbtn{flex:1;background:var(--btn);color:var(--txt);border:1px solid var(--brd);border-radius:10px;padding:0 18px;height:48px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;text-align:left;transition:background .14s,border-color .14s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rbtn:hover{background:var(--hov);border-color:var(--cy)}
-.rbtn.gr{background:var(--gr);color:var(--gr2);border:none}.rbtn.gr:hover{background:#22c55e}
-.rbtn.am{background:var(--am);color:var(--am2);border:none}.rbtn.am:hover{background:#f59e0b}
-.cbtn{background:var(--card);color:var(--mut);border:1px solid var(--brd);border-radius:10px;width:44px;height:48px;cursor:pointer;font-size:18px;flex-shrink:0;transition:all .14s}
-.cbtn:hover{background:var(--hov);color:var(--cy)}
-.cbtn.done{color:var(--gr)}
-footer{background:var(--surf);border-top:1px solid var(--brd);padding:0 24px;height:62px;display:flex;align-items:center;justify-content:center;gap:12px}
-.fbtn{background:var(--card);color:var(--txt);border:1px solid var(--brd);border-radius:9px;padding:0 22px;height:40px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .14s}
-.fbtn:hover{background:var(--hov);border-color:var(--cy)}
-.fbtn.am{background:var(--am);color:var(--am2);border:none}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:999}
-.overlay.h{display:none}
-.mbox{background:var(--card);border:1px solid var(--brd);border-radius:16px;padding:28px;width:420px;max-width:90vw}
-.mtitle{font-size:15px;font-weight:700;color:var(--cy);margin-bottom:14px}
-.mlabel{font-size:13px;color:var(--hdr);margin-bottom:8px}
-.minput{width:100%;background:var(--btn);border:1px solid var(--brd);border-radius:9px;color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:14px;padding:10px 14px;outline:none;transition:border-color .14s}
-.minput:focus{border-color:var(--cy)}
-.macts{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
-.mcanc{background:transparent;border:1px solid var(--brd);color:var(--mut);border-radius:8px;padding:8px 18px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600}
-.mconf{background:var(--cy);color:#001a1f;border:none;border-radius:8px;padding:8px 20px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700}
-#toasts{position:fixed;bottom:80px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999}
-.toast{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;animation:si .2s ease;box-shadow:0 4px 20px rgba(0,0,0,.4)}
-.toast.ok{border-color:var(--gr);color:var(--gr)}.toast.er{border-color:#f87171;color:#f87171}
-@keyframes si{from{transform:translateX(60px);opacity:0}to{transform:none;opacity:1}}
+:root {
+  --bg: #02040a; --surf: #080c16; --card: #0c1425; --btn: #121d33;
+  --brd: #1a2c4e; --hov: #1e3a5f; --txt: #e2e8f0; --mut: #64748b;
+  --cy: #38bdf8; --gr: #10b981; --am: #fbbf24; --red: #e11d48;
+  --pur: #9333ea; --ind: #4f46e5; --sky: #0284c7;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Header ── */
+header { background: var(--surf); border-bottom: 1px solid var(--brd); padding: 0 24px; height: 60px; display: flex; align-items: center; gap: 20px; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: center; gap: 10px; min-width: 200px; }
+.logo-name { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+.logo-badge { font-size: 10px; font-weight: 700; background: var(--btn); color: var(--cy); border: 1px solid var(--brd); padding: 2px 8px; border-radius: 99px; }
+.tab-nav { display: flex; gap: 4px; flex: 1; justify-content: center; }
+.tab-btn { background: transparent; border: 1px solid transparent; color: var(--mut); font-family: 'Inter'; font-size: 13px; font-weight: 600; padding: 8px 22px; border-radius: 8px; cursor: pointer; transition: all .15s; }
+.tab-btn:hover { background: var(--btn); color: var(--txt); border-color: var(--brd); }
+.tab-btn.active { background: var(--cy); color: #020617; border-color: transparent; }
+.status { display: flex; align-items: center; gap: 8px; min-width: 140px; justify-content: flex-end; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--mut); transition: .3s; }
+.dot.ok { background: var(--gr); box-shadow: 0 0 8px var(--gr); }
+.stxt { font-size: 11px; color: var(--mut); font-family: 'JetBrains Mono'; }
+
+/* ── Main ── */
+main { flex: 1; padding: 24px 28px; max-width: 880px; margin: 0 auto; width: 100%; }
+.panel { display: none; } .panel.on { display: block; }
+
+/* ── Sections ── */
+.section { background: var(--card); border: 1px solid var(--brd); border-radius: 14px; padding: 14px 16px; margin-bottom: 20px; }
+.section-title { color: var(--mut); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 0 4px 10px; }
+
+/* ── Action Buttons ── */
+.action-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.action-btn { flex: 1; display: flex; align-items: center; background: var(--btn); border: 1px solid var(--brd); border-radius: 10px; padding: 10px 14px; cursor: pointer; transition: all .15s; min-height: 46px; }
+.action-btn:hover { background: var(--hov); border-color: var(--cy); }
+.action-btn:active { transform: scale(0.98); }
+.action-btn .label { font-size: 14px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.action-btn .cmd-text { font-family: 'JetBrains Mono'; font-size: 11px; color: #475569; margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px; text-align: right; }
+.badge { font-size: 10px; font-weight: 700; color: #fff; padding: 3px 10px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
+.badge-node { background: var(--sky); }
+.badge-launch { background: var(--gr); }
+.badge-sys { background: var(--pur); }
+.badge-kill { background: var(--red); }
+.copy-btn { width: 36px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--btn); border: 1px solid var(--brd); border-radius: 10px; cursor: pointer; color: var(--mut); font-size: 16px; transition: all .15s; flex-shrink: 0; }
+.copy-btn:hover { background: var(--hov); color: var(--cy); border-color: var(--cy); }
+
+/* ── Footer ── */
+footer { background: var(--surf); border-top: 1px solid var(--brd); padding: 12px 24px; display: flex; justify-content: center; gap: 12px; }
+.footer-btn { background: var(--ind); color: #fff; border: 1px solid var(--brd); border-radius: 8px; padding: 10px 22px; font-family: 'Inter'; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; }
+.footer-btn:hover { background: #4338ca; }
+
+/* ── Toast ── */
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--gr); color: #020617; padding: 10px 24px; border-radius: 10px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity .3s; z-index: 999; pointer-events: none; }
+.toast.show { opacity: 1; }
 </style>
 </head>
 <body>
+
 <header>
   <div class="logo">
-    <span class="logo-icon">⬡</span>
+    <span style="font-size:20px;">🤖</span>
     <span class="logo-name">ROS 2 Nexus</span>
-    <span class="logo-badge">Web Edition</span>
+    <span class="logo-badge">WEB</span>
   </div>
-  <nav class="tab-nav" id="tnav"></nav>
+  <nav class="tab-nav" id="tab-nav">
+    <button class="tab-btn active" data-tab="robot">Roboter</button>
+    <button class="tab-btn" data-tab="nodes">Nodes / Launch</button>
+    <button class="tab-btn" data-tab="web">Web</button>
+    <button class="tab-btn" data-tab="info">ROS Info</button>
+    <button class="tab-btn" data-tab="system">System</button>
+  </nav>
   <div class="status">
-    <div class="dot" id="dot"></div>
-    <span class="stxt" id="stxt">Verbinde…</span>
+    <div class="dot" id="status-dot"></div>
+    <span class="stxt" id="status-text">Offline</span>
   </div>
 </header>
 
-<main id="main"></main>
+<main id="main-content"></main>
 
 <footer>
-  <button class="fbtn" id="fbashrc">✎ bashrc</button>
-  <button class="fbtn" id="fcode">⌨ Code</button>
-  <button class="fbtn am" onclick="location.reload()">↻ Neu laden</button>
+  <button class="footer-btn" onclick="runCmd('nano ~/.bashrc', '~/.bashrc Editor', 'interactive')">~/.bashrc</button>
+  <button class="footer-btn" onclick="runCmd('nano ~/dev_ws/_exec/ros2_nexus.py', 'App Code', 'interactive')">App Code</button>
+  <button class="footer-btn" onclick="location.reload()">App Reload</button>
 </footer>
 
-<div class="overlay h" id="modal">
-  <div class="mbox">
-    <div class="mtitle" id="mtitle"></div>
-    <div class="mlabel" id="mlabel"></div>
-    <input class="minput" id="minput" type="text">
-    <div class="macts">
-      <button class="mcanc" id="mcanc">Abbrechen</button>
-      <button class="mconf" id="mconf">Ausführen ▶</button>
-    </div>
-  </div>
-</div>
-
-<div id="toasts"></div>
+<div class="toast" id="toast"></div>
 
 <script>
-(function(){
-  // ── Data ────────────────────────────────────────────────────────────
-  var JC  = 'ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy "{header:{stamp:{sec:0,nanosec:0},frame_id:base_link},axes:[0.0,1.0,0.0,0.0],buttons:[0,0,0,0]}"';
-  var JCC = 'ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy "{header:{stamp:{sec:0,nanosec:0},frame_id:base_link},axes:[0.0,1.0,0.0,0.0],buttons:[0,0,0,0]}"';
-  var KL  = 'pkill -f rosbridge_server; pkill -f workspace_analyzer; pkill -f lite6; pkill -f http.server';
-
-  var TABS = [
-    {id:'daily',label:'Daily',cards:[
-      {title:'Netzwerk \u0026 System',btns:[
-        {t:'Eigene IP-Adresse anzeigen',m:'interactive',c:'ip -brief address show; read -p "Enter..."',ti:'IP Adresse',cp:'ip -brief address show'},
-        {t:'Datei im System suchen',m:'interactive',p:{l:'Dateiname:',ph:'datei.txt'},tp:'find / -iname "*{0}*" 2>/dev/null | head -60; read -p "Enter..."',ti:'System Suche',cp:'find / -iname "*<NAME>*" 2>/dev/null'},
-      ]},
-      {title:'Umgebung (.bashrc)',btns:[
-        {t:'~/.bashrc neu laden (source)',m:'interactive',c:'source ~/.bashrc && echo ".bashrc geladen!"; sleep 2',ti:'Source Bashrc',cp:'source ~/.bashrc'},
-      ]},
+// ══════════════════════════════════════════════════════
+//  TAB DATA — identisch mit ros2_nexus.py
+// ══════════════════════════════════════════════════════
+const TABS = {
+  robot: [
+    { title: "Hardware", actions: [
+      { label: "Real Move Launch", cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", type: "launch" },
+      { label: "Fake Move Launch", cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true", type: "launch" },
+      { label: "Keyboard Input", cmd: "ros2 run xarm_moveit_servo xarm_keyboard_input", type: "node" },
     ]},
-    {id:'nodes',label:'Nodes',cards:[
-      {title:'Controller (Joy)',btns:[
-        {t:'Pub /joy (Rate 10)',m:'ros',c:JC,ti:'Joy Pub',cp:JC},
-        {t:'Pub /joy_check (Rate 10)',m:'ros',c:JCC,ti:'Joy Check Pub',cp:JCC},
-      ]},
-      {title:'Robotik \u0026 MoveIt',btns:[
-        {t:'Real Move Launch (X-Arm Servo)',m:'ros',c:'ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev',ti:'Real Move',cp:'ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev'},
-        {t:'Fake Move Launch (Simulation)',m:'ros',c:'ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true',ti:'Fake Move',cp:'ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true'},
-        {t:'Keyboard Input Node',m:'ros',c:'ros2 run xarm_moveit_servo xarm_keyboard_input',ti:'Keyboard Input',cp:'ros2 run xarm_moveit_servo xarm_keyboard_input'},
-      ]},
-      {title:'Planung \u0026 Logik',btns:[
-        {t:'Move To Coordinator Node',m:'ros',c:'ros2 run move_to_coordinator move_to_coordinator',ti:'Coordinator',cp:'ros2 run move_to_coordinator move_to_coordinator'},
-        {t:'Motion Sequence Launch',m:'ros',c:'ros2 launch motion_sequence motion_sequence_launch.py',ti:'Motion Sequence',cp:'ros2 launch motion_sequence motion_sequence_launch.py'},
-        {t:'Collision Check Node',m:'ros',c:'ros2 run collision_check checker',ti:'Collision Check',cp:'ros2 run collision_check checker'},
-      ]},
-      {title:'Vision \u0026 Voice',btns:[
-        {t:'Eye UI Node',m:'ros',c:'ros2 run eye_control eye_ui',ti:'Eye UI',cp:'ros2 run eye_control eye_ui'},
-        {t:'YOLO Homographie Node',m:'ros',c:'ros2 run yolo_object_detector yolo_homography_node',ti:'YOLO',cp:'ros2 run yolo_object_detector yolo_homography_node'},
-        {t:'RViz Marker \u0026 Scene Launch',m:'ros',c:'ros2 launch rviz_marker rviz_marker.launch.py',ti:'RViz Marker',cp:'ros2 launch rviz_marker rviz_marker.launch.py'},
-        {t:'Whisper Bringup Launch',m:'ros',c:'ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True',ti:'Whisper Bringup',cp:'ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True'},
-        {t:'Whisper Stream Demo Node',m:'ros',c:'ros2 run whisper_demos whisper_on_key',ti:'Whisper Demo',cp:'ros2 run whisper_demos whisper_on_key'},
-        {t:'Voice Command Listener Node',m:'ros',c:'ros2 run voice_command_listener listener',ti:'Voice Listener',cp:'ros2 run voice_command_listener listener'},
-      ]},
+  ],
+  nodes: [
+    { title: "Planung & Logik", actions: [
+      { label: "Move To Coordinator", cmd: "ros2 run move_to_coordinator move_to_coordinator", type: "node" },
+      { label: "Motion Sequence Launch", cmd: "ros2 launch motion_sequence motion_sequence_launch.py", type: "launch" },
+      { label: "Collision Check Node", cmd: "ros2 run collision_check checker", type: "node" },
     ]},
-    {id:'web',label:'Web',cards:[
-      {title:'Backend \u0026 Server',btns:[
-        {t:'ROS Bridge Launch (Websocket)',m:'ros',c:'ros2 launch rosbridge_server rosbridge_websocket_launch.xml',ti:'ROS Bridge',cp:'ros2 launch rosbridge_server rosbridge_websocket_launch.xml'},
-        {t:'Webserver starten (Port 8080)',m:'ros',c:'python3 -m http.server 8080 -d src/websocket',ti:'Webserver',cp:'python3 -m http.server 8080 -d src/websocket'},
-        {t:'Workspace Analyzer Script',m:'ros',c:'python3 src/websocket/workspace_analyzer.py',ti:'Workspace Analyzer',cp:'python3 src/websocket/workspace_analyzer.py'},
-      ]},
-      {title:'Frontend',btns:[
-        {t:'Dashboard im Browser \u00f6ffnen',m:'bg',c:'xdg-open http://localhost:8080/dashboard_index.html',ti:'Dashboard',cp:'xdg-open http://localhost:8080/dashboard_index.html',cl:'gr'},
-        {t:'OBS Studio',m:'ros',c:'obs',ti:'OBS Studio',cp:'obs'},
-      ]},
+    { title: "Vision & Eye-Tracking", actions: [
+      { label: "Eye UI Node", cmd: "ros2 run eye_control eye_ui", type: "node" },
+      { label: "YOLO Homographie", cmd: "ros2 run yolo_object_detector yolo_homography_node", type: "node" },
+      { label: "RViz Marker Launch", cmd: "ros2 launch rviz_marker rviz_marker.launch.py", type: "launch" },
     ]},
-    {id:'info',label:'Info',cards:[
-      {title:'Listen \u0026 Status',btns:[
-        {t:'Aktive Nodes',m:'ros',c:'ros2 node list',ti:'Nodes',cp:'ros2 node list'},
-        {t:'Aktive Topics',m:'ros',c:'ros2 topic list -t',ti:'Topics',cp:'ros2 topic list -t'},
-        {t:'Aktive Services',m:'ros',c:'ros2 service list',ti:'Services',cp:'ros2 service list'},
-        {t:'Globale Parameter',m:'ros',c:'ros2 param list',ti:'Parameter',cp:'ros2 param list'},
-        {t:'Alle ROS 2 Pakete',m:'ros',c:'ros2 pkg list',ti:'Packages',cp:'ros2 pkg list'},
-      ]},
-      {title:'Visualisierung',btns:[
-        {t:'RViz2 starten',m:'ros',c:'rviz2',ti:'RViz2',cp:'rviz2'},
-        {t:'RQT Graph (Node-Netzwerk)',m:'ros',c:'rqt_graph',ti:'RQT Graph',cp:'rqt_graph'},
-        {t:'RQT (Generelle GUI)',m:'ros',c:'rqt',ti:'RQT',cp:'rqt'},
-      ]},
-      {title:'Live-Debugging',btns:[
-        {t:'Topic Echo (Live-Daten)',m:'interactive',p:{l:'Topic Name:',ph:'/some/topic'},tp:'ros2 topic echo {0}',ti:'Topic Echo',cp:'ros2 topic echo <TOPIC>'},
-        {t:'Topic Hz (Publish-Rate)',m:'interactive',p:{l:'Topic Name:',ph:'/some/topic'},tp:'ros2 topic hz {0}',ti:'Topic Hz',cp:'ros2 topic hz <TOPIC>'},
-        {t:'Interface / Message Aufbau',m:'interactive',p:{l:'Message-Typ:',ph:'std_msgs/msg/String'},tp:'ros2 interface show {0}; read -p "Enter..."',ti:'Interface Info',cp:'ros2 interface show <TYPE>'},
-        {t:'System Check (ros2 doctor)',m:'ros',c:'ros2 doctor',ti:'ROS Doctor',cp:'ros2 doctor'},
-      ]},
+    { title: "Sprache & Audio", actions: [
+      { label: "Whisper Bringup", cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", type: "launch" },
+      { label: "Whisper Stream Demo", cmd: "ros2 run whisper_demos whisper_on_key", type: "node" },
+      { label: "Voice Command Listener", cmd: "ros2 run voice_command_listener listener", type: "node" },
     ]},
-    {id:'build',label:'Build',cards:[
-      {title:'Build \u0026 Workspace',btns:[
-        {t:'Colcon Build (--symlink-install)',m:'ros',c:'colcon build --symlink-install',ti:'Colcon Build',cp:'colcon build --symlink-install',cl:'gr'},
-      ]},
-      {title:'Wartung \u0026 Reset',btns:[
-        {t:'ALLE ROS-Prozesse beenden',m:'bg',c:KL,ti:'Kill All',cp:KL,cl:'am'},
-      ]},
+  ],
+  web: [
+    { title: "Backend & Server", actions: [
+      { label: "ROS Bridge Launch", cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", type: "launch" },
+      { label: "Webserver Port 8080", cmd: "python3 -m http.server 8080 -d src/websocket", type: "sys" },
+      { label: "Workspace Analyzer", cmd: "python3 src/websocket/workspace_analyzer.py", type: "sys" },
     ]},
-  ];
+    { title: "Frontend & Browser", actions: [
+      { label: "Dashboard öffnen", cmd: "xdg-open http://localhost:8080/dashboard_index.html", type: "sys", mode: "bg" },
+      { label: "OBS Studio", cmd: "obs", type: "sys" },
+    ]},
+  ],
+  info: [
+    { title: "Listen & Status", actions: [
+      { label: "Aktive Nodes", cmd: "ros2 node list", type: "sys" },
+      { label: "Aktive Topics", cmd: "ros2 topic list -t", type: "sys" },
+      { label: "Services", cmd: "ros2 service list", type: "sys" },
+      { label: "Parameter", cmd: "ros2 param list", type: "sys" },
+      { label: "Alle Pakete", cmd: "ros2 pkg list", type: "sys" },
+    ]},
+    { title: "Visualisierung", actions: [
+      { label: "RViz2", cmd: "rviz2", type: "launch" },
+      { label: "RQT Graph", cmd: "rqt_graph", type: "sys" },
+      { label: "RQT", cmd: "rqt", type: "sys" },
+    ]},
+    { title: "Live-Debugging", actions: [
+      { label: "Topic Echo", cmd: 'read -p "Topic: " tp; ros2 topic echo $tp', type: "sys", mode: "interactive" },
+      { label: "Topic Hz", cmd: 'read -p "Topic: " tp; ros2 topic hz $tp', type: "sys", mode: "interactive" },
+      { label: "Interface Aufbau", cmd: 'read -p "Message-Typ: " msg; ros2 interface show $msg; echo ""; read -p "Enter..."', type: "sys", mode: "interactive" },
+      { label: "ros2 doctor", cmd: "ros2 doctor", type: "sys" },
+    ]},
+  ],
+  system: [
+    { title: "Controller (Joy)", actions: [
+      { label: "Pub /joy", cmd: 'ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"', type: "node" },
+      { label: "Pub /joy_check", cmd: 'ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"', type: "node" },
+    ]},
+    { title: "Netzwerk & System", actions: [
+      { label: "Eigene IP anzeigen", cmd: "echo -e '\\033[1;32mNetzwerk:\\033[0m'; ip -brief address show; echo ''; read -p 'Enter...'", type: "sys", mode: "interactive" },
+      { label: "Datei suchen", cmd: 'read -p "Dateiname?: " st; find / -iname "*${st}*" 2>/dev/null', type: "sys", mode: "interactive" },
+    ]},
+    { title: "Umgebung & Build", actions: [
+      { label: "bashrc neu laden", cmd: "source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2", type: "sys", mode: "interactive" },
+      { label: "dev_ws → colcon build", cmd: "colcon build --symlink-install", type: "sys" },
+    ]},
+    { title: "Notfall", actions: [
+      { label: "ALLE ROS-Prozesse beenden", cmd: "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'", type: "kill", mode: "bg" },
+    ]},
+  ],
+};
 
-  // ── Render ────────────────────────────────────────────────────────────
-  var activeTab = 'nodes';
+// ══════════════════════════════════════════════════════
+//  RENDERING
+// ══════════════════════════════════════════════════════
+const badgeClass = { node: 'badge-node', launch: 'badge-launch', sys: 'badge-sys', kill: 'badge-kill' };
+const badgeLabel = { node: 'NODE', launch: 'LAUNCH', sys: 'CMD', kill: 'KILL' };
 
-  function render() {
-    var nav  = document.getElementById('tnav');
-    var main = document.getElementById('main');
-    TABS.forEach(function(tab) {
-      // tab button
-      var b = document.createElement('button');
-      b.className = 'tab-btn' + (tab.id === activeTab ? ' active' : '');
-      b.textContent = tab.label;
-      b.setAttribute('data-id', tab.id);
-      b.onclick = function() { switchTab(tab.id); };
-      nav.appendChild(b);
-
-      // panel
-      var panel = document.createElement('div');
-      panel.className = 'panel' + (tab.id === activeTab ? ' on' : '');
-      panel.id = 'p-' + tab.id;
-
-      tab.cards.forEach(function(card) {
-        var cardEl = document.createElement('div');
-        cardEl.className = 'card';
-        var h = document.createElement('div');
-        h.className = 'ctitle';
-        h.textContent = card.title;
-        cardEl.appendChild(h);
-        var body = document.createElement('div');
-        body.className = 'cbody';
-
-        card.btns.forEach(function(btn) {
-          var row = document.createElement('div');
-          row.className = 'brow';
-          var rb = document.createElement('button');
-          rb.className = 'rbtn' + (btn.cl ? ' ' + btn.cl : '');
-          rb.textContent = btn.t;
-          rb.onclick = function() { handleBtn(btn); };
-          row.appendChild(rb);
-          if (btn.cp) {
-            var cb = document.createElement('button');
-            cb.className = 'cbtn';
-            cb.title = 'Kopieren';
-            cb.textContent = '\u29c9';
-            cb.onclick = function() { copyCmd(btn.cp, cb); };
-            row.appendChild(cb);
-          }
-          body.appendChild(row);
-        });
-        cardEl.appendChild(body);
-        panel.appendChild(cardEl);
-      });
-      main.appendChild(panel);
+function renderTab(tabId) {
+  const sections = TABS[tabId] || [];
+  let html = '';
+  sections.forEach(sec => {
+    html += `<div class="section"><div class="section-title">${sec.title}</div>`;
+    sec.actions.forEach(a => {
+      const displayCmd = a.cmd.length > 55 ? a.cmd.slice(0, 52) + '...' : a.cmd;
+      const mode = a.mode || 'ros';
+      const bc = badgeClass[a.type] || 'badge-sys';
+      const bl = badgeLabel[a.type] || 'CMD';
+      html += `
+        <div class="action-row">
+          <div class="action-btn" onclick="runCmd('${a.cmd.replace(/'/g, "\\'")}', '${a.label}', '${mode}')" title="${a.cmd}">
+            <span class="label">${a.label}</span>
+            <span class="cmd-text">${displayCmd}</span>
+            <span class="badge ${bc}">${bl}</span>
+          </div>
+          <div class="copy-btn" onclick="copyCmd('${a.cmd.replace(/'/g, "\\'")}', this)" title="Befehl kopieren">⧉</div>
+        </div>`;
     });
-  }
+    html += '</div>';
+  });
+  document.getElementById('main-content').innerHTML = html;
+}
 
-  function switchTab(id) {
-    activeTab = id;
-    document.querySelectorAll('.tab-btn').forEach(function(b) {
-      b.classList.toggle('active', b.getAttribute('data-id') === id);
-    });
-    document.querySelectorAll('.panel').forEach(function(p) {
-      p.classList.toggle('on', p.id === 'p-' + id);
-    });
-  }
+// ══════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ══════════════════════════════════════════════════════
+let currentTab = 'robot';
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    renderTab(currentTab);
+  });
+});
 
-  // ── Actions ────────────────────────────────────────────────────────────
-  function handleBtn(btn) {
-    if (btn.p) { openModal(btn); } else { execCmd(btn.c, btn.ti, btn.m); }
-  }
-
-  function execCmd(cmd, title, mode) {
-    fetch('/api/run', {
+// ══════════════════════════════════════════════════════
+//  BACKEND COMMUNICATION
+// ══════════════════════════════════════════════════════
+async function runCmd(command, title, mode = 'ros') {
+  try {
+    const res = await fetch('/api/run', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({command: cmd, title: title || 'ROS 2', mode: mode || 'ros'})
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(d){ toast(d.ok ? '\u25b6 ' + (title||'Gestartet') : '\u2716 ' + d.error, d.ok ? 'ok' : 'er'); })
-    .catch(function(){ toast('\u2716 Backend nicht erreichbar', 'er'); });
-  }
-
-  function copyCmd(text, btn) {
-    navigator.clipboard.writeText(text).then(function() {
-      btn.classList.add('done'); btn.textContent = '\u2713';
-      setTimeout(function(){ btn.classList.remove('done'); btn.textContent = '\u29c9'; }, 1400);
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command, title, mode })
     });
+    const data = await res.json();
+    if (data.ok) {
+      showToast(`✓ ${title}`);
+    } else {
+      showToast(`✗ ${data.error}`, true);
+    }
+  } catch (e) {
+    showToast('✗ Backend nicht erreichbar', true);
   }
+}
 
-  // ── Modal ──────────────────────────────────────────────────────────────
-  var pendingBtn = null;
-  var modal  = document.getElementById('modal');
-  var minput = document.getElementById('minput');
+function copyCmd(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓';
+    btn.style.color = 'var(--gr)';
+    setTimeout(() => { btn.textContent = '⧉'; btn.style.color = ''; }, 1200);
+  });
+}
 
-  function openModal(btn) {
-    pendingBtn = btn;
-    document.getElementById('mtitle').textContent = btn.t;
-    document.getElementById('mlabel').textContent = btn.p.l;
-    minput.placeholder = btn.p.ph || '';
-    minput.value = '';
-    modal.classList.remove('h');
-    setTimeout(function(){ minput.focus(); }, 80);
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? 'var(--red)' : 'var(--gr)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ══════════════════════════════════════════════════════
+//  STATUS PING
+// ══════════════════════════════════════════════════════
+async function checkStatus() {
+  try {
+    const res = await fetch('/api/ping');
+    const data = await res.json();
+    document.getElementById('status-dot').classList.toggle('ok', data.ok);
+    document.getElementById('status-text').textContent = data.ok ? 'Online' : 'Offline';
+  } catch {
+    document.getElementById('status-dot').classList.remove('ok');
+    document.getElementById('status-text').textContent = 'Offline';
   }
+}
 
-  function closeModal() { modal.classList.add('h'); pendingBtn = null; }
-
-  document.getElementById('mcanc').onclick = closeModal;
-  modal.onclick = function(e){ if (e.target === modal) closeModal(); };
-  document.getElementById('mconf').onclick = function() {
-    var val = minput.value.trim();
-    if (!val) { minput.focus(); return; }
-    var btn = pendingBtn;
-    closeModal();
-    execCmd(btn.tp.replace(/\{0\}/g, val), btn.ti, btn.m);
-  };
-  minput.onkeydown = function(e){ if (e.key === 'Enter') document.getElementById('mconf').click(); };
-
-  // ── Toast ──────────────────────────────────────────────────────────────
-  function toast(msg, type) {
-    var t = document.createElement('div');
-    t.className = 'toast ' + (type||'ok');
-    t.textContent = msg;
-    document.getElementById('toasts').appendChild(t);
-    setTimeout(function(){ t.remove(); }, 2800);
-  }
-
-  // ── Status ─────────────────────────────────────────────────────────────
-  function checkStatus() {
-    fetch('/api/ping')
-      .then(function(r){ return r.json(); })
-      .then(function(){ document.getElementById('dot').className='dot ok'; document.getElementById('stxt').textContent='Backend aktiv'; })
-      .catch(function(){ document.getElementById('dot').className='dot err'; document.getElementById('stxt').textContent='Keine Verbindung'; });
-  }
-
-  // ── Footer ─────────────────────────────────────────────────────────────
-  document.getElementById('fbashrc').onclick = function(){ execCmd('nano ~/.bashrc','Bashrc Editor','interactive'); };
-  document.getElementById('fcode').onclick   = function(){ execCmd('nano ~/dev_ws/_exec/ros2_nexus_web.py','Code Editor','interactive'); };
-
-  // ── Init ───────────────────────────────────────────────────────────────
-  render();
-  checkStatus();
-  setInterval(checkStatus, 8000);
-})();
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+renderTab('robot');
+checkStatus();
+setInterval(checkStatus, 5000);
 </script>
 </body>
 </html>
