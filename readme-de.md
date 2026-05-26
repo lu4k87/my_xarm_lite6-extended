@@ -108,7 +108,7 @@ Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, im
 
 Eine zentrale **grafische Desktop-Anwendung**, die komplexe CLI-Workflows durch eine einzige, tab-organisierte Oberfläche ersetzt. Alle ROS 2 Befehle, Launch-Files, Build-Tasks und Workspace-Skripte sind über kategorisierte Buttons erreichbar – jeder Button zeigt den zugehörigen Befehl für volle Transparenz an.
 
-**Funktionsweise:** Entwickelt mit `customtkinter` organisiert die GUI alle Operationen in logische Tabs (Daily, Nodes, Web, Info, Build). Jeder Button startet seinen Befehl als isolierten `subprocess` in einem dedizierten `gnome-terminal`-Fenster, sodass die GUI reaktionsfähig bleibt und jeder Prozess direkt in seinem eigenen Terminal debuggt werden kann. Aktive ROS-Nodes werden durch ein farbiges Badge visuell hervorgehoben.
+**Funktionsweise:** Entwickelt mit `customtkinter` organisiert die GUI alle Operationen in logische Tabs (Roboter, Nodes/Launch, Web, ROS Info, System). Jeder Button startet seinen Befehl als isolierten `subprocess` in einem dedizierten `gnome-terminal`-Fenster, sodass die GUI reaktionsfähig bleibt und jeder Prozess direkt in seinem eigenen Terminal debuggt werden kann. Aktive ROS-Nodes werden durch ein farbiges Badge visuell hervorgehoben.
 
 <p align="center">
   <img src="_imgs/nexus_roboter.png" width="49%" alt="ROS2 Nexus - Roboter">

@@ -110,7 +110,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 A central **graphical desktop application** that replaces complex CLI workflows with a single, tab-organized interface. All ROS 2 commands, launch files, build tasks, and workspace scripts are accessible via categorized buttons — each button displays its underlying command for full transparency.
 
-**How it works:** Built with `customtkinter`, the GUI organizes operations into logical tabs (Daily, Nodes, Web, Info, Build). Every button spawns its command as an isolated `subprocess` in a dedicated `gnome-terminal` window, keeping the GUI responsive and providing a native debugging experience for each process. Active ROS nodes are highlighted with a distinct badge for quick visual identification.
+**How it works:** Built with `customtkinter`, the GUI organizes operations into logical tabs (Roboter, Nodes/Launch, Web, ROS Info, System). Every button spawns its command as an isolated `subprocess` in a dedicated `gnome-terminal` window, keeping the GUI responsive and providing a native debugging experience for each process. Active ROS nodes are highlighted with a distinct badge for quick visual identification.
 
 <p align="center">
   <img src="_imgs/nexus_roboter.png" width="49%" alt="ROS2 Nexus - Robot">
