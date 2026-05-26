@@ -38,24 +38,41 @@ Es baut auf dem offiziellen xarm_ros2 Repository auf: https://github.com/xArm-De
 
 ## 2. 🔬 Architektur & Leitprinzipien
 
-### Human-Centered Automation:
-* Nutzer sollen befähigt werden, Systemzustände der Automatisierung jederzeit zu interpretieren und die Intention des technischen Systems zu antizipieren.
-* Dies ermöglicht es ihnen, richtige Entscheidungen zu treffen und über die Zeit Vertrauen in das technische System aufzubauen.
+### Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform
 
-### Shared Control & Kognitive Entlastung: 
-* Der nahtlose Wechsel zwischen manueller und KI-gestützter Steuerung minimiert die mentale Arbeitsbelastung.
+Das Kernziel des Projekts ist die Realisierung einer modularen, plattformbasierten Softwarearchitektur für die multimodale Teleoperation und KI-gestützte Assistenzrobotik. Das System fungiert als zentraler, softwareseitiger Integrationsknoten (Middleware-Ebene), der heterogene Teilsysteme in einer einheitlichen Laufzeitumgebung zusammenführt. Durch ein verteiltes Server-Client-Netzwerk (Multi-PC-Setup) und die softwareseitige Kopplung an einen echtzeitfähigen Digitalen Zwilling (NVIDIA Isaac Sim) dient die Plattform sowohl als flexible Entwicklungsumgebung als auch als standardisierte und replizierbare Testumgebung.
 
-### HCI & Usability Fokus:
-* Die Interaktionen verschieben sich von komplexen Low-Level-Steuerungen hin zu intentionsbasierter Aufgabenbewältigung.
+Das Projekt ist explizit als geschlossener Kreislauf aus Entwicklung und empirischer Validierung konzipiert. Die Plattform verfügt über eine integrierte Logging- und Datenakquisitions-Infrastruktur, um während der Systemnutzung sowohl technische Leistungsparameter als auch menschliche Interaktionsdaten zeitsynchron aufzuzeichnen. Die Architektur ist inhärent darauf ausgelegt, ein breites Spektrum an Modalitäten flexibel zu orchestrieren und messtechnisch zu erfassen:
 
-### Reproduzierbar & Open Source:
-* Transparente Codebasis für standardisierte wissenschaftliche Experimente.
+* **Sensorik & Perzeption:** Integration von Tiefenkameras (z. B. Objekterkennung via YOLO, Marker-Tracking) und taktilen oder physiologischen Sensoren zur Zustandserfassung.
+* **Multimodale Steuerung:** Parallele Einbindung diverser Eingabekanäle wie Eye-Tracking-Systeme zur Blickzielerfassung, Sprachsteuerung (z. B. via OpenAI Whisper) sowie klassische Hardware-Controller (Gamepads, 3D-Mäuse).
+* **Kognitive Robotik:** Einbindung moderner Vision-Language-Action-Modelle (VLA), um hochgradig abstrakte, sprachliche und visuelle Befehle direkt in robotische Handlungssequenzen zu übersetzen.
 
-### Kosteneffiziente Hardware: 
-* Erschwingliche Komponenten verbessern den Zugang für Inklusions- und Forschungsprojekte.
+### Human-Centered Automation
 
-### Modular & Industrie-Standard:
-* Vollständige Integration in ROS 2 Humble für Kompatibilität mit etablierten Frameworks.
+Die Systemarchitektur stellt den menschlichen Operator ins Zentrum des Interaktionsdesigns. Das System wird so konzipiert, dass Nutzer den aktuellen Automatisierungszustand – insbesondere bei der parallelen Verarbeitung von Blickbewegungen (Eye-Tracking) und sensorischen Rückmeldungen – durchgängig kognitiv erfassen und nachfolgende Systemaktionen antizipieren können. Diese Transparenz bricht algorithmische Black-Box-Strukturen auf. Sie befähigt den Operator zu fundierten Interventionen in kritischen Situationen und bildet die Basis für den Aufbau eines kalibrierten Systemvertrauens (*Trust in Automation*), welches im Rahmen von Nutzerstudien quantitativ und qualitativ evaluiert wird.
+
+### Shared Control & Kognitive Entlastung
+
+Ein Kernmerkmal der Softwarearchitektur ist die Implementierung von *Shared-Control*-Paradigmen zur kooperativen Aufgabenbewältigung. Die Plattform ermöglicht einen nahtlosen, latenzarmen Wechsel der Kontrollhoheit zwischen manueller Führung (z. B. via MoveIt Servo / Gamepad), blickgesteuerten Interaktionen (Eye-Tracking-Targeting) und KI-gestützten, teilautomatisierten Assistenzfunktionen. Durch diese kontextabhängige Aufteilung der Kontrollanteile wird die mentale Arbeitsbelastung (*Mental Workload*) des Nutzers minimiert. Das System kompensiert fehleranfällige Low-Level-Korrekturen autonom, wodurch kognitive Ressourcen für die übergeordnete Prozessüberwachung freigesetzt werden. Die Effektivität dieser Entlastung wird im Projektverlauf über standardisierte psychometrische Verfahren empirisch validiert.
+
+### HCI & Usability Fokus & Empirische Evaluation
+
+Die Gestaltung der zentralen Steuerungsschnittstelle (GUI) folgt etablierten Prinzipien der Mensch-Computer-Interaktion (HCI). Die Interaktionsmuster verschieben sich von der komplexen Koordination einzelner Freiheitsgrade oder dem manuellen Aufrufen verteilter Terminal-Prozesse hin zu einer intentionsbasierten Aufgabenbewältigung. Der Operator kommuniziert abstrakte Handlungsabsichten – sei es per Sprache, Blickziel oder High-Level-Controller –, welche die Plattform oder integrierte VLA-Modelle autonom in kinematische Trajektorien übersetzt.
+
+Ein integraler Bestandteil des Projekts ist die Durchführung systematischer Benutzerstudien zur Evaluierung dieser multimodalen Schnittstellen. Hierbei werden standardisierte Usability-Metriken (wie die *System Usability Scale*, SUS) und objektive Leistungsdaten (z. B. Task Completion Time, Fehlerraten, Blickbewegungspfade) erhoben, um die Gebrauchstauglichkeit und die kognitive Beanspruchung (z. B. via *NASA-TLX*) empirisch abzusichern und das System iterativ zu optimieren.
+
+### Reproduzierbar & Open Source
+
+Zur Gewährleistung wissenschaftlicher Validität ist das Projekt als Open-Source-Architektur angelegt. Die Offenlegung der vollständigen Codebasis sichert die methodische Transparenz aller Algorithmen, Konfigurationen (URDFs, MoveIt-Konfigurationen) und Datenflüsse. Dies ermöglicht unabhängigen Forschungsgruppen eine exakte Replikation der Experimente inklusive der Validierung komplexer Sensordatenströme und Steuerungseingaben. Es sichert die statistische Verifizierbarkeit der Evaluationsergebnisse und etabliert die Plattform als standardisierte Benchmark für komparative Studien im Bereich der Assistenz- und Inklusionsrobotik.
+
+### Kosteneffiziente Hardware
+
+Die Systemkonfiguration basiert primär auf ökonomisch erschwinglichen, kommerziell verfügbaren Komponenten (COTS) – wie dem UFactory xArm Lite 6, Standard-Tiefenkameras und gängigen Consumer-Controllern –, ohne die erforderliche Präzision und funktionale Zuverlässigkeit zu kompromittieren. Durch die Reduktion investiver Barrieren wird der Zugang zu moderner, multimodal gesteuerter Robotiktechnologie demokratisiert. Im Rahmen des Projekts wird gezielt evaluiert, inwieweit diese kosteneffiziente Hardware im Vergleich zu hochpreisigen Industriesystemen eine valide und verlässliche Forschungs- und Einsatzplattform für inklusive Projekte und Bildungseinrichtungen darstellt.
+
+### Modular & Industrie-Standard
+
+Die softwareseitige Infrastruktur ist modular gekapselt und vollständig in das Middleware-Framework ROS 2 Humble integriert. Die native Nutzung standardisierter Kommunikationsprimitive (Nodes, Topics, Services, Actions) sichert die Interoperabilität mit industriellen Ökosystemen wie MoveIt 2 sowie modernen Sensor- und Tracking-SDKs. Diese modulare Entkopplung gewährleistet, dass einzelne Subsysteme – wie VLA-Pipelines zur Intentionserkennung, spezifische Eye-Tracking-Treiber, neue Eingabegeräte oder die Simulationsbrücke zum Digitalen Zwilling – als eigenständige Module ausgetauscht, erweitert oder isoliert evaluiert werden können, ohne das Gesamtsystem modifizieren zu müssen.
 
 ---
 
@@ -208,7 +225,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 ### 6.4 🦾 Bewegung & Sicherheit
 
 * **`motion_sequence`**
-    * **Zweck:** Zustandsverwaltung und failsafe Ausführung von Fahrten.
+    * **Zweck:** Zustandsverwaltung und sichere Ausführung von kartesischen Bewegungen.
     * **Aufgabe:** Physische Steuerung und Umschalten von Hardware-Modi.
     * **Funktionsweise:** Stellt Action-Services (z.B. `execute_motion_to_pose`) bereit. Schaltet auf Hardware-Ebene zwischen Servo- und Pose-Mode um. Bei Endeffektor-Höhe < 95 mm wird der Arm vor der Fahrt präventiv auf Z=150 mm angehoben (Kollisionsschutz).
 * **`collision_check`**
@@ -225,7 +242,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
         * **X:** Asynchroner Whisper AI Trigger.
         * **Y:** Service Call für initiale Pose.
 
-### 6.5 🖥️ UI & Visualisierung
+### 6.5 🖥️ Monitoring(Dashboard),UI & Visualisierung
 
 * **`rviz_marker`**
     * **Zweck:** Visuelles Live-Feedback in RViz2.

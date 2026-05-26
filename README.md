@@ -38,24 +38,41 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 
 ## 2. 🔬 Architecture & Guiding Principles
 
-### Human-Centered Automation:
-* Users should be empowered to continuously interpret the system states of the automated system and anticipate the intention of the technical system.
-* This enables them to make the right decisions and build trust in the technical system over time.
+### The System Idea: An Integrated Development, Evaluation, and Validation Platform
 
-### Shared Control & Cognitive Relief: 
-* Seamless switching between manual and AI-assisted control minimizes mental workload.
+The core objective of the project is to realize a modular, platform-based software architecture for multimodal teleoperation and AI-assisted assistive robotics. The system functions as a central, software-side integration node (middleware level) that merges heterogeneous subsystems into a unified runtime environment. Through a distributed server-client network (multi-PC setup) and software coupling to a real-time digital twin (NVIDIA Isaac Sim), the platform serves as both a flexible development environment and a standardized, replicable testbed.
 
-### HCI & Usability Focus:
-* Interactions shift from complex low-level controls toward intention-based task completion.
+The project is explicitly designed as a closed loop of development and empirical validation. The platform features an integrated logging and data acquisition infrastructure to record both technical performance parameters and human interaction data in a time-synchronized manner during system use. The architecture is inherently designed to flexibly orchestrate and measure a wide range of modalities:
 
-### Reproducible & Open Source:
-* Transparent codebase for standardized scientific experiments.
+* **Sensors & Perception:** Integration of depth cameras (e.g., object detection via YOLO, marker tracking) and tactile or physiological sensors for state estimation.
+* **Multimodal Control:** Parallel integration of various input channels such as eye-tracking systems for gaze target acquisition, voice control (e.g., via OpenAI Whisper), and classic hardware controllers (gamepads, 3D mice).
+* **Cognitive Robotics:** Integration of modern Vision-Language-Action (VLA) models to translate highly abstract textual and visual commands directly into robotic action sequences.
 
-### Cost-Efficient Hardware: 
-* Affordable components improve accessibility for inclusion and research projects.
+### Human-Centered Automation
 
-### Modular & Industry Standard:
-* Full integration into ROS 2 Humble for compatibility with established frameworks.
+The system architecture places the human operator at the center of the interaction design. The system is designed to allow users to cognitively grasp the current state of automation throughout operation—especially during the parallel processing of gaze patterns (eye tracking) and sensory feedback—and to anticipate subsequent system actions. This transparency dismantles algorithmic black-box structures. It empowers the operator to make informed interventions in critical situations and forms the basis for establishing calibrated trust in the system (*Trust in Automation*), which is evaluated quantitatively and qualitatively through user studies.
+
+### Shared Control & Cognitive Relief
+
+A key feature of the software architecture is the implementation of *shared control* paradigms for cooperative task execution. The platform enables a seamless, low-latency transfer of control authority between manual guidance (e.g., via MoveIt Servo / gamepad), gaze-controlled interactions (gaze target acquisition), and AI-assisted, semi-automated assistance functions. Through this context-dependent distribution of control shares, the user's mental workload is minimized. The system autonomously compensates for error-prone low-level corrections, thereby freeing up cognitive resources for high-level process monitoring. The effectiveness of this relief will be empirically validated in the course of the project using standardized psychometric methods.
+
+### HCI & Usability Focus & Empirical Evaluation
+
+The design of the central control interface (GUI) follows established principles of Human-Computer Interaction (HCI). Interaction patterns shift from the complex coordination of individual degrees of freedom or manually invoking distributed terminal processes toward intention-based task completion. The operator communicates abstract action intents—be it via voice, gaze target, or high-level controller—which the platform or integrated VLA models autonomously translate into kinematic trajectories.
+
+An integral part of the project is conducting systematic user studies to evaluate these multimodal interfaces. Standardized usability metrics (such as the *System Usability Scale*, SUS) and objective performance data (e.g., task completion time, error rates, gaze paths) are collected to empirically verify usability and cognitive load (e.g., via *NASA-TLX*) and to iteratively optimize the system.
+
+### Reproducible & Open Source
+
+To ensure scientific validity, the project is designed as an open-source architecture. Disclosing the complete codebase ensures the methodological transparency of all algorithms, configurations (URDFs, MoveIt configurations), and data flows. This allows independent research groups to exact-replicate experiments, including the validation of complex sensor data streams and control inputs. It secures the statistical verifiability of evaluation results and establishes the platform as a standardized benchmark for comparative studies in the field of assistive and inclusive robotics.
+
+### Cost-Effective Hardware
+
+The system configuration is primarily based on economically affordable, commercially available off-the-shelf components (COTS)—such as the UFactory xArm Lite 6, standard depth cameras, and common consumer controllers—without compromising the required precision and functional reliability. By reducing investment barriers, access to modern, multimodally controlled robotics technology is democratized. The project specifically evaluates the extent to which this cost-effective hardware, compared to high-priced industrial systems, represents a valid and reliable research and deployment platform for inclusive projects and educational institutions.
+
+### Modular & Industry Standard
+
+The software-side infrastructure is modularly encapsulated and fully integrated into the ROS 2 Humble middleware framework. The native use of standardized communication primitives (nodes, topics, services, actions) ensures interoperability with industrial ecosystems such as MoveIt 2 as well as modern sensor and tracking SDKs. This modular decoupling ensures that individual subsystems—such as VLA pipelines for intent recognition, specific eye-tracking drivers, new input devices, or the simulation bridge to the digital twin—can be exchanged, extended, or evaluated in isolation as independent modules without having to modify the overall system.
 
 ---
 
@@ -208,7 +225,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 ### 6.4 🦾 Motion & Safety
 
 * **`motion_sequence`**
-    * **Purpose:** State management and failsafe execution of movements.
+    * **Purpose:** State management and safe execution of Cartesian movements.
     * **Task:** Physical control and switching of hardware modes.
     * **How it works:** Provides action services (e.g., `execute_motion_to_pose`). Switches between servo and pose mode at the hardware level. When end-effector height < 95 mm, the arm is preventively raised to Z=150 mm before movement (collision protection).
 * **`collision_check`**
@@ -225,7 +242,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
         * **X:** Asynchronous Whisper AI trigger.
         * **Y:** Service call for initial pose.
 
-### 6.5 🖥️ UI & Visualization
+### 6.5 🖥️ Monitoring (Dashboard), UI & Visualization
 
 * **`rviz_marker`**
     * **Purpose:** Real-time visual feedback in RViz2.
