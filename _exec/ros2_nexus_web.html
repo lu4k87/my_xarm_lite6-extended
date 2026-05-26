@@ -427,9 +427,14 @@ function renderTab(tabId) {
       const mode = a.mode || 'ros';
       const bc = badgeClass[a.type] || 'badge-sys';
       const bl = badgeLabel[a.type] || 'CMD';
+      
+      // Escape double quotes for HTML attributes
+      const safeCmd = a.cmd.replace(/"/g, '&quot;');
+      const safeLabel = a.label.replace(/"/g, '&quot;');
+      
       html += `
         <div class="action-card">
-          <div class="action-btn" onclick="runCmd('${a.cmd.replace(/'/g, "\\'")}', '${a.label}', '${mode}')" title="Ausführen">
+          <div class="action-btn" data-cmd="${safeCmd}" data-label="${safeLabel}" data-mode="${mode}" title="Ausführen">
             <div class="btn-top">
               <span class="label">${a.label}</span>
               <span class="badge ${bc}">${bl}</span>
@@ -438,7 +443,7 @@ function renderTab(tabId) {
               <span class="cmd-text">${a.cmd}</span>
             </div>
           </div>
-          <div class="copy-btn" onclick="copyCmd('${a.cmd.replace(/'/g, "\\'")}', this)" title="Befehl kopieren">
+          <div class="copy-btn" data-cmd="${safeCmd}" title="Befehl kopieren">
             <svg><use href="#icon-copy"></use></svg>
           </div>
         </div>`;
@@ -449,6 +454,19 @@ function renderTab(tabId) {
     `;
   });
   document.getElementById('main-content').innerHTML = html;
+
+  // Event Listeners anhängen
+  document.querySelectorAll('.action-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      runCmd(btn.dataset.cmd, btn.dataset.label, btn.dataset.mode);
+    });
+  });
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      copyCmd(btn.dataset.cmd, btn);
+    });
+  });
 }
 
 // ══════════════════════════════════════════════════════
