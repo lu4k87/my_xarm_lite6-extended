@@ -80,8 +80,7 @@ python3 _exec/ros2_nexus_web.py
 > **Ubuntu App Integration:** ROS 2 Nexus is registered as a native Ubuntu application via a `.desktop` entry. You can simply search for **"ROS 2 Nexus"** in your Ubuntu Activities menu to launch the app directly via its icon.
 
 <p align="center">
-  <img src="_imgs/nexus_roboter.png" width="49%" alt="ROS 2 Nexus - Robot">
-  <img src="_imgs/nexus_2nodes.png" width="49%" alt="ROS 2 Nexus - Nodes">
+  <img src="_imgs/ros2_nexus_web.png" width="90%" alt="ROS 2 Nexus — Web Edition">
 </p>
 
 ### 3.2 Network & Port Architecture
