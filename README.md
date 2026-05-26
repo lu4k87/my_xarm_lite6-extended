@@ -1,11 +1,20 @@
 # xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
-
 This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
 It builds upon the official xarm_ros2 repository: https://github.com/xArm-Developer/xarm_ros2/tree/humble (Branch: humble).
 
+## Table of Contents
+1. [📋 Project Overview](#1--project-overview)
+2. [🔬 Architecture & Guiding Principles](#2--architecture--guiding-principles)
+3. [🚀 Quick Start: ROS 2 Nexus (The Central Launcher)](#3--quick-start-ros-2-nexus-the-central-launcher)
+4. [📊 Monitoring: Dashboard & Workspace Analyzer](#4--monitoring-dashboard--workspace-analyzer)
+5. [🕹️ Multimodal Technologies & Interaction Concepts](#5-️-multimodal-technologies--interaction-concepts)
+6. [⚙️ Core Features & ROS 2 Nodes (Deep Dive)](#6-️-core-features--ros-2-nodes-deep-dive)
 
-## 📋 Project Overview
+---
+
+## 1. 📋 Project Overview
+
 **`Concept:`**
 * A modular platform for controlling the xArm Lite 6 robot through multimodal input methods with a focus on maximum usability.
 
@@ -25,7 +34,10 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 * Guidelines derived from this are intended to serve companies (e.g., when planning to introduce robots) as a guide and answer the question: "How do we proceed in accordance with Industry 5.0 requirements?". 
 * These guidelines can also potentially be made available as a monetizable service for industry.
 
-## 🔬 Architecture & Guiding Principles
+---
+
+## 2. 🔬 Architecture & Guiding Principles
+
 ### Human-Centered Automation:
 * Users should be empowered to continuously interpret the system states of the automated system and anticipate the intention of the technical system.
 * This enables them to make the right decisions and build trust in the technical system over time.
@@ -47,9 +59,68 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 
 ---
 
-## 🚀 Multimodal Technologies & Interaction Concepts
+## 3. 🚀 Quick Start: ROS 2 Nexus (The Central Launcher)
 
-### Robot Control Methods (Inputs)
+**ROS 2 Nexus** is the primary, central tool of this repository. It is a web-based GUI that serves as the main hub to launch all nodes, sensors, algorithms, and workspace scripts with a single click. Instead of memorizing and typing long CLI commands, you manage the entire robot system directly from your browser.
+
+### 3.1 Start Commands & Ubuntu App Integration
+
+**Launch via Terminal:**
+```bash
+cd ~/dev_ws
+python3 _exec/ros2_nexus_web.py
+# → Opens at http://localhost:5000 (accessible in LAN, e.g., http://192.168.x.x:5000)
+```
+
+**Quick Launch (auto-start backend + open browser):**
+```bash
+./_exec/ros2_nexus_web_start.sh
+```
+
+> **Ubuntu App Integration:** ROS 2 Nexus is registered as a native Ubuntu application via a `.desktop` entry. You can simply search for **"ROS 2 Nexus"** in your Ubuntu Activities menu to launch the app directly via its icon.
+
+<p align="center">
+  <img src="_imgs/nexus_roboter.png" width="49%" alt="ROS 2 Nexus - Robot">
+  <img src="_imgs/nexus_2nodes.png" width="49%" alt="ROS 2 Nexus - Nodes">
+</p>
+
+### 3.2 Network & Port Architecture
+
+To run the complete system with both web interfaces (Nexus and Dashboard), three different servers operate on separate ports:
+
+| Port | Service | Type | Description |
+|------|---------|------|-------------|
+| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Provides the graphical Nexus UI. Receives button clicks from the browser and executes ROS shell commands as subprocesses on the host PC. |
+| **`8080`** | **Dashboard Frontend** | HTTP Server | Hosts the static HTML/CSS/JS files for the ROS2 Core Dashboard. |
+| **`9090`** | **ROS Bridge** | WebSocket | The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services. |
+
+---
+
+## 4. 📊 Monitoring: Dashboard & Workspace Analyzer
+
+Once you have launched your nodes via ROS 2 Nexus, you can monitor the live state of your system using the **ROS2 Core Dashboard**. This is a web-based real-time UI that fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface.
+
+### 4.1 Backend (`workspace_analyzer.py`)
+A ROS 2 node that performs execution-free, regex-based static code analysis of the entire `src/` directory. It extracts node names, publishers, subscribers, services, actions, and package dependencies. These structured JSON metadata are continuously published to `/dashboard/workspace_metadata` via a 10-second timer cycle. Additionally, it reads environment variables (ROS Distro, Domain ID, DDS middleware, Localhost mode) from `~/.bashrc` and provides them as live status badges.
+
+> **Note on `workspace_analyzer.py`:** This is **not** a network server, but a standard ROS 2 node. The Dashboard accesses its published topics via the ROS Bridge (Port 9090).
+
+### 4.2 Frontend (`dashboard_index.html`)
+Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). It visually matches statically analyzed nodes against the currently running nodes, displays real-time topic frequencies (Hz), and enables direct execution of system scripts from the browser. The sidebar provides at-a-glance status information including connection health, robot availability, and the active ROS 2 environment configuration.
+
+![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
+
+### 4.3 Launch Commands for UI Components
+*Launch these components via ROS 2 Nexus, or manually via terminal:*
+* **Backend:** `python3 src/websocket/workspace_analyzer.py`
+* **Web Server:** `python3 -m http.server 8080 -d src/websocket`
+* *(Dashboard accessible at: `http://localhost:8080/dashboard_index.html`)*
+
+---
+
+## 5. 🕹️ Multimodal Technologies & Interaction Concepts
+
+### 5.1 Robot Control Methods (Inputs)
 **Gamepad Teleoperation:** <br> 
 * Low-latency, continuous fine control using Xbox One Elite Series 2 Controller (incl. haptic feedback - vibration on collision risk).
 
@@ -65,7 +136,7 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 **VR Controller Control** (in progress...): <br>
 * Immersive, spatial teleoperation through precise 6DoF tracking (Six Degrees of Freedom) and haptic feedback using Virtual Reality controllers.
 
-### Perception & Assistance (Perception)
+### 5.2 Perception & Assistance
 **Computer Vision:** <br> 
 * Spatial 2D object detection and localization using *YOLO* (currently via PiCameras).
 **Stereo Vision (Planned):** <br>
@@ -73,13 +144,13 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 **VLA & Video Action Models (Planned):** <br>
 * AI-assisted action planning through *Vision-Language-Action* models.
 
-### Coordinate Transformation & Calibration
+### 5.3 Coordinate Transformation & Calibration
 **ArUco Marker System:** <br> 
 * Markers placed in the robot's operating area serve as reference for homography matrices.
 * Derivation of 3D world coordinates for objects on the work surface (Z = 90 mm).
 * Precise projection of eye-tracking gaze coordinates onto the control **UI** to translate gaze into robot commands.
 
-### User Interfaces (UI/GUI)
+### 5.4 User Interfaces (UI/GUI)
 For cognitively relieving teleoperation, the user is provided with a central, immersive user interface that consolidates all system states.
 
 **Telemetry & Status:** <br> 
@@ -104,43 +175,16 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ---
 
-## 🖥️ System Administration, Workspace & Node Management
+## 6. ⚙️ Core Features & ROS 2 Nodes (Deep Dive)
 
-### ROS 2 Nexus — Desktop GUI (`ros2_nexus.py`)
-
-A central **graphical desktop application** that replaces complex CLI workflows with a single, tab-organized interface. All ROS 2 commands, launch files, build tasks, and workspace scripts are accessible via categorized buttons — each button displays its underlying command for full transparency.
-
-**How it works:** Built with `customtkinter`, the GUI organizes operations into logical tabs (Roboter, Nodes/Launch, Web, ROS Info, System). Every button spawns its command as an isolated `subprocess` in a dedicated `gnome-terminal` window, keeping the GUI responsive and providing a native debugging experience for each process. Active ROS nodes are highlighted with a distinct badge for quick visual identification.
-
-<p align="center">
-  <img src="_imgs/nexus_roboter.png" width="49%" alt="ROS2 Nexus - Robot">
-  <img src="_imgs/nexus_2nodes.png" width="49%" alt="ROS2 Nexus - Nodes">
-</p>
-
----
-
-### ROS2 Core — Dashboard UI & Workspace Analyzer
-
-A **web-based real-time dashboard** that fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface. The system consists of two tightly coupled components:
-
-**Backend — `workspace_analyzer.py`:** A ROS 2 node that performs execution-free, regex-based static code analysis of the entire `src/` directory. It extracts node names, publishers, subscribers, services, actions, and package dependencies. These structured JSON metadata are continuously published to `/dashboard/workspace_metadata` via a 10-second timer cycle. Additionally, it reads environment variables (ROS Distro, Domain ID, DDS middleware, Localhost mode) from `~/.bashrc` and provides them as live status badges.
-
-**Frontend — `dashboard_index.html`:** Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090) using `roslib.js`. It visually matches statically analyzed nodes against the currently running nodes, displays real-time topic frequencies (Hz), and enables direct execution of system scripts from the browser. The sidebar provides at-a-glance status information including connection health, robot availability, and the active ROS 2 environment configuration.
-
-![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
-
----
-
-## ⚙️ Core Features & ROS 2 Nodes
-
-### 👁️ Computer Vision & Perception
+### 6.1 👁️ Computer Vision & Perception
 
 * **`yolo_object_detector`**
     * **Purpose:** Object detection and spatial localization (cube, rectangle, cylinder).
     * **Task:** Finds trained objects and ArUco markers in the 2D image stream; projects them into 3D.
     * **How it works:** Reads RTSP/HTTP streams in a background thread. Transforms YOLO bounding boxes via `cv2.findHomography` and ArUco markers into 3D space (Z=90 mm). Publishes `PoseArray` messages under `/objects/<color>_<shape>/world_poses`.
 
-### 🗣️ Voice Control & Interaction
+### 6.2 🗣️ Voice Control & Interaction
 
 * **`ros2_whisper`**
     * **Purpose:** Local Speech-to-Text recognition.
@@ -155,14 +199,14 @@ A **web-based real-time dashboard** that fuses static source code analysis with 
     * **Task:** "God-Mode" PyQt5 user interface for pure gaze input.
     * **How it works:** Extracts JSON Gaze2D data from the RTSP stream. Uses ArUco markers for screen detection and transforms gaze coordinates into the **UI**. With a 0.5 sec. dwell time on a button, a `TwistStamped` command is published.
 
-### 🧠 Logic & Coordination
+### 6.3 🧠 Logic & Coordination
 
 * **`move_to_coordinator`**
     * **Purpose:** Central "brain" for task-based movements in **Shared Control**.
     * **Task:** Merges voice/gaze commands with camera data and coordinates movement commands.
     * **How it works:** State machine based. Queues intents, sends the robot to a scan pose (`WAITING_FOR_ROBOT_IDLE`), blocks 2.0 sec. for image stabilization, checks the freshness of the `PoseArray`, and executes the Cartesian service call.
 
-### 🦾 Motion & Safety
+### 6.4 🦾 Motion & Safety
 
 * **`motion_sequence`**
     * **Purpose:** State management and failsafe execution of movements.
@@ -182,7 +226,7 @@ A **web-based real-time dashboard** that fuses static source code analysis with 
         * **X:** Asynchronous Whisper AI trigger.
         * **Y:** Service call for initial pose.
 
-### 🖥️ UI & Visualization
+### 6.5 🖥️ UI & Visualization
 
 * **`rviz_marker`**
     * **Purpose:** Real-time visual feedback in RViz2.
@@ -191,217 +235,14 @@ A **web-based real-time dashboard** that fuses static source code analysis with 
 * **`websocket`** *(Workspace Analyzer Backend)*
     * **Purpose:** Data source for the web dashboard.
     * **Task:** Monitors the ROS network and source code.
-    * **How it works:** `workspace_analyzer.py` uses AST for execution-free code analysis (`src/`). Monitors file changes (Watchdog) and publishes JSON metadata to ROS topics (e.g., `/dashboard/workspace_metadata`).
+    * **How it works:** `workspace_analyzer.py` uses regex for execution-free code analysis (`src/`). Monitors file changes and publishes JSON metadata to ROS topics (e.g., `/dashboard/workspace_metadata`).
 * **`rosbridge_server`**
     * **Purpose:** WebSocket bridge for web browsers.
     * **Task:** Native communication between dashboard and robot.
     * **How it works:** Standard package for WebSockets (Port 9090). Allows web applications to interact directly with the ROS network via `roslib.js`.
 * **`zed_wrapper`**
     * **Purpose:** Hardware driver for Stereolabs ZEDm.
-    * **Task:** Provision of 3D depth data and point clouds for environment mapping and detection.
+    * **Task:** Direct streaming to RViz2 and logic nodes without external software.
+    * **How it works:** Native C++ node replacing the generic USB-cam node. Publishes `Image` and `CameraInfo` under `/zed/zed_node/...`.
 
 ---
-
-
-## 🛠️ Prerequisites
-
-* **The official repository:** [xarm_ros2 (Official)](https://github.com/xArm-Developer/xarm_ros2/tree/humble) (Branch: `humble`)
-* **OS:** Ubuntu 22.04.5 (Jammy Jellyfish)
-* **ROS:** ROS 2 Humble
-* **Python:** Python 3.10+
-* **System Dependencies** *(via `sudo apt install ...`)*:
-  * `portaudio19-dev` (for audio input)
-  * `python3-pyqt5.qtwebengine` (for embedded livestream in Eye Control UI)
-  * `python3-opencv` (OpenCV system library for image processing)
-  * `python3-av` (PyAV – hardware-accelerated video/audio decoding)
-* **Additional Libraries** *(via `pip install ...`)*:
-  * `pyaudio` (speech capture) — `ros2_whisper/audio_listener/audio_listener/audio_listener.py`
-  * `ultralytics` (YOLO Object Detection) — `yolo_object_detector/yolo_object_detector/yolo_homography_node.py`
-  * `opencv-python` (image processing) — `yolo_object_detector/yolo_object_detector/yolo_homography_node.py`
-  * `numpy` (numerical computation / image matrices) — `yolo_homography_node.py`, `eye_ui_node.py`, `audio_listener.py`
-  * `pygame` (gamepad rumble / haptic feedback) — `collision_check/collision_check/checker.py`
-  * `PyQt5` (Eye Control UI) — `eye_control/eye_control/eye_ui_node.py`
-  * `pyyaml` (camera calibration data) — `yolo_homography_node.py`, `calibrate_camera.py`
-  * `rosbridge_suite` (WebSocket communication)
-  * `ros2 whisper` (voice commands)
-
-
-
----
-
-## ⚙️ Installation & Setup
-
-1. Clone the repository:
-```bash
-git clone [https://github.com/lu4k87/my_xarm_lite6-extended.git](https://github.com/lu4k87/my_xarm_lite6-extended.git) dev_ws
-cd dev_ws
-
-```
-
-
-2. Install all ROS 2 dependencies with `rosdep`:
-```bash
-rosdep update
-rosdep install --from-paths src --ignore-src -r -y
-
-```
-
-
-3. Build the workspace:
-```bash
-colcon build --symlink-install
-
-
-```
-
-
-
-```
-4. Source ROS 2 + Workspace:
-   ```bash
-   source /opt/ros/humble/setup.bash
-   source install/setup.bash
-   
-
-```
-
----
-
-## 💻 Environment Configuration (`~/.bashrc`)
-
-To ensure that the ROS 2 workspace, CUDA tools, and necessary environment variables are automatically loaded every time a new terminal is opened, the following configuration should be added to your `~/.bashrc` file. 
-
-You can edit the file by running:
-```bash
-nano ~/.bashrc
-```
-
-Add the following content at the end of the file:
-```bash
-# -------------------------------------------------------------------------
-# --- CUDA Configuration ---
-# Adds CUDA tools to the PATH
-export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
-# Enables the system to find CUDA libraries
-export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-
-# --- ROS 2 Base Configuration ---
-# Sets the Domain ID for ROS network isolation
-export ROS_DOMAIN_ID=66
-# Defines the used distribution
-export ROS_DISTRO=humble
-# Forces CycloneDDS as middleware
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-# Allows communication beyond localhost (important for the Dashboard)
-export ROS_LOCALHOST_ONLY=0
-
-# --- ROS 2 Sourcing ---
-# Loads the global ROS 2 environment (default path)
-if [ -f /opt/ros/humble/setup.bash ]; then
-    source /opt/ros/humble/setup.bash
-fi
-
-# Loads the custom development workspace (if it exists)
-if [ -f ~/dev_ws/install/setup.bash ]; then
-    source ~/dev_ws/install/setup.bash
-fi
-
-# Optional: Confirmation when opening a terminal (helps with debugging)
-echo -e "\e[35mProzess-ID: $$ \e[0m\e[31m(Domain ID: $ROS_DOMAIN_ID, RMW: $RMW_IMPLEMENTATION)\e[0m"
-echo -e "\033[1;32msource /opt/ros/humble/setup.bash\033[0m"
-echo -e "\033[1;32msource ~/dev_ws/install/setup.bash\033[0m"
-echo -e "------------------------------------------------------------------------"
-# -------------------------------------------------------------------------
-```
-
-### Why is this needed?
-This configuration automates several critical steps:
-* **CUDA Paths:** Enables the system to find GPU tools, which is essential for fast YOLO object detection.
-* **Network Isolation:** `ROS_DOMAIN_ID=66` isolates your ROS 2 network so it doesn't conflict with other ROS systems on the same network.
-* **Middleware & Communication:** `RMW_IMPLEMENTATION` ensures the reliable CycloneDDS is used, and `ROS_LOCALHOST_ONLY=0` allows the Dashboard UI to communicate with ROS.
-* **Auto-Sourcing:** Automatically loads the base ROS 2 system and your custom `dev_ws` workspace, so you don't have to run `source` manually in every new terminal. The `echo` commands give you a helpful visual confirmation.
-
----
-
-## 🎮 Usage & Launch
-
-Launching is preferably done via scripts for automatic initialization of nodes and WebSockets:
-
-* **Start the entire system (Simulation/Fake):**
-```bash
-./start.sh
-
-
-```
-
-
-
-```
-  *(Starts web server, rosbridge_server, Analyzer & MoveIt Servo in mock environment).*
-
-* **Start the real Lite6 robot:**
-  ```bash
-  ./lite6.sh
-  
-
-```
-
-* **Manual individual launch (Examples):**
-* Object detection: `ros2 run yolo_object_detector yolo_tracker_node`
-* ROS Bridge: `ros2 launch rosbridge_server rosbridge_websocket_launch.xml`
-
-
-
----
-
-## 🖥️ ROS 2 Nexus — Launch Commands
-
-**Desktop GUI:**
-```bash
-cd ~/dev_ws
-python3 _exec/ros2_nexus.py
-```
-
-### 🌐 ROS 2 Nexus — Web Edition (`ros2_nexus_web.py`)
-
-An alternative version of the Nexus GUI that runs entirely in the browser — accessible from any device in the local network (phone, tablet, etc.).
-
-* **Same functionality** as the desktop version: all 5 tabs (Roboter, Nodes/Launch, Web, ROS Info, System) with identical buttons.
-* **Why a backend?** A browser cannot execute shell commands directly (security restriction). The small Flask backend (`ros2_nexus_web.py`) acts as a bridge: it receives HTTP requests from the browser and calls `subprocess.Popen()` to open `gnome-terminal` windows on the host machine — exactly like the desktop version.
-* **Dependencies:** `pip install flask`
-
-**Launch Command:**
-```bash
-cd ~/dev_ws
-python3 _exec/ros2_nexus_web.py
-# → http://localhost:5000  (also reachable in LAN, e.g. http://192.168.x.x:5000)
-```
-
-**Quick Launch (auto-start backend + open browser):**
-```bash
-./_exec/ros2_nexus_web_start.sh
-```
-
-> **Ubuntu App Integration:** ROS 2 Nexus is registered as a native Ubuntu application via `.desktop` entry. Search for **"ROS 2 Nexus"** in the Ubuntu Activities menu to launch it directly with its icon.
-
----
-
-## 📊 ROS2 Core — Launch Commands
-
-* **Backend:** `python3 src/websocket/workspace_analyzer.py`
-* **Web Server:** `python3 -m http.server 8080 -d src/websocket`
-* *(Dashboard accessible at: `http://localhost:8080/dashboard_index.html`)*
-
----
-
-## 🌐 Network & Port Architecture
-
-To run the complete system with both web interfaces, three different servers operate on separate ports:
-
-| Port | Service | Type | Description |
-|------|---------|------|-------------|
-| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Provides the graphical Nexus UI. Receives button clicks from the browser and executes ROS shell commands as subprocesses on the host PC. |
-| **`8080`** | **Dashboard Frontend** | HTTP Server | Hosts the static HTML/CSS/JS files for the ROS2 Core Dashboard. |
-| **`9090`** | **ROS Bridge** | WebSocket | The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services. |
-
-> **Note on `workspace_analyzer.py`:** This is **not** a network server, but a standard ROS 2 node. It analyzes the source code in the background and publishes the results as ROS topics (e.g., `/dashboard/workspace_metadata`), which the Dashboard then accesses via Port 9090.
