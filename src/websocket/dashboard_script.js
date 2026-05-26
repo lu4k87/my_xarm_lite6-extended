@@ -2137,6 +2137,31 @@ function initRosConnection() {
                 domainEl.textContent = incoming.ros_domain_id;
             }
 
+            const distroEl = document.getElementById('val-ros-distro');
+            if (distroEl && incoming.ros_distro) {
+                distroEl.textContent = incoming.ros_distro.toUpperCase();
+            }
+
+            const rmwEl = document.getElementById('val-rmw-impl');
+            if (rmwEl && incoming.rmw_impl) {
+                // Kürzere Anzeige: rmw_cyclonedds_cpp → CycloneDDS
+                const rmwShort = incoming.rmw_impl
+                    .replace('rmw_', '')
+                    .replace('_cpp', '')
+                    .replace('fastrtps', 'FastDDS')
+                    .replace('cyclonedds', 'CycloneDDS')
+                    .replace('connextdds', 'ConnextDDS');
+                rmwEl.textContent = rmwShort;
+                rmwEl.title = incoming.rmw_impl;  // Vollname als Tooltip
+            }
+
+            const localhostEl = document.getElementById('val-localhost-only');
+            if (localhostEl && incoming.localhost_only !== undefined) {
+                const isOn = incoming.localhost_only === '1' || incoming.localhost_only === 1;
+                localhostEl.textContent = isOn ? 'ON' : 'OFF';
+                localhostEl.style.color = isOn ? '#f59e0b' : '#10b981';
+            }
+
             // Roboter Status Detektion
             const isRobotOnline = workspaceData.robot_hardware_connected === true;
 

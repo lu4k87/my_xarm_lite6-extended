@@ -32,12 +32,31 @@
                 <img src="node-icon.svg" alt="ROS2 Logo" class="brand-logo">
             </div>
             <div class="system-status">
-                <div
-                    style="text-align: center; margin-top: 15px; font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; letter-spacing: 1px;">
-                    ROS2-DOMAIN ID: <span id="val-domain-id"
-                        style="color: var(--accent-primary); font-family: 'JetBrains Mono', monospace; font-weight: bold;">?</span>
+                <!-- ROS Environment Badges -->
+                <div class="ros-env-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 12px 10px 4px 10px;">
+                    <!-- Distro -->
+                    <div class="ros-env-badge" style="background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.25); border-radius: 8px; padding: 7px 10px;">
+                        <div style="font-size: 0.62rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px;">Distro</div>
+                        <div id="val-ros-distro" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 700; color: var(--accent-primary);">—</div>
+                    </div>
+                    <!-- Domain ID -->
+                    <div class="ros-env-badge" style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 8px; padding: 7px 10px;">
+                        <div style="font-size: 0.62rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px;">Domain ID</div>
+                        <div id="val-domain-id" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 700; color: #10b981;">—</div>
+                    </div>
+                    <!-- DDS / RMW -->
+                    <div class="ros-env-badge" style="background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.25); border-radius: 8px; padding: 7px 10px;">
+                        <div style="font-size: 0.62rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px;">DDS</div>
+                        <div id="val-rmw-impl" style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 600; color: #a78bfa; word-break: break-all;">—</div>
+                    </div>
+                    <!-- Localhost Only -->
+                    <div class="ros-env-badge" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 7px 10px;">
+                        <div style="font-size: 0.62rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px;">Localhost</div>
+                        <div id="val-localhost-only" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 700; color: #f59e0b;">—</div>
+                    </div>
                 </div>
-                <div class="status-row-container" style="flex-direction: column; gap: 10px;">
+
+                <div class="status-row-container" style="flex-direction: column; gap: 10px; padding: 8px 10px 10px 10px;">
                     <div class="status-section"
                         style="flex-direction: row; justify-content: space-between; padding: 10px 16px; width: 100%;">
                         <div class="status-label" style="margin: 0; font-size: 0.85rem; text-align: left;">Dashboard
@@ -62,6 +81,7 @@
                 </div>
 
             </div>
+
             <nav class="nav-menu">
                 <button class="nav-btn" onclick="switchView('telemetry')"><i class="fa-solid fa-gauge-high"></i>
                     Telemetrie</button>

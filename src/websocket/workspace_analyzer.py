@@ -795,6 +795,9 @@ class WorkspaceAnalyzer(Node):
                 "launches":      [],
                 "all_launches":  self.launch_details_cache,
                 "ros_domain_id": os.environ.get("ROS_DOMAIN_ID", "0"),
+                "ros_distro":    os.environ.get("ROS_DISTRO", "humble"),
+                "rmw_impl":      os.environ.get("RMW_IMPLEMENTATION", "fastrtps"),
+                "localhost_only": os.environ.get("ROS_LOCALHOST_ONLY", "0"),
             }
 
             active_launch_files = set()
