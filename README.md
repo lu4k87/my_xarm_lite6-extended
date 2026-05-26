@@ -97,6 +97,8 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 **Implementation via OBS Studio:**<br>
 * In *OBS Studio*, all components are consolidated and provided to the user as a central GUI for robot teleoperation.*
 
+![Gaze Control UI](_imgs/gaze_control_interface.png)
+
 ---
 
 ## 🖥️ System Administration, Workspace & Node Management
