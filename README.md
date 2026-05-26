@@ -15,64 +15,90 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 
 ## 1. 📋 Project Overview
 
-**`Concept:`**
-* A modular platform for controlling the xArm Lite 6 robot through multimodal input methods with a focus on maximum usability.
+### Concept: An Integrated, Multimodal Teleoperation Platform
+The primary goal of this project is the development and implementation of a modular control and interaction platform for the UFactory xArm Lite 6 robot arm. The system consolidates heterogeneous, multimodal input methods into a centralized software environment and places a consistent focus on maximized usability and intuitive operation. By architecturally abstracting complex kinematic processes, an accessible interface is created that bridges the gap between human action intent and robot-assisted execution.
 
-**`Motivation (Assistance and Participation):`**
-* Classical teleoperation requires cognitively demanding fine control and creates high technical barriers. 
-* This project aims to reduce barriers in the spirit of Industry 5.0, enabling people with different physical abilities to participate productively in the workplace.
+### Motivation: Assistance, Inclusion, and Participation in the Context of Industry 5.0
+In practice, classical methods of teleoperation and robot control are highly error-prone and demand immense cognitive fine control and technical expertise from the operator. These high barriers exclude many people from direct usage. In the spirit of the Industry 5.0 guiding principles—which place the human, sustainability, and resilience at the center of industrial production—this project starts exactly here:
 
-**`Operating Principle:`**
-* The system uses a Shared-Control approach ("Human-in-the-Loop"). 
-* Users seamlessly switch between intuitive commands (e.g., voice/gaze) and precise manual corrections (gamepad).
+* **Lowering Technical Barriers:** Reducing entry thresholds by shifting from low-level joint coordination toward intuitive high-level commands.
+* **Promoting Inclusion:** Creating technological conditions to enable productive and equal participation in the modern workplace, even for people with different physical or cognitive capabilities.
+* **Human-Machine Synergy:** Establishing the robot as an assistive tool that relieves the human instead of replacing them.
 
-**`Objective:`**
-* As a reproducible, cost-efficient Proof-of-Concept for research and inclusion projects to develop and empirically evaluate assistive robotics systems.
+### Operating Principle: Shared Control and the "Human-in-the-Loop" Paradigm
+The technological foundation of the platform is based on a dynamic *shared control* approach, where human and machine interact cooperatively. The user remains permanently integrated into the control loop as a supervisor (*Human-in-the-Loop*), but controls the system through a tiered, complementary interaction pattern:
 
-**`Evaluation Logic & Guidelines:`**
-* Development of an evaluation logic for interaction quality. 
-* Guidelines derived from this are intended to serve companies (e.g., when planning to introduce robots) as a guide and answer the question: "How do we proceed in accordance with Industry 5.0 requirements?". 
-* These guidelines can also potentially be made available as a monetizable service for industry.
+* **Intuitive High-Level Commands:** Initiating global actions or target specifications via natural modalities such as gaze control (eye tracking) or voice commands.
+* **Precise Low-Level Corrections:** Seamless, low-latency switching to manual input devices (e.g., gamepad/MoveIt Servo) for sensitive adjustments in the workspace.
+* **Context-Sensitive Assistance:** Autonomous path planning and collision-free trajectory calculation in the background to actively safeguard the operator during execution.
+
+### Objective: A Valid, Cost-Effective Proof-of-Concept
+The project presents itself as a fully functional, reproducible, and economically affordable Proof-of-Concept (PoC) for academic research landscapes and practice-oriented inclusion projects. The open architecture serves as a standardized evaluation platform on which novel assistive robotics systems can be developed, tested, and empirically validated under realistic conditions.
+
+### Evaluation Logic & Guidelines: From Research to Industrial Practice
+A key core and innovative character of the project lies in the scientific analysis of interaction quality. The system serves not only as a technical demonstrator, but as a tool to generate transferable knowledge:
+
+* **Development of an Evaluation Logic:** Systematic capture and measurement of usability, cognitive load, and system performance for quantitative assessment of the human-robot interface.
+* **Derivation of Action Recommendations:** Formulation of standardized guidelines that serve companies as a strategic guide during the introduction of modern robot systems.
+* **Answering the Transformation Question:** Concrete practical assistance on the core question: *“How do we structure our processes and workplaces to measurably meet the human-centered requirements of Industry 5.0?”*
+* **Service Potential:** The resulting frameworks and guidelines have the potential to be provided as a validated, monetizable consulting and service offering for industry, accompanying digital and demographic changes in production.
 
 ---
 
 ## 2. 🔬 Architecture & Guiding Principles
 
 ### The System Idea: An Integrated Development, Evaluation, and Validation Platform
-
-The core objective of the project is to realize a modular, platform-based software architecture for multimodal teleoperation and AI-assisted assistive robotics. The system functions as a central, software-side integration node (middleware level) that merges heterogeneous subsystems into a unified runtime environment. Through a distributed server-client network (multi-PC setup) and software coupling to a real-time digital twin (NVIDIA Isaac Sim), the platform serves as both a flexible development environment and a standardized, replicable testbed.
-
-The project is explicitly designed as a closed loop of development and empirical validation. The platform features an integrated logging and data acquisition infrastructure to record both technical performance parameters and human interaction data in a time-synchronized manner during system use. The architecture is inherently designed to flexibly orchestrate and measure a wide range of modalities:
+The core objective of the project is to realize a modular, platform-based software architecture for multimodal teleoperation and AI-assisted assistive robotics. The system functions as a central, software-side integration node (middleware level) that merges heterogeneous subsystems into a unified runtime environment. Through a distributed server-client network (multi-PC setup) and software coupling to a real-time digital twin (NVIDIA Isaac Sim), the platform serves as both a flexible development environment and a standardized, replicable testbed. The project is explicitly designed as a closed loop of development and empirical validation:
 
 * **Sensors & Perception:** Integration of depth cameras (e.g., object detection via YOLO, marker tracking) and tactile or physiological sensors for state estimation.
 * **Multimodal Control:** Parallel integration of various input channels such as eye-tracking systems for gaze target acquisition, voice control (e.g., via OpenAI Whisper), and classic hardware controllers (gamepads, 3D mice).
 * **Cognitive Robotics:** Integration of modern Vision-Language-Action (VLA) models to translate highly abstract textual and visual commands directly into robotic action sequences.
+* **Integrated Data Acquisition:** Time-synchronized recording of technical performance parameters and human interaction data via a central logging infrastructure during system use.
 
 ### Human-Centered Automation
+The system architecture places the human operator at the center of the interaction design. The system is designed to allow users to cognitively grasp the current state of automation throughout operation and to anticipate subsequent system actions. This transparency dismantles algorithmic black-box structures, bringing significant advantages for practical application:
 
-The system architecture places the human operator at the center of the interaction design. The system is designed to allow users to cognitively grasp the current state of automation throughout operation—especially during the parallel processing of gaze patterns (eye tracking) and sensory feedback—and to anticipate subsequent system actions. This transparency dismantles algorithmic black-box structures. It empowers the operator to make informed interventions in critical situations and forms the basis for establishing calibrated trust in the system (*Trust in Automation*), which is evaluated quantitatively and qualitatively through user studies.
+* **Cognitive Transparency:** Consistent comprehensibility of system states, especially during the parallel processing of gaze patterns and sensory feedback.
+* **Informed Intervention:** Empowering the operator to make safe and targeted interventions in critical or unforeseen interaction situations.
+* **Calibrated Trust in Automation:** Creating a reliable technological basis for systematically building *trust in automation*, which is evaluated through user studies.
 
 ### Shared Control & Cognitive Relief
+A key feature of the software architecture is the implementation of *shared control* paradigms for cooperative task execution. The platform enables a seamless, low-latency transfer of control authority between manual guidance, gaze-controlled interactions, and AI-assisted, semi-automated assistance functions. The context-dependent distribution of control shares targets the following core aspects:
 
-A key feature of the software architecture is the implementation of *shared control* paradigms for cooperative task execution. The platform enables a seamless, low-latency transfer of control authority between manual guidance (e.g., via MoveIt Servo / gamepad), gaze-controlled interactions (gaze target acquisition), and AI-assisted, semi-automated assistance functions. Through this context-dependent distribution of control shares, the user's mental workload is minimized. The system autonomously compensates for error-prone low-level corrections, thereby freeing up cognitive resources for high-level process monitoring. The effectiveness of this relief will be empirically validated in the course of the project using standardized psychometric methods.
+* **Seamless Control Handover:** Low-latency switching between manual input (e.g., via MoveIt Servo / gamepad) and autonomous system actions (e.g., gaze-based grasping).
+* **Minimizing Mental Workload:** Targeted reduction of the user's mental workload during complex or long-lasting manipulation tasks.
+* **Autonomous Error Compensation:** Independent mitigation of error-prone low-level corrections by the system, thereby freeing up cognitive resources for high-level process monitoring.
+* **Empirical Validation:** Ongoing verification of actual cognitive relief throughout the project using standardized psychometric methods.
 
 ### HCI & Usability Focus & Empirical Evaluation
+The design of the central control interface (GUI) follows established principles of Human-Computer Interaction (HCI). Interaction patterns shift from the complex coordination of individual degrees of freedom or manually invoking distributed terminal processes toward intention-based task completion. An integral part of the project is conducting systematic user studies to evaluate these multimodal interfaces:
 
-The design of the central control interface (GUI) follows established principles of Human-Computer Interaction (HCI). Interaction patterns shift from the complex coordination of individual degrees of freedom or manually invoking distributed terminal processes toward intention-based task completion. The operator communicates abstract action intents—be it via voice, gaze target, or high-level controller—which the platform or integrated VLA models autonomously translate into kinematic trajectories.
-
-An integral part of the project is conducting systematic user studies to evaluate these multimodal interfaces. Standardized usability metrics (such as the *System Usability Scale*, SUS) and objective performance data (e.g., task completion time, error rates, gaze paths) are collected to empirically verify usability and cognitive load (e.g., via *NASA-TLX*) and to iteratively optimize the system.
+* **Intention-Based Control:** Translating abstract action intents (via voice, gaze target, or high-level controller) into precise kinematic trajectories.
+* **Standardized Usability Metrics:** Collection of subjective usability via established questionnaires such as the *System Usability Scale* (SUS).
+* **Objective Performance Parameters:** Measuring quantitative factors such as *task completion time*, error rates, and specific gaze paths.
+* **Load Analysis:** Empirical verification of the participants' cognitive load using the *NASA-TLX* index for iterative system optimization.
 
 ### Reproducible & Open Source
+To ensure scientific validity, the project is designed as an open-source architecture. Disclosing the complete codebase ensures the methodological transparency of all algorithms, configurations, and data flows. For the scientific community, this yields key added value:
 
-To ensure scientific validity, the project is designed as an open-source architecture. Disclosing the complete codebase ensures the methodological transparency of all algorithms, configurations (URDFs, MoveIt configurations), and data flows. This allows independent research groups to exact-replicate experiments, including the validation of complex sensor data streams and control inputs. It secures the statistical verifiability of evaluation results and establishes the platform as a standardized benchmark for comparative studies in the field of assistive and inclusive robotics.
+* **Methodological Transparency:** Full visibility of all underlying algorithms, URDF models, and MoveIt configurations.
+* **Exact Replication:** Enabling straightforward secondary investigations by independent research groups under identical conditions.
+* **Statistical Verifiability:** Traceability and validation of complex, recorded sensor data streams and control inputs.
+* **Standardized Benchmark:** Establishing the platform as a reliable baseline for comparative studies in the field of assistive and inclusive robotics.
 
 ### Cost-Effective Hardware
+The system configuration is primarily based on economically affordable, commercially available off-the-shelf components (COTS), without compromising the required precision and functional reliability. This approach pursues clear strategic goals:
 
-The system configuration is primarily based on economically affordable, commercially available off-the-shelf components (COTS)—such as the UFactory xArm Lite 6, standard depth cameras, and common consumer controllers—without compromising the required precision and functional reliability. By reducing investment barriers, access to modern, multimodally controlled robotics technology is democratized. The project specifically evaluates the extent to which this cost-effective hardware, compared to high-priced industrial systems, represents a valid and reliable research and deployment platform for inclusive projects and educational institutions.
+* **Democratizing Access:** Reducing investment and financial barriers when entering modern, multimodally controlled robotics technologies.
+* **Target Audience Transfer:** Facilitating technology transfer into inclusive projects, educational institutions, and smaller research facilities (e.g., via the UFactory xArm Lite 6 and consumer controllers).
+* **Validating Reliability:** Targeted scientific evaluation of the extent to which cost-effective hardware represents a valid research platform in direct comparison to high-priced industrial systems.
 
 ### Modular & Industry Standard
+The software-side infrastructure is modularly encapsulated and fully integrated into the ROS 2 Humble middleware framework. The native use of standardized communication primitives ensures interoperability with industrial ecosystems. The consistent modular principle offers crucial architectural advantages:
 
-The software-side infrastructure is modularly encapsulated and fully integrated into the ROS 2 Humble middleware framework. The native use of standardized communication primitives (nodes, topics, services, actions) ensures interoperability with industrial ecosystems such as MoveIt 2 as well as modern sensor and tracking SDKs. This modular decoupling ensures that individual subsystems—such as VLA pipelines for intent recognition, specific eye-tracking drivers, new input devices, or the simulation bridge to the digital twin—can be exchanged, extended, or evaluated in isolation as independent modules without having to modify the overall system.
+* **Native ROS 2 Communication:** Full compatibility with established ecosystems (like MoveIt 2) and modern sensor SDKs via nodes, topics, services, and actions.
+* **Isolated Subsystem Encapsulation:** Straightforward replacement or extension of individual modules—such as VLA pipelines for intent recognition or specific eye-tracking drivers.
+* **Future-Proofing & Portability:** Low-maintenance software structure allowing easy migration to future ROS 2 LTS distributions without modifying the overall platform.
 
 ---
 
