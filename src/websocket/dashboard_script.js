@@ -432,7 +432,7 @@ function updateNodeList() {
     if (activeWsNodes.length > 0) {
         html += `<div class="node-group-container">
                     <div class="node-group-header ws-header" onclick="toggleNodeGroup(this)">
-                        <span><i class="fa-solid fa-code" style="margin-right: 8px;"></i>Workspace Nodes</span>
+                        <span style="display: flex; align-items: center;"><i class="fa-solid fa-code" style="margin-right: 8px;"></i><div style="display:inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); animation: pulse-dot 2s infinite; margin-right: 8px;"></div>Aktive Workspace Nodes</span>
                         <i class="fa-solid fa-chevron-right group-toggle-caret" style="transform: rotate(90deg); transition: transform 0.2s; font-size: 0.8rem; margin-left: auto;"></i>
                     </div>
                     <div class="node-group-body">`;
@@ -454,7 +454,7 @@ function updateNodeList() {
     if (inactiveWsNodes.length > 0) {
         html += `<div class="node-group-container" style="opacity: 0.8;">
                     <div class="node-group-header ws-inactive-header" onclick="toggleNodeGroup(this)">
-                        <span><i class="fa-regular fa-file-code" style="margin-right: 8px;"></i>Lokale Dateien (.py, .cpp)</span>
+                        <span><i class="fa-regular fa-file-code" style="margin-right: 8px;"></i>Lokale Workspace Nodes (.py, .cpp)</span>
                         <i class="fa-solid fa-chevron-right group-toggle-caret" style="transform: rotate(90deg); transition: transform 0.2s; font-size: 0.8rem; margin-left: auto;"></i>
                     </div>
                     <div class="node-group-body">`;

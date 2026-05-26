@@ -786,7 +786,7 @@ body {
 }
 
 .node-list-panel {
-    width: 360px;
+    width: 455px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
