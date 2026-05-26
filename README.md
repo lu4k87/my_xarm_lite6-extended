@@ -391,3 +391,17 @@ python3 _exec/ros2_nexus_web.py
 * **Backend:** `python3 src/websocket/workspace_analyzer.py`
 * **Web Server:** `python3 -m http.server 8080 -d src/websocket`
 * *(Dashboard accessible at: `http://localhost:8080/dashboard_index.html`)*
+
+---
+
+## 🌐 Network & Port Architecture
+
+To run the complete system with both web interfaces, three different servers operate on separate ports:
+
+| Port | Service | Type | Description |
+|------|---------|------|-------------|
+| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Provides the graphical Nexus UI. Receives button clicks from the browser and executes ROS shell commands as subprocesses on the host PC. |
+| **`8080`** | **Dashboard Frontend** | HTTP Server | Hosts the static HTML/CSS/JS files for the ROS2 Core Dashboard. |
+| **`9090`** | **ROS Bridge** | WebSocket | The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services. |
+
+> **Note on `workspace_analyzer.py`:** This is **not** a network server, but a standard ROS 2 node. It analyzes the source code in the background and publishes the results as ROS topics (e.g., `/dashboard/workspace_metadata`), which the Dashboard then accesses via Port 9090.
