@@ -106,18 +106,28 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ## 🖥️ System Administration, Workspace & Node Management
 
-* [**ROS 2 Nexus (GUI)**](#-ros-2-nexus-ros2_nexuspy) - Modern desktop interface for quickly launching nodes and workspace scripts.
+### ROS 2 Nexus — Desktop GUI (`ros2_nexus.py`)
+
+A central **graphical desktop application** that replaces complex CLI workflows with a single, tab-organized interface. All ROS 2 commands, launch files, build tasks, and workspace scripts are accessible via categorized buttons — each button displays its underlying command for full transparency.
+
+**How it works:** Built with `customtkinter`, the GUI organizes operations into logical tabs (Daily, Nodes, Web, Info, Build). Every button spawns its command as an isolated `subprocess` in a dedicated `gnome-terminal` window, keeping the GUI responsive and providing a native debugging experience for each process. Active ROS nodes are highlighted with a distinct badge for quick visual identification.
 
 <p align="center">
   <img src="_imgs/nexus_roboter.png" width="49%" alt="ROS2 Nexus - Robot">
   <img src="_imgs/nexus_2nodes.png" width="49%" alt="ROS2 Nexus - Nodes">
-</p> 
+</p>
 
+---
 
+### ROS2 Core — Dashboard UI & Workspace Analyzer
 
-* [**Dashboard UI & Workspace Analyzer**](#-operating-principle-dashboard--workspace-analyzer) - Web-based real-time monitoring and analysis of the ROS network.
+A **web-based real-time dashboard** that fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface. The system consists of two tightly coupled components:
 
-![Ros2 Core - Dashboard](_imgs/dashboard_nodes.png)
+**Backend — `workspace_analyzer.py`:** A ROS 2 node that performs execution-free AST (Abstract Syntax Tree) analysis of the entire `src/` directory. It extracts node names, publishers, subscribers, services, actions, and package dependencies. These structured JSON metadata are continuously published to `/dashboard/workspace_metadata`. A file watcher (Watchdog) triggers instant re-analysis when source files change. Additionally, it reads environment variables (ROS Distro, Domain ID, DDS middleware, Localhost mode) from `~/.bashrc` and provides them as live status badges.
+
+**Frontend — `dashboard_index.html`:** Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090) using `roslib.js`. It visually matches statically analyzed nodes against the currently running nodes, displays real-time topic frequencies (Hz), and enables direct execution of system scripts from the browser. The sidebar provides at-a-glance status information including connection health, robot availability, and the active ROS 2 environment configuration.
+
+![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
 
 ---
 

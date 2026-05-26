@@ -96,12 +96,36 @@ Für eine kognitiv entlastende Teleoperation wird dem Anwender ein zentrales, im
 **Umsetzung via OBS Studio:**<br>
 * In *OBS Studio* werden alle Komponenten gebündelt und dem Nutzer als zentrale GUI für die Teleoperation des Roboters bereitgestellt.*
 
+**Gaze Control User Interface**<br>
+
+![Gaze Control UI](_imgs/gaze_control_interface.png)
+
 ---
 
 ## 🖥️ Systemverwaltung, Workspace- & Node-Management
 
-* [**ROS 2 Nexus (GUI)**](#-ros-2-nexus-ros2_nexuspy) - Moderne Desktop-Oberfläche zum schnellen Starten von Nodes und Workspace-Skripten.
-* [**Dashboard UI & Workspace Analyzer**](#-funktionsweise-dashboard--workspace-analyzer) - Webbasierte Echtzeit-Überwachung und Analyse des ROS-Netzwerks.
+### ROS 2 Nexus — Desktop GUI (`ros2_nexus.py`)
+
+Eine zentrale **grafische Desktop-Anwendung**, die komplexe CLI-Workflows durch eine einzige, tab-organisierte Oberfläche ersetzt. Alle ROS 2 Befehle, Launch-Files, Build-Tasks und Workspace-Skripte sind über kategorisierte Buttons erreichbar – jeder Button zeigt den zugehörigen Befehl für volle Transparenz an.
+
+**Funktionsweise:** Entwickelt mit `customtkinter` organisiert die GUI alle Operationen in logische Tabs (Daily, Nodes, Web, Info, Build). Jeder Button startet seinen Befehl als isolierten `subprocess` in einem dedizierten `gnome-terminal`-Fenster, sodass die GUI reaktionsfähig bleibt und jeder Prozess direkt in seinem eigenen Terminal debuggt werden kann. Aktive ROS-Nodes werden durch ein farbiges Badge visuell hervorgehoben.
+
+<p align="center">
+  <img src="_imgs/nexus_roboter.png" width="49%" alt="ROS2 Nexus - Roboter">
+  <img src="_imgs/nexus_2nodes.png" width="49%" alt="ROS2 Nexus - Nodes">
+</p>
+
+---
+
+### ROS2 Core — Dashboard UI & Workspace Analyzer
+
+Ein **webbasiertes Echtzeit-Dashboard**, das statische Quellcode-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks zu einer einheitlichen Monitoring-Oberfläche zusammenführt. Das System besteht aus zwei eng verzahnten Komponenten:
+
+**Backend — `workspace_analyzer.py`:** Ein ROS 2 Node, der eine ausführungsfreie AST-Analyse (Abstract Syntax Trees) des gesamten `src/`-Verzeichnisses durchführt. Dabei werden Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten extrahiert. Diese strukturierten JSON-Metadaten werden kontinuierlich an `/dashboard/workspace_metadata` publiziert. Ein File-Watcher (Watchdog) löst bei Quellcode-Änderungen sofort eine erneute Analyse aus. Zusätzlich werden Umgebungsvariablen (ROS Distro, Domain ID, DDS-Middleware, Localhost-Modus) aus `~/.bashrc` ausgelesen und als Live-Status-Badges bereitgestellt.
+
+**Frontend — `dashboard_index.html`:** Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mittels `roslib.js` mit dem ROS-Netzwerk. Es gleicht statisch analysierte Nodes visuell mit den aktuell laufenden Nodes ab, zeigt Echtzeit-Topic-Frequenzen (Hz) an und ermöglicht die direkte Ausführung von System-Skripten aus der Browser-Oberfläche. Die Sidebar liefert auf einen Blick Statusinformationen wie Verbindungsgesundheit, Roboter-Verfügbarkeit und die aktive ROS 2 Umgebungskonfiguration.
+
+![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
 
 ---
 
