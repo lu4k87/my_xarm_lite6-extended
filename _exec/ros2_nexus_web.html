@@ -179,16 +179,32 @@ main {
 .badge {
   font-size: 13px;
   font-weight: 800;
-  color: #fff;
   padding: 6px 14px;
   border-radius: 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
+  border: 1px solid transparent;
 }
-.badge-node { background: var(--badge-node); }
-.badge-launch { background: var(--badge-launch); }
-.badge-sys { background: var(--badge-sys); }
-.badge-kill { background: var(--badge-kill); }
+.badge-node { 
+  background: rgba(14, 165, 233, 0.15); 
+  color: var(--badge-node); 
+  border-color: rgba(14, 165, 233, 0.3);
+}
+.badge-launch { 
+  background: rgba(16, 185, 129, 0.15); 
+  color: var(--badge-launch); 
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.badge-sys { 
+  background: rgba(139, 92, 246, 0.15); 
+  color: var(--badge-sys); 
+  border-color: rgba(139, 92, 246, 0.3);
+}
+.badge-kill { 
+  background: rgba(239, 68, 68, 0.15); 
+  color: var(--badge-kill); 
+  border-color: rgba(239, 68, 68, 0.3);
+}
 
 .btn-bottom {
   background: rgba(0,0,0,0.3);
