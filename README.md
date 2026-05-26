@@ -123,7 +123,7 @@ A central **graphical desktop application** that replaces complex CLI workflows 
 
 A **web-based real-time dashboard** that fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface. The system consists of two tightly coupled components:
 
-**Backend — `workspace_analyzer.py`:** A ROS 2 node that performs execution-free AST (Abstract Syntax Tree) analysis of the entire `src/` directory. It extracts node names, publishers, subscribers, services, actions, and package dependencies. These structured JSON metadata are continuously published to `/dashboard/workspace_metadata`. A file watcher (Watchdog) triggers instant re-analysis when source files change. Additionally, it reads environment variables (ROS Distro, Domain ID, DDS middleware, Localhost mode) from `~/.bashrc` and provides them as live status badges.
+**Backend — `workspace_analyzer.py`:** A ROS 2 node that performs execution-free, regex-based static code analysis of the entire `src/` directory. It extracts node names, publishers, subscribers, services, actions, and package dependencies. These structured JSON metadata are continuously published to `/dashboard/workspace_metadata` via a 10-second timer cycle. Additionally, it reads environment variables (ROS Distro, Domain ID, DDS middleware, Localhost mode) from `~/.bashrc` and provides them as live status badges.
 
 **Frontend — `dashboard_index.html`:** Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090) using `roslib.js`. It visually matches statically analyzed nodes against the currently running nodes, displays real-time topic frequencies (Hz), and enables direct execution of system scripts from the browser. The sidebar provides at-a-glance status information including connection health, robot availability, and the active ROS 2 environment configuration.
 
@@ -354,62 +354,33 @@ Launching is preferably done via scripts for automatic initialization of nodes a
 
 ---
 
-## 🖥️ ROS 2 Nexus (`ros2_nexus.py`)
+## 🖥️ ROS 2 Nexus — Launch Commands
 
-* **Concept:** A central **graphical user interface (GUI)** for the entire workspace. Replaces complicated CLI commands with direct **usability**.
-* **Function:** Launches ROS 2 commands, launch files, and bash scripts via desktop buttons.
-* **Technical Flow:** Uses `customtkinter` for tab-based navigation. Commands run as isolated `subprocess` calls in dedicated `gnome-terminal` windows for better debugging.
-
-**Launch Command:**
-
+**Desktop GUI:**
 ```bash
 cd ~/dev_ws
 python3 _exec/ros2_nexus.py
-
 ```
 
 ### 🌐 ROS 2 Nexus — Web Edition (`ros2_nexus_web.py`)
 
 An alternative version of the Nexus GUI that runs entirely in the browser — accessible from any device in the local network (phone, tablet, etc.).
 
-* **Same functionality** as the desktop version: all 5 tabs (Daily, Nodes, Web, Info, Build) with identical buttons.
+* **Same functionality** as the desktop version: all 5 tabs (Roboter, Nodes/Launch, Web, ROS Info, System) with identical buttons.
 * **Why a backend?** A browser cannot execute shell commands directly (security restriction). The small Flask backend (`ros2_nexus_web.py`) acts as a bridge: it receives HTTP requests from the browser and calls `subprocess.Popen()` to open `gnome-terminal` windows on the host machine — exactly like the desktop version.
 * **Dependencies:** `pip install flask`
 
 **Launch Command:**
-
 ```bash
 cd ~/dev_ws
 python3 _exec/ros2_nexus_web.py
 # → http://localhost:5000  (also reachable in LAN, e.g. http://192.168.x.x:5000)
-
 ```
 
 ---
 
-## 📊 Dashboard & Workspace Analyzer
-
-A web-based **User Interface (UI)** that combines static code analysis with live telemetry data from the ROS 2 network.
-
-### 1. Workspace Analyzer (Backend)
-
-* Performs execution-free AST analysis (Abstract Syntax Trees) in `src/` for ROS patterns.
-* Extracts node names, publishers, subscribers, services, actions, and package dependencies.
-* Continuously publishes these structured JSON metadata to `/dashboard/workspace_metadata` (with Watchdog for live updates on code changes).
-
-### 2. Dashboard (Frontend)
-
-* Connects via WebSocket (`rosbridge_server` on Port 9090).
-* Visually matches static nodes with active nodes.
-* Reads topics via `roslib.js` in real-time, calculates Hz frequencies, and allows direct execution of system scripts (`start.sh`, `lite6.sh`) from the browser **UI**.
-
-### 3. UI Component Launch Commands
+## 📊 ROS2 Core — Launch Commands
 
 * **Backend:** `python3 src/websocket/workspace_analyzer.py`
 * **Web Server:** `python3 -m http.server 8080 -d src/websocket`
-*(Dashboard accessible at: `http://localhost:8080/dashboard_index.html`)*
-
-```
-
-
-```
+* *(Dashboard accessible at: `http://localhost:8080/dashboard_index.html`)*
