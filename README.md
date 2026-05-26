@@ -97,13 +97,24 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 **Implementation via OBS Studio:**<br>
 * In *OBS Studio*, all components are consolidated and provided to the user as a central GUI for robot teleoperation.*
 
-![Gaze Control UI](_imgs/gaze control interface.png)
+
+**Gaze Control User Interface**<br>
+
+![Gaze Control UI](_imgs/gaze_control_interface.png)
 
 ---
 
 ## 🖥️ System Administration, Workspace & Node Management
 
 * [**ROS 2 Nexus (GUI)**](#-ros-2-nexus-ros2_nexuspy) - Modern desktop interface for quickly launching nodes and workspace scripts.
+
+<p align="center">
+  <img src="_imgs/nexus_roboter.png" width="49%" alt="ROS2 Nexus - Robot">
+  <img src="_imgs/nexus_2nodes.png" width="49%" alt="ROS2 Nexus - Nodes">
+</p> 
+
+
+
 * [**Dashboard UI & Workspace Analyzer**](#-operating-principle-dashboard--workspace-analyzer) - Web-based real-time monitoring and analysis of the ROS network.
 
 ![Ros2 Core - Dashboard](_imgs/dashboard_nodes.png)
