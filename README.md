@@ -3,6 +3,10 @@
 This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
 It builds upon the official xarm_ros2 repository: https://github.com/xArm-Developer/xarm_ros2/tree/humble (Branch: humble).
 
+<p align="center">
+  <img src="_imgs/robotsystem.jpg" width="90%" alt="xArm Extended Workspace in Action">
+</p>
+
 ## Table of Contents
 1. [📋 Project Overview](#1--project-overview)
 2. [🔬 Architecture & Guiding Principles](#2--architecture--guiding-principles)
