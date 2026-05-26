@@ -39,38 +39,38 @@ body {
 header { 
   background: var(--surf); 
   border-bottom: 1px solid var(--brd); 
-  padding: 0 32px; 
-  height: 72px; 
+  padding: 0 40px; 
+  height: 120px; 
   display: flex; 
   align-items: center; 
-  gap: 24px; 
+  gap: 32px; 
   position: sticky; 
   top: 0; 
   z-index: 100; 
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
-.logo { display: flex; align-items: center; gap: 12px; min-width: 220px; }
-.logo-name { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+.logo { display: flex; align-items: center; gap: 16px; min-width: 280px; }
+.logo-name { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
 .logo-badge { 
-  font-size: 11px; 
+  font-size: 14px; 
   font-weight: 800; 
   background: rgba(59, 130, 246, 0.15); 
   color: var(--primary); 
   border: 1px solid rgba(59, 130, 246, 0.3); 
-  padding: 4px 10px; 
+  padding: 6px 14px; 
   border-radius: 99px; 
 }
 
-.tab-nav { display: flex; gap: 8px; flex: 1; justify-content: center; }
+.tab-nav { display: flex; gap: 12px; flex: 1; justify-content: center; }
 .tab-btn { 
   background: transparent; 
   border: 1px solid transparent; 
   color: var(--mut); 
   font-family: 'Inter'; 
-  font-size: 15px; 
+  font-size: 18px; 
   font-weight: 600; 
-  padding: 10px 24px; 
-  border-radius: 10px; 
+  padding: 14px 32px; 
+  border-radius: 12px; 
   cursor: pointer; 
   transition: all .2s; 
 }
@@ -86,10 +86,10 @@ header {
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
 }
 
-.status { display: flex; align-items: center; gap: 10px; min-width: 140px; justify-content: flex-end; }
-.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mut); transition: .3s; }
-.dot.ok { background: var(--badge-launch); box-shadow: 0 0 10px var(--badge-launch); }
-.stxt { font-size: 13px; font-weight: 600; color: var(--mut); letter-spacing: 0.5px; text-transform: uppercase;}
+.status { display: flex; align-items: center; gap: 12px; min-width: 180px; justify-content: flex-end; }
+.dot { width: 14px; height: 14px; border-radius: 50%; background: var(--mut); transition: .3s; }
+.dot.ok { background: var(--badge-launch); box-shadow: 0 0 14px var(--badge-launch); }
+.stxt { font-size: 16px; font-weight: 600; color: var(--mut); letter-spacing: 0.5px; text-transform: uppercase;}
 
 /* ── Main Layout ── */
 main { 
@@ -104,18 +104,22 @@ main {
 /* ── Sections ── */
 .section { 
   margin-bottom: 40px; 
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 32px;
 }
 .section-title { 
   color: var(--mut); 
-  font-size: 14px; 
+  font-size: 18px; 
   font-weight: 700; 
   text-transform: uppercase; 
   letter-spacing: 1.5px; 
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   padding-left: 4px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 .section-title::after {
   content: "";
@@ -127,8 +131,8 @@ main {
 /* ── CSS Grid for Action Cards ── */
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 24px;
 }
 
 /* ── Action Card (Modern Design) ── */
@@ -149,11 +153,11 @@ main {
 
 .action-btn {
   flex: 1;
-  padding: 16px 20px;
+  padding: 24px 28px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   background: transparent;
   transition: background 0.2s;
 }
@@ -167,17 +171,17 @@ main {
 }
 
 .label {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--txt);
 }
 
 .badge {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   color: #fff;
-  padding: 4px 12px;
-  border-radius: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -188,14 +192,14 @@ main {
 
 .btn-bottom {
   background: rgba(0,0,0,0.3);
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 14px 16px;
+  border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.05);
 }
 
 .cmd-text {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--mut);
   line-height: 1.5;
   word-break: break-all;
@@ -292,7 +296,7 @@ footer {
 
 <header>
   <div class="logo">
-    <span style="font-size:26px;">🤖</span>
+    <span style="font-size:42px;">🤖</span>
     <span class="logo-name">ROS 2 Nexus</span>
     <span class="logo-badge">WEB</span>
   </div>
