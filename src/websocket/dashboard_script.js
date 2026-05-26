@@ -1671,7 +1671,9 @@ function renderLaunchFiles() {
         const groups = {};
         
         rootLaunches.forEach((root, index) => {
-            let groupName = root.file_name.split('_')[0];
+            // Führende Unterstriche ignorieren beim Gruppieren
+            const baseName = root.file_name.replace(/^_+/, '');
+            let groupName = baseName.split('_')[0];
             if (!groupName) groupName = "Sonstige";
             if (!groups[groupName]) groups[groupName] = [];
             groups[groupName].push({ root, index });
