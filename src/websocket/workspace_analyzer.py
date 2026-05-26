@@ -729,6 +729,32 @@ class WorkspaceAnalyzer(Node):
         except Exception as e:
             return [f"FEHLER: {str(e)}"]
 
+    def parse_bashrc_env_vars(self):
+        """Liest gezielt export-Zeilen aus ~/.bashrc aus.
+        Gibt ein Dict mit den gefundenen Werten zurueck.
+        Dient als Fallback wenn os.environ die Variablen nicht enthaelt.
+        """
+        result = {}
+        bashrc_path = os.path.expanduser('~/.bashrc')
+        if not os.path.exists(bashrc_path):
+            return result
+        try:
+            with open(bashrc_path, 'r', encoding='utf-8', errors='ignore') as f:
+                for line in f:
+                    line = line.strip()
+                    # Ignoriere Kommentare
+                    if line.startswith('#'):
+                        continue
+                    # Suche nach: export KEY=VALUE oder KEY=VALUE
+                    m = re.match(r'^(?:export\s+)?(\w+)=(.+)$', line)
+                    if m:
+                        key = m.group(1)
+                        val = m.group(2).strip().strip('"').strip("'")
+                        result[key] = val
+        except Exception:
+            pass
+        return result
+
     # ═══════════════════════════════════════════════════════════════════════════
     # PUBLISH METADATA  (mit Topology-Diff)
     # ═══════════════════════════════════════════════════════════════════════════
@@ -787,6 +813,12 @@ class WorkspaceAnalyzer(Node):
                     del self.cli_node_cache[dn]
 
             # ── Metadata aufbauen ─────────────────────────────────────────────
+            # Fallback: Werte aus ~/.bashrc lesen wenn os.environ sie nicht kennt
+            bashrc_env = self.parse_bashrc_env_vars()
+
+            def env_get(key, default=''):
+                return os.environ.get(key) or bashrc_env.get(key, default)
+
             metadata = {
                 "nodes":         {},
                 "project_files": copy.deepcopy(self.project_files_cache),
@@ -794,10 +826,10 @@ class WorkspaceAnalyzer(Node):
                 "tree":          self.workspace_tree_cache,
                 "launches":      [],
                 "all_launches":  self.launch_details_cache,
-                "ros_domain_id": os.environ.get("ROS_DOMAIN_ID", "0"),
-                "ros_distro":    os.environ.get("ROS_DISTRO", "humble"),
-                "rmw_impl":      os.environ.get("RMW_IMPLEMENTATION", "fastrtps"),
-                "localhost_only": os.environ.get("ROS_LOCALHOST_ONLY", "0"),
+                "ros_domain_id": env_get("ROS_DOMAIN_ID", "0"),
+                "ros_distro":    env_get("ROS_DISTRO", "humble"),
+                "rmw_impl":      env_get("RMW_IMPLEMENTATION", "fastrtps"),
+                "localhost_only": env_get("ROS_LOCALHOST_ONLY", "0"),
             }
 
             active_launch_files = set()
