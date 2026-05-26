@@ -104,6 +104,8 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 * [**ROS 2 Nexus (GUI)**](#-ros-2-nexus-ros2_nexuspy) - Modern desktop interface for quickly launching nodes and workspace scripts.
 * [**Dashboard UI & Workspace Analyzer**](#-operating-principle-dashboard--workspace-analyzer) - Web-based real-time monitoring and analysis of the ROS network.
 
+![Ros2 Core - Dashboard](_imgs/dashboard_nodes.png)
+
 ---
 
 ## ⚙️ Core Features & ROS 2 Nodes
