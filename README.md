@@ -377,6 +377,13 @@ python3 _exec/ros2_nexus_web.py
 # → http://localhost:5000  (also reachable in LAN, e.g. http://192.168.x.x:5000)
 ```
 
+**Quick Launch (auto-start backend + open browser):**
+```bash
+./_exec/ros2_nexus_web_start.sh
+```
+
+> **Ubuntu App Integration:** ROS 2 Nexus is registered as a native Ubuntu application via `.desktop` entry. Search for **"ROS 2 Nexus"** in the Ubuntu Activities menu to launch it directly with its icon.
+
 ---
 
 ## 📊 ROS2 Core — Launch Commands
