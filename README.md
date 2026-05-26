@@ -13,7 +13,7 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 3. [🚀 Quick Start: ROS 2 Nexus (The Central Launcher)](#3--quick-start-ros-2-nexus-the-central-launcher)
 4. [📊 Monitoring: Dashboard & Workspace Analyzer](#4--monitoring-dashboard--workspace-analyzer)
 5. [🕹️ Multimodal Technologies & Interaction Concepts](#5-️-multimodal-technologies--interaction-concepts)
-6. [⚙️ Core Features & ROS 2 Nodes (Deep Dive)](#6-️-core-features--ros-2-nodes-deep-dive)
+6. [⚙️ Core Features & ROS 2 Nodes](#6-️-core-features--ros-2-nodes)
 
 ---
 
@@ -221,7 +221,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ---
 
-## 6. ⚙️ Core Features & ROS 2 Nodes (Deep Dive)
+## 6. ⚙️ Core Features & ROS 2 Nodes
 
 ### 6.1 👁️ Computer Vision & Perception
 
