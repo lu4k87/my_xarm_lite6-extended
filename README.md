@@ -20,7 +20,7 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 ## 1. 📋 Project Overview
 
 ### Concept: An Integrated, Multimodal Teleoperation Platform
-The primary goal of this project is the development and implementation of a modular control and interaction platform for the UFactory xArm Lite 6 robot arm. The system consolidates heterogeneous, multimodal input methods into a centralized software environment and places a consistent focus on maximized usability and intuitive operation. By architecturally abstracting complex kinematic processes, an accessible interface is created that bridges the gap between human action intent and robot-assisted execution.
+The primary goal of this project is the development and implementation of a modular control and interaction platform for the UFactory xArm Lite 6 robot arm. The system consolidates heterogeneous, multimodal input methods into a centralized software environment and places a consistent focus on maximized usability and intuitive operation. The system handles the calculation of complex robot movements in the background. This creates a simple interface that directly translates the user's intentions into robotic actions.
 
 ### Motivation: Assistance, Inclusion, and Participation in the Context of Industry 5.0
 In practice, classical methods of teleoperation and robot control are highly error-prone and demand immense cognitive fine control and technical expertise from the operator. These high barriers exclude many people from direct usage. In the spirit of the Industry 5.0 guiding principles—which place the human, sustainability, and resilience at the center of industrial production—this project starts exactly here:
