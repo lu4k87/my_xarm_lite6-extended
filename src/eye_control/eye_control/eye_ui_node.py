@@ -113,7 +113,8 @@ class EyeControlUI(QWidget):
 
         self.pulse_timer = QTimer(self)
         self.pulse_timer.timeout.connect(self.animate_pulse)
-        self.pulse_state = False
+        self.pulse_opacity = 0.9
+        self.pulse_direction = -1  # -1 = fading out, +1 = fading in
 
         self.cooldown_timer = QTimer(self)
         self.cooldown_timer.setSingleShot(True)
@@ -198,20 +199,59 @@ class EyeControlUI(QWidget):
         self.update_buttons_state()
 
     def create_button(self, text, color, is_toggle):
-        btn = QPushButton(text)
-        btn.setFixedSize(200, 120)
+        btn = QPushButton("")
+        btn.setFixedSize(150, 100)
         btn.setProperty("default_text", text)
         btn.setProperty("default_color", color)
         btn.setProperty("dwell_time", 1500) 
         btn.setProperty("is_toggle", is_toggle)
-        
+
+        layout = QVBoxLayout(btn)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setSpacing(0)
+
+        arrow_label = QLabel("")
+        arrow_label.setAlignment(Qt.AlignCenter)
+        arrow_label.setAttribute(Qt.WA_TransparentForMouseEvents)
+
+        text_label = QLabel("")
+        text_label.setAlignment(Qt.AlignCenter)
+        text_label.setWordWrap(True)
+        text_label.setAttribute(Qt.WA_TransparentForMouseEvents)
+
+        layout.addWidget(arrow_label)
+        layout.addWidget(text_label)
+
+        btn._arrow_label = arrow_label
+        btn._text_label = text_label
+
         return btn
+
+    def set_button_text(self, btn, full_text, text_color="rgba(255, 255, 255, 0.9)"):
+        """Setzt Button-Text mit großem Pfeil-Symbol und kleinem Label."""
+        arrows = set("⟲⟳⬆⬇⬅➡⇈⇊")
+        if full_text and full_text[0] in arrows:
+            arrow_char = full_text[0]
+            label_text = full_text[1:].strip()
+            btn._arrow_label.setText(arrow_char)
+            btn._arrow_label.setStyleSheet(
+                f"font-size: 60px; color: {text_color}; font-weight: bold; background: transparent;")
+            btn._arrow_label.show()
+            btn._text_label.setText(label_text)
+            btn._text_label.setStyleSheet(
+                f"font-size: 11px; color: {text_color}; background: transparent;")
+        else:
+            btn._arrow_label.setText("")
+            btn._arrow_label.hide()
+            btn._text_label.setText(full_text)
+            btn._text_label.setStyleSheet(
+                f"font-size: 14px; color: {text_color}; font-weight: bold; background: transparent;")
 
     def _position_buttons(self):
         """Positioniert alle Buttons absolut basierend auf der Fenstergröße."""
         w = self.width()
         h = self.height()
-        bw, bh = 200, 120
+        bw, bh = 150, 100
         gap = 10  # kleiner Abstand zwischen gepaarten Buttons
 
         positions = {
@@ -418,6 +458,9 @@ class EyeControlUI(QWidget):
             self.cursor_dot.hide()
 
         hovered_widget = self.childAt(target_pos)
+        # Wenn ein internes QLabel getroffen wird, zum übergeordneten QPushButton navigieren
+        if isinstance(hovered_widget, QLabel) and isinstance(hovered_widget.parentWidget(), QPushButton):
+            hovered_widget = hovered_widget.parentWidget()
 
         if self.current_target and hovered_widget != self.current_target:
             if self.is_driving:
@@ -452,14 +495,14 @@ class EyeControlUI(QWidget):
                             
                             if is_sys_toggle:
                                 base_text = "DISABLING..." if self.system_active else "ENABLING..."
-                                hovered_widget.setText(f"{base_text}\n{secs_left:.1f}s")
+                                self.set_button_text(hovered_widget, f"{base_text}\n{secs_left:.1f}s")
                             else:
                                 base_text = hovered_widget.property("default_text")
                                 if base_text == "GRIPPER_TOGGLE":
                                     base_text = "GRIPPER OPEN" if self.ros_node.gripper_state == "CLOSE" else "GRIPPER CLOSE"
                                 elif base_text == "GRIPPER_OFF":
                                     base_text = "GRIPPER OFF"
-                                hovered_widget.setText(f"{base_text}\n{secs_left:.1f}s")
+                                self.set_button_text(hovered_widget, f"{base_text}\n{secs_left:.1f}s")
                             
                             hovered_widget.setStyleSheet(f"""
                                 QPushButton {{
@@ -474,29 +517,25 @@ class EyeControlUI(QWidget):
 
     def animate_pulse(self):
         if self.current_target and self.is_driving:
-            self.pulse_state = not self.pulse_state
-            if self.pulse_state:
-                self.current_target.setStyleSheet("""
-                    QPushButton {
-                        background-color: rgba(46, 204, 113, 0.9); 
-                        color: white; 
-                        font-size: 28px; 
-                        font-weight: bold; 
-                        border-radius: 15px; 
-                        border: 4px solid rgba(255, 255, 255, 0.8);
-                    }
-                """)
-            else:
-                self.current_target.setStyleSheet("""
-                    QPushButton {
-                        background-color: rgba(46, 204, 113, 0.5); 
-                        color: white; 
-                        font-size: 26px; 
-                        font-weight: bold; 
-                        border-radius: 15px; 
-                        border: 2px solid rgba(46, 204, 113, 0.8);
-                    }
-                """)
+            # Sanfter Fade: Opacity pendelt zwischen 0.35 und 0.9
+            step = 0.025
+            self.pulse_opacity += step * self.pulse_direction
+            if self.pulse_opacity >= 0.9:
+                self.pulse_opacity = 0.9
+                self.pulse_direction = -1
+            elif self.pulse_opacity <= 0.35:
+                self.pulse_opacity = 0.35
+                self.pulse_direction = 1
+
+            op = self.pulse_opacity
+            border_op = min(1.0, op + 0.1)
+            self.current_target.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: rgba(46, 204, 113, {op:.2f}); 
+                    border-radius: 15px; 
+                    border: 3px solid rgba(255, 255, 255, {border_op:.2f});
+                }}
+            """)
 
     def publish_active_vector(self):
         self.ros_node.publish_twist(self.active_vector)
@@ -520,25 +559,19 @@ class EyeControlUI(QWidget):
         
         if btn.property("is_toggle"):
             if self.system_active:
-                btn.setText("Eye Control\nON")
+                self.set_button_text(btn, "Eye Control\nON")
                 btn.setStyleSheet("""
                     QPushButton {
                         background-color: rgba(46, 204, 113, 0.4); 
-                        color: rgba(255, 255, 255, 0.9); 
-                        font-size: 22px; 
-                        font-weight: bold; 
                         border-radius: 15px; 
                         border: 2px solid rgba(255, 255, 255, 0.15);
                     }
                 """)
             else:
-                btn.setText("Eye Control\nOFF")
+                self.set_button_text(btn, "Eye Control\nOFF")
                 btn.setStyleSheet("""
                     QPushButton {
                         background-color: rgba(192, 57, 43, 0.4); 
-                        color: rgba(255, 255, 255, 0.9); 
-                        font-size: 22px; 
-                        font-weight: bold; 
                         border-radius: 15px; 
                         border: 2px solid rgba(255, 255, 255, 0.15);
                     }
@@ -549,33 +582,33 @@ class EyeControlUI(QWidget):
             if text == "GRIPPER_TOGGLE":
                 text = "GRIPPER\nOPEN" if self.ros_node.gripper_state == "CLOSE" else "GRIPPER\nCLOSE"
             elif text == "GRIPPER_OFF":
-                text = "GRIPPER\nOFF"
+                if self.ros_node.gripper_state == "OFF":
+                    text = "GRIPPER\nOFF"
+                else:
+                    text = "GRIPPER\nON"
                 is_off_btn = True
 
             if not self.system_active:
-                btn.setText(text)
+                self.set_button_text(btn, text, "rgba(255, 255, 255, 0.2)")
                 btn.setStyleSheet("""
                     QPushButton {
                         background-color: rgba(50, 50, 50, 0.2); 
-                        color: rgba(255, 255, 255, 0.2); 
-                        font-size: 22px; 
-                        font-weight: bold; 
                         border-radius: 15px; 
                         border: 2px solid rgba(255, 255, 255, 0.05);
                     }
                 """)
             else:
                 color = btn.property("default_color")
-                if is_off_btn and self.ros_node.gripper_state == "OFF":
-                    color = "rgba(100, 100, 100, 0.4)"
+                if is_off_btn:
+                    if self.ros_node.gripper_state == "OFF":
+                        color = "rgba(100, 100, 100, 0.4)"
+                    else:
+                        color = "rgba(46, 204, 113, 0.4)"
                     
-                btn.setText(text)
+                self.set_button_text(btn, text)
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: {color}; 
-                        color: rgba(255, 255, 255, 0.9); 
-                        font-size: 22px; 
-                        font-weight: bold; 
                         border-radius: 15px; 
                         border: 2px solid rgba(255, 255, 255, 0.15);
                     }}
@@ -633,19 +666,17 @@ class EyeControlUI(QWidget):
             print(f"[ROS 2] -> GRIPPER STOPPED ({new_state})")
         else:
             self.is_driving = True
-            btn.setText("DRIVING!")
-            self.pulse_state = True
+            self.set_button_text(btn, "DRIVING!")
+            self.pulse_opacity = 0.9
+            self.pulse_direction = -1
             btn.setStyleSheet("""
                 QPushButton {
                     background-color: rgba(46, 204, 113, 0.9); 
-                    color: white; 
-                    font-size: 28px; 
-                    font-weight: bold; 
                     border-radius: 15px; 
-                    border: 4px solid rgba(255, 255, 255, 0.8);
+                    border: 3px solid rgba(255, 255, 255, 0.9);
                 }
             """)
-            self.pulse_timer.start(400) 
+            self.pulse_timer.start(50) 
             self.servo_publish_timer.start(50) 
             print(f"[ROS 2] -> DRIVING started: {cmd}")
 
