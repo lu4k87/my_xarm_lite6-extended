@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=ROS2 Nexus
+Comment=Launch ROS2 Nexus Web Dashboard
+Exec=/home/mk/dev_ws/_exec/ros2_nexus_web_start.sh
+Icon=/home/mk/dev_ws/_exec/ros2_nexus_icon.png
+Terminal=false
+Type=Application
+Categories=Utility;Robot;
