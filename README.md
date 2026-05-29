@@ -14,6 +14,9 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 4. [📊 Monitoring: Dashboard & Workspace Analyzer](#4--monitoring-dashboard--workspace-analyzer)
 5. [🕹️ Multimodal Technologies & Interaction Concepts](#5-️-multimodal-technologies--interaction-concepts)
 6. [⚙️ Core Features & ROS 2 Nodes](#6-️-core-features--ros-2-nodes)
+7. [🎮 Gamepad Control — Deep Dive](#7--gamepad-control--deep-dive)
+8. [📦 Dependencies & Requirements](#8--dependencies--requirements)
+9. [🗂️ Repository Structure](#9-️-repository-structure)
 
 ---
 
@@ -254,23 +257,21 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ### 6.4 🦾 Motion & Safety
 
-* **`motion_sequence`**
+* **`motion_sequence`** — `src/motion_sequence/motion_sequence/motion_sequence.py`
     * **Purpose:** State management and safe execution of Cartesian movements.
     * **Task:** Physical control and switching of hardware modes.
     * **How it works:** Provides action services (e.g., `execute_motion_to_pose`). Switches between servo and pose mode at the hardware level. When end-effector height < 95 mm, the arm is preventively raised to Z=150 mm before movement (collision protection).
-* **`collision_check`**
+    * **Safety Pre-Movement Lift:** Before any Cartesian goal execution, the node queries the current EEF pose. If Z < 95 mm, it autonomously drives to a safe clearance height (Z = 150 mm) first, preventing gripper-table collisions during homing sequences.
+
+* **`collision_check`** — `src/collision_check/collision_check/checker.py`
     * **Purpose:** Hardware protection (table surface collision prevention).
     * **Task:** Predictive intervention before collisions during manual gamepad control.
-    * **How it works:** Filters `/joy` and `/ufactory/get_position`. Calculates future Z-height in advance (`Z_new = Z_current + V_z * 0.1s`). Below 96.5 mm, the joy axis is zeroed to `0.0`, the user is warned via the **UI**, and a gamepad rumble is triggered.
-* **`xarm_joystick_input`** *(Part of `xarm_moveit_servo`)*
-    * **Purpose:** Gamepad control & button mapping.
-    * **Task:** C++ node for filtered joy signals and ROS service calls.
-    * **How it works:** Subscribes to the filtered `/joy_check`. Smooths signals exponentially (`factor = 0.5`). Mappings:
-        * **D-Pad:** Speed levels (12.5% - 100%).
-        * **Start/Back:** Reference frame switching (base vs. end-effector).
-        * **A/B:** Vacuum gripper control.
-        * **X:** Asynchronous Whisper AI trigger.
-        * **Y:** Service call for initial pose.
+    * **How it works:** Intercepts raw `/joy` signals, asynchronously queries the robot's current EEF position, computes a forward-projected position, and publishes a sanitized `/joy_check` signal with the downward axis zeroed if a collision is imminent. See **Section 7** for the full technical deep-dive.
+
+* **`xarm_joystick_input`** *(Part of `xarm_moveit_servo`)* — `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`
+    * **Purpose:** Gamepad control & button mapping (C++ node).
+    * **Task:** Translates filtered joystick signals into `TwistStamped` Cartesian velocity commands and ROS service calls.
+    * **How it works:** Subscribes to the sanitized `/joy_check` topic. Applies exponential smoothing (`factor = 0.5`) to all axes, enforces a deadzone of `|val| > 0.1`, and maps all 11 buttons to robot actions. See **Section 7** for the complete button mapping table and signal flow diagram.
 
 ### 6.5 🖥️ Monitoring (Dashboard), UI & Visualization
 
@@ -292,3 +293,305 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **How it works:** Native C++ node replacing the generic USB-cam node. Publishes `Image` and `CameraInfo` under `/zed/zed_node/...`.
 
 ---
+
+## 7. 🎮 Gamepad Control — Deep Dive
+
+This section provides a full technical reference for the two-node gamepad pipeline that enables real-time, collision-safe teleoperation of the xArm Lite 6 using an Xbox One Elite Series 2 Controller.
+
+### 7.1 Pipeline Architecture
+
+The gamepad signal is processed in two sequential stages before reaching the MoveIt Servo server. This two-node design cleanly separates **safety enforcement** (Python) from **motion translation** (C++):
+
+```mermaid
+flowchart LR
+    JOY["🎮 /joy\n(Raw gamepad input\nfrom joy_node)"]
+    CHECKER["🛡️ collision_check\nchecker.py\n(Python)"]
+    JOY_CHECK["✅ /joy_check\n(Sanitized signal)"]
+    CPP["⚙️ xarm_joystick_input\n.cpp (C++)"]
+    SERVO["🦾 /servo_server/\ndelta_twist_cmds"]
+    POS["📡 /ufactory/get_position\n(Service — live EEF pose)"]
+    UI["🖥️ /ui/collision_msg\n/ui/eef_position"]
+
+    JOY --> CHECKER
+    POS --> CHECKER
+    CHECKER --> JOY_CHECK
+    CHECKER --> UI
+    JOY_CHECK --> CPP
+    CPP --> SERVO
+    CPP --> |"/ui/joy_button_presses\n/ui/robot_control/current_speed"| UI
+```
+
+---
+
+### 7.2 `checker.py` — Collision Guard (Python Node)
+
+**File:** `src/collision_check/collision_check/checker.py`
+
+This node acts as a transparent **safety proxy** between the raw joystick driver and the motion controller. Every incoming `/joy` message triggers an asynchronous service call to fetch the current EEF position; only after receiving the position response is the (potentially modified) signal forwarded.
+
+#### 7.2.1 Predictive Collision Algorithm
+
+The node does not simply check the current Z position — it **predicts where the end-effector will be** within the next `LOOKAHEAD_TIME` seconds and blocks movement if that predicted position violates the safety limit:
+
+```
+trigger_intensity  = (1.0 - axes[RT]) / 2.0        # 0.0 (released) → 1.0 (full press)
+target_z_velocity  = V_max × speed_factor × trigger_intensity
+effective_velocity = target_z_velocity × α          # α = ACCELERATION_FACTOR = 0.9
+predicted_z        = current_z − (effective_velocity × Δt)
+
+if predicted_z < Z_LIMIT:
+    axes[RT] = 1.0  # zero the downward command
+```
+
+| Parameter | Value | Description |
+|---|---|---|
+| `Z_LIMIT` | `96.5 mm` | Hard floor — downward motion is blocked at this height |
+| `CAUTION_ZONE_START` | `110.0 mm` | Soft zone entry — speed clamped to 25% of current level |
+| `CAUTION_ZONE_SPEED` | `0.25` | Max speed factor inside the caution zone |
+| `MAX_LINEAR_VELOCITY_MM_S` | `75.0 mm/s` | Assumed max linear velocity for prediction |
+| `LOOKAHEAD_TIME` | `0.1 s` | Prediction horizon |
+| `ACCELERATION_FACTOR` (α) | `0.9` | Velocity damping factor applied to prediction |
+| `DOWN_TRIGGER_AXIS` | `5` (RT) | Joy axis index for the downward trigger |
+
+#### 7.2.2 Two-Tier Safety Model
+
+```
+Z > 110 mm   → Full speed, no restrictions
+110 mm ≥ Z > 96.5 mm  → ⚠️  CAUTION ZONE: speed clamped to 25%
+Z ≤ 96.5 mm  → 🛑  HARD STOP: downward axis zeroed, rumble triggered
+```
+
+#### 7.2.3 Haptic Feedback via Pygame
+
+When a collision is detected, the node uses `pygame.joystick.rumble()` to trigger vibration on the physical controller — providing immediate tactile feedback without requiring the operator to watch the screen:
+
+```python
+if self.joystick: self.joystick.rumble(0.8, 0.8, 1000)  # intensity L/R, duration ms
+```
+
+The rumble is cleared as soon as the arm is moved to a safe height.
+
+#### 7.2.4 Topics & Services Reference
+
+| Type | Name | Message Type | Description |
+|------|------|-------------|-------------|
+| **Subscriber** | `/joy` | `sensor_msgs/Joy` | Raw gamepad input from the `joy_node` driver |
+| **Publisher** | `/joy_check` | `sensor_msgs/Joy` | Sanitized, collision-checked output signal |
+| **Publisher** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | Live EEF position [x, y, z] for UI display |
+| **Publisher** | `/ui/collision_msg` | `std_msgs/String` | Collision warning / cleared message for UI |
+| **Subscriber** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | Receives current speed factor from the C++ node |
+| **Service Client** | `/ufactory/get_position` | `xarm_msgs/GetFloat32List` | Fetches real-time EEF pose from the hardware driver |
+
+---
+
+### 7.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)
+
+**File:** `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`  
+**Class:** `xarm_moveit_servo::JoyToServoPub`  
+**Registered as:** ROS 2 Component (`RCLCPP_COMPONENTS_REGISTER_NODE`)
+
+This node receives the already-sanitized `/joy_check` signal and translates it into `geometry_msgs/TwistStamped` messages for the MoveIt Servo server — enabling smooth, real-time Cartesian velocity control.
+
+#### 7.3.1 Full Controller Button Mapping
+
+<p align="center">
+  <img src="_imgs/gamepad_layout.png" width="85%" alt="Xbox One Elite — Button Mapping for xArm Lite 6">
+</p>
+
+| Input | Function | ROS Action | Technical Detail |
+|-------|----------|-----------|-----------------|
+| **Left Stick ↑↓** | Move X-axis (forward/back) | `TwistStamped.linear.x` | `axes[1] × speed_scale` |
+| **Left Stick ←→** | Move Y-axis (left/right) | `TwistStamped.linear.y` | `axes[0] × speed_scale` |
+| **LT (Left Trigger)** | Move Z down | `TwistStamped.linear.z` | `clamp(LT - RT, -1, 1) × -speed_scale` |
+| **RT (Right Trigger)** | Move Z up | `TwistStamped.linear.z` | `clamp(LT - RT, -1, 1) × -speed_scale` |
+| **LB (Left Bumper)** | Rotate wrist CCW (Z-) | `TwistStamped.angular.z` | `buttons[LB] - buttons[RB]` |
+| **RB (Right Bumper)** | Rotate wrist CW (Z+) | `TwistStamped.angular.z` | `buttons[LB] - buttons[RB]` |
+| **D-Pad ↑** | Speed level UP | Publishes to `/ui/robot_control/current_speed` | Cycles through 5 speed levels |
+| **D-Pad ↓** | Speed level DOWN | Publishes to `/ui/robot_control/current_speed` | Cycles through 5 speed levels |
+| **Back (⊞)** | Reference frame → `link_base` | Publishes to `/ui/joy_button_presses` | World coordinate mode |
+| **Start (≡)** | Reference frame → `link_eef` | Publishes to `/ui/joy_button_presses` | End-effector relative mode |
+| **A (green)** | Gripper toggle (open ↔ close) | Service: `/ufactory/open_lite6_gripper` / `close_lite6_gripper` | State tracked in `vacuum_gripper_state_` |
+| **B (red)** | Gripper stop / off | Service: `/ufactory/stop_lite6_gripper` | Emergency gripper cut-off |
+| **X (blue)** | Whisper AI voice record | Action: `/whisper/inference` (max 5 sec) | Toggle: press once to start, again to stop |
+| **Y (yellow)** | Move to home position | Service: `/execute_motion_sequence_Y` | Calls the `motion_sequence` node |
+
+**Speed Levels (D-Pad):**
+
+| Level | Factor | Description |
+|-------|--------|-------------|
+| 1 | `12.5%` | Ultra-precise — fine positioning |
+| 2 | `25%` | Slow — near-target approach |
+| 3 | `50%` | Normal — default start level |
+| 4 | `75%` | Fast — long-range traversal |
+| 5 | `100%` | Maximum — full servo speed |
+
+#### 7.3.2 Signal Flow & Exponential Smoothing
+
+All continuous axes are passed through an **exponential low-pass filter** to prevent jerky, discontinuous movements from stick input noise:
+
+```
+// Applied every callback cycle:
+smoothed_value += (target_value - smoothed_value) × smoothing_factor
+
+// Example for X-axis:
+smoothed_twist_.linear.x += (target_twist.linear.x - smoothed_twist_.linear.x) × 0.5
+```
+
+The full signal chain from hardware to servo:
+
+```
+Hardware Input
+    └─ /joy (raw axes & buttons)
+        └─ checker.py (safety filter, async position check)
+            └─ /joy_check (sanitized signal)
+                └─ xarm_joystick_input.cpp
+                    ├─ Deadzone filter:    |val| < 0.1  → 0.0
+                    ├─ Speed scale:        val × speed_levels_[index]
+                    ├─ Exponential smooth: smoothed += (target - smoothed) × 0.5
+                    └─ /servo_server/delta_twist_cmds (TwistStamped)
+```
+
+#### 7.3.3 Whisper AI Integration (X Button)
+
+The X button integrates **OpenAI Whisper** via a ROS 2 **Action Client** (`rclcpp_action`) — not a simple service. This enables non-blocking, cancellable, real-time speech recording:
+
+```
+Press X → async_send_goal (max_duration = 5s)
+         ├─ Goal accepted → is_whisper_listening_ = true
+         │                → wall_timer starts (5s auto-timeout)
+         │                → UI: "✅ EIN - lauscht (5sek)"
+         ├─ Press X again → async_cancel_goal()
+         │                → UI: "❌ AUS"
+         └─ Timeout fires → async_cancel_goal() automatically
+                          → UI: "❌ AUS (Timeout)"
+```
+
+Status feedback is published to `/ui/joy_button_presses` after every state transition, allowing the dashboard to display real-time microphone status.
+
+#### 7.3.4 Topics & Services Reference
+
+| Type | Name | Message Type | Description |
+|------|------|-------------|-------------|
+| **Subscriber** | `/joy_check` | `sensor_msgs/Joy` | Sanitized joy signal from `checker.py` |
+| **Publisher** | `/servo_server/delta_twist_cmds` | `geometry_msgs/TwistStamped` | Cartesian velocity command to MoveIt Servo |
+| **Publisher** | `/servo_server/delta_joint_cmds` | `control_msgs/JointJog` | Joint-space command (initialization only) |
+| **Publisher** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | Current speed factor (latched QoS) |
+| **Publisher** | `/ui/joy_button_presses` | `std_msgs/String` | Human-readable button feedback for dashboard |
+| **Service Client** | `/servo_server/start_servo` | `std_srvs/Trigger` | Activates MoveIt Servo on startup |
+| **Service Client** | `/ufactory/open_lite6_gripper` | `xarm_msgs/Call` | Opens the vacuum gripper |
+| **Service Client** | `/ufactory/close_lite6_gripper` | `xarm_msgs/Call` | Closes the vacuum gripper |
+| **Service Client** | `/ufactory/stop_lite6_gripper` | `xarm_msgs/Call` | Stops / turns off gripper |
+| **Service Client** | `/execute_motion_sequence_Y` | `std_srvs/Trigger` | Triggers home position sequence |
+| **Action Client** | `/whisper/inference` | `whisper_idl/Inference` | Starts/cancels Whisper voice recording |
+
+---
+
+## 8. 📦 Dependencies & Requirements
+
+### System Requirements
+
+| Component | Version / Details |
+|-----------|-----------------|
+| **OS** | Ubuntu 22.04 LTS (Jammy) |
+| **ROS 2** | Humble Hawksbill (LTS) |
+| **Build System** | `colcon` |
+| **Compiler** | GCC 11+ (C++17) |
+
+### Core ROS 2 Packages
+
+```bash
+# MoveIt 2 & Servo
+sudo apt install ros-humble-moveit ros-humble-moveit-servo
+
+# Joystick driver
+sudo apt install ros-humble-joy ros-humble-teleop-twist-joy
+
+# Web Dashboard bridge
+sudo apt install ros-humble-rosbridge-server ros-humble-rosbridge-suite
+
+# TF2 & visualization
+sudo apt install ros-humble-tf2-ros ros-humble-rviz2
+```
+
+### Python Dependencies
+
+```bash
+pip install pygame          # Haptic feedback (rumble) for collision_check
+pip install openai-whisper  # Local speech recognition (ros2_whisper)
+pip install flask           # ROS 2 Nexus web backend
+pip install opencv-python   # Computer vision (yolo_object_detector, eye_control)
+pip install PyQt5           # Gaze control UI (eye_control)
+pip install ultralytics     # YOLO object detection
+```
+
+### Hardware
+
+| Device | Role |
+|--------|------|
+| UFactory xArm Lite 6 | 6-DOF robot arm |
+| Xbox One Elite Series 2 | Primary teleoperation controller |
+| Tobii Pro Glasses 3 | Eye-tracking input *(in progress)* |
+| Stereolabs ZED Mini | Stereo depth camera *(planned)* |
+| Raspberry Pi Camera (×2) | 2D object detection via YOLO |
+| Leap Motion Controller | Gesture input *(planned)* |
+
+### Setup & Build
+
+```bash
+# Clone and initialize
+git clone <repo-url> ~/dev_ws
+cd ~/dev_ws
+
+# Install dependencies
+rosdep install --from-paths src --ignore-src -r -y
+
+# Build the workspace
+colcon build --symlink-install
+
+# Source the workspace
+source install/setup.bash
+```
+
+---
+
+## 9. 🗂️ Repository Structure
+
+```
+dev_ws/
+├── _exec/                          # Launcher scripts & app integration
+│   ├── ros2_nexus_web.py           # Flask backend — ROS 2 Nexus Web UI
+│   ├── ros2_nexus_web.html         # Frontend HTML for Nexus
+│   ├── ros2_nexus_web_start.sh     # Auto-start script (backend + browser)
+│   ├── ROS2_Nexus.desktop          # Ubuntu application shortcut
+│   ├── lite6.sh                    # Hardware bringup script
+│   └── start.sh                    # Full system launch script
+├── _imgs/                          # Documentation images
+│   ├── robotsystem.jpg
+│   ├── ros2_nexus_web.png
+│   ├── dashboard_nodes.png
+│   ├── gaze_control_interface.png
+│   └── gamepad_layout.png          # Xbox controller button mapping
+├── src/
+│   ├── collision_check/            # 🛡️ Python: Predictive collision guard
+│   │   └── collision_check/checker.py
+│   ├── eye_control/                # 👁️ Python: PyQt5 gaze control UI
+│   ├── motion_sequence/            # 🦾 Python: Cartesian motion state machine
+│   │   └── motion_sequence/motion_sequence.py
+│   ├── move_to_coordinator/        # 🧠 Python: Shared control brain
+│   │   └── move_to_coordinator/move_to_coordinator.py
+│   ├── ros2_whisper/               # 🎙️ Whisper AI speech-to-text node
+│   ├── rviz_marker/                # 📍 Python: RViz2 marker publisher
+│   ├── voice_command_listener/     # 🗣️ Python: Intent parser & filter
+│   ├── websocket/                  # 📊 Python: Workspace analyzer backend
+│   ├── xarm_ros2/                  # 🤖 Official xArm ROS 2 packages (submodule)
+│   │   └── xarm_moveit_servo/
+│   │       └── src/
+│   │           └── xarm_joystick_input.cpp  # ⚙️ C++: Gamepad → Servo bridge
+│   ├── yolo_object_detector/       # 🔍 Python: YOLO + ArUco detection
+│   ├── zed-ros2-wrapper/           # 📷 ZED camera driver (submodule)
+│   └── zed-ros2-examples/          # 📷 ZED examples (submodule)
+└── README.md / readme-de.md        # Documentation (EN / DE)
+```
+
+---
+
