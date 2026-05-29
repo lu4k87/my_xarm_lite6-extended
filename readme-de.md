@@ -388,16 +388,12 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 
 #### 7.3.1 Vollständige Controller-Belegung
 
-<p align="center">
-  <img src="_imgs/gamepad_layout.png" width="85%" alt="Xbox One Elite — Button-Belegung für xArm Lite 6">
-</p>
-
 | Eingabe | Funktion | ROS-Aktion | Technisches Detail |
 |---------|---------|-----------|-------------------|
 | **Left Stick ↑↓** | X-Achse (vor/zurück) | `TwistStamped.linear.x` | `axes[1] × speed_scale` |
 | **Left Stick ←→** | Y-Achse (links/rechts) | `TwistStamped.linear.y` | `axes[0] × speed_scale` |
-| **LT (Left Trigger)** | Z abwärts | `TwistStamped.linear.z` | `clamp(LT - RT, -1, 1) × -speed_scale` |
-| **RT (Right Trigger)** | Z aufwärts | `TwistStamped.linear.z` | `clamp(LT - RT, -1, 1) × -speed_scale` |
+| **LT (Left Trigger)** | Z **aufwärts** (Z+) | `TwistStamped.linear.z` | `clamp(LT−RT, -1,1) × −speed_scale` → LT gedrückt: negativer zAchse-Wert × −scale = **positive Z** |
+| **RT (Right Trigger)** | Z **abwärts** (Z−) | `TwistStamped.linear.z` | `clamp(LT−RT, -1,1) × −speed_scale` → RT gedrückt: positiver zAchse-Wert × −scale = **negative Z** |
 | **LB (Left Bumper)** | Handgelenk CCW (Z-) | `TwistStamped.angular.z` | `buttons[LB] - buttons[RB]` |
 | **RB (Right Bumper)** | Handgelenk CW (Z+) | `TwistStamped.angular.z` | `buttons[LB] - buttons[RB]` |
 | **D-Pad ↑** | Geschwindigkeit hoch | Pub → `/ui/robot_control/current_speed` | 5 Stufen durchschalten |

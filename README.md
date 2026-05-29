@@ -394,16 +394,12 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 
 #### 7.3.1 Full Controller Button Mapping
 
-<p align="center">
-  <img src="_imgs/gamepad_layout.png" width="85%" alt="Xbox One Elite — Button Mapping for xArm Lite 6">
-</p>
-
 | Input | Function | ROS Action | Technical Detail |
 |-------|----------|-----------|-----------------|
 | **Left Stick ↑↓** | Move X-axis (forward/back) | `TwistStamped.linear.x` | `axes[1] × speed_scale` |
 | **Left Stick ←→** | Move Y-axis (left/right) | `TwistStamped.linear.y` | `axes[0] × speed_scale` |
-| **LT (Left Trigger)** | Move Z down | `TwistStamped.linear.z` | `clamp(LT - RT, -1, 1) × -speed_scale` |
-| **RT (Right Trigger)** | Move Z up | `TwistStamped.linear.z` | `clamp(LT - RT, -1, 1) × -speed_scale` |
+| **LT (Left Trigger)** | Move Z **up** (Z+) | `TwistStamped.linear.z` | `clamp(LT−RT, -1,1) × −speed_scale` → LT pressed: negative zAchse × −scale = **positive Z** |
+| **RT (Right Trigger)** | Move Z **down** (Z−) | `TwistStamped.linear.z` | `clamp(LT−RT, -1,1) × −speed_scale` → RT pressed: positive zAchse × −scale = **negative Z** |
 | **LB (Left Bumper)** | Rotate wrist CCW (Z-) | `TwistStamped.angular.z` | `buttons[LB] - buttons[RB]` |
 | **RB (Right Bumper)** | Rotate wrist CW (Z+) | `TwistStamped.angular.z` | `buttons[LB] - buttons[RB]` |
 | **D-Pad ↑** | Speed level UP | Publishes to `/ui/robot_control/current_speed` | Cycles through 5 speed levels |
