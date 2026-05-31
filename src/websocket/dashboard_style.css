@@ -117,14 +117,15 @@ body {
     max-width: 324px;
     width: 324px;
     flex-shrink: 0;
-    background-color: rgba(18, 18, 18, 0.4);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-right: 1px solid var(--border-color);
+    background: rgba(13, 15, 18, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     flex-direction: column;
     z-index: 10;
     transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
 }
 
 .sidebar.collapsed {
@@ -293,15 +294,17 @@ body {
 }
 
 .nav-btn:hover {
-    background-color: var(--bg-surface-hover);
-    color: white;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    transform: translateX(2px);
 }
 
 .nav-btn.active {
-    background: linear-gradient(90deg, rgba(56, 189, 248, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%);
+    background: linear-gradient(90deg, rgba(45, 212, 191, 0.12) 0%, transparent 100%);
     color: var(--accent-primary);
-    border-left: 4px solid var(--accent-primary);
-    font-weight: 500;
+    border-left: 3px solid var(--accent-primary);
+    font-weight: 600;
+    letter-spacing: 0.1px;
 }
 
 .btn-execution {
@@ -405,9 +408,11 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    padding: 5px 0;
-    border: #cbd5e1 1px solid;
+    padding: 8px 4px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
 }
 
 .status-group {
@@ -532,20 +537,24 @@ body {
 }
 
 .widget {
-    background: rgba(18, 18, 18, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
+    background: rgba(14, 17, 22, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
     padding: 26px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-
-    /* Centered 50% layout */
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
     width: 70%;
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 30px;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.widget:hover {
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .span-2 {
@@ -553,23 +562,24 @@ body {
 }
 
 .widget-header {
-    font-size: 1.05rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-primary);
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
     margin: -26px -26px 20px -26px;
-    padding: 15px 20px;
-    font-weight: 500;
+    padding: 12px 20px;
+    font-weight: 600;
     text-align: center;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px 16px 0 0;
+    border-radius: 14px 14px 0 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 8px;
 }
 
 .coords-container {
@@ -842,13 +852,13 @@ body {
 }
 
 .node-list li {
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    border-radius: 9px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(0, 0, 0, 0.2);
+    transition: all 0.18s ease;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.02);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -857,9 +867,9 @@ body {
 }
 
 .node-list li:hover {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(45, 212, 191, 0.15);
+    transform: translateX(2px);
 }
 
 .node-card-content {
@@ -933,9 +943,9 @@ body {
 }
 
 .node-list li.ws-node.active {
-    background: radial-gradient(circle at left, var(--accent-glow) 0%, transparent 100%);
-    border: 1px solid var(--accent-primary);
-    box-shadow: 0 4px 15px var(--accent-glow);
+    background: linear-gradient(90deg, rgba(45, 212, 191, 0.1) 0%, transparent 100%);
+    border: 1px solid rgba(45, 212, 191, 0.35);
+    box-shadow: 0 2px 12px rgba(45, 212, 191, 0.15);
     color: var(--text-primary);
 }
 
@@ -1185,30 +1195,30 @@ body {
 }
 
 .nd-section-title {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
     margin-bottom: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 12px;
-    padding: 14px 20px;
-    background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.8) 50%, transparent 100%);
-    border-radius: 12px;
-    letter-spacing: 1px;
+    gap: 10px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+    text-shadow: none;
 }
 
 .nd-content-block {
-    background: rgba(0, 0, 0, 0.25);
-    border: 2px solid rgb(255, 255, 255);
-    /* Narrow thin white border */
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 12px;
     padding: 20px;
     margin-top: 30px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .nd-content-block .nd-section-title {
@@ -1264,29 +1274,30 @@ body {
 .tooltip-text {
     visibility: hidden;
     width: 220px;
-    background-color: var(--bg-surface);
+    background: rgba(10, 12, 16, 0.96);
     color: var(--text-primary);
     text-align: left;
-    border-radius: 6px;
-    padding: 10px;
+    border-radius: 8px;
+    padding: 10px 12px;
     position: absolute;
     z-index: 9999;
     bottom: 130%;
     left: 50%;
     transform: translateX(-50%);
     opacity: 0;
-    transition: opacity 0.3s, visibility 0.3s;
-    font-size: 0.8rem;
+    transition: opacity 0.2s, visibility 0.2s;
+    font-size: 0.78rem;
     font-weight: normal;
-    font-family: 'Inter', sans-serif;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    line-height: 1.4;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid rgba(45, 212, 191, 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    line-height: 1.5;
     white-space: normal;
     pointer-events: none;
     word-break: break-all;
-    max-width: 300px;
-    cursor: default !important; /* Kein Fragezeichen etc. */
+    max-width: 320px;
+    cursor: default !important;
+    backdrop-filter: blur(12px);
 }
 
 .tooltip-text-node {
@@ -1977,8 +1988,8 @@ body {
 }
 
 .center-node-box {
-    background: rgba(255, 255, 255, 0.03);
-    border: 2px solid rgba(255, 255, 255, 0.8);
+    background: rgba(14, 17, 22, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 16px;
     padding: 20px 30px;
     text-align: center;
@@ -1991,7 +2002,8 @@ body {
     justify-content: center;
     position: relative;
     transition: all 0.3s ease;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
 }
 
 .center-node-box.node-is-live {
@@ -2251,43 +2263,39 @@ body {
     padding: 15px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    /* Increased opacity for base column */
+    border: 1px solid rgba(255, 255, 255, 0.06);
     transition: all 0.3s ease;
 }
 
 .col-subs {
     background: rgba(245, 158, 11, 0.03);
-    border-color: rgb(245, 158, 11);
-    /* Full strength orange */
+    border-color: rgba(245, 158, 11, 0.25);
+    border-left: 2px solid rgba(245, 158, 11, 0.5);
 }
 
 .col-pubs {
-    background: rgba(16, 185, 129, 0.03);
-    border-color: rgb(16, 185, 129);
-    /* Full strength green */
+    background: rgba(52, 211, 153, 0.03);
+    border-color: rgba(52, 211, 153, 0.25);
+    border-left: 2px solid rgba(52, 211, 153, 0.5);
 }
 
 .col-services {
-    background: rgba(168, 85, 247, 0.05);
-    /* Purple */
-    border-color: rgb(168, 85, 247);
-    /* Full strength purple */
+    background: rgba(167, 139, 250, 0.03);
+    border-color: rgba(167, 139, 250, 0.25);
+    border-left: 2px solid rgba(167, 139, 250, 0.5);
 }
 
 .col-clients {
-    background: rgba(56, 189, 248, 0.05);
-    /* Blue */
-    border-color: rgb(56, 189, 248);
-    /* Full strength blue */
+    background: rgba(56, 189, 248, 0.03);
+    border-color: rgba(56, 189, 248, 0.25);
+    border-left: 2px solid rgba(56, 189, 248, 0.5);
 }
 
 .col-act-server,
 .col-act-client {
-    background: rgba(239, 68, 68, 0.05);
-    /* Red */
-    border-color: rgb(239, 68, 68);
-    /* Full strength red */
+    background: rgba(239, 68, 68, 0.03);
+    border-color: rgba(239, 68, 68, 0.25);
+    border-left: 2px solid rgba(239, 68, 68, 0.5);
 }
 
 .topic-col:hover {
@@ -2322,26 +2330,23 @@ body {
 }
 
 .topic-item {
-    background: rgba(15, 23, 42, 0.4);
+    background: rgba(10, 13, 18, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 14px;
+    padding: 12px 14px;
     border-radius: 10px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-    
-    /* Stacking Context für überlappende Tooltips */
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
     position: relative;
     z-index: 1;
 }
 
 .topic-item:hover {
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(45, 212, 191, 0.2);
     transform: translateY(-2px);
-    background: rgba(15, 23, 42, 0.6);
-    
-    /* Stacking Context beim Hover anheben, um Tooltips über Nachbarn zu legen */
+    background: rgba(10, 13, 18, 0.7);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     z-index: 100;
 }
 
