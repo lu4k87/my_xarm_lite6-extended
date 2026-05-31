@@ -1543,17 +1543,55 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 25px;
-    background: transparent;
     padding: 40px 25px;
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    backdrop-filter: none;
+    border-radius: 16px;
+    border: 1px solid rgba(45, 212, 191, 0.1);
 
-    /* NEW: Neon Grid Perspective */
+    /* --- HINTERGRUND: Dot-Grid + radiale Teal-Glows --- */
+    background-color: rgba(8, 10, 14, 0.85);
+    background-image:
+        /* Teal Glow links (Eingang) */
+        radial-gradient(ellipse at 15% 50%, rgba(45, 212, 191, 0.07) 0%, transparent 55%),
+        /* Cyan Glow rechts (Ausgang) */
+        radial-gradient(ellipse at 85% 50%, rgba(56, 189, 248, 0.07) 0%, transparent 55%),
+        /* Mittiges subtiles Leuchten */
+        radial-gradient(ellipse at 50% 50%, rgba(30, 34, 48, 0.5) 0%, transparent 70%),
+        /* Dot-Grid Pattern */
+        radial-gradient(circle, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: auto, auto, auto, 28px 28px;
+    background-position: center, center, center, 0 0;
+
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow:
+        0 4px 30px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+
     position: relative;
     overflow: hidden;
     perspective: 800px;
 }
+
+/* Horizontale Trennlinie in der Mitte — hauchzart */
+.nd-flow-diagram::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    right: 5%;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(45, 212, 191, 0.15) 20%,
+        rgba(56, 189, 248, 0.25) 50%,
+        rgba(45, 212, 191, 0.15) 80%,
+        transparent 100%);
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
 
 .nd-flow-video {
     position: absolute;
