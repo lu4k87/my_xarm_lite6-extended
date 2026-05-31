@@ -1,36 +1,36 @@
 :root {
-    /* ULTRA MODERN DARK THEME - Aufgehellt */
-    --bg-base: #11141d;
-    --bg-surface: #1a1e2b;
-    --bg-surface-hover: #262c3f;
+    /* MODERN DARK THEME — Slate/Charcoal mit Teal-Akzent */
+    --bg-base: #0d0f12;
+    --bg-surface: #141720;
+    --bg-surface-hover: #1e2230;
 
-    /* NEUE HAUPTFARBEN (Blau & Violett) */
-    --accent-primary: #38bdf8;
-    --accent-secondary: #a855f7;
+    /* HAUPTFARBEN: Teal & Cyan statt Blau/Violett */
+    --accent-primary: #2dd4bf;
+    --accent-secondary: #38bdf8;
 
     /* GLOW EFFEKTE */
-    --accent-glow: rgba(56, 189, 248, 0.4);
-    --accent-secondary-glow: rgba(168, 85, 247, 0.4);
+    --accent-glow: rgba(45, 212, 191, 0.35);
+    --accent-secondary-glow: rgba(56, 189, 248, 0.3);
 
     /* TEXT & STATUS */
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --color-x: #ef4444;
-    --color-y: #22c55e;
-    --color-z: #0ea5e9;
-    --color-rx: #f59e0b;
-    --color-tx: #10b981;
-    --color-warn: #f43f5e;
-    --border-color: rgba(255, 255, 255, 0.08);
+    --text-primary: #e2e8f0;
+    --text-secondary: #64748b;
+    --color-x: #f87171;
+    --color-y: #4ade80;
+    --color-z: #38bdf8;
+    --color-rx: #fbbf24;
+    --color-tx: #34d399;
+    --color-warn: #fb7185;
+    --border-color: rgba(255, 255, 255, 0.06);
 
-    --node-bg: rgba(255, 255, 255, 0.03);
-    --node-border: rgba(255, 255, 255, 0.05);
+    --node-bg: rgba(255, 255, 255, 0.02);
+    --node-border: rgba(255, 255, 255, 0.04);
 
-    --search-bg: rgba(0, 0, 0, 0.3);
-    --search-border: rgba(255, 255, 255, 0.1);
+    --search-bg: rgba(0, 0, 0, 0.4);
+    --search-border: rgba(255, 255, 255, 0.08);
 
-    --shadow-color: rgba(0, 0, 0, 0.4);
-    --pulse-opacity: 0.15;
+    --shadow-color: rgba(0, 0, 0, 0.6);
+    --pulse-opacity: 0.12;
 }
 
 * {
@@ -84,8 +84,10 @@ h6,
 
 body {
     background-color: var(--bg-base);
-    /* Dein aktueller Background mit hellem Gradient-Overlay */
-    background-image: linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.07)), url('bg.jpg');
+    /* Modern Dark: sehr dunkle Basis, kein bg.jpg-Overlay */
+    background-image:
+        linear-gradient(160deg, rgba(20, 23, 32, 0.95) 0%, rgba(13, 15, 18, 1) 100%),
+        url('bg.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -103,8 +105,10 @@ body {
 .app-container {
     display: flex;
     height: 100vh;
-    background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.7) 0%, rgba(168, 85, 247, 0.25) 30%, transparent 70%),
-        radial-gradient(circle at bottom left, rgba(56, 189, 248, 0.7) 0%, rgba(56, 189, 248, 0.25) 30%, transparent 70%);
+    background:
+        radial-gradient(ellipse at top right, rgba(45, 212, 191, 0.08) 0%, transparent 55%),
+        radial-gradient(ellipse at bottom left, rgba(56, 189, 248, 0.06) 0%, transparent 55%),
+        radial-gradient(ellipse at center, rgba(30, 34, 48, 0.4) 0%, transparent 80%);
 }
 
 /* Sidebar mit Gradient-Logo */
