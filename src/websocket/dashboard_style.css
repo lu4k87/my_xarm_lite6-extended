@@ -271,8 +271,8 @@ body {
 .nav-menu {
     display: flex;
     flex-direction: column;
-    padding: 20px 10px;
-    gap: 4px;
+    padding: 12px 10px 20px;
+    gap: 2px;
     flex-grow: 1;
     overflow-y: auto;
 }
@@ -280,23 +280,26 @@ body {
 .nav-btn {
     background: transparent;
     border: none;
+    border-left: 3px solid transparent;
     color: var(--text-secondary);
-    padding: 12px 16px;
+    padding: 9px 14px 9px 12px;
     text-align: left;
-    font-size: 1.05rem;
-    border-radius: 8px;
+    font-size: 0.92rem;
+    border-radius: 0 8px 8px 0;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.18s ease;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     font-weight: 400;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
 }
 
 .nav-btn:hover {
     background: rgba(255, 255, 255, 0.04);
     color: var(--text-primary);
-    transform: translateX(2px);
+    border-left-color: rgba(45, 212, 191, 0.3);
 }
 
 .nav-btn.active {
@@ -304,85 +307,163 @@ body {
     color: var(--accent-primary);
     border-left: 3px solid var(--accent-primary);
     font-weight: 600;
-    letter-spacing: 0.1px;
 }
 
-.btn-execution {
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    margin-top: 15px;
-    margin-bottom: 10px;
-    color: var(--text-primary);
-    background: rgba(0, 0, 0, 0.2);
+/* Icon container — feste Breite für sauberes Alignment */
+.nav-icon {
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    color: inherit;
+    opacity: 0.75;
 }
 
-.btn-execution:hover {
-    border-color: var(--accent-secondary);
-    color: var(--accent-secondary);
-    background: rgba(168, 85, 247, 0.05);
+.nav-btn.active .nav-icon,
+.nav-btn:hover .nav-icon {
+    opacity: 1;
 }
 
-.btn-execution.active {
-    border-color: var(--accent-secondary);
-    color: var(--accent-secondary);
+.nav-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.wiki-group {
-    margin-top: 20px;
-    border-top: 1px solid var(--border-color);
-    padding-top: 15px;
+/* Kleines Badge (z.B. "lite6") */
+.nav-badge {
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(45, 212, 191, 0.12);
+    color: var(--accent-primary);
+    border: 1px solid rgba(45, 212, 191, 0.25);
+    border-radius: 4px;
+    padding: 2px 5px;
+    flex-shrink: 0;
+}
+
+/* Section-Trenner / Labels */
+.nav-section-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    padding: 14px 15px 4px 15px;
+    margin-top: 4px;
+    user-select: none;
+}
+
+/* Accordion */
+.nav-accordion {
     display: flex;
     flex-direction: column;
 }
 
-.wiki-header {
-    padding: 5px 15px 10px 15px;
-    color: white;
-    font-weight: 500;
-    font-size: 1.15rem;
+.nav-accordion-btn {
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    color: var(--text-secondary);
+    padding: 9px 14px 9px 12px;
+    text-align: left;
+    font-size: 0.92rem;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 10px;
-}
-
-.wiki-list {
-    list-style: none;
-    margin: 0;
-    padding: 0 0 10px 0;
-}
-
-.wiki-list li {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    padding: 8px 15px 8px 45px;
-    cursor: pointer;
-    position: relative;
-    transition: color 0.2s;
-    background: transparent;
-    border: none;
-    border-radius: 0;
+    font-family: 'Inter', sans-serif;
     font-weight: 400;
+    width: 100%;
+    transition: all 0.18s ease;
 }
 
-.wiki-list li::before {
-    content: "-";
-    position: absolute;
-    left: 30px;
-    color: var(--text-secondary);
+.nav-accordion-btn:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    border-left-color: rgba(45, 212, 191, 0.2);
 }
 
-.wiki-list li:hover {
-    color: white;
+.nav-accordion-btn.open {
+    color: var(--text-primary);
+    border-left-color: rgba(45, 212, 191, 0.35);
     background: rgba(255, 255, 255, 0.03);
 }
 
-.wiki-list li.active {
+.nav-chevron {
+    margin-left: auto;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+}
+
+.nav-accordion-btn.open .nav-chevron {
+    transform: rotate(90deg);
+    color: var(--accent-primary);
+}
+
+.nav-accordion-body {
+    display: none;
+    flex-direction: column;
+    padding: 2px 0 4px 22px;
+    gap: 1px;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    margin-left: 22px;
+}
+
+.nav-accordion-body.open {
+    display: flex;
+}
+
+.nav-sub-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 7px 10px;
+    text-align: left;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    width: 100%;
+}
+
+.nav-sub-btn:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    transform: translateX(2px);
+}
+
+.nav-sub-btn.active {
     color: var(--accent-primary);
     font-weight: 500;
 }
 
-.wiki-list li.active::before {
-    color: var(--accent-primary);
+.nav-sub-btn i {
+    width: 14px;
+    text-align: center;
+    font-size: 0.75rem;
+    opacity: 0.6;
+    flex-shrink: 0;
 }
+
+.nav-sub-btn:hover i,
+.nav-sub-btn.active i {
+    opacity: 1;
+}
+
 
 .system-status {
     padding: 20px 20px;

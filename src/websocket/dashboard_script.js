@@ -1547,12 +1547,29 @@ window.restartSystemNode = restartSystemNode;
 window.initCopyButtons = initCopyButtons;
 window.loadExternalViews = loadExternalViews;
 
+function toggleAccordion(btn) {
+    const body = btn.nextElementSibling;
+    const isOpen = btn.classList.contains('open');
+    btn.classList.toggle('open', !isOpen);
+    body.classList.toggle('open', !isOpen);
+}
+
+window.toggleAccordion = toggleAccordion;
+
 function switchView(viewId) {
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.wiki-list li').forEach(li => li.classList.remove('active'));
+    // Clear all active states
+    document.querySelectorAll('.nav-btn, .nav-sub-btn, .nav-accordion-btn').forEach(btn => btn.classList.remove('active'));
 
     const clickedElement = event ? event.currentTarget : null;
-    if (clickedElement) clickedElement.classList.add('active');
+    if (clickedElement) {
+        clickedElement.classList.add('active');
+        // Wenn Sub-Button: übergeordneten Accordion-Button auch markieren
+        const accordionBody = clickedElement.closest('.nav-accordion-body');
+        if (accordionBody) {
+            const accordionBtn = accordionBody.previousElementSibling;
+            if (accordionBtn) accordionBtn.classList.add('active');
+        }
+    }
 
     document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
     const targetSection = document.getElementById(viewId);
@@ -1567,7 +1584,6 @@ function switchView(viewId) {
         if (typeof renderLaunchFiles === 'function') renderLaunchFiles();
     }
 
-    // Trigger syntax highlighting for freshly visible pre/code blocks
     if (typeof hljs !== 'undefined') {
         hljs.highlightAll();
     }

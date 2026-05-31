@@ -84,56 +84,96 @@
             </div>
 
             <nav class="nav-menu">
-                <button class="nav-btn" onclick="switchView('telemetry')"><i class="fa-solid fa-gauge-high"></i>
-                    Telemetrie</button>
-                <button class="nav-btn" onclick="switchView('vision')"><i class="fa-solid fa-camera-retro"></i> Vision
-                    &amp;
-                    Objekte</button>
-                <button class="nav-btn active" onclick="switchView('network')"><i
-                        class="fa-solid fa-diagram-project"></i> Node Explorer</button>
-                <button class="nav-btn" onclick="switchView('script-docs')"><i class="fa-solid fa-file-code"></i> Node -
-                    Parms &amp; Configs</button>
-                <button class="nav-btn" onclick="switchView('workspace-tree')"><i class="fa-solid fa-folder-tree"></i>
-                    Workspace</button>
-                <button class="nav-btn" onclick="switchView('launch-files')"><i class="fa-solid fa-rocket"></i>
-                    Launch-Files</button>
-                <button class="nav-btn btn-execution" onclick="switchView('execution')"><i
-                        class="fa-solid fa-terminal"></i> Execution (lite6.sh)</button>
-                <!-- NEUE SECTION: COMMANDS -->
-                <div class="wiki-group">
-                    <div class="wiki-header" style="color: var(--accent-primary); cursor: pointer;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';"><i
-                            class="fa-solid fa-laptop-code"></i> Commands &gt;&gt;</div>
-                    <ul class="wiki-list" style="display: none;">
-                        <li onclick="switchView('cmd-system')">Linux System</li>
-                        <li onclick="switchView('cmd-ros2')">ROS 2 CLI</li>
-                        <li onclick="switchView('cmd-colcon')">Colcon Build</li>
-                        <li onclick="switchView('cmd-rqt')">rqt Tools (Interaktiv)</li>
-                        <li onclick="switchView('cmd-git')">Git &amp; Versioning</li>
-                    </ul>
+
+                <!-- SECTION: MONITORING -->
+                <div class="nav-section-label">Monitoring</div>
+                <button class="nav-btn" onclick="switchView('telemetry')">
+                    <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                    <span class="nav-text">Telemetrie</span>
+                </button>
+                <button class="nav-btn" onclick="switchView('vision')">
+                    <span class="nav-icon"><i class="fa-solid fa-camera-retro"></i></span>
+                    <span class="nav-text">Vision & Objekte</span>
+                </button>
+
+                <!-- SECTION: TOOLS -->
+                <div class="nav-section-label">Tools</div>
+                <button class="nav-btn active" onclick="switchView('network')">
+                    <span class="nav-icon"><i class="fa-solid fa-diagram-project"></i></span>
+                    <span class="nav-text">Node Explorer</span>
+                </button>
+                <button class="nav-btn" onclick="switchView('script-docs')">
+                    <span class="nav-icon"><i class="fa-solid fa-sliders"></i></span>
+                    <span class="nav-text">Params & Configs</span>
+                </button>
+                <button class="nav-btn" onclick="switchView('workspace-tree')">
+                    <span class="nav-icon"><i class="fa-solid fa-folder-tree"></i></span>
+                    <span class="nav-text">Workspace</span>
+                </button>
+                <button class="nav-btn" onclick="switchView('launch-files')">
+                    <span class="nav-icon"><i class="fa-solid fa-rocket"></i></span>
+                    <span class="nav-text">Launch-Files</span>
+                </button>
+                <button class="nav-btn" onclick="switchView('execution')">
+                    <span class="nav-icon"><i class="fa-solid fa-terminal"></i></span>
+                    <span class="nav-text">Execution</span>
+                    <span class="nav-badge">lite6</span>
+                </button>
+
+                <!-- SECTION: RESOURCES -->
+                <div class="nav-section-label">Referenz</div>
+
+                <!-- Commands Accordion -->
+                <div class="nav-accordion">
+                    <button class="nav-accordion-btn" onclick="toggleAccordion(this)">
+                        <span class="nav-icon"><i class="fa-solid fa-laptop-code"></i></span>
+                        <span class="nav-text">Commands</span>
+                        <i class="fa-solid fa-chevron-right nav-chevron"></i>
+                    </button>
+                    <div class="nav-accordion-body">
+                        <button class="nav-sub-btn" onclick="switchView('cmd-system')">
+                            <i class="fa-brands fa-linux"></i> Linux System
+                        </button>
+                        <button class="nav-sub-btn" onclick="switchView('cmd-ros2')">
+                            <i class="fa-solid fa-circle-nodes"></i> ROS 2 CLI
+                        </button>
+                        <button class="nav-sub-btn" onclick="switchView('cmd-colcon')">
+                            <i class="fa-solid fa-hammer"></i> Colcon Build
+                        </button>
+                        <button class="nav-sub-btn" onclick="switchView('cmd-rqt')">
+                            <i class="fa-solid fa-chart-line"></i> rqt Tools
+                        </button>
+                        <button class="nav-sub-btn" onclick="switchView('cmd-git')">
+                            <i class="fa-brands fa-git-alt"></i> Git & Versioning
+                        </button>
+                    </div>
                 </div>
-                <!-- WIKI SECTION -->
-                <div class="wiki-group">
-                    <div class="wiki-header" style="cursor: pointer;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';"><i class="fa-solid fa-book"></i> Wiki &gt;&gt;</div>
-                    <ul class="wiki-list" style="display: none;">
-                        <li onclick="switchView('wiki-dashboard')">Dashboard Architektur</li>
-                        <li onclick="switchView('wiki-ports')">Architektur Ports (8080/9090)</li>
-                        <li onclick="switchView('wiki-bootcamp')">ROS 2 Bootcamp Summary</li>
-                        <li onclick="switchView('wiki-git')">Git Setup</li>
-                        <li onclick="switchView('wiki-intro')">Introduction</li>
-                        <li onclick="switchView('wiki-install')">Installation</li>
-                        <li onclick="switchView('wiki-ros2')">Ros2</li>
-                        <li onclick="switchView('wiki-vision')">Vision</li>
-                        <li onclick="switchView('wiki-object')">Object Detection</li>
-                        <li onclick="switchView('wiki-rviz2')">Rviz2</li>
-                        <li onclick="switchView('wiki-isaacsim')">Isaac Sim</li>
-                        <li onclick="switchView('wiki-isaaclab')">Isaac Lab</li>
-                        <li onclick="switchView('wiki-stereovision')">Stereo Vision (3D)</li>
-                        <li onclick="switchView('wiki-koordinaten')">Koordinaten Transformation</li>
-                        <li onclick="switchView('wiki-pointcloud')">Pointcloud</li>
-                        <li onclick="switchView('wiki-octomap')">Octomap</li>
-                    </ul>
+
+                <!-- Wiki Accordion -->
+                <div class="nav-accordion">
+                    <button class="nav-accordion-btn" onclick="toggleAccordion(this)">
+                        <span class="nav-icon"><i class="fa-solid fa-book-open"></i></span>
+                        <span class="nav-text">Wiki</span>
+                        <i class="fa-solid fa-chevron-right nav-chevron"></i>
+                    </button>
+                    <div class="nav-accordion-body">
+                        <button class="nav-sub-btn" onclick="switchView('wiki-dashboard')">Dashboard Architektur</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-ports')">Ports (8080/9090)</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-bootcamp')">ROS 2 Bootcamp</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-git')">Git Setup</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-install')">Installation</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-ros2')">ROS 2</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-vision')">Vision</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-rviz2')">Rviz2</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-isaaclab')">Isaac Lab</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-stereovision')">Stereo Vision (3D)</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-pointcloud')">Pointcloud</button>
+                        <button class="nav-sub-btn" onclick="switchView('wiki-octomap')">Octomap</button>
+                    </div>
                 </div>
+
             </nav>
+
         </aside>
         <main class="main-content">
             <section class="view-section active" data-view="views/network.html" id="network"></section>
