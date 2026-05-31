@@ -222,7 +222,13 @@ class WorkspaceAnalyzer(Node):
                         def make_cb(t_name):
                             def cb(m):
                                 self.message_counts[t_name] += 1
-                                msg_str = str(m)
+                                # JSON-kompatible Serialisierung für das Frontend
+                                try:
+                                    from rosidl_runtime_py import message_to_ordereddict
+                                    msg_dict = message_to_ordereddict(m)
+                                    msg_str = json.dumps(msg_dict)
+                                except Exception:
+                                    msg_str = str(m)
                                 # Bandbreitenbegrenzung (Kamera, YOLO etc.)
                                 if len(msg_str) > 2000:
                                     msg_str = msg_str[:2000] + "... [TRUNCATED]"
