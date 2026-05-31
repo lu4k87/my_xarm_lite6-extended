@@ -1921,6 +1921,40 @@ const _sendTopicActivityRequest = debounce(function (topics) {
     }
 }, 250);
 
+/**
+ * Bereinigt activity.last_msg vom Backend:
+ * Das Backend liefert den Wert oft als mehrfach-JSON-kodierten String.
+ * Diese Funktion entfernt alle Escape-Ebenen und gibt lesbaren Text zurück.
+ * Falls es sich um valides JSON handelt, wird es hübsch formatiert.
+ */
+function formatLastMsg(raw) {
+    let val = raw;
+    // Bis zu 5x entschachteln (mehrfach JSON.stringify'd)
+    for (let i = 0; i < 5; i++) {
+        if (typeof val !== 'string') break;
+        const trimmed = val.trim();
+        // Nur weiter parsen wenn String wie JSON aussieht
+        if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+            (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+            (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (typeof parsed === 'string') {
+                    val = parsed; // String-Wrapper entfernen, weiter entschachteln
+                } else {
+                    // Objekt/Array → hübsch formatieren und fertig
+                    return JSON.stringify(parsed, null, 2);
+                }
+            } catch {
+                break; // Kein gültiges JSON mehr → Rohwert verwenden
+            }
+        } else {
+            break;
+        }
+    }
+    return typeof val === 'string' ? val : JSON.stringify(val, null, 2);
+}
+
 function initRosConnection() {
     const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
     window.ros = ros;
@@ -1963,17 +1997,20 @@ function initRosConnection() {
                             // --- NEUER CODE: Message Content in der UI updaten ---
                             if (activity.last_msg !== undefined && activity.last_msg !== "") {
                                 const safeTopicId = t.replace(/\//g, '-');
+                                const formatted = formatLastMsg(activity.last_msg);
                                 const msgValEl = document.querySelector(`#msg-${safeTopicId} .topic-val`);
                                 if (msgValEl) {
-                                    msgValEl.textContent = activity.last_msg;
-                                    msgValEl.removeAttribute('title'); // Veralteten Standard-Tooltip deaktivieren
+                                    // Kurze Vorschau: erste Zeile oder max. 60 Zeichen
+                                    const preview = formatted.split('\n')[0].slice(0, 60) + (formatted.length > 60 ? '…' : '');
+                                    msgValEl.textContent = preview;
+                                    msgValEl.removeAttribute('title');
                                     msgValEl.style.color = "var(--text-primary)";
                                 }
 
-                                // Den neuen, stylischen Hover-Tooltip mit den Livedaten füttern
+                                // Hover-Tooltip: sauber formatierter Volltext
                                 const msgTooltipEl = document.querySelector(`#msg-${safeTopicId} .msg-tooltip`);
                                 if (msgTooltipEl) {
-                                    msgTooltipEl.textContent = activity.last_msg;
+                                    msgTooltipEl.textContent = formatted;
                                 }
                             }
                         }
