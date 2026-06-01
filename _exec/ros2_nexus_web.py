@@ -89,6 +89,11 @@ def index():
     return send_from_directory(BASE_DIR, "ros2_nexus_web.html")
 
 
+@app.route("/icon")
+def icon():
+    return send_from_directory(BASE_DIR, "ros2_nexus_icon.png")
+
+
 @app.route("/api/ping")
 def ping():
     return jsonify({"ok": True, "version": "Web Edition 1.0"})

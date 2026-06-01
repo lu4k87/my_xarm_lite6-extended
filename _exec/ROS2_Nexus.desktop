@@ -5,4 +5,4 @@ Exec=/home/mk/dev_ws/_exec/ros2_nexus_web_start.sh
 Icon=/home/mk/dev_ws/_exec/ros2_nexus_icon.png
 Terminal=false
 Type=Application
-Categories=Utility;Robot;
+Categories=Utility;X-Robot;

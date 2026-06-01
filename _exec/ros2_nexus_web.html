@@ -4,494 +4,412 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ROS 2 Nexus — Web Edition</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <style>
-/* ── Color Palette (Modern Zinc/Slate Dark Theme) ── */
 :root {
-  --bg: #09090b;       /* Zinc 950 */
-  --surf: #18181b;     /* Zinc 900 */
-  --card: #27272a;     /* Zinc 800 */
-  --brd: #3f3f46;      /* Zinc 700 */
-  --brd-hov: #52525b;  /* Zinc 600 */
-  --txt: #fafafa;      /* Zinc 50 */
-  --mut: #a1a1aa;      /* Zinc 400 */
-  
-  --primary: #f97316;  /* Orange 500 */
-  --primary-hov: #ea580c; 
-  
-  --badge-node: #0ea5e9;  /* Sky 500 */
-  --badge-launch: #10b981; /* Emerald 500 */
-  --badge-sys: #8b5cf6;    /* Violet 500 */
-  --badge-kill: #ef4444;   /* Red 500 */
+  --bg:        #07080f;
+  --surf:      rgba(13,17,23,.4);
+  --card:      rgba(22,27,39,.45);
+  --card2:     rgba(28,35,51,.6);
+  --brd:       rgba(255,255,255,.08);
+  --brd-h:     rgba(255,255,255,.15);
+  --txt:       #e8eaf0;
+  --mut:       #7a8499;
+  --dim:       #4a5568;
+
+  --accent:    #38bdf8;
+  --accent2:   #818cf8;
+  --orange:    #f97316;
+  --green:     #10b981;
+  --red:       #ef4444;
+  --gold:      #f0b429;
+
+  --c-node:    #38bdf8;
+  --c-launch:  #10b981;
+  --c-cmd:     #818cf8;
+  --c-kill:    #ef4444;
+
+  --glow-a:    0 0 18px rgba(56,189,248,.25);
+  --glow-o:    0 0 18px rgba(249,115,22,.3);
+  --glow-g:    0 0 18px rgba(16,185,129,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background: linear-gradient(135deg, #0d131f 0%, #0a1829 50%, #082f49 100%);
+  background-attachment: fixed;
+  color:var(--txt);font-family:'Outfit',sans-serif;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;
+  letter-spacing:.15px;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { 
-  background: var(--bg); 
-  color: var(--txt); 
-  font-family: 'Inter', sans-serif; 
-  min-height: 100vh; 
-  display: flex; 
-  flex-direction: column; 
+/* scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surf)}
+::-webkit-scrollbar-thumb{background:var(--brd-h);border-radius:3px}
+
+/* ── HEADER ── */
+header{
+  background:linear-gradient(135deg,rgba(13,17,23,.6) 0%,rgba(15,20,35,.6) 100%);
+  border-bottom:1px solid var(--brd);
+  padding:0 32px;
+  height:72px;
+  display:flex;
+  align-items:center;
+  gap:24px;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 4px 32px rgba(0,0,0,.5),0 1px 0 rgba(56,189,248,.06);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
 }
 
-/* ── Header ── */
-header { 
-  background: var(--surf); 
-  border-bottom: 1px solid var(--brd); 
-  padding: 0 40px; 
-  height: 120px; 
-  display: flex; 
-  align-items: center; 
-  gap: 32px; 
-  position: sticky; 
-  top: 0; 
-  z-index: 100; 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-.logo { display: flex; align-items: center; gap: 16px; min-width: 280px; }
-.logo-name { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
-.logo-badge { 
-  font-size: 14px; 
-  font-weight: 800; 
-  background: rgba(249, 115, 22, 0.15); 
-  color: var(--primary); 
-  border: 1px solid rgba(249, 115, 22, 0.3); 
-  padding: 6px 14px; 
-  border-radius: 99px; 
+.logo{display:flex;align-items:center;gap:12px;min-width:240px;text-decoration:none}
+.logo img{height:42px;width:42px;object-fit:contain;border-radius:10px;filter:drop-shadow(0 2px 8px rgba(56,189,248,.3))}
+.logo-name{font-size:22px;font-weight:800;letter-spacing:-.3px;color:var(--txt);line-height:1;font-family:'Outfit',sans-serif}
+.logo-sub{font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:1.5px;margin-top:3px;font-family:'Outfit',sans-serif}
+.logo-badge{
+  font-size:10px;font-weight:800;
+  background:linear-gradient(135deg,rgba(56,189,248,.15),rgba(129,140,248,.15));
+  color:var(--accent);
+  border:1px solid rgba(56,189,248,.3);
+  padding:3px 10px;border-radius:99px;letter-spacing:.8px;
 }
 
-.tab-nav { display: flex; gap: 12px; flex: 1; justify-content: center; }
-.tab-btn { 
-  background: transparent; 
-  border: 1px solid transparent; 
-  color: var(--mut); 
-  font-family: 'Inter'; 
-  font-size: 18px; 
-  font-weight: 600; 
-  padding: 14px 32px; 
-  border-radius: 12px; 
-  cursor: pointer; 
-  transition: all .2s; 
+.tab-nav{display:flex;gap:4px;flex:1;justify-content:center;background:rgba(255,255,255,.03);border:1px solid var(--brd);border-radius:12px;padding:4px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+
+.tab-btn{
+  background:transparent;border:none;color:var(--mut);
+  font-family:'Outfit';font-size:14px;font-weight:600;
+  padding:9px 22px;border-radius:8px;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;gap:8px;white-space:nowrap;
 }
-.tab-btn:hover { 
-  background: var(--card); 
-  color: var(--txt); 
-  border-color: var(--brd); 
-}
-.tab-btn.active { 
-  background: var(--primary); 
-  color: #fff; 
-  border-color: transparent; 
-  box-shadow: 0 0 12px rgba(249, 115, 22, 0.4);
+.tab-btn i{font-size:13px}
+.tab-btn:hover{color:var(--txt);background:rgba(255,255,255,.05)}
+.tab-btn.active{
+  background:rgba(56,189,248,.12);
+  color:var(--accent);
+  border:1px solid rgba(56,189,248,.35);
+  box-shadow:0 0 14px rgba(56,189,248,.12);
 }
 
-.status { display: flex; align-items: center; gap: 12px; min-width: 180px; justify-content: flex-end; }
-.dot { width: 14px; height: 14px; border-radius: 50%; background: var(--mut); transition: .3s; }
-.dot.ok { background: var(--badge-launch); box-shadow: 0 0 14px var(--badge-launch); }
-.stxt { font-size: 16px; font-weight: 600; color: var(--mut); letter-spacing: 0.5px; text-transform: uppercase;}
+.hdr-right{display:flex;align-items:center;gap:12px;min-width:160px;justify-content:flex-end}
+.status-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--card);border:1px solid var(--brd);
+  padding:6px 14px;border-radius:99px;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:.3s;flex-shrink:0}
+.dot.ok{background:var(--green);box-shadow:var(--glow-g)}
+.dot.ok{animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.5}}
+.stxt{font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
 
-/* ── Main Layout ── */
-main { 
-  flex: 1; 
-  padding: 40px 32px; 
-  max-width: 1400px; 
-  margin: 0 auto; 
-  width: 100%; 
-}
-.panel { display: none; } .panel.on { display: block; }
+/* ── MAIN ── */
+main{flex:1;padding:36px 36px;max-width:1440px;margin:0 auto;width:100%}
 
-/* ── Sections ── */
-.section { 
-  margin-bottom: 40px; 
-  background: rgba(15, 30, 70, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
-  padding: 32px;
+/* ── SECTION ── */
+.section{margin-bottom:36px}
+.section-title{
+  font-size:12px;font-weight:700;text-transform:uppercase;
+  letter-spacing:2px;color:var(--mut);
+  margin-bottom:20px;padding-left:2px;
+  display:flex;align-items:center;gap:12px;
 }
-.section-title { 
-  color: var(--primary); 
-  font-size: 18px; 
-  font-weight: 700; 
-  text-transform: uppercase; 
-  letter-spacing: 1.5px; 
-  margin-bottom: 24px;
-  padding-left: 4px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.section-title::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--brd);
-}
+.section-title i{color:var(--accent);font-size:15px}
+.section-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--brd) 0%,transparent 100%)}
 
-/* ── CSS Grid for Action Cards ── */
-.actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
-  gap: 24px;
-}
+/* ── GRID ── */
+.actions-grid{display:flex;flex-direction:column;gap:10px}
 
-/* ── Action Card (Modern Design) ── */
-.action-card {
-  display: flex;
-  background: var(--surf);
-  border: 1px solid var(--brd);
-  border-radius: 16px;
-  overflow: hidden;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+/* ── ACTION CARD ── */
+.action-card{
+  display:flex;
+  background:var(--card);
+  border:1px solid var(--brd);
+  border-radius:14px;
+  overflow:hidden;
+  transition:border-color .2s,box-shadow .2s,transform .2s;
+  position:relative;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
 }
-.action-card:hover {
-  border-color: var(--primary);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  transform: translateY(-2px);
+.action-card::before{
+  content:"";position:absolute;inset:0;border-radius:14px;
+  background:linear-gradient(135deg,rgba(56,189,248,.04) 0%,transparent 60%);
+  opacity:0;transition:opacity .2s;pointer-events:none;
 }
+.action-card:hover{border-color:var(--brd-h);box-shadow:0 8px 28px rgba(0,0,0,.5),0 0 0 1px rgba(56,189,248,.1);transform:translateY(-1px)}
+.action-card:hover::before{opacity:1}
 
-.action-btn {
-  flex: 1;
-  padding: 24px 28px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  background: transparent;
-  transition: background 0.2s;
+/* type-specific gradient border (left, top, bottom fading to right) */
+.action-card::after {
+  content:""; position:absolute; inset:0; border-radius:14px;
+  border-style:solid; border-color:transparent;
+  border-width: 2px 0 2px 5px;
+  background: var(--card-accent, transparent) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events:none;
 }
-.action-btn:hover { background: rgba(255,255,255,0.02); }
-.action-btn:active { background: rgba(0,0,0,0.2); }
+.action-card[data-type="node"]{ --card-accent: linear-gradient(90deg, var(--c-node) 0%, rgba(56,189,248,0) 35%); }
+.action-card[data-type="launch"]{ --card-accent: linear-gradient(90deg, var(--c-launch) 0%, rgba(16,185,129,0) 35%); }
+.action-card[data-type="sys"]{ --card-accent: linear-gradient(90deg, var(--c-cmd) 0%, rgba(129,140,248,0) 35%); }
+.action-card[data-type="kill"]{ --card-accent: linear-gradient(90deg, var(--c-kill) 0%, rgba(239,68,68,0) 35%); }
 
-.btn-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.action-btn{
+  flex:1;padding:20px 22px;cursor:pointer;
+  display:flex;flex-direction:column;gap:12px;
+  background:transparent;border:none;text-align:left;
+  transition:background .15s;min-width:0;
 }
+.action-btn:hover{background:rgba(255,255,255,.025)}
+.action-btn:active{background:rgba(0,0,0,.15)}
 
-.label {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--txt);
-}
+.btn-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.label{font-size:17px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Outfit',sans-serif;letter-spacing:-.1px}
 
-.badge {
-  font-size: 13px;
-  font-weight: 800;
-  padding: 6px 14px;
-  border-radius: 8px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border: 1px solid transparent;
+.badge{
+  font-size:10px;font-weight:800;padding:4px 11px;
+  border-radius:6px;text-transform:uppercase;letter-spacing:1px;
+  border:1px solid transparent;flex-shrink:0;display:flex;align-items:center;gap:5px;
+  font-family:'Outfit',sans-serif;
 }
-.badge-node { 
-  background: rgba(14, 165, 233, 0.15); 
-  color: var(--badge-node); 
-  border-color: rgba(14, 165, 233, 0.3);
+.badge i{font-size:10px}
+.badge-node{background:rgba(56,189,248,.12);color:var(--c-node);border-color:rgba(56,189,248,.25)}
+.badge-launch{background:rgba(16,185,129,.12);color:var(--c-launch);border-color:rgba(16,185,129,.25)}
+.badge-sys{background:rgba(129,140,248,.12);color:var(--c-cmd);border-color:rgba(129,140,248,.25)}
+.badge-kill{background:rgba(239,68,68,.12);color:var(--c-kill);border-color:rgba(239,68,68,.25)}
+
+/* CMD line — full width, always fully visible */
+.cmd-wrap{
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;padding:10px 14px;
+  overflow-x:auto;
 }
-.badge-launch { 
-  background: rgba(16, 185, 129, 0.15); 
-  color: var(--badge-launch); 
-  border-color: rgba(16, 185, 129, 0.3);
-}
-.badge-sys { 
-  background: rgba(139, 92, 246, 0.15); 
-  color: var(--badge-sys); 
-  border-color: rgba(139, 92, 246, 0.3);
-}
-.badge-kill { 
-  background: rgba(239, 68, 68, 0.15); 
-  color: var(--badge-kill); 
-  border-color: rgba(239, 68, 68, 0.3);
+.cmd-text{
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;color:var(--mut);
+  white-space:pre;
+  display:block;
 }
 
-.btn-bottom {
-  background: rgba(0,0,0,0.3);
-  padding: 14px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.05);
+/* ── COPY BUTTON ── */
+.copy-btn{
+  width:50px;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.1);border:none;border-left:1px solid var(--brd);
+  cursor:pointer;color:var(--dim);transition:all .2s;flex-shrink:0;
 }
+.copy-btn:hover{background:rgba(56,189,248,.08);color:var(--accent)}
+.copy-btn i{font-size:16px}
 
-.cmd-text {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 15px;
-  color: var(--mut);
-  line-height: 1.5;
-  word-break: break-all;
-  display: block;
+/* ── FOOTER ── */
+footer{
+  background:var(--surf);border-top:1px solid var(--brd);
+  padding:12px 28px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 }
+.footer-btn{
+  background:var(--card);color:var(--txt);
+  border:1px solid var(--brd);border-radius:8px;
+  padding:9px 22px;font-family:'Outfit';font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px;
+}
+.footer-btn:hover{background:var(--card2);border-color:var(--brd-h)}
+.footer-btn.primary{
+  background:linear-gradient(135deg,rgba(56,189,248,.2),rgba(129,140,248,.2));
+  border-color:rgba(56,189,248,.4);color:var(--accent);
+}
+.footer-btn.primary:hover{background:linear-gradient(135deg,rgba(56,189,248,.3),rgba(129,140,248,.3))}
 
-/* ── Copy Button ── */
-.copy-btn {
-  width: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.15);
-  border-left: 1px solid var(--brd);
-  cursor: pointer;
-  color: var(--mut);
-  transition: all 0.2s;
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:80px;left:50%;
+  transform:translateX(-50%) translateY(16px);
+  padding:10px 24px;border-radius:10px;
+  font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  z-index:999;pointer-events:none;
+  background:var(--green);color:#000;
+  box-shadow:0 8px 24px rgba(16,185,129,.4);
 }
-.copy-btn:hover {
-  background: rgba(255,255,255,0.05);
-  color: var(--primary);
-}
-.copy-btn svg {
-  width: 22px;
-  height: 22px;
-  fill: currentColor;
-}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--red);color:#fff;box-shadow:0 8px 24px rgba(239,68,68,.4)}
 
-/* ── Footer ── */
-footer { 
-  background: var(--surf); 
-  border-top: 1px solid var(--brd); 
-  padding: 16px 32px; 
-  display: flex; 
-  justify-content: center; 
-  gap: 16px; 
-}
-.footer-btn { 
-  background: var(--card); 
-  color: var(--txt); 
-  border: 1px solid var(--brd); 
-  border-radius: 10px; 
-  padding: 12px 28px; 
-  font-family: 'Inter'; 
-  font-size: 14px; 
-  font-weight: 700; 
-  cursor: pointer; 
-  transition: all .2s; 
-}
-.footer-btn:hover { 
-  background: var(--brd); 
-  border-color: var(--brd-hov);
-}
-.footer-btn.primary {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-}
-.footer-btn.primary:hover {
-  background: var(--primary-hov);
-  border-color: var(--primary-hov);
-}
-
-/* ── Toast ── */
-.toast { 
-  position: fixed; 
-  bottom: 100px; 
-  left: 50%; 
-  transform: translateX(-50%) translateY(20px); 
-  background: var(--badge-launch); 
-  color: #000; 
-  padding: 14px 32px; 
-  border-radius: 12px; 
-  font-size: 15px; 
-  font-weight: 800; 
-  opacity: 0; 
-  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1); 
-  z-index: 999; 
-  pointer-events: none;
-  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
-}
-.toast.show { 
-  opacity: 1; 
-  transform: translateX(-50%) translateY(0);
-}
-.toast.error {
-  background: var(--badge-kill);
-  color: #fff;
-  box-shadow: 0 8px 30px rgba(239, 68, 68, 0.4);
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  header{padding:0 16px;gap:12px}
+  .logo-name{font-size:16px}
+  .tab-btn{padding:7px 12px;font-size:12px}
+  main{padding:18px 14px}
+  .actions-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <span style="font-size:42px;">🤖</span>
-    <span class="logo-name">ROS 2 Nexus</span>
+  <a class="logo" href="/" style="text-decoration:none">
+    <img src="data:image/png;base64,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" alt="ROS 2 Nexus Icon">
+    <div>
+      <div class="logo-name">ROS 2 Nexus</div>
+      <div class="logo-sub">Control Center</div>
+    </div>
     <span class="logo-badge">WEB</span>
-  </div>
+  </a>
+
   <nav class="tab-nav" id="tab-nav">
-    <button class="tab-btn active" data-tab="robot">Roboter</button>
-    <button class="tab-btn" data-tab="nodes">Nodes / Launch</button>
-    <button class="tab-btn" data-tab="web">Web</button>
-    <button class="tab-btn" data-tab="info">ROS Info</button>
-    <button class="tab-btn" data-tab="system">System</button>
+    <button class="tab-btn active" data-tab="robot"><i class="fa-solid fa-robot"></i> Sensors</button>
+    <button class="tab-btn" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
+    <button class="tab-btn" data-tab="web"><i class="fa-solid fa-server"></i> Web- / Server</button>
+    <button class="tab-btn" data-tab="info"><i class="fa-solid fa-gauge-high"></i> ROS Info</button>
+    <button class="tab-btn" data-tab="system"><i class="fa-solid fa-terminal"></i> System</button>
   </nav>
-  <div class="status">
-    <div class="dot" id="status-dot"></div>
-    <span class="stxt" id="status-text">Offline</span>
+
+  <div class="hdr-right">
+    <div class="status-pill">
+      <div class="dot" id="status-dot"></div>
+      <span class="stxt" id="status-text">Offline</span>
+    </div>
   </div>
 </header>
 
 <main id="main-content"></main>
 
 <footer>
-  <button class="footer-btn" onclick="runCmd('nano ~/.bashrc', '~/.bashrc Editor', 'interactive')">~/.bashrc</button>
-  <button class="footer-btn" onclick="runCmd('nano ~/dev_ws/_exec/ros2_nexus_web.py', 'App Code', 'interactive')">Backend Code</button>
-  <button class="footer-btn primary" onclick="location.reload()">App Reload</button>
+  <button class="footer-btn" onclick="runCmd('nano ~/.bashrc','~/.bashrc Editor','interactive')"><i class="fa-solid fa-file-code"></i> ~/.bashrc</button>
+  <button class="footer-btn" onclick="runCmd('nano ~/dev_ws/_exec/ros2_nexus_web.py','Backend Code','interactive')"><i class="fa-solid fa-code"></i> Backend</button>
+  <button class="footer-btn primary" onclick="location.reload()"><i class="fa-solid fa-arrows-rotate"></i> Reload</button>
 </footer>
 
 <div class="toast" id="toast"></div>
 
-<!-- Copy Icon SVG Template -->
-<svg style="display:none;">
-  <symbol id="icon-copy" viewBox="0 0 24 24">
-    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-  </symbol>
-  <symbol id="icon-check" viewBox="0 0 24 24">
-    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-  </symbol>
-</svg>
-
 <script>
-// ══════════════════════════════════════════════════════
-//  TAB DATA
-// ══════════════════════════════════════════════════════
+// ─── TAB DATA ────────────────────────────────────────────────────────────────
 const TABS = {
   robot: [
-    { title: "Hardware", actions: [
-      { label: "Real Move Launch", cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", type: "launch" },
-      { label: "Fake Move Launch", cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true", type: "launch" },
-      { label: "Keyboard Input", cmd: "ros2 run xarm_moveit_servo xarm_keyboard_input", type: "node" },
+    { title: "Hardware", icon: "fa-solid fa-microchip", actions: [
+      { label:"Keyboard Input",    cmd:"ros2 run xarm_moveit_servo xarm_keyboard_input", type:"node" },
+    ]},
+    { title:"Controller (Joy)", icon:"fa-solid fa-gamepad", actions:[
+      { label:"Pub /joy",       cmd:'ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"',       type:"node" },
+      { label:"Pub /joy_check", cmd:'ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"', type:"node" },
     ]},
   ],
   nodes: [
-    { title: "Planung & Logik", actions: [
-      { label: "Move To Coordinator", cmd: "ros2 run move_to_coordinator move_to_coordinator", type: "node" },
-      { label: "Motion Sequence Launch", cmd: "ros2 launch motion_sequence motion_sequence_launch.py", type: "launch" },
-      { label: "Collision Check Node", cmd: "ros2 run collision_check checker", type: "node" },
+    { title:"Roboter", icon:"fa-solid fa-robot", actions:[
+      { label:"Real Move Launch",  cmd:"ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", type:"launch" },
+      { label:"Fake Move Launch",  cmd:"ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true", type:"launch" },
     ]},
-    { title: "Vision & Eye-Tracking", actions: [
-      { label: "Eye UI Node", cmd: "ros2 run eye_control eye_ui", type: "node" },
-      { label: "YOLO Homographie", cmd: "ros2 run yolo_object_detector yolo_homography_node", type: "node" },
-      { label: "RViz Marker Launch", cmd: "ros2 launch rviz_marker rviz_marker.launch.py", type: "launch" },
+    { title:"Planung & Logik", icon:"fa-solid fa-brain", actions:[
+      { label:"Move To Coordinator",   cmd:"ros2 run move_to_coordinator move_to_coordinator", type:"node" },
+      { label:"Motion Sequence Launch",cmd:"ros2 launch motion_sequence motion_sequence_launch.py", type:"launch" },
+      { label:"Collision Check Node",  cmd:"ros2 run collision_check checker", type:"node" },
     ]},
-    { title: "Sprache & Audio", actions: [
-      { label: "Whisper Bringup", cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", type: "launch" },
-      { label: "Whisper Stream Demo", cmd: "ros2 run whisper_demos whisper_on_key", type: "node" },
-      { label: "Voice Command Listener", cmd: "ros2 run voice_command_listener listener", type: "node" },
+    { title:"Vision & Eye-Tracking", icon:"fa-solid fa-eye", actions:[
+      { label:"Eye UI Node",           cmd:"ros2 run eye_control eye_ui", type:"node" },
+      { label:"YOLO Homographie",      cmd:"ros2 run yolo_object_detector yolo_homography_node", type:"node" },
+      { label:"RViz Marker Launch",    cmd:"ros2 launch rviz_marker rviz_marker.launch.py", type:"launch" },
+    ]},
+    { title:"Sprache & Audio", icon:"fa-solid fa-microphone", actions:[
+      { label:"Whisper Bringup",       cmd:"ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", type:"launch" },
+      { label:"Whisper Stream Demo",   cmd:"ros2 run whisper_demos whisper_on_key", type:"node" },
+      { label:"Voice Command Listener",cmd:"ros2 run voice_command_listener listener", type:"node" },
     ]},
   ],
   web: [
-    { title: "Backend & Server", actions: [
-      { label: "ROS Bridge Launch", cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", type: "launch" },
-      { label: "Webserver Port 8080", cmd: "python3 -m http.server 8080 -d src/websocket", type: "sys" },
-      { label: "Workspace Analyzer", cmd: "python3 src/websocket/workspace_analyzer.py", type: "sys" },
+    { title:"Backend & Server", icon:"fa-solid fa-server", actions:[
+      { label:"ROS Bridge Launch",    cmd:"ros2 launch rosbridge_server rosbridge_websocket_launch.xml", type:"launch" },
+      { label:"Webserver Port 8080",  cmd:"python3 -m http.server 8080 -d src/websocket", type:"sys" },
+      { label:"Workspace Analyzer",   cmd:"python3 src/websocket/workspace_analyzer.py", type:"sys" },
     ]},
-    { title: "Frontend & Browser", actions: [
-      { label: "Dashboard öffnen", cmd: "xdg-open http://localhost:8080/dashboard_index.html", type: "sys", mode: "bg" },
-      { label: "OBS Studio", cmd: "obs", type: "sys" },
+    { title:"Frontend & Browser", icon:"fa-solid fa-globe", actions:[
+      { label:"Dashboard öffnen",     cmd:"xdg-open http://localhost:8080/dashboard_index.html", type:"sys", mode:"bg" },
+      { label:"OBS Studio",           cmd:"obs", type:"sys" },
     ]},
   ],
   info: [
-    { title: "Listen & Status", actions: [
-      { label: "Aktive Nodes", cmd: "ros2 node list", type: "sys" },
-      { label: "Aktive Topics", cmd: "ros2 topic list -t", type: "sys" },
-      { label: "Services", cmd: "ros2 service list", type: "sys" },
-      { label: "Parameter", cmd: "ros2 param list", type: "sys" },
-      { label: "Alle Pakete", cmd: "ros2 pkg list", type: "sys" },
+    { title:"Listen & Status", icon:"fa-solid fa-list", actions:[
+      { label:"Aktive Nodes",  cmd:"ros2 node list",         type:"sys" },
+      { label:"Aktive Topics", cmd:"ros2 topic list -t",     type:"sys" },
+      { label:"Services",      cmd:"ros2 service list",      type:"sys" },
+      { label:"Parameter",     cmd:"ros2 param list",        type:"sys" },
+      { label:"Alle Pakete",   cmd:"ros2 pkg list",          type:"sys" },
     ]},
-    { title: "Visualisierung", actions: [
-      { label: "RViz2", cmd: "rviz2", type: "sys" },
-      { label: "RQT Graph", cmd: "rqt_graph", type: "sys" },
-      { label: "RQT", cmd: "rqt", type: "sys" },
+    { title:"Visualisierung", icon:"fa-solid fa-chart-network", actions:[
+      { label:"RViz2",     cmd:"rviz2",       type:"sys" },
+      { label:"RQT Graph", cmd:"rqt_graph",   type:"sys" },
+      { label:"RQT",       cmd:"rqt",         type:"sys" },
     ]},
-    { title: "Live-Debugging", actions: [
-      { label: "Topic Echo", cmd: 'read -p "Topic: " tp; ros2 topic echo $tp', type: "sys", mode: "interactive" },
-      { label: "Topic Hz", cmd: 'read -p "Topic: " tp; ros2 topic hz $tp', type: "sys", mode: "interactive" },
-      { label: "Interface Aufbau", cmd: 'read -p "Message-Typ: " msg; ros2 interface show $msg; echo ""; read -p "Enter..."', type: "sys", mode: "interactive" },
-      { label: "ros2 doctor", cmd: "ros2 doctor", type: "sys" },
+    { title:"Live-Debugging", icon:"fa-solid fa-bug", actions:[
+      { label:"Topic Echo",       cmd:'read -p "Topic: " tp; ros2 topic echo $tp',                                                   type:"sys", mode:"interactive" },
+      { label:"Topic Hz",         cmd:'read -p "Topic: " tp; ros2 topic hz $tp',                                                     type:"sys", mode:"interactive" },
+      { label:"Interface Aufbau", cmd:'read -p "Message-Typ: " msg; ros2 interface show $msg; echo ""; read -p "Enter..."',          type:"sys", mode:"interactive" },
+      { label:"ros2 doctor",      cmd:"ros2 doctor",                                                                                  type:"sys" },
     ]},
   ],
   system: [
-    { title: "Controller (Joy)", actions: [
-      { label: "Pub /joy", cmd: 'ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"', type: "node" },
-      { label: "Pub /joy_check", cmd: 'ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"', type: "node" },
+    { title:"Netzwerk & System", icon:"fa-solid fa-network-wired", actions:[
+      { label:"Eigene IP anzeigen", cmd:"echo -e '\\033[1;32mNetzwerk:\\033[0m'; ip -brief address show; echo ''; read -p 'Enter...'", type:"sys", mode:"interactive" },
+      { label:"Datei suchen",       cmd:'read -p "Dateiname?: " st; find / -iname "*${st}*" 2>/dev/null',                              type:"sys", mode:"interactive" },
     ]},
-    { title: "Netzwerk & System", actions: [
-      { label: "Eigene IP anzeigen", cmd: "echo -e '\\033[1;32mNetzwerk:\\033[0m'; ip -brief address show; echo ''; read -p 'Enter...'", type: "sys", mode: "interactive" },
-      { label: "Datei suchen", cmd: 'read -p "Dateiname?: " st; find / -iname "*${st}*" 2>/dev/null', type: "sys", mode: "interactive" },
+    { title:"Umgebung & Build", icon:"fa-solid fa-hammer", actions:[
+      { label:"bashrc neu laden",       cmd:"source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2", type:"sys", mode:"interactive" },
+      { label:"dev_ws → colcon build",  cmd:"colcon build --symlink-install",                                              type:"sys" },
     ]},
-    { title: "Umgebung & Build", actions: [
-      { label: "bashrc neu laden", cmd: "source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2", type: "sys", mode: "interactive" },
-      { label: "dev_ws → colcon build", cmd: "colcon build --symlink-install", type: "sys" },
-    ]},
-    { title: "Notfall", actions: [
-      { label: "ALLE ROS-Prozesse beenden", cmd: "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'", type: "kill", mode: "bg" },
+    { title:"Notfall", icon:"fa-solid fa-triangle-exclamation", actions:[
+      { label:"ALLE ROS-Prozesse beenden", cmd:"pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'", type:"kill", mode:"bg" },
     ]},
   ],
 };
 
-// ══════════════════════════════════════════════════════
-//  RENDERING
-// ══════════════════════════════════════════════════════
-const badgeClass = { node: 'badge-node', launch: 'badge-launch', sys: 'badge-sys', kill: 'badge-kill' };
-const badgeLabel = { node: 'NODE', launch: 'LAUNCH', sys: 'CMD', kill: 'KILL' };
+// ─── BADGE CONFIG ─────────────────────────────────────────────────────────────
+const BADGE = {
+  node:   { cls:"badge-node",   icon:"fa-solid fa-circle-dot",    label:"NODE" },
+  launch: { cls:"badge-launch", icon:"fa-solid fa-rocket",        label:"LAUNCH" },
+  sys:    { cls:"badge-sys",    icon:"fa-solid fa-terminal",      label:"CMD" },
+  kill:   { cls:"badge-kill",   icon:"fa-solid fa-skull-crossbones", label:"KILL" },
+};
 
+// ─── RENDER ───────────────────────────────────────────────────────────────────
 function renderTab(tabId) {
   const sections = TABS[tabId] || [];
   let html = '';
   sections.forEach(sec => {
-    html += `
-      <div class="section">
-        <div class="section-title">${sec.title}</div>
-        <div class="actions-grid">
-    `;
+    html += `<div class="section">
+      <div class="section-title"><i class="${sec.icon}"></i>${sec.title}</div>
+      <div class="actions-grid">`;
     sec.actions.forEach(a => {
-      const mode = a.mode || 'ros';
-      const bc = badgeClass[a.type] || 'badge-sys';
-      const bl = badgeLabel[a.type] || 'CMD';
-      
-      // Escape double quotes for HTML attributes
+      const mode    = a.mode || 'ros';
+      const b       = BADGE[a.type] || BADGE.sys;
       const safeCmd = a.cmd.replace(/"/g, '&quot;');
-      const safeLabel = a.label.replace(/"/g, '&quot;');
-      
+      const safeLbl = a.label.replace(/"/g, '&quot;');
       html += `
-        <div class="action-card">
-          <div class="action-btn" data-cmd="${safeCmd}" data-label="${safeLabel}" data-mode="${mode}" title="Ausführen">
+        <div class="action-card" data-type="${a.type}">
+          <button class="action-btn" data-cmd="${safeCmd}" data-label="${safeLbl}" data-mode="${mode}" title="Ausführen">
             <div class="btn-top">
               <span class="label">${a.label}</span>
-              <span class="badge ${bc}">${bl}</span>
+              <span class="badge ${b.cls}"><i class="${b.icon}"></i>${b.label}</span>
             </div>
-            <div class="btn-bottom">
-              <span class="cmd-text">${a.cmd}</span>
-            </div>
-          </div>
-          <div class="copy-btn" data-cmd="${safeCmd}" title="Befehl kopieren">
-            <svg><use href="#icon-copy"></use></svg>
-          </div>
+            <div class="cmd-wrap"><span class="cmd-text">${a.cmd}</span></div>
+          </button>
+          <button class="copy-btn" data-cmd="${safeCmd}" title="Befehl kopieren"><i class="fa-regular fa-copy"></i></button>
         </div>`;
     });
-    html += `
-        </div>
-      </div>
-    `;
+    html += `</div></div>`;
   });
   document.getElementById('main-content').innerHTML = html;
 
-  // Event Listeners anhängen
   document.querySelectorAll('.action-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      runCmd(btn.dataset.cmd, btn.dataset.label, btn.dataset.mode);
-    });
+    btn.addEventListener('click', () => runCmd(btn.dataset.cmd, btn.dataset.label, btn.dataset.mode));
   });
   document.querySelectorAll('.copy-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      copyCmd(btn.dataset.cmd, btn);
-    });
+    btn.addEventListener('click', e => { e.stopPropagation(); copyCmd(btn.dataset.cmd, btn); });
   });
 }
 
-// ══════════════════════════════════════════════════════
-//  TAB SWITCHING
-// ══════════════════════════════════════════════════════
+// ─── TABS ─────────────────────────────────────────────────────────────────────
 let currentTab = 'robot';
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -502,64 +420,45 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ══════════════════════════════════════════════════════
-//  BACKEND COMMUNICATION
-// ══════════════════════════════════════════════════════
+// ─── BACKEND ──────────────────────────────────────────────────────────────────
 async function runCmd(command, title, mode = 'ros') {
   try {
-    const res = await fetch('/api/run', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ command, title, mode })
-    });
+    const res  = await fetch('/api/run', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command,title,mode}) });
     const data = await res.json();
-    if (data.ok) {
-      showToast(`✓ ${title} gestartet`);
-    } else {
-      showToast(`✗ Fehler: ${data.error}`, true);
-    }
-  } catch (e) {
-    showToast('✗ Backend nicht erreichbar', true);
-  }
+    if (data.ok) showToast(`✓ ${title} gestartet`);
+    else         showToast(`✗ Fehler: ${data.error}`, true);
+  } catch { showToast('✗ Backend nicht erreichbar', true); }
 }
 
 function copyCmd(text, btn) {
   navigator.clipboard.writeText(text).then(() => {
-    btn.innerHTML = '<svg><use href="#icon-check"></use></svg>';
-    btn.style.color = 'var(--badge-launch)';
-    setTimeout(() => { 
-      btn.innerHTML = '<svg><use href="#icon-copy"></use></svg>'; 
-      btn.style.color = ''; 
-    }, 1200);
+    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.innerHTML = '<i class="fa-regular fa-copy"></i>'; btn.style.color = ''; }, 1400);
   });
 }
 
-function showToast(msg, isError = false) {
+function showToast(msg, isErr = false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast show';
-  if (isError) t.classList.add('error');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-// ══════════════════════════════════════════════════════
-//  STATUS PING
-// ══════════════════════════════════════════════════════
+// ─── STATUS ───────────────────────────────────────────────────────────────────
 async function checkStatus() {
   try {
-    const res = await fetch('/api/ping');
-    const data = await res.json();
+    const data = await (await fetch('/api/ping')).json();
     document.getElementById('status-dot').classList.toggle('ok', data.ok);
-    document.getElementById('status-text').textContent = data.ok ? 'Online' : 'Offline';
+    const host = window.location.host || 'local';
+    document.getElementById('status-text').textContent = data.ok ? `Online • ${host}` : 'Offline';
   } catch {
     document.getElementById('status-dot').classList.remove('ok');
     document.getElementById('status-text').textContent = 'Offline';
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 renderTab('robot');
 checkStatus();
 setInterval(checkStatus, 5000);
