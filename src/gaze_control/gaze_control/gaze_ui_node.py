@@ -43,7 +43,7 @@ except AttributeError:
 
 class EyeRosNode(Node):
     def __init__(self):
-        super().__init__('eye_ui_ros2_node')
+        super().__init__('gaze_ui_ros2_node')
         self.twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
         self.speed_scale = 0.50 
         

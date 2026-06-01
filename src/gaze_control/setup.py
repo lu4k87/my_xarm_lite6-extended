@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'eye_ui = gaze_control.eye_ui_node:main',
+            'gaze_ui = gaze_control.gaze_ui_node:main',
         ],
     },
 )

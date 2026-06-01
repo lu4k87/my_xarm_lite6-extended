@@ -28,7 +28,7 @@
     },
     {
       "title": "Vision & Eye-Tracking", "icon": "fa-solid fa-eye", "actions": [
-        { "label": "Eye UI Node", "cmd": "ros2 run gaze_control eye_ui", "type": "node" },
+        { "label": "Gaze UI Node", "cmd": "ros2 run gaze_control gaze_ui", "type": "node" },
         { "label": "YOLO Homographie", "cmd": "ros2 run yolo_object_detector yolo_homography_node", "type": "node" },
         { "label": "RViz Marker Launch", "cmd": "ros2 launch rviz_marker rviz_marker.launch.py", "type": "launch" }
       ]
