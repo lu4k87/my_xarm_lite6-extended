@@ -7,13 +7,45 @@ Usage: python3 ros2_nexus_web.py
 """
 
 from flask import Flask, request, jsonify, send_from_directory
+from flask_socketio import SocketIO
 import subprocess
 import os
 import shlex
+import threading
+
+import uuid
+import signal
 
 app     = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WS_PATH  = os.environ.get("ROS2_WS", "~/dev_ws")
+
+active_processes = {}
+
+def _stream_output(process, cmd_id):
+    for line in iter(process.stdout.readline, b''):
+        if line:
+            socketio.emit('terminal_output', {'id': cmd_id, 'data': line.decode('utf-8', errors='replace')})
+    process.stdout.close()
+    process.wait()
+    socketio.emit('terminal_output', {'id': cmd_id, 'data': f"\n\033[1;33m[Prozess beendet mit Code {process.returncode}]\033[0m\n"})
+    active_processes.pop(cmd_id, None)
+
+def _run_streaming_cmd(script: str, cmd_id: str):
+    process = subprocess.Popen(
+        f"bash -c {shlex.quote(script)}",
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        preexec_fn=os.setsid  # Allow killing entire process group
+    )
+    active_processes[cmd_id] = process
+    t = threading.Thread(target=_stream_output, args=(process, cmd_id), daemon=True)
+    t.start()
+    return process
+
+# ... (other code like _build_ros_script is unchanged, but we need to supply the whole block)
 
 
 def _build_ros_script(command: str, ws_path: str) -> str:
@@ -110,20 +142,39 @@ def api_run():
     if not command:
         return jsonify({"ok": False, "error": "No command provided"}), 400
 
+    cmd_id = "cmd_" + uuid.uuid4().hex[:8]
+
     try:
         if mode == "bg":
             env = os.environ.copy()
             env.setdefault("DISPLAY", ":0")
-            subprocess.Popen(command, shell=True, env=env)
+            process = subprocess.Popen(command, shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid)
+            active_processes[cmd_id] = process
+            t = threading.Thread(target=_stream_output, args=(process, cmd_id), daemon=True)
+            t.start()
         elif mode == "interactive":
             _open_terminal(_build_interactive_script(command), title)
         else:
-            _open_terminal(_build_ros_script(command, ws_path), title)
+            socketio.emit('terminal_output', {'id': cmd_id, 'data': f"\n\033[1;36m[{title}]\033[0m\n"})
+            _run_streaming_cmd(_build_ros_script(command, ws_path), cmd_id)
 
-        return jsonify({"ok": True})
+        return jsonify({"ok": True, "cmd_id": cmd_id})
 
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route("/api/kill", methods=["POST"])
+def api_kill():
+    data = request.get_json(force=True)
+    cmd_id = data.get("cmd_id")
+    if cmd_id in active_processes:
+        try:
+            os.killpg(os.getpgid(active_processes[cmd_id].pid), signal.SIGKILL)
+        except:
+            active_processes[cmd_id].kill()
+        active_processes.pop(cmd_id, None)
+        return jsonify({"ok": True})
+    return jsonify({"ok": False, "error": "Process not found"})
 
 
 if __name__ == "__main__":
@@ -134,4 +185,4 @@ if __name__ == "__main__":
     print(f"  Browser:    http://localhost:{port}")
     print(f"  Workspace:  {WS_PATH}")
     print(f"{'═'*54}\n")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)

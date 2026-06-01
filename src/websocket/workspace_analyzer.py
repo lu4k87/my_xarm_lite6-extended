@@ -232,7 +232,10 @@ class WorkspaceAnalyzer(Node):
                                 # Bandbreitenbegrenzung (Kamera, YOLO etc.)
                                 if len(msg_str) > 2000:
                                     msg_str = msg_str[:2000] + "... [TRUNCATED]"
-                                self.last_messages[t_name] = msg_str
+                                
+                                # Dashboard Topics ausschließen, um unendliche Rekursion bei verschachtelten JSON-Strings zu verhindern
+                                if t_name not in ["/dashboard/topic_activity", "/dashboard/workspace_metadata"]:
+                                    self.last_messages[t_name] = msg_str
                             return cb
 
                         self.subs[topic_name] = self.create_subscription(

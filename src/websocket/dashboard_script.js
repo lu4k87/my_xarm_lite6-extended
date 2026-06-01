@@ -1974,7 +1974,24 @@ function recursivelyParseJSON(obj) {
  */
 function formatLastMsg(raw) {
     const fullyParsed = recursivelyParseJSON(raw);
-    return typeof fullyParsed === 'string' ? fullyParsed : JSON.stringify(fullyParsed, null, 2);
+    let result = typeof fullyParsed === 'string' ? fullyParsed : JSON.stringify(fullyParsed, null, 2);
+    
+    // Fallback: If it's a raw string that couldn't be parsed (e.g. due to backend truncation),
+    // manually clean up the JSON escape characters so it looks readable.
+    if (typeof result === 'string') {
+        if (result.includes('\\"')) {
+            result = result.replace(/\\"/g, '"');
+        }
+        if (result.includes('\\\\')) {
+            result = result.replace(/\\\\/g, '\\');
+        }
+        // Remove surrounding quotes if the string was a literal JSON string
+        if (result.startsWith('"') && result.endsWith('"') && result.length > 1) {
+            result = result.substring(1, result.length - 1);
+        }
+    }
+    
+    return result;
 }
 
 function initRosConnection() {
@@ -2022,9 +2039,10 @@ function initRosConnection() {
                                 const formatted = formatLastMsg(activity.last_msg);
                                 const msgValEl = document.querySelector(`#msg-${safeTopicId} .topic-val`);
                                 if (msgValEl) {
-                                    // Kurze Vorschau: erste Zeile oder max. 60 Zeichen
-                                    const preview = formatted.split('\n')[0].slice(0, 60) + (formatted.length > 60 ? '…' : '');
-                                    msgValEl.textContent = preview;
+                                    // Kurze Vorschau: als kompakter Einzeiler, volle Breite nutzen (CSS übernimmt Truncation)
+                                    const compactStr = formatted.replace(/\s+/g, ' ').trim();
+                                    msgValEl.textContent = compactStr;
+                                    msgValEl.classList.add('text-truncate');
                                     msgValEl.removeAttribute('title');
                                     msgValEl.style.color = "var(--text-primary)";
                                 }
