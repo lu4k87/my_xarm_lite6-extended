@@ -1381,7 +1381,7 @@ function refreshNodeGraph() {
 
             visNodes.add(nodeNames.map((name) => ({
                 id: name, label: name, shape: 'image', image: 'node-icon.svg', size: 24,
-                font: { color: '#f8fafc', face: 'Inter' }
+                font: { color: '#f8fafc', face: 'Outfit' }
             })));
 
             nodeNames.forEach(name => {
@@ -1937,38 +1937,44 @@ const _sendTopicActivityRequest = debounce(function (topics) {
     }
 }, 250);
 
-/**
- * Bereinigt activity.last_msg vom Backend:
- * Das Backend liefert den Wert oft als mehrfach-JSON-kodierten String.
- * Diese Funktion entfernt alle Escape-Ebenen und gibt lesbaren Text zurück.
- * Falls es sich um valides JSON handelt, wird es hübsch formatiert.
- */
-function formatLastMsg(raw) {
-    let val = raw;
-    // Bis zu 5x entschachteln (mehrfach JSON.stringify'd)
-    for (let i = 0; i < 5; i++) {
-        if (typeof val !== 'string') break;
-        const trimmed = val.trim();
-        // Nur weiter parsen wenn String wie JSON aussieht
-        if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-            (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+function recursivelyParseJSON(obj) {
+    if (typeof obj === 'string') {
+        const trimmed = obj.trim();
+        // Remove surrounding quotes if it's double-stringified
+        if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+            try {
+                return recursivelyParseJSON(JSON.parse(trimmed));
+            } catch (e) { }
+        }
+        if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
             (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
             try {
-                const parsed = JSON.parse(trimmed);
-                if (typeof parsed === 'string') {
-                    val = parsed; // String-Wrapper entfernen, weiter entschachteln
-                } else {
-                    // Objekt/Array → hübsch formatieren und fertig
-                    return JSON.stringify(parsed, null, 2);
-                }
-            } catch {
-                break; // Kein gültiges JSON mehr → Rohwert verwenden
+                return recursivelyParseJSON(JSON.parse(trimmed));
+            } catch (e) {
+                return obj;
             }
-        } else {
-            break;
         }
+        // Handle Python's repr strings commonly found in logs if possible, but standard JSON is handled above
+        return obj;
+    } else if (Array.isArray(obj)) {
+        return obj.map(recursivelyParseJSON);
+    } else if (obj !== null && typeof obj === 'object') {
+        const newObj = {};
+        for (const key in obj) {
+            newObj[key] = recursivelyParseJSON(obj[key]);
+        }
+        return newObj;
     }
-    return typeof val === 'string' ? val : JSON.stringify(val, null, 2);
+    return obj;
+}
+
+/**
+ * Bereinigt activity.last_msg vom Backend rekursiv:
+ * Das Backend liefert den Wert oft als mehrfach-JSON-kodierten String.
+ */
+function formatLastMsg(raw) {
+    const fullyParsed = recursivelyParseJSON(raw);
+    return typeof fullyParsed === 'string' ? fullyParsed : JSON.stringify(fullyParsed, null, 2);
 }
 
 function initRosConnection() {
