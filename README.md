@@ -247,7 +247,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Purpose:** Interpretation and filtering of speech text.
     * **Task:** Extracts intents (e.g., "move to red"), blocks spam, and provides visual dashboard feedback.
     * **How it works:** Subscribes to `/whisper/text`, uses regex filters and a debounce mechanism (5 sec. cooldown in the `action_cooldown` dictionary) to block redundant commands. Publishes to `/voice_cmd` and `/ui/voice_feedback`.
-* **`eye_control`**
+* **`gaze_control`**
     * **Purpose:** Robot control via gaze detection (**UI** interaction).
     * **Task:** "God-Mode" PyQt5 user interface for pure gaze input.
     * **How it works:** Extracts JSON Gaze2D data from the RTSP stream. Uses ArUco markers for screen detection and transforms gaze coordinates into the **UI**. With a 0.5 sec. dwell time on a button, a `TwistStamped` command is published.
@@ -519,8 +519,8 @@ sudo apt install ros-humble-tf2-ros ros-humble-rviz2
 pip install pygame          # Haptic feedback (rumble) for collision_check
 pip install openai-whisper  # Local speech recognition (ros2_whisper)
 pip install flask           # ROS 2 Nexus web backend
-pip install opencv-python   # Computer vision (yolo_object_detector, eye_control)
-pip install PyQt5           # Gaze control UI (eye_control)
+pip install opencv-python   # Computer vision (yolo_object_detector, gaze_control)
+pip install PyQt5           # Gaze control UI (gaze_control)
 pip install ultralytics     # YOLO object detection
 ```
 
@@ -575,7 +575,7 @@ dev_ws/
 ├── src/
 │   ├── collision_check/            # 🛡️ Python: Predictive collision guard
 │   │   └── collision_check/checker.py
-│   ├── eye_control/                # 👁️ Python: PyQt5 gaze control UI
+│   ├── gaze_control/               # 👁️ Python: PyQt5 gaze control UI
 │   ├── motion_sequence/            # 🦾 Python: Cartesian motion state machine
 │   │   └── motion_sequence/motion_sequence.py
 │   ├── move_to_coordinator/        # 🧠 Python: Shared control brain

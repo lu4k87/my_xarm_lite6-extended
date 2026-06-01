@@ -247,7 +247,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Zweck:** Interpretation und Filterung des Sprachtextes.
     * **Aufgabe:** Extrahiert Intents (z.B. "fahre zu rot"), blockiert Spam und gibt visuelles Dashboard-Feedback.
     * **Funktionsweise:** Abonniert `/whisper/text`, nutzt Regex-Filter und einen Debounce-Mechanismus (5 Sek. Cooldown im `action_cooldown` Dictionary), um redundante Befehle abzublocken. Publiziert an `/voice_cmd` und `/ui/voice_feedback`.
-* **`eye_control`**
+* **`gaze_control`**
     * **Zweck:** Robotersteuerung durch Blickerfassung (**UI** Interaktion).
     * **Aufgabe:** "God-Mode" PyQt5 Benutzeroberfläche für reine Blickeingabe.
     * **Funktionsweise:** Extrahiert JSON Gaze2D-Daten aus dem RTSP Stream. Nutzt ArUco-Marker zur Bildschirm-Erkennung und transformiert Blickkoordinaten in die **UI**. Bei 0,5 Sek. Verweildauer (Dwell-Time) auf einem Button wird ein `TwistStamped`-Befehl publiziert.
@@ -541,7 +541,7 @@ dev_ws/
 ├── src/
 │   ├── collision_check/            # 🛡️ Python: Prädiktiver Kollisionsschutz
 │   │   └── collision_check/checker.py
-│   ├── eye_control/                # 👁️ Python: PyQt5 Gaze-Control-UI
+│   ├── gaze_control/               # 👁️ Python: PyQt5 Gaze-Control-UI
 │   ├── motion_sequence/            # 🦾 Python: Kartesische Bewegungs-State-Machine
 │   │   └── motion_sequence/motion_sequence.py
 │   ├── move_to_coordinator/        # 🧠 Python: Shared-Control-Gehirn

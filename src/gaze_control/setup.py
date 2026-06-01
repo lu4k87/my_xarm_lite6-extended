@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'eye_control'
+package_name = 'gaze_control'
 
 setup(
     name=package_name,
@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'eye_ui = eye_control.eye_ui_node:main',
+            'eye_ui = gaze_control.eye_ui_node:main',
         ],
     },
 )
