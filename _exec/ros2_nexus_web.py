@@ -131,6 +131,16 @@ def ping():
     return jsonify({"ok": True, "version": "Web Edition 1.0"})
 
 
+@app.route("/api/config")
+def get_config():
+    try:
+        with open(os.path.join(BASE_DIR, "launcher_config.json"), "r") as f:
+            import json
+            return jsonify(json.load(f))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/run", methods=["POST"])
 def api_run():
     data    = request.get_json(force=True)
@@ -168,10 +178,12 @@ def api_kill():
     data = request.get_json(force=True)
     cmd_id = data.get("cmd_id")
     if cmd_id in active_processes:
+        proc = active_processes[cmd_id]
         try:
-            os.killpg(os.getpgid(active_processes[cmd_id].pid), signal.SIGKILL)
-        except:
-            active_processes[cmd_id].kill()
+            pgid = os.getpgid(proc.pid)
+            os.killpg(pgid, signal.SIGKILL)
+        except Exception:
+            proc.kill()
         active_processes.pop(cmd_id, None)
         return jsonify({"ok": True})
     return jsonify({"ok": False, "error": "Process not found"})

@@ -143,6 +143,10 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 | **`8080`** | **Dashboard Frontend** | HTTP Server | Hostet die statischen HTML/CSS/JS-Dateien für das ROS2 Core Dashboard. |
 | **`9090`** | **ROS Bridge** | WebSocket | Die Brücke zwischen ROS 2 und dem Browser. Erlaubt dem Dashboard (Port 8080), sich über `roslib.js` direkt mit dem ROS-Netzwerk zu verbinden, um Echtzeit-Telemetrie auszulesen und Services aufzurufen. |
 
+### 3.3 Launcher-Konfiguration (`launcher_config.json`)
+
+Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar. Sie werden in einer externen Konfigurationsdatei unter `_exec/launcher_config.json` definiert. Um eigene Skripte, Debugging-Tools oder ROS 2 Nodes zur Launcher-UI hinzuzufügen, muss lediglich diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch, sodass Änderungen nach einem simplen Neuladen der Seite im Browser sofort aktiv werden, ohne dass das Backend neugestartet werden muss.
+
 ---
 
 ## 4. 📊 Monitoring: Dashboard & Workspace Analyzer
@@ -521,6 +525,7 @@ source install/setup.bash
 ```
 dev_ws/
 ├── _exec/                          # Launcher-Skripte & App-Integration
+│   ├── launcher_config.json        # Konfigurationsdatei für Nexus-Buttons
 │   ├── ros2_nexus_web.py           # Flask-Backend — ROS 2 Nexus Web UI
 │   ├── ros2_nexus_web.html         # Frontend-HTML für Nexus
 │   ├── ros2_nexus_web_start.sh     # Auto-Start-Skript

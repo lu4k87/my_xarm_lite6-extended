@@ -730,110 +730,18 @@
     }
 
     // ─── TAB DATA ────────────────────────────────────────────────────────────────
-    const TABS = {
-      robot: [
-        {
-          title: "Hardware", icon: "fa-solid fa-microchip", actions: [
-            { label: "Keyboard Input", cmd: "ros2 run xarm_moveit_servo xarm_keyboard_input", type: "node" },
-          ]
-        },
-        {
-          title: "Controller (Joy)", icon: "fa-solid fa-gamepad", actions: [
-            { label: "Pub /joy", cmd: 'ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"', type: "node" },
-            { label: "Pub /joy_check", cmd: 'ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: \'base_link\'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}"', type: "node" },
-          ]
-        },
-      ],
-      nodes: [
-        {
-          title: "Roboter", icon: "fa-solid fa-robot", actions: [
-            { label: "Real Move Launch", cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev", type: "launch" },
-            { label: "Fake Move Launch", cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true", type: "launch" },
-          ]
-        },
-        {
-          title: "Planung & Logik", icon: "fa-solid fa-brain", actions: [
-            { label: "Move To Coordinator", cmd: "ros2 run move_to_coordinator move_to_coordinator", type: "node" },
-            { label: "Motion Sequence Launch", cmd: "ros2 launch motion_sequence motion_sequence_launch.py", type: "launch" },
-            { label: "Collision Check Node", cmd: "ros2 run collision_check checker", type: "node" },
-          ]
-        },
-        {
-          title: "Vision & Eye-Tracking", icon: "fa-solid fa-eye", actions: [
-            { label: "Eye UI Node", cmd: "ros2 run eye_control eye_ui", type: "node" },
-            { label: "YOLO Homographie", cmd: "ros2 run yolo_object_detector yolo_homography_node", type: "node" },
-            { label: "RViz Marker Launch", cmd: "ros2 launch rviz_marker rviz_marker.launch.py", type: "launch" },
-          ]
-        },
-        {
-          title: "Sprache & Audio", icon: "fa-solid fa-microphone", actions: [
-            { label: "Whisper Bringup", cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", type: "launch" },
-            { label: "Whisper Stream Demo", cmd: "ros2 run whisper_demos whisper_on_key", type: "node" },
-            { label: "Voice Command Listener", cmd: "ros2 run voice_command_listener listener", type: "node" },
-          ]
-        },
-      ],
-      web: [
-        {
-          title: "Backend & Server", icon: "fa-solid fa-server", actions: [
-            { label: "ROS Bridge Launch", cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", type: "launch" },
-            { label: "Webserver Port 8080", cmd: "python3 -m http.server 8080 -d src/websocket", type: "sys" },
-            { label: "Workspace Analyzer", cmd: "python3 src/websocket/workspace_analyzer.py", type: "sys" },
-          ]
-        },
-        {
-          title: "Frontend & Browser", icon: "fa-solid fa-globe", actions: [
-            { label: "Dashboard öffnen", cmd: "xdg-open http://localhost:8080/dashboard_index.html", type: "sys", mode: "bg" },
-            { label: "OBS Studio", cmd: "obs", type: "sys" },
-          ]
-        },
-      ],
-      info: [
-        {
-          title: "Listen & Status", icon: "fa-solid fa-list", actions: [
-            { label: "Aktive Nodes", cmd: "ros2 node list", type: "sys" },
-            { label: "Aktive Topics", cmd: "ros2 topic list -t", type: "sys" },
-            { label: "Services", cmd: "ros2 service list", type: "sys" },
-            { label: "Parameter", cmd: "ros2 param list", type: "sys" },
-            { label: "Alle Pakete", cmd: "ros2 pkg list", type: "sys" },
-          ]
-        },
-        {
-          title: "Visualisierung", icon: "fa-solid fa-chart-network", actions: [
-            { label: "RViz2", cmd: "rviz2", type: "sys" },
-            { label: "RQT Graph", cmd: "rqt_graph", type: "sys" },
-            { label: "RQT", cmd: "rqt", type: "sys" },
-          ]
-        },
-        {
-          title: "Live-Debugging", icon: "fa-solid fa-bug", actions: [
-            { label: "Topic Echo", cmd: 'read -p "Topic: " tp; ros2 topic echo $tp', type: "sys", mode: "interactive" },
-            { label: "Topic Hz", cmd: 'read -p "Topic: " tp; ros2 topic hz $tp', type: "sys", mode: "interactive" },
-            { label: "Interface Aufbau", cmd: 'read -p "Message-Typ: " msg; ros2 interface show $msg; echo ""; read -p "Enter..."', type: "sys", mode: "interactive" },
-            { label: "ros2 doctor", cmd: "ros2 doctor", type: "sys" },
-          ]
-        },
-      ],
-      system: [
-        {
-          title: "Netzwerk & System", icon: "fa-solid fa-network-wired", actions: [
-            { label: "Eigene IP anzeigen", cmd: "echo -e '\\033[1;32mNetzwerk:\\033[0m'; ip -brief address show; echo ''; read -p 'Enter...'", type: "sys", mode: "interactive" },
-            { label: "Datei suchen", cmd: 'read -p "Dateiname?: " st; find / -iname "*${st}*" 2>/dev/null', type: "sys", mode: "interactive" },
-          ]
-        },
-        {
-          title: "Umgebung & Build", icon: "fa-solid fa-hammer", actions: [
-            { label: "bashrc neu laden", cmd: "source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2", type: "sys", mode: "interactive" },
-            { label: "dev_ws → colcon build", cmd: "colcon build --symlink-install", type: "sys" },
-          ]
-        },
-        {
-          title: "Notfall", icon: "fa-solid fa-triangle-exclamation", actions: [
-            { label: "ALLE ROS-Prozesse beenden", cmd: "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'", type: "kill", mode: "bg" },
-          ]
-        },
-      ],
-    };
+    let TABS = {};
+
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/config');
+        TABS = await res.json();
+        renderTab(currentTab);
+      } catch (err) {
+        console.error("Failed to load config:", err);
+        showToast('✗ Konfiguration konnte nicht geladen werden', true);
+      }
+    }
 
     // ─── BADGE CONFIG ─────────────────────────────────────────────────────────────
     const BADGE = {
@@ -935,7 +843,7 @@
     }
 
     // ─── INIT ─────────────────────────────────────────────────────────────────────
-    renderTab('robot');
+    loadConfig();
     checkStatus();
     setInterval(checkStatus, 5000);
   </script>
