@@ -286,7 +286,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 * **`websocket`** *(Workspace Analyzer Backend)*
     * **Zweck:** Datenquelle für das Web-Dashboard.
     * **Aufgabe:** Überwacht das ROS-Netzwerk und den Quellcode.
-    * **Funktionsweise:** `workspace_analyzer.py` nutzt Regex für ausführungsfreie Code-Analyse (`src/`). Überwacht Dateiänderungen und publiziert JSON-Metadaten auf ROS-Topics (z.B. `/dashboard/workspace_metadata`).
+    * **Funktionsweise:** Das Backend ist modularisiert in `workspace_analyzer.py` (ROS 2 Node für Pub/Sub), `workspace_parser.py` (ausführungsfreie Regex-Code-Analyse) und `system_utils.py` (Umgebungs-Parsing). Es überwacht Dateiänderungen und publiziert JSON-Metadaten auf ROS-Topics (z.B. `/dashboard/workspace_metadata`).
 * **`rosbridge_server`**
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
@@ -550,6 +550,9 @@ dev_ws/
 │   ├── rviz_marker/                # 📍 Python: RViz2 Marker-Publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent-Parser & Filter
 │   ├── websocket/                  # 📊 Python: Workspace-Analyzer-Backend
+│   │   ├── workspace_analyzer.py   # Haupt-ROS 2-Node (Pub/Sub & Topologie)
+│   │   ├── workspace_parser.py     # Statische Code-Analyse (Regex)
+│   │   ├── system_utils.py         # Umgebungsvariablen-Parsing (bashrc Cache)
 │   ├── xarm_ros2/                  # 🤖 Offizielle xArm ROS 2 Pakete (Submodul)
 │   │   └── xarm_moveit_servo/src/
 │   │       └── xarm_joystick_input.cpp  # ⚙️ C++: Gamepad → Servo Bridge

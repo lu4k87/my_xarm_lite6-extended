@@ -9,20 +9,22 @@ Optimierungen (2025-03):
   - Debug-Prints → get_logger().debug()
   - /tmp-Debug-Schreiben entfernt
   - pulse_timer 2s → 3s
+  - Modularized: parser logic moved to workspace_parser.py, bashrc to system_utils.py
 """
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 import json
 import os
-import glob
-import re
 import subprocess
 import time
 import copy
-import threading
+import re
 from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy
 from rosidl_runtime_py.utilities import get_message
+
+from system_utils import parse_bashrc, parse_bashrc_env_vars
+from workspace_parser import WorkspaceParser
 
 
 class WorkspaceAnalyzer(Node):
@@ -37,17 +39,10 @@ class WorkspaceAnalyzer(Node):
         self.workspace_path = os.path.expanduser('~/dev_ws/src')
         self.base_ws_path   = os.path.expanduser('~/dev_ws')
 
-        # ── Caches ────────────────────────────────────────────────────────────
-        self.pkg_cache                = {}
-        self.pkg_dependencies_cache   = {}
-        self.source_files_cache       = []
-        self.launch_files_cache       = []
-        self.node_info_cache          = {}
-        self.workspace_tree_cache     = {}
-        self.project_files_cache      = {}
-        self.launch_details_cache     = []
-        self.bashrc_mtime             = 0
-        self.bashrc_cache             = []
+        # Instantiate Parser
+        self.parser = WorkspaceParser(self.workspace_path, self.base_ws_path, self.get_logger())
+
+        # Additional Caches
         self.startup_sh_mtime         = 0
         self.startup_sh_cache         = set()
 
@@ -57,20 +52,14 @@ class WorkspaceAnalyzer(Node):
         self.message_counts   = {}          # topic → int
         self.last_messages    = {}          # topic → str
         self.last_publish_time = time.time()
-        self.last_topology_update = 0        # Timestamp für Topology-Vollrefreh
+        self.last_topology_update = 0        # Timestamp für Topology-Vollrefresh
 
         self.cmd_sub      = self.create_subscription(String, '/dashboard/request_topic_activity', self.handle_activity_request, 10)
         self.activity_pub = self.create_publisher  (String, '/dashboard/topic_activity',          10)
         self.activity_timer = self.create_timer(0.5, self.publish_activity)
 
-        # ── CLI / Exe-Cache (Thread-safe) ─────────────────────────────────────
-        self.cli_node_cache    = {}
-        self.last_cli_update   = 0
-        self.executable_pkg_map = {}
-        self._exe_cache_lock   = threading.Lock()   # Schützt executable_pkg_map
-        self._exe_cache_refresh_done = False
-
         # ── Topology-Diff: Merker für letzte bekannte Node-Menge ──────────────
+        self.cli_node_cache    = {}
         self._last_known_nodes: set = set()          # full_names
         self._topology_cache: dict  = {}             # full_name → {publishers, subscribers}
 
@@ -79,20 +68,16 @@ class WorkspaceAnalyzer(Node):
             String, '/dashboard/request_node_details', self.handle_node_detail_request, 10)
 
         # ── Initialisierung ───────────────────────────────────────────────────
-        self.index_workspace()
+        self.parser.index_workspace()
 
         # Full Metadata alle 10 s  |  Pulse alle 3 s (statt 2 s)
         self.timer       = self.create_timer(10.0, self.publish_metadata)
         self.pulse_timer = self.create_timer( 3.0, self.publish_active_nodes_pulse)
 
         # Exe-Cache 30 s nach Start im Hintergrund auffrischen
-        self.create_timer(30.0, self._schedule_exe_cache_refresh)
+        self.create_timer(30.0, self.parser.schedule_exe_cache_refresh)
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # ON-DEMAND NODE DETAILS
-    # ═══════════════════════════════════════════════════════════════════════════
     def handle_node_detail_request(self, msg):
-        """Wird aufgerufen wenn im Dashboard ein Node ausgewählt wird."""
         node_name = msg.data.strip()
         if not node_name:
             return
@@ -118,7 +103,6 @@ class WorkspaceAnalyzer(Node):
             }
             self.cli_node_cache[node_name] = node_data
 
-            # Topology-Cache für diesen Node sofort aktualisieren
             self._topology_cache[node_name] = {
                 "publishers":  node_data["publishers"],
                 "subscribers": node_data["subscribers"],
@@ -128,9 +112,6 @@ class WorkspaceAnalyzer(Node):
         except Exception as e:
             self.get_logger().error(f"Fehler bei On-Demand Abfrage: {e}")
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # STANDARD HANDLERS
-    # ═══════════════════════════════════════════════════════════════════════════
     def handle_open_explorer(self, msg):
         req_path = msg.data.strip()
         if not req_path or req_path == 'Pfad unbekannt':
@@ -139,7 +120,7 @@ class WorkspaceAnalyzer(Node):
         try:
             if not os.path.exists(full_path):
                 base = os.path.basename(full_path)
-                for cache_file in self.source_files_cache + self.launch_files_cache:
+                for cache_file in self.parser.source_files_cache + self.parser.launch_files_cache:
                     if os.path.basename(cache_file) == base:
                         full_path = cache_file
                         break
@@ -156,7 +137,7 @@ class WorkspaceAnalyzer(Node):
         try:
             if not os.path.exists(full_path):
                 base = os.path.basename(full_path)
-                for cache_file in self.source_files_cache + self.launch_files_cache:
+                for cache_file in self.parser.source_files_cache + self.parser.launch_files_cache:
                     if os.path.basename(cache_file) == base:
                         full_path = cache_file
                         response["path"] = os.path.relpath(full_path, self.base_ws_path)
@@ -170,9 +151,6 @@ class WorkspaceAnalyzer(Node):
             response["content"] = f"Fehler beim Lesen:\n{str(e)}"
         self.code_pub.publish(String(data=json.dumps(response)))
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # TOPIC ACTIVITY  (Diff-basierte Subscription-Verwaltung)
-    # ═══════════════════════════════════════════════════════════════════════════
     def handle_activity_request(self, msg):
         try:
             req        = json.loads(msg.data)
@@ -180,7 +158,6 @@ class WorkspaceAnalyzer(Node):
             new_set    = {t['topic'] for t in new_topics}
             old_set    = set(self.subs.keys())
 
-            # Subs entfernen die nicht mehr gebraucht werden
             to_remove = old_set - new_set
             for topic in to_remove:
                 try:
@@ -188,9 +165,8 @@ class WorkspaceAnalyzer(Node):
                 except Exception:
                     pass
                 self.message_counts.pop(topic, None)
-                self.last_messages.pop(topic, None)   # Speicher freigeben
+                self.last_messages.pop(topic, None)
 
-            # Neue Subs nur für wirklich neue Topics anlegen
             qos = QoSProfile(
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
@@ -201,7 +177,6 @@ class WorkspaceAnalyzer(Node):
                 topic_type_str = t_info.get('type')
 
                 if topic_name in self.subs:
-                    # Subscription existiert bereits → nichts tun
                     continue
 
                 if not topic_type_str or topic_type_str == "Unbekannt":
@@ -222,18 +197,15 @@ class WorkspaceAnalyzer(Node):
                         def make_cb(t_name):
                             def cb(m):
                                 self.message_counts[t_name] += 1
-                                # JSON-kompatible Serialisierung für das Frontend
                                 try:
                                     from rosidl_runtime_py import message_to_ordereddict
                                     msg_dict = message_to_ordereddict(m)
                                     msg_str = json.dumps(msg_dict)
                                 except Exception:
                                     msg_str = str(m)
-                                # Bandbreitenbegrenzung (Kamera, YOLO etc.)
                                 if len(msg_str) > 2000:
                                     msg_str = msg_str[:2000] + "... [TRUNCATED]"
                                 
-                                # Dashboard Topics ausschließen, um unendliche Rekursion bei verschachtelten JSON-Strings zu verhindern
                                 if t_name not in ["/dashboard/topic_activity", "/dashboard/workspace_metadata"]:
                                     self.last_messages[t_name] = msg_str
                             return cb
@@ -249,524 +221,41 @@ class WorkspaceAnalyzer(Node):
             self.tracked_topics = new_topics
 
         except Exception as e:
-            self.get_logger().error(f"handle_activity_request Fehler: {e}")
+            self.get_logger().error(f"Fehler in handle_activity_request: {e}")
 
     def publish_activity(self):
         if not self.tracked_topics:
             return
-        current_time = time.time()
-        dt           = current_time - self.last_publish_time
-        self.last_publish_time = current_time
+        now = time.time()
+        elapsed = now - self.last_publish_time
+        if elapsed <= 0: elapsed = 0.001
+        self.last_publish_time = now
 
-        activity_data = {}
-        for topic, count in self.message_counts.items():
-            hz        = count / dt if dt > 0 else 0
-            is_active = count > 0
-            activity_data[topic] = {
-                "hz":       round(hz, 1),
-                "active":   is_active,
-                "last_msg": self.last_messages.get(topic, ""),
-            }
-            self.message_counts[topic] = 0
+        activity_data = []
+        for t_info in self.tracked_topics:
+            topic_name = t_info['topic']
+            count = self.message_counts.get(topic_name, 0)
+            self.message_counts[topic_name] = 0
+            hz = count / elapsed
+            lmsg = self.last_messages.get(topic_name, "Warte auf Daten...")
 
-        if activity_data:
-            self.activity_pub.publish(String(data=json.dumps(activity_data)))
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # NODE PULSE  (3 s Intervall statt 2 s)
-    # ═══════════════════════════════════════════════════════════════════════════
-    def publish_active_nodes_pulse(self):
-        """Schickt nur die Liste der aktiven Node-Namen für Sidebar-Punkte."""
-        try:
-            node_names_and_ns = self.get_node_names_and_namespaces()
-            running_names     = {f"{ns}/{n}".replace('//', '/') for n, ns in node_names_and_ns}
-            
-            # Sofortiges Metadaten-Update triggern, wenn sich die Node-Liste geändert hat
-            if running_names != self._last_known_nodes:
-                self.get_logger().info(f"Node-Change im Pulse erkannt ({len(self._last_known_nodes)} -> {len(running_names)}). Trigger Metadata...")
-                self.publish_metadata()
-                return # publish_metadata schickt bereits den Pulse mit
-
-            self.publisher_.publish(String(data=json.dumps({
-                "type": "node_pulse",
-                "active_nodes": list(running_names),
-            })))
-        except Exception:
-            pass
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # WORKSPACE INDEXING
-    # ═══════════════════════════════════════════════════════════════════════════
-    def build_file_tree(self, path):
-        tree = {"name": os.path.basename(path), "type": "folder", "children": []}
-        try:
-            entries = sorted(os.listdir(path))
-            SKIP    = {'build', 'install', 'log', '.git', '__pycache__'}
-            dirs    = [e for e in entries if os.path.isdir(os.path.join(path, e))  and e not in SKIP]
-            files   = [e for e in entries if os.path.isfile(os.path.join(path, e))]
-            for d in dirs:
-                tree["children"].append(self.build_file_tree(os.path.join(path, d)))
-            for f in files:
-                if f.endswith(('.py', '.cpp', '.hpp', '.xml', '.yaml', '.txt', '.json')):
-                    tree["children"].append({"name": f, "type": "file"})
-        except Exception:
-            pass
-        return tree
-
-    def index_workspace(self):
-        if not os.path.exists(self.workspace_path):
-            self.workspace_tree_cache = {"name": "dev_ws/src", "type": "folder", "children": [
-                {"name": "Pfad nicht gefunden", "type": "file"}
-            ]}
-            return
-
-        self.workspace_tree_cache = self.build_file_tree(self.workspace_path)
-
-        # Package.xml parsen
-        for xml_path in glob.glob(os.path.join(self.workspace_path, '**', 'package.xml'), recursive=True):
-            pkg_dir  = os.path.dirname(xml_path)
-            pkg_name = os.path.basename(pkg_dir)
-            deps     = []
-            try:
-                with open(xml_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                # Robustes Parsing von Name und Dependencies (auch mit Attributen oder Zeilenumbrüchen)
-                match = re.search(r'<name(?:\s+[^>]*)?>(.*?)</name>', content, re.DOTALL)
-                if match:
-                    pkg_name = match.group(1).strip()
-                
-                # Tags: depend, build_depend, etc.
-                pattern = r'<(depend|build_depend|build_export_depend|exec_depend|test_depend|buildtool_depend)(?:\s+[^>]*)?>(.*?)</\1>'
-                found_deps = re.findall(pattern, content, re.DOTALL)
-                
-                seen = set()
-                for dtype, dname in found_deps:
-                    dname = dname.strip()
-                    if dname and dname not in seen:
-                        seen.add(dname)
-                        deps.append({"type": dtype, "name": dname})
-            except Exception:
-                pass
-            self.pkg_cache[pkg_dir]             = pkg_name
-            self.pkg_dependencies_cache[pkg_name] = deps
-
-        # Source- und Launch-Dateien
-        SKIP_PATHS = ['/build', '/install', '/log', '/.git']
-        for root, dirs, files in os.walk(self.workspace_path):
-            if any(s in root for s in SKIP_PATHS):
-                continue
-            for f in files:
-                full_path = os.path.join(root, f)
-                if f.endswith(('.py', '.cpp', '.hpp')):
-                    if 'launch' in f or 'launch' in root.lower():
-                        self.launch_files_cache.append(full_path)
-                    else:
-                        self.source_files_cache.append(full_path)
-                elif f.endswith(('.launch.xml', '.launch.yaml', '.launch.py')):
-                    self.launch_files_cache.append(full_path)
-
-        # Launch-Details parsen
-        self.launch_details_cache = []
-        for l_file in self.launch_files_cache:
-            try:
-                with open(l_file, 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read()
-
-                clean_args = []
-                for arg_block in re.finditer(r'DeclareLaunchArgument\s*\(\s*(.*?)\)', content, re.DOTALL):
-                    inner      = arg_block.group(1)
-                    name_match = re.search(r'^[\'"]([^\'"]+)[\'"]', inner.strip())
-                    if not name_match:
-                        continue
-                    arg_name  = name_match.group(1)
-                    def_match = re.search(r'default_value\s*=\s*([\'"][^\'"]*[\'"]|[^,]+)', inner)
-                    val       = def_match.group(1).strip().strip('\'"') if def_match else "Kein Default"
-                    clean_args.append({"name": arg_name, "default": val, "description": ""})
-
-                for xml_arg in re.finditer(r'<arg\s+([^>]+)/?\>', content):
-                    inner      = xml_arg.group(1)
-                    name_match = re.search(r'name\s*=\s*[\'"]([^\'"]+)[\'"]', inner)
-                    if not name_match:
-                        continue
-                    def_match = re.search(r'default\s*=\s*[\'"]([^\'"]*)[\'"]', inner)
-                    clean_args.append({
-                        "name":        name_match.group(1),
-                        "default":     def_match.group(1) if def_match else "Kein Default",
-                        "description": "",
-                    })
-
-                # Kommentare entfernen, um sauberes Parsing zu garantieren
-                clean_content = re.sub(r'#.*', '', content)
-                
-                nodes_list = []
-                # Finde alle Einstiegspunkte (Instanziierungen)
-                matches = list(re.finditer(r'\b(Node|ComposableNodeContainer|ComposableNode)\s*\(', clean_content))
-                
-                for i, match in enumerate(matches):
-                    node_type = match.group(1)
-                    start_idx = match.end()
-                    # Ende des Suchbereichs ist der Start des nächsten Nodes oder das Dateiende
-                    end_idx = matches[i+1].start() if i + 1 < len(matches) else len(clean_content)
-                    
-                    n_str = clean_content[start_idx:end_idx]
-                    
-                    pkg    = re.search(r'package\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
-                    exe    = re.search(r'executable\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
-                    plugin = re.search(r'plugin\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
-                    name_m = re.search(r'name\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
-                    
-                    if node_type == 'ComposableNode':
-                        exe_val = plugin.group(1).split('::')[-1] if plugin else "component"
-                        is_cont = False
-                        is_comp = True
-                    elif node_type == 'ComposableNodeContainer':
-                        exe_val = exe.group(1) if exe else "component_container"
-                        is_cont = True
-                        is_comp = False
-                    else:
-                        exe_val = exe.group(1) if exe else "unknown"
-                        is_cont = False
-                        is_comp = False
-                    
-                    if pkg and exe_val != "unknown":
-                        nodes_list.append({
-                            "package":      pkg.group(1),
-                            "executable":   exe_val,
-                            "name":         name_m.group(1) if name_m else exe_val,
-                            "is_container": is_cont,
-                            "is_component": is_comp
-                        })
-
-                for node_match in re.finditer(r'<node\s+([^>]+)>', content):
-                    n_str  = node_match.group(1)
-                    pkg    = re.search(r'pkg\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
-                    exe    = re.search(r'exec\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
-                    name_m = re.search(r'name\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
-                    if pkg and exe:
-                        nodes_list.append({
-                            "package":    pkg.group(1),
-                            "executable": exe.group(1),
-                            "name":       name_m.group(1) if name_m else exe.group(1),
-                        })
-
-                all_launch_refs = set(re.findall(
-                    r'([a-zA-Z0-9_\-\.]+(?:\.launch\.py|\.launch\.xml|_launch\.xml))', content))
-                my_name = os.path.basename(l_file)
-                all_launch_refs.discard(my_name)
-
-                self.launch_details_cache.append({
-                    "file_name":       my_name,
-                    "path":            os.path.relpath(l_file, self.base_ws_path),
-                    "args":            clean_args,
-                    "parsed_nodes":    nodes_list,
-                    "parsed_includes": list(all_launch_refs),
-                })
-            except Exception:
-                pass
-
-        self.update_project_files_cache()
-        self._build_executable_cache_async()   # Nicht-blockierend!
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # EXECUTABLE CACHE  (Thread-sicher, nicht-blockierend)
-    # ═══════════════════════════════════════════════════════════════════════════
-    def _build_executable_cache_async(self):
-        """Startet den exe-cache-Build in einem Hintergrund-Thread."""
-        t = threading.Thread(target=self._build_executable_cache, daemon=True)
-        t.start()
-
-    def _build_executable_cache(self):
-        """Baut executable→package Map. Läuft im Hintergrund-Thread."""
-        source_cmd = ('source /opt/ros/humble/setup.bash && '
-                      'source ~/dev_ws/install/setup.bash 2>/dev/null')
-        new_map    = {}
-        ws_pkg_names = list(self.pkg_cache.values())
-
-        for pkg_name in ws_pkg_names:
-            try:
-                result = subprocess.run(
-                    f'{source_cmd} && ros2 pkg executables {pkg_name}',
-                    shell=True, executable='/bin/bash',
-                    capture_output=True, text=True, timeout=10)
-                for line in result.stdout.splitlines():
-                    parts = line.strip().split()
-                    if len(parts) == 2:
-                        new_map[parts[1]] = pkg_name
-            except Exception as e:
-                self.get_logger().debug(f'[exe-cache] {pkg_name}: {e}')
-
-        with self._exe_cache_lock:
-            self.executable_pkg_map = new_map
-        self.get_logger().info(f"[exe-cache] {len(new_map)} Executables gecacht.")
-
-    def _schedule_exe_cache_refresh(self):
-        """30-Sekunden-Timer: Cache einmalig nachaktualisieren."""
-        if self._exe_cache_refresh_done:
-            return
-        self._exe_cache_refresh_done = True
-        self._build_executable_cache_async()
-        self.node_info_cache.clear()
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # PROJECT FILES CACHE
-    # ═══════════════════════════════════════════════════════════════════════════
-    def update_project_files_cache(self):
-        target_files_set = set()
-        for src in self.source_files_cache:
-            if src.endswith(('.py', '.cpp')):
-                try:
-                    with open(src, 'r', encoding='utf-8', errors='ignore') as f:
-                        content = f.read()
-                    if 'rclpy' in content or 'rclcpp' in content or 'Node' in content:
-                        target_files_set.add(os.path.basename(src))
-                except Exception:
-                    pass
-
-        for t_file in list(target_files_set):
-            full_path = next(
-                (src for src in self.source_files_cache + self.launch_files_cache
-                 if os.path.basename(src) == t_file), "")
-            info = {
-                "file_name":        t_file,
-                "file_path":        "Unbekannt",
-                "package":          "Unbekannt",
-                "publishers":       [],
-                "subscribers":      [],
-                "services":         [],
-                "clients":          [],
-                "is_workspace":     True,
-                "is_active":        False,
-                "active_node_name": None,
-                "dependencies":     [],
-            }
-            if full_path:
-                info["file_path"]    = os.path.relpath(full_path, self.base_ws_path)
-                info["package"]      = self.get_package_for_file(full_path)
-                info["dependencies"] = self.pkg_dependencies_cache.get(info["package"], [])
-                self.get_logger().debug(f"Indexed: {t_file}")
-
-            self.project_files_cache[t_file] = info
-
-    def get_package_for_file(self, file_path):
-        best_match, best_pkg = "", "Unbekannt"
-        for pkg_dir, pkg_name in self.pkg_cache.items():
-            if file_path.startswith(pkg_dir) and len(pkg_dir) > len(best_match):
-                best_match, best_pkg = pkg_dir, pkg_name
-        return best_pkg
-
-    def classify_node_category(self, pkg_name, launched_by):
-        """Gibt die Kategorie eines Nodes zurück:
-          'workspace'         → Eigener Code in ~/dev_ws/src/
-          'system_via_launch' → System-Paket, aber via WS-Launch-File gestartet
-          'system'            → Reiner ROS 2 System-Node
-        """
-        if pkg_name in self.pkg_cache.values():
-            return 'workspace'
-        if launched_by and launched_by != 'Terminal / Sub-Prozess':
-            return 'system_via_launch'
-        return 'system'
-
-    def _find_source_file(self, executable_name, pkg_name):
-        """Sucht den Quellpfad (src/) für einen Node – sowohl .py als auch .cpp."""
-        exts = ['.py', '.cpp']
-        pkg_src_dir = os.path.join(self.workspace_path, pkg_name)
-
-        # Direkte Kandidaten-Pfade
-        candidates = []
-        for ext in exts:
-            candidates += [
-                os.path.join(self.workspace_path, pkg_name, pkg_name, f"{executable_name}{ext}"),
-                os.path.join(self.workspace_path, pkg_name, 'src', f"{executable_name}{ext}"),
-                os.path.join(self.workspace_path, pkg_name, f"{executable_name}{ext}"),
-            ]
-
-        # Breite Suche im pkg-Verzeichnis (Dateiname stimmt überein)
-        if os.path.isdir(pkg_src_dir):
-            for root, _, files in os.walk(pkg_src_dir):
-                for f in files:
-                    name_no_ext = os.path.splitext(f)[0]
-                    if (name_no_ext == executable_name or name_no_ext == f"{executable_name}_node") \
-                            and f.endswith(tuple(exts)):
-                        candidates.append(os.path.join(root, f))
-
-        for c in candidates:
-            if os.path.exists(c):
-                return os.path.relpath(c, self.base_ws_path)
-        return None
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # NODE INFO RESOLUTION  (3-Stufen-Kategorisierung)
-    # ═══════════════════════════════════════════════════════════════════════════
-    def resolve_node_info(self, raw_node_name):
-        """Löst Paket, Dateipfad und Kategorie für einen Node auf.
-        Kategorien: 'workspace' | 'system_via_launch' | 'system'
-        """
-        clean_name = raw_node_name.lstrip('/')
-        if clean_name in self.node_info_cache:
-            return self.node_info_cache[clean_name]
-
-        info = {
-            "package":      "ROS 2 System",
-            "source_file":  "Kompilierte Binary",
-            "file_path":    "/opt/ros/humble/...",
-            "launched_by":  "Terminal / Sub-Prozess",
-            "is_workspace": False,     # Leagcy-Kompatibilität
-            "category":     "system",  # Neue eindeutige Kategorie
-        }
-
-        # ── Spezialfall: workspace_analyzer selbst ───────────────────────────
-        if clean_name == "workspace_analyzer":
-            info.update({
-                "package":      "websocket",
-                "source_file":  "workspace_analyzer.py",
-                "file_path":    "src/websocket/workspace_analyzer.py",
-                "is_workspace": True,
-                "category":     "workspace",
+            activity_data.append({
+                "topic": topic_name,
+                "hz": round(hz, 2),
+                "last_message": lmsg
             })
-            self.node_info_cache[clean_name] = info
-            return info
 
-        # ── Stufe 1: Direkte Source-Datei suchen (Python) ────────────────────
-        # z.B. Node-Name stimmt mit Dateiname überein: collision_check → collision_check.py
-        for src in self.source_files_cache:
-            try:
-                base_name = os.path.splitext(os.path.basename(src))[0]
-                # Exakter Match oder _node-Suffix-Match
-                if clean_name == base_name or clean_name.rstrip('_node') == base_name:
-                    pkg = self.get_package_for_file(src)
-                    if pkg != 'Unbekannt' and pkg in self.pkg_cache.values():
-                        rel = os.path.relpath(src, self.base_ws_path)
-                        info.update({
-                            "package":      pkg,
-                            "source_file":  os.path.basename(src),
-                            "file_path":    rel,
-                            "is_workspace": True,
-                            "category":     "workspace",
-                        })
-                        break
-            except Exception:
-                pass
+        self.activity_pub.publish(String(data=json.dumps({"activities": activity_data})))
 
-        # ── Stufe 2: Launch-Datei-Zuordnung ─────────────────────────────────
-        # Prüft, ob der Node in einem Workspace-Launch-File referenziert wird
-        for launch in self.launch_details_cache:
-            for l_node in launch.get("parsed_nodes", []):
-                l_name = l_node.get("name", "")
-                l_exec = l_node.get("executable", "")
-                if l_name == clean_name or l_exec == clean_name:
-                    l_pkg = l_node.get("package", "")
-                    info["launched_by"] = launch["file_name"]
-                    info["package"]    = l_pkg
-                    # Ist das Paket ein Workspace-Paket?
-                    if l_pkg in self.pkg_cache.values():
-                        info["is_workspace"] = True
-                        info["category"]     = "workspace"
-                        # Source-Pfad noch nicht gesetzt → versuche Quellpfad (.py oder .cpp)
-                        if not info["file_path"].startswith("src/"):
-                            src_path = self._find_source_file(l_exec, l_pkg)
-                            if src_path:
-                                info["source_file"] = os.path.basename(src_path)
-                                info["file_path"]   = src_path
-                            else:
-                                info["source_file"] = f"Launch: {launch['file_name']}"
-                                info["file_path"]   = launch.get("path", "/opt/ros/humble/...")
-                    else:
-                        # System-Paket, aber via WS-Launch gestartet
-                        info["category"]     = "system_via_launch"
-                        info["is_workspace"] = False
-                        info["source_file"]  = f"gestartet via: {launch['file_name']}"
-                        info["file_path"]    = launch.get("path", "/opt/ros/humble/...")
-                    break
-            if info["launched_by"] != "Terminal / Sub-Prozess":
-                break
-
-        # ── Stufe 3: Executable-Cache (Thread-safe) ──────────────────────────
-        # Workspace-Paket via `ros2 pkg executables`
-        if info["category"] == "system":
-            with self._exe_cache_lock:
-                exe_map = self.executable_pkg_map
-            if clean_name in exe_map:
-                ws_pkg = exe_map[clean_name]
-                # Nur als workspace wenn Paket wirklich in dev_ws/src liegt
-                if ws_pkg in self.pkg_cache.values():
-                    src_path = self._find_source_file(clean_name, ws_pkg)
-                    info.update({
-                        "package":      ws_pkg,
-                        "source_file":  os.path.basename(src_path) if src_path else f"{clean_name} (Binary)",
-                        "file_path":    src_path if src_path else f"src/{ws_pkg}/",
-                        "is_workspace": True,
-                        "category":     "workspace",
-                    })
-
-        # ── Stufe 4: Bereinigung für System-Nodes ─────────────────────────────
-        # Falls bis hierhin kein Workspace-Bezug gefunden wurde, stellen wir sicher,
-        # dass kein falscher Pfad aus der Launch-Suche hängen bleibt.
-        if info["category"] == "system":
-            info["source_file"] = "Kompilierte Binary"
-            info["file_path"]   = "/opt/ros/humble/..."
-            info["is_workspace"] = False
-            
-        # Legacy-Feld synchron halten
-        info["is_workspace"] = (info["category"] == "workspace")
-        
-        # NEU: Abhängigkeiten direkt in die Info-Daten einbetten
-        if info["package"] != "Unbekannt":
-            info["dependencies"] = self.pkg_dependencies_cache.get(info["package"], [])
-        else:
-            info["dependencies"] = []
-
-        self.node_info_cache[clean_name] = info
-        return info
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # BASHRC PARSER
-    # ═══════════════════════════════════════════════════════════════════════════
-    def parse_bashrc(self):
-        bashrc_path = os.path.expanduser('~/.bashrc')
-        if not os.path.exists(bashrc_path):
-            return ["Keine .bashrc gefunden"]
+    def publish_active_nodes_pulse(self):
         try:
-            current_mtime = os.path.getmtime(bashrc_path)
-            if current_mtime <= self.bashrc_mtime and self.bashrc_cache:
-                return self.bashrc_cache
-            self.bashrc_mtime = current_mtime
-            with open(bashrc_path, 'r', encoding='utf-8', errors='ignore') as f:
-                content = f.read()
-            lines = content.split('\n')
-            self.bashrc_cache = lines[max(0, len(lines) - 20):]
-            return self.bashrc_cache
-        except Exception as e:
-            return [f"FEHLER: {str(e)}"]
-
-    def parse_bashrc_env_vars(self):
-        """Liest gezielt export-Zeilen aus ~/.bashrc aus.
-        Gibt ein Dict mit den gefundenen Werten zurueck.
-        Dient als Fallback wenn os.environ die Variablen nicht enthaelt.
-        """
-        result = {}
-        bashrc_path = os.path.expanduser('~/.bashrc')
-        if not os.path.exists(bashrc_path):
-            return result
-        try:
-            with open(bashrc_path, 'r', encoding='utf-8', errors='ignore') as f:
-                for line in f:
-                    line = line.strip()
-                    # Ignoriere Kommentare
-                    if line.startswith('#'):
-                        continue
-                    # Suche nach: export KEY=VALUE oder KEY=VALUE
-                    m = re.match(r'^(?:export\s+)?(\w+)=(.+)$', line)
-                    if m:
-                        key = m.group(1)
-                        val = m.group(2).strip().strip('"').strip("'")
-                        result[key] = val
+            node_names_and_namespaces = self.get_node_names_and_namespaces()
+            active_node_names = [n for n, _ in node_names_and_namespaces]
+            pulse_data = {"active_nodes": active_node_names}
+            self.publisher_.publish(String(data=json.dumps(pulse_data)))
         except Exception:
             pass
-        return result
 
-    # ═══════════════════════════════════════════════════════════════════════════
-    # PUBLISH METADATA  (mit Topology-Diff)
-    # ═══════════════════════════════════════════════════════════════════════════
     def publish_metadata(self):
         try:
             import traceback
@@ -776,7 +265,6 @@ class WorkspaceAnalyzer(Node):
                 f"{ns}/{n}".replace('//', '/') for n, ns in node_names_and_namespaces
             }
 
-            # ── Topology neu abfragen wenn nötig (alle 10s oder bei Node-Änderung) ──
             nodes_changed = (current_full_names != self._last_known_nodes)
             time_since_last = time.time() - self.last_topology_update
             
@@ -794,9 +282,6 @@ class WorkspaceAnalyzer(Node):
                         pubs = self.get_publisher_names_and_types_by_node(n_name, n_ns)
                         subs = self.get_subscriber_names_and_types_by_node(n_name, n_ns)
                         
-                        # --- Stabilitäts-Check (Anti-Blink) ---
-                        # Falls Node gerade 0 Topics meldet, aber er vorher welche hatte:
-                        # Behalte die alten Daten für max. 1 Zyklus (Hysterese)
                         if not pubs and not subs and full_n in self._topology_cache:
                             old = self._topology_cache[full_n]
                             if old.get("publishers") or old.get("subscribers"):
@@ -815,26 +300,23 @@ class WorkspaceAnalyzer(Node):
 
                 self._topology_cache = new_topology
 
-            # ── Bereinige cli_node_cache von toten Nodes ──────────────────────
             dead_nodes = set(self.cli_node_cache.keys()) - current_full_names
             for dn in dead_nodes:
                 if dn != 'workspace_analyzer':
                     del self.cli_node_cache[dn]
 
-            # ── Metadata aufbauen ─────────────────────────────────────────────
-            # Fallback: Werte aus ~/.bashrc lesen wenn os.environ sie nicht kennt
-            bashrc_env = self.parse_bashrc_env_vars()
+            bashrc_env = parse_bashrc_env_vars()
 
             def env_get(key, default=''):
                 return os.environ.get(key) or bashrc_env.get(key, default)
 
             metadata = {
                 "nodes":         {},
-                "project_files": copy.deepcopy(self.project_files_cache),
-                "bashrc":        self.parse_bashrc(),
-                "tree":          self.workspace_tree_cache,
+                "project_files": copy.deepcopy(self.parser.project_files_cache),
+                "bashrc":        parse_bashrc(),
+                "tree":          self.parser.workspace_tree_cache,
                 "launches":      [],
-                "all_launches":  self.launch_details_cache,
+                "all_launches":  self.parser.launch_details_cache,
                 "ros_domain_id": env_get("ROS_DOMAIN_ID", "0"),
                 "ros_distro":    env_get("ROS_DISTRO", "humble"),
                 "rmw_impl":      env_get("RMW_IMPLEMENTATION", "fastrtps"),
@@ -847,14 +329,13 @@ class WorkspaceAnalyzer(Node):
                 full_name  = f"{namespace}/{name}".replace('//', '/')
                 node_topo  = self._topology_cache.get(full_name, {"publishers": [], "subscribers": []})
                 pubs, subs = node_topo["publishers"], node_topo["subscribers"]
-                info       = self.resolve_node_info(name)
+                info       = self.parser.resolve_node_info(name)
 
                 all_pubs    = {t["topic"]: t["types"] for t in pubs}
                 all_subs    = {t["topic"]: t["types"] for t in subs}
                 all_srvs    = {}
                 all_clients = {}
 
-                # CLI On-Demand Daten einmischen
                 if full_name in self.cli_node_cache:
                     cli = self.cli_node_cache[full_name]
                     for p  in cli.get('publishers',  []): all_pubs[p['topic']]   = p['types']
@@ -862,7 +343,6 @@ class WorkspaceAnalyzer(Node):
                     for sr in cli.get('services',    []): all_srvs[sr['name']]   = sr['types']
                     for c  in cli.get('clients',     []): all_clients[c['name']] = c['types']
 
-                # Actions erkennen
                 action_bases = set()
                 for t in pubs + subs:
                     if "/_action/" in t["topic"]:
@@ -874,7 +354,7 @@ class WorkspaceAnalyzer(Node):
                     "file_path":         info["file_path"],
                     "launched_by":       info["launched_by"],
                     "is_workspace":      info["is_workspace"],
-                    "category":          info.get("category", "system"),  # 'workspace' | 'system_via_launch' | 'system'
+                    "category":          info.get("category", "system"),
                     "filtered_subs_count": 0,
                     "publishers":        [{"topic": k, "types": v} for k, v in all_pubs.items()],
                     "subscribers":       [{"topic": k, "types": v} for k, v in all_subs.items()],
@@ -882,10 +362,9 @@ class WorkspaceAnalyzer(Node):
                     "clients":           [{"name":  k, "types": v} for k, v in all_clients.items()],
                     "actions":           list(action_bases),
                     "action_count":      len(action_bases),
-                    "dependencies":      self.pkg_dependencies_cache.get(info["package"], []),
+                    "dependencies":      self.parser.pkg_dependencies_cache.get(info["package"], []),
                 }
 
-                # Projekt-Datei als aktiv markieren
                 for p_file, p_data in metadata["project_files"].items():
                     p_file_no_ext = os.path.splitext(p_file)[0]
                     if info["source_file"] == p_file or name == p_file_no_ext:
@@ -896,7 +375,6 @@ class WorkspaceAnalyzer(Node):
                 if info["launched_by"] and "Terminal" not in info["launched_by"]:
                     active_launch_files.add(info["launched_by"])
 
-            # ── start.sh parsen (mtime-gecacht) ───────────────────────────────
             start_sh_path        = os.path.join(self.base_ws_path, 'start.sh')
             relevant_launch_names = set()
             try:
@@ -914,8 +392,7 @@ class WorkspaceAnalyzer(Node):
             except Exception:
                 pass
 
-            # Transitive Includes auflösen
-            includes_map = {l["file_name"]: l.get("parsed_includes", []) for l in self.launch_details_cache}
+            includes_map = {l["file_name"]: l.get("parsed_includes", []) for l in self.parser.launch_details_cache}
             added_new = True
             while added_new:
                 added_new = False
@@ -925,9 +402,8 @@ class WorkspaceAnalyzer(Node):
                             relevant_launch_names.add(inc)
                             added_new = True
 
-            # Launch-Daten aufbauen
             filtered_launches = []
-            for l in self.launch_details_cache:
+            for l in self.parser.launch_details_cache:
                 if l["file_name"] in relevant_launch_names:
                     active_nodes = [
                         n for n, ni in metadata["nodes"].items()
@@ -954,9 +430,6 @@ class WorkspaceAnalyzer(Node):
             self.get_logger().error(f"publish_metadata Exception:\n{traceback.format_exc()}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# MAIN
-# ═══════════════════════════════════════════════════════════════════════════════
 def main(args=None):
     rclpy.init(args=args)
     analyzer = WorkspaceAnalyzer()

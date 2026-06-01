@@ -286,7 +286,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 * **`websocket`** *(Workspace Analyzer Backend)*
     * **Purpose:** Data source for the web dashboard.
     * **Task:** Monitors the ROS network and source code.
-    * **How it works:** `workspace_analyzer.py` uses regex for execution-free code analysis (`src/`). Monitors file changes and publishes JSON metadata to ROS topics (e.g., `/dashboard/workspace_metadata`).
+    * **How it works:** The backend is modularized into `workspace_analyzer.py` (ROS 2 Node handling Pub/Sub), `workspace_parser.py` (regex execution-free code analysis), and `system_utils.py` (environment parsing). It monitors file changes and publishes JSON metadata to ROS topics (e.g., `/dashboard/workspace_metadata`).
 * **`rosbridge_server`**
     * **Purpose:** WebSocket bridge for web browsers.
     * **Task:** Native communication between dashboard and robot.
@@ -584,6 +584,9 @@ dev_ws/
 │   ├── rviz_marker/                # 📍 Python: RViz2 marker publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent parser & filter
 │   ├── websocket/                  # 📊 Python: Workspace analyzer backend
+│   │   ├── workspace_analyzer.py   # Main ROS 2 Node (Pub/Sub & Topology)
+│   │   ├── workspace_parser.py     # Static code analysis (Regex)
+│   │   ├── system_utils.py         # Environment parsing (bashrc cache)
 │   ├── xarm_ros2/                  # 🤖 Official xArm ROS 2 packages (submodule)
 │   │   └── xarm_moveit_servo/
 │   │       └── src/
