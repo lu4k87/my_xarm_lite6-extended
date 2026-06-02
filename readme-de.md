@@ -114,17 +114,17 @@ Die softwareseitige Infrastruktur ist modular gekapselt und vollständig in das 
 
 Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustand des Systems über das **ROS2 Core Dashboard** überwachen. Dies ist eine webbasierte Echtzeit-UI, die statische Quellcode-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks zu einer einheitlichen Monitoring-Oberfläche zusammenführt.
 
-### 4.1 Backend (`workspace_analyzer.py`)
-Ein ROS 2 Node, der eine ausführungsfreie, regex-basierte statische Code-Analyse des gesamten `src/`-Verzeichnisses durchführt. Dabei werden Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten extrahiert. Diese strukturierten JSON-Metadaten werden kontinuierlich an `/dashboard/workspace_metadata` publiziert (im 10-Sekunden-Timer-Zyklus). Zusätzlich werden Umgebungsvariablen (ROS Distro, Domain ID, DDS-Middleware, Localhost-Modus) aus `~/.bashrc` ausgelesen und als Live-Status-Badges bereitgestellt.
+### 3.1 Backend (`workspace_analyzer.py`)
+Das Backend ist ein ROS 2 Node, der eine ausführungsfreie, regex-basierte statische Code-Analyse durchführt. Es wurde stark modularisiert in drei Kerndateien: `workspace_analyzer.py` (behandelt ROS Pub/Sub), `workspace_parser.py` (führt die Regex-Analyse aus) und `system_utils.py` (parst Umgebungsvariablen). Dabei werden Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten extrahiert. Diese strukturierten JSON-Metadaten werden kontinuierlich an `/dashboard/workspace_metadata` publiziert (im 10-Sekunden-Timer-Zyklus). Zusätzlich werden Umgebungsvariablen (ROS Distro, Domain ID, DDS-Middleware, Localhost-Modus) aus `~/.bashrc` ausgelesen und als Live-Status-Badges bereitgestellt.
 
 > **Hinweis zu `workspace_analyzer.py`:** Dies ist **kein** Netzwerk-Server, sondern ein normaler ROS 2 Node. Das Dashboard greift über die ROS Bridge (Port 9090) auf dessen publizierte Topics zu.
 
-### 4.2 Frontend (`dashboard_index.html`)
-Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Netzwerk. Es gleicht statisch analysierte Nodes visuell mit den aktuell laufenden Nodes ab, zeigt Echtzeit-Topic-Frequenzen (Hz) an und ermöglicht die direkte Ausführung von System-Skripten aus der Browser-Oberfläche in einer übersichtlichen, einspaltigen Referenzansicht. Das UI nutzt eine moderne Glassmorphism-Designsprache und führt rekursives JSON-Parsing durch, um tief verschachtelte ROS-Nachrichtenstrukturen sauber formatiert darzustellen. Die Sidebar liefert auf einen Blick Statusinformationen wie Verbindungsgesundheit, Roboter-Verfügbarkeit und die aktive ROS 2 Umgebungskonfiguration.
+### 3.2 Frontend (`dashboard_index.html`)
+Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Netzwerk. Die Frontend-Logik wurde für eine bessere Wartbarkeit strikt in 8 spezialisierte JavaScript-Module unterteilt (z.B. `dashboard_script_nodes.js`, `dashboard_script_graph.js`, `dashboard_script_ros.js`). Es gleicht statisch analysierte Nodes visuell mit den aktuell laufenden Nodes ab, zeigt Echtzeit-Topic-Frequenzen (Hz) an und ermöglicht die direkte Ausführung von System-Skripten aus der Browser-Oberfläche in einer übersichtlichen, einspaltigen Referenzansicht. Das UI nutzt eine moderne Glassmorphism-Designsprache und führt rekursives JSON-Parsing durch, um tief verschachtelte ROS-Nachrichtenstrukturen sauber formatiert darzustellen. Die Sidebar liefert auf einen Blick Statusinformationen wie Verbindungsgesundheit, Roboter-Verfügbarkeit und die aktive ROS 2 Umgebungskonfiguration.
 
 ![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
 
-### 4.3 Startbefehle der UI-Komponenten
+### 3.3 Startbefehle der UI-Komponenten
 *Starte diese Komponenten über ROS 2 Nexus oder manuell über das Terminal:*
 * **Backend:** `python3 src/websocket/workspace_analyzer.py`
 * **Webserver:** `python3 -m http.server 8080 -d src/websocket`
@@ -134,7 +134,7 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ## 4. 🕹️ Multimodale Technologien & Interaktionskonzepte
 
-### 5.1 Roboter-Steuerungsarten (Inputs)
+### 4.1 Roboter-Steuerungsarten (Inputs)
 **Gamepad Teleoperation:** <br> 
 * Latenzarme, kontinuierliche Feinsteuerung per Xbox One Elite Series 2 Controller (inkl. haptischem Feedback - Vibration bei Kollisionsgefahr).
 
@@ -150,7 +150,7 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 **VR-Controller Steuerung** (in Bearbeitung...): <br>
 * Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
 
-### 5.2 Sensorik & Assistenz (Perception)
+### 4.2 Sensorik & Assistenz (Perception)
 **Computer Vision:** <br> 
 * Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* (aktuell über PiCameras).
 **Stereo Vision (Geplant):** <br>
@@ -158,13 +158,13 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 **VLA & Video Action Models (Geplant):** <br>
 * KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
-### 5.3 Koordinatentransformation & Kalibrierung
+### 4.3 Koordinatentransformation & Kalibrierung
 **ArUco Marker System:** <br> 
 * Im Arbeitsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
 * Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsfläche (Z = 90 mm).
 * Präzise Projektion von Eye-Tracking Blickkoordinaten auf die Steuerungs-**UI**, um den Blick in Roboterbefehle zu übersetzen.
 
-### 5.4 User Interfaces (UI/GUI)
+### 4.4 User Interfaces (UI/GUI)
 Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, immersives User Interface zur Verfügung, das alle Systemzustände bündelt.
 
 **Telemetrie & Status:** <br> 
@@ -191,14 +191,14 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 
 ## 5. ⚙️ Core Features & ROS 2 Nodes
 
-### 6.1 👁️ Computer Vision & Perception
+### 5.1 👁️ Computer Vision & Perception
 
 * **`yolo_object_detector`**
     * **Zweck:** Objekterkennung und räumliche Lokalisierung (Würfel, Rechteck, Zylinder).
     * **Aufgabe:** Findet trainierte Objekte und ArUco-Marker im 2D-Bildstream; projiziert diese in 3D.
     * **Funktionsweise:** Liest RTSP/HTTP-Streams im Background-Thread. Transformiert YOLO Bounding Boxes via `cv2.findHomography` und ArUco-Markern in den 3D-Raum (Z=90 mm). Publiziert `PoseArray`-Nachrichten unter `/objects/<color>_<shape>/world_poses`.
 
-### 6.2 🗣️ Sprachsteuerung & Interaktion
+### 5.2 🗣️ Sprachsteuerung & Interaktion
 
 * **`ros2_whisper`**
     * **Zweck:** Lokale Speech-to-Text Erkennung.
@@ -213,14 +213,14 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Aufgabe:** "God-Mode" PyQt5 Benutzeroberfläche für reine Blickeingabe.
     * **Funktionsweise:** Extrahiert JSON Gaze2D-Daten aus dem RTSP Stream. Nutzt ArUco-Marker zur Bildschirm-Erkennung und transformiert Blickkoordinaten in die **UI**. Bei 0,5 Sek. Verweildauer (Dwell-Time) auf einem Button wird ein `TwistStamped`-Befehl publiziert.
 
-### 6.3 🧠 Logik & Koordination
+### 5.3 🧠 Logik & Koordination
 
 * **`move_to_coordinator`**
     * **Zweck:** Zentrales "Gehirn" für task-basierte Bewegungen im **Shared Control**.
     * **Aufgabe:** Führt Sprach-/Blickbefehle mit Kameradaten zusammen und koordiniert Fahrbefehle.
     * **Funktionsweise:** State-Machine basiert. Queued Intents, sendet den Roboter auf eine Scan-Pose (`WAITING_FOR_ROBOT_IDLE`), blockiert 2,0 Sek. zur Bildstabilisierung, prüft die Aktualität des `PoseArray` und führt den kartesischen Service Call aus.
 
-### 6.4 🦾 Bewegung & Sicherheit
+### 5.4 🦾 Bewegung & Sicherheit
 
 * **`motion_sequence`** — `src/motion_sequence/motion_sequence/motion_sequence.py`
     * **Zweck:** Zustandsverwaltung und sichere Ausführung von kartesischen Bewegungen.
@@ -231,23 +231,19 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 * **`collision_check`** — `src/collision_check/collision_check/checker.py`
     * **Zweck:** Hardwareschutz (Verhinderung von Tischkollisionen).
     * **Aufgabe:** Prädiktives Eingreifen vor Kollisionen bei manueller Gamepad-Steuerung.
-    * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt asynchron die aktuelle EEF-Position ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Kollision droht. Siehe **Abschnitt 7** für die vollständige technische Tiefenanalyse.
+    * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt asynchron die aktuelle EEF-Position ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Kollision droht. Siehe **Abschnitt 6** für die vollständige technische Tiefenanalyse.
 
 * **`xarm_joystick_input`** *(Teil von `xarm_moveit_servo`)* — `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`
     * **Zweck:** Gamepad-Steuerung & Button-Mapping (C++ Node).
     * **Aufgabe:** Übersetzt gefilterte Joystick-Signale in `TwistStamped` Kartesische Geschwindigkeitsbefehle und ROS Service Calls.
-    * **Funktionsweise:** Abonniert das bereinigte `/joy_check`-Topic. Wendet exponentielles Smoothing (`factor = 0.5`) auf alle Achsen an, erzwingt eine Totzone von `|val| > 0.1` und bildet alle 11 Buttons auf Roboteraktionen ab. Siehe **Abschnitt 7** für die vollständige Belegungstabelle und das Signal-Fluss-Diagramm.
+    * **Funktionsweise:** Abonniert das bereinigte `/joy_check`-Topic. Wendet exponentielles Smoothing (`factor = 0.5`) auf alle Achsen an, erzwingt eine Totzone von `|val| > 0.1` und bildet alle 11 Buttons auf Roboteraktionen ab. Siehe **Abschnitt 6** für die vollständige Belegungstabelle und das Signal-Fluss-Diagramm.
 
-### 6.5 🖥️ Monitoring (Dashboard), UI & Visualisierung
+### 5.5 🖥️ Monitoring (Dashboard), UI & Visualisierung
 
 * **`rviz_marker`**
     * **Zweck:** Visuelles Live-Feedback in RViz2.
     * **Aufgabe:** Optische Aufwertung der 3D-Simulation.
     * **Funktionsweise:** Trackt `link_eef` via TF2. Publiziert `MarkerArray` mit Pick-and-Place-Zielen (Würfel, Zylinder) und statische 3D-Meshes (z.B. ZED Kamera) zur Simulation ohne Live-YOLO-Daten.
-* **`websocket`** *(Workspace Analyzer Backend)*
-    * **Zweck:** Datenquelle für das Web-Dashboard.
-    * **Aufgabe:** Überwacht das ROS-Netzwerk und den Quellcode.
-    * **Funktionsweise:** Das Backend ist modularisiert in `workspace_analyzer.py` (ROS 2 Node für Pub/Sub), `workspace_parser.py` (ausführungsfreie Regex-Code-Analyse) und `system_utils.py` (Umgebungs-Parsing). Es überwacht Dateiänderungen und publiziert JSON-Metadaten auf ROS-Topics (z.B. `/dashboard/workspace_metadata`).
 * **`rosbridge_server`**
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
@@ -263,7 +259,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 
 Dieser Abschnitt liefert eine vollständige technische Referenz für die zweistufige Gamepad-Pipeline, die eine kollisionssichere Echtzeit-Teleoperation des xArm Lite 6 mit dem Xbox One Elite Series 2 Controller ermöglicht.
 
-### 7.1 Pipeline-Architektur
+### 6.1 Pipeline-Architektur
 
 Das Gamepad-Signal durchläuft zwei Stufen, bevor es den MoveIt Servo Server erreicht. Dieses Zwei-Node-Design trennt **Sicherheitsdurchsetzung** (Python) von **Bewegungsübersetzung** (C++):
 
@@ -288,13 +284,13 @@ flowchart LR
 
 ---
 
-### 7.2 `checker.py` — Kollisionsschutz (Python Node)
+### 6.2 `checker.py` — Kollisionswächter (Python Node)
 
 **Datei:** `src/collision_check/collision_check/checker.py`
 
 Fungiert als transparenter **Sicherheits-Proxy** zwischen rohem Joystick-Treiber und Bewegungscontroller. Jede `/joy`-Nachricht löst einen asynchronen Service-Call für die aktuelle EEF-Position aus — erst danach wird das (ggf. modifizierte) Signal weitergeleitet.
 
-#### 7.2.1 Prädiktiver Kollisionsalgorithmus
+#### 6.2.1 Prädiktiver Kollisions-Algorithmus
 
 ```
 trigger_intensity  = (1.0 - axes[RT]) / 2.0        # 0.0 (los) → 1.0 (voll)
@@ -316,7 +312,7 @@ if predicted_z < Z_LIMIT:
 | `ACCELERATION_FACTOR` (α) | `0,9` | Dämpfungsfaktor |
 | `DOWN_TRIGGER_AXIS` | `5` (RT) | Joy-Achsen-Index für Abwärts-Trigger |
 
-#### 7.2.2 Zweistufiges Sicherheitsmodell
+#### 6.2.2 Zwei-Stufen-Sicherheitsmodell
 
 ```
 Z > 110 mm              → Volle Geschwindigkeit, keine Einschränkungen
@@ -324,7 +320,7 @@ Z > 110 mm              → Volle Geschwindigkeit, keine Einschränkungen
 Z ≤ 96,5 mm            → 🛑  HARD STOP: Abwärtsachse genullt + Rumble
 ```
 
-#### 7.2.3 Haptisches Feedback via Pygame
+#### 6.2.3 Haptisches Feedback via Pygame
 
 ```python
 if self.joystick: self.joystick.rumble(0.8, 0.8, 1000)  # Intensität L/R, Dauer ms
@@ -332,7 +328,7 @@ if self.joystick: self.joystick.rumble(0.8, 0.8, 1000)  # Intensität L/R, Dauer
 
 Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 
-#### 7.2.4 Topics & Services Referenz
+#### 6.2.4 Topics & Services Referenz
 
 | Typ | Name | Message-Typ | Beschreibung |
 |-----|------|------------|-------------|
@@ -345,13 +341,13 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 
 ---
 
-### 7.3 `xarm_joystick_input.cpp` — Bewegungscontroller (C++ Node)
+### 6.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)
 
 **Datei:** `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`  
 **Klasse:** `xarm_moveit_servo::JoyToServoPub`  
 **Registriert als:** ROS 2 Component (`RCLCPP_COMPONENTS_REGISTER_NODE`)
 
-#### 7.3.1 Vollständige Controller-Belegung
+#### 6.3.1 Vollständiges Controller Button-Mapping
 
 | Eingabe | Funktion | ROS-Aktion | Technisches Detail |
 |---------|---------|-----------|-------------------|
@@ -380,7 +376,7 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 | 4 | `75%` | Schnell — Weitstreckenfahrt |
 | 5 | `100%` | Maximum — volle Servo-Geschwindigkeit |
 
-#### 7.3.2 Signalfluss & Exponentielles Smoothing
+#### 6.3.2 Signal-Fluss & Exponentielle Glättung
 
 ```
 // Jeder Callback-Zyklus:
@@ -397,7 +393,7 @@ Hardware-Eingabe
                     └─ /servo_server/delta_twist_cmds (TwistStamped)
 ```
 
-#### 7.3.3 Whisper AI Integration (X-Taste)
+#### 6.3.3 Whisper AI Integration (X-Button)
 
 ```
 X drücken → async_send_goal (max_duration = 5s)
@@ -410,7 +406,7 @@ X drücken → async_send_goal (max_duration = 5s)
 
 Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 
-#### 7.3.4 Topics & Services Referenz
+#### 6.3.4 Topics & Services Referenz
 
 | Typ | Name | Message-Typ | Beschreibung |
 |-----|------|------------|-------------|
@@ -496,11 +492,11 @@ source install/setup.bash
 
 Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Software. **ROS 2 Nexus** dient dabei als zentrale webbasierte Oberfläche, um alle Nodes, Sensoren und Algorithmen mit nur einem Klick hochzufahren.
 
-### Schritt 1: Hardware vorbereiten
+### 8.1 Schritt 1: Hardware vorbereiten
 1. **Roboter einschalten:** Schalte den UFactory xArm Lite 6 an und stelle sicher, dass der Not-Aus-Schalter entriegelt ist.
 2. **Controller verbinden:** Schalte den Xbox One Elite Series 2 Controller ein und prüfe die Verbindung (Bluetooth oder USB) mit dem Host-PC.
 
-### Schritt 2: System starten (ROS 2 Nexus)
+### 8.2 Schritt 2: System starten (ROS 2 Nexus)
 Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- oder `ros2 launch`-Befehle in mehreren Terminals parallel ausgeführt werden, um die einzelnen Nodes zu starten. Genau um dieses Problem zu lösen, wurde die **ROS 2 Nexus** WebApp entwickelt: Anstatt komplexe CLI-Befehle auswendig zu lernen, lassen sich alle benötigten Nodes und Launch-Files bequem per Klick direkt aus dem Browser heraus starten.
 
 **Start über Terminal:**
@@ -517,7 +513,7 @@ python3 _exec/ros2_nexus_web.py
 
 > **Ubuntu App Integration:** ROS 2 Nexus ist als native Ubuntu-Anwendung über einen `.desktop`-Eintrag registriert. Die App kann direkt gestartet werden, indem im Ubuntu-Aktivitäten-Menü nach **„ROS 2 Nexus"** gesucht wird.
 
-### Schritt 3: Module über die GUI aktivieren
+### 8.3 Schritt 3: Module über die GUI aktivieren
 Sobald sich ROS 2 Nexus im Browser geöffnet hat:
 1. Navigiere durch die verschiedenen Tabs der Oberfläche.
 2. Klicke auf die entsprechenden Buttons, um die benötigten Module (z.B. Roboter-Treiber, Gamepad-Steuerung, Vision, Dashboard) zu starten.
@@ -527,7 +523,7 @@ Sobald sich ROS 2 Nexus im Browser geöffnet hat:
   <img src="_imgs/ros2_nexus_web.png" width="90%" alt="ROS 2 Nexus — Web Edition">
 </p>
 
-### 3.2 Netzwerk- & Port-Architektur
+### 8.4 Netzwerk- & Port-Architektur
 
 Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nutzen, laufen im Hintergrund drei verschiedene Server auf drei separaten Ports:
 
@@ -535,12 +531,12 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 |------|---------|-----|--------------|
 | **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Stellt die grafische Nexus-Oberfläche bereit. Empfängt Klicks aus dem Browser, führt ROS-Shell-Befehle als Unterprozesse auf dem Host-PC aus und streamt den Terminal-Output in Echtzeit direkt zurück in die Web-Oberfläche. |
 | **`8080`** | **Dashboard Frontend** | HTTP Server | Hostet die statischen HTML/CSS/JS-Dateien für das ROS2 Core Dashboard. |
-| **`8765`** | **Nexus Terminal Server** | WebSocket (PTY) | Eigenständiges Python-Backend, das Pseudo-Terminals (`pty`) nutzt, um eine vollständig interaktive, mit Tabs versehene Ubuntu-Bash-Shell direkt in der Nexus Web UI via `xterm.js` bereitzustellen. |
+| **`8765`** | **Nexus Terminal Server** | WebSocket (PTY) | Eigenständiges Python-Backend, das Pseudo-Terminals (`pty`) nutzt, um eine vollständig interaktive, mit Tabs versehene Ubuntu-Bash-Shell direkt in der Nexus Web UI via `xterm.js` bereitzustellen. **Beinhaltet ein robustes Session-basiertes Process Lifecycle Management:** Das Schließen eines Terminal-Tabs beendet sofort und zuverlässig (`SIGTERM` -> `SIGKILL`) den gesamten zugehörigen ROS 2-Prozessbaum, was Zombie-Nodes und blockierte Ports rigoros verhindert. |
 | **`9090`** | **ROS Bridge** | WebSocket | Die Brücke zwischen ROS 2 und dem Browser. Erlaubt dem Dashboard (Port 8080), sich über `roslib.js` direkt mit dem ROS-Netzwerk zu verbinden, um Echtzeit-Telemetrie auszulesen und Services aufzurufen. |
 
 > **Warum strikte Port-Trennung?** Die Ports 8080 und 9090 nutzen unterschiedliche Protokolle für verschiedene Aufgaben. Port 8080 (HTTP) fungiert als Standard-Webserver und liefert die statischen Webseiten-Dateien (HTML/CSS) an den Browser aus. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich ROS-Echtzeitdaten streamt und nicht in der Lage ist, Webseiten bereitzustellen. Port 5000 (Flask) verarbeitet Backend-Logik unabhängig von ROS.
 
-### 3.3 Launcher-Konfiguration (`launcher_config.json`)
+### 8.5 Launcher-Konfiguration (`launcher_config.json`)
 
 Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar. Sie werden in einer externen Konfigurationsdatei unter `_exec/launcher_config.json` definiert. Um eigene Skripte, Debugging-Tools oder ROS 2 Nodes zur Launcher-UI hinzuzufügen, muss lediglich diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch, sodass Änderungen nach einem simplen Neuladen der Seite im Browser sofort aktiv werden, ohne dass das Backend neugestartet werden muss.
 
@@ -576,10 +572,13 @@ dev_ws/
 │   ├── ros2_whisper/               # 🎙️ Whisper AI Speech-to-Text
 │   ├── rviz_marker/                # 📍 Python: RViz2 Marker-Publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent-Parser & Filter
-│   ├── websocket/                  # 📊 Python: Workspace-Analyzer-Backend
+│   ├── websocket/                  # 📊 Python/JS: Workspace Analyzer & Dashboard
 │   │   ├── workspace_analyzer.py   # Haupt-ROS 2-Node (Pub/Sub & Topologie)
 │   │   ├── workspace_parser.py     # Statische Code-Analyse (Regex)
-│   │   ├── system_utils.py         # Umgebungsvariablen-Parsing (bashrc Cache)
+│   │   ├── system_utils.py         # Umgebungsvariablen-Parsing
+│   │   ├── dashboard_index.html    # Haupt-UI des Dashboards
+│   │   ├── dashboard_script_*.js   # 8 modulare Frontend-Logik-Skripte
+│   │   └── dashboard_style.css     # UI Styling
 │   ├── xarm_ros2/                  # 🤖 Offizielle xArm ROS 2 Pakete (Submodul)
 │   │   └── xarm_moveit_servo/src/
 │   │       └── xarm_joystick_input.cpp  # ⚙️ C++: Gamepad → Servo Bridge
