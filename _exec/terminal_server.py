@@ -7,10 +7,9 @@ import fcntl
 import termios
 import struct
 import json
-import traceback
+import signal
+import subprocess
 
-# Dictionary to keep track of running terminals (optional, for later extension)
-terminals = {}
 
 async def terminal_handler(websocket):
     # Set up the PTY
@@ -65,17 +64,18 @@ async def terminal_handler(websocket):
         async def recv_from_ws():
             try:
                 async for message in websocket:
-                    if isinstance(message, str) and message.startswith('{"type":"resize"'):
+                    if isinstance(message, str) and message.startswith('{'):
                         try:
                             msg = json.loads(message)
-                            set_winsize(msg['rows'], msg['cols'])
-                        except:
+                            if msg.get("type") == "resize":
+                                set_winsize(msg['rows'], msg['cols'])
+                                continue
+                        except (json.JSONDecodeError, KeyError):
                             pass
+                    if isinstance(message, str):
+                        os.write(fd, message.encode('utf-8'))
                     else:
-                        if isinstance(message, str):
-                            os.write(fd, message.encode('utf-8'))
-                        else:
-                            os.write(fd, message)
+                        os.write(fd, message)
             except websockets.exceptions.ConnectionClosed:
                 pass
 
@@ -84,63 +84,57 @@ async def terminal_handler(websocket):
         except Exception as e:
             print(f"Error: {e}")
         finally:
+            # Remove PTY reader
             try:
                 loop.remove_reader(fd)
             except:
                 pass
             
+            # ── Sauberes Beenden aller Prozesse in der Session ──
+            # pty.fork() macht den Child zum Session Leader (SID = pid).
+            # Alle Prozesse die in diesem Terminal gestartet wurden
+            # (auch ros2 launch Kinder) erben diese Session-ID.
+            # pkill -s <SID> ist die EINZIGE zuverlässige Methode,
+            # die wirklich ALLE Prozesse in der Session erreicht,
+            # unabhängig von Prozessgruppen.
+            
+            print(f"[terminal_server] Beende Session {pid}...")
+            
+            # 1. SIGTERM an die gesamte Session → sauberes Herunterfahren
             try:
-                import psutil
-                import signal
-                import time
-                try:
-                    parent = psutil.Process(pid)
-                    children = parent.children(recursive=True)
-                    
-                    # 1. Graceful Shutdown: send SIGTERM to all children
-                    for child in children:
-                        try:
-                            child.terminate()
-                        except psutil.NoSuchProcess:
-                            pass
-                    try:
-                        parent.terminate()
-                    except psutil.NoSuchProcess:
-                        pass
-                    
-                    # Give processes time to release ports (e.g. rosbridge)
-                    time.sleep(0.5)
-                    
-                    # 2. Force Kill remaining processes
-                    for child in children:
-                        if child.is_running():
-                            try:
-                                child.kill()
-                            except psutil.NoSuchProcess:
-                                pass
-                    if parent.is_running():
-                        try:
-                            parent.kill()
-                        except psutil.NoSuchProcess:
-                            pass
-                            
-                except psutil.NoSuchProcess:
-                    pass
-                
-                # Fallback to killpg
-                try:
-                    os.killpg(pid, signal.SIGKILL)
-                except OSError:
-                    pass
-                
-                os.waitpid(pid, 0)
+                subprocess.run(
+                    ['pkill', '-TERM', '-s', str(pid)],
+                    timeout=2, capture_output=True
+                )
             except Exception:
                 pass
-                
+            
+            # 2. Warten, damit Ports freigegeben werden (z.B. rosbridge :9090)
+            await asyncio.sleep(1.0)
+            
+            # 3. SIGKILL an alle noch laufenden Prozesse in der Session
+            try:
+                subprocess.run(
+                    ['pkill', '-KILL', '-s', str(pid)],
+                    timeout=2, capture_output=True
+                )
+            except Exception:
+                pass
+            
+            # 4. Zombie aufräumen
+            try:
+                os.waitpid(pid, os.WNOHANG)
+            except ChildProcessError:
+                pass
+            
+            # 5. PTY File Descriptor schließen
             try:
                 os.close(fd)
             except OSError:
                 pass
+            
+            print(f"[terminal_server] Session {pid} beendet.")
+
 
 async def main():
     print("Starte echtes Ubuntu Terminal WebSocket-Backend auf Port 8765...")

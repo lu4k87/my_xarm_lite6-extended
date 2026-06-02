@@ -784,13 +784,20 @@
       term.open(pane);
       fitAddon.fit();
       
+      // Terminal-Eintrag SOFORT registrieren, BEVOR der WebSocket connected,
+      // damit die PID-Nachricht nicht ins Leere geht.
+      terminals[id] = { term, fitAddon, socket: null, container: pane, pid: null };
+
       const ws = new WebSocket('ws://' + window.location.hostname + ':8765');
+      terminals[id].socket = ws;
+
       ws.onmessage = e => {
         try {
-          if (typeof e.data === 'string' && e.data.includes('"pid"')) {
+          if (typeof e.data === 'string' && e.data.startsWith('{')) {
             const msg = JSON.parse(e.data);
-            if (msg.type === 'pid' && terminals[id]) {
+            if (msg.type === 'pid') {
               terminals[id].pid = msg.pid;
+              console.log('[Terminal] PID empfangen:', msg.pid);
               return;
             }
           }
@@ -815,7 +822,6 @@
       });
       window.addEventListener('resize', () => fitAddon.fit());
 
-      terminals[id] = { term, fitAddon, socket: ws, container: pane };
       switchTermTab(id);
       return id;
     }
