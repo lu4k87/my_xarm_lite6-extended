@@ -9,14 +9,14 @@ It builds upon the official xarm_ros2 repository: https://github.com/xArm-Develo
 
 ## Table of Contents
 1. [📋 Project Overview](#1--project-overview)
-2. [🔬 Architecture & Guiding Principles](#2--architecture--guiding-principles)
-3. [🚀 Quick Start: ROS 2 Nexus (The Central Launcher)](#3--quick-start-ros-2-nexus-the-central-launcher)
-4. [📊 Monitoring: Dashboard & Workspace Analyzer](#4--monitoring-dashboard--workspace-analyzer)
-5. [🕹️ Multimodal Technologies & Interaction Concepts](#5-️-multimodal-technologies--interaction-concepts)
-6. [⚙️ Core Features & ROS 2 Nodes](#6-️-core-features--ros-2-nodes)
-7. [🎮 Gamepad Control — Deep Dive](#7--gamepad-control--deep-dive)
-8. [📦 Dependencies & Requirements](#8--dependencies--requirements)
-9. [🗂️ Repository Structure](#9-️-repository-structure)
+2. [🔬 Architecture & Guiding Principles](#2--architecture-guiding-principles)
+3. [📊 Monitoring: Dashboard & Workspace Analyzer](#3--monitoring-dashboard-workspace-analyzer)
+4. [🕹️ Multimodal Technologies & Interaction Concepts](#4--multimodal-technologies-interaction-concepts)
+5. [⚙️ Core Features & ROS 2 Nodes](#5--core-features-ros-2-nodes)
+6. [🎮 Gamepad Control — Deep Dive](#6--gamepad-control-deep-dive)
+7. [📦 Dependencies & Requirements](#7--dependencies-requirements)
+8. [🚀 Execution: How to Run the System](#8--execution-how-to-run-the-system)
+9. [🗂️ Repository Structure](#9--repository-structure)
 
 ---
 
@@ -47,7 +47,7 @@ A key core and innovative character of the project lies in the scientific analys
 
 * **Development of an Evaluation Logic:** Systematic capture and measurement of usability, cognitive load, and system performance for quantitative assessment of the human-robot interface.
 * **Derivation of Action Recommendations:** Formulation of standardized guidelines that serve companies as a strategic guide during the introduction of modern robot systems.
-* **Answering the Transformation Question:** Concrete practical assistance on the core question: *“How do we structure our processes and workplaces to measurably meet the human-centered requirements of Industry 5.0?”*
+* **Answering the Transformation Question:** Concrete practical assistance on the core question: *“How can processes and workplaces be structured to measurably meet the human-centered requirements of Industry 5.0?”*
 * **Service Potential:** The resulting frameworks and guidelines have the potential to be provided as a validated, monetizable consulting and service offering for industry, accompanying digital and demographic changes in production.
 
 ---
@@ -109,49 +109,9 @@ The software-side infrastructure is modularly encapsulated and fully integrated 
 
 ---
 
-## 3. 🚀 Quick Start: ROS 2 Nexus (The Central Launcher)
+## 3. 📊 Monitoring: Dashboard & Workspace Analyzer
 
-**ROS 2 Nexus** is the primary, central tool of this repository. It is a web-based GUI that serves as the main hub to launch all nodes, sensors, algorithms, and workspace scripts with a single click. Instead of memorizing and typing long CLI commands, you manage the entire robot system directly from your browser.
-
-### 3.1 Start Commands & Ubuntu App Integration
-
-**Launch via Terminal:**
-```bash
-cd ~/dev_ws
-python3 _exec/ros2_nexus_web.py
-# → Opens at http://localhost:5000 (accessible in LAN, e.g., http://192.168.x.x:5000)
-```
-
-**Quick Launch (auto-start backend + open browser):**
-```bash
-./_exec/ros2_nexus_web_start.sh
-```
-
-> **Ubuntu App Integration:** ROS 2 Nexus is registered as a native Ubuntu application via a `.desktop` entry. You can simply search for **"ROS 2 Nexus"** in your Ubuntu Activities menu to launch the app directly via its icon.
-
-<p align="center">
-  <img src="_imgs/ros2_nexus_web.png" width="90%" alt="ROS 2 Nexus — Web Edition">
-</p>
-
-### 3.2 Network & Port Architecture
-
-To run the complete system with both web interfaces (Nexus and Dashboard), three different servers operate on separate ports:
-
-| Port | Service | Type | Description |
-|------|---------|------|-------------|
-| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Provides the graphical Nexus UI. Receives button clicks from the browser, executes ROS shell commands as subprocesses on the host PC, and streams real-time terminal output directly back to the web interface via WebSockets (Socket.IO). Features a multi-tab terminal system for isolated process management. |
-| **`8080`** | **Dashboard Frontend** | HTTP Server | Hosts the static HTML/CSS/JS files for the ROS2 Core Dashboard. |
-| **`9090`** | **ROS Bridge** | WebSocket | The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services. |
-
-### 3.3 Launcher Configuration (`launcher_config.json`)
-
-The buttons, categories, and commands in the ROS 2 Nexus Web interface are highly customizable. They are defined in an external configuration file located at `_exec/launcher_config.json`. To add custom scripts, debugging tools, or ROS 2 nodes to the launcher UI, simply modify this JSON file. The web application dynamically fetches the configuration, so changes take effect upon the next page reload without requiring backend restarts.
-
----
-
-## 4. 📊 Monitoring: Dashboard & Workspace Analyzer
-
-Once you have launched your nodes via ROS 2 Nexus, you can monitor the live state of your system using the **ROS2 Core Dashboard**. This is a web-based real-time UI that fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface.
+Once the nodes are launched via ROS 2 Nexus, the live state of the system can be monitored using the **ROS2 Core Dashboard**. This is a web-based real-time UI, which fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface.
 
 ### 4.1 Backend (`workspace_analyzer.py`)
 A ROS 2 node that performs execution-free, regex-based static code analysis of the entire `src/` directory. It extracts node names, publishers, subscribers, services, actions, and package dependencies. These structured JSON metadata are continuously published to `/dashboard/workspace_metadata` via a 10-second timer cycle. Additionally, it reads environment variables (ROS Distro, Domain ID, DDS middleware, Localhost mode) from `~/.bashrc` and provides them as live status badges.
@@ -171,7 +131,7 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). It 
 
 ---
 
-## 5. 🕹️ Multimodal Technologies & Interaction Concepts
+## 4. 🕹️ Multimodal Technologies & Interaction Concepts
 
 ### 5.1 Robot Control Methods (Inputs)
 **Gamepad Teleoperation:** <br> 
@@ -228,7 +188,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ---
 
-## 6. ⚙️ Core Features & ROS 2 Nodes
+## 5. ⚙️ Core Features & ROS 2 Nodes
 
 ### 6.1 👁️ Computer Vision & Perception
 
@@ -298,7 +258,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ---
 
-## 7. 🎮 Gamepad Control — Deep Dive
+## 6. 🎮 Gamepad Control — Deep Dive
 
 This section provides a full technical reference for the two-node gamepad pipeline that enables real-time, collision-safe teleoperation of the xArm Lite 6 using an Xbox One Elite Series 2 Controller.
 
@@ -486,7 +446,7 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 
 ---
 
-## 8. 📦 Dependencies & Requirements
+## 7. 📦 Dependencies & Requirements
 
 ### System Requirements
 
@@ -551,6 +511,59 @@ colcon build --symlink-install
 # Source the workspace
 source install/setup.bash
 ```
+
+---
+
+## 8. 🚀 Execution: How to Run the System
+
+This section describes the step-by-step process to launch both the hardware and the software components. **ROS 2 Nexus** serves as the central web-based GUI to launch all nodes, sensors, and algorithms with a single click.
+
+### Step 1: Hardware Preparation
+1. **Turn on the Robot:** Power on the UFactory xArm Lite 6 and ensure the emergency stop is released.
+2. **Connect the Controller:** Turn on the Xbox One Elite Series 2 Controller and ensure it is connected to the host PC via Bluetooth or USB.
+
+### Step 2: Launch the System (ROS 2 Nexus)
+Normally in robotics, multiple terminals must be opened to execute a multitude of long `ros2 run` or `ros2 launch` commands in parallel to start the individual nodes. The **ROS 2 Nexus** WebApp was built precisely to solve this problem: Instead of memorizing complex CLI commands, all required nodes and launch files can be conveniently started with a single click directly from the browser.
+
+**Launch via Terminal:**
+```bash
+cd ~/dev_ws
+python3 _exec/ros2_nexus_web.py
+# → Opens at http://localhost:5000 (accessible in LAN, e.g., http://192.168.x.x:5000)
+```
+
+**Quick Launch (auto-start backend + open browser):**
+```bash
+./_exec/ros2_nexus_web_start.sh
+```
+
+> **Ubuntu App Integration:** ROS 2 Nexus is registered as a native Ubuntu application via a `.desktop` entry. It can be launched directly by searching for **"ROS 2 Nexus"** in the Ubuntu Activities menu.
+
+### Step 3: Start Nodes via GUI
+Once the ROS 2 Nexus interface is open in the browser:
+1. Navigate through the available tabs.
+2. Click the corresponding buttons to launch the required modules (e.g., Robot Driver, Gamepad Control, Vision, Dashboard).
+3. The terminal output of each launched node will stream directly back to the web interface in real-time.
+
+<p align="center">
+  <img src="_imgs/ros2_nexus_web.png" width="90%" alt="ROS 2 Nexus — Web Edition">
+</p>
+
+### 3.2 Network & Port Architecture
+
+To run the complete system with both web interfaces (Nexus and Dashboard), three different servers operate on separate ports:
+
+| Port | Service | Type | Description |
+|------|---------|------|-------------|
+| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Provides the graphical Nexus UI. Receives button clicks from the browser, executes ROS shell commands as subprocesses on the host PC, and streams real-time terminal output directly back to the web interface via WebSockets (Socket.IO). Features a multi-tab terminal system for isolated process management. |
+| **`8080`** | **Dashboard Frontend** | HTTP Server | Hosts the static HTML/CSS/JS files for the ROS2 Core Dashboard. |
+| **`9090`** | **ROS Bridge** | WebSocket | The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services. |
+
+> **Why strict port separation?** Ports 8080 and 9090 serve fundamentally different purposes and protocols. Port 8080 (HTTP) acts as a standard web server to deliver the static UI files (HTML/CSS) to the browser. Port 9090 (WebSocket via `rosbridge`) is a highly specialized data broker that exclusively streams live ROS telemetry and lacks the capability to serve web pages. Port 5000 (Flask) provides backend business logic independent of ROS.
+
+### 3.3 Launcher Configuration (`launcher_config.json`)
+
+The buttons, categories, and commands in the ROS 2 Nexus Web interface are highly customizable. They are defined in an external configuration file located at `_exec/launcher_config.json`. To add custom scripts, debugging tools, or ROS 2 nodes to the launcher UI, simply modify this JSON file. The web application dynamically fetches the configuration, so changes take effect upon the next page reload without requiring backend restarts.
 
 ---
 
