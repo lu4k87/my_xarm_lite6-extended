@@ -787,10 +787,12 @@
       const ws = new WebSocket('ws://' + window.location.hostname + ':8765');
       ws.onmessage = e => {
         try {
-          if (typeof e.data === 'string' && e.data.startsWith('{"type":"pid"')) {
+          if (typeof e.data === 'string' && e.data.includes('"pid"')) {
             const msg = JSON.parse(e.data);
-            if (terminals[id]) terminals[id].pid = msg.pid;
-            return;
+            if (msg.type === 'pid' && terminals[id]) {
+              terminals[id].pid = msg.pid;
+              return;
+            }
           }
         } catch (err) {}
         term.write(e.data);

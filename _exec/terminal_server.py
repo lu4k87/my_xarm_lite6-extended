@@ -88,29 +88,55 @@ async def terminal_handler(websocket):
                 loop.remove_reader(fd)
             except:
                 pass
+            
             try:
                 import psutil
                 import signal
-                parent = psutil.Process(pid)
-                # First kill all descendants
-                for child in parent.children(recursive=True):
+                import time
+                try:
+                    parent = psutil.Process(pid)
+                    children = parent.children(recursive=True)
+                    
+                    # 1. Graceful Shutdown: send SIGTERM to all children
+                    for child in children:
+                        try:
+                            child.terminate()
+                        except psutil.NoSuchProcess:
+                            pass
                     try:
-                        child.kill()
+                        parent.terminate()
                     except psutil.NoSuchProcess:
                         pass
-                # Then kill the parent
-                try:
-                    parent.kill()
+                    
+                    # Give processes time to release ports (e.g. rosbridge)
+                    time.sleep(0.5)
+                    
+                    # 2. Force Kill remaining processes
+                    for child in children:
+                        if child.is_running():
+                            try:
+                                child.kill()
+                            except psutil.NoSuchProcess:
+                                pass
+                    if parent.is_running():
+                        try:
+                            parent.kill()
+                        except psutil.NoSuchProcess:
+                            pass
+                            
                 except psutil.NoSuchProcess:
                     pass
-                # Also try to kill the process group as a fallback
+                
+                # Fallback to killpg
                 try:
                     os.killpg(pid, signal.SIGKILL)
                 except OSError:
                     pass
+                
                 os.waitpid(pid, 0)
             except Exception:
                 pass
+                
             try:
                 os.close(fd)
             except OSError:
