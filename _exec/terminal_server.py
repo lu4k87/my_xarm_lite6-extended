@@ -85,7 +85,8 @@ async def terminal_handler(websocket):
             except:
                 pass
             try:
-                os.kill(pid, 9)
+                import signal
+                os.killpg(pid, signal.SIGKILL)
                 os.waitpid(pid, 0)
             except OSError:
                 pass
