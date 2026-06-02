@@ -49,6 +49,10 @@ async def terminal_handler(websocket):
         loop.add_reader(fd, pty_reader)
 
         async def send_to_ws():
+            try:
+                await websocket.send(json.dumps({"type": "pid", "pid": pid}))
+            except:
+                pass
             while True:
                 data = await output_queue.get()
                 if data is None:

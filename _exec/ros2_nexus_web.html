@@ -738,11 +738,13 @@
       if (event) event.stopPropagation();
       const t = terminals[id];
       if (t) {
+        const pidMsg = t.pid ? ` (PID: ${t.pid})` : '';
         if (t.socket) t.socket.close();
         if (t.term) t.term.dispose();
         t.container.remove();
         document.querySelector(`.term-tab[data-id="${id}"]`)?.remove();
         delete terminals[id];
+        showToast(`Terminal-Prozess${pidMsg} beendet.`, false);
       }
       const remaining = Object.keys(terminals);
       if (remaining.length > 0) switchTermTab(remaining[remaining.length - 1]);
@@ -783,7 +785,16 @@
       fitAddon.fit();
       
       const ws = new WebSocket('ws://' + window.location.hostname + ':8765');
-      ws.onmessage = e => term.write(e.data);
+      ws.onmessage = e => {
+        try {
+          if (typeof e.data === 'string' && e.data.startsWith('{"type":"pid"')) {
+            const msg = JSON.parse(e.data);
+            if (terminals[id]) terminals[id].pid = msg.pid;
+            return;
+          }
+        } catch (err) {}
+        term.write(e.data);
+      };
       ws.onopen = () => {
          if (initCommand) {
             // Setup sequence um ROS 2 zu sourcen, dann den command senden
