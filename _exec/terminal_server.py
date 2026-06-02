@@ -89,10 +89,27 @@ async def terminal_handler(websocket):
             except:
                 pass
             try:
+                import psutil
                 import signal
-                os.killpg(pid, signal.SIGKILL)
+                parent = psutil.Process(pid)
+                # First kill all descendants
+                for child in parent.children(recursive=True):
+                    try:
+                        child.kill()
+                    except psutil.NoSuchProcess:
+                        pass
+                # Then kill the parent
+                try:
+                    parent.kill()
+                except psutil.NoSuchProcess:
+                    pass
+                # Also try to kill the process group as a fallback
+                try:
+                    os.killpg(pid, signal.SIGKILL)
+                except OSError:
+                    pass
                 os.waitpid(pid, 0)
-            except OSError:
+            except Exception:
                 pass
             try:
                 os.close(fd)
