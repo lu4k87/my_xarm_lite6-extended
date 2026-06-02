@@ -21,6 +21,11 @@ else
     BACKEND_PID=$!
     echo "   PID: $BACKEND_PID"
 
+    echo "🚀 Starte Terminal-Server (xterm.js Backend)..."
+    python3 "$SCRIPT_DIR/terminal_server.py" &
+    TERM_PID=$!
+    echo "   PID: $TERM_PID"
+
     # Warten bis der Server antwortet (max 5 Sek.)
     for i in {1..10}; do
         if curl -s --head "$URL" > /dev/null 2>&1; then
@@ -37,5 +42,6 @@ xdg-open "$URL" 2>/dev/null &
 
 # Warten auf Backend (falls gestartet)
 if [ -n "$BACKEND_PID" ]; then
+    trap "kill $BACKEND_PID $TERM_PID 2>/dev/null" EXIT INT TERM
     wait $BACKEND_PID
 fi

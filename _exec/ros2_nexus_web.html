@@ -10,6 +10,9 @@
     rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/xterm@5.3.0/css/xterm.css" />
+  <script src="https://unpkg.com/xterm@5.3.0/lib/xterm.js"></script>
+  <script src="https://unpkg.com/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
   <style>
     :root {
       --bg: #07080f;
@@ -637,9 +640,19 @@
         class="fa-solid fa-code"></i> Backend</button>
     <button class="footer-btn primary" onclick="location.reload()"><i class="fa-solid fa-arrows-rotate"></i>
       Reload</button>
+    <button class="footer-btn" style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3);" onclick="killAllProcesses()"><i class="fa-solid fa-skull"></i> Alle Beenden</button>
   </footer>
 
   <div class="toast" id="toast"></div>
+
+  <div id="offline-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Outfit',sans-serif;">
+    <i class="fa-solid fa-power-off" style="font-size: 80px; color: var(--red); margin-bottom: 20px;"></i>
+    <h1 style="font-size: 32px; margin: 0 0 10px 0;">SYSTEM OFFLINE</h1>
+    <p style="font-size: 18px; color: #a5b4fc; max-width: 600px; text-align: center; line-height: 1.5;">
+      Alle Backend-Prozesse wurden erfolgreich beendet.<br><br>
+      Bitte starte <b>ros2_nexus_web_start.sh</b> in deinem Ubuntu-Terminal neu, um das System wieder hochzufahren.
+    </p>
+  </div>
 
   <style>
     .term-tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; align-items: center; padding-right: 10px; }
@@ -665,68 +678,133 @@
   </div>
 
   <script>
-    // ─── SOCKET.IO TERMINAL ────────────────────────────────────────────────────────
-    const socket = io();
+    // ─── DRAGGABLE TERMINAL ────────────────────────────────────────────────────────
+    const _termOverlay = document.getElementById('web-terminal-overlay');
+    const _termHeader = document.querySelector('.terminal-header');
+    let _isDragging = false, _dragOffsetX = 0, _dragOffsetY = 0;
+
+    _termHeader.addEventListener('mousedown', e => {
+      if (e.target.closest('button') || e.target.closest('.term-tab')) return;
+      _isDragging = true;
+      const rect = _termOverlay.getBoundingClientRect();
+      _termOverlay.style.right = 'auto';
+      _termOverlay.style.bottom = 'auto';
+      _termOverlay.style.left = rect.left + 'px';
+      _termOverlay.style.top = rect.top + 'px';
+      _termOverlay.style.transform = 'none';
+      _termOverlay.style.transition = 'none'; // disable transition while dragging
+      _dragOffsetX = e.clientX - rect.left;
+      _dragOffsetY = e.clientY - rect.top;
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (!_isDragging) return;
+      _termOverlay.style.left = (e.clientX - _dragOffsetX) + 'px';
+      _termOverlay.style.top = (e.clientY - _dragOffsetY) + 'px';
+    });
+
+    window.addEventListener('mouseup', () => { 
+      if (_isDragging) {
+         _isDragging = false; 
+         _termOverlay.style.transition = 'all 0.3s ease';
+      }
+    });
+    // ─── ECHTES UBUNTU TERMINAL (xterm.js) ───────────────────────────────────────
     const termOverlay = document.getElementById('web-terminal-overlay');
     const termTabs = document.getElementById('term-tabs');
     const termContent = document.getElementById('web-terminal-content');
-    let activeCmdId = null;
-    let panes = {};
+    let activeTermId = null;
+    let terminals = {}; // { id: { term, fitAddon, socket, container } }
 
-    socket.on('terminal_output', function(msg) {
-      if (!msg.id) return;
-      let text = msg.data.replace(/\x1B\[[0-9;]*[mK]/g, '');
-      let pane = panes[msg.id];
-      if (pane) {
-         pane.appendChild(document.createTextNode(text));
-         pane.scrollTop = pane.scrollHeight;
-      }
-    });
-
-    function closeTerminal() {
-      termOverlay.classList.add('hidden');
-    }
-
+    function closeTerminal() { termOverlay.classList.add('hidden'); }
     function toggleTerminal() {
       termOverlay.classList.toggle('hidden');
+      if (!termOverlay.classList.contains('hidden') && activeTermId && terminals[activeTermId]) {
+        setTimeout(() => terminals[activeTermId].fitAddon.fit(), 50);
+      }
     }
 
-    function switchTermTab(cmdId) {
-      activeCmdId = cmdId;
-      document.querySelectorAll('.term-tab').forEach(t => t.classList.toggle('active', t.dataset.id === cmdId));
-      document.querySelectorAll('.term-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + cmdId));
+    function switchTermTab(id) {
+      activeTermId = id;
+      document.querySelectorAll('.term-tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));
+      document.querySelectorAll('.term-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + id));
       termOverlay.classList.remove('hidden');
+      if (terminals[id] && terminals[id].fitAddon) {
+        setTimeout(() => terminals[id].fitAddon.fit(), 50);
+      }
     }
 
-    function killCmd(cmdId, event) {
+    function killTerm(id, event) {
       if (event) event.stopPropagation();
-      fetch('/api/kill', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cmd_id: cmdId }) });
-      document.querySelector(`.term-tab[data-id="${cmdId}"]`)?.remove();
-      document.getElementById('pane-' + cmdId)?.remove();
-      delete panes[cmdId];
-      const remaining = Object.keys(panes);
+      const t = terminals[id];
+      if (t) {
+        if (t.socket) t.socket.close();
+        if (t.term) t.term.dispose();
+        t.container.remove();
+        document.querySelector(`.term-tab[data-id="${id}"]`)?.remove();
+        delete terminals[id];
+      }
+      const remaining = Object.keys(terminals);
       if (remaining.length > 0) switchTermTab(remaining[remaining.length - 1]);
       else closeTerminal();
     }
 
-    function createTermTab(cmdId, title) {
+    function createTermTab(title, initCommand = null) {
       termOverlay.classList.remove('hidden');
-      if (panes[cmdId]) return;
+      const id = 'term_' + Math.random().toString(36).substr(2, 9);
       
       const tab = document.createElement('button');
       tab.className = 'term-tab active';
-      tab.dataset.id = cmdId;
-      tab.innerHTML = `<span><i class="fa-solid fa-terminal"></i> ${title}</span> <div class="kill-btn" onclick="killCmd('${cmdId}', event)" title="Prozess beenden"><i class="fa-solid fa-xmark"></i></div>`;
-      tab.onclick = () => switchTermTab(cmdId);
+      tab.dataset.id = id;
+      tab.innerHTML = `<span><i class="fa-solid fa-terminal"></i> ${title}</span> <div class="kill-btn" onclick="killTerm('${id}', event)" title="Prozess beenden"><i class="fa-solid fa-xmark"></i></div>`;
+      tab.onclick = () => switchTermTab(id);
       
       const pane = document.createElement('div');
       pane.className = 'term-pane active';
-      pane.id = 'pane-' + cmdId;
+      pane.id = 'pane-' + id;
+      pane.style.height = '100%';
+      pane.style.overflow = 'hidden';
+      pane.style.padding = '5px';
+      pane.style.backgroundColor = '#000';
       
       termTabs.appendChild(tab);
       termContent.appendChild(pane);
-      panes[cmdId] = pane;
-      switchTermTab(cmdId);
+      
+      const term = new Terminal({
+        theme: { background: '#000' },
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 13,
+        cursorBlink: true,
+        convertEol: true
+      });
+      const fitAddon = new FitAddon.FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(pane);
+      fitAddon.fit();
+      
+      const ws = new WebSocket('ws://' + window.location.hostname + ':8765');
+      ws.onmessage = e => term.write(e.data);
+      ws.onopen = () => {
+         if (initCommand) {
+            // Setup sequence um ROS 2 zu sourcen, dann den command senden
+            const setupCmd = "source ~/.bashrc; source /opt/ros/humble/setup.bash; source ~/dev_ws/install/setup.bash; clear";
+            ws.send(setupCmd + " && " + initCommand + "\r");
+         }
+      };
+      ws.onclose = () => term.write('\r\n\x1b[31m[Verbindung zum Terminal-Server getrennt oder verweigert. Läuft das Backend?]\x1b[0m\r\n');
+      ws.onerror = () => term.write('\r\n\x1b[31m[Fehler: Kann nicht zum Terminal-Server verbinden!]\x1b[0m\r\n');
+      
+      term.onData(data => ws.send(data));
+      term.onResize(size => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'resize', cols: size.cols, rows: size.rows }));
+        }
+      });
+      window.addEventListener('resize', () => fitAddon.fit());
+
+      terminals[id] = { term, fitAddon, socket: ws, container: pane };
+      switchTermTab(id);
+      return id;
     }
 
     // ─── TAB DATA ────────────────────────────────────────────────────────────────
@@ -800,18 +878,19 @@
     });
 
     // ─── BACKEND ──────────────────────────────────────────────────────────────────
+    // ─── BACKEND ──────────────────────────────────────────────────────────────────
     async function runCmd(command, title, mode = 'ros') {
-      try {
-        const res = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command, title, mode }) });
-        const data = await res.json();
-        if (data.ok) {
-           showToast(`✓ ${title} gestartet`);
-           if (data.cmd_id && mode !== 'interactive') {
-              createTermTab(data.cmd_id, title);
-           }
-        }
-        else showToast(`✗ Fehler: ${data.error}`, true);
-      } catch { showToast('✗ Backend nicht erreichbar', true); }
+      if (mode === 'interactive' || mode === 'ros') {
+         createTermTab(title, command);
+         showToast(`✓ ${title} im Terminal geöffnet`);
+      } else {
+         try {
+           const res = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command, title, mode }) });
+           const data = await res.json();
+           if (data.ok) showToast(`✓ ${title} im Hintergrund gestartet`);
+           else showToast(`✗ Fehler: ${data.error}`, true);
+         } catch { showToast('✗ Backend nicht erreichbar', true); }
+      }
     }
 
     function copyCmd(text, btn) {
@@ -827,6 +906,16 @@
       t.textContent = msg;
       t.className = 'toast show' + (isErr ? ' err' : '');
       setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    async function killAllProcesses() {
+      if (!confirm("Wirklich ALLE Backend-Prozesse beenden? (Das Dashboard muss danach per Terminal neu gestartet werden)")) return;
+      try {
+        await fetch('/api/kill_all', { method: 'POST' });
+        document.getElementById('offline-overlay').style.display = 'flex';
+      } catch {
+        document.getElementById('offline-overlay').style.display = 'flex';
+      }
     }
 
     // ─── STATUS ───────────────────────────────────────────────────────────────────

@@ -188,6 +188,12 @@ def api_kill():
         return jsonify({"ok": True})
     return jsonify({"ok": False, "error": "Process not found"})
 
+@app.route("/api/kill_all", methods=["POST"])
+def api_kill_all():
+    # Kill all running backends and terminal servers in 1 second
+    subprocess.Popen("sleep 1 && pkill -f 'ros2_nexus_web.py|terminal_server.py'", shell=True)
+    return jsonify({"ok": True, "msg": "Alle Prozesse werden beendet."})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("NEXUS_PORT", 5000))

@@ -565,8 +565,9 @@ To run the complete system with both web interfaces (Nexus and Dashboard), three
 
 | Port | Service | Type | Description |
 |------|---------|------|-------------|
-| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Provides the graphical Nexus UI. Receives button clicks from the browser, executes ROS shell commands as subprocesses on the host PC, and streams real-time terminal output directly back to the web interface via WebSockets (Socket.IO). Features a multi-tab terminal system for isolated process management. |
+| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Provides the graphical Nexus UI. Receives button clicks from the browser, executes ROS shell commands as subprocesses on the host PC, and streams real-time terminal output directly back to the web interface. |
 | **`8080`** | **Dashboard Frontend** | HTTP Server | Hosts the static HTML/CSS/JS files for the ROS2 Core Dashboard. |
+| **`8765`** | **Nexus Terminal Server** | WebSocket (PTY) | Standalone Python backend utilizing pseudo-terminals (`pty`) to provide a fully interactive, multi-tabbed Ubuntu bash shell directly inside the Nexus Web UI via `xterm.js`. |
 | **`9090`** | **ROS Bridge** | WebSocket | The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services. |
 
 > **Why strict port separation?** Ports 8080 and 9090 serve fundamentally different purposes and protocols. Port 8080 (HTTP) acts as a standard web server to deliver the static UI files (HTML/CSS) to the browser. Port 9090 (WebSocket via `rosbridge`) is a highly specialized data broker that exclusively streams live ROS telemetry and lacks the capability to serve web pages. Port 5000 (Flask) provides backend business logic independent of ROS.
@@ -585,6 +586,7 @@ dev_ws/
 │   ├── launcher_config.json        # Configuration file for Nexus buttons
 │   ├── ros2_nexus_web.py           # Flask backend — ROS 2 Nexus Web UI
 │   ├── ros2_nexus_web.html         # Frontend HTML for Nexus
+│   ├── terminal_server.py          # WebSocket PTY server — xterm.js Backend
 │   ├── ros2_nexus_web_start.sh     # Auto-start script (backend + browser)
 │   ├── ROS2_Nexus.desktop          # Ubuntu application shortcut
 │   ├── lite6.sh                    # Hardware bringup script

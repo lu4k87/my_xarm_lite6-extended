@@ -251,7 +251,10 @@ class WorkspaceAnalyzer(Node):
         try:
             node_names_and_namespaces = self.get_node_names_and_namespaces()
             active_node_names = [n for n, _ in node_names_and_namespaces]
-            pulse_data = {"active_nodes": active_node_names}
+            pulse_data = {
+                "type": "node_pulse",
+                "active_nodes": active_node_names
+            }
             self.publisher_.publish(String(data=json.dumps(pulse_data)))
         except Exception:
             pass

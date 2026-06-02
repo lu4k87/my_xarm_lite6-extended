@@ -533,8 +533,9 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 
 | Port | Service | Typ | Beschreibung |
 |------|---------|-----|--------------|
-| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Stellt die grafische Nexus-Oberfläche bereit. Empfängt Klicks aus dem Browser, führt ROS-Shell-Befehle als Unterprozesse auf dem Host-PC aus und streamt den Terminal-Output in Echtzeit über WebSockets (Socket.IO) direkt zurück in die Web-Oberfläche. Bietet ein Multi-Tab-Terminal zur isolierten Prozessverwaltung. |
+| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Stellt die grafische Nexus-Oberfläche bereit. Empfängt Klicks aus dem Browser, führt ROS-Shell-Befehle als Unterprozesse auf dem Host-PC aus und streamt den Terminal-Output in Echtzeit direkt zurück in die Web-Oberfläche. |
 | **`8080`** | **Dashboard Frontend** | HTTP Server | Hostet die statischen HTML/CSS/JS-Dateien für das ROS2 Core Dashboard. |
+| **`8765`** | **Nexus Terminal Server** | WebSocket (PTY) | Eigenständiges Python-Backend, das Pseudo-Terminals (`pty`) nutzt, um eine vollständig interaktive, mit Tabs versehene Ubuntu-Bash-Shell direkt in der Nexus Web UI via `xterm.js` bereitzustellen. |
 | **`9090`** | **ROS Bridge** | WebSocket | Die Brücke zwischen ROS 2 und dem Browser. Erlaubt dem Dashboard (Port 8080), sich über `roslib.js` direkt mit dem ROS-Netzwerk zu verbinden, um Echtzeit-Telemetrie auszulesen und Services aufzurufen. |
 
 > **Warum strikte Port-Trennung?** Die Ports 8080 und 9090 nutzen unterschiedliche Protokolle für verschiedene Aufgaben. Port 8080 (HTTP) fungiert als Standard-Webserver und liefert die statischen Webseiten-Dateien (HTML/CSS) an den Browser aus. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich ROS-Echtzeitdaten streamt und nicht in der Lage ist, Webseiten bereitzustellen. Port 5000 (Flask) verarbeitet Backend-Logik unabhängig von ROS.
@@ -553,6 +554,7 @@ dev_ws/
 │   ├── launcher_config.json        # Konfigurationsdatei für Nexus-Buttons
 │   ├── ros2_nexus_web.py           # Flask-Backend — ROS 2 Nexus Web UI
 │   ├── ros2_nexus_web.html         # Frontend-HTML für Nexus
+│   ├── terminal_server.py          # WebSocket PTY Server — xterm.js Backend
 │   ├── ros2_nexus_web_start.sh     # Auto-Start-Skript
 │   ├── ROS2_Nexus.desktop          # Ubuntu Anwendungsverknüpfung
 │   ├── lite6.sh                    # Hardware-Bringup-Skript
