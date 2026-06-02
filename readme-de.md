@@ -453,6 +453,7 @@ sudo apt install ros-humble-tf2-ros ros-humble-rviz2
 pip install pygame          # Haptisches Feedback für collision_check
 pip install openai-whisper  # Lokale Spracherkennung
 pip install flask           # ROS 2 Nexus Web-Backend
+pip install flask-socketio  # Socket.IO für Echtzeit-Terminal-Streaming im Browser
 pip install opencv-python   # Computer Vision
 pip install PyQt5           # Gaze-Control-UI
 pip install ultralytics     # YOLO-Objekterkennung
