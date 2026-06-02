@@ -1,7 +1,8 @@
 # xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
 Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- und Evaluationsplattform für multimodale Teleoperation und Mensch-Computer-Interaktion (HCI). <br>
-Es baut auf dem offiziellen xarm_ros2 Repository auf: https://github.com/xArm-Developer/xarm_ros2/tree/humble (Branch: humble).
+> [!IMPORTANT]
+> **Grundvoraussetzung:** Dieses Repository ist ein *Erweiterungs-Workspace*. Es baut vollständig auf dem offiziellen [xarm_ros2 Repository (Branch: humble)](https://github.com/xArm-Developer/xarm_ros2/tree/humble) von UFactory auf. Das offizielle Repository, dessen Struktur und all seine Systemabhängigkeiten bilden das zwingende Basis-Fundament für diese Software!
 
 <p align="center">
   <img src="_imgs/robotsystem.jpg" width="90%" alt="xArm Extended Workspace in Aktion">
@@ -438,6 +439,12 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 | **Build-System** | `colcon` |
 | **Compiler** | GCC 11+ (C++17) |
 
+### Basis-System (Grundvoraussetzung)
+
+Die absolute Grundvoraussetzung für diesen Workspace ist das offizielle UFactory ROS 2 Paket. Da dieses Repository eine Erweiterung darstellt, müssen alle Abhängigkeiten des Haupt-Repositories erfüllt sein:
+* **Repository:** [UFactory xarm_ros2 (Humble)](https://github.com/xArm-Developer/xarm_ros2/tree/humble)
+* Alle offiziellen UFactory Installationsschritte und Treiber (z.B. xArm-C++-API) müssen funktionsfähig im Hintergrund vorhanden sein.
+
 ### Kern-ROS-2-Pakete
 
 ```bash
@@ -474,7 +481,11 @@ pip install ultralytics     # YOLO-Objekterkennung
 
 ```bash
 git clone <repo-url> ~/dev_ws && cd ~/dev_ws
+
+# Installiert alle Basis-Abhängigkeiten des offiziellen xarm_ros2 Repos 
+# sowie die unserer eigenen multimodalen Pakete:
 rosdep install --from-paths src --ignore-src -r -y
+
 colcon build --symlink-install
 source install/setup.bash
 ```

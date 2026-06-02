@@ -1,7 +1,8 @@
 # xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
 This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
-It builds upon the official xarm_ros2 repository: https://github.com/xArm-Developer/xarm_ros2/tree/humble (Branch: humble).
+> [!IMPORTANT]
+> **Core Prerequisite:** This repository is an *extension workspace*. It is built entirely on top of the official [xarm_ros2 repository (Branch: humble)](https://github.com/xArm-Developer/xarm_ros2/tree/humble) from UFactory. The official repository, its structure, and all of its system dependencies form the mandatory foundational baseline for this software!
 
 <p align="center">
   <img src="_imgs/robotsystem.jpg" width="90%" alt="xArm Extended Workspace in Action">
@@ -457,6 +458,12 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 | **Build System** | `colcon` |
 | **Compiler** | GCC 11+ (C++17) |
 
+### Base System (Core Prerequisite)
+
+The absolute core prerequisite for this workspace is the official UFactory ROS 2 package. Because this repository acts as an extension, all dependencies of the main repository must be met:
+* **Repository:** [UFactory xarm_ros2 (Humble)](https://github.com/xArm-Developer/xarm_ros2/tree/humble)
+* All official UFactory installation steps and drivers (e.g., xArm-C++-API) must be fully functional in the background.
+
 ### Core ROS 2 Packages
 
 ```bash
@@ -504,6 +511,8 @@ git clone <repo-url> ~/dev_ws
 cd ~/dev_ws
 
 # Install dependencies
+# This installs all base dependencies of the official xarm_ros2 repo 
+# as well as the dependencies of our own multimodal packages:
 rosdep install --from-paths src --ignore-src -r -y
 
 # Build the workspace
