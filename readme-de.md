@@ -502,16 +502,21 @@ Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- ode
 **Start über Terminal:**
 ```bash
 cd ~/dev_ws
-python3 _exec/ros2_nexus_web.py
+python3 ros2_nexus/ros2_nexus_web.py
 # → Öffnet sich unter http://localhost:5000 (auch im LAN erreichbar, z.B. http://192.168.x.x:5000)
 ```
 
 **Quick Launch (Backend automatisch starten + Browser öffnen):**
 ```bash
-./_exec/ros2_nexus_web_start.sh
+./ros2_nexus/ros2_nexus_web_start.sh
 ```
 
-> **Ubuntu App Integration:** ROS 2 Nexus ist als native Ubuntu-Anwendung über einen `.desktop`-Eintrag registriert. Die App kann direkt gestartet werden, indem im Ubuntu-Aktivitäten-Menü nach **„ROS 2 Nexus"** gesucht wird.
+> **Ubuntu App Integration:** ROS 2 Nexus kann als native Ubuntu-Anwendung registriert werden. Um die App im Ubuntu-Aktivitäten-Menü zu finden, kopiere die mitgelieferte `.desktop`-Datei in das Systemverzeichnis:
+> ```bash
+> cp ~/dev_ws/ros2_nexus/ROS2_Nexus.desktop ~/.local/share/applications/
+> update-desktop-database ~/.local/share/applications/
+> ```
+> Danach kann die App über das Suchfeld im Menü (nach **„ROS 2 Nexus"** suchen) direkt gestartet werden.
 
 ### 8.3 Schritt 3: Module über die GUI aktivieren
 Sobald sich ROS 2 Nexus im Browser geöffnet hat:
@@ -538,7 +543,7 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 
 ### 8.5 Launcher-Konfiguration (`launcher_config.json`)
 
-Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar. Sie werden in einer externen Konfigurationsdatei unter `_exec/launcher_config.json` definiert. Um eigene Skripte, Debugging-Tools oder ROS 2 Nodes zur Launcher-UI hinzuzufügen, muss lediglich diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch, sodass Änderungen nach einem simplen Neuladen der Seite im Browser sofort aktiv werden, ohne dass das Backend neugestartet werden muss.
+Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar. Sie werden in einer externen Konfigurationsdatei unter `ros2_nexus/launcher_config.json` definiert. Um eigene Skripte, Debugging-Tools oder ROS 2 Nodes zur Launcher-UI hinzuzufügen, muss lediglich diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch, sodass Änderungen nach einem simplen Neuladen der Seite im Browser sofort aktiv werden, ohne dass das Backend neugestartet werden muss.
 
 ---
 
@@ -546,7 +551,7 @@ Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind voll
 
 ```
 dev_ws/
-├── _exec/                          # Launcher-Skripte & App-Integration
+├── ros2_nexus/                       # Launcher-Skripte & App-Integration
 │   ├── launcher_config.json        # Konfigurationsdatei für Nexus-Buttons
 │   ├── ros2_nexus_web.py           # Flask-Backend — ROS 2 Nexus Web UI
 │   ├── ros2_nexus_web.html         # Frontend-HTML für Nexus
