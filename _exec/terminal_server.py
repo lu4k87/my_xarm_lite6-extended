@@ -15,7 +15,9 @@ async def terminal_handler(websocket):
     # Set up the PTY
     pid, fd = pty.fork()
     if pid == 0:
-        # Child process: set environment and exec bash
+        # Child process: neue Session erstellen (KRITISCH für pkill -s!)
+        # Ohne setsid() bleibt der Child in der Parent-Session → pkill -s <SID> findet nichts!
+        os.setsid()
         os.environ['TERM'] = 'xterm-256color'
         os.execvp('bash', ['bash', '-i'])
     else:
@@ -114,29 +116,50 @@ async def terminal_handler(websocket):
             print(f"[terminal_server] Beende Session {pid}...")
 
             # ── Sauberes Beenden aller Prozesse in der Session ──
-            # pty.fork() macht den Child zum Session Leader (SID = pid).
-            # Alle Prozesse die in diesem Terminal gestartet wurden
-            # (auch ros2 launch Kinder) erben diese Session-ID.
-            # pkill -s <SID> ist die zuverlässigste Methode.
+            # Da wir im Child os.setsid() aufrufen, ist der Child Session-Leader
+            # mit SID == pid. Alle Kindprozesse des Bash (z.B. ros2 launch)
+            # erben diese Session-ID.
+            #
+            # Strategie:
+            #   1. pkill -TERM -s <SID>  → alle Prozesse der Session (SIGTERM)
+            #   2. os.killpg(pgid, SIGTERM) als Fallback über die Process Group
+            #   3. 2.5s warten → Ports (z.B. rosbridge :9090) können freigegeben werden
+            #   4. pkill -KILL -s <SID>  → verbleibende Prozesse hart killen
+            #   5. Zombie aufräumen
 
-            # 1. SIGTERM an die gesamte Session → sauberes Herunterfahren
+            # 1. SIGTERM an die gesamte Session
             try:
-                subprocess.run(
+                result = subprocess.run(
                     ['pkill', '-TERM', '-s', str(pid)],
                     timeout=2, capture_output=True
                 )
+                print(f"[terminal_server] pkill -TERM -s {pid}: returncode={result.returncode}")
+            except Exception as e:
+                print(f"[terminal_server] pkill TERM Fehler: {e}")
+
+            # 1b. Fallback: SIGTERM an die Process Group (pgid == pid bei Session-Leader)
+            try:
+                os.killpg(pid, signal.SIGTERM)
             except Exception:
                 pass
 
             # 2. Warten, damit Ports freigegeben werden (z.B. rosbridge :9090)
-            await asyncio.sleep(1.5)
+            #    2.5s statt 1.5s für sicherere Port-Freigabe
+            await asyncio.sleep(2.5)
 
             # 3. SIGKILL an alle noch laufenden Prozesse in der Session
             try:
-                subprocess.run(
+                result = subprocess.run(
                     ['pkill', '-KILL', '-s', str(pid)],
                     timeout=2, capture_output=True
                 )
+                print(f"[terminal_server] pkill -KILL -s {pid}: returncode={result.returncode}")
+            except Exception as e:
+                print(f"[terminal_server] pkill KILL Fehler: {e}")
+
+            # 3b. Fallback: SIGKILL an die Process Group
+            try:
+                os.killpg(pid, signal.SIGKILL)
             except Exception:
                 pass
 

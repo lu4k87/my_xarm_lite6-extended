@@ -739,12 +739,24 @@
       const t = terminals[id];
       if (t) {
         const pidMsg = t.pid ? ` (PID: ${t.pid})` : '';
-        if (t.socket) t.socket.close();
+        // Tab und UI sofort entfernen
         if (t.term) t.term.dispose();
         t.container.remove();
         document.querySelector(`.term-tab[data-id="${id}"]`)?.remove();
         delete terminals[id];
-        showToast(`Terminal-Prozess${pidMsg} beendet.`, false);
+
+        // WebSocket schließen: onclose im terminal_server.py startet den Cleanup
+        // (SIGTERM → 2.5s warten → SIGKILL). Wir warten auf das close-Event.
+        if (t.socket) {
+          t.socket.onclose = null; // Standard-onclose deaktivieren
+          t.socket.onerror = null;
+          t.socket.onmessage = null;
+          t.socket.close();
+          // Kurze Anzeige damit der User weiß, dass der Cleanup läuft
+          showToast(`⏳ Terminal-Prozess${pidMsg} wird beendet...`, false);
+        } else {
+          showToast(`Terminal-Prozess${pidMsg} beendet.`, false);
+        }
       }
       const remaining = Object.keys(terminals);
       if (remaining.length > 0) switchTermTab(remaining[remaining.length - 1]);
@@ -806,13 +818,31 @@
       };
       ws.onopen = () => {
          if (initCommand) {
-            // Setup sequence um ROS 2 zu sourcen, dann den command senden
-            const setupCmd = "source ~/.bashrc; source /opt/ros/humble/setup.bash; source ~/dev_ws/install/setup.bash; clear";
-            ws.send(setupCmd + " && " + initCommand + "\r");
+            // WICHTIG: Kurze Verzögerung (3s) damit mögliche vorherige Prozesse
+            // (z.B. rosbridge auf Port 9090) vollständig beendet sind
+            // bevor der neue Start-Befehl gesendet wird.
+            const delay = 3000;
+            term.write(`\r\n\x1b[33m[⏳ Warte ${delay/1000}s auf saubere Prozessbeendigung...]\x1b[0m\r\n`);
+            setTimeout(() => {
+              if (ws.readyState === WebSocket.OPEN) {
+                const setupCmd = "source ~/.bashrc; source /opt/ros/humble/setup.bash; source ~/dev_ws/install/setup.bash; clear";
+                ws.send(setupCmd + " && " + initCommand + "\r");
+              }
+            }, delay);
          }
       };
-      ws.onclose = () => term.write('\r\n\x1b[31m[Verbindung zum Terminal-Server getrennt oder verweigert. Läuft das Backend?]\x1b[0m\r\n');
-      ws.onerror = () => term.write('\r\n\x1b[31m[Fehler: Kann nicht zum Terminal-Server verbinden!]\x1b[0m\r\n');
+      ws.onclose = (event) => {
+        // Unterscheide: Verbindung nie aufgebaut (onerror tritt vorher auf)
+        // vs. Verbindung verloren während aktiver Session
+        if (!terminals[id] || !terminals[id].pid) {
+          // Keine PID empfangen → Terminal-Server war nicht erreichbar
+          term.write('\r\n\x1b[31m[Terminal-Server nicht erreichbar (Port 8765)!]\x1b[0m\r\n');
+          term.write('\x1b[33m[► Bitte Backend neu starten: ./ros2_nexus_web_start.sh]\x1b[0m\r\n');
+        } else {
+          term.write('\r\n\x1b[31m[Verbindung zum Terminal-Server getrennt.]\x1b[0m\r\n');
+        }
+      };
+      ws.onerror = () => term.write('\r\n\x1b[31m[Fehler: Terminal-Server nicht erreichbar (ws://localhost:8765)!]\x1b[0m\r\n\x1b[33m[► Backend neu starten: ./ros2_nexus_web_start.sh]\x1b[0m\r\n');
       
       term.onData(data => ws.send(data));
       term.onResize(size => {
