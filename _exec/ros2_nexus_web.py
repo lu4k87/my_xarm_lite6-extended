@@ -12,6 +12,8 @@ import subprocess
 import os
 import shlex
 import threading
+import asyncio
+import time
 
 import uuid
 import signal
@@ -191,8 +193,54 @@ def api_kill():
 @app.route("/api/kill_all", methods=["POST"])
 def api_kill_all():
     # Kill all running backends and terminal servers in 1 second
-    subprocess.Popen("sleep 1 && pkill -f 'ros2_nexus_web.py|terminal_server.py'", shell=True)
+    # terminal_server läuft als Daemon-Thread in Flask → stirbt automatisch mit
+    subprocess.Popen("sleep 1 && pkill -f 'ros2_nexus_web.py'", shell=True)
     return jsonify({"ok": True, "msg": "Alle Prozesse werden beendet."})
+
+
+def _start_terminal_server():
+    """
+    Startet terminal_server.py (Port 8765) als asyncio-Loop im eigenen Thread.
+    Läuft automatisch mit Flask zusammen — kein separater Prozess nötig.
+    Retry-Loop: falls Port 8765 kurz nach Kill-All noch belegt ist, wartet er.
+    """
+    import importlib.util, sys
+
+    ts_path = os.path.join(BASE_DIR, "terminal_server.py")
+    if not os.path.exists(ts_path):
+        print("[terminal_server] ⚠️  terminal_server.py nicht gefunden!")
+        return
+
+    # Modul dynamisch laden
+    spec = importlib.util.spec_from_file_location("terminal_server", ts_path)
+    ts_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ts_mod)
+
+    # Retry-Loop: warten bis Port 8765 frei ist (max 10s)
+    import socket
+    for attempt in range(20):
+        try:
+            s = socket.socket()
+            s.bind(('0.0.0.0', 8765))
+            s.close()
+            break  # Port frei!
+        except OSError:
+            if attempt == 0:
+                print("[terminal_server] Port 8765 noch belegt, warte...")
+            time.sleep(0.5)
+    else:
+        print("[terminal_server] ❌ Port 8765 nach 10s noch belegt – terminal_server nicht gestartet!")
+        return
+
+    print("[terminal_server] ✅ Starte auf Port 8765...")
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(ts_mod.main())
+    except Exception as e:
+        print(f"[terminal_server] Fehler: {e}")
+    finally:
+        loop.close()
 
 
 if __name__ == "__main__":
@@ -202,5 +250,11 @@ if __name__ == "__main__":
     print(f"{'═'*54}")
     print(f"  Browser:    http://localhost:{port}")
     print(f"  Workspace:  {WS_PATH}")
+    print(f"  Terminal:   ws://localhost:8765 (eingebettet)")
     print(f"{'═'*54}\n")
+
+    # Terminal-Server als Daemon-Thread starten (stirbt automatisch mit Flask)
+    ts_thread = threading.Thread(target=_start_terminal_server, daemon=True, name="terminal-server")
+    ts_thread.start()
+
     socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)
