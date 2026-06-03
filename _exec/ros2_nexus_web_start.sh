@@ -45,14 +45,33 @@ if [ -f "$WS_DIR/install/setup.bash" ]; then
     source "$WS_DIR/install/setup.bash" 2>/dev/null && echo "  ✅ Workspace" || echo "  ⚠️  Workspace setup.bash fehlgeschlagen"
 fi
 
-# ── Flask-Backend prüfen / starten ────────────────────────────
-# Flask startet jetzt automatisch auch terminal_server (Port 8765)!
+# ── Flask-Backend + Terminal-Server prüfen / starten ─────────
+# Flask enthält jetzt terminal_server als eingebetteten Thread (Port 8765).
+# Prüfe BEIDE: Flask (Port 5000) UND terminal_server (Port 8765).
+# Wenn Flask läuft aber 8765 fehlt → alter Prozess ohne eingebetteten Server
+# → killen und neu starten!
 echo ""
 BACKEND_PID=""
-if curl -s --max-time 1 "$URL" > /dev/null 2>&1; then
-    echo "✅ Backend läuft bereits (Flask + Terminal-Server)"
-else
-    echo "🚀 Starte Backend (Flask + eingebetteter Terminal-Server)..."
+
+FLASK_OK=false
+TERM_OK=false
+curl -s --max-time 1 "$URL" > /dev/null 2>&1 && FLASK_OK=true
+ss -tlnp 2>/dev/null | grep -q ":8765" && TERM_OK=true
+
+if $FLASK_OK && $TERM_OK; then
+    echo "✅ Backend läuft bereits (Flask Port $PORT + Terminal-Server Port 8765)"
+
+elif $FLASK_OK && ! $TERM_OK; then
+    echo "⚠️  Flask läuft, aber Terminal-Server (Port 8765) fehlt!"
+    echo "   → Alter Prozess ohne eingebetteten Terminal-Server erkannt."
+    echo "   → Beende alten Prozess und starte neu..."
+    pkill -f "ros2_nexus_web.py" 2>/dev/null
+    sleep 2
+    FLASK_OK=false  # Neustart erzwingen
+fi
+
+if ! $FLASK_OK; then
+    echo "🚀 Starte Backend (Flask Port $PORT + Terminal-Server Port 8765)..."
     cd "$WS_DIR"
     python3 "$SCRIPT_DIR/ros2_nexus_web.py" &
     BACKEND_PID=$!
@@ -60,7 +79,7 @@ else
 
     echo "⏳ Warte auf Backend..."
     READY=0
-    for i in {1..16}; do
+    for i in {1..20}; do
         sleep 0.5
         if curl -s --max-time 1 "$URL" > /dev/null 2>&1; then
             READY=1
@@ -70,9 +89,14 @@ else
     done
     echo ""
     if [ "$READY" -eq 1 ]; then
-        echo "✅ Backend bereit! (Flask Port $PORT + Terminal-Server Port 8765)"
+        echo "✅ Backend bereit!"
+        # Kurz extra warten damit terminal_server Thread hochfährt
+        sleep 1
+        ss -tlnp 2>/dev/null | grep -q ":8765" \
+            && echo "✅ Terminal-Server bereit (Port 8765)" \
+            || echo "⚠️  Terminal-Server noch nicht sichtbar (startet im Hintergrund)"
     else
-        echo "❌ Backend nicht erreichbar nach 8s!"
+        echo "❌ Backend nicht erreichbar nach 10s!"
     fi
 fi
 
