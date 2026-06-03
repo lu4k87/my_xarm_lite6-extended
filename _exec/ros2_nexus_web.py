@@ -1,51 +1,27 @@
 #!/usr/bin/env python3
 """
 ROS 2 Nexus — Web Edition
-Flask-Backend: führt ROS-Befehle in gnome-terminal aus.
+Nexus Web Backend: führt ROS-Befehle in gnome-terminal aus.
 Usage: python3 ros2_nexus_web.py
        Browser: http://localhost:5000
 """
 
 from flask import Flask, request, jsonify, send_from_directory
-from flask_socketio import SocketIO
 import subprocess
 import os
 import shlex
 import threading
-import asyncio
-import time
+import sys
+import atexit
 
 import uuid
 import signal
 
 app     = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WS_PATH  = os.environ.get("ROS2_WS", "~/dev_ws")
 
 active_processes = {}
-
-def _stream_output(process, cmd_id):
-    for line in iter(process.stdout.readline, b''):
-        if line:
-            socketio.emit('terminal_output', {'id': cmd_id, 'data': line.decode('utf-8', errors='replace')})
-    process.stdout.close()
-    process.wait()
-    socketio.emit('terminal_output', {'id': cmd_id, 'data': f"\n\033[1;33m[Prozess beendet mit Code {process.returncode}]\033[0m\n"})
-    active_processes.pop(cmd_id, None)
-
-def _run_streaming_cmd(script: str, cmd_id: str):
-    process = subprocess.Popen(
-        f"bash -c {shlex.quote(script)}",
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid  # Allow killing entire process group
-    )
-    active_processes[cmd_id] = process
-    t = threading.Thread(target=_stream_output, args=(process, cmd_id), daemon=True)
-    t.start()
-    return process
 
 # ... (other code like _build_ros_script is unchanged, but we need to supply the whole block)
 
@@ -160,15 +136,12 @@ def api_run():
         if mode == "bg":
             env = os.environ.copy()
             env.setdefault("DISPLAY", ":0")
-            process = subprocess.Popen(command, shell=True, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid)
+            process = subprocess.Popen(command, shell=True, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, preexec_fn=os.setsid)
             active_processes[cmd_id] = process
-            t = threading.Thread(target=_stream_output, args=(process, cmd_id), daemon=True)
-            t.start()
         elif mode == "interactive":
             _open_terminal(_build_interactive_script(command), title)
         else:
-            socketio.emit('terminal_output', {'id': cmd_id, 'data': f"\n\033[1;36m[{title}]\033[0m\n"})
-            _run_streaming_cmd(_build_ros_script(command, ws_path), cmd_id)
+            _open_terminal(_build_ros_script(command, ws_path), title)
 
         return jsonify({"ok": True, "cmd_id": cmd_id})
 
@@ -192,55 +165,9 @@ def api_kill():
 
 @app.route("/api/kill_all", methods=["POST"])
 def api_kill_all():
-    # Kill all running backends and terminal servers in 1 second
-    # terminal_server läuft als Daemon-Thread in Flask → stirbt automatisch mit
+    # Kill all running Nexus Web Backends in 1 second
     subprocess.Popen("sleep 1 && pkill -f 'ros2_nexus_web.py'", shell=True)
     return jsonify({"ok": True, "msg": "Alle Prozesse werden beendet."})
-
-
-def _start_terminal_server():
-    """
-    Startet terminal_server.py (Port 8765) als asyncio-Loop im eigenen Thread.
-    Läuft automatisch mit Flask zusammen — kein separater Prozess nötig.
-    Retry-Loop: falls Port 8765 kurz nach Kill-All noch belegt ist, wartet er.
-    """
-    import importlib.util, sys
-
-    ts_path = os.path.join(BASE_DIR, "terminal_server.py")
-    if not os.path.exists(ts_path):
-        print("[terminal_server] ⚠️  terminal_server.py nicht gefunden!")
-        return
-
-    # Modul dynamisch laden
-    spec = importlib.util.spec_from_file_location("terminal_server", ts_path)
-    ts_mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(ts_mod)
-
-    # Retry-Loop: warten bis Port 8765 frei ist (max 10s)
-    import socket
-    for attempt in range(20):
-        try:
-            s = socket.socket()
-            s.bind(('0.0.0.0', 8765))
-            s.close()
-            break  # Port frei!
-        except OSError:
-            if attempt == 0:
-                print("[terminal_server] Port 8765 noch belegt, warte...")
-            time.sleep(0.5)
-    else:
-        print("[terminal_server] ❌ Port 8765 nach 10s noch belegt – terminal_server nicht gestartet!")
-        return
-
-    print("[terminal_server] ✅ Starte auf Port 8765...")
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        loop.run_until_complete(ts_mod.main())
-    except Exception as e:
-        print(f"[terminal_server] Fehler: {e}")
-    finally:
-        loop.close()
 
 
 if __name__ == "__main__":
@@ -250,11 +177,7 @@ if __name__ == "__main__":
     print(f"{'═'*54}")
     print(f"  Browser:    http://localhost:{port}")
     print(f"  Workspace:  {WS_PATH}")
-    print(f"  Terminal:   ws://localhost:8765 (eingebettet)")
+    print(f"  Terminal:   gnome-terminal (Desktop)")
     print(f"{'═'*54}\n")
 
-    # Terminal-Server als Daemon-Thread starten (stirbt automatisch mit Flask)
-    ts_thread = threading.Thread(target=_start_terminal_server, daemon=True, name="terminal-server")
-    ts_thread.start()
-
-    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)

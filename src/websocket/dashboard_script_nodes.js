@@ -27,7 +27,7 @@ function updateNodeList() {
     let inactiveWsNodes = [];
     let sysNodes = [];
 
-    // Erfasse direkt ueber Backend-Metadaten, wer wirklich ein Workspace Node ist
+    // Erfasse direkt ueber Workspace Analyzer Backend-Metadaten, wer wirklich ein Workspace Node ist
     nodes.forEach(n => {
         const info = workspaceData.nodes[n];
         let isWs = false;
@@ -39,7 +39,7 @@ function updateNodeList() {
             isWs = true;
         }
 
-        // Eindeutig ein Workspace Node laut Backend
+        // Eindeutig ein Workspace Node laut Workspace Analyzer Backend
         if (isWs) {
             activeWsNodes.push(n);
         } else {
@@ -151,7 +151,7 @@ function updateNodeList() {
         let outHtml = '';
 
         const getPackageForNode = (name) => {
-            // Priority 1: direct live node data from the Python backend (most accurate)
+            // Priority 1: direct live node data from the Python Workspace Analyzer Backend (most accurate)
             if (workspaceData.nodes && workspaceData.nodes[name]) {
                 const pkg = workspaceData.nodes[name].package;
                 if (pkg && pkg !== 'ROS 2 System' && pkg !== 'Unbekannt') return pkg;
@@ -446,7 +446,7 @@ function selectNode(nodeName, skipRequest = false) {
     document.getElementById('nodes-overview-view').classList.add('hidden');
     document.getElementById('node-details-view').classList.remove('hidden');
 
-    // On-Demand Details vom Backend anfordern (nur wenn nicht durch Update getriggert)
+    // On-Demand Details vom Workspace Analyzer Backend anfordern (nur wenn nicht durch Update getriggert)
     if (nodeDetailReqPub && !skipRequest) {
         nodeDetailReqPub.publish(new ROSLIB.Message({ data: nodeName }));
     }

@@ -49,7 +49,7 @@ cat > "$DESKTOP_FILE" << EOF
 [Desktop Entry]
 Name=ROS 2 Nexus
 Comment=ROS 2 Workspace Manager — Web Edition
-Exec=gnome-terminal --title="ROS 2 Nexus — Backend" -- bash -c "${START_SCRIPT}; exec bash"
+Exec=gnome-terminal --title="ROS 2 Nexus — Nexus Web Backend" -- bash -c "${START_SCRIPT}; exec bash"
 Icon=${ICON_FILE}
 Terminal=false
 Type=Application

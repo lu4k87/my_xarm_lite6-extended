@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-workspace_analyzer.py – ROS 2 Dashboard Backend
+workspace_analyzer.py – Workspace Analyzer Backend
 Optimierungen (2025-03):
   - Topology-Abfrage nur bei Änderung der Node-Liste (Diff)
   - exe-cache in separatem Thread (kein Blockieren des ROS-Spin)
