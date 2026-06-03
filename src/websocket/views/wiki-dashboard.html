@@ -7,7 +7,7 @@
         beteiligt sind und wie die Live-Daten aus ROS 2 extrahiert und kategorisiert werden.</p>
 
     <div class="exec-category">
-        <h3 class="exec-cat-title"><i class="fa-solid fa-server" style="color: var(--accent-secondary);"></i> 1. Backend
+        <h3 class="exec-cat-title"><i class="fa-solid fa-server" style="color: var(--accent-secondary);"></i> 1. Workspace Analyzer Backend
             (Datenerfassung &amp; ROS 2 Bridge)</h3>
         <div class="exec-grid">
             <div class="exec-card" style="grid-column: span 2;">
@@ -62,8 +62,7 @@
             Node Explorer Logik (Sidebar)</h3>
         <p style="margin-bottom: 20px; font-size: 0.95rem; color: #cbd5e1;">Das Dashboard trennt alle erkannten ROS 2
             Nodes intelligent in <strong>drei Hauptkategorien</strong>. Die Zuordnung erfolgt durch das
-            JavaScript-Frontend (<code>dashboard_script.js</code>), welches die <code>is_workspace</code> Flag vom
-            Backend auswertet.</p>
+            JavaScript-Frontend (<code>dashboard_script.js</code>), welches die <code>is_workspace</code> Flag vom Workspace Analyzer Backend auswertet.</p>
 
         <div class="exec-grid">
             <div class="exec-card"
@@ -75,7 +74,7 @@
                         <h5 style="color: rgb(34, 197, 94); margin-bottom: 8px;"><i class="fa-solid fa-code"></i>
                             Workspace Nodes</h5>
                         <p style="font-size: 0.85rem; color: #cbd5e1;"><strong>Eigener, aktiver Code.</strong><br>Diese
-                            Nodes laufen gerade im System (grüner Status-Puls). Das Backend hat validiert, dass ihr
+                            Nodes laufen gerade im System (grüner Status-Puls). Das Workspace Analyzer Backend hat validiert, dass ihr
                             Ursprung im lokalen <code>dev_ws/src</code> Ordner liegt – sei es als kompiliertes C++
                             Executable, statisches Python Script oder durch ein lokales Launch File parametrisiert.</p>
                     </div>
@@ -138,7 +137,7 @@
 
                         <h5
                             style="color: var(--accent-primary); margin-top: 20px; margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;">
-                            Schritt 2: Backend Bindings</h5>
+                            Schritt 2: Workspace Analyzer Backend Bindings</h5>
                         <div style="margin-top: 10px; font-size: 0.85rem; color: #cbd5e1;">
                             <div class="exec-row-item">Der <code>workspace_analyzer</code> löst die Topic-Strings
                                 dynamisch über <code>get_message(type)</code> auf.</div>

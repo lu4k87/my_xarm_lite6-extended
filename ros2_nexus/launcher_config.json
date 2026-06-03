@@ -43,7 +43,7 @@
   ],
   "web": [
     {
-      "title": "Backend & Server", "icon": "fa-solid fa-server", "actions": [
+      "title": "Workspace Analyzer Backend", "icon": "fa-solid fa-server", "actions": [
         { "label": "ROS Bridge Launch", "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", "type": "launch" },
         { "label": "Webserver Port 8080", "cmd": "python3 -m http.server 8080 -d src/websocket", "type": "sys" },
         { "label": "Workspace Analyzer", "cmd": "python3 src/websocket/workspace_analyzer.py", "type": "sys" }

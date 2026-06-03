@@ -9,10 +9,6 @@
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/xterm@5.3.0/css/xterm.css" />
-  <script src="https://unpkg.com/xterm@5.3.0/lib/xterm.js"></script>
-  <script src="https://unpkg.com/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
   <style>
     :root {
       --bg: #07080f;
@@ -552,27 +548,6 @@
       box-shadow: 0 8px 24px rgba(239, 68, 68, .4)
     }
 
-    /* ── TERMINAL OVERLAY ── */
-    .terminal-overlay {
-      position: fixed; bottom: 20px; right: 20px; width: 850px; max-width: 95vw; height: 450px;
-      background: rgba(13, 17, 23, 0.95); border: 1px solid var(--brd); border-radius: 12px;
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      z-index: 1000; display: flex; flex-direction: column;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-      transition: all 0.3s ease;
-    }
-    .terminal-overlay.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
-    .terminal-header {
-      padding: 10px 16px; border-bottom: 1px solid var(--brd); display: flex; justify-content: space-between;
-      align-items: center; font-family: 'Outfit'; font-weight: 600; color: var(--accent); background: rgba(0,0,0,0.2);
-    }
-    .terminal-content {
-      flex: 1; overflow-y: auto; padding: 12px; font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; color: #a5b4fc; white-space: pre-wrap; word-break: break-all;
-    }
-    .close-btn { background: transparent; border: none; color: var(--mut); cursor: pointer; font-size: 16px; }
-    .close-btn:hover { color: var(--txt); }
-
     /* ── RESPONSIVE ── */
     @media(max-width:900px) {
       header {
@@ -633,10 +608,10 @@
   <main id="main-content"></main>
 
   <footer>
-    <button class="footer-btn" onclick="toggleTerminal()"><i class="fa-solid fa-terminal"></i> Terminal</button>
+    <button class="footer-btn" onclick="runCmd('bash','Terminal','interactive')"><i class="fa-solid fa-terminal"></i> Terminal</button>
     <button class="footer-btn" onclick="runCmd('nano ~/.bashrc','~/.bashrc Editor','interactive')"><i
         class="fa-solid fa-file-code"></i> ~/.bashrc</button>
-    <button class="footer-btn" onclick="runCmd('nano ~/dev_ws/ros2_nexus/ros2_nexus_web.py','Backend Code','interactive')"><i class="fas fa-code"></i> Backend</button>
+    <button class="footer-btn" onclick="runCmd('nano ~/dev_ws/ros2_nexus/ros2_nexus_web.py','Nexus Web Backend Code','interactive')"><i class="fa-solid fa-code"></i> Nexus Web Backend</button>
     <button class="footer-btn primary" onclick="location.reload()"><i class="fa-solid fa-arrows-rotate"></i>
       Reload</button>
     <button class="footer-btn" style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3);" onclick="killAllProcesses()"><i class="fa-solid fa-skull"></i> Alle Beenden</button>
@@ -648,183 +623,12 @@
     <i class="fa-solid fa-power-off" style="font-size: 80px; color: var(--red); margin-bottom: 20px;"></i>
     <h1 style="font-size: 32px; margin: 0 0 10px 0;">SYSTEM OFFLINE</h1>
     <p style="font-size: 18px; color: #a5b4fc; max-width: 600px; text-align: center; line-height: 1.5;">
-      Alle Backend-Prozesse wurden erfolgreich beendet.<br><br>
+      Alle Nexus Web Backend-Prozesse wurden erfolgreich beendet.<br><br>
       Bitte starte <b>ros2_nexus_web_start.sh</b> in deinem Ubuntu-Terminal neu, um das System wieder hochzufahren.
     </p>
   </div>
 
-  <style>
-    .term-tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; align-items: center; padding-right: 10px; }
-    .term-tabs::-webkit-scrollbar { height: 4px; }
-    .term-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-    .term-tab {
-      background: rgba(255,255,255,0.05); color: var(--mut); border: 1px solid var(--brd);
-      padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
-    }
-    .term-tab.active { background: rgba(56,189,248,0.15); color: var(--accent); border-color: rgba(56,189,248,0.3); }
-    .term-tab:hover { background: rgba(255,255,255,0.1); }
-    .term-tab .kill-btn { color: var(--red); background: none; border: none; cursor: pointer; padding: 0 2px; font-size: 12px; }
-    .term-pane { display: none; padding: 12px; overflow-y: auto; flex: 1; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #a5b4fc; word-break: break-all; }
-    .term-pane.active { display: block; }
-  </style>
-
-  <div id="web-terminal-overlay" class="terminal-overlay hidden">
-    <div class="terminal-header">
-      <div id="term-tabs" class="term-tabs"></div>
-      <button onclick="closeTerminal()" class="close-btn" title="Minimieren"><i class="fa-solid fa-window-minimize"></i></button>
-    </div>
-    <div id="web-terminal-content" class="terminal-content" style="padding: 0; display: flex; flex-direction: column;"></div>
-  </div>
-
   <script>
-    // ─── DRAGGABLE TERMINAL ────────────────────────────────────────────────────────
-    const _termOverlay = document.getElementById('web-terminal-overlay');
-    const _termHeader = document.querySelector('.terminal-header');
-    let _isDragging = false, _dragOffsetX = 0, _dragOffsetY = 0;
-
-    _termHeader.addEventListener('mousedown', e => {
-      if (e.target.closest('button') || e.target.closest('.term-tab')) return;
-      _isDragging = true;
-      const rect = _termOverlay.getBoundingClientRect();
-      _termOverlay.style.right = 'auto';
-      _termOverlay.style.bottom = 'auto';
-      _termOverlay.style.left = rect.left + 'px';
-      _termOverlay.style.top = rect.top + 'px';
-      _termOverlay.style.transform = 'none';
-      _termOverlay.style.transition = 'none'; // disable transition while dragging
-      _dragOffsetX = e.clientX - rect.left;
-      _dragOffsetY = e.clientY - rect.top;
-    });
-
-    window.addEventListener('mousemove', e => {
-      if (!_isDragging) return;
-      _termOverlay.style.left = (e.clientX - _dragOffsetX) + 'px';
-      _termOverlay.style.top = (e.clientY - _dragOffsetY) + 'px';
-    });
-
-    window.addEventListener('mouseup', () => { 
-      if (_isDragging) {
-         _isDragging = false; 
-         _termOverlay.style.transition = 'all 0.3s ease';
-      }
-    });
-    // ─── ECHTES UBUNTU TERMINAL (xterm.js) ───────────────────────────────────────
-    const termOverlay = document.getElementById('web-terminal-overlay');
-    const termTabs = document.getElementById('term-tabs');
-    const termContent = document.getElementById('web-terminal-content');
-    let activeTermId = null;
-    let terminals = {}; // { id: { term, fitAddon, socket, container } }
-
-    function closeTerminal() { termOverlay.classList.add('hidden'); }
-    function toggleTerminal() {
-      termOverlay.classList.toggle('hidden');
-      if (!termOverlay.classList.contains('hidden') && activeTermId && terminals[activeTermId]) {
-        setTimeout(() => terminals[activeTermId].fitAddon.fit(), 50);
-      }
-    }
-
-    function switchTermTab(id) {
-      activeTermId = id;
-      document.querySelectorAll('.term-tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));
-      document.querySelectorAll('.term-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + id));
-      termOverlay.classList.remove('hidden');
-      if (terminals[id] && terminals[id].fitAddon) {
-        setTimeout(() => terminals[id].fitAddon.fit(), 50);
-      }
-    }
-
-    function killTerm(id, event) {
-      if (event) event.stopPropagation();
-      const t = terminals[id];
-      if (t) {
-        const pidMsg = t.pid ? ` (PID: ${t.pid})` : '';
-        if (t.socket) t.socket.close();
-        if (t.term) t.term.dispose();
-        t.container.remove();
-        document.querySelector(`.term-tab[data-id="${id}"]`)?.remove();
-        delete terminals[id];
-        showToast(`Terminal-Prozess${pidMsg} beendet.`, false);
-      }
-      const remaining = Object.keys(terminals);
-      if (remaining.length > 0) switchTermTab(remaining[remaining.length - 1]);
-      else closeTerminal();
-    }
-
-    function createTermTab(title, initCommand = null) {
-      termOverlay.classList.remove('hidden');
-      const id = 'term_' + Math.random().toString(36).substr(2, 9);
-      
-      const tab = document.createElement('button');
-      tab.className = 'term-tab active';
-      tab.dataset.id = id;
-      tab.innerHTML = `<span><i class="fa-solid fa-terminal"></i> ${title}</span> <div class="kill-btn" onclick="killTerm('${id}', event)" title="Prozess beenden"><i class="fa-solid fa-xmark"></i></div>`;
-      tab.onclick = () => switchTermTab(id);
-      
-      const pane = document.createElement('div');
-      pane.className = 'term-pane active';
-      pane.id = 'pane-' + id;
-      pane.style.height = '100%';
-      pane.style.overflow = 'hidden';
-      pane.style.padding = '5px';
-      pane.style.backgroundColor = '#000';
-      
-      termTabs.appendChild(tab);
-      termContent.appendChild(pane);
-      
-      const term = new Terminal({
-        theme: { background: '#000' },
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 13,
-        cursorBlink: true,
-        convertEol: true
-      });
-      const fitAddon = new FitAddon.FitAddon();
-      term.loadAddon(fitAddon);
-      term.open(pane);
-      fitAddon.fit();
-      
-      // Terminal-Eintrag SOFORT registrieren, BEVOR der WebSocket connected,
-      // damit die PID-Nachricht nicht ins Leere geht.
-      terminals[id] = { term, fitAddon, socket: null, container: pane, pid: null };
-
-      const ws = new WebSocket('ws://' + window.location.hostname + ':8765');
-      terminals[id].socket = ws;
-
-      ws.onmessage = e => {
-        try {
-          if (typeof e.data === 'string' && e.data.startsWith('{')) {
-            const msg = JSON.parse(e.data);
-            if (msg.type === 'pid') {
-              terminals[id].pid = msg.pid;
-              console.log('[Terminal] PID empfangen:', msg.pid);
-              return;
-            }
-          }
-        } catch (err) {}
-        term.write(e.data);
-      };
-      ws.onopen = () => {
-         if (initCommand) {
-            // Setup sequence um ROS 2 zu sourcen, dann den command senden
-            const setupCmd = "source ~/.bashrc; source /opt/ros/humble/setup.bash; source ~/dev_ws/install/setup.bash; clear";
-            ws.send(setupCmd + " && " + initCommand + "\r");
-         }
-      };
-      ws.onclose = () => term.write('\r\n\x1b[31m[Verbindung zum Terminal-Server getrennt oder verweigert. Läuft das Backend?]\x1b[0m\r\n');
-      ws.onerror = () => term.write('\r\n\x1b[31m[Fehler: Kann nicht zum Terminal-Server verbinden!]\x1b[0m\r\n');
-      
-      term.onData(data => ws.send(data));
-      term.onResize(size => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'resize', cols: size.cols, rows: size.rows }));
-        }
-      });
-      window.addEventListener('resize', () => fitAddon.fit());
-
-      switchTermTab(id);
-      return id;
-    }
-
     // ─── TAB DATA ────────────────────────────────────────────────────────────────
     let TABS = {};
 
@@ -895,20 +699,14 @@
       });
     });
 
-    // ─── BACKEND ──────────────────────────────────────────────────────────────────
-    // ─── BACKEND ──────────────────────────────────────────────────────────────────
+    // ─── NEXUS WEB BACKEND ──────────────────────────────────────────────────────────────────
     async function runCmd(command, title, mode = 'ros') {
-      if (mode === 'interactive' || mode === 'ros') {
-         createTermTab(title, command);
-         showToast(`✓ ${title} im Terminal geöffnet`);
-      } else {
-         try {
-           const res = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command, title, mode }) });
-           const data = await res.json();
-           if (data.ok) showToast(`✓ ${title} im Hintergrund gestartet`);
-           else showToast(`✗ Fehler: ${data.error}`, true);
-         } catch { showToast('✗ Backend nicht erreichbar', true); }
-      }
+      try {
+        const res = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command, title, mode }) });
+        const data = await res.json();
+        if (data.ok) showToast(`✓ ${title} gestartet`);
+        else showToast(`✗ Fehler: ${data.error}`, true);
+      } catch { showToast('✗ Nexus Web Backend nicht erreichbar', true); }
     }
 
     function copyCmd(text, btn) {
@@ -927,7 +725,7 @@
     }
 
     async function killAllProcesses() {
-      if (!confirm("Wirklich ALLE Backend-Prozesse beenden? (Das Dashboard muss danach per Terminal neu gestartet werden)")) return;
+      if (!confirm("Wirklich ALLE Nexus Web Backend-Prozesse beenden? (Das Dashboard muss danach per Terminal neu gestartet werden)")) return;
       try {
         await fetch('/api/kill_all', { method: 'POST' });
         document.getElementById('offline-overlay').style.display = 'flex';

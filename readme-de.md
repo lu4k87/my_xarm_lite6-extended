@@ -114,8 +114,8 @@ Die softwareseitige Infrastruktur ist modular gekapselt und vollständig in das 
 
 Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustand des Systems über das **ROS2 Core Dashboard** überwachen. Dies ist eine webbasierte Echtzeit-UI, die statische Quellcode-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks zu einer einheitlichen Monitoring-Oberfläche zusammenführt.
 
-### 3.1 Backend (`workspace_analyzer.py`)
-Das Backend ist ein ROS 2 Node, der eine ausführungsfreie, regex-basierte statische Code-Analyse durchführt. Es wurde stark modularisiert in drei Kerndateien: `workspace_analyzer.py` (behandelt ROS Pub/Sub), `workspace_parser.py` (führt die Regex-Analyse aus) und `system_utils.py` (parst Umgebungsvariablen). Dabei werden Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten extrahiert. Diese strukturierten JSON-Metadaten werden kontinuierlich an `/dashboard/workspace_metadata` publiziert (im 10-Sekunden-Timer-Zyklus). Zusätzlich werden Umgebungsvariablen (ROS Distro, Domain ID, DDS-Middleware, Localhost-Modus) aus `~/.bashrc` ausgelesen und als Live-Status-Badges bereitgestellt.
+### 3.1 Workspace Analyzer Backend (`workspace_analyzer.py`)
+Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, regex-basierte statische Code-Analyse durchführt. Es wurde stark modularisiert in drei Kerndateien: `workspace_analyzer.py` (behandelt ROS Pub/Sub), `workspace_parser.py` (führt die Regex-Analyse aus) und `system_utils.py` (parst Umgebungsvariablen). Dabei werden Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten extrahiert. Diese strukturierten JSON-Metadaten werden kontinuierlich an `/dashboard/workspace_metadata` publiziert (im 10-Sekunden-Timer-Zyklus). Zusätzlich werden Umgebungsvariablen (ROS Distro, Domain ID, DDS-Middleware, Localhost-Modus) aus `~/.bashrc` ausgelesen und als Live-Status-Badges bereitgestellt.
 
 > **Hinweis zu `workspace_analyzer.py`:** Dies ist **kein** Netzwerk-Server, sondern ein normaler ROS 2 Node. Das Dashboard greift über die ROS Bridge (Port 9090) auf dessen publizierte Topics zu.
 
@@ -126,7 +126,7 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ### 3.3 Startbefehle der UI-Komponenten
 *Starte diese Komponenten über ROS 2 Nexus oder manuell über das Terminal:*
-* **Backend:** `python3 src/websocket/workspace_analyzer.py`
+* **Workspace Analyzer Backend:** `python3 src/websocket/workspace_analyzer.py`
 * **Webserver:** `python3 -m http.server 8080 -d src/websocket`
 * *(Dashboard erreichbar unter: `http://localhost:8080/dashboard_index.html`)*
 
@@ -455,7 +455,7 @@ sudo apt install ros-humble-tf2-ros ros-humble-rviz2
 ```bash
 pip install pygame          # Haptisches Feedback für collision_check
 pip install openai-whisper  # Lokale Spracherkennung
-pip install flask           # ROS 2 Nexus Web-Backend
+pip install flask           # ROS 2 Nexus Web Backend
 pip install flask-socketio  # Socket.IO für Echtzeit-Terminal-Streaming im Browser
 pip install opencv-python   # Computer Vision
 pip install PyQt5           # Gaze-Control-UI
@@ -506,7 +506,7 @@ python3 ros2_nexus/ros2_nexus_web.py
 # → Öffnet sich unter http://localhost:5000 (auch im LAN erreichbar, z.B. http://192.168.x.x:5000)
 ```
 
-**Quick Launch (Backend automatisch starten + Browser öffnen):**
+**Quick Launch (Nexus Web Backend automatisch starten + Browser öffnen):**
 ```bash
 ./ros2_nexus/ros2_nexus_web_start.sh
 ```
@@ -534,16 +534,15 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 
 | Port | Service | Typ | Beschreibung |
 |------|---------|-----|--------------|
-| **`5000`** | **ROS 2 Nexus Web** | Flask Backend | Stellt die grafische Nexus-Oberfläche bereit. Empfängt Klicks aus dem Browser, führt ROS-Shell-Befehle als Unterprozesse auf dem Host-PC aus und streamt den Terminal-Output in Echtzeit direkt zurück in die Web-Oberfläche. |
+| **`5000`** | **ROS 2 Nexus Web** | Nexus Web Backend | Stellt die grafische Nexus-Oberfläche bereit. Empfängt Klicks aus dem Browser, führt ROS-Shell-Befehle als Unterprozesse in `gnome-terminal` auf dem Host-PC aus. |
 | **`8080`** | **Dashboard Frontend** | HTTP Server | Hostet die statischen HTML/CSS/JS-Dateien für das ROS2 Core Dashboard. |
-| **`8765`** | **Nexus Terminal Server** | WebSocket (PTY) | Eigenständiges Python-Backend, das Pseudo-Terminals (`pty`) nutzt, um eine vollständig interaktive, mit Tabs versehene Ubuntu-Bash-Shell direkt in der Nexus Web UI via `xterm.js` bereitzustellen. **Beinhaltet ein robustes Session-basiertes Process Lifecycle Management:** Das Schließen eines Terminal-Tabs beendet sofort und zuverlässig (`SIGTERM` -> `SIGKILL`) den gesamten zugehörigen ROS 2-Prozessbaum, was Zombie-Nodes und blockierte Ports rigoros verhindert. |
 | **`9090`** | **ROS Bridge** | WebSocket | Die Brücke zwischen ROS 2 und dem Browser. Erlaubt dem Dashboard (Port 8080), sich über `roslib.js` direkt mit dem ROS-Netzwerk zu verbinden, um Echtzeit-Telemetrie auszulesen und Services aufzurufen. |
 
-> **Warum strikte Port-Trennung?** Die Ports 8080 und 9090 nutzen unterschiedliche Protokolle für verschiedene Aufgaben. Port 8080 (HTTP) fungiert als Standard-Webserver und liefert die statischen Webseiten-Dateien (HTML/CSS) an den Browser aus. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich ROS-Echtzeitdaten streamt und nicht in der Lage ist, Webseiten bereitzustellen. Port 5000 (Flask) verarbeitet Backend-Logik unabhängig von ROS.
+> **Warum strikte Port-Trennung?** Die Ports 8080 und 9090 nutzen unterschiedliche Protokolle für verschiedene Aufgaben. Port 8080 (HTTP) fungiert als Standard-Webserver und liefert die statischen Webseiten-Dateien (HTML/CSS) an den Browser aus. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich ROS-Echtzeitdaten streamt und nicht in der Lage ist, Webseiten bereitzustellen. Port 5000 (Flask) verarbeitet Nexus Web Backend-Logik unabhängig von ROS.
 
 ### 8.5 Launcher-Konfiguration (`launcher_config.json`)
 
-Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar. Sie werden in einer externen Konfigurationsdatei unter `ros2_nexus/launcher_config.json` definiert. Um eigene Skripte, Debugging-Tools oder ROS 2 Nodes zur Launcher-UI hinzuzufügen, muss lediglich diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch, sodass Änderungen nach einem simplen Neuladen der Seite im Browser sofort aktiv werden, ohne dass das Backend neugestartet werden muss.
+Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar. Sie werden in einer externen Konfigurationsdatei unter `ros2_nexus/launcher_config.json` definiert. Um eigene Skripte, Debugging-Tools oder ROS 2 Nodes zur Launcher-UI hinzuzufügen, muss lediglich diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch, sodass Änderungen nach einem simplen Neuladen der Seite im Browser sofort aktiv werden, ohne dass das Nexus Web Backend neugestartet werden muss.
 
 ---
 
@@ -553,9 +552,8 @@ Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind voll
 dev_ws/
 ├── ros2_nexus/                       # Launcher-Skripte & App-Integration
 │   ├── launcher_config.json        # Konfigurationsdatei für Nexus-Buttons
-│   ├── ros2_nexus_web.py           # Flask-Backend — ROS 2 Nexus Web UI
+│   ├── ros2_nexus_web.py           # Nexus Web Backend — ROS 2 Nexus Web UI
 │   ├── ros2_nexus_web.html         # Frontend-HTML für Nexus
-│   ├── terminal_server.py          # WebSocket PTY Server — xterm.js Backend
 │   ├── ros2_nexus_web_start.sh     # Auto-Start-Skript
 │   ├── ROS2_Nexus.desktop          # Ubuntu Anwendungsverknüpfung
 │   ├── lite6.sh                    # Hardware-Bringup-Skript

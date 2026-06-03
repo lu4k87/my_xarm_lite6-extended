@@ -54,14 +54,14 @@ function recursivelyParseJSON(obj) {
 }
 
 /**
- * Bereinigt activity.last_msg vom Backend rekursiv:
- * Das Backend liefert den Wert oft als mehrfach-JSON-kodierten String.
+ * Bereinigt activity.last_msg vom Workspace Analyzer Backend rekursiv:
+ * Das Workspace Analyzer Backend liefert den Wert oft als mehrfach-JSON-kodierten String.
  */
 function formatLastMsg(raw) {
     const fullyParsed = recursivelyParseJSON(raw);
     let result = typeof fullyParsed === 'string' ? fullyParsed : JSON.stringify(fullyParsed, null, 2);
     
-    // Fallback: If it's a raw string that couldn't be parsed (e.g. due to backend truncation),
+    // Fallback: If it's a raw string that couldn't be parsed (e.g. due to Workspace Analyzer Backend truncation),
     // manually clean up the JSON escape characters so it looks readable.
     if (typeof result === 'string') {
         if (result.includes('\\"')) {

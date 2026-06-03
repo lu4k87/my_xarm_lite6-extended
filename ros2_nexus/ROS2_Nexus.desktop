@@ -1,8 +1,21 @@
+# DIESE DATEI NICHT DIREKT NUTZEN!
+# ─────────────────────────────────────────────────────────────────
+# Stattdessen einmalig install_app.sh ausführen:
+#
+#   cd ~/dev_ws/ros2_nexus && bash install_app.sh
+#
+# install_app.sh generiert die .desktop-Datei automatisch mit dem
+# korrekten Benutzerpfad für diesen PC und registriert die App
+# im Ubuntu App-Menü.
+# ─────────────────────────────────────────────────────────────────
+
 [Desktop Entry]
-Name=ROS2 Nexus
-Comment=Launch ROS2 Nexus Web Dashboard
-Exec=/home/mk/dev_ws/ros2_nexus/ros2_nexus_web_start.sh
-Icon=/home/mk/dev_ws/ros2_nexus/ros2_nexus_icon.png
+Name=ROS 2 Nexus
+Comment=ROS 2 Workspace Manager — Web Edition
+Exec=WIRD_VON_install_app.sh_GENERIERT
+Icon=WIRD_VON_install_app.sh_GENERIERT
 Terminal=false
 Type=Application
-Categories=Utility;X-Robot;
+Categories=Development;Science;
+StartupNotify=true
+StartupWMClass=ros2-nexus
