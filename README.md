@@ -153,7 +153,7 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 ### 4.2 Perception & Assistance
 **Computer Vision:** <br> 
 * Spatial 2D object detection and localization using *YOLO* (currently via PiCameras).
-**Stereo Vision (Planned):** <br>
+**Stereo Vision:** <br>
 * Integration of true 3D depth data via a *ZED Mini (Stereolabs)* camera.
 **VLA & Video Action Models (Planned):** <br>
 * AI-assisted action planning through *Vision-Language-Action* models.
@@ -486,7 +486,6 @@ sudo apt install ros-humble-tf2-ros ros-humble-rviz2
 pip install pygame          # Haptic feedback (rumble) for collision_check
 pip install openai-whisper  # Local speech recognition (ros2_whisper)
 pip install flask           # ROS 2 Nexus Web Backend
-pip install flask-socketio  # Socket.IO support for real-time terminal streaming
 pip install opencv-python   # Computer vision (yolo_object_detector, gaze_control)
 pip install PyQt5           # Gaze control UI (gaze_control)
 pip install ultralytics     # YOLO object detection
@@ -517,14 +516,7 @@ The ZED Mini camera requires the official ZED SDK and a matching CUDA toolkit ve
    ```bash
    sudo apt install ros-humble-point-cloud-transport
    ```
-4. **Git Branch Locking [CRITICAL]**: The ROS 2 Wrapper must precisely match the installed SDK version to avoid C++ `undefined symbol` and `CameraOne.hpp` compilation errors. If using ZED SDK 4.1.x, you MUST check out the `humble-v4.1.4` tag.
-   ```bash
-   cd ~/dev_ws/src/zed-ros2-wrapper
-   git checkout humble-v4.1.4
-   
-   cd ~/dev_ws/src/zed-ros2-interfaces
-   git checkout humble-v4.1.4
-   ```
+4. **ZED SDK Source Code [CRITICAL]**: The ROS 2 Wrapper source code must precisely match the installed SDK version to avoid compilation errors. This repository already includes the correct source code (`humble-v4.1.4`) permanently embedded. You do **not** need to clone or check out any ZED repositories manually.
 5. **Build the Wrapper**: 
    ```bash
    cd ~/dev_ws
