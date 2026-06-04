@@ -28,10 +28,12 @@
       --red: #ef4444;
       --gold: #f0b429;
 
-      --c-node: #38bdf8;
-      --c-launch: #10b981;
-      --c-cmd: #818cf8;
-      --c-kill: #ef4444;
+      /* Badge-Farben — nach Wunsch angepasst */
+      --c-node:   #06b6d4;   /* Türkis/Blau      — ros2 run Node      */
+      --c-launch: #f97316;   /* Orange           — ros2 launch File   */
+      --c-pub:    #10b981;   /* Grün             — ros2 topic pub     */
+      --c-cmd:    #a78bfa;   /* Violett          — System CMD         */
+      --c-kill:   #f87171;   /* Rot              — Kill / Danger      */
 
       --glow-a: 0 0 18px rgba(56, 189, 248, .25);
       --glow-o: 0 0 18px rgba(249, 115, 22, .3);
@@ -335,19 +337,23 @@
     }
 
     .action-card[data-type="node"] {
-      --card-accent: linear-gradient(90deg, var(--c-node) 0%, rgba(56, 189, 248, 0) 35%);
+      --card-accent: linear-gradient(90deg, var(--c-node) 0%, rgba(6, 182, 212, 0) 35%);
     }
 
     .action-card[data-type="launch"] {
-      --card-accent: linear-gradient(90deg, var(--c-launch) 0%, rgba(16, 185, 129, 0) 35%);
+      --card-accent: linear-gradient(90deg, var(--c-launch) 0%, rgba(249, 115, 22, 0) 35%);
     }
 
     .action-card[data-type="sys"] {
-      --card-accent: linear-gradient(90deg, var(--c-cmd) 0%, rgba(129, 140, 248, 0) 35%);
+      --card-accent: linear-gradient(90deg, var(--c-cmd) 0%, rgba(167, 139, 250, 0) 35%);
     }
 
     .action-card[data-type="kill"] {
-      --card-accent: linear-gradient(90deg, var(--c-kill) 0%, rgba(239, 68, 68, 0) 35%);
+      --card-accent: linear-gradient(90deg, var(--c-kill) 0%, rgba(248, 113, 113, 0) 35%);
+    }
+
+    .action-card[data-type="pub"] {
+      --card-accent: linear-gradient(90deg, var(--c-pub) 0%, rgba(16, 185, 129, 0) 35%);
     }
 
     .action-btn {
@@ -374,7 +380,7 @@
 
     .btn-top {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: center;
       gap: 12px
     }
@@ -410,27 +416,33 @@
     }
 
     .badge-node {
-      background: rgba(56, 189, 248, .12);
+      background: rgba(6, 182, 212, .12);
       color: var(--c-node);
-      border-color: rgba(56, 189, 248, .25)
+      border-color: rgba(6, 182, 212, .25)
     }
 
     .badge-launch {
-      background: rgba(16, 185, 129, .12);
+      background: rgba(249, 115, 22, .12);
       color: var(--c-launch);
-      border-color: rgba(16, 185, 129, .25)
+      border-color: rgba(249, 115, 22, .25)
     }
 
     .badge-sys {
-      background: rgba(129, 140, 248, .12);
+      background: rgba(167, 139, 250, .12);
       color: var(--c-cmd);
-      border-color: rgba(129, 140, 248, .25)
+      border-color: rgba(167, 139, 250, .25)
     }
 
     .badge-kill {
-      background: rgba(239, 68, 68, .12);
+      background: rgba(248, 113, 113, .12);
       color: var(--c-kill);
-      border-color: rgba(239, 68, 68, .25)
+      border-color: rgba(248, 113, 113, .25)
+    }
+
+    .badge-pub {
+      background: rgba(16, 185, 129, .12);
+      color: var(--c-pub);
+      border-color: rgba(16, 185, 129, .25)
     }
 
     /* CMD line — full width, always fully visible */
@@ -590,8 +602,7 @@
     </a>
 
     <nav class="tab-nav" id="tab-nav">
-      <button class="tab-btn active" data-tab="robot"><i class="fa-solid fa-robot"></i> Sensors</button>
-      <button class="tab-btn" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
+      <button class="tab-btn active" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
       <button class="tab-btn" data-tab="web"><i class="fa-solid fa-server"></i> Web- / Server</button>
       <button class="tab-btn" data-tab="info"><i class="fa-solid fa-gauge-high"></i> ROS Info</button>
       <button class="tab-btn" data-tab="system"><i class="fa-solid fa-terminal"></i> System</button>
@@ -645,10 +656,11 @@
 
     // ─── BADGE CONFIG ─────────────────────────────────────────────────────────────
     const BADGE = {
-      node: { cls: "badge-node", icon: "fa-solid fa-circle-dot", label: "NODE" },
-      launch: { cls: "badge-launch", icon: "fa-solid fa-rocket", label: "LAUNCH" },
-      sys: { cls: "badge-sys", icon: "fa-solid fa-terminal", label: "CMD" },
-      kill: { cls: "badge-kill", icon: "fa-solid fa-skull-crossbones", label: "KILL" },
+      node:   { cls: "badge-node",   icon: "fa-solid fa-circle-dot",        label: "NODE"      },
+      launch: { cls: "badge-launch", icon: "fa-solid fa-rocket",             label: "LAUNCH"    },
+      pub:    { cls: "badge-pub",    icon: "fa-solid fa-arrow-up-from-bracket", label: "TOPIC PUB" },
+      sys:    { cls: "badge-sys",    icon: "fa-solid fa-terminal",            label: "CMD"       },
+      kill:   { cls: "badge-kill",   icon: "fa-solid fa-skull-crossbones",    label: "KILL"      },
     };
 
     // ─── RENDER ───────────────────────────────────────────────────────────────────
@@ -668,8 +680,8 @@
         <div class="action-card" data-type="${a.type}">
           <button class="action-btn" data-cmd="${safeCmd}" data-label="${safeLbl}" data-mode="${mode}" title="Ausführen">
             <div class="btn-top">
-              <span class="label">${a.label}</span>
               <span class="badge ${b.cls}"><i class="${b.icon}"></i>${b.label}</span>
+              <span class="label">${a.label}</span>
             </div>
             <div class="cmd-wrap"><span class="cmd-text">${a.cmd}</span></div>
           </button>
@@ -689,7 +701,7 @@
     }
 
     // ─── TABS ─────────────────────────────────────────────────────────────────────
-    let currentTab = 'robot';
+    let currentTab = 'nodes';
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));

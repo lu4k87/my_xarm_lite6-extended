@@ -197,6 +197,10 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Purpose:** Object detection and spatial localization (cube, rectangle, cylinder).
     * **Task:** Finds trained objects and ArUco markers in the 2D image stream; projects them into 3D.
     * **How it works:** Reads RTSP/HTTP streams in a background thread. Transforms YOLO bounding boxes via `cv2.findHomography` and ArUco markers into 3D space (Z=90 mm). Publishes `PoseArray` messages under `/objects/<color>_<shape>/world_poses`.
+* **`my_zed_tf_bringup`**
+    * **Purpose:** Unified ZED Mini Camera Initialization, TF Broadcasting, and 3D Visualization.
+    * **Task:** Safely launches the `zed_wrapper` node alongside a static TF publisher and generates the 3D camera models in RViz.
+    * **How it works:** Executes `zed_camera.launch.py` to initialize the native stereolabs driver and simultaneously broadcast a static transform from `link_base` to `zed_camera_link`. It also runs a custom Python publisher (`zed_stand_publisher.py`) that generates the 3D tripod and ZED camera mesh (`ZEDM.stl`) dynamically, directly coupling them to the TF frame for accurate visual representation in RViz.
 
 ### 5.2 🗣️ Voice Control & Interaction
 
@@ -242,8 +246,8 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 * **`rviz_marker`**
     * **Purpose:** Real-time visual feedback in RViz2.
-    * **Task:** Visual enhancement of the 3D simulation.
-    * **How it works:** Tracks `link_eef` via TF2. Publishes `MarkerArray` with pick-and-place targets (cubes, cylinders) and static 3D meshes (e.g., ZED camera) for simulation without live YOLO data.
+    * **Task:** Visual enhancement of the 3D simulation work area.
+    * **How it works:** Tracks `link_eef` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data.
 * **`rosbridge_server`**
     * **Purpose:** WebSocket bridge for web browsers.
     * **Task:** Native communication between dashboard and robot.
@@ -495,9 +499,43 @@ pip install ultralytics     # YOLO object detection
 | UFactory xArm Lite 6 | 6-DOF robot arm |
 | Xbox One Elite Series 2 | Primary teleoperation controller |
 | Tobii Pro Glasses 3 | Eye-tracking input *(in progress)* |
-| Stereolabs ZED Mini | Stereo depth camera *(planned)* |
+| Stereolabs ZED Mini | Stereo depth camera |
 | Raspberry Pi Camera (×2) | 2D object detection via YOLO |
 | Leap Motion Controller | Gesture input *(planned)* |
+
+### ZED SDK & Camera Setup (ZED Mini)
+
+The ZED Mini camera requires the official ZED SDK and a matching CUDA toolkit version. To ensure a clean installation on Ubuntu 22.04 with ROS 2 Humble without breaking existing NVIDIA drivers, follow this exact procedure:
+
+1. **Install CUDA 12.1 Toolkit**: We strongly recommend CUDA 12.1, as it is native and highly stable with the ZED SDK. Install only the toolkit, not the full driver package.
+2. **Install ZED SDK 4.1.2**: Download the ZED SDK 4.1.x for Ubuntu 22.04 (CUDA 12.1 variant) from Stereolabs and run the installer in silent mode.
+   * *Important:* The installer sets up Python API packages as root. Fix the PIP permissions afterwards so `rosdep` can access them:
+     ```bash
+     sudo chmod -R a+rX /usr/local/lib/python3.10/dist-packages/
+     ```
+3. **ROS Dependencies**: Install the required point cloud transport package:
+   ```bash
+   sudo apt install ros-humble-point-cloud-transport
+   ```
+4. **Git Branch Locking [CRITICAL]**: The ROS 2 Wrapper must precisely match the installed SDK version to avoid C++ `undefined symbol` and `CameraOne.hpp` compilation errors. If using ZED SDK 4.1.x, you MUST check out the `humble-v4.1.4` tag.
+   ```bash
+   cd ~/dev_ws/src/zed-ros2-wrapper
+   git checkout humble-v4.1.4
+   
+   cd ~/dev_ws/src/zed-ros2-interfaces
+   git checkout humble-v4.1.4
+   ```
+5. **Build the Wrapper**: 
+   ```bash
+   cd ~/dev_ws
+   rm -rf build/zed_* install/zed_*  # Clean old artifacts first!
+   source /opt/ros/humble/setup.bash
+   colcon build --packages-select zed_interfaces zed_components zed_wrapper my_zed_tf_bringup --symlink-install
+   ```
+6. **Execution Workflow & RViz Integration**:
+   * First, launch the robot base (e.g., **Fake Arm** or **Real Arm**) via the ROS 2 Nexus WebApp. This automatically opens **RViz** with the pre-configured layout (`servo.rviz`).
+   * Next, launch the **ZED M Bringup** via Nexus. This executes the `my_zed_tf_bringup` package, which simultaneously initializes the ZED wrapper, broadcasts the static TF (aligning the camera to the robot's `link_base`), and publishes the dynamically generated 3D tripod visualization.
+   * The live Point Cloud (`PointCloud2`) and the camera axes will instantly and automatically appear in the already running RViz instance without any manual configuration.
 
 ### Setup & Build
 
@@ -552,8 +590,8 @@ python3 ros2_nexus/ros2_nexus_web.py
 
 ### 8.3 Step 3: Start Nodes via GUI
 Once the ROS 2 Nexus interface is open in the browser:
-1. Navigate through the available tabs.
-2. Click the corresponding buttons to launch the required modules (e.g., Robot Driver, Gamepad Control, Vision, Dashboard).
+1. Navigate through the available tabs (e.g., `Nodes / Launch`, `Sensors`, `Hardware`, `Web`).
+2. Click the corresponding buttons to launch the required modules (for instance, the ZED camera driver is located under the **Sensors** tab).
 3. The terminal output of each launched node will stream directly back to the web interface in real-time.
 
 <p align="center">
@@ -604,6 +642,7 @@ dev_ws/
 │   │   └── motion_sequence/motion_sequence.py
 │   ├── move_to_coordinator/        # 🧠 Python: Shared control brain
 │   │   └── move_to_coordinator/move_to_coordinator.py
+│   ├── my_zed_tf_bringup/          # 📷 Camera Bringup, TF & 3D Stand publisher
 │   ├── ros2_whisper/               # 🎙️ Whisper AI speech-to-text node
 │   ├── rviz_marker/                # 📍 Python: RViz2 marker publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent parser & filter

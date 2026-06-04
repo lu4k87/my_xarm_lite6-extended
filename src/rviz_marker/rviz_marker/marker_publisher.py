@@ -29,8 +29,6 @@ CONFIG = {
 SCENE_MARKERS = [
     # Arbeitsbereich als weiße Kreislinie (Radius 0.44)
     {"id": 10, "type": Marker.LINE_LIST, "radius": 0.44, "pos": (0.0, 0.0, -0.004), "dims": (0.001, 0.0, 0.0), "color": [1.0, 1.0, 1.0, 1.0]}, 
-    # ZED Camera Stand (Aluminium)
-    {"id": 11, "type": Marker.CUBE, "pos": (0.5, 0.5, 0.19), "dims": (0.02, 0.02, 0.38), "color": [0.7, 0.7, 0.7, 1.0]}, 
     # Template Plane (Aluminium)
     {"id": 14, "type": Marker.CUBE, "pos": (0.32, 0.0, -0.003), "dims": (0.2, 0.3, 0.001), "color": [0.7, 0.7, 0.7, 1.0]},
     # Wand Links (y = 2.0)

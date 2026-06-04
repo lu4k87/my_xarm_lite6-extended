@@ -197,6 +197,10 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Zweck:** Objekterkennung und räumliche Lokalisierung (Würfel, Rechteck, Zylinder).
     * **Aufgabe:** Findet trainierte Objekte und ArUco-Marker im 2D-Bildstream; projiziert diese in 3D.
     * **Funktionsweise:** Liest RTSP/HTTP-Streams im Background-Thread. Transformiert YOLO Bounding Boxes via `cv2.findHomography` und ArUco-Markern in den 3D-Raum (Z=90 mm). Publiziert `PoseArray`-Nachrichten unter `/objects/<color>_<shape>/world_poses`.
+* **`my_zed_tf_bringup`**
+    * **Zweck:** Einheitliche Initialisierung der ZED Mini Kamera, TF-Broadcasting und 3D-Visualisierung.
+    * **Aufgabe:** Startet den `zed_wrapper` Node sicher und kombiniert ihn mit dem statischen TF-Publisher und der Generierung der 3D-Kameramodelle in RViz.
+    * **Funktionsweise:** Führt `zed_camera.launch.py` aus, um den nativen Stereolabs-Treiber zu initialisieren und sendet simultan eine statische Transformation von `link_base` zu `zed_camera_link`. Zusätzlich läuft ein eigenes Python-Skript (`zed_stand_publisher.py`), welches das 3D-Stativ und das ZED-Kameramesh (`ZEDM.stl`) dynamisch generiert und direkt an den TF-Frame koppelt, um eine korrekte visuelle Repräsentation in RViz zu gewährleisten. Standardmäßig ist dies für ein physisches Stativ-Setup parametrisiert (x=5.0m, y=0.0m, z=0.5m, pitch=-20°, yaw=180°), wodurch die Kamera in RViz2 direkt in das Weltkoordinatensystem des Roboters eingebunden wird.
 
 ### 5.2 🗣️ Sprachsteuerung & Interaktion
 
@@ -241,9 +245,9 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 ### 5.5 🖥️ Monitoring (Dashboard), UI & Visualisierung
 
 * **`rviz_marker`**
-    * **Zweck:** Visuelles Live-Feedback in RViz2.
-    * **Aufgabe:** Optische Aufwertung der 3D-Simulation.
-    * **Funktionsweise:** Trackt `link_eef` via TF2. Publiziert `MarkerArray` mit Pick-and-Place-Zielen (Würfel, Zylinder) und statische 3D-Meshes (z.B. ZED Kamera) zur Simulation ohne Live-YOLO-Daten.
+    * **Zweck:** Visuelles Echtzeit-Feedback in RViz2.
+    * **Aufgabe:** Optische Aufwertung des 3D-Arbeitsbereichs.
+    * **Funktionsweise:** Trackt `link_eef` via TF2. Publiziert `MarkerArray` mit interaktiven Pick-and-Place Zielen (Würfel, Zylinder) und statischen Grenzen (Tischkanten) für die Simulation ohne Live-YOLO Daten.
 * **`rosbridge_server`**
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
@@ -469,9 +473,43 @@ pip install ultralytics     # YOLO-Objekterkennung
 | UFactory xArm Lite 6 | 6-DOF Roboterarm |
 | Xbox One Elite Series 2 | Primärer Teleoperation-Controller |
 | Tobii Pro Glasses 3 | Eye-Tracking *(in Bearbeitung)* |
-| Stereolabs ZED Mini | Stereo-Tiefenkamera *(geplant)* |
+| Stereolabs ZED Mini | Stereo-Tiefenkamera |
 | Raspberry Pi Kamera (×2) | 2D-Objekterkennung via YOLO |
 | Leap Motion Controller | Gesteneingabe *(geplant)* |
+
+### ZED SDK & Kamera Setup (ZED Mini)
+
+Die ZED Mini Kamera erfordert das offizielle ZED SDK und eine passende CUDA-Version. Für eine saubere Installation unter Ubuntu 22.04 mit ROS 2 Humble (ohne bestehende NVIDIA-Treiber zu beschädigen), folge exakt diesem Ablauf:
+
+1. **CUDA 12.1 Toolkit installieren**: Wir empfehlen dringend CUDA 12.1, da es hochgradig stabil mit dem ZED SDK läuft. Nur das Toolkit installieren, nicht den gesamten Treiber.
+2. **ZED SDK 4.1.2 installieren**: Lade das ZED SDK 4.1.x für Ubuntu 22.04 (CUDA 12.1 Variante) von Stereolabs herunter und führe den Installer aus.
+   * *Wichtig:* Der Installer richtet Python-API-Pakete als Root ein. Korrigiere anschließend die Berechtigungen, damit `rosdep` fehlerfrei durchläuft:
+     ```bash
+     sudo chmod -R a+rX /usr/local/lib/python3.10/dist-packages/
+     ```
+3. **ROS Abhängigkeiten**: Installiere das benötigte Point-Cloud-Transport-Paket:
+   ```bash
+   sudo apt install ros-humble-point-cloud-transport
+   ```
+4. **Git Branch Locking [KRITISCH]**: Der ROS 2 Wrapper muss exakt zur installierten SDK-Version passen, um C++ `undefined symbol` und `CameraOne.hpp` Kompilierungsfehler zu vermeiden. Bei Nutzung des ZED SDK 4.1.x MUSST du den Tag `humble-v4.1.4` auschecken.
+   ```bash
+   cd ~/dev_ws/src/zed-ros2-wrapper
+   git checkout humble-v4.1.4
+   
+   cd ~/dev_ws/src/zed-ros2-interfaces
+   git checkout humble-v4.1.4
+   ```
+5. **Wrapper kompilieren**: 
+   ```bash
+   cd ~/dev_ws
+   rm -rf build/zed_* install/zed_*  # Alte Fragmente zwingend löschen!
+   source /opt/ros/humble/setup.bash
+   colcon build --packages-select zed_interfaces zed_components zed_wrapper my_zed_tf_bringup --symlink-install
+   ```
+6. **Ausführungs-Workflow & RViz Integration**:
+   * Starte zunächst die Roboter-Basis (z. B. **Fake Arm** oder **Real Arm**) über die ROS 2 Nexus WebApp. Dies öffnet automatisch **RViz** mit dem vorkonfigurierten Layout (`servo.rviz`).
+   * Starte im Anschluss das **ZED M Bringup** über Nexus. Dies führt das `my_zed_tf_bringup` Paket aus, welches simultan den ZED-Treiber initialisiert, die statische TF-Transformation sendet (um die Kamera relativ zum `link_base` des Roboters auszurichten) und das dynamisch generierte 3D-Stativ publiziert.
+   * Die Live-Punktwolke (`PointCloud2`) sowie die Kamera-Achsen erscheinen daraufhin sofort und vollautomatisch in der bereits laufenden RViz-Instanz, ohne dass weitere manuelle Einstellungen nötig sind.
 
 ### Setup & Build
 
@@ -520,8 +558,8 @@ python3 ros2_nexus/ros2_nexus_web.py
 
 ### 8.3 Schritt 3: Module über die GUI aktivieren
 Sobald sich ROS 2 Nexus im Browser geöffnet hat:
-1. Navigiere durch die verschiedenen Tabs der Oberfläche.
-2. Klicke auf die entsprechenden Buttons, um die benötigten Module (z.B. Roboter-Treiber, Gamepad-Steuerung, Vision, Dashboard) zu starten.
+1. Navigiere durch die verschiedenen Tabs der Oberfläche (z.B. `Nodes / Launch`, `Sensors`, `Hardware`, `Web`).
+2. Klicke auf die entsprechenden Buttons, um die benötigten Module zu starten (der Treiber für die ZED-Kamera befindet sich beispielsweise im Tab **Sensors**).
 3. Der Terminal-Output jedes gestarteten Nodes wird dir in Echtzeit direkt in die Web-Oberfläche gestreamt.
 
 <p align="center">
@@ -572,6 +610,7 @@ dev_ws/
 │   │   └── motion_sequence/motion_sequence.py
 │   ├── move_to_coordinator/        # 🧠 Python: Shared-Control-Gehirn
 │   │   └── move_to_coordinator/move_to_coordinator.py
+│   ├── my_zed_tf_bringup/          # 📷 Kamera Bringup, TF & 3D-Stativ Publisher
 │   ├── ros2_whisper/               # 🎙️ Whisper AI Speech-to-Text
 │   ├── rviz_marker/                # 📍 Python: RViz2 Marker-Publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent-Parser & Filter

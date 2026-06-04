@@ -31,11 +31,23 @@ Panels:
 Visualization Manager:
   Class: ""
   Displays:
+    - Class: rviz_default_plugins/PointCloud2
+      Name: ZED PointCloud
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /zed/zed_node/point_cloud/cloud_registered
+      Color Transformer: RGB8
+      Size (m): 0.0005
+      Style: Squares
+      Value: true
     - Alpha: 0.5
       Cell Size: 0.05000000074505806
       Class: rviz_default_plugins/Grid
       Color: 150; 150; 150
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.029999999329447746
         Value: Lines
@@ -326,6 +338,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: visualization_marker_array
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: ZED Stand & Camera Mesh
+      Namespaces:
+        zed_visuals: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep All
+        Reliability Policy: Reliable
+        Value: zed_visual_markers
+      Value: true
     - Class: rviz_default_plugins/Axes
       Enabled: true
       Length: 1
@@ -339,6 +363,13 @@ Visualization Manager:
       Name: Axes
       Radius: 0.0010000000474974513
       Reference Frame: link_tcp
+      Value: true
+    - Class: rviz_default_plugins/Axes
+      Enabled: true
+      Length: 0.2
+      Name: ZED Axes
+      Radius: 0.005
+      Reference Frame: zed_camera_link
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
