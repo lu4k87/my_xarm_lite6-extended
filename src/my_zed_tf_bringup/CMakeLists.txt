@@ -8,7 +8,7 @@ install(DIRECTORY launch meshes
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(PROGRAMS scripts/zed_stand_publisher.py
+install(PROGRAMS scripts/zed_stand_publisher.py scripts/pointcloud_optimizer.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

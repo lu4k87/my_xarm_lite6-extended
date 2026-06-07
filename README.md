@@ -198,9 +198,9 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Task:** Finds trained objects and ArUco markers in the 2D image stream; projects them into 3D.
     * **How it works:** Reads RTSP/HTTP streams in a background thread. Transforms YOLO bounding boxes via `cv2.findHomography` and ArUco markers into 3D space (Z=90 mm). Publishes `PoseArray` messages under `/objects/<color>_<shape>/world_poses`.
 * **`my_zed_tf_bringup`**
-    * **Purpose:** Unified ZED Mini Camera Initialization, TF Broadcasting, and 3D Visualization.
-    * **Task:** Safely launches the `zed_wrapper` node alongside a static TF publisher and generates the 3D camera models in RViz.
-    * **How it works:** Executes `zed_camera.launch.py` to initialize the native stereolabs driver and simultaneously broadcast a static transform from `link_base` to `zed_camera_link`. It also runs a custom Python publisher (`zed_stand_publisher.py`) that generates the 3D tripod and ZED camera mesh (`ZEDM.stl`) dynamically, directly coupling them to the TF frame for accurate visual representation in RViz.
+    * **Purpose:** Unified ZED Mini Camera Initialization, TF Broadcasting, Pointcloud Optimization, and 3D Visualization.
+    * **Task:** Safely launches the `zed_wrapper` node alongside a static TF publisher, filters point clouds, and generates the 3D camera models in RViz.
+    * **How it works:** Executes `zed_camera.launch.py` to initialize the native Stereolabs driver and simultaneously broadcast a static transform from `link_base` to `zed_camera_link`. By default, this is parameterized for a physical tripod setup (x=0.75m, y=0.0m, z=0.5m, pitch=45°, yaw=180°), seamlessly integrating the camera into the robot's world coordinate system in RViz2. It also runs two custom Python nodes: `zed_stand_publisher.py` to generate the 3D tripod and ZED camera mesh (`ZEDM.stl`), and `pointcloud_optimizer.py`. The optimizer relies entirely on native Numpy 2.x (dropping Open3D and SciPy dependencies) to execute an extremely fast, hash-based voxel downsampling algorithm and correctly rotate the point cloud from the optical frame to the standard ROS frame.
 
 ### 5.2 🗣️ Voice Control & Interaction
 

@@ -56,8 +56,8 @@ def generate_launch_description():
         description='Kamera Z-Position (Höhe) relativ zu link_base [m]')
     tf_roll_arg = DeclareLaunchArgument('tf_roll', default_value='0.0',
         description='Kamera Roll-Winkel [rad]')
-    tf_pitch_arg = DeclareLaunchArgument('tf_pitch', default_value='0.35',
-        description='Kamera Pitch-Winkel [rad] (positiv = nach unten geneigt, 0.35 = ~20°)')
+    tf_pitch_arg = DeclareLaunchArgument('tf_pitch', default_value='0.785398',
+        description='Kamera Pitch-Winkel [rad] (positiv = nach unten geneigt, 0.785398 = ~45°)')
     tf_yaw_arg = DeclareLaunchArgument('tf_yaw', default_value='3.14159',
         description='Kamera Yaw-Winkel [rad] (3.14159 = 180°, zeigt zum Roboter)')
 
@@ -110,6 +110,16 @@ def generate_launch_description():
         output='screen'
     )
 
+    # -----------------------------------------------------------------------
+    # Point Cloud Optimizer Node
+    # -----------------------------------------------------------------------
+    pointcloud_optimizer_node = Node(
+        package='my_zed_tf_bringup',
+        executable='pointcloud_optimizer.py',
+        name='pointcloud_optimizer',
+        output='screen'
+    )
+
     return LaunchDescription([
         # Arguments
         camera_model_arg,
@@ -123,4 +133,5 @@ def generate_launch_description():
         zed_wrapper_launch,
         static_tf_node,
         zed_stand_publisher_node,
+        pointcloud_optimizer_node,
     ])
