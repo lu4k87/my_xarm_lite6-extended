@@ -76,8 +76,13 @@ class ZedYolo3DNode(Node):
             self.get_logger().error(f'Error converting images: {e}')
             return
 
+        # Crop the top 50% of the image to ignore background and speed up inference
+        img_h, img_w = cv_rgb.shape[:2]
+        crop_y = int(img_h * 0.5)
+        cv_rgb_cropped = cv_rgb[crop_y:, :]
+
         # Run YOLO inference on CPU to save VRAM
-        results = self.model.predict(cv_rgb, verbose=False, conf=0.5, device='cpu')
+        results = self.model.predict(cv_rgb_cropped, verbose=False, conf=0.5, device='cpu')
         
         marker_array = MarkerArray()
         
@@ -99,7 +104,11 @@ class ZedYolo3DNode(Node):
         frame_id = rgb_msg.header.frame_id
 
         for i, (box, cls_id) in enumerate(zip(boxes, classes)):
-            x_min, y_min, x_max, y_max = map(int, box)
+            x_min, y_min_crop, x_max, y_max_crop = map(int, box)
+            
+            # Restore original image coordinates
+            y_min = y_min_crop + crop_y
+            y_max = y_max_crop + crop_y
             
             # Ensure within bounds
             h, w = cv_depth.shape
