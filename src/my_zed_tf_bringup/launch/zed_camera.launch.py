@@ -88,14 +88,14 @@ def generate_launch_description():
         executable='static_transform_publisher',
         name='zed_static_tf_publisher',
         arguments=[
-            LaunchConfiguration('tf_x'),
-            LaunchConfiguration('tf_y'),
-            LaunchConfiguration('tf_z'),
-            LaunchConfiguration('tf_yaw'),
-            LaunchConfiguration('tf_pitch'),
-            LaunchConfiguration('tf_roll'),
-            'link_base',        # Elternrahmen (Roboterbasis)
-            'zed_camera_link',  # Kindrahmen (ZED-Kamera)
+            '--x', LaunchConfiguration('tf_x'),
+            '--y', LaunchConfiguration('tf_y'),
+            '--z', LaunchConfiguration('tf_z'),
+            '--yaw', LaunchConfiguration('tf_yaw'),
+            '--pitch', LaunchConfiguration('tf_pitch'),
+            '--roll', LaunchConfiguration('tf_roll'),
+            '--frame-id', 'link_base',        # Elternrahmen (Roboterbasis)
+            '--child-frame-id', 'zed_camera_link',  # Kindrahmen (ZED-Kamera)
         ],
         output='screen'
     )
@@ -107,16 +107,6 @@ def generate_launch_description():
         package='my_zed_tf_bringup',
         executable='zed_stand_publisher.py',
         name='zed_stand_publisher',
-        output='screen'
-    )
-
-    # -----------------------------------------------------------------------
-    # Point Cloud Optimizer Node
-    # -----------------------------------------------------------------------
-    pointcloud_optimizer_node = Node(
-        package='my_zed_tf_bringup',
-        executable='pointcloud_optimizer.py',
-        name='pointcloud_optimizer',
         output='screen'
     )
 
@@ -133,5 +123,4 @@ def generate_launch_description():
         zed_wrapper_launch,
         static_tf_node,
         zed_stand_publisher_node,
-        pointcloud_optimizer_node,
     ])

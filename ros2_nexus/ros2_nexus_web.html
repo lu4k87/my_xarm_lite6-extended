@@ -244,18 +244,30 @@
     main {
       flex: 1;
       padding: 36px 36px;
-      max-width: 1440px;
-      margin: 0 auto;
-      width: 100%
+      width: 100%;
+      column-count: 3;
+      column-gap: 32px;
     }
 
     /* ── SECTION ── */
     .section {
-      margin-bottom: 36px
+      background: rgba(10, 15, 25, 0.45);
+      border: 1px solid var(--brd);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      min-width: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 32px;
+      display: inline-block;
+      width: 100%;
     }
 
     .section-title {
-      font-size: 12px;
+      font-size: 16px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 2px;
@@ -358,7 +370,7 @@
 
     .action-btn {
       flex: 1;
-      padding: 20px 22px;
+      padding: 16px 18px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
@@ -577,7 +589,13 @@
       }
 
       main {
-        padding: 18px 14px
+        padding: 18px 14px;
+        column-count: 1;
+      }
+
+      .section {
+        padding: 16px;
+        margin-bottom: 20px;
       }
 
       .actions-grid {
@@ -603,7 +621,8 @@
 
     <nav class="tab-nav" id="tab-nav">
       <button class="tab-btn active" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
-      <button class="tab-btn" data-tab="web"><i class="fa-solid fa-server"></i> Web- / Server</button>
+      <button class="tab-btn" data-tab="topic_pubs"><i class="fa-solid fa-arrow-up-from-bracket"></i> Topic Pubs</button>
+      <button class="tab-btn" data-tab="web"><i class="fa-solid fa-server"></i> Web- / Server + UI</button>
       <button class="tab-btn" data-tab="info"><i class="fa-solid fa-gauge-high"></i> ROS Info</button>
       <button class="tab-btn" data-tab="system"><i class="fa-solid fa-terminal"></i> System</button>
     </nav>
@@ -668,7 +687,8 @@
       const sections = TABS[tabId] || [];
       let html = '';
       sections.forEach(sec => {
-        html += `<div class="section">
+        const extraStyle = sec.style ? ` style="${sec.style}"` : '';
+        html += `<div class="section"${extraStyle}>
       <div class="section-title"><i class="${sec.icon}"></i>${sec.title}</div>
       <div class="actions-grid">`;
         sec.actions.forEach(a => {

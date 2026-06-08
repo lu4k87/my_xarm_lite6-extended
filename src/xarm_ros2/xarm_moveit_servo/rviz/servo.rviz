@@ -38,9 +38,9 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /zed/zed_node/point_cloud/cloud_optimized
+        Value: /zed/zed_node/point_cloud/cloud_registered
       Color Transformer: RGB8
-      Size (m): 0.0005
+      Size (m): 0.01
       Style: Squares
       Value: true
     - Alpha: 0.5
@@ -349,6 +349,19 @@ Visualization Manager:
         History Policy: Keep All
         Reliability Policy: Reliable
         Value: zed_visual_markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: YOLO 3D Bounding Boxes
+      Namespaces:
+        yolo_bboxes: true
+        yolo_bboxes_text: true
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /zed/bboxes_3d
       Value: true
     - Class: rviz_default_plugins/Axes
       Enabled: true

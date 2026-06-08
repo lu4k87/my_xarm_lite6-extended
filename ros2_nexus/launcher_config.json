@@ -1,14 +1,20 @@
 {
   "nodes": [
     {
-      "title": "Roboter",
+      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)",
       "icon": "fa-solid fa-robot",
       "actions": [
         {
           "label": "Real Move Launch",
           "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
           "type": "launch"
-        },
+        }
+      ]
+    },
+    {
+      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)",
+      "icon": "fa-solid fa-robot",
+      "actions": [
         {
           "label": "Fake Move Launch",
           "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
@@ -17,83 +23,36 @@
       ]
     },
     {
-      "title": "Sensors",
-      "icon": "fa-solid fa-camera",
-      "actions": [
-        {
-          "label": "ZED M Bringup (Kamera + TF)",
-          "cmd": "source ~/dev_ws/install/setup.bash && ros2 launch my_zed_tf_bringup zed_camera.launch.py",
-          "type": "launch"
-        },
-        {
-          "label": "YOLO Homographie",
-          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
-          "type": "node"
-        }
-      ]
-    },
-    {
-      "title": "Hardware & Eingabe",
-      "icon": "fa-solid fa-microchip",
-      "actions": [
-        {
-          "label": "Keyboard Input",
-          "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
-          "type": "node"
-        },
-        {
-          "label": "Pub /joy",
-          "cmd": "ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\"",
-          "type": "node"
-        },
-        {
-          "label": "Pub /joy_check",
-          "cmd": "ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\"",
-          "type": "node"
-        }
-      ]
-    },
-    {
-      "title": "Planung & Logik",
-      "icon": "fa-solid fa-brain",
+      "title": "Roboter Aktionen & Sequenzen",
+      "icon": "fa-solid fa-route",
       "actions": [
         {
           "label": "Move To Coordinator",
           "cmd": "ros2 run move_to_coordinator move_to_coordinator",
-          "type": "node"
+          "type": "pub"
         },
         {
           "label": "Motion Sequence Launch",
           "cmd": "ros2 launch motion_sequence motion_sequence_launch.py",
-          "type": "launch"
-        },
-        {
-          "label": "Collision Check Node",
-          "cmd": "ros2 run collision_check checker",
-          "type": "node"
+          "type": "pub"
         }
       ]
     },
     {
-      "title": "Vision & Eye-Tracking",
-      "icon": "fa-solid fa-eye",
+      "title": "Controllers (Input -> Moveit Servo)",
+      "icon": "fa-solid fa-gamepad",
+      "style": "break-before: column;",
       "actions": [
+        {
+          "label": "Collision Check Node",
+          "cmd": "ros2 run collision_check checker",
+          "type": "node"
+        },
         {
           "label": "Gaze UI Node",
           "cmd": "ros2 run gaze_control gaze_ui",
           "type": "node"
         },
-        {
-          "label": "RViz Marker Launch",
-          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
-          "type": "launch"
-        }
-      ]
-    },
-    {
-      "title": "Sprache & Audio",
-      "icon": "fa-solid fa-microphone",
-      "actions": [
         {
           "label": "Whisper Bringup",
           "cmd": "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True",
@@ -108,6 +67,62 @@
           "label": "Voice Command Listener",
           "cmd": "ros2 run voice_command_listener listener",
           "type": "node"
+        },
+        {
+          "label": "Keyboard Input",
+          "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
+          "type": "node"
+        }
+      ]
+    },
+    {
+      "title": "Cameras, Sensors",
+      "icon": "fa-solid fa-camera",
+      "style": "break-before: column;",
+      "actions": [
+        {
+          "label": "ZED M Bringup (Kamera + TF)",
+          "cmd": "source ~/dev_ws/install/setup.bash && ros2 launch my_zed_tf_bringup zed_camera.launch.py",
+          "type": "launch"
+        },
+        {
+          "label": "YOLO Homographie",
+          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
+          "type": "node"
+        },
+        {
+          "label": "YOLO 3D BBox Node",
+          "cmd": "ros2 run my_zed_tf_bringup zed_yolo_3d_bbox.py",
+          "type": "node"
+        }
+      ]
+    },
+    {
+      "title": "Vizualsation (Rviz2)",
+      "icon": "fa-solid fa-chart-network",
+      "actions": [
+        {
+          "label": "RViz Marker Launch",
+          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
+          "type": "launch"
+        }
+      ]
+    }
+  ],
+  "topic_pubs": [
+    {
+      "title": "Topic Pubs (Controllers)",
+      "icon": "fa-solid fa-gamepad",
+      "actions": [
+        {
+          "label": "Pub /joy",
+          "cmd": "ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\"",
+          "type": "pub"
+        },
+        {
+          "label": "Pub /joy_check",
+          "cmd": "ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\"",
+          "type": "pub"
         }
       ]
     }
