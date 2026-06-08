@@ -103,6 +103,24 @@ class ZedYolo3DNode(Node):
         current_time = self.get_clock().now().to_msg()
         frame_id = rgb_msg.header.frame_id
 
+        # Lookup TF to map 3D points exactly into link_base
+        try:
+            trans = self.tf_buffer.lookup_transform('link_base', frame_id, rgb_msg.header.stamp)
+            q = trans.transform.rotation
+            t = trans.transform.translation
+            x_q, y_q, z_q, w_q = q.x, q.y, q.z, q.w
+            # Quaternion to 3x3 Rotation Matrix
+            R = np.array([
+                [1 - 2*y_q*y_q - 2*z_q*z_q,     2*x_q*y_q - 2*z_q*w_q,     2*x_q*z_q + 2*y_q*w_q],
+                [    2*x_q*y_q + 2*z_q*w_q, 1 - 2*x_q*x_q - 2*z_q*z_q,     2*y_q*z_q - 2*x_q*w_q],
+                [    2*x_q*z_q - 2*y_q*w_q,     2*y_q*z_q + 2*x_q*w_q, 1 - 2*x_q*x_q - 2*y_q*y_q]
+            ])
+            T = np.array([[t.x], [t.y], [t.z]])
+            tf_available = True
+        except Exception as e:
+            self.get_logger().warn(f'TF lookup failed: {e}')
+            tf_available = False
+
         for i, (box, cls_id) in enumerate(zip(boxes, classes)):
             x_min, y_min_crop, x_max, y_max_crop = map(int, box)
             
@@ -127,67 +145,88 @@ class ZedYolo3DNode(Node):
             if len(valid_depths) == 0:
                 continue
                 
-            # Use median depth to ignore background/foreground outliers
             z_median = np.median(valid_depths)
-            
             if np.isnan(z_median) or z_median <= 0:
                 continue
                 
-            # Calculate 2D center
-            u_center = (x_min + x_max) / 2.0
-            v_center = (y_min + y_max) / 2.0
+            # Isolate object from background/table (within 10cm of median depth)
+            obj_mask = (depth_roi > 0.1) & (depth_roi < 10.0) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi) & (np.abs(depth_roi - z_median) < 0.1)
             
-            # Project to 3D Space (Optical Frame: X right, Y down, Z forward)
-            x_3d = (u_center - cx) * z_median / fx
-            y_3d = (v_center - cy) * z_median / fy
-            z_3d = float(z_median)
+            if not np.any(obj_mask):
+                continue
+                
+            # Extract 2D pixel coordinates for the object
+            v_roi, u_roi = np.where(obj_mask)
+            u_img = u_roi + x_min
+            v_img = v_roi + y_min
+            z_vals = depth_roi[obj_mask]
             
-            # Calculate physical dimensions
-            width_3d = (x_max - x_min) * z_median / fx
-            height_3d = (y_max - y_min) * z_median / fy
+            # Convert to 3D Optical Frame
+            x_opt = (u_img - cx) * z_vals / fx
+            y_opt = (v_img - cy) * z_vals / fy
+            z_opt = z_vals
             
-            # Estimate depth (thickness) of the object, limit to reasonable bounds
-            depth_3d = min(width_3d, height_3d) * 0.8
-            depth_3d = max(0.05, min(0.3, depth_3d)) # Min 5cm, Max 30cm thickness
+            pts_opt = np.vstack((x_opt, y_opt, z_opt)) # shape (3, N)
             
+            if tf_available:
+                # Transform to link_base
+                pts_base = R @ pts_opt + T
+                
+                # Filter out table points (Z < 0.02)
+                table_filter = pts_base[2, :] > 0.02
+                if np.sum(table_filter) > 10:
+                    pts_base = pts_base[:, table_filter]
+                
+                # Compute 3D Bounding Box in link_base
+                min_x, max_x = np.min(pts_base[0]), np.max(pts_base[0])
+                min_y, max_y = np.min(pts_base[1]), np.max(pts_base[1])
+                min_z, max_z = np.min(pts_base[2]), np.max(pts_base[2])
+                
+                center_x = (min_x + max_x) / 2.0
+                center_y = (min_y + max_y) / 2.0
+                center_z = (min_z + max_z) / 2.0
+                
+                scale_x = max(0.02, max_x - min_x)
+                scale_y = max(0.02, max_y - min_y)
+                scale_z = max(0.02, max_z - min_z)
+                
+                marker_frame = 'link_base'
+            else:
+                # Fallback to optical frame bounding box
+                min_x, max_x = np.min(pts_opt[0]), np.max(pts_opt[0])
+                min_y, max_y = np.min(pts_opt[1]), np.max(pts_opt[1])
+                min_z, max_z = np.min(pts_opt[2]), np.max(pts_opt[2])
+                
+                center_x = (min_x + max_x) / 2.0
+                center_y = (min_y + max_y) / 2.0
+                center_z = (min_z + max_z) / 2.0
+                
+                scale_x = max(0.02, max_x - min_x)
+                scale_y = max(0.02, max_y - min_y)
+                scale_z = max(0.02, max_z - min_z)
+                
+                marker_frame = frame_id
+                
             color = self.colors[cls_id % 100]
             class_name = names[cls_id]
             
             # --- Marker 1: The Bounding Box Cube ---
             marker = Marker()
             marker.header.stamp = current_time
+            marker.header.frame_id = marker_frame
             marker.ns = 'yolo_bboxes'
             marker.id = i * 2
             marker.type = Marker.CUBE
             marker.action = Marker.ADD
             
-            # Transform point to link_base to keep the bounding box upright
-            pt_opt = PointStamped()
-            pt_opt.header.frame_id = frame_id
-            pt_opt.header.stamp = rgb_msg.header.stamp
-            pt_opt.point.x = float(x_3d)
-            pt_opt.point.y = float(y_3d)
-            pt_opt.point.z = float(z_3d)
+            marker.pose.position.x = float(center_x)
+            marker.pose.position.y = float(center_y)
+            marker.pose.position.z = float(center_z)
+            marker.pose.orientation.w = 1.0
             
-            try:
-                pt_base = self.tf_buffer.transform(pt_opt, 'link_base')
-                marker.header.frame_id = 'link_base'
-                marker.pose.position.x = pt_base.point.x
-                marker.pose.position.y = pt_base.point.y
-                marker.pose.position.z = pt_base.point.z
-                # Scale mapping for link_base (X=depth, Y=width, Z=height)
-                marker.scale.x = float(depth_3d)
-                marker.scale.y = float(width_3d)
-                marker.scale.z = float(height_3d)
-            except Exception as e:
-                # Fallback to optical frame if TF fails
-                marker.header.frame_id = frame_id
-                marker.pose.position.x = float(x_3d)
-                marker.pose.position.y = float(y_3d)
-                marker.pose.position.z = float(z_3d)
-                marker.scale.x = float(width_3d)
-                marker.scale.y = float(height_3d)
-                marker.scale.z = float(depth_3d)
+            marker.scale.x = float(scale_x)
+            marker.scale.y = float(scale_y)
+            marker.scale.z = float(scale_z)
             
             marker.pose.orientation.w = 1.0
             
@@ -214,10 +253,10 @@ class ZedYolo3DNode(Node):
             text_marker.pose.position.x = marker.pose.position.x
             text_marker.pose.position.y = marker.pose.position.y
             if marker.header.frame_id == 'link_base':
-                text_marker.pose.position.z = marker.pose.position.z + (height_3d / 2.0) + 0.02
+                text_marker.pose.position.z = marker.pose.position.z + (scale_z / 2.0) + 0.02
             else:
                 text_marker.pose.position.z = marker.pose.position.z
-                text_marker.pose.position.y -= (height_3d / 2.0) + 0.02
+                text_marker.pose.position.y -= (scale_y / 2.0) + 0.02
                 
             text_marker.pose.orientation.w = 1.0
             
