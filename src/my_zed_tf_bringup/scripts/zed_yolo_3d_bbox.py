@@ -205,14 +205,14 @@ class ZedYolo3DNode(Node):
             text_marker.pose.position.x = marker.pose.position.x
             text_marker.pose.position.y = marker.pose.position.y
             if marker.header.frame_id == 'link_base':
-                text_marker.pose.position.z = marker.pose.position.z + height_3d/2 + 0.05
+                text_marker.pose.position.z = marker.pose.position.z + (height_3d / 2.0) + 0.02
             else:
                 text_marker.pose.position.z = marker.pose.position.z
-                text_marker.pose.position.y -= height_3d/2 + 0.05
+                text_marker.pose.position.y -= (height_3d / 2.0) + 0.02
                 
             text_marker.pose.orientation.w = 1.0
             
-            text_marker.scale.z = 0.08 # Height of the text
+            text_marker.scale.z = 0.03 # Height of the text (3 cm)
             text_marker.color.r = 1.0
             text_marker.color.g = 1.0
             text_marker.color.b = 1.0
