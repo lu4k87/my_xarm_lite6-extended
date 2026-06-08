@@ -110,6 +110,16 @@ def generate_launch_description():
         output='screen'
     )
 
+    # -----------------------------------------------------------------------
+    # PointCloud ROI Optimizer (Crops Top 50% Background)
+    # -----------------------------------------------------------------------
+    pointcloud_optimizer_node = Node(
+        package='my_zed_tf_bringup',
+        executable='pointcloud_optimizer.py',
+        name='pointcloud_optimizer',
+        output='screen'
+    )
+
     return LaunchDescription([
         # Arguments
         camera_model_arg,
@@ -123,4 +133,5 @@ def generate_launch_description():
         zed_wrapper_launch,
         static_tf_node,
         zed_stand_publisher_node,
+        pointcloud_optimizer_node,
     ])
