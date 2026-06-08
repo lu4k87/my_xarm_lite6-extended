@@ -25,7 +25,8 @@ class ZedYolo3DNode(Node):
         # Load the official YOLOv8s model
         self.get_logger().info('Lade YOLOv8s Modell...')
         self.model = YOLO('yolov8s.pt')
-        self.get_logger().info('Modell erfolgreich geladen.')
+        self.model.to('cpu')  # Force CPU to avoid CUDA OOM with ZED SDK
+        self.get_logger().info('Modell erfolgreich geladen (auf CPU).')
         
         self.bridge = CvBridge()
         self.camera_info = None
@@ -75,8 +76,8 @@ class ZedYolo3DNode(Node):
             self.get_logger().error(f'Error converting images: {e}')
             return
 
-        # Run YOLO inference
-        results = self.model.predict(cv_rgb, verbose=False, conf=0.5)
+        # Run YOLO inference on CPU to save VRAM
+        results = self.model.predict(cv_rgb, verbose=False, conf=0.5, device='cpu')
         
         marker_array = MarkerArray()
         
