@@ -27,11 +27,11 @@ class ZedVisualPublisher(Node):
         stand.type = Marker.CUBE
         stand.action = Marker.ADD
 
-        # The camera TF is exactly at X=0.75, Z=0.5
-        # The stand goes straight down from Z=0 to Z=0.5. Center is at Z=0.25
+        # The camera TF is exactly at X=0.75, Z=0.4
+        # The stand goes straight down from Z=0 to Z=0.4. Center is at Z=0.20
         stand.pose.position.x = 0.75
         stand.pose.position.y = 0.0
-        stand.pose.position.z = 0.25
+        stand.pose.position.z = 0.20
         
         # Upright
         stand.pose.orientation.x = 0.0
@@ -39,10 +39,10 @@ class ZedVisualPublisher(Node):
         stand.pose.orientation.z = 0.0
         stand.pose.orientation.w = 1.0
 
-        # Scale: 2cm diameter, 50cm tall
+        # Scale: 2cm diameter, 40cm tall
         stand.scale.x = 0.02  
         stand.scale.y = 0.02
-        stand.scale.z = 0.5   
+        stand.scale.z = 0.4   
 
         # Color: Aluminum / Light Grey
         stand.color.r = 0.7
