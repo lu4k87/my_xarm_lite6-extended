@@ -22,9 +22,9 @@ class ZedYolo3DNode(Node):
     def __init__(self):
         super().__init__('zed_yolo_3d_bbox')
         
-        # Load the locally available YOLOv8s model
-        self.get_logger().info('Lade YOLOv8s Modell...')
-        self.model = YOLO('yolov8s.pt')
+        # Load the locally available YOLOv8l (Large) model
+        self.get_logger().info('Lade YOLOv8l (Large) Modell...')
+        self.model = YOLO('yolov8l.pt')
         self.get_logger().info('Modell erfolgreich geladen (nutzt GPU falls verfügbar).')
         
         self.bridge = CvBridge()

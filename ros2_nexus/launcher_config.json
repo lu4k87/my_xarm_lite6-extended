@@ -89,18 +89,6 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
-          "label": "Fake Move Launch",
-          "type": "launch"
-        }
-      ],
-      "col": 0,
-      "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
           "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
           "label": "Real Move Launch",
           "type": "launch"
@@ -109,6 +97,18 @@
       "col": 0,
       "icon": "fa-solid fa-robot",
       "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
+          "label": "Fake Move Launch",
+          "type": "launch"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-robot",
+      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
     },
     {
       "actions": [
@@ -276,28 +276,6 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-          "label": "ROS Bridge Launch",
-          "type": "launch"
-        },
-        {
-          "cmd": "python3 -m http.server 8080 -d src/websocket",
-          "label": "Webserver Port 8080",
-          "type": "sys"
-        },
-        {
-          "cmd": "python3 src/websocket/workspace_analyzer.py",
-          "label": "Workspace Analyzer",
-          "type": "sys"
-        }
-      ],
-      "col": 0,
-      "icon": "fa-solid fa-server",
-      "title": "Workspace Analyzer Backend"
-    },
-    {
-      "actions": [
-        {
           "cmd": "xdg-open http://localhost:8080/index.html",
           "label": "UI - Teleoperation - Telemetrie",
           "mode": "bg",
@@ -315,9 +293,31 @@
           "type": "sys"
         }
       ],
-      "col": 1,
+      "col": 0,
       "icon": "fa-solid fa-globe",
       "title": "Frontend & Browser"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+          "label": "ROS Bridge Launch",
+          "type": "launch"
+        },
+        {
+          "cmd": "python3 -m http.server 8080 -d src/websocket",
+          "label": "Webserver Port 8080",
+          "type": "sys"
+        },
+        {
+          "cmd": "python3 src/websocket/workspace_analyzer.py",
+          "label": "Workspace Analyzer",
+          "type": "sys"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-server",
+      "title": "Workspace Analyzer Backend"
     }
   ]
 }
