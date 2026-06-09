@@ -113,39 +113,6 @@
     {
       "actions": [
         {
-          "cmd": "source ~/dev_ws/install/setup.bash && ros2 launch my_zed_tf_bringup zed_camera.launch.py",
-          "label": "ZED M Bringup (Kamera + TF)",
-          "type": "launch"
-        },
-        {
-          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
-          "label": "YOLO Homographie",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run my_zed_tf_bringup zed_yolo_3d_bbox.py",
-          "label": "YOLO 3D BBox Node",
-          "type": "node"
-        }
-      ],
-      "icon": "fa-solid fa-camera",
-      "style": "break-before: column;",
-      "title": "Cameras, Sensors"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
-          "label": "Real Move Launch",
-          "type": "launch"
-        }
-      ],
-      "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
           "cmd": "ros2 run collision_check checker",
           "label": "Collision Check Node",
           "type": "node"
@@ -179,6 +146,39 @@
       "icon": "fa-solid fa-gamepad",
       "style": "break-before: column;",
       "title": "Controllers (Input -> Moveit Servo)"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "source ~/dev_ws/install/setup.bash && ros2 launch my_zed_tf_bringup zed_camera.launch.py",
+          "label": "ZED M Bringup (Kamera + TF)",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
+          "label": "YOLO Homographie",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run my_zed_tf_bringup zed_yolo_3d_bbox.py",
+          "label": "YOLO 3D BBox Node",
+          "type": "node"
+        }
+      ],
+      "icon": "fa-solid fa-camera",
+      "style": "break-before: column;",
+      "title": "Cameras, Sensors"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
+          "label": "Real Move Launch",
+          "type": "launch"
+        }
+      ],
+      "icon": "fa-solid fa-robot",
+      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
     },
     {
       "actions": [
