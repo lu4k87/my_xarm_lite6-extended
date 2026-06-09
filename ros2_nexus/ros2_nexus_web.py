@@ -109,14 +109,24 @@ def ping():
     return jsonify({"ok": True, "version": "Web Edition 1.0"})
 
 
-@app.route("/api/config")
-def get_config():
-    try:
-        with open(os.path.join(BASE_DIR, "launcher_config.json"), "r") as f:
-            import json
-            return jsonify(json.load(f))
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@app.route("/api/config", methods=["GET", "POST"])
+def api_config():
+    import json
+    config_path = os.path.join(BASE_DIR, "launcher_config.json")
+    if request.method == "POST":
+        try:
+            new_config = request.get_json(force=True)
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(new_config, f, indent=2, ensure_ascii=False)
+            return jsonify({"ok": True})
+        except Exception as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+    else:
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                return jsonify(json.load(f))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/run", methods=["POST"])

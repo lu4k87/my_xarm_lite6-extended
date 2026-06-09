@@ -572,6 +572,12 @@
       box-shadow: 0 8px 24px rgba(239, 68, 68, .4)
     }
 
+    .sortable-ghost {
+      opacity: 0.4;
+      background: var(--card2);
+      border: 1px dashed var(--accent);
+    }
+
     /* ── RESPONSIVE ── */
     @media(max-width:900px) {
       header {
@@ -658,6 +664,7 @@
     </p>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script>
     // ─── TAB DATA ────────────────────────────────────────────────────────────────
     let TABS = {};
@@ -686,18 +693,18 @@
     function renderTab(tabId) {
       const sections = TABS[tabId] || [];
       let html = '';
-      sections.forEach(sec => {
+      sections.forEach((sec, secIndex) => {
         const extraStyle = sec.style ? ` style="${sec.style}"` : '';
         html += `<div class="section"${extraStyle}>
       <div class="section-title"><i class="${sec.icon}"></i>${sec.title}</div>
-      <div class="actions-grid">`;
-        sec.actions.forEach(a => {
+      <div class="actions-grid" data-sec-index="${secIndex}">`;
+        sec.actions.forEach((a, aIndex) => {
           const mode = a.mode || 'ros';
           const b = BADGE[a.type] || BADGE.sys;
           const safeCmd = a.cmd.replace(/"/g, '&quot;');
           const safeLbl = a.label.replace(/"/g, '&quot;');
           html += `
-        <div class="action-card" data-type="${a.type}">
+        <div class="action-card" data-type="${a.type}" data-action-index="${aIndex}">
           <button class="action-btn" data-cmd="${safeCmd}" data-label="${safeLbl}" data-mode="${mode}" title="Ausführen">
             <div class="btn-top">
               <span class="badge ${b.cls}"><i class="${b.icon}"></i>${b.label}</span>
@@ -717,6 +724,42 @@
       });
       document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', e => { e.stopPropagation(); copyCmd(btn.dataset.cmd, btn); });
+      });
+
+      // Initialize SortableJS for drag-and-drop
+      document.querySelectorAll('.actions-grid').forEach(grid => {
+        new Sortable(grid, {
+          animation: 200,
+          ghostClass: 'sortable-ghost',
+          onEnd: async function (evt) {
+            const secIndex = parseInt(evt.from.dataset.secIndex);
+            const oldIdx = evt.oldIndex;
+            const newIdx = evt.newIndex;
+            if (oldIdx === newIdx) return;
+            
+            // Update internal state
+            const arr = TABS[tabId][secIndex].actions;
+            const movedItem = arr.splice(oldIdx, 1)[0];
+            arr.splice(newIdx, 0, movedItem);
+            
+            // Save to backend
+            try {
+              const res = await fetch('/api/config', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(TABS) 
+              });
+              const data = await res.json();
+              if (data.ok) showToast('✓ Layout gespeichert');
+              else showToast('✗ Speichern fehlgeschlagen', true);
+            } catch {
+              showToast('✗ Speichern fehlgeschlagen', true);
+            }
+            
+            // Re-render to ensure DOM perfectly matches internal state
+            renderTab(tabId);
+          }
+        });
       });
     }
 
