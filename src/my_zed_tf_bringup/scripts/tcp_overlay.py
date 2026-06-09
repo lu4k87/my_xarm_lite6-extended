@@ -37,30 +37,32 @@ class TcpOverlayNode(Node):
             msg.horizontal_distance = 10  # 10px Abstand vom rechten Rand
             msg.vertical_distance = 10    # 10px Abstand vom oberen Rand
             
-            # Banner-Größe: -1 bedeutet automatische Anpassung an die Textgröße!
-            msg.width = -1
-            msg.height = -1
+            # Banner-Größe: Schmaler und dünner, passend zur Schrift
+            msg.width = 460
+            msg.height = 22
             
-            # Hintergrund: Schwarz, leicht transparent (60%)
-            msg.bg_color = ColorRGBA(r=0.0, g=0.0, b=0.0, a=0.6)
+            # Hintergrund: Sehr stark transparent (nur 20% Deckkraft)
+            msg.bg_color = ColorRGBA(r=0.0, g=0.0, b=0.0, a=0.2)
             
-            # Text-Eigenschaften (als Fallback)
+            # Text-Eigenschaften
             msg.fg_color = ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)
-            msg.text_size = 14.0
-            msg.font = "DejaVu Sans"
-            msg.line_width = 2
+            msg.text_size = 12.0
+            msg.font = "monospace"
+            msg.line_width = 1
             
-            # HTML Rich-Text Formatierung für RViz Overlay (X=Rot, Y=Grün, Z=Blau)
-            # Das <nobr> Tag verhindert Zeilenumbrüche strikt.
+            # HTML Rich-Text Formatierung
+            # Wir nutzen feste Stellen ({...:4d}), damit der Text immer exakt gleich breit bleibt!
             html_text = (
+                f'<div align="center">'
                 f'<nobr>'
-                f'<span style="color:#ffffff;">EEF: tcp_link &nbsp;&nbsp;|&nbsp;&nbsp; </span>'
-                f'<span style="color:#ff4444;">X: {x_mm} mm</span>'
-                f' &nbsp;&nbsp;|&nbsp;&nbsp; '
-                f'<span style="color:#44ff44;">Y: {y_mm} mm</span>'
-                f' &nbsp;&nbsp;|&nbsp;&nbsp; '
-                f'<span style="color:#44bbff;">Z: {z_mm} mm</span>'
+                f'<span style="color:#ffffff;">EEF &nbsp;|&nbsp; </span>'
+                f'<span style="color:#ff4444;">X: {x_mm:4d} mm</span>'
+                f' &nbsp;|&nbsp; '
+                f'<span style="color:#44ff44;">Y: {y_mm:4d} mm</span>'
+                f' &nbsp;|&nbsp; '
+                f'<span style="color:#44bbff;">Z: {z_mm:4d} mm</span>'
                 f'</nobr>'
+                f'</div>'
             )
             
             msg.text = html_text

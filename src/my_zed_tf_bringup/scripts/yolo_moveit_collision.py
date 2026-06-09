@@ -36,6 +36,7 @@ class YoloMoveitCollision(Node):
 
         self.was_active = False
         self.known_objects = set()
+        self.last_publish_time = self.get_clock().now()
 
         # End effector links that are allowed to collide with the objects
         # Dies erlaubt das Greifen von oben!
@@ -173,9 +174,8 @@ class YoloMoveitCollision(Node):
             co.id = obj_name
             co.operation = CollisionObject.REMOVE
             scene_msg.world.collision_objects.append(co)
-            
-        self.known_objects = current_objects
-
+        # The known_objects update is moved to the throttle block below
+        
         # --- 3. Allowed Collision Matrix (ACM) ---
         if current_objects:
             obj_list = list(current_objects)
@@ -195,7 +195,16 @@ class YoloMoveitCollision(Node):
 
             scene_msg.allowed_collision_matrix = acm
 
-        self.pub_planning_scene.publish(scene_msg)
+        # Throttling to prevent RViz/MoveIt freezing (Max 2 Hz for position updates)
+        now = self.get_clock().now()
+        time_since_last = (now - self.last_publish_time).nanoseconds / 1e9
+        
+        objects_changed = (self.known_objects != current_objects) or bool(objects_to_remove)
+        
+        if objects_changed or time_since_last >= 0.5:
+            self.pub_planning_scene.publish(scene_msg)
+            self.last_publish_time = now
+            self.known_objects = current_objects
         
         # Always publish an empty marker array with DELETEALL to clean up if needed
         # But here we just publish the valid markers.
