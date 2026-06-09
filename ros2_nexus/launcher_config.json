@@ -1,308 +1,317 @@
 {
-  "nodes": [
-    {
-      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)",
-      "icon": "fa-solid fa-robot",
-      "actions": [
-        {
-          "label": "Real Move Launch",
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
-          "type": "launch"
-        }
-      ]
-    },
-    {
-      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)",
-      "icon": "fa-solid fa-robot",
-      "actions": [
-        {
-          "label": "Fake Move Launch",
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
-          "type": "launch"
-        }
-      ]
-    },
-    {
-      "title": "Roboter Aktionen & Sequenzen",
-      "icon": "fa-solid fa-route",
-      "actions": [
-        {
-          "label": "Move To Coordinator",
-          "cmd": "ros2 run move_to_coordinator move_to_coordinator",
-          "type": "pub"
-        },
-        {
-          "label": "Motion Sequence Launch",
-          "cmd": "ros2 launch motion_sequence motion_sequence_launch.py",
-          "type": "pub"
-        }
-      ]
-    },
-    {
-      "title": "Controllers (Input -> Moveit Servo)",
-      "icon": "fa-solid fa-gamepad",
-      "style": "break-before: column;",
-      "actions": [
-        {
-          "label": "Collision Check Node",
-          "cmd": "ros2 run collision_check checker",
-          "type": "node"
-        },
-        {
-          "label": "Gaze UI Node",
-          "cmd": "ros2 run gaze_control gaze_ui",
-          "type": "node"
-        },
-        {
-          "label": "Whisper Bringup",
-          "cmd": "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True",
-          "type": "launch"
-        },
-        {
-          "label": "Whisper Stream Demo",
-          "cmd": "ros2 run whisper_demos whisper_on_key",
-          "type": "node"
-        },
-        {
-          "label": "Voice Command Listener",
-          "cmd": "ros2 run voice_command_listener listener",
-          "type": "node"
-        },
-        {
-          "label": "Keyboard Input",
-          "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
-          "type": "node"
-        }
-      ]
-    },
-    {
-      "title": "Cameras, Sensors",
-      "icon": "fa-solid fa-camera",
-      "style": "break-before: column;",
-      "actions": [
-        {
-          "label": "ZED M Bringup (Kamera + TF)",
-          "cmd": "source ~/dev_ws/install/setup.bash && ros2 launch my_zed_tf_bringup zed_camera.launch.py",
-          "type": "launch"
-        },
-        {
-          "label": "YOLO Homographie",
-          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
-          "type": "node"
-        },
-        {
-          "label": "YOLO 3D BBox Node",
-          "cmd": "ros2 run my_zed_tf_bringup zed_yolo_3d_bbox.py",
-          "type": "node"
-        }
-      ]
-    },
-    {
-      "title": "Vizualsation (Rviz2)",
-      "icon": "fa-solid fa-chart-network",
-      "actions": [
-        {
-          "label": "RViz Marker Launch",
-          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
-          "type": "launch"
-        }
-      ]
-    }
-  ],
-  "topic_pubs": [
-    {
-      "title": "Topic Pubs (Controllers)",
-      "icon": "fa-solid fa-gamepad",
-      "actions": [
-        {
-          "label": "Pub /joy",
-          "cmd": "ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\"",
-          "type": "pub"
-        },
-        {
-          "label": "Pub /joy_check",
-          "cmd": "ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\"",
-          "type": "pub"
-        }
-      ]
-    }
-  ],
-  "web": [
-    {
-      "title": "Workspace Analyzer Backend",
-      "icon": "fa-solid fa-server",
-      "actions": [
-        {
-          "label": "ROS Bridge Launch",
-          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-          "type": "launch"
-        },
-        {
-          "label": "Webserver Port 8080",
-          "cmd": "python3 -m http.server 8080 -d src/websocket",
-          "type": "sys"
-        },
-        {
-          "label": "Workspace Analyzer",
-          "cmd": "python3 src/websocket/workspace_analyzer.py",
-          "type": "sys"
-        }
-      ]
-    },
-    {
-      "title": "Frontend & Browser",
-      "icon": "fa-solid fa-globe",
-      "actions": [
-        {
-          "label": "UI - Teleoperation - Telemetrie",
-          "cmd": "xdg-open http://localhost:8080/index.html",
-          "type": "sys",
-          "mode": "bg"
-        },
-        {
-          "label": "Dashboard öffnen",
-          "cmd": "xdg-open http://localhost:8080/dashboard_index.html",
-          "type": "sys",
-          "mode": "bg"
-        },
-        {
-          "label": "OBS Studio",
-          "cmd": "obs",
-          "type": "sys"
-        }
-      ]
-    }
-  ],
   "info": [
     {
-      "title": "Listen & Status",
-      "icon": "fa-solid fa-list",
       "actions": [
         {
-          "label": "Aktive Nodes",
           "cmd": "ros2 node list",
+          "label": "Aktive Nodes",
           "type": "sys"
         },
         {
-          "label": "Aktive Topics",
           "cmd": "ros2 topic list -t",
+          "label": "Aktive Topics",
           "type": "sys"
         },
         {
-          "label": "Services",
           "cmd": "ros2 service list",
+          "label": "Services",
           "type": "sys"
         },
         {
-          "label": "Parameter",
           "cmd": "ros2 param list",
+          "label": "Parameter",
           "type": "sys"
         },
         {
-          "label": "Alle Pakete",
           "cmd": "ros2 pkg list",
+          "label": "Alle Pakete",
           "type": "sys"
         }
-      ]
+      ],
+      "icon": "fa-solid fa-list",
+      "title": "Listen & Status"
     },
     {
-      "title": "Visualisierung",
-      "icon": "fa-solid fa-chart-network",
       "actions": [
         {
-          "label": "RViz2",
           "cmd": "rviz2",
+          "label": "RViz2",
           "type": "sys"
         },
         {
-          "label": "RQT Graph",
           "cmd": "rqt_graph",
+          "label": "RQT Graph",
           "type": "sys"
         },
         {
-          "label": "RQT",
           "cmd": "rqt",
+          "label": "RQT",
           "type": "sys"
         }
-      ]
+      ],
+      "icon": "fa-solid fa-chart-network",
+      "title": "Visualisierung"
     },
     {
-      "title": "Live-Debugging",
-      "icon": "fa-solid fa-bug",
       "actions": [
         {
-          "label": "Topic Echo",
           "cmd": "read -p \"Topic: \" tp; ros2 topic echo $tp",
-          "type": "sys",
-          "mode": "interactive"
+          "label": "Topic Echo",
+          "mode": "interactive",
+          "type": "sys"
         },
         {
-          "label": "Topic Hz",
           "cmd": "read -p \"Topic: \" tp; ros2 topic hz $tp",
-          "type": "sys",
-          "mode": "interactive"
+          "label": "Topic Hz",
+          "mode": "interactive",
+          "type": "sys"
         },
         {
-          "label": "Interface Aufbau",
           "cmd": "read -p \"Message-Typ: \" msg; ros2 interface show $msg; echo \"\"; read -p \"Enter...\"",
-          "type": "sys",
-          "mode": "interactive"
+          "label": "Interface Aufbau",
+          "mode": "interactive",
+          "type": "sys"
         },
         {
-          "label": "ros2 doctor",
           "cmd": "ros2 doctor",
+          "label": "ros2 doctor",
           "type": "sys"
         }
-      ]
+      ],
+      "icon": "fa-solid fa-bug",
+      "title": "Live-Debugging"
+    }
+  ],
+  "nodes": [
+    {
+      "actions": [
+        {
+          "cmd": "ros2 run move_to_coordinator move_to_coordinator",
+          "label": "Move To Coordinator",
+          "type": "pub"
+        },
+        {
+          "cmd": "ros2 launch motion_sequence motion_sequence_launch.py",
+          "label": "Motion Sequence Launch",
+          "type": "pub"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-route",
+      "title": "Roboter Aktionen & Sequenzen"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 run collision_check checker",
+          "label": "Collision Check Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run gaze_control gaze_ui",
+          "label": "Gaze UI Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True",
+          "label": "Whisper Bringup",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 run whisper_demos whisper_on_key",
+          "label": "Whisper Stream Demo",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run voice_command_listener listener",
+          "label": "Voice Command Listener",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
+          "label": "Keyboard Input",
+          "type": "node"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-gamepad",
+      "style": "break-before: column;",
+      "title": "Controllers (Input -> Moveit Servo)"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
+          "label": "Fake Move Launch",
+          "type": "launch"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-robot",
+      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
+          "label": "Real Move Launch",
+          "type": "launch"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-robot",
+      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "source ~/dev_ws/install/setup.bash && ros2 launch my_zed_tf_bringup zed_camera.launch.py",
+          "label": "ZED M Bringup (Kamera + TF)",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
+          "label": "YOLO Homographie",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run my_zed_tf_bringup zed_yolo_3d_bbox.py",
+          "label": "YOLO 3D BBox Node",
+          "type": "node"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-camera",
+      "style": "break-before: column;",
+      "title": "Cameras, Sensors"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
+          "label": "RViz Marker Launch",
+          "type": "launch"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-chart-network",
+      "title": "Vizualsation (Rviz2)"
     }
   ],
   "system": [
     {
-      "title": "Netzwerk & System",
-      "icon": "fa-solid fa-network-wired",
       "actions": [
         {
-          "label": "Eigene IP anzeigen",
           "cmd": "echo -e '\\033[1;32mNetzwerk:\\033[0m'; ip -brief address show; echo ''; read -p 'Enter...'",
-          "type": "sys",
-          "mode": "interactive"
+          "label": "Eigene IP anzeigen",
+          "mode": "interactive",
+          "type": "sys"
         },
         {
-          "label": "Datei suchen",
           "cmd": "read -p \"Dateiname?: \" st; find / -iname \"*${st}*\" 2>/dev/null",
-          "type": "sys",
-          "mode": "interactive"
-        }
-      ]
-    },
-    {
-      "title": "Umgebung & Build",
-      "icon": "fa-solid fa-hammer",
-      "actions": [
-        {
-          "label": "bashrc neu laden",
-          "cmd": "source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2",
-          "type": "sys",
-          "mode": "interactive"
-        },
-        {
-          "label": "dev_ws → colcon build",
-          "cmd": "colcon build --symlink-install",
+          "label": "Datei suchen",
+          "mode": "interactive",
           "type": "sys"
         }
-      ]
+      ],
+      "icon": "fa-solid fa-network-wired",
+      "title": "Netzwerk & System"
     },
     {
-      "title": "Notfall",
-      "icon": "fa-solid fa-triangle-exclamation",
       "actions": [
         {
-          "label": "ALLE ROS-Prozesse beenden",
-          "cmd": "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'",
-          "type": "kill",
-          "mode": "bg"
+          "cmd": "source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2",
+          "label": "bashrc neu laden",
+          "mode": "interactive",
+          "type": "sys"
+        },
+        {
+          "cmd": "colcon build --symlink-install",
+          "label": "dev_ws → colcon build",
+          "type": "sys"
         }
-      ]
+      ],
+      "icon": "fa-solid fa-hammer",
+      "title": "Umgebung & Build"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'",
+          "label": "ALLE ROS-Prozesse beenden",
+          "mode": "bg",
+          "type": "kill"
+        }
+      ],
+      "icon": "fa-solid fa-triangle-exclamation",
+      "title": "Notfall"
+    }
+  ],
+  "topic_pubs": [
+    {
+      "actions": [
+        {
+          "cmd": "ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\"",
+          "label": "Pub /joy",
+          "type": "pub"
+        },
+        {
+          "cmd": "ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\"",
+          "label": "Pub /joy_check",
+          "type": "pub"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-gamepad",
+      "title": "Topic Pubs (Controllers)"
+    }
+  ],
+  "web": [
+    {
+      "actions": [
+        {
+          "cmd": "xdg-open http://localhost:8080/index.html",
+          "label": "UI - Teleoperation - Telemetrie",
+          "mode": "bg",
+          "type": "sys"
+        },
+        {
+          "cmd": "xdg-open http://localhost:8080/dashboard_index.html",
+          "label": "Dashboard öffnen",
+          "mode": "bg",
+          "type": "sys"
+        },
+        {
+          "cmd": "obs",
+          "label": "OBS Studio",
+          "type": "sys"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-globe",
+      "title": "Frontend & Browser"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+          "label": "ROS Bridge Launch",
+          "type": "launch"
+        },
+        {
+          "cmd": "python3 -m http.server 8080 -d src/websocket",
+          "label": "Webserver Port 8080",
+          "type": "sys"
+        },
+        {
+          "cmd": "python3 src/websocket/workspace_analyzer.py",
+          "label": "Workspace Analyzer",
+          "type": "sys"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-server",
+      "title": "Workspace Analyzer Backend"
     }
   ]
 }

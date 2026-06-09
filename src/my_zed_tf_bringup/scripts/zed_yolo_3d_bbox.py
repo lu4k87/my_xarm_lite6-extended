@@ -265,44 +265,51 @@ class ZedYolo3DNode(Node):
             
             marker_array.markers.append(marker)
             
-            # --- Marker 2: The Text Label (Name + Coords combined) ---
-            text_marker = Marker()
-            text_marker.header.frame_id = marker.header.frame_id
-            text_marker.header.stamp = current_time
-            text_marker.ns = 'yolo_labels'
-            text_marker.id = i
-            text_marker.type = Marker.TEXT_VIEW_FACING
-            text_marker.action = Marker.ADD
-            
-            # Place text cleanly above the box using absolute center coordinates
-            text_marker.pose.position.x = float(center_x)
-            text_marker.pose.position.y = float(center_y)
-            if marker.header.frame_id == 'link_base':
-                text_marker.pose.position.z = float(center_z) + (scale_z / 2.0) + 0.04
-            else:
-                text_marker.pose.position.z = float(center_z)
-                text_marker.pose.position.y -= (scale_y / 2.0) + 0.04
-                
-            text_marker.pose.orientation.w = 1.0
-            
-            text_marker.scale.z = 0.015 # Text height (smaller and thinner)
-            text_marker.color.r = 1.0
-            text_marker.color.g = 1.0
-            text_marker.color.b = 0.0 # Yellow text for better visibility
-            text_marker.color.a = 1.0
-            
             x_mm = int(center_x * 1000)
             y_mm = int(center_y * 1000)
             z_mm = int(center_z * 1000)
-            
-            # Remove spaces to prevent RViz Ogre3D from massively justifying the text horizontally
             safe_class_name = class_name.replace(' ', '_')
-            text_marker.text = f"{safe_class_name}\nX:{x_mm}mm\nY:{y_mm}mm\nZ:{z_mm}mm"
             
-            text_marker.lifetime.sec = 0
-            text_marker.lifetime.nanosec = int(500 * 1e6)
-            
-            marker_array.markers.append(text_marker)
+            # Helper to create a text marker
+            def create_text_marker(ns_suffix, m_id, text, r, g, b, z_offset):
+                tm = Marker()
+                tm.header.frame_id = marker.header.frame_id
+                tm.header.stamp = current_time
+                tm.ns = f'yolo_labels_{ns_suffix}'
+                tm.id = m_id
+                tm.type = Marker.TEXT_VIEW_FACING
+                tm.action = Marker.ADD
+                
+                tm.pose.position.x = float(center_x)
+                tm.pose.position.y = float(center_y)
+                
+                if marker.header.frame_id == 'link_base':
+                    base_z = float(center_z) + (scale_z / 2.0) + 0.02
+                    tm.pose.position.z = base_z + z_offset
+                else:
+                    tm.pose.position.z = float(center_z)
+                    tm.pose.position.y -= (scale_y / 2.0) + 0.02 + z_offset
+                    
+                tm.pose.orientation.w = 1.0
+                tm.scale.z = 0.010 # Thinner and smaller font
+                tm.color.r = float(r)
+                tm.color.g = float(g)
+                tm.color.b = float(b)
+                tm.color.a = 1.0
+                tm.text = text
+                tm.lifetime.sec = 0
+                tm.lifetime.nanosec = int(500 * 1e6)
+                return tm
+                
+            # Stack the text vertically
+            # Class name in white (Top)
+            marker_array.markers.append(create_text_marker('class', i, safe_class_name, 1.0, 1.0, 1.0, 0.036))
+            # X coordinate in red (Axis X)
+            marker_array.markers.append(create_text_marker('x', i, f"X: {x_mm} mm", 1.0, 0.2, 0.2, 0.024))
+            # Y coordinate in green (Axis Y)
+            marker_array.markers.append(create_text_marker('y', i, f"Y: {y_mm} mm", 0.2, 1.0, 0.2, 0.012))
+            # Z coordinate in blue (Axis Z)
+            marker_array.markers.append(create_text_marker('z', i, f"Z: {z_mm} mm", 0.2, 0.5, 1.0, 0.000))
             
             # Log the coordinates to the terminal so they are neatly listed
             self.get_logger().info(f"[{class_name}] X: {x_mm} mm | Y: {y_mm} mm | Z: {z_mm} mm")
