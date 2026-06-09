@@ -28,9 +28,9 @@
           "type": "sys"
         }
       ],
+      "col": 0,
       "icon": "fa-solid fa-list",
-      "title": "Listen & Status",
-      "col": 0
+      "title": "Listen & Status"
     },
     {
       "actions": [
@@ -50,9 +50,9 @@
           "type": "sys"
         }
       ],
+      "col": 1,
       "icon": "fa-solid fa-chart-network",
-      "title": "Visualisierung",
-      "col": 1
+      "title": "Visualisierung"
     },
     {
       "actions": [
@@ -80,9 +80,9 @@
           "type": "sys"
         }
       ],
+      "col": 2,
       "icon": "fa-solid fa-bug",
-      "title": "Live-Debugging",
-      "col": 2
+      "title": "Live-Debugging"
     }
   ],
   "nodes": [
@@ -217,9 +217,9 @@
           "type": "sys"
         }
       ],
+      "col": 0,
       "icon": "fa-solid fa-network-wired",
-      "title": "Netzwerk & System",
-      "col": 0
+      "title": "Netzwerk & System"
     },
     {
       "actions": [
@@ -230,9 +230,9 @@
           "type": "kill"
         }
       ],
+      "col": 1,
       "icon": "fa-solid fa-triangle-exclamation",
-      "title": "Notfall",
-      "col": 1
+      "title": "Notfall"
     },
     {
       "actions": [
@@ -248,9 +248,9 @@
           "type": "sys"
         }
       ],
+      "col": 1,
       "icon": "fa-solid fa-hammer",
-      "title": "Umgebung & Build",
-      "col": 1
+      "title": "Umgebung & Build"
     }
   ],
   "topic_pubs": [
