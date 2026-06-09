@@ -285,7 +285,7 @@ class ZedYolo3DNode(Node):
                 
             text_marker.pose.orientation.w = 1.0
             
-            text_marker.scale.z = 0.025 # Text height
+            text_marker.scale.z = 0.015 # Text height (smaller and thinner)
             text_marker.color.r = 1.0
             text_marker.color.g = 1.0
             text_marker.color.b = 0.0 # Yellow text for better visibility
