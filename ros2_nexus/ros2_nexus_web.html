@@ -245,8 +245,19 @@
       flex: 1;
       padding: 36px 36px;
       width: 100%;
-      column-count: 3;
-      column-gap: 32px;
+      display: flex;
+      flex-direction: row;
+      gap: 32px;
+      align-items: flex-start;
+    }
+
+    .col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      min-width: 0;
+      min-height: 200px;
     }
 
     /* ── SECTION ── */
@@ -259,11 +270,6 @@
       -webkit-backdrop-filter: blur(12px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
       min-width: 0;
-      break-inside: avoid;
-      page-break-inside: avoid;
-      margin-bottom: 32px;
-      display: inline-block;
-      width: 100%;
     }
 
     .section-title {
@@ -601,7 +607,7 @@
 
       main {
         padding: 18px 14px;
-        column-count: 1;
+        flex-direction: column;
       }
 
       .section {
@@ -697,10 +703,17 @@
     // ─── RENDER ───────────────────────────────────────────────────────────────────
     function renderTab(tabId) {
       const sections = TABS[tabId] || [];
-      let html = '';
+      
+      // Ensure each section has a column assignment, default to distributing 0, 1, 2
+      sections.forEach((sec, i) => {
+         if (sec.col === undefined) sec.col = i % 3;
+      });
+
+      let colHtml = ['<div class="col" id="col-0">', '<div class="col" id="col-1">', '<div class="col" id="col-2">'];
+      
       sections.forEach((sec, secIndex) => {
         const extraStyle = sec.style ? ` style="${sec.style}"` : '';
-        html += `<div class="section"${extraStyle}>
+        let html = `<div class="section"${extraStyle} data-sec-id="${secIndex}">
       <div class="section-title"><i class="${sec.icon}"></i>${sec.title}</div>
       <div class="actions-grid" data-sec-index="${secIndex}">`;
         sec.actions.forEach((a, aIndex) => {
@@ -721,8 +734,10 @@
         </div>`;
         });
         html += `</div></div>`;
+        
+        colHtml[sec.col] += html;
       });
-      document.getElementById('main-content').innerHTML = html;
+      document.getElementById('main-content').innerHTML = colHtml[0] + '</div>' + colHtml[1] + '</div>' + colHtml[2] + '</div>';
 
       document.querySelectorAll('.action-btn').forEach(btn => {
         btn.addEventListener('click', () => runCmd(btn.dataset.cmd, btn.dataset.label, btn.dataset.mode));
@@ -767,38 +782,56 @@
         });
       });
 
-      // Initialize SortableJS for drag-and-drop of SECTIONS
-      new Sortable(document.getElementById('main-content'), {
-        animation: 200,
-        ghostClass: 'sortable-ghost',
-        handle: '.section-title', // Only drag by the title
-        onEnd: async function (evt) {
-          const oldIdx = evt.oldIndex;
-          const newIdx = evt.newIndex;
-          if (oldIdx === newIdx) return;
-          
-          // Update internal state
-          const arr = TABS[tabId];
-          const movedItem = arr.splice(oldIdx, 1)[0];
-          arr.splice(newIdx, 0, movedItem);
-          
-          // Save to backend
-          try {
-            const res = await fetch('/api/config', { 
-              method: 'POST', 
-              headers: { 'Content-Type': 'application/json' }, 
-              body: JSON.stringify(TABS) 
+      // Initialize SortableJS for drag-and-drop of SECTIONS between columns
+      document.querySelectorAll('.col').forEach(col => {
+        new Sortable(col, {
+          group: 'sections',
+          animation: 200,
+          ghostClass: 'sortable-ghost',
+          handle: '.section-title',
+          onEnd: async function () {
+            // Reconstruct the JSON array based on DOM state
+            let newSections = [];
+            let c0 = Array.from(document.getElementById('col-0').children);
+            let c1 = Array.from(document.getElementById('col-1').children);
+            let c2 = Array.from(document.getElementById('col-2').children);
+            
+            c0.forEach(el => {
+              let s = TABS[tabId][parseInt(el.dataset.secId)];
+              s.col = 0;
+              newSections.push(s);
             });
-            const data = await res.json();
-            if (data.ok) showToast('✓ Layout gespeichert');
-            else showToast('✗ Speichern fehlgeschlagen', true);
-          } catch {
-            showToast('✗ Speichern fehlgeschlagen', true);
+            c1.forEach(el => {
+              let s = TABS[tabId][parseInt(el.dataset.secId)];
+              s.col = 1;
+              newSections.push(s);
+            });
+            c2.forEach(el => {
+              let s = TABS[tabId][parseInt(el.dataset.secId)];
+              s.col = 2;
+              newSections.push(s);
+            });
+            
+            TABS[tabId] = newSections;
+            
+            // Save to backend
+            try {
+              const res = await fetch('/api/config', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(TABS) 
+              });
+              const data = await res.json();
+              if (data.ok) showToast('✓ Layout gespeichert');
+              else showToast('✗ Speichern fehlgeschlagen', true);
+            } catch {
+              showToast('✗ Speichern fehlgeschlagen', true);
+            }
+            
+            // Re-render
+            renderTab(tabId);
           }
-          
-          // Re-render to ensure DOM perfectly matches internal state
-          renderTab(tabId);
-        }
+        });
       });
     }
 

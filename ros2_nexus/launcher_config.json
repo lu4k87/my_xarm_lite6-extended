@@ -86,17 +86,6 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
-          "label": "Fake Move Launch",
-          "type": "launch"
-        }
-      ],
-      "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
           "cmd": "ros2 run move_to_coordinator move_to_coordinator",
           "label": "Move To Coordinator",
           "type": "pub"
@@ -108,44 +97,20 @@
         }
       ],
       "icon": "fa-solid fa-route",
-      "title": "Roboter Aktionen & Sequenzen"
+      "title": "Roboter Aktionen & Sequenzen",
+      "col": 0
     },
     {
       "actions": [
         {
-          "cmd": "ros2 run collision_check checker",
-          "label": "Collision Check Node",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run gaze_control gaze_ui",
-          "label": "Gaze UI Node",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True",
-          "label": "Whisper Bringup",
+          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
+          "label": "RViz Marker Launch",
           "type": "launch"
-        },
-        {
-          "cmd": "ros2 run whisper_demos whisper_on_key",
-          "label": "Whisper Stream Demo",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run voice_command_listener listener",
-          "label": "Voice Command Listener",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
-          "label": "Keyboard Input",
-          "type": "node"
         }
       ],
-      "icon": "fa-solid fa-gamepad",
-      "style": "break-before: column;",
-      "title": "Controllers (Input -> Moveit Servo)"
+      "icon": "fa-solid fa-chart-network",
+      "title": "Vizualsation (Rviz2)",
+      "col": 0
     },
     {
       "actions": [
@@ -167,7 +132,20 @@
       ],
       "icon": "fa-solid fa-camera",
       "style": "break-before: column;",
-      "title": "Cameras, Sensors"
+      "title": "Cameras, Sensors",
+      "col": 1
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
+          "label": "Fake Move Launch",
+          "type": "launch"
+        }
+      ],
+      "icon": "fa-solid fa-robot",
+      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)",
+      "col": 1
     },
     {
       "actions": [
@@ -178,18 +156,8 @@
         }
       ],
       "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
-          "label": "RViz Marker Launch",
-          "type": "launch"
-        }
-      ],
-      "icon": "fa-solid fa-chart-network",
-      "title": "Vizualsation (Rviz2)"
+      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)",
+      "col": 2
     }
   ],
   "system": [
