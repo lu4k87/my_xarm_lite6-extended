@@ -790,6 +790,7 @@
           ghostClass: 'sortable-ghost',
           handle: '.section-title',
           revertOnSpill: true,
+          emptyInsertThreshold: 500, // Erlaubt das Ablegen weit unterhalb der Elemente / in leeren Spalten
           onEnd: async function (evt) {
             // Reconstruct the JSON array based on DOM state
             let newSections = [];

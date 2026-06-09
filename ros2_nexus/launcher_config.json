@@ -29,7 +29,8 @@
         }
       ],
       "icon": "fa-solid fa-list",
-      "title": "Listen & Status"
+      "title": "Listen & Status",
+      "col": 0
     },
     {
       "actions": [
@@ -50,7 +51,8 @@
         }
       ],
       "icon": "fa-solid fa-chart-network",
-      "title": "Visualisierung"
+      "title": "Visualisierung",
+      "col": 1
     },
     {
       "actions": [
@@ -79,10 +81,35 @@
         }
       ],
       "icon": "fa-solid fa-bug",
-      "title": "Live-Debugging"
+      "title": "Live-Debugging",
+      "col": 2
     }
   ],
   "nodes": [
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
+          "label": "Fake Move Launch",
+          "type": "launch"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-robot",
+      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
+          "label": "Real Move Launch",
+          "type": "launch"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-robot",
+      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
+    },
     {
       "actions": [
         {
@@ -99,6 +126,41 @@
       "col": 0,
       "icon": "fa-solid fa-route",
       "title": "Roboter Aktionen & Sequenzen"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "source ~/dev_ws/install/setup.bash && ros2 launch my_zed_tf_bringup zed_camera.launch.py",
+          "label": "ZED M Bringup (Kamera + TF)",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
+          "label": "YOLO Homographie",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run my_zed_tf_bringup zed_yolo_3d_bbox.py",
+          "label": "YOLO 3D BBox Node",
+          "type": "node"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-camera",
+      "style": "break-before: column;",
+      "title": "Cameras, Sensors"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
+          "label": "RViz Marker Launch",
+          "type": "launch"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-chart-network",
+      "title": "Vizualsation (Rviz2)"
     },
     {
       "actions": [
@@ -133,69 +195,10 @@
           "type": "node"
         }
       ],
-      "col": 1,
+      "col": 2,
       "icon": "fa-solid fa-gamepad",
       "style": "break-before: column;",
       "title": "Controllers (Input -> Moveit Servo)"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
-          "label": "Fake Move Launch",
-          "type": "launch"
-        }
-      ],
-      "col": 1,
-      "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
-          "label": "Real Move Launch",
-          "type": "launch"
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "source ~/dev_ws/install/setup.bash && ros2 launch my_zed_tf_bringup zed_camera.launch.py",
-          "label": "ZED M Bringup (Kamera + TF)",
-          "type": "launch"
-        },
-        {
-          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
-          "label": "YOLO Homographie",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run my_zed_tf_bringup zed_yolo_3d_bbox.py",
-          "label": "YOLO 3D BBox Node",
-          "type": "node"
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-camera",
-      "style": "break-before: column;",
-      "title": "Cameras, Sensors"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
-          "label": "RViz Marker Launch",
-          "type": "launch"
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-chart-network",
-      "title": "Vizualsation (Rviz2)"
     }
   ],
   "system": [
@@ -215,7 +218,21 @@
         }
       ],
       "icon": "fa-solid fa-network-wired",
-      "title": "Netzwerk & System"
+      "title": "Netzwerk & System",
+      "col": 0
+    },
+    {
+      "actions": [
+        {
+          "cmd": "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'",
+          "label": "ALLE ROS-Prozesse beenden",
+          "mode": "bg",
+          "type": "kill"
+        }
+      ],
+      "icon": "fa-solid fa-triangle-exclamation",
+      "title": "Notfall",
+      "col": 1
     },
     {
       "actions": [
@@ -232,19 +249,8 @@
         }
       ],
       "icon": "fa-solid fa-hammer",
-      "title": "Umgebung & Build"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'",
-          "label": "ALLE ROS-Prozesse beenden",
-          "mode": "bg",
-          "type": "kill"
-        }
-      ],
-      "icon": "fa-solid fa-triangle-exclamation",
-      "title": "Notfall"
+      "title": "Umgebung & Build",
+      "col": 1
     }
   ],
   "topic_pubs": [
@@ -261,12 +267,34 @@
           "type": "pub"
         }
       ],
-      "col": 0,
+      "col": 1,
       "icon": "fa-solid fa-gamepad",
       "title": "Topic Pubs (Controllers)"
     }
   ],
   "web": [
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+          "label": "ROS Bridge Launch",
+          "type": "launch"
+        },
+        {
+          "cmd": "python3 -m http.server 8080 -d src/websocket",
+          "label": "Webserver Port 8080",
+          "type": "sys"
+        },
+        {
+          "cmd": "python3 src/websocket/workspace_analyzer.py",
+          "label": "Workspace Analyzer",
+          "type": "sys"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-server",
+      "title": "Workspace Analyzer Backend"
+    },
     {
       "actions": [
         {
@@ -290,28 +318,6 @@
       "col": 1,
       "icon": "fa-solid fa-globe",
       "title": "Frontend & Browser"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-          "label": "ROS Bridge Launch",
-          "type": "launch"
-        },
-        {
-          "cmd": "python3 -m http.server 8080 -d src/websocket",
-          "label": "Webserver Port 8080",
-          "type": "sys"
-        },
-        {
-          "cmd": "python3 src/websocket/workspace_analyzer.py",
-          "label": "Workspace Analyzer",
-          "type": "sys"
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-server",
-      "title": "Workspace Analyzer Backend"
     }
   ]
 }
