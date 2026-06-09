@@ -17,40 +17,47 @@ class ZedVisualPublisher(Node):
         now = self.get_clock().now().to_msg()
 
         # =========================================================
-        # MARKER 1: The Aluminum Tripod/Stand
+        # MARKER 1: V-Slot Aluminum Profile (20x20mm) Stand
         # =========================================================
-        stand = Marker()
-        stand.header.frame_id = 'link_base'
-        stand.header.stamp = now
-        stand.ns = 'zed_visuals'
-        stand.id = 1
-        stand.type = Marker.CUBE
-        stand.action = Marker.ADD
-
-        # The camera TF is exactly at X=0.75, Z=0.36
-        # The stand goes straight down from Z=0 to Z=0.34 (2cm shorter). Center is at Z=0.17
-        stand.pose.position.x = 0.75
-        stand.pose.position.y = 0.0
-        stand.pose.position.z = 0.17
+        h = 0.34
+        cx = 0.75
+        cy = 0.0
+        cz = 0.17
         
-        # Upright
-        stand.pose.orientation.x = 0.0
-        stand.pose.orientation.y = 0.0
-        stand.pose.orientation.z = 0.0
-        stand.pose.orientation.w = 1.0
-
-        # Scale: 1.2cm diameter (thinner), 34cm tall
-        stand.scale.x = 0.012  
-        stand.scale.y = 0.012
-        stand.scale.z = 0.34   
-
         # Color: Aluminum / Light Grey
-        stand.color.r = 0.7
-        stand.color.g = 0.7
-        stand.color.b = 0.7
-        stand.color.a = 1.0
+        r, g, b, a = 0.7, 0.7, 0.7, 1.0
         
-        marker_array.markers.append(stand)
+        def create_profile_part(m_id, dx, dy, sx, sy):
+            m = Marker()
+            m.header.frame_id = 'link_base'
+            m.header.stamp = now
+            m.ns = 'zed_visuals_stand'
+            m.id = m_id
+            m.type = Marker.CUBE
+            m.action = Marker.ADD
+            m.pose.position.x = cx + dx
+            m.pose.position.y = cy + dy
+            m.pose.position.z = cz
+            m.pose.orientation.w = 1.0
+            m.scale.x = sx
+            m.scale.y = sy
+            m.scale.z = h
+            m.color.r = r
+            m.color.g = g
+            m.color.b = b
+            m.color.a = a
+            return m
+            
+        # Core (8x8mm)
+        marker_array.markers.append(create_profile_part(1, 0.0, 0.0, 0.008, 0.008))
+        
+        # 4 Corners (6x6mm) placed at the outer edges to create a 20x20mm profile with an 8mm groove
+        d = 0.007 # distance from center to corner center
+        s = 0.006 # size of corner
+        marker_array.markers.append(create_profile_part(2,  d,  d, s, s))
+        marker_array.markers.append(create_profile_part(3,  d, -d, s, s))
+        marker_array.markers.append(create_profile_part(4, -d,  d, s, s))
+        marker_array.markers.append(create_profile_part(5, -d, -d, s, s))
 
         # =========================================================
         # MARKER 2: The Camera 3D Mesh (ZEDM.stl)
