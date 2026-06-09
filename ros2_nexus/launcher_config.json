@@ -89,18 +89,6 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
-          "label": "Real Move Launch",
-          "type": "launch"
-        }
-      ],
-      "col": 0,
-      "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
           "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
           "label": "Fake Move Launch",
           "type": "launch"
@@ -109,6 +97,18 @@
       "col": 0,
       "icon": "fa-solid fa-robot",
       "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
+          "label": "Real Move Launch",
+          "type": "launch"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-robot",
+      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
     },
     {
       "actions": [
