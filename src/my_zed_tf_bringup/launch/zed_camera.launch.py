@@ -120,6 +120,26 @@ def generate_launch_description():
         output='screen'
     )
 
+    # -----------------------------------------------------------------------
+    # YOLO MoveIt Collision Node
+    # -----------------------------------------------------------------------
+    yolo_moveit_collision_node = Node(
+        package='my_zed_tf_bringup',
+        executable='yolo_moveit_collision.py',
+        name='yolo_moveit_collision',
+        output='screen'
+    )
+
+    # -----------------------------------------------------------------------
+    # TCP 2D Overlay Node
+    # -----------------------------------------------------------------------
+    tcp_overlay_node = Node(
+        package='my_zed_tf_bringup',
+        executable='tcp_overlay.py',
+        name='tcp_overlay',
+        output='screen'
+    )
+
     return LaunchDescription([
         # Arguments
         camera_model_arg,
@@ -134,4 +154,6 @@ def generate_launch_description():
         static_tf_node,
         zed_stand_publisher_node,
         pointcloud_optimizer_node,
+        yolo_moveit_collision_node,
+        tcp_overlay_node,
     ])

@@ -54,6 +54,10 @@ class ZedYolo3DNode(Node):
         # Color mapping for different classes
         self.colors = np.random.uniform(0.3, 1.0, size=(100, 3))
         
+        # EMA Filtering state
+        self.ema_states = {} # maps cls_id -> {'state': np.array, 'last_seen': float}
+        self.alpha = 0.2 # Smoothing factor (lower = smoother but more delay)
+        
         self.get_logger().info('ZED YOLO 3D BBox Node gestartet.')
 
     def camera_info_callback(self, msg):
@@ -220,6 +224,21 @@ class ZedYolo3DNode(Node):
                 scale_z = max(0.02, max_z - min_z)
                 
                 marker_frame = frame_id
+            
+            # --- Exponential Moving Average (EMA) Smoothing ---
+            # Glättet das Flackern der Bounding Box (nimmt an, 1 Objekt pro Klasse)
+            current_t = current_time.sec + current_time.nanosec * 1e-9
+            state = np.array([center_x, center_y, center_z, scale_x, scale_y, scale_z])
+            
+            if cls_id not in self.ema_states or (current_t - self.ema_states[cls_id]['last_seen']) > 1.0:
+                # Neues Objekt oder Objekt war für > 1 Sekunde weg
+                self.ema_states[cls_id] = {'state': state, 'last_seen': current_t}
+            else:
+                # Glätten mit vorherigem Zustand
+                self.ema_states[cls_id]['state'] = self.alpha * state + (1.0 - self.alpha) * self.ema_states[cls_id]['state']
+                self.ema_states[cls_id]['last_seen'] = current_t
+                
+            center_x, center_y, center_z, scale_x, scale_y, scale_z = self.ema_states[cls_id]['state']
                 
             color = self.colors[cls_id % 100]
             class_name = names[cls_id]

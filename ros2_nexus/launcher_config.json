@@ -276,6 +276,28 @@
     {
       "actions": [
         {
+          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+          "label": "ROS Bridge Launch",
+          "type": "launch"
+        },
+        {
+          "cmd": "python3 -m http.server 8080 -d src/websocket",
+          "label": "Webserver Port 8080",
+          "type": "sys"
+        },
+        {
+          "cmd": "python3 src/websocket/workspace_analyzer.py",
+          "label": "Workspace Analyzer",
+          "type": "sys"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-server",
+      "title": "Workspace Analyzer Backend"
+    },
+    {
+      "actions": [
+        {
           "cmd": "xdg-open http://localhost:8080/index.html",
           "label": "UI - Teleoperation - Telemetrie",
           "mode": "bg",
@@ -293,31 +315,9 @@
           "type": "sys"
         }
       ],
-      "col": 0,
+      "col": 1,
       "icon": "fa-solid fa-globe",
       "title": "Frontend & Browser"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-          "label": "ROS Bridge Launch",
-          "type": "launch"
-        },
-        {
-          "cmd": "python3 -m http.server 8080 -d src/websocket",
-          "label": "Webserver Port 8080",
-          "type": "sys"
-        },
-        {
-          "cmd": "python3 src/websocket/workspace_analyzer.py",
-          "label": "Workspace Analyzer",
-          "type": "sys"
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-server",
-      "title": "Workspace Analyzer Backend"
     }
   ]
 }
