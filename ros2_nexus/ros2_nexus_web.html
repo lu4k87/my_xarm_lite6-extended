@@ -277,6 +277,11 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      cursor: grab;
+    }
+
+    .section-title:active {
+      cursor: grabbing;
     }
 
     .section-title i {
@@ -760,6 +765,40 @@
             renderTab(tabId);
           }
         });
+      });
+
+      // Initialize SortableJS for drag-and-drop of SECTIONS
+      new Sortable(document.getElementById('main-content'), {
+        animation: 200,
+        ghostClass: 'sortable-ghost',
+        handle: '.section-title', // Only drag by the title
+        onEnd: async function (evt) {
+          const oldIdx = evt.oldIndex;
+          const newIdx = evt.newIndex;
+          if (oldIdx === newIdx) return;
+          
+          // Update internal state
+          const arr = TABS[tabId];
+          const movedItem = arr.splice(oldIdx, 1)[0];
+          arr.splice(newIdx, 0, movedItem);
+          
+          // Save to backend
+          try {
+            const res = await fetch('/api/config', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify(TABS) 
+            });
+            const data = await res.json();
+            if (data.ok) showToast('✓ Layout gespeichert');
+            else showToast('✗ Speichern fehlgeschlagen', true);
+          } catch {
+            showToast('✗ Speichern fehlgeschlagen', true);
+          }
+          
+          // Re-render to ensure DOM perfectly matches internal state
+          renderTab(tabId);
+        }
       });
     }
 
