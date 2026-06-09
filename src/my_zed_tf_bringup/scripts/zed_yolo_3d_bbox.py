@@ -305,15 +305,15 @@ class ZedYolo3DNode(Node):
                 tm.lifetime.nanosec = int(500 * 1e6)
                 return tm
                 
-            # Stack the text vertically (No spaces between values to prevent RViz justification bug!)
+            # Stack the text vertically (No spaces between values to prevent RViz justification bug, use underscores instead)
             # Class name in white (Top)
             marker_array.markers.append(create_text_marker('class', i, safe_class_name, 1.0, 1.0, 1.0, 0.036))
             # X coordinate in red (Axis X)
-            marker_array.markers.append(create_text_marker('x', i, f"X:{x_mm}mm", 1.0, 0.2, 0.2, 0.024))
+            marker_array.markers.append(create_text_marker('x', i, f"X:_{x_mm}_mm", 1.0, 0.2, 0.2, 0.024))
             # Y coordinate in green (Axis Y)
-            marker_array.markers.append(create_text_marker('y', i, f"Y:{y_mm}mm", 0.2, 1.0, 0.2, 0.012))
+            marker_array.markers.append(create_text_marker('y', i, f"Y:_{y_mm}_mm", 0.2, 1.0, 0.2, 0.012))
             # Z coordinate in blue (Axis Z)
-            marker_array.markers.append(create_text_marker('z', i, f"Z:{z_mm}mm", 0.2, 0.5, 1.0, 0.000))
+            marker_array.markers.append(create_text_marker('z', i, f"Z:_{z_mm}_mm", 0.2, 0.5, 1.0, 0.000))
             
             # Log the coordinates to the terminal so they are neatly listed
             self.get_logger().info(f"[{class_name}] X: {x_mm} mm | Y: {y_mm} mm | Z: {z_mm} mm")
