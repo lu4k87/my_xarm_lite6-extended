@@ -274,13 +274,13 @@ class ZedYolo3DNode(Node):
             text_marker.type = Marker.TEXT_VIEW_FACING
             text_marker.action = Marker.ADD
             
-            # Place text cleanly above the box
-            text_marker.pose.position.x = marker.pose.position.x
-            text_marker.pose.position.y = marker.pose.position.y
+            # Place text cleanly above the box using absolute center coordinates
+            text_marker.pose.position.x = float(center_x)
+            text_marker.pose.position.y = float(center_y)
             if marker.header.frame_id == 'link_base':
-                text_marker.pose.position.z = marker.pose.position.z + (scale_z / 2.0) + 0.04
+                text_marker.pose.position.z = float(center_z) + (scale_z / 2.0) + 0.04
             else:
-                text_marker.pose.position.z = marker.pose.position.z
+                text_marker.pose.position.z = float(center_z)
                 text_marker.pose.position.y -= (scale_y / 2.0) + 0.04
                 
             text_marker.pose.orientation.w = 1.0
