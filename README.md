@@ -200,7 +200,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 * **`my_zed_tf_bringup`**
     * **Purpose:** Unified ZED Mini Camera Initialization, TF Broadcasting, 3D Bounding Box Generation, and 3D Visualization.
     * **Task:** Safely launches the `zed_wrapper` node alongside a static TF publisher, generates the 3D camera models in RViz, and projects YOLO detections into 3D space.
-    * **How it works:** Executes `zed_camera.launch.py` to initialize the native Stereolabs driver (now configured to use the high-performance `NEURAL` depth mode in `common.yaml` to leverage GPU VRAM for dense, AI-based PointClouds) and simultaneously broadcast a static transform from `link_base` to `zed_camera_link`. By default, this is parameterized for a physical tripod setup (x=0.75m, y=0.0m, z=0.4m, pitch=45°, yaw=180°), seamlessly integrating the camera into the robot's world coordinate system in RViz2. It also runs two custom Python nodes: `zed_stand_publisher.py` to generate the 3D tripod and ZED camera mesh (`ZEDM.stl`), and `zed_yolo_3d_bbox.py`. This standalone node processes the camera's RGB and Depth streams in parallel using GPU acceleration for YOLOv8. It extracts the true 3D PointCloud of each detected object, transforms it into the robot's world frame, robustly filters depth noise (flying pixels) using 2nd/98th percentiles, and tightly isolates the object from the background. It then computes a millimeter-perfect 3D bounding box that is published live to RViz along with a floating, combined text label showing the object class and XYZ coordinates. Ghost markers are completely prevented using a robust DELETEALL mechanism.
+    * **How it works:** Executes `zed_camera.launch.py` to initialize the native Stereolabs driver (now configured to use the high-performance `NEURAL` depth mode in `common.yaml` to leverage GPU VRAM for dense, AI-based PointClouds, **and with a `manual_polygon` ROI that aggressively crops the top 20% of the image to save massive PointCloud processing power**) and simultaneously broadcast a static transform from `link_base` to `zed_camera_link`. By default, this is parameterized for a physical tripod setup (x=0.75m, y=0.0m, z=0.4m, pitch=45°, yaw=180°), seamlessly integrating the camera into the robot's world coordinate system in RViz2. It also runs two custom Python nodes: `zed_stand_publisher.py` to generate the 3D tripod and ZED camera mesh (`ZEDM.stl`), and `zed_yolo_3d_bbox.py`. This standalone node processes the camera's RGB and Depth streams in parallel using GPU acceleration for YOLOv8. It extracts the true 3D PointCloud of each detected object, transforms it into the robot's world frame, robustly filters depth noise (flying pixels) using 2nd/98th percentiles, and tightly isolates the object from the background. It then computes a millimeter-perfect 3D bounding box that is published live to RViz as a **clean, thin wireframe box (`LINE_LIST`)** along with a floating, combined text label showing the object class and XYZ coordinates precisely centered above the object. Ghost markers are completely prevented using a robust DELETEALL mechanism.
 
 ### 5.2 🗣️ Voice Control & Interaction
 
@@ -601,6 +601,16 @@ To run the complete system with both web interfaces (Nexus and Dashboard), three
 | **`9090`** | **ROS Bridge** | WebSocket | The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services. |
 
 > **Why strict port separation?** Ports 8080 and 9090 serve fundamentally different purposes and protocols. Port 8080 (HTTP) acts as a standard web server to deliver the static UI files (HTML/CSS) to the browser. Port 9090 (WebSocket via `rosbridge`) is a highly specialized data broker that exclusively streams live ROS telemetry and lacks the capability to serve web pages. Port 5000 (Flask) provides Nexus Web Backend business logic independent of ROS.
+
+### 8.5 DDS Multicast Storm Prevention (Critical)
+> [!CAUTION]
+> **Internet Disconnection Issue:** By default, ROS 2 DDS implementations use UDP Multicast, broadcasting all data to the entire local network. Launching the ZED camera (high-res images) and YOLO (dense 3D PointClouds) will flood the network with gigabits of UDP packets, which typically **crashes the local WiFi router or drops the PC's internet connection instantly.**
+> 
+> To prevent this and drastically improve system performance, you **must** restrict ROS 2 network traffic to the local machine:
+> ```bash
+> echo "export ROS_LOCALHOST_ONLY=1" >> ~/.bashrc
+> source ~/.bashrc
+> ```
 
 ### 8.5 Launcher Configuration (`launcher_config.json`)
 
