@@ -22,11 +22,10 @@ class ZedYolo3DNode(Node):
     def __init__(self):
         super().__init__('zed_yolo_3d_bbox')
         
-        # Load the official YOLOv8s model
+        # Load the locally available YOLOv8s model
         self.get_logger().info('Lade YOLOv8s Modell...')
         self.model = YOLO('yolov8s.pt')
-        self.model.to('cpu')  # Force CPU to avoid CUDA OOM with ZED SDK
-        self.get_logger().info('Modell erfolgreich geladen (auf CPU).')
+        self.get_logger().info('Modell erfolgreich geladen (nutzt GPU falls verfügbar).')
         
         self.bridge = CvBridge()
         self.camera_info = None
@@ -76,18 +75,18 @@ class ZedYolo3DNode(Node):
             self.get_logger().error(f'Error converting images: {e}')
             return
 
-        # Crop the top 50% of the image to ignore background and speed up inference
-        img_h, img_w = cv_rgb.shape[:2]
-        crop_y = int(img_h * 0.5)
-        cv_rgb_cropped = cv_rgb[crop_y:, :]
-
-        # Run YOLO inference on CPU to save VRAM
-        results = self.model.predict(cv_rgb_cropped, verbose=False, conf=0.5, device='cpu')
+        # We do not crop the image anymore so YOLO can detect the full objects
+        # Run YOLO inference (GPU beschleunigt)
+        results = self.model.predict(cv_rgb, verbose=False, conf=0.5)
         
         marker_array = MarkerArray()
         
+        # Always send a DELETEALL first to clear ghost markers from previous frames
+        clear_marker = Marker()
+        clear_marker.action = Marker.DELETEALL
+        marker_array.markers.append(clear_marker)
+        
         if len(results) == 0 or len(results[0].boxes) == 0:
-            # Publish empty array to clear old markers
             self.pub_markers.publish(marker_array)
             return
 
@@ -122,11 +121,7 @@ class ZedYolo3DNode(Node):
             tf_available = False
 
         for i, (box, cls_id) in enumerate(zip(boxes, classes)):
-            x_min, y_min_crop, x_max, y_max_crop = map(int, box)
-            
-            # Restore original image coordinates
-            y_min = y_min_crop + crop_y
-            y_max = y_max_crop + crop_y
+            x_min, y_min, x_max, y_max = map(int, box)
             
             # Ensure within bounds
             h, w = cv_depth.shape
@@ -140,17 +135,30 @@ class ZedYolo3DNode(Node):
             depth_roi = cv_depth[y_min:y_max, x_min:x_max]
             
             # Filter out NaNs, zeros, and infinities
-            valid_depths = depth_roi[(depth_roi > 0.1) & (depth_roi < 10.0) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi)]
+            # Use inner 50% of the bounding box to determine the object's median depth robustly
+            roi_h, roi_w = depth_roi.shape
+            inner_x_min = int(roi_w * 0.25)
+            inner_x_max = int(roi_w * 0.75)
+            inner_y_min = int(roi_h * 0.25)
+            inner_y_max = int(roi_h * 0.75)
             
-            if len(valid_depths) == 0:
-                continue
+            inner_depth_roi = depth_roi[inner_y_min:inner_y_max, inner_x_min:inner_x_max]
+            valid_inner_depths = inner_depth_roi[(inner_depth_roi > 0.1) & (inner_depth_roi < 10.0) & ~np.isnan(inner_depth_roi) & ~np.isinf(inner_depth_roi)]
+            
+            # Fallback to entire ROI if inner ROI is empty or invalid
+            if len(valid_inner_depths) > 10:
+                z_median = np.median(valid_inner_depths)
+            else:
+                valid_depths = depth_roi[(depth_roi > 0.1) & (depth_roi < 10.0) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi)]
+                if len(valid_depths) == 0:
+                    continue
+                z_median = np.median(valid_depths)
                 
-            z_median = np.median(valid_depths)
             if np.isnan(z_median) or z_median <= 0:
                 continue
                 
-            # Isolate object from background/table (within 10cm of median depth)
-            obj_mask = (depth_roi > 0.1) & (depth_roi < 10.0) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi) & (np.abs(depth_roi - z_median) < 0.1)
+            # Isolate object from background/table (within 10cm of median depth to encompass the object cleanly but avoid background)
+            obj_mask = (depth_roi > 0.1) & (depth_roi < 10.0) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi) & (np.abs(depth_roi - z_median) < 0.10)
             
             if not np.any(obj_mask):
                 continue
@@ -174,13 +182,14 @@ class ZedYolo3DNode(Node):
                 
                 # Filter out table points (Z < 0.02)
                 table_filter = pts_base[2, :] > 0.02
-                if np.sum(table_filter) > 10:
-                    pts_base = pts_base[:, table_filter]
+                if np.sum(table_filter) < 10:
+                    continue # Not enough points belonging to the object
+                pts_base = pts_base[:, table_filter]
                 
-                # Compute 3D Bounding Box in link_base
-                min_x, max_x = np.min(pts_base[0]), np.max(pts_base[0])
-                min_y, max_y = np.min(pts_base[1]), np.max(pts_base[1])
-                min_z, max_z = np.min(pts_base[2]), np.max(pts_base[2])
+                # Compute 3D Bounding Box in link_base (use 2nd/98th percentiles to heavily filter out flying pixels from specular objects like balls)
+                min_x, max_x = np.percentile(pts_base[0], 2), np.percentile(pts_base[0], 98)
+                min_y, max_y = np.percentile(pts_base[1], 2), np.percentile(pts_base[1], 98)
+                min_z, max_z = np.percentile(pts_base[2], 2), np.percentile(pts_base[2], 98)
                 
                 center_x = (min_x + max_x) / 2.0
                 center_y = (min_y + max_y) / 2.0
@@ -192,10 +201,12 @@ class ZedYolo3DNode(Node):
                 
                 marker_frame = 'link_base'
             else:
+                if pts_opt.shape[1] < 10:
+                    continue
                 # Fallback to optical frame bounding box
-                min_x, max_x = np.min(pts_opt[0]), np.max(pts_opt[0])
-                min_y, max_y = np.min(pts_opt[1]), np.max(pts_opt[1])
-                min_z, max_z = np.min(pts_opt[2]), np.max(pts_opt[2])
+                min_x, max_x = np.percentile(pts_opt[0], 2), np.percentile(pts_opt[0], 98)
+                min_y, max_y = np.percentile(pts_opt[1], 2), np.percentile(pts_opt[1], 98)
+                min_z, max_z = np.percentile(pts_opt[2], 2), np.percentile(pts_opt[2], 98)
                 
                 center_x = (min_x + max_x) / 2.0
                 center_y = (min_y + max_y) / 2.0
@@ -215,7 +226,7 @@ class ZedYolo3DNode(Node):
             marker.header.stamp = current_time
             marker.header.frame_id = marker_frame
             marker.ns = 'yolo_bboxes'
-            marker.id = i * 2
+            marker.id = i
             marker.type = Marker.CUBE
             marker.action = Marker.ADD
             
@@ -240,37 +251,47 @@ class ZedYolo3DNode(Node):
             
             marker_array.markers.append(marker)
             
-            # --- Marker 2: The Text Label ---
+            # --- Marker 2: The Text Label (Name + Coords combined) ---
             text_marker = Marker()
             text_marker.header.frame_id = marker.header.frame_id
             text_marker.header.stamp = current_time
-            text_marker.ns = 'yolo_bboxes_text'
-            text_marker.id = i * 2 + 1
+            text_marker.ns = 'yolo_labels'
+            text_marker.id = i
             text_marker.type = Marker.TEXT_VIEW_FACING
             text_marker.action = Marker.ADD
             
-            # Place text slightly above the box
+            # Place text cleanly above the box
             text_marker.pose.position.x = marker.pose.position.x
             text_marker.pose.position.y = marker.pose.position.y
             if marker.header.frame_id == 'link_base':
-                text_marker.pose.position.z = marker.pose.position.z + (scale_z / 2.0) + 0.02
+                text_marker.pose.position.z = marker.pose.position.z + (scale_z / 2.0) + 0.04
             else:
                 text_marker.pose.position.z = marker.pose.position.z
-                text_marker.pose.position.y -= (scale_y / 2.0) + 0.02
+                text_marker.pose.position.y -= (scale_y / 2.0) + 0.04
                 
             text_marker.pose.orientation.w = 1.0
             
-            text_marker.scale.z = 0.03 # Height of the text (3 cm)
+            text_marker.scale.z = 0.025 # Text height
             text_marker.color.r = 1.0
             text_marker.color.g = 1.0
-            text_marker.color.b = 1.0
+            text_marker.color.b = 0.0 # Yellow text for better visibility
             text_marker.color.a = 1.0
-            text_marker.text = class_name
+            
+            x_mm = int(center_x * 1000)
+            y_mm = int(center_y * 1000)
+            z_mm = int(center_z * 1000)
+            
+            # Use newlines to create a solid block of text that cannot physically separate
+            text_marker.text = f"{class_name}\nX: {x_mm} mm\nY: {y_mm} mm\nZ: {z_mm} mm"
             
             text_marker.lifetime.sec = 0
             text_marker.lifetime.nanosec = int(500 * 1e6)
             
             marker_array.markers.append(text_marker)
+            
+            # Log the coordinates to the terminal so they are neatly listed
+            self.get_logger().info(f"[{class_name}] X: {x_mm} mm | Y: {y_mm} mm | Z: {z_mm} mm")
+            
             
         self.pub_markers.publish(marker_array)
 
