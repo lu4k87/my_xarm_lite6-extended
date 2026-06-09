@@ -75,7 +75,11 @@ class ZedYolo3DNode(Node):
             self.get_logger().error(f'Error converting images: {e}')
             return
 
-        # We do not crop the image anymore so YOLO can detect the full objects
+        # Black out the top 20% of the image to ignore out-of-workspace detections
+        h, w = cv_rgb.shape[:2]
+        crop_h = int(h * 0.2)
+        cv_rgb[:crop_h, :] = 0
+        
         # Run YOLO inference (GPU beschleunigt)
         results = self.model.predict(cv_rgb, verbose=False, conf=0.5)
         
@@ -180,11 +184,11 @@ class ZedYolo3DNode(Node):
                 # Transform to link_base
                 pts_base = R @ pts_opt + T
                 
-                # Filter out table points (Z < 0.02)
-                table_filter = pts_base[2, :] > 0.02
-                if np.sum(table_filter) < 10:
+                # Filter out table points (Z < 0.02) and robot base (X < 0.25)
+                valid_pts_filter = (pts_base[2, :] > 0.02) & (pts_base[0, :] > 0.25)
+                if np.sum(valid_pts_filter) < 10:
                     continue # Not enough points belonging to the object
-                pts_base = pts_base[:, table_filter]
+                pts_base = pts_base[:, valid_pts_filter]
                 
                 # Compute 3D Bounding Box in link_base (use 2nd/98th percentiles to heavily filter out flying pixels from specular objects like balls)
                 min_x, max_x = np.percentile(pts_base[0], 2), np.percentile(pts_base[0], 98)
@@ -301,15 +305,15 @@ class ZedYolo3DNode(Node):
                 tm.lifetime.nanosec = int(500 * 1e6)
                 return tm
                 
-            # Stack the text vertically
+            # Stack the text vertically (No spaces between values to prevent RViz justification bug!)
             # Class name in white (Top)
             marker_array.markers.append(create_text_marker('class', i, safe_class_name, 1.0, 1.0, 1.0, 0.036))
             # X coordinate in red (Axis X)
-            marker_array.markers.append(create_text_marker('x', i, f"X: {x_mm} mm", 1.0, 0.2, 0.2, 0.024))
+            marker_array.markers.append(create_text_marker('x', i, f"X:{x_mm}mm", 1.0, 0.2, 0.2, 0.024))
             # Y coordinate in green (Axis Y)
-            marker_array.markers.append(create_text_marker('y', i, f"Y: {y_mm} mm", 0.2, 1.0, 0.2, 0.012))
+            marker_array.markers.append(create_text_marker('y', i, f"Y:{y_mm}mm", 0.2, 1.0, 0.2, 0.012))
             # Z coordinate in blue (Axis Z)
-            marker_array.markers.append(create_text_marker('z', i, f"Z: {z_mm} mm", 0.2, 0.5, 1.0, 0.000))
+            marker_array.markers.append(create_text_marker('z', i, f"Z:{z_mm}mm", 0.2, 0.5, 1.0, 0.000))
             
             # Log the coordinates to the terminal so they are neatly listed
             self.get_logger().info(f"[{class_name}] X: {x_mm} mm | Y: {y_mm} mm | Z: {z_mm} mm")
