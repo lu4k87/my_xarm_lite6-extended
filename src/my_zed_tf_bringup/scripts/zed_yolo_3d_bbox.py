@@ -236,8 +236,8 @@ class ZedYolo3DNode(Node):
             
             marker.pose.orientation.w = 1.0
             
-            # Line thickness (3mm)
-            marker.scale.x = 0.003 
+            # Line thickness (1mm) to match the thin text
+            marker.scale.x = 0.001 
             
             # 8 corners of the bounding box
             p1 = Point(x=float(min_x), y=float(min_y), z=float(min_z))
