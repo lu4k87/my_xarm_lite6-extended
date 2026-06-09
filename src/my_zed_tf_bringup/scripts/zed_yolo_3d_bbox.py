@@ -75,11 +75,7 @@ class ZedYolo3DNode(Node):
             self.get_logger().error(f'Error converting images: {e}')
             return
 
-        # Black out the top 20% of the image to ignore out-of-workspace detections
-        h, w = cv_rgb.shape[:2]
-        crop_h = int(h * 0.2)
-        cv_rgb[:crop_h, :] = 0
-        
+        # We do not crop the image so YOLO can detect the full objects
         # Run YOLO inference (GPU beschleunigt)
         results = self.model.predict(cv_rgb, verbose=False, conf=0.5)
         
@@ -193,7 +189,10 @@ class ZedYolo3DNode(Node):
                 # Compute 3D Bounding Box in link_base (use 2nd/98th percentiles to heavily filter out flying pixels from specular objects like balls)
                 min_x, max_x = np.percentile(pts_base[0], 2), np.percentile(pts_base[0], 98)
                 min_y, max_y = np.percentile(pts_base[1], 2), np.percentile(pts_base[1], 98)
-                min_z, max_z = np.percentile(pts_base[2], 2), np.percentile(pts_base[2], 98)
+                _, max_z = np.percentile(pts_base[2], 2), np.percentile(pts_base[2], 98)
+                
+                # Objects always rest on the table, so force min_z to 0.0
+                min_z = 0.0
                 
                 center_x = (min_x + max_x) / 2.0
                 center_y = (min_y + max_y) / 2.0
