@@ -29,7 +29,8 @@
         }
       ],
       "icon": "fa-solid fa-list",
-      "title": "Listen & Status"
+      "title": "Listen & Status",
+      "col": 0
     },
     {
       "actions": [
@@ -50,7 +51,8 @@
         }
       ],
       "icon": "fa-solid fa-chart-network",
-      "title": "Visualisierung"
+      "title": "Visualisierung",
+      "col": 1
     },
     {
       "actions": [
@@ -79,7 +81,8 @@
         }
       ],
       "icon": "fa-solid fa-bug",
-      "title": "Live-Debugging"
+      "title": "Live-Debugging",
+      "col": 2
     }
   ],
   "nodes": [
@@ -96,9 +99,9 @@
           "type": "pub"
         }
       ],
+      "col": 0,
       "icon": "fa-solid fa-route",
-      "title": "Roboter Aktionen & Sequenzen",
-      "col": 0
+      "title": "Roboter Aktionen & Sequenzen"
     },
     {
       "actions": [
@@ -108,44 +111,9 @@
           "type": "launch"
         }
       ],
+      "col": 0,
       "icon": "fa-solid fa-chart-network",
-      "title": "Vizualsation (Rviz2)",
-      "col": 0
-    },
-    {
-      "actions": [
-        {
-          "cmd": "source ~/dev_ws/install/setup.bash && ros2 launch my_zed_tf_bringup zed_camera.launch.py",
-          "label": "ZED M Bringup (Kamera + TF)",
-          "type": "launch"
-        },
-        {
-          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
-          "label": "YOLO Homographie",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run my_zed_tf_bringup zed_yolo_3d_bbox.py",
-          "label": "YOLO 3D BBox Node",
-          "type": "node"
-        }
-      ],
-      "icon": "fa-solid fa-camera",
-      "style": "break-before: column;",
-      "title": "Cameras, Sensors",
-      "col": 1
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
-          "label": "Fake Move Launch",
-          "type": "launch"
-        }
-      ],
-      "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)",
-      "col": 1
+      "title": "Vizualsation (Rviz2)"
     },
     {
       "actions": [
@@ -155,9 +123,9 @@
           "type": "launch"
         }
       ],
+      "col": 2,
       "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)",
-      "col": 2
+      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
     }
   ],
   "system": [
@@ -177,7 +145,8 @@
         }
       ],
       "icon": "fa-solid fa-network-wired",
-      "title": "Netzwerk & System"
+      "title": "Netzwerk & System",
+      "col": 0
     },
     {
       "actions": [
@@ -194,7 +163,8 @@
         }
       ],
       "icon": "fa-solid fa-hammer",
-      "title": "Umgebung & Build"
+      "title": "Umgebung & Build",
+      "col": 1
     },
     {
       "actions": [
@@ -206,7 +176,8 @@
         }
       ],
       "icon": "fa-solid fa-triangle-exclamation",
-      "title": "Notfall"
+      "title": "Notfall",
+      "col": 2
     }
   ],
   "topic_pubs": [
@@ -224,7 +195,8 @@
         }
       ],
       "icon": "fa-solid fa-gamepad",
-      "title": "Topic Pubs (Controllers)"
+      "title": "Topic Pubs (Controllers)",
+      "col": 0
     }
   ],
   "web": [
@@ -247,7 +219,8 @@
         }
       ],
       "icon": "fa-solid fa-server",
-      "title": "Workspace Analyzer Backend"
+      "title": "Workspace Analyzer Backend",
+      "col": 0
     },
     {
       "actions": [
@@ -270,7 +243,8 @@
         }
       ],
       "icon": "fa-solid fa-globe",
-      "title": "Frontend & Browser"
+      "title": "Frontend & Browser",
+      "col": 1
     }
   ]
 }

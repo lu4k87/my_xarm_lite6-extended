@@ -789,28 +789,36 @@
           animation: 200,
           ghostClass: 'sortable-ghost',
           handle: '.section-title',
-          onEnd: async function () {
+          revertOnSpill: true,
+          onEnd: async function (evt) {
             // Reconstruct the JSON array based on DOM state
             let newSections = [];
-            let c0 = Array.from(document.getElementById('col-0').children);
-            let c1 = Array.from(document.getElementById('col-1').children);
-            let c2 = Array.from(document.getElementById('col-2').children);
+            let c0 = Array.from(document.getElementById('col-0').querySelectorAll('.section'));
+            let c1 = Array.from(document.getElementById('col-1').querySelectorAll('.section'));
+            let c2 = Array.from(document.getElementById('col-2').querySelectorAll('.section'));
             
             c0.forEach(el => {
+              if(!el.dataset.secId) return;
               let s = TABS[tabId][parseInt(el.dataset.secId)];
-              s.col = 0;
-              newSections.push(s);
+              if(s) { s.col = 0; newSections.push(s); }
             });
             c1.forEach(el => {
+              if(!el.dataset.secId) return;
               let s = TABS[tabId][parseInt(el.dataset.secId)];
-              s.col = 1;
-              newSections.push(s);
+              if(s) { s.col = 1; newSections.push(s); }
             });
             c2.forEach(el => {
+              if(!el.dataset.secId) return;
               let s = TABS[tabId][parseInt(el.dataset.secId)];
-              s.col = 2;
-              newSections.push(s);
+              if(s) { s.col = 2; newSections.push(s); }
             });
+            
+            // CRITICAL SAFETY CHECK: Prevent data loss if DOM misread
+            if (newSections.length !== TABS[tabId].length) {
+              console.error("Data loss detected! Aborting save.");
+              renderTab(tabId);
+              return;
+            }
             
             TABS[tabId] = newSections;
             
