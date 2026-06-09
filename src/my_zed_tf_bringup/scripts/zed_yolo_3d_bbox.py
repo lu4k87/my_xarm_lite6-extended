@@ -10,7 +10,7 @@ import numpy as np
 import cv2
 import tf2_ros
 import tf2_geometry_msgs
-from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import PointStamped, Point
 
 try:
     from ultralytics import YOLO
@@ -221,30 +221,44 @@ class ZedYolo3DNode(Node):
             color = self.colors[cls_id % 100]
             class_name = names[cls_id]
             
-            # --- Marker 1: The Bounding Box Cube ---
+            # --- Marker 1: The Bounding Box Edges (Line List) ---
             marker = Marker()
             marker.header.stamp = current_time
             marker.header.frame_id = marker_frame
             marker.ns = 'yolo_bboxes'
             marker.id = i
-            marker.type = Marker.CUBE
+            marker.type = Marker.LINE_LIST
             marker.action = Marker.ADD
             
-            marker.pose.position.x = float(center_x)
-            marker.pose.position.y = float(center_y)
-            marker.pose.position.z = float(center_z)
             marker.pose.orientation.w = 1.0
             
-            marker.scale.x = float(scale_x)
-            marker.scale.y = float(scale_y)
-            marker.scale.z = float(scale_z)
+            # Line thickness (3mm)
+            marker.scale.x = 0.003 
             
-            marker.pose.orientation.w = 1.0
+            # 8 corners of the bounding box
+            p1 = Point(x=float(min_x), y=float(min_y), z=float(min_z))
+            p2 = Point(x=float(max_x), y=float(min_y), z=float(min_z))
+            p3 = Point(x=float(max_x), y=float(max_y), z=float(min_z))
+            p4 = Point(x=float(min_x), y=float(max_y), z=float(min_z))
+            p5 = Point(x=float(min_x), y=float(min_y), z=float(max_z))
+            p6 = Point(x=float(max_x), y=float(min_y), z=float(max_z))
+            p7 = Point(x=float(max_x), y=float(max_y), z=float(max_z))
+            p8 = Point(x=float(min_x), y=float(max_y), z=float(max_z))
+            
+            # 12 edges (2 points per edge for LINE_LIST)
+            marker.points = [
+                # Bottom face
+                p1, p2, p2, p3, p3, p4, p4, p1,
+                # Top face
+                p5, p6, p6, p7, p7, p8, p8, p5,
+                # Vertical edges
+                p1, p5, p2, p6, p3, p7, p4, p8
+            ]
             
             marker.color.r = float(color[0])
             marker.color.g = float(color[1])
             marker.color.b = float(color[2])
-            marker.color.a = 0.4 # Semi-transparent
+            marker.color.a = 0.8 # More opaque for thin lines
             
             marker.lifetime.sec = 0
             marker.lifetime.nanosec = int(500 * 1e6) # 0.5s lifetime
@@ -281,8 +295,9 @@ class ZedYolo3DNode(Node):
             y_mm = int(center_y * 1000)
             z_mm = int(center_z * 1000)
             
-            # Use newlines to create a solid block of text that cannot physically separate
-            text_marker.text = f"{class_name}\nX: {x_mm} mm\nY: {y_mm} mm\nZ: {z_mm} mm"
+            # Remove spaces to prevent RViz Ogre3D from massively justifying the text horizontally
+            safe_class_name = class_name.replace(' ', '_')
+            text_marker.text = f"{safe_class_name}\nX:{x_mm}mm\nY:{y_mm}mm\nZ:{z_mm}mm"
             
             text_marker.lifetime.sec = 0
             text_marker.lifetime.nanosec = int(500 * 1e6)
