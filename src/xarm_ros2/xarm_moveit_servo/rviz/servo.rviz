@@ -7,9 +7,8 @@ Panels:
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
         - /MotionPlanning1/Planned Path1
-        - /TextOverlay1
         - /TextOverlay1/Topic1
-      Splitter Ratio: 0.46875
+      Splitter Ratio: 0.578125
     Tree Height: 1075
   - Class: rviz_common/Selection
     Name: Selection
@@ -473,6 +472,18 @@ Visualization Manager:
       ver_alignment: top
       ver_dist: 0
       width: 128
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Obj Det Bbox -> moveit:collision Obj
+      Namespaces:
+        yolo_collision_vis: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /ui/yolo_collision_toggle
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -519,25 +530,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.0869498252868652
+      Distance: 1.0670045614242554
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.24495337903499603
-        Y: -0.00895670149475336
-        Z: 0.06382627785205841
+        X: 0.31277427077293396
+        Y: 0.08973883092403412
+        Z: 0.09590368717908859
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3754016160964966
+      Pitch: 0.4854015111923218
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.391834735870361
+      Yaw: 5.571842670440674
     Saved: ~
 Window Geometry:
   Displays:
