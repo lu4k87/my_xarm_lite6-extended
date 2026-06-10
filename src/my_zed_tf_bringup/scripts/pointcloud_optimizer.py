@@ -68,15 +68,7 @@ class PointCloudOptimizerNode(Node):
             b = (rgb_uint32 & 0x000000FF) / 255.0
             colors = np.vstack((r, g, b)).T
 
-        # Region of Interest (ROI) Crop: Keep only the bottom 50% of the camera image.
-        # In the zed_camera_link (ROS) frame, Z goes UP.
-        # The top 50% of the image corresponds exactly to Z > 0 in this frame.
-        # We cut it off by only keeping Z <= 0.
-        roi_mask = xyz[:, 2] <= 0
-        xyz = xyz[roi_mask]
-        if has_rgb:
-            colors = colors[roi_mask]
-
+        # NO CROP: Keep 100% of the camera pointcloud
         optimized_xyz = xyz
         if len(optimized_xyz) == 0:
             return
