@@ -193,11 +193,11 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ### 5.1 👁️ Computer Vision & Perception
 
-* **`yolo_object_detector`**
-    * **Purpose:** Object detection and spatial localization (cube, rectangle, cylinder).
-    * **Task:** Finds trained objects and ArUco markers in the 2D image stream; projects them into 3D.
+* **`yolo_object_detector` [DEPRECATED / LEGACY]**
+    * **Purpose:** *[Legacy]* 2D-based object detection and spatial localization via homography.
+    * **Task:** Finds trained objects and ArUco markers in the 2D image stream; projects them into 3D. **This node has been superseded by the `my_zed_tf_bringup` pipeline and is only kept for legacy reference.**
     * **How it works:** Reads RTSP/HTTP streams in a background thread. Transforms YOLO bounding boxes via `cv2.findHomography` and ArUco markers into 3D space (Z=90 mm). Publishes `PoseArray` messages under `/objects/<color>_<shape>/world_poses`.
-* **`my_zed_tf_bringup`**
+* **`my_zed_tf_bringup` [NEW VISION SYSTEM]**
     * **Purpose:** Unified ZED Mini Camera Initialization, TF Broadcasting, 3D Bounding Box Generation, and 3D Visualization.
     * **Task:** Safely launches the `zed_wrapper` node alongside a static TF publisher, generates the 3D camera models in RViz, and projects YOLO detections into 3D space.
     * **How it works:** Executes `zed_camera.launch.py` to initialize the native Stereolabs driver (now configured to use the ultra-precise `NEURAL_PLUS` depth mode with enhanced `depth_stabilization` in `common.yaml` to leverage GPU VRAM for dense, AI-based PointClouds, **and with a `manual_polygon` ROI that aggressively crops the top 20% of the image to save massive PointCloud processing power**) and simultaneously broadcast a static transform from `link_base` to `zed_camera_link`. By default, this is parameterized for a physical tripod setup (x=0.75m, y=0.0m, z=0.36m, pitch=45°, yaw=180°), seamlessly integrating the camera into the robot's world coordinate system in RViz2. It also runs multiple custom Python nodes: `zed_stand_publisher.py` to generate a mathematically accurate 3D V-Slot Aluminum Extrusion profile (20x20mm) and ZED camera mesh (`ZEDM.stl`); and `zed_yolo_3d_bbox.py`, which processes the full, uncropped camera RGB and Depth streams in parallel using GPU acceleration and the highly accurate **YOLOv8 Large (`yolov8l.pt`)** model. It extracts the true 3D PointCloud of each detected object, transforms it into the robot's world frame, filters out the robot base (`X < 0.25`), robustly filters depth noise (flying pixels) using 2nd/98th percentiles, applies **Exponential Moving Average (EMA) smoothing** to completely eliminate bounding box jitter, and tightly isolates the object from the background. It then computes a millimeter-perfect 3D bounding box that is **explicitly grounded to the table plane (`Z=0.0`)** and published live to RViz as an **ultra-fine 1mm wireframe box (`LINE_LIST`)**. Above the box, multiple floating text labels are precisely stacked, displaying the object class (white) alongside its color-coded XYZ coordinates (Red, Green, Blue) formatted with underscores (e.g. `X:_407_mm`) to prevent RViz Ogre3D text-justification bugs. Ghost markers are completely prevented using a robust DELETEALL mechanism. Additionally, it runs `yolo_moveit_collision.py` to seamlessly convert YOLO bounding boxes into dynamic MoveIt `CollisionObject` messages (toggleable via an RViz display checkbox) while using an Allowed Collision Matrix (ACM) exception to allow the end effector to grasp objects from above, and `tcp_overlay.py` which creates a sleek 2D Head-Up Display (HUD) in RViz showing real-time TCP coordinates in matching axis colors.
@@ -651,7 +651,14 @@ dev_ws/
 │   │   └── motion_sequence/motion_sequence.py
 │   ├── move_to_coordinator/        # 🧠 Python: Shared control brain
 │   │   └── move_to_coordinator/move_to_coordinator.py
-│   ├── my_zed_tf_bringup/          # 📷 Camera Bringup, TF & 3D Stand publisher
+│   ├── my_zed_tf_bringup/          # 🌟 [NEW VISION] Camera Bringup, TF, 3D BBox & Perception
+│   │   ├── launch/zed_camera.launch.py       # ZED driver & static TF launcher
+│   │   └── scripts/
+│   │       ├── pointcloud_optimizer.py       # 3D depth noise reduction & filtering
+│   │       ├── tcp_overlay.py                # RViz 2D HUD overlay for TCP
+│   │       ├── yolo_moveit_collision.py      # MoveIt collision objects (on/off)
+│   │       ├── zed_stand_publisher.py        # 3D camera stand/tripod mesh publisher
+│   │       └── zed_yolo_3d_bbox.py           # 3D object detection & bounding boxes
 │   ├── ros2_whisper/               # 🎙️ Whisper AI speech-to-text node
 │   ├── rviz_marker/                # 📍 Python: RViz2 marker publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent parser & filter
@@ -666,7 +673,7 @@ dev_ws/
 │   │   └── xarm_moveit_servo/
 │   │       └── src/
 │   │           └── xarm_joystick_input.cpp  # ⚙️ C++: Gamepad → Servo bridge
-│   ├── yolo_object_detector/       # 🔍 Python: YOLO + ArUco detection
+│   ├── yolo_object_detector/       # ⚠️ [DEPRECATED] Python: Legacy 2D YOLO + ArUco detection
 │   ├── zed-ros2-wrapper/           # 📷 ZED camera driver (submodule)
 │   └── zed-ros2-examples/          # 📷 ZED examples (submodule)
 └── README.md / readme-de.md        # Documentation (EN / DE)
