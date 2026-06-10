@@ -152,16 +152,16 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ### 4.2 Sensorik & Assistenz (Perception)
 **Computer Vision:** <br> 
-* Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* (aktuell über PiCameras).
+* **[VERALTET]** Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* über PiCameras. Dies wird nun vollständig in 3D durch die ZED-Kamera übernommen.
 **Stereo Vision:** <br>
 * Integration echter 3D-Tiefendaten durch eine *ZED Mini (Stereolabs)* Kamera.
 **VLA & Video Action Models (Geplant):** <br>
 * KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
 ### 4.3 Koordinatentransformation & Kalibrierung
-**ArUco Marker System:** <br> 
-* Im Arbeitsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
-* Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsfläche (Z = 90 mm).
+**ArUco Marker System [VERALTET]:** <br> 
+* *[Veraltet]* Im Arbeitsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
+* *[Veraltet]* Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsfläche (Z = 90 mm).
 * Präzise Projektion von Eye-Tracking Blickkoordinaten auf die Steuerungs-**UI**, um den Blick in Roboterbefehle zu übersetzen.
 
 ### 4.4 User Interfaces (UI/GUI)
@@ -193,9 +193,9 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 
 ### 5.1 👁️ Computer Vision & Perception
 
-* **`yolo_object_detector` [VERALTET / LEGACY]**
+* **`yolo_object_detector` [VERALTET]**
     * **Zweck:** *[Veraltet]* 2D-basierte Objekterkennung und räumliche Lokalisierung via Homographie.
-    * **Aufgabe:** Findet trainierte Objekte und ArUco-Marker im 2D-Bildstream; projiziert diese in 3D. **Diese Node wurde durch die neue `my_zed_tf_bringup` Pipeline ersetzt und dient nur noch als Legacy-Referenz.**
+    * **Aufgabe:** Findet trainierte Objekte und ArUco-Marker im 2D-Bildstream; projiziert diese in 3D. **Diese Node wurde durch die neue `my_zed_tf_bringup` Pipeline ersetzt.**
     * **Funktionsweise:** Liest RTSP/HTTP-Streams im Background-Thread. Transformiert YOLO Bounding Boxes via `cv2.findHomography` und ArUco-Markern in den 3D-Raum (Z=90 mm). Publiziert `PoseArray`-Nachrichten unter `/objects/<color>_<shape>/world_poses`.
 * **`my_zed_tf_bringup` [VISION SYSTEM]**
     * **Zweck:** Einheitliche Initialisierung der ZED Mini Kamera, TF-Broadcasting, 3D Bounding-Box Generierung und 3D-Visualisierung.
@@ -473,7 +473,7 @@ pip install ultralytics     # YOLO-Objekterkennung
 | Xbox One Elite Series 2 | Primärer Teleoperation-Controller |
 | Tobii Pro Glasses 3 | Eye-Tracking *(in Bearbeitung)* |
 | Stereolabs ZED Mini | Stereo-Tiefenkamera |
-| Raspberry Pi Kamera (×2) | 2D-Objekterkennung via YOLO |
+| Raspberry Pi Kamera (×2) | **[VERALTET]** 2D-Objekterkennung via YOLO |
 | Leap Motion Controller | Gesteneingabe *(geplant)* |
 
 ### ZED SDK & Kamera Setup (ZED Mini)
@@ -637,7 +637,7 @@ dev_ws/
 │   ├── xarm_ros2/                  # 🤖 Offizielle xArm ROS 2 Pakete (Submodul)
 │   │   └── xarm_moveit_servo/src/
 │   │       └── xarm_joystick_input.cpp  # ⚙️ C++: Gamepad → Servo Bridge
-│   ├── yolo_object_detector/       # ⚠️ [VERALTET] Python: Legacy 2D YOLO + ArUco Erkennung
+│   ├── yolo_object_detector/       # ⚠️ [VERALTET] Python: 2D YOLO + ArUco Erkennung
 │   ├── zed-ros2-wrapper/           # 📷 ZED-Kamera-Treiber (Submodul)
 │   └── zed-ros2-examples/          # 📷 ZED-Beispiele (Submodul)
 └── README.md / readme-de.md        # Dokumentation (EN / DE)
