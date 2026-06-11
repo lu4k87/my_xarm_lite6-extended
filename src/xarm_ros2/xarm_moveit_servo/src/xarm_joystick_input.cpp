@@ -79,6 +79,7 @@ namespace xarm_moveit_servo
         joint_pub_ = this->create_publisher<control_msgs::msg::JointJog>(joint_command_in_topic_, ros_queue_size_);
 	    speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/ui/robot_control/current_speed", rclcpp::QoS(1).transient_local()); 
         button_press_pub_ = this->create_publisher<std_msgs::msg::String>("/ui/joy_button_presses", 10);
+        frame_pub_ = this->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", rclcpp::QoS(1).transient_local());
 
         servo_start_client_ = this->create_client<std_srvs::srv::Trigger>("/servo_server/start_servo");
         servo_start_client_->wait_for_service(std::chrono::seconds(1));
@@ -107,6 +108,10 @@ namespace xarm_moveit_servo
         auto speed_msg = std::make_unique<std_msgs::msg::Float32>();
         speed_msg->data = linear_speed_scale_;
         speed_pub_->publish(std::move(speed_msg));
+        
+        auto frame_msg = std::make_unique<std_msgs::msg::String>();
+        frame_msg->data = planning_frame_;
+        frame_pub_->publish(std::move(frame_msg));
         
         timeout_timer_ = this->create_wall_timer(
             std::chrono::seconds(5),
@@ -290,19 +295,27 @@ namespace xarm_moveit_servo
         // --- ÜBERARBEITETER ABSCHNITT FÜR REFERENZRAHMEN-PUBLISHING ---
         if (buttons[xbox_BTN_BACK] == 1 && prev_buttons_[xbox_BTN_BACK] == 0 && planning_frame_ == ee_frame_name_) {
             planning_frame_ = robot_link_command_frame_;
-            RCLCPP_INFO(this->get_logger(), "Referenzrahmen: link_base");
+            RCLCPP_INFO(this->get_logger(), "Referenzrahmen: %s", planning_frame_.c_str());
             
             auto btn_msg = std::make_unique<std_msgs::msg::String>();
-            btn_msg->data = "Referenzrahmen: link_base";
+            btn_msg->data = "Referenzrahmen: " + planning_frame_;
             button_press_pub_->publish(std::move(btn_msg));
+            
+            auto frame_msg = std::make_unique<std_msgs::msg::String>();
+            frame_msg->data = planning_frame_;
+            frame_pub_->publish(std::move(frame_msg));
         }
         else if (buttons[xbox_BTN_START] == 1 && prev_buttons_[xbox_BTN_START] == 0 && planning_frame_ == robot_link_command_frame_) {
             planning_frame_ = ee_frame_name_;
-            RCLCPP_INFO(this->get_logger(), "Referenzrahmen: link_eef");
+            RCLCPP_INFO(this->get_logger(), "Referenzrahmen: %s", planning_frame_.c_str());
 
             auto btn_msg = std::make_unique<std_msgs::msg::String>();
-            btn_msg->data = "Referenzrahmen: link_eef";
+            btn_msg->data = "Referenzrahmen: " + planning_frame_;
             button_press_pub_->publish(std::move(btn_msg));
+            
+            auto frame_msg = std::make_unique<std_msgs::msg::String>();
+            frame_msg->data = planning_frame_;
+            frame_pub_->publish(std::move(frame_msg));
         }
         // ----------------------------------------------------------------
 

@@ -107,6 +107,7 @@ private:
     rclcpp::Publisher<control_msgs::msg::JointJog>::SharedPtr joint_pub_;
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr speed_pub_;            
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr button_press_pub_;      
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr frame_pub_;
 
     // ***************************************************************
     // 2. ROS 2 Service Clients

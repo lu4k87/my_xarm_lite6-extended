@@ -461,7 +461,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /ui/tcp_overlay
+        Value: /ui/rviz_overlay
       Value: true
       font: DejaVu Sans Mono
       height: 128

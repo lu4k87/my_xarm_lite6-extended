@@ -133,10 +133,10 @@ def generate_launch_description():
     # -----------------------------------------------------------------------
     # TCP 2D Overlay Node
     # -----------------------------------------------------------------------
-    tcp_overlay_node = Node(
+    rviz_overlay_node = Node(
         package='my_zed_tf_bringup',
-        executable='tcp_overlay.py',
-        name='tcp_overlay',
+        executable='rviz_overlay.py',
+        name='rviz_overlay',
         output='screen'
     )
 
@@ -165,6 +165,6 @@ def generate_launch_description():
         zed_stand_publisher_node,
         pointcloud_optimizer_node,
         yolo_moveit_collision_node,
-        tcp_overlay_node,
+        rviz_overlay_node,
         set_fake_initial_pose_node,
     ])

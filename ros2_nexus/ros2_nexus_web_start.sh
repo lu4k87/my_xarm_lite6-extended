@@ -91,7 +91,7 @@ echo "  ✅ ROS 2 Nexus Web läuft!"
 echo "  PID: ${BACKEND_PID:-bereits laufend}"
 echo ""
 echo "  Dieses Terminal offen lassen."
-echo "  Zum Beenden: Strg+C  oder  'Alle Beenden' im Browser"
+echo "  Zum Beenden: Strg+C  oder  'Kill all ROS2 Processes' im Browser"
 echo "════════════════════════════════════════════════════════"
 echo ""
 

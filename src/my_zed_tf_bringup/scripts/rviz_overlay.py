@@ -5,24 +5,42 @@ from rclpy.node import Node
 from tf2_ros import Buffer, TransformListener
 from rviz_2d_overlay_msgs.msg import OverlayText
 from std_msgs.msg import ColorRGBA
+from std_msgs.msg import String
 
-class TcpOverlayNode(Node):
+class RvizOverlayNode(Node):
     def __init__(self):
-        super().__init__('tcp_overlay_node')
+        super().__init__('rviz_overlay_node')
+
+        self.declare_parameter('base_frame', 'link_base')
+        self.declare_parameter('eef_frame', 'link_tcp')
+
+        self.active_frame = 'link_base' # Fallback default
+        self.frame_sub = self.create_subscription(
+            String,
+            '/ui/robot_control/current_frame',
+            self.frame_callback,
+            10
+        )
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.publisher = self.create_publisher(OverlayText, '/ui/tcp_overlay', 10)
+        self.publisher = self.create_publisher(OverlayText, '/ui/rviz_overlay', 10)
         
         # 10 Hz Update Rate
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.get_logger().info('TCP 2D Overlay Node gestartet.')
+        self.get_logger().info('RViz 2D Overlay Node gestartet.')
+
+    def frame_callback(self, msg):
+        self.active_frame = msg.data
 
     def timer_callback(self):
         try:
+            base_frame = self.get_parameter('base_frame').value
+            eef_frame = self.get_parameter('eef_frame').value
+
             # Hole den aktuellen TCP (Endeffektor) TF relativ zur Roboter-Basis
-            trans = self.tf_buffer.lookup_transform('link_base', 'link_eef', rclpy.time.Time())
+            trans = self.tf_buffer.lookup_transform(base_frame, eef_frame, rclpy.time.Time())
             
             x_mm = int(trans.transform.translation.x * 1000.0)
             y_mm = int(trans.transform.translation.y * 1000.0)
@@ -38,7 +56,7 @@ class TcpOverlayNode(Node):
             msg.vertical_distance = 10    # 10px Abstand vom oberen Rand
             
             # Banner-Größe: Schmaler und dünner, passend zur Schrift
-            msg.width = 460
+            msg.width = 650
             msg.height = 22
             
             # Hintergrund: Sehr stark transparent (nur 20% Deckkraft)
@@ -55,7 +73,7 @@ class TcpOverlayNode(Node):
             html_text = (
                 f'<div align="center">'
                 f'<nobr>'
-                f'<span style="color:#ffffff;">EEF &nbsp;|&nbsp; </span>'
+                f'<span style="color:#ffffff;">Frame: {self.active_frame} &nbsp;|&nbsp; </span>'
                 f'<span style="color:#ff4444;">X: {x_mm:4d} mm</span>'
                 f' &nbsp;|&nbsp; '
                 f'<span style="color:#44ff44;">Y: {y_mm:4d} mm</span>'
@@ -75,7 +93,7 @@ class TcpOverlayNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = TcpOverlayNode()
+    node = RvizOverlayNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
