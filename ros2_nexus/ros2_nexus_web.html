@@ -641,7 +641,7 @@
 
     <nav class="tab-nav" id="tab-nav">
       <button class="tab-btn active" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
-      <button class="tab-btn" data-tab="topic_pubs"><i class="fa-solid fa-arrow-up-from-bracket"></i> Topic Pubs</button>
+      <button class="tab-btn" data-tab="topic_pubs"><i class="fa-solid fa-arrow-up-from-bracket"></i> Pub MSG on Topic</button>
       <button class="tab-btn" data-tab="web"><i class="fa-solid fa-server"></i> Web- / Server + UI</button>
       <button class="tab-btn" data-tab="info"><i class="fa-solid fa-gauge-high"></i> ROS Info</button>
       <button class="tab-btn" data-tab="system"><i class="fa-solid fa-terminal"></i> System</button>
@@ -661,7 +661,7 @@
     <button class="footer-btn" onclick="runCmd('bash','Terminal','interactive')"><i class="fa-solid fa-terminal"></i> Terminal</button>
     <button class="footer-btn" onclick="runCmd('nano ~/.bashrc','~/.bashrc Editor','interactive')"><i
         class="fa-solid fa-file-code"></i> ~/.bashrc</button>
-    <button class="footer-btn" onclick="runCmd('nano ~/dev_ws/ros2_nexus/ros2_nexus_web.py','Nexus Web Backend Code','interactive')"><i class="fa-solid fa-code"></i> Nexus Web Backend</button>
+    <button class="footer-btn" onclick="runCmd('nano ~/dev_ws/ros2_nexus/ros2_nexus_web.py','Code: ROS2 Nexus WebApp','interactive')"><i class="fa-solid fa-code"></i> Code: ROS2 Nexus WebApp</button>
     <button class="footer-btn primary" onclick="location.reload()"><i class="fa-solid fa-arrows-rotate"></i>
       Reload</button>
     <button class="footer-btn" style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3);" onclick="killAllProcesses()"><i class="fa-solid fa-skull"></i> Alle Beenden</button>
@@ -698,7 +698,7 @@
     const BADGE = {
       node:   { cls: "badge-node",   icon: "fa-solid fa-circle-dot",        label: "NODE"      },
       launch: { cls: "badge-launch", icon: "fa-solid fa-rocket",             label: "LAUNCH"    },
-      pub:    { cls: "badge-pub",    icon: "fa-solid fa-arrow-up-from-bracket", label: "TOPIC PUB" },
+      pub:    { cls: "badge-pub",    icon: "fa-solid fa-arrow-up-from-bracket", label: "PUB MSG ON TOPIC" },
       sys:    { cls: "badge-sys",    icon: "fa-solid fa-terminal",            label: "CMD"       },
       kill:   { cls: "badge-kill",   icon: "fa-solid fa-skull-crossbones",    label: "KILL"      },
     };
