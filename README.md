@@ -245,10 +245,10 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Task:** Predictive intervention before collisions during manual gamepad control.
     * **How it works:** Intercepts raw `/joy` signals, asynchronously queries the robot's current EEF position, computes a forward-projected position, and publishes a sanitized `/joy_check` signal with the downward axis zeroed if a collision is imminent. See **Section 6** for the full technical deep-dive.
 
-* **`fake_initial_pose`**
-    * **Purpose:** Automatic initialization of the simulated robot arm's starting pose.
-    * **Task:** Moves the fake arm to the default starting position (X=200, Y=0, Z=150).
-    * **How it works:** First, it calls the `/servo_server/stop_servo` service to temporarily pause MoveIt Servo, preventing command conflicts. Then, it constructs and publishes a `JointTrajectory` message containing predefined joint angles (for X=200, Y=0, Z=150) directly to the `/lite6_traj_controller/joint_trajectory` topic. After waiting 1 second for the hardware simulation to execute the movement, it calls the `/servo_server/start_servo` service to seamlessly reactivate manual control via gamepad or HUD.
+* **`universal_initial_pose_node`** *(in package `fake_initial_pose`)*
+    * **Purpose:** Hardware-agnostic initialization of the robot's starting pose.
+    * **Task:** Safely moves the arm (real or simulated) to the default starting position (X=200, Y=0, Z=150).
+    * **How it works:** Provides the `/ui/execute_initial_pose` service. Upon request, it first calls `/servo_server/stop_servo` to temporarily pause MoveIt Servo and prevent command conflicts. It then constructs and publishes a `JointTrajectory` message with predefined joint angles directly to the `/lite6_traj_controller/joint_trajectory` topic. Once the movement finishes, it calls `/servo_server/start_servo` to seamlessly reactivate manual control via gamepad or HUD.
 
 * **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
     * **Purpose:** Hard-stop collision avoidance at the MoveIt level.

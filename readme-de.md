@@ -245,10 +245,10 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Aufgabe:** Prädiktives Eingreifen vor Kollisionen bei manueller Gamepad-Steuerung.
     * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt asynchron die aktuelle EEF-Position ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Kollision droht. Siehe **Abschnitt 6** für die vollständige technische Tiefenanalyse.
 
-* **`fake_initial_pose`**
-    * **Zweck:** Automatische Initialisierung der Startpose des simulierten Roboterarms.
-    * **Aufgabe:** Fährt den Fake-Arm auf die Standard-Startposition (X=200, Y=0, Z=150).
-    * **Funktionsweise:** Ruft zunächst den Service `/servo_server/stop_servo` auf, um den MoveIt Servo Server temporär zu pausieren und Befehlskonflikte zu vermeiden. Konstruiert dann eine `JointTrajectory` Nachricht mit fest vordefinierten Gelenkwinkeln (entspricht X=200, Y=0, Z=150) und publiziert diese direkt auf das Topic `/lite6_traj_controller/joint_trajectory`. Nach 1 Sekunde Wartezeit für die Bewegungsausführung in der Simulation wird der Service `/servo_server/start_servo` aufgerufen, um die manuelle Gamepad- oder HUD-Steuerung nahtlos wieder freizugeben.
+* **`universal_initial_pose_node`** *(im Paket `fake_initial_pose`)*
+    * **Zweck:** Hardware-unabhängige Initialisierung der Roboter-Startpose.
+    * **Aufgabe:** Fährt den Arm (Real oder Simulation) sicher auf die Standard-Startposition (X=200, Y=0, Z=150).
+    * **Funktionsweise:** Bietet den Service `/ui/execute_initial_pose` an. Bei Aufruf pausiert der Node zunächst den MoveIt Servo Server (`/servo_server/stop_servo`), um Konflikte mit dem Gamepad zu vermeiden. Dann publiziert er eine `JointTrajectory` mit fest vordefinierten Gelenkwinkeln direkt an den `/lite6_traj_controller/joint_trajectory`. Nach Abschluss der Bewegung wird MoveIt Servo (`/servo_server/start_servo`) wieder aktiviert, sodass die manuelle Steuerung nahtlos fortgesetzt werden kann.
 
 * **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
     * **Zweck:** Hard-Stop Kollisionsvermeidung auf MoveIt-Ebene.
