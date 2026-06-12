@@ -55,7 +55,13 @@ Ein wesentlicher Kern und Innovationscharakter des Projekts liegt in der wissens
 
 ## 2. 🔬 Architektur & Leitprinzipien
 
-### Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform
+### 2.1 Betriebsmodi: FAKE vs. REAL (Simulation vs. Hardware)
+Die Plattform unterstützt zwei fundamentale Betriebsmodi, die einen nahtlosen Übergang von der Software-Entwicklung zur Hardware-Ausführung ermöglichen:
+
+* **FAKE (Simulationsmodus):** Der Roboter existiert rein virtuell in RViz2 / MoveIt. Es ist keine physische Hardware (weder Roboter noch ZED-Kamera) angeschlossen. Dieser Modus ist essenziell für die gefahrlose Logik-Entwicklung, das Testen der UI und das Validieren von Trajektorien. Kamera- und Objektdaten (YOLO) werden in diesem Modus durch künstliche Marker (`rviz_marker`) simuliert.
+* **REAL (Hardwaremodus):** Das System ist live mit dem physischen xArm Lite 6 und der Stereolab ZEDm Kamera verbunden. Die vollständige Hardware-Pipeline inklusive echter Sensorik, Live-Bildverarbeitung (YOLOv8) und physischen Sicherheits-Stopps ist aktiv.
+
+### 2.2 Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform
 Das Kernziel des Projekts ist die Realisierung einer modularen, plattformbasierten Softwarearchitektur für die multimodale Teleoperation und KI-gestützte Assistenzrobotik. Das System fungiert als zentraler, softwareseitiger Integrationsknoten (Middleware-Ebene), der heterogene Teilsysteme in einer einheitlichen Laufzeitumgebung zusammenführt. Durch ein verteiltes Server-Client-Netzwerk (Multi-PC-Setup) und die softwareseitige Kopplung an einen echtzeitfähigen Digitalen Zwilling (NVIDIA Isaac Sim) dient die Plattform sowohl als flexible Entwicklungsumgebung als auch als standardisierte und replizierbare Testumgebung. Das Projekt ist explizit als geschlossener Kreislauf aus Entwicklung und empirischer Validierung konzipiert:
 
 * **Sensorik & Perzeption:** Integration von Tiefenkameras (z. B. Objekterkennung via YOLO, Marker-Tracking) sowie taktilen oder physiologischen Sensoren zur Zustandserfassung.
@@ -245,10 +251,10 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Aufgabe:** Prädiktives Eingreifen vor Kollisionen bei manueller Gamepad-Steuerung.
     * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt asynchron die aktuelle EEF-Position ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Kollision droht. Siehe **Abschnitt 6** für die vollständige technische Tiefenanalyse.
 
-* **`universal_initial_pose_node`** *(im Paket `fake_initial_pose`)*
+* **`universal_initial_pose_node`** *(im Paket `fake_initial_pose` | REAL & FAKE Modi)*
     * **Zweck:** Hardware-unabhängige Initialisierung der Roboter-Startpose.
     * **Aufgabe:** Fährt den Arm (Real oder Simulation) sicher auf die Standard-Startposition (X=200, Y=0, Z=150).
-    * **Funktionsweise:** Bietet den Service `/ui/execute_initial_pose` an. Bei Aufruf pausiert der Node zunächst den MoveIt Servo Server (`/servo_server/stop_servo`), um Konflikte mit dem Gamepad zu vermeiden. Dann publiziert er eine `JointTrajectory` mit fest vordefinierten Gelenkwinkeln direkt an den `/lite6_traj_controller/joint_trajectory`. Nach Abschluss der Bewegung wird MoveIt Servo (`/servo_server/start_servo`) wieder aktiviert, sodass die manuelle Steuerung nahtlos fortgesetzt werden kann.
+    * **Funktionsweise:** Bietet den Service `/ui/execute_initial_pose` an. Bei Aufruf pausiert der Node zunächst den MoveIt Servo Server (`/servo_server/stop_servo`), um Konflikte mit dem Gamepad zu vermeiden. Dann publiziert er eine `JointTrajectory` mit fest vordefinierten Gelenkwinkeln direkt an den `/lite6_traj_controller/joint_trajectory`. Nach Abschluss der Bewegung wird MoveIt Servo (`/servo_server/start_servo`) wieder aktiviert, sodass die manuelle Steuerung via Gamepad oder RViz Control Panel nahtlos fortgesetzt werden kann.
 
 * **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
     * **Zweck:** Hard-Stop Kollisionsvermeidung auf MoveIt-Ebene.
@@ -262,26 +268,26 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 
 ### 5.5 🖥️ Monitoring (Dashboard), UI & Visualisierung
 
-* **`rviz_marker`**
+* **`rviz_marker`** *(nur FAKE-Modus)*
     * **Zweck:** Visuelles Echtzeit-Feedback in RViz2.
     * **Aufgabe:** Optische Aufwertung des 3D-Arbeitsbereichs.
-    * **Funktionsweise:** Trackt `link_tcp` via TF2. Publiziert `MarkerArray` mit interaktiven Pick-and-Place Zielen (Würfel, Zylinder) und statischen Grenzen (Tischkanten) für die Simulation ohne Live-YOLO Daten.
+    * **Funktionsweise:** Trackt `link_tcp` via TF2. Publiziert `MarkerArray` mit interaktiven Pick-and-Place Zielen (Würfel, Zylinder) und statischen Grenzen (Tischkanten) für die Simulation ohne Live-YOLO Daten. Dient als primärer Ersatz für die Kamera im reinen Simulationsbetrieb.
 * **`rviz_robot_control_panel`**
-    * **Zweck:** 2D HUD Panel innerhalb von RViz für manuelles 6-DoF Jogging des Roboters.
+    * **Zweck:** 2D Control Panel innerhalb von RViz für manuelles 6-DoF Jogging des Roboters.
     * **Aufgabe:** Bietet ein grafisches Steuerkreuz (D-Pad) für Translationen (X, Y, Z), dedizierte Buttons für Rotationen (Roll, Pitch, Yaw) sowie Schnellzugriffe für die Initial-Pose und das Umschalten des Planungsrahmens (Base/TCP).
     * **Funktionsweise:** Implementiert in C++ als Qt-Plugin. Die Bewegungs-Buttons generieren `TwistStamped`-Befehle auf `/servo_server/delta_twist_cmds`, um den Roboter dynamisch zu verfahren. Der "Move to Initial Position"-Button ruft asynchron den ROS 2 Service `/ui/execute_initial_pose` auf (bereitgestellt vom Node `universal_initial_pose_node`). Dieser Service pausiert MoveIt Servo (`/servo_server/stop_servo`), publiziert eine sichere `JointTrajectory` direkt auf das Topic `/lite6_traj_controller/joint_trajectory` und setzt Servo anschließend wieder fort (`/servo_server/start_servo`). *Hinweis:* Da dieser Ablauf ausschließlich standardisierte MoveIt-Services anstelle proprietärer Hardware-APIs nutzt, ist er komplett hardware-unabhängig und funktioniert sicher sowohl auf dem echten Roboter als auch in der Simulation (FAKE). *Aktivierung in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
 * **`rviz_overlay`**
-    * **Zweck:** 2D Head-Up-Display (HUD) innerhalb der RViz 3D-Ansicht.
+    * **Zweck:** 2D Text Overlay innerhalb der RViz 3D-Ansicht.
     * **Aufgabe:** Projiziert die Echtzeit-Koordinaten (X/Y/Z) übersichtlich in den jeweiligen Achsenfarben in das Sichtfeld.
     * **Funktionsweise:** Eigenständiger Python-Node, der das `rviz_2d_overlay_plugins` Paket nutzt. Er berechnet die Echtzeit-TF-Daten und publiziert HTML-formatierten Text als Bild-Overlay. Über das Topic `/ui/robot_control/current_frame` synchronisiert er sich mit dem Control Panel und zeigt dynamisch den ausgewählten Frame (z.B. `[tcp_link]`) an.
 * **`rosbridge_server`**
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
     * **Funktionsweise:** Standard-Paket für WebSockets (Port 9090). Erlaubt Webanwendungen, via `roslib.js` direkt mit dem ROS-Netzwerk zu interagieren.
-* **`zed_wrapper`**
+* **`zed_wrapper`** *(nur REAL-Modus)*
     * **Zweck:** Hardware-Treiber für Stereolabs ZEDm.
     * **Aufgabe:** Direktes Streaming an RViz2 und Logik-Nodes ohne Drittsoftware.
-    * **Funktionsweise:** Nativer C++ Node, der den generischen USB-Cam Node ersetzt. Publiziert `Image` und `CameraInfo` unter `/zed/zed_node/...`.
+    * **Funktionsweise:** Nativer C++ Node, der den generischen USB-Cam Node ersetzt. Publiziert `Image` und `CameraInfo` unter `/zed/zed_node/...`. Ist nur aktiv, wenn die physische Kamera angeschlossen ist.
 
 ---
 
@@ -653,7 +659,7 @@ dev_ws/
 │   │       ├── zed_stand_publisher.py        # 3D-Stativ Mesh Publisher
 │   │       └── zed_yolo_3d_bbox.py           # 3D Objekterkennung & Bounding-Boxen
 │   ├── ros2_whisper/               # 🎙️ Whisper AI Speech-to-Text
-│   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D HUD Overlay für TCP
+│   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D Text Overlay für TCP
 │   ├── rviz_robot_control_panel/   # 🖥️ C++: RViz2 2D Control Panel Plugin
 │   │   └── src/rviz_robot_control_panel.cpp
 │   ├── rviz_marker/                # 📍 Python: RViz2 Marker-Publisher

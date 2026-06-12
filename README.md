@@ -51,12 +51,16 @@ A key core and innovative character of the project lies in the scientific analys
 * **Answering the Transformation Question:** Concrete practical assistance on the core question: *“How can processes and workplaces be structured to measurably meet the human-centered requirements of Industry 5.0?”*
 * **Service Potential:** The resulting frameworks and guidelines have the potential to be provided as a validated, monetizable consulting and service offering for industry, accompanying digital and demographic changes in production.
 
----
-
 ## 2. 🔬 Architecture & Guiding Principles
 
-### The System Idea: An Integrated Development, Evaluation, and Validation Platform
-The core objective of the project is to realize a modular, platform-based software architecture for multimodal teleoperation and AI-assisted assistive robotics. The system functions as a central, software-side integration node (middleware level) that merges heterogeneous subsystems into a unified runtime environment. Through a distributed server-client network (multi-PC setup) and software coupling to a real-time digital twin (NVIDIA Isaac Sim), the platform serves as both a flexible development environment and a standardized, replicable testbed. The project is explicitly designed as a closed loop of development and empirical validation:
+### 2.1 Operating Modes: FAKE vs. REAL (Simulation vs. Hardware)
+The platform supports two fundamental operating modes, enabling a seamless transition from software development to hardware execution:
+
+* **FAKE (Simulation Mode):** The robot exists purely virtually in RViz2 / MoveIt. No physical hardware (neither the robot nor the ZED camera) is connected. This mode is essential for risk-free logic development, UI testing, and trajectory validation. Camera and object data (YOLO) are simulated in this mode using artificial markers (`rviz_marker`).
+* **REAL (Hardware Mode):** The system is connected live to the physical xArm Lite 6 and the Stereolab ZEDm camera. The complete hardware pipeline, including real sensors, live image processing (YOLOv8), and physical safety stops, is active.
+
+### 2.2 The System Concept: An Integrated Development, Evaluation, and Validation Platform
+The core objective of the project is the realization of a modular, platform-based software architecture for multimodal teleoperation and AI-supported assistive robotics. The system acts as a central, software-side integration node (middleware level) that unifies heterogeneous subsystems into a consistent runtime environment. Through a distributed server-client network (multi-PC setup) and the software-side coupling to a real-time capable Digital Twin (NVIDIA Isaac Sim), the platform serves as both a flexible development environment and a standardized, replicable test environment. The project is explicitly designed as a closed loop of development and empirical validation:
 
 * **Sensors & Perception:** Integration of depth cameras (e.g., object detection via YOLO, marker tracking) and tactile or physiological sensors for state estimation.
 * **Multimodal Control:** Parallel integration of various input channels such as eye-tracking systems for gaze target acquisition, voice control (e.g., via OpenAI Whisper), and classic hardware controllers (gamepads, 3D mice).
@@ -245,10 +249,10 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Task:** Predictive intervention before collisions during manual gamepad control.
     * **How it works:** Intercepts raw `/joy` signals, asynchronously queries the robot's current EEF position, computes a forward-projected position, and publishes a sanitized `/joy_check` signal with the downward axis zeroed if a collision is imminent. See **Section 6** for the full technical deep-dive.
 
-* **`universal_initial_pose_node`** *(in package `fake_initial_pose`)*
+* **`universal_initial_pose_node`** *(in package `fake_initial_pose` | REAL & FAKE modes)*
     * **Purpose:** Hardware-agnostic initialization of the robot's starting pose.
     * **Task:** Safely moves the arm (real or simulated) to the default starting position (X=200, Y=0, Z=150).
-    * **How it works:** Provides the `/ui/execute_initial_pose` service. Upon request, it first calls `/servo_server/stop_servo` to temporarily pause MoveIt Servo and prevent command conflicts. It then constructs and publishes a `JointTrajectory` message with predefined joint angles directly to the `/lite6_traj_controller/joint_trajectory` topic. Once the movement finishes, it calls `/servo_server/start_servo` to seamlessly reactivate manual control via gamepad or HUD.
+    * **How it works:** Provides the `/ui/execute_initial_pose` service. Upon request, it first calls `/servo_server/stop_servo` to temporarily pause MoveIt Servo and prevent command conflicts. It then constructs and publishes a `JointTrajectory` message with predefined joint angles directly to the `/lite6_traj_controller/joint_trajectory` topic. Once the movement finishes, it calls `/servo_server/start_servo` to seamlessly reactivate manual control via gamepad or RViz Control Panel.
 
 * **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
     * **Purpose:** Hard-stop collision avoidance at the MoveIt level.
@@ -262,26 +266,26 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ### 5.5 🖥️ Monitoring (Dashboard), UI & Visualization
 
-* **`rviz_marker`**
+* **`rviz_marker`** *(FAKE mode only)*
     * **Purpose:** Real-time visual feedback in RViz2.
     * **Task:** Visual enhancement of the 3D simulation work area.
-    * **How it works:** Tracks `link_tcp` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data.
+    * **How it works:** Tracks `link_tcp` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data. Serves as the primary camera replacement during pure simulation operation.
 * **`rviz_robot_control_panel`**
-    * **Purpose:** 2D HUD Panel inside RViz for manual 6-DoF robot jogging.
+    * **Purpose:** 2D Control Panel inside RViz for manual 6-DoF robot jogging.
     * **Task:** Provides a graphical control pad (D-Pad) for translations (X, Y, Z), dedicated buttons for rotations (Roll, Pitch, Yaw), and quick-access buttons for the fake initial pose and planning frame switching (Base/TCP).
     * **How it works:** Implemented in C++ as a Qt plugin. The movement buttons generate `TwistStamped` commands on `/servo_server/delta_twist_cmds` to dynamically jog the robot. The "Move to Initial Position" button asynchronously calls the `/ui/execute_initial_pose` ROS 2 service (provided by the `universal_initial_pose_node`). This service pauses MoveIt Servo (`/servo_server/stop_servo`), publishes a safe `JointTrajectory` directly to the `/lite6_traj_controller/joint_trajectory` topic, and then resumes Servo (`/servo_server/start_servo`). *Note:* Because this workflow relies purely on standardized MoveIt services rather than proprietary hardware APIs, it is completely hardware-agnostic and safely operates on both the real robot and the simulated (FAKE) hardware. *Activation in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
 * **`rviz_overlay`**
-    * **Purpose:** 2D Head-Up Display (HUD) inside the RViz 3D view.
+    * **Purpose:** 2D Text Overlay inside the RViz 3D view.
     * **Task:** Projects real-time TCP coordinates (X/Y/Z) cleanly formatted in their respective axis colors directly into the user's field of view.
     * **How it works:** Independent Python node utilizing the `rviz_2d_overlay_plugins` package. It calculates real-time TF data and publishes HTML-formatted text as an image overlay. It listens to the `/ui/robot_control/current_frame` topic to synchronize with the Control Panel and dynamically display the selected reference frame (e.g. `[tcp_link]`).
 * **`rosbridge_server`**
     * **Purpose:** WebSocket bridge for web browsers.
     * **Task:** Native communication between dashboard and robot.
     * **How it works:** Standard package for WebSockets (Port 9090). Allows web applications to interact directly with the ROS network via `roslib.js`.
-* **`zed_wrapper`**
+* **`zed_wrapper`** *(REAL mode only)*
     * **Purpose:** Hardware driver for Stereolabs ZEDm.
-    * **Task:** Direct streaming to RViz2 and logic nodes without external software.
-    * **How it works:** Native C++ node replacing the generic USB-cam node. Publishes `Image` and `CameraInfo` under `/zed/zed_node/...`.
+    * **Task:** Direct streaming to RViz2 and logic nodes without third-party software.
+    * **How it works:** Native C++ node replacing the generic USB-Cam node. Publishes `Image` and `CameraInfo` under `/zed/zed_node/...`. Only active when the physical camera is connected.
 
 ---
 
@@ -506,7 +510,7 @@ sudo apt install ros-humble-rosbridge-server ros-humble-rosbridge-suite
 # TF2 & visualization
 sudo apt install ros-humble-tf2-ros ros-humble-rviz2
 
-# RViz 2D Overlay Plugins (for UI HUDs)
+# RViz 2D Overlay Plugins
 sudo apt install ros-humble-rviz-2d-overlay-plugins ros-humble-rviz-2d-overlay-msgs
 ```
 
@@ -688,7 +692,7 @@ dev_ws/
 │   │       ├── zed_stand_publisher.py        # 3D camera stand/tripod mesh publisher
 │   │       └── zed_yolo_3d_bbox.py           # 3D object detection & bounding boxes
 │   ├── ros2_whisper/               # 🎙️ Whisper AI speech-to-text node
-│   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D HUD Overlay for TCP
+│   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D Text Overlay for TCP
 │   ├── rviz_robot_control_panel/   # 🖥️ C++: RViz2 2D Control Panel Plugin
 │   │   └── src/rviz_robot_control_panel.cpp
 │   ├── rviz_marker/                # 📍 Python: RViz2 marker publisher
