@@ -259,9 +259,9 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Task:** Visual enhancement of the 3D simulation work area.
     * **How it works:** Tracks `link_eef` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data.
 * **`rviz_control_robot_panel`**
-    * **Purpose:** 2D HUD Panel inside RViz for manual robot jogging.
-    * **Task:** Provides a classic D-Pad style graphical user interface to control the robot with mouse clicks.
-    * **How it works:** Implemented in C++ as a Qt plugin. Generates a TwistStamped command on `/servo_server/delta_twist_cmds` upon button clicks. *Activation in RViz:* `Panels -> Add New Panel -> rviz_control_robot_panel -> ControlPanel`.
+    * **Purpose:** 2D HUD Panel inside RViz for manual 6-DoF robot jogging.
+    * **Task:** Provides a graphical control pad (D-Pad) for translations (X, Y, Z), dedicated buttons for rotations (Roll, Pitch, Yaw), and quick-access buttons for the fake initial pose and planning frame switching (Base/TCP).
+    * **How it works:** Implemented in C++ as a Qt plugin. Generates a `TwistStamped` command on `/servo_server/delta_twist_cmds` upon button clicks, adapting dynamically to the selected reference frame (`/ui/robot_control/current_frame`). *Activation in RViz:* `Panels -> Add New Panel -> rviz_control_robot_panel -> ControlPanel`.
 * **`rosbridge_server`**
     * **Purpose:** WebSocket bridge for web browsers.
     * **Task:** Native communication between dashboard and robot.

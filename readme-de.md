@@ -259,9 +259,9 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Aufgabe:** Optische Aufwertung des 3D-Arbeitsbereichs.
     * **Funktionsweise:** Trackt `link_eef` via TF2. Publiziert `MarkerArray` mit interaktiven Pick-and-Place Zielen (Würfel, Zylinder) und statischen Grenzen (Tischkanten) für die Simulation ohne Live-YOLO Daten.
 * **`rviz_control_robot_panel`**
-    * **Zweck:** 2D HUD Panel innerhalb von RViz für manuelles Jogging des Roboters.
-    * **Aufgabe:** Bietet ein grafisches Steuerkreuz (D-Pad) zur Steuerung des Roboters per Mausklick.
-    * **Funktionsweise:** Implementiert in C++ als Qt-Plugin. Generiert beim Button-Klick einen TwistStamped-Befehl auf `/servo_server/delta_twist_cmds`. *Aktivierung in RViz:* `Panels -> Add New Panel -> rviz_control_robot_panel -> ControlPanel`.
+    * **Zweck:** 2D HUD Panel innerhalb von RViz für manuelles 6-DoF Jogging des Roboters.
+    * **Aufgabe:** Bietet ein grafisches Steuerkreuz (D-Pad) für Translationen (X, Y, Z), dedizierte Buttons für Rotationen (Roll, Pitch, Yaw) sowie Schnellzugriffe für die Initial-Pose und das Umschalten des Planungsrahmens (Base/TCP).
+    * **Funktionsweise:** Implementiert in C++ als Qt-Plugin. Generiert beim Button-Klick einen `TwistStamped`-Befehl auf `/servo_server/delta_twist_cmds`, welcher sich dynamisch an den aktuell gewählten Referenz-Frame anpasst (`/ui/robot_control/current_frame`). *Aktivierung in RViz:* `Panels -> Add New Panel -> rviz_control_robot_panel -> ControlPanel`.
 * **`rosbridge_server`**
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
