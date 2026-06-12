@@ -172,7 +172,7 @@
           "type": "node"
         }
       ],
-      "col": 1,
+      "col": 2,
       "icon": "fa-solid fa-camera",
       "style": "break-before: column;",
       "title": "Cameras, Sensors"
@@ -210,7 +210,7 @@
           "type": "node"
         }
       ],
-      "col": 1,
+      "col": 2,
       "icon": "fa-solid fa-gamepad",
       "style": "break-before: column;",
       "title": "Controllers (Input -> Moveit Servo)"
