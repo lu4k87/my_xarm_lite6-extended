@@ -140,6 +140,11 @@
           "type": "node"
         },
         {
+          "cmd": "ros2 run rviz_pose_control set_initial_pose",
+          "label": "Set Initial Pose (One-Shot)",
+          "type": "node"
+        },
+        {
           "cmd": "ros2 run xarm_moveit_servo scan_trajectory_node",
           "label": "Scan Trajectory Node",
           "type": "node"
