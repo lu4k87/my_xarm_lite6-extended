@@ -31,7 +31,7 @@ move_group_name:  xarm7   # Beibehalten laut Backup
 planning_frame: link_base  # Beibehalten laut Backup
 
 ## Other frames
-ee_frame_name: link_eef  
+ee_frame_name: link_tcp  
 robot_link_command_frame:  link_base  
 
 ## Stopping behaviour

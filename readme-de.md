@@ -257,11 +257,11 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 * **`rviz_marker`**
     * **Zweck:** Visuelles Echtzeit-Feedback in RViz2.
     * **Aufgabe:** Optische Aufwertung des 3D-Arbeitsbereichs.
-    * **Funktionsweise:** Trackt `link_eef` via TF2. Publiziert `MarkerArray` mit interaktiven Pick-and-Place Zielen (Würfel, Zylinder) und statischen Grenzen (Tischkanten) für die Simulation ohne Live-YOLO Daten.
+    * **Funktionsweise:** Trackt `link_tcp` via TF2. Publiziert `MarkerArray` mit interaktiven Pick-and-Place Zielen (Würfel, Zylinder) und statischen Grenzen (Tischkanten) für die Simulation ohne Live-YOLO Daten.
 * **`rviz_robot_control_panel`**
     * **Zweck:** 2D HUD Panel innerhalb von RViz für manuelles 6-DoF Jogging des Roboters.
     * **Aufgabe:** Bietet ein grafisches Steuerkreuz (D-Pad) für Translationen (X, Y, Z), dedizierte Buttons für Rotationen (Roll, Pitch, Yaw) sowie Schnellzugriffe für die Initial-Pose und das Umschalten des Planungsrahmens (Base/TCP).
-    * **Funktionsweise:** Implementiert in C++ als Qt-Plugin. Generiert beim Button-Klick einen `TwistStamped`-Befehl auf `/servo_server/delta_twist_cmds`, welcher sich dynamisch an den aktuell gewählten Referenz-Frame anpasst (`/ui/robot_control/current_frame`). *Aktivierung in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
+    * **Funktionsweise:** Implementiert in C++ als Qt-Plugin. Die Bewegungs-Buttons generieren `TwistStamped`-Befehle auf `/servo_server/delta_twist_cmds`, um den Roboter dynamisch zu verfahren. Der "Move to Initial Position"-Button ruft asynchron den ROS 2 Service `/ui/execute_initial_pose` auf (bereitgestellt vom Node `universal_initial_pose_node`). Dieser Service pausiert MoveIt Servo (`/servo_server/stop_servo`), publiziert eine sichere `JointTrajectory` direkt auf das Topic `/lite6_traj_controller/joint_trajectory` und setzt Servo anschließend wieder fort (`/servo_server/start_servo`). *Hinweis:* Da dieser Ablauf ausschließlich standardisierte MoveIt-Services anstelle proprietärer Hardware-APIs nutzt, ist er komplett hardware-unabhängig und funktioniert sicher sowohl auf dem echten Roboter als auch in der Simulation (FAKE). *Aktivierung in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
 * **`rviz_overlay`**
     * **Zweck:** 2D Head-Up-Display (HUD) innerhalb der RViz 3D-Ansicht.
     * **Aufgabe:** Projiziert die Echtzeit-Koordinaten (X/Y/Z) übersichtlich in den jeweiligen Achsenfarben in das Sichtfeld.
@@ -382,11 +382,11 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 | **D-Pad ↑** | Geschwindigkeit hoch | Pub → `/ui/robot_control/current_speed` | 5 Stufen durchschalten |
 | **D-Pad ↓** | Geschwindigkeit runter | Pub → `/ui/robot_control/current_speed` | 5 Stufen durchschalten |
 | **Back (⊞)** | Rahmen → `link_base` | Pub → `/ui/joy_button_presses` | Weltkoordinaten-Modus |
-| **Start (≡)** | Rahmen → `link_eef` | Pub → `/ui/joy_button_presses` | EEF-relativer Modus |
+| **Start (≡)** | Rahmen → `link_tcp` | Pub → `/ui/joy_button_presses` | EEF-relativer Modus |
 | **A (grün)** | Greifer toggle | Service: `open/close_lite6_gripper` | Zustand in `vacuum_gripper_state_` |
 | **B (rot)** | Greifer stopp | Service: `/ufactory/stop_lite6_gripper` | Not-Aus |
 | **X (blau)** | Whisper AI toggle | Action: `/whisper/inference` (max 5 Sek.) | Toggle start/stopp |
-| **Y (gelb)** | Initialposition | Service: `/execute_motion_sequence_Y` | `motion_sequence` Node |
+| **Y (gelb)** | Initialposition | Service: `/ui/execute_initial_pose` | `universal_initial_pose_node` |
 
 **Geschwindigkeitsstufen (D-Pad):**
 
@@ -436,7 +436,7 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 | **Publisher** | `/servo_server/delta_twist_cmds` | `geometry_msgs/TwistStamped` | Kartesischer Geschwindigkeitsbefehl |
 | **Publisher** | `/servo_server/delta_joint_cmds` | `control_msgs/JointJog` | Gelenkraum-Befehl (Initialisierung) |
 | **Publisher** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | Geschwindigkeitsfaktor (Latched QoS) |
-| **Publisher** | `/ui/robot_control/current_frame` | `std_msgs/String` | Aktiver Referenzrahmen (`link_base` oder `link_eef`) |
+| **Publisher** | `/ui/robot_control/current_frame` | `std_msgs/String` | Aktiver Referenzrahmen (`link_base` oder `link_tcp`) |
 | **Publisher** | `/ui/joy_button_presses` | `std_msgs/String` | Button-Feedback für Dashboard |
 | **Service Client** | `/servo_server/start_servo` | `std_srvs/Trigger` | Aktiviert MoveIt Servo |
 | **Service Client** | `/ufactory/open_lite6_gripper` | `xarm_msgs/Call` | Öffnet Greifer |

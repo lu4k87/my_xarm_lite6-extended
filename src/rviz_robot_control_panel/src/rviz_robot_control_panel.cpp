@@ -25,6 +25,7 @@ void ControlPanel::onInitialize()
   // Using the same topic as the gaze control
   twist_pub_ = node_->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_server/delta_twist_cmds", 10);
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
+  initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
 }
 
 void ControlPanel::setupUI()
@@ -58,7 +59,7 @@ void ControlPanel::setupUI()
   btn_y_minus_ = new QPushButton("Right\n(Y-)");
   btn_z_plus_ = new QPushButton("Up\n(Z+)");
   btn_z_minus_ = new QPushButton("Down\n(Z-)");
-  btn_initial_pose_ = new QPushButton("Initial Position (FAKE)");
+  btn_initial_pose_ = new QPushButton("Move to Initial Position");
   
   grid_layout->addWidget(btn_z_plus_, 0, 0);
   grid_layout->addWidget(btn_x_plus_, 0, 1);
@@ -173,15 +174,18 @@ void ControlPanel::onButtonPressYPlus() { updateTwist(0.0, 0.1, 0.0, 0.0, 0.0, 0
 void ControlPanel::onButtonPressYMinus() { updateTwist(0.0, -0.1, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
 void ControlPanel::onButtonPressZPlus() { updateTwist(0.0, 0.0, 0.1, 0.0, 0.0, 0.0); publish_timer_->start(50); }
 void ControlPanel::onButtonPressZMinus() { updateTwist(0.0, 0.0, -0.1, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotXPlus() { updateTwist(0.0, 0.0, 0.0, 0.1, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotXMinus() { updateTwist(0.0, 0.0, 0.0, -0.1, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotYPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.1, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotYMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, -0.1, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotZPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.1); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotZMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.1); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXPlus() { updateTwist(0.0, 0.0, 0.0, 0.2, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXMinus() { updateTwist(0.0, 0.0, 0.0, -0.2, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.2, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, -0.2, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotZPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.2); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotZMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.2); publish_timer_->start(50); }
 
 void ControlPanel::onButtonInitialPose() {
-  std::system("nohup ros2 run fake_initial_pose set_fake_pose > /dev/null 2>&1 &");
+  if (initial_pose_client_) {
+    auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+    initial_pose_client_->async_send_request(request);
+  }
 }
 
 void ControlPanel::onButtonFrameBase() {

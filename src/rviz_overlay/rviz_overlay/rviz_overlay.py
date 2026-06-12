@@ -55,9 +55,9 @@ class RvizOverlayNode(Node):
             msg.horizontal_distance = 10  # 10px Abstand vom rechten Rand
             msg.vertical_distance = 10    # 10px Abstand vom oberen Rand
             
-            # Banner-Größe: Schmaler und dünner, passend zur Schrift
-            msg.width = 450
-            msg.height = 45
+            # Banner-Größe: Etwas breiter und höher, damit der Text nicht umbricht oder abgeschnitten wird
+            msg.width = 550
+            msg.height = 55
             
             # Hintergrund: Sehr stark transparent (nur 20% Deckkraft)
             msg.bg_color = ColorRGBA(r=0.0, g=0.0, b=0.0, a=0.2)

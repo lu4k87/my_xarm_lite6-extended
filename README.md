@@ -257,11 +257,11 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 * **`rviz_marker`**
     * **Purpose:** Real-time visual feedback in RViz2.
     * **Task:** Visual enhancement of the 3D simulation work area.
-    * **How it works:** Tracks `link_eef` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data.
+    * **How it works:** Tracks `link_tcp` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data.
 * **`rviz_robot_control_panel`**
     * **Purpose:** 2D HUD Panel inside RViz for manual 6-DoF robot jogging.
     * **Task:** Provides a graphical control pad (D-Pad) for translations (X, Y, Z), dedicated buttons for rotations (Roll, Pitch, Yaw), and quick-access buttons for the fake initial pose and planning frame switching (Base/TCP).
-    * **How it works:** Implemented in C++ as a Qt plugin. Generates a `TwistStamped` command on `/servo_server/delta_twist_cmds` upon button clicks, adapting dynamically to the selected reference frame (`/ui/robot_control/current_frame`). *Activation in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
+    * **How it works:** Implemented in C++ as a Qt plugin. The movement buttons generate `TwistStamped` commands on `/servo_server/delta_twist_cmds` to dynamically jog the robot. The "Move to Initial Position" button asynchronously calls the `/ui/execute_initial_pose` ROS 2 service (provided by the `universal_initial_pose_node`). This service pauses MoveIt Servo (`/servo_server/stop_servo`), publishes a safe `JointTrajectory` directly to the `/lite6_traj_controller/joint_trajectory` topic, and then resumes Servo (`/servo_server/start_servo`). *Note:* Because this workflow relies purely on standardized MoveIt services rather than proprietary hardware APIs, it is completely hardware-agnostic and safely operates on both the real robot and the simulated (FAKE) hardware. *Activation in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
 * **`rviz_overlay`**
     * **Purpose:** 2D Head-Up Display (HUD) inside the RViz 3D view.
     * **Task:** Projects real-time TCP coordinates (X/Y/Z) cleanly formatted in their respective axis colors directly into the user's field of view.
@@ -388,11 +388,11 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 | **D-Pad ↑** | Speed level UP | Publishes to `/ui/robot_control/current_speed` | Cycles through 5 speed levels |
 | **D-Pad ↓** | Speed level DOWN | Publishes to `/ui/robot_control/current_speed` | Cycles through 5 speed levels |
 | **Back (⊞)** | Reference frame → `link_base` | Publishes to `/ui/joy_button_presses` | World coordinate mode |
-| **Start (≡)** | Reference frame → `link_eef` | Publishes to `/ui/joy_button_presses` | End-effector relative mode |
+| **Start (≡)** | Reference frame → `link_tcp` | Publishes to `/ui/joy_button_presses` | End-effector relative mode |
 | **A (green)** | Gripper toggle (open ↔ close) | Service: `/ufactory/open_lite6_gripper` / `close_lite6_gripper` | State tracked in `vacuum_gripper_state_` |
 | **B (red)** | Gripper stop / off | Service: `/ufactory/stop_lite6_gripper` | Emergency gripper cut-off |
 | **X (blue)** | Whisper AI voice record | Action: `/whisper/inference` (max 5 sec) | Toggle: press once to start, again to stop |
-| **Y (yellow)** | Move to home position | Service: `/execute_motion_sequence_Y` | Calls the `motion_sequence` node |
+| **Y (yellow)** | Move to home position | Service: `/ui/execute_initial_pose` | Calls the `universal_initial_pose_node` |
 
 **Speed Levels (D-Pad):**
 
@@ -455,7 +455,7 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 | **Publisher** | `/servo_server/delta_twist_cmds` | `geometry_msgs/TwistStamped` | Cartesian velocity command to MoveIt Servo |
 | **Publisher** | `/servo_server/delta_joint_cmds` | `control_msgs/JointJog` | Joint-space command (initialization only) |
 | **Publisher** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | Current speed factor (latched QoS) |
-| **Publisher** | `/ui/robot_control/current_frame` | `std_msgs/String` | Active reference frame (`link_base` or `link_eef`) |
+| **Publisher** | `/ui/robot_control/current_frame` | `std_msgs/String` | Active reference frame (`link_base` or `link_tcp`) |
 | **Publisher** | `/ui/joy_button_presses` | `std_msgs/String` | Human-readable button feedback for dashboard |
 | **Service Client** | `/servo_server/start_servo` | `std_srvs/Trigger` | Activates MoveIt Servo on startup |
 | **Service Client** | `/ufactory/open_lite6_gripper` | `xarm_msgs/Call` | Opens the vacuum gripper |

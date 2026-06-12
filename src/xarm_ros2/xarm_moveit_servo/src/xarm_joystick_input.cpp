@@ -52,7 +52,7 @@ namespace xarm_moveit_servo
           cartesian_command_in_topic_("/servo_server/delta_twist_cmds"),
           joint_command_in_topic_("/servo_server/delta_joint_cmds"),
           robot_link_command_frame_("link_base"),
-          ee_frame_name_("link_eef"),
+          ee_frame_name_("link_tcp"),
           planning_frame_("link_base"),
           current_speed_index_(2),
           prev_cross_key_fb_state_(0.0f)
@@ -89,7 +89,7 @@ namespace xarm_moveit_servo
         _close_gripper_client_ = this->create_client<xarm_msgs::srv::Call>("/ufactory/close_lite6_gripper");
         _stop_gripper_client_ = this->create_client<xarm_msgs::srv::Call>("/ufactory/stop_lite6_gripper");
         _get_position_client_ = this->create_client<xarm_msgs::srv::GetFloat32List>("/ufactory/get_position");
-        execute_sequence_y_client_ = this->create_client<std_srvs::srv::Trigger>("/execute_motion_sequence_Y");
+        execute_sequence_y_client_ = this->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
         execute_sequence_y_client_->wait_for_service(std::chrono::seconds(1));
         execute_sequence_b_client_ = this->create_client<std_srvs::srv::Trigger>("/execute_motion_sequence_B");
         execute_sequence_b_client_->wait_for_service(std::chrono::seconds(1));
@@ -418,7 +418,7 @@ namespace xarm_moveit_servo
         }
 
         if (msg->buttons[xbox_BTN_Y] == 1 && prev_buttons_[xbox_BTN_Y] == 0) {
-            RCLCPP_INFO(this->get_logger(), "[Y]: call '/execute_motion_sequence_Y' service...");
+            RCLCPP_INFO(this->get_logger(), "[Y]: call '/ui/execute_initial_pose' service...");
             execute_sequence_y_client_->async_send_request(std::make_shared<std_srvs::srv::Trigger::Request>());
             auto btn_msg = std::make_unique<std_msgs::msg::String>();
             btn_msg->data = "Roboter bewegt sich zur Initialposition 🏠";

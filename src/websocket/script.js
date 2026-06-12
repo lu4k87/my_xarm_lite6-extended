@@ -101,8 +101,8 @@ window.onload = function () {
     var joyLogListener = new ROSLIB.Topic({ ros: ros, name: '/ui/joy_button_presses', messageType: 'std_msgs/String' });
     joyLogListener.subscribe((message) => {
         const msg = message.data;
-        if (msg.includes("link_eef")) {
-            frameDisplay.textContent = "TOOL (link_eef)";
+        if (msg.includes("link_tcp")) {
+            frameDisplay.textContent = "TOOL (link_tcp)";
             frameDisplay.className = "frame-val-text frame-eef";
         } else if (msg.includes("link_base")) {
             frameDisplay.textContent = "BASE (link_base)";

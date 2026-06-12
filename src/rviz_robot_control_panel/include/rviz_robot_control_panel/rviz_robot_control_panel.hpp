@@ -5,6 +5,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <QPushButton>
 #include <QTimer>
 #include <QGridLayout>
@@ -74,6 +75,8 @@ protected:
   QTimer* publish_timer_;
   geometry_msgs::msg::TwistStamped current_twist_;
   std::string active_frame_ = "link_base";
+  
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr initial_pose_client_;
   
   void setupUI();
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);

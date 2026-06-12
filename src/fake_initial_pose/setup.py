@@ -24,7 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'set_fake_pose = fake_initial_pose.set_initial_pose_node:main'
+            'set_fake_pose = fake_initial_pose.set_initial_pose_node:main',
+            'universal_initial_pose = fake_initial_pose.universal_initial_pose_node:main'
         ],
     },
 )

@@ -153,13 +153,13 @@
     {
       "actions": [
         {
-          "cmd": "ros2 run fake_initial_pose set_fake_pose",
-          "label": "Set Fake Initial Pose",
+          "cmd": "ros2 run fake_initial_pose universal_initial_pose",
+          "label": "Universal Initial Pose Node",
           "type": "node"
         },
         {
           "cmd": "ros2 run rviz_overlay rviz_overlay",
-          "label": "RViz2 TCP Overlay Node",
+          "label": "Rviz2 - Overlay: Planning Frame + TCP Coordinates",
           "type": "node"
         },
         {
