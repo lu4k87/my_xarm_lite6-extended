@@ -222,15 +222,23 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 * **`move_to_coordinator`**
     * **Purpose:** Central "brain" for task-based movements in **Shared Control**.
     * **Task:** Merges voice/gaze commands with camera data and coordinates movement commands.
-    * **How it works:** State machine based. Queues intents, sends the robot to a scan pose (`WAITING_FOR_ROBOT_IDLE`), blocks 2.0 sec. for image stabilization, checks the freshness of the `PoseArray`, and executes the Cartesian service call.
+    * **How it works:** Acts as the orchestrator for complex movement sequences. It receives voice commands (e.g., "move to red") and queues them with anti-spam logic. The exact workflow is:
+        1. **Move to Scan Pose:** Calls the `/execute_motion_sequence_scan_object_positions_pos` service (provided by the `motion_sequence` node) to drive the robot to a high overview position.
+        2. **Idle Wait:** Polls the `/get_motion_busy` service until the hardware finishes moving.
+        3. **Vision Update:** Pauses for 2.0 seconds to allow the camera image to stabilize and waits for a fresh object coordinate from the `PoseArray`.
+        4. **Final Approach:** Executes the `/execute_motion_to_pose` service call to navigate the robot exactly over the target object.
 
 ### 5.4 🦾 Motion & Safety
 
 * **`motion_sequence`** — `src/motion_sequence/motion_sequence/motion_sequence.py`
     * **Purpose:** State management and safe execution of Cartesian movements.
     * **Task:** Physical control and switching of hardware modes.
-    * **How it works:** Provides action services (e.g., `execute_motion_to_pose`). Switches between servo and pose mode at the hardware level. When end-effector height < 95 mm, the arm is preventively raised to Z=150 mm before movement (collision protection).
-    * **Safety Pre-Movement Lift:** Before any Cartesian goal execution, the node queries the current EEF pose. If Z < 95 mm, it autonomously drives to a safe clearance height (Z = 150 mm) first, preventing gripper-table collisions during homing sequences.
+    * **How it works:** Acts as the bridge between continuous MoveIt Servo control (Gamepad) and discrete target coordinates. It provides specific services like `/execute_motion_to_pose`. 
+    * **Detailed Service Call Execution Flow:**
+        1. **Hardware State Switch:** To prevent command conflicts, it interrupts the running MoveIt Servo mode and shifts the robot hardware into Mode 0 / State 4 (Pose Mode) via the proprietary UFactory API.
+        2. **Pre-Movement Lift (Safety):** It checks the current Z-height. If the gripper is below 95 mm, it preventively executes a vertical lift to Z=150 mm to avoid dragging across the table.
+        3. **Execution:** Sends the Cartesian target to the hardware and actively blocks/monitors the API until the robot signals completion.
+        4. **Servo Recovery:** Finally, it switches the hardware back into MoveIt Servo mode, allowing a seamless handover back to manual Gamepad control.
 
 * **`collision_check`** — `src/collision_check/collision_check/checker.py`
     * **Purpose:** Hardware protection (table surface collision prevention).

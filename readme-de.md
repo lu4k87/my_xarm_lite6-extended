@@ -222,15 +222,23 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 * **`move_to_coordinator`**
     * **Zweck:** Zentrales "Gehirn" für task-basierte Bewegungen im **Shared Control**.
     * **Aufgabe:** Führt Sprach-/Blickbefehle mit Kameradaten zusammen und koordiniert Fahrbefehle.
-    * **Funktionsweise:** State-Machine basiert. Queued Intents, sendet den Roboter auf eine Scan-Pose (`WAITING_FOR_ROBOT_IDLE`), blockiert 2,0 Sek. zur Bildstabilisierung, prüft die Aktualität des `PoseArray` und führt den kartesischen Service Call aus.
+    * **Funktionsweise:** Agiert als Orchestrator für komplexe Bewegungsabläufe. Erhält Sprachbefehle (z. B. "move to red") und puffert diese in einer Queue mit Anti-Spam-Logik. Der Workflow läuft wie folgt ab:
+        1. **Scan-Pose anfahren:** Ruft den Service `/execute_motion_sequence_scan_object_positions_pos` auf, um den Roboter in eine hohe Übersichtsposition zu fahren.
+        2. **Idle State prüfen:** Pollt den Service `/get_motion_busy`, bis der Roboter die Bewegung abgeschlossen hat.
+        3. **Vision Update:** Pausiert 2,0 Sekunden zur Stabilisierung des Kamerabildes und wartet auf eine taufrische `PoseArray`-Koordinate des Objekts.
+        4. **Ziel anfahren:** Führt den finalen Service-Call `/execute_motion_to_pose` aus, um den Roboter exakt über das Objekt zu navigieren.
 
 ### 5.4 🦾 Bewegung & Sicherheit
 
 * **`motion_sequence`** — `src/motion_sequence/motion_sequence/motion_sequence.py`
     * **Zweck:** Zustandsverwaltung und sichere Ausführung von kartesischen Bewegungen.
-    * **Aufgabe:** Physische Steuerung und Umschalten von Hardware-Modi.
-    * **Funktionsweise:** Stellt Action-Services (z.B. `execute_motion_to_pose`) bereit. Schaltet auf Hardware-Ebene zwischen Servo- und Pose-Mode um. Bei Endeffektor-Höhe < 95 mm wird der Arm vor der Fahrt präventiv auf Z=150 mm angehoben (Kollisionsschutz).
-    * **Sicherheits-Vorhub:** Vor jeder Ausführung einer kartesischen Zielvorgabe wird die aktuelle EEF-Pose abgefragt. Falls Z < 95 mm, fährt der Arm zunächst autonom auf eine sichere Freigabehöhe (Z = 150 mm) — verhindert Greifer-Tisch-Kollisionen bei Homing-Sequenzen.
+    * **Funktionsweise:** Fungiert als Brücke zwischen der MoveIt Servo-Steuerung (Gamepad) und festen Zielkoordinaten. Der Node stellt spezifische Services bereit (z. B. `/execute_motion_to_pose`).
+    * **Detaillierter Ablauf eines Service-Calls:**
+        1. **Hardware State Switch:** Um Konflikte zu vermeiden, wird der laufende MoveIt Servo-Modus unterbrochen und der Roboter über die UFactory API hart in den Modus 0 / State 4 (Pose Mode) geschaltet.
+        2. **Pre-Movement Lift (Sicherheit):** Vor der Fahrt wird die Z-Höhe geprüft. Ist der Greifer unterhalb von 95 mm, wird präventiv ein Befehl gesendet, um ihn auf Z=150 mm anzuheben, damit er nicht über den Tisch schleift.
+        3. **Ausführung:** Der kartesische Fahrbefehl wird an die Hardware gesendet. Der Node blockiert und überwacht die API, bis die Bewegung abgeschlossen ist.
+        4. **Servo Recovery:** Abschließend schaltet der Node die Hardware wieder in den MoveIt Servo-Modus zurück, sodass nahtlos wieder mit dem Gamepad weitergefahren werden kann.
+
 
 * **`collision_check`** — `src/collision_check/collision_check/checker.py`
     * **Zweck:** Hardwareschutz (Verhinderung von Tischkollisionen).
