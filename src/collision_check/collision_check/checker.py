@@ -4,7 +4,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Joy
-from xarm_msgs.srv import GetFloat32List
+import tf2_ros
 import pygame
 from std_msgs.msg import Float32, Float32MultiArray, String, Int8
 import sys
@@ -22,7 +22,6 @@ class Checker(Node):
         self.CAUTION_ZONE_START = 110.0 # Z-Position, ab der die Geschwindigkeit begrenzt wird (mm)
         self.CAUTION_ZONE_SPEED = 0.25 # Maximaler Geschwindigkeitsfaktor in der Caution Zone
         self.DOWN_TRIGGER_AXIS = 5 # Index des rechten Triggers (R2/RT)
-        self.Z_POSITION_INDEX = 2 # Index der Z-Position im GetFloat32List-Ergebnis
         
         # === TUNING-PARAMETER ===
         self.MAX_LINEAR_VELOCITY_MM_S = 75.0 # Maximale Lineargeschw. des Roboters (Basis für Berechnung)
@@ -31,7 +30,11 @@ class Checker(Node):
 
         # --- ROS2-Setup ---
         self.__sub = self.create_subscription(Joy, "/joy", self.pre_joy_callback, 10)
-        self.__client = self.create_client(GetFloat32List, "/ufactory/get_position")
+        
+        # TF2 Setup für hardware-unabhängige Positionserfassung
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        
         self.__pub = self.create_publisher(Joy, "/joy_check", 10)
         # FINAL: Publisher für EEF-Position auf /ui/eef_position
         self.eef_pos_pub = self.create_publisher(Float32MultiArray, "/ui/eef_position", 10) 
@@ -43,11 +46,6 @@ class Checker(Node):
         # Subscriber für MoveIt Servo Warnungen (3D Kollisionen)
         self.servo_status_sub = self.create_subscription(Int8, "/servo_server/status", self.servo_status_callback, 10)
         
-        while not self.__client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info("Warte auf Service /ufactory/get_position...")
-            pass
-        
-        self.request = GetFloat32List.Request()
         self.joy_cmd = Joy()
         self.current_z = 0.0
         self.current_speed_factor_from_joy = 0.5 # Startwert
@@ -78,24 +76,30 @@ class Checker(Node):
                 # Vibriere intensiv für 500ms
                 self.joystick.rumble(1.0, 1.0, 500)
 
-    def check_position(self, response):
-        """Callback, der nach Erhalt der aktuellen EEF-Position ausgeführt wird."""
-        result = response.result()
-        
-        if not result or result.ret != 0 or not result.datas or len(result.datas) < 6:
+    def check_position(self):
+        """Synchrone TF2-Abfrage und Kollisionsprüfung."""
+        try:
+            # Hole die Transformation von link_base zu link_tcp
+            trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+            # TF2 liefert Meter, wir rechnen in Millimeter um
+            x = trans.transform.translation.x * 1000.0
+            y = trans.transform.translation.y * 1000.0
+            z = trans.transform.translation.z * 1000.0
+        except Exception as e:
             if self.joy_cmd: 
                 self.__pub.publish(self.joy_cmd)
-            self.get_logger().warn("Fehler beim Abrufen der Roboterposition. Sende unveränderten Joy-Befehl.")
+            # Nicht spammen, wenn TF noch nicht da ist
+            # self.get_logger().warn(f"TF Fehler: {e}. Sende unveränderten Joy-Befehl.")
             return
         
         # FINAL: Veröffentlichung der EEF-Position (x, y, z)
         eef_data = Float32MultiArray()
-        eef_data.data = [result.datas[0], result.datas[1], result.datas[2]] 
+        eef_data.data = [x, y, z] 
         self.eef_pos_pub.publish(eef_data)
         
         # --- Kollisionsprüfung ---
         
-        self.current_z = result.datas[self.Z_POSITION_INDEX]
+        self.current_z = z
         
         # Geschwindigkeitsbegrenzung in der Nähe des Bodens
         effective_speed_factor = self.current_speed_factor_from_joy
@@ -161,8 +165,7 @@ class Checker(Node):
     def pre_joy_callback(self, msg):
         """Erster Callback, wenn ein neuer Joystick-Befehl (von /joy) eintrifft."""
         self.joy_cmd = msg
-        future = self.__client.call_async(self.request)
-        future.add_done_callback(self.check_position)
+        self.check_position()
 
 def main(args=None) -> None:
     rclpy.init(args=args)
