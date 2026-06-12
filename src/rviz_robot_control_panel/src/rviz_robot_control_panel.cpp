@@ -17,12 +17,6 @@ ControlPanel::ControlPanel(QWidget* parent)
 
 ControlPanel::~ControlPanel()
 {
-  if (moveit_executor_) {
-    moveit_executor_->cancel();
-  }
-  if (moveit_spinner_thread_.joinable()) {
-    moveit_spinner_thread_.join();
-  }
 }
 
 void ControlPanel::onInitialize()
@@ -33,23 +27,18 @@ void ControlPanel::onInitialize()
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
   initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
   scan_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_scan_trajectory");
-  
-  moveit_node_ = std::make_shared<rclcpp::Node>("rviz_moveit_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
-  moveit_executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  moveit_executor_->add_node(moveit_node_);
-  moveit_spinner_thread_ = std::thread([this]() { moveit_executor_->spin(); });
 }
 
 void ControlPanel::setupUI()
 {
   // Global Dark Theme
   this->setStyleSheet(
-    "QWidget { background-color: #2c3e50; color: #ecf0f1; font-size: 13px; font-weight: bold; }"
-    "QPushButton { background-color: #34495e; border-radius: 6px; padding: 8px; border: 1px solid #1abc9c; }"
-    "QPushButton:hover { background-color: #1abc9c; color: #fff; }"
-    "QPushButton:pressed { background-color: #16a085; }"
-    "QDoubleSpinBox { background-color: #34495e; color: #ecf0f1; border: 1px solid #7f8c8d; border-radius: 4px; padding: 2px; }"
-    "QLabel { color: #ecf0f1; }"
+    "rviz_robot_control_panel--ControlPanel { background-color: #2c3e50; }"
+    "QPushButton { background-color: #7f8c8d; color: white; border-radius: 6px; padding: 8px; border: 1px solid #95a5a6; font-weight: bold; }"
+    "QPushButton:hover { background-color: #95a5a6; }"
+    "QPushButton:pressed { background-color: #636e72; }"
+    "QDoubleSpinBox { background-color: #95a5a6; color: #2c3e50; border: 1px solid #7f8c8d; border-radius: 4px; padding: 4px; font-weight: bold; }"
+    "QLabel { color: #ecf0f1; font-weight: bold; }"
   );
 
   QVBoxLayout* main_layout = new QVBoxLayout(this);
@@ -117,11 +106,11 @@ void ControlPanel::setupUI()
   QLabel* lbl_z = new QLabel("Z:");
   spin_z_ = new QDoubleSpinBox(); spin_z_->setRange(-2000.0, 2000.0); spin_z_->setValue(200.0);
   
-  QLabel* lbl_roll = new QLabel("R:");
+  QLabel* lbl_roll = new QLabel("Roll:");
   spin_roll_ = new QDoubleSpinBox(); spin_roll_->setRange(-3.15, 3.15); spin_roll_->setSingleStep(0.1); spin_roll_->setValue(3.14159);
-  QLabel* lbl_pitch = new QLabel("P:");
+  QLabel* lbl_pitch = new QLabel("Pitch:");
   spin_pitch_ = new QDoubleSpinBox(); spin_pitch_->setRange(-3.15, 3.15); spin_pitch_->setSingleStep(0.1); spin_pitch_->setValue(0.0);
-  QLabel* lbl_yaw = new QLabel("Yw:");
+  QLabel* lbl_yaw = new QLabel("Yaw:");
   spin_yaw_ = new QDoubleSpinBox(); spin_yaw_->setRange(-3.15, 3.15); spin_yaw_->setSingleStep(0.1); spin_yaw_->setValue(0.0);
   
   btn_move_to_ = new QPushButton("Move To Absolute Pose");
@@ -325,7 +314,16 @@ void ControlPanel::onButtonMoveTo()
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
       }
       
-      moveit::planning_interface::MoveGroupInterface move_group(moveit_node_, "lite6");
+      rclcpp::NodeOptions options;
+      options.automatically_declare_parameters_from_overrides(true);
+      auto moveit_node = rclcpp::Node::make_shared("rviz_moveit_node", options);
+      
+      // We must explicitly set the robot_description parameter for MoveGroupInterface to work!
+      // RViz stores it, so we can try to copy it, or just let MoveIt fetch it from the parameter server.
+      // MoveIt 2 MoveGroupInterface Options allows fetching from a specific node
+      moveit::planning_interface::MoveGroupInterface::Options mgi_options("lite6", "robot_description");
+      
+      moveit::planning_interface::MoveGroupInterface move_group(node_, mgi_options);
       move_group.setMaxVelocityScalingFactor(0.5);
       move_group.setMaxAccelerationScalingFactor(0.5);
       
