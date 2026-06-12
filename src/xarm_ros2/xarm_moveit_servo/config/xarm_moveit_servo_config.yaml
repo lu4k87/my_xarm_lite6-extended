@@ -39,8 +39,8 @@ incoming_command_timeout:  0.2
 num_outgoing_halt_msgs_to_publish: 4
 
 ## Configure handling of singularities and joint limits
-lower_singularity_threshold:  17.0  
-hard_stop_singularity_threshold: 30.0 
+lower_singularity_threshold:  30.0  
+hard_stop_singularity_threshold: 45.0 
 joint_limit_margin: 0.1 
 
 ## Topic names
