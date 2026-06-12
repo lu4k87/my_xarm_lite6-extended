@@ -30,27 +30,38 @@ void ControlPanel::onInitialize()
 void ControlPanel::setupUI()
 {
   QVBoxLayout* main_layout = new QVBoxLayout(this);
+  
+  QGridLayout* top_grid_layout = new QGridLayout();
   QGridLayout* grid_layout = new QGridLayout();
 
-  // Create Buttons
+  // Create Rotation Buttons (Top)
+  btn_rot_x_plus_ = new QPushButton("Roll +\n(Rot X)");
+  btn_rot_x_minus_ = new QPushButton("Roll -\n(Rot X)");
+  btn_rot_y_plus_ = new QPushButton("Pitch +\n(Rot Y)");
+  btn_rot_y_minus_ = new QPushButton("Pitch -\n(Rot Y)");
+  btn_rot_z_plus_ = new QPushButton("Yaw +\n(Rot Z)");
+  btn_rot_z_minus_ = new QPushButton("Yaw -\n(Rot Z)");
+
+  top_grid_layout->addWidget(btn_rot_x_plus_, 0, 0);
+  top_grid_layout->addWidget(btn_rot_x_minus_, 1, 0);
+  top_grid_layout->addWidget(btn_rot_y_plus_, 0, 1);
+  top_grid_layout->addWidget(btn_rot_y_minus_, 1, 1);
+  top_grid_layout->addWidget(btn_rot_z_plus_, 0, 2);
+  top_grid_layout->addWidget(btn_rot_z_minus_, 1, 2);
+
+  main_layout->addLayout(top_grid_layout);
+
+  // Create Translation Buttons (D-Pad)
   btn_x_plus_ = new QPushButton("Forward\n(X+)");
   btn_x_minus_ = new QPushButton("Backward\n(X-)");
   btn_y_plus_ = new QPushButton("Left\n(Y+)");
   btn_y_minus_ = new QPushButton("Right\n(Y-)");
   btn_z_plus_ = new QPushButton("Up\n(Z+)");
   btn_z_minus_ = new QPushButton("Down\n(Z-)");
-  btn_rot_z_plus_ = new QPushButton("Rot Left\n(Z+)");
-  btn_rot_z_minus_ = new QPushButton("Rot Right\n(Z-)");
   btn_initial_pose_ = new QPushButton("Initial Position (FAKE)");
-
-  // Layout Option 1 (D-Pad):
-  // [ Up ]   [ Fwd ] [ Rot L ]
-  // [ Left ] [     ] [ Right ]
-  // [ Down ] [ Bck ] [ Rot R ]
   
   grid_layout->addWidget(btn_z_plus_, 0, 0);
   grid_layout->addWidget(btn_x_plus_, 0, 1);
-  grid_layout->addWidget(btn_rot_z_plus_, 0, 2);
 
   grid_layout->addWidget(btn_y_plus_, 1, 0);
   grid_layout->addWidget(btn_initial_pose_, 1, 1);
@@ -58,7 +69,6 @@ void ControlPanel::setupUI()
 
   grid_layout->addWidget(btn_z_minus_, 2, 0);
   grid_layout->addWidget(btn_x_minus_, 2, 1);
-  grid_layout->addWidget(btn_rot_z_minus_, 2, 2);
 
   main_layout->addLayout(grid_layout);
 
@@ -88,9 +98,6 @@ void ControlPanel::setupUI()
   // Z-Achse (Hoch/Runter) = Blau
   QString styleZ = makeStyle("#2980b9", "#3498db");
   
-  // Rotation (Z-Achse) = Orange (zur Unterscheidung von Translation Z)
-  QString styleRot = makeStyle("#d35400", "#e67e22");
-
   btn_x_plus_->setStyleSheet(styleY);
   btn_x_minus_->setStyleSheet(styleY);
   
@@ -100,6 +107,13 @@ void ControlPanel::setupUI()
   btn_z_plus_->setStyleSheet(styleZ);
   btn_z_minus_->setStyleSheet(styleZ);
   
+  // Rotation = Purple
+  QString styleRot = makeStyle("#8e44ad", "#9b59b6");
+  
+  btn_rot_x_plus_->setStyleSheet(styleRot);
+  btn_rot_x_minus_->setStyleSheet(styleRot);
+  btn_rot_y_plus_->setStyleSheet(styleRot);
+  btn_rot_y_minus_->setStyleSheet(styleRot);
   btn_rot_z_plus_->setStyleSheet(styleRot);
   btn_rot_z_minus_->setStyleSheet(styleRot);
   
@@ -115,6 +129,11 @@ void ControlPanel::setupUI()
   connect(btn_y_minus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressYMinus);
   connect(btn_z_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressZPlus);
   connect(btn_z_minus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressZMinus);
+  
+  connect(btn_rot_x_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressRotXPlus);
+  connect(btn_rot_x_minus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressRotXMinus);
+  connect(btn_rot_y_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressRotYPlus);
+  connect(btn_rot_y_minus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressRotYMinus);
   connect(btn_rot_z_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressRotZPlus);
   connect(btn_rot_z_minus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressRotZMinus);
 
@@ -129,6 +148,11 @@ void ControlPanel::setupUI()
   connect(btn_y_minus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
   connect(btn_z_plus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
   connect(btn_z_minus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
+  
+  connect(btn_rot_x_plus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
+  connect(btn_rot_x_minus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
+  connect(btn_rot_y_plus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
+  connect(btn_rot_y_minus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
   connect(btn_rot_z_plus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
   connect(btn_rot_z_minus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
 }
@@ -149,6 +173,10 @@ void ControlPanel::onButtonPressYPlus() { updateTwist(0.0, 0.1, 0.0, 0.0, 0.0, 0
 void ControlPanel::onButtonPressYMinus() { updateTwist(0.0, -0.1, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
 void ControlPanel::onButtonPressZPlus() { updateTwist(0.0, 0.0, 0.1, 0.0, 0.0, 0.0); publish_timer_->start(50); }
 void ControlPanel::onButtonPressZMinus() { updateTwist(0.0, 0.0, -0.1, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXPlus() { updateTwist(0.0, 0.0, 0.0, 0.1, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXMinus() { updateTwist(0.0, 0.0, 0.0, -0.1, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.1, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, -0.1, 0.0); publish_timer_->start(50); }
 void ControlPanel::onButtonPressRotZPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.1); publish_timer_->start(50); }
 void ControlPanel::onButtonPressRotZMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.1); publish_timer_->start(50); }
 

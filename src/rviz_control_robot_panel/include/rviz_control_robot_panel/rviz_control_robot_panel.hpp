@@ -32,6 +32,10 @@ protected Q_SLOTS:
   void onButtonPressZMinus();
   void onButtonPressRotZPlus();
   void onButtonPressRotZMinus();
+  void onButtonPressRotXPlus();
+  void onButtonPressRotXMinus();
+  void onButtonPressRotYPlus();
+  void onButtonPressRotYMinus();
   
   void onButtonRelease();
   
@@ -57,6 +61,10 @@ protected:
   QPushButton* btn_z_minus_;
   QPushButton* btn_rot_z_plus_;
   QPushButton* btn_rot_z_minus_;
+  QPushButton* btn_rot_x_plus_;
+  QPushButton* btn_rot_x_minus_;
+  QPushButton* btn_rot_y_plus_;
+  QPushButton* btn_rot_y_minus_;
   
   QPushButton* btn_initial_pose_;
   QPushButton* btn_frame_base_;
