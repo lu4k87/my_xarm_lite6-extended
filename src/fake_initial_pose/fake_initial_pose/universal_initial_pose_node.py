@@ -93,11 +93,6 @@ class UniversalInitialPoseNode(Node):
             
         return response
 
-        finally:
-            self.is_executing = False
-            
-        return response
-
 def main(args=None):
     rclpy.init(args=args)
     node = UniversalInitialPoseNode()
