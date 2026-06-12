@@ -20,7 +20,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'set_initial_pose = rviz_pose_control.set_initial_pose_node:main',
             'universal_initial_pose = rviz_pose_control.universal_initial_pose_node:main'
         ],
     },

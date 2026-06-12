@@ -652,7 +652,6 @@ dev_ws/
 │   ├── collision_check/            # 🛡️ Python: Prädiktiver Kollisionsschutz
 │   │   └── collision_check/checker.py
 │   ├── rviz_pose_control/          # 🤖 Python: Setzt Fake-Arm Startpose
-│   │   └── rviz_pose_control/set_initial_pose_node.py
 │   ├── gaze_control/               # 👁️ Python: PyQt5 Gaze-Control-UI
 │   ├── motion_sequence/            # 🦾 Python: Kartesische Bewegungs-State-Machine
 │   │   └── motion_sequence/motion_sequence.py
