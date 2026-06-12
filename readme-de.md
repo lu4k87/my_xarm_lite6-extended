@@ -55,11 +55,11 @@ Ein wesentlicher Kern und Innovationscharakter des Projekts liegt in der wissens
 
 ## 2. 🔬 Architektur & Leitprinzipien
 
-### 2.1 Betriebsmodi: FAKE vs. REAL (Simulation vs. Hardware)
-Die Plattform unterstützt zwei fundamentale Betriebsmodi, die einen nahtlosen Übergang von der Software-Entwicklung zur Hardware-Ausführung ermöglichen:
+### 2.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)
+Die Plattform unterscheidet strikt zwischen zwei Betriebsmodi für den Roboterarm. Diese Unterscheidung bezieht sich **ausschließlich auf das `ros2_control` Hardware Interface** und ist unabhängig von der Sensorik (wie Kamera oder YOLO, welche in beiden Modi live laufen können):
 
-* **FAKE (Simulationsmodus):** Der Roboter existiert rein virtuell in RViz2 / MoveIt. Es ist keine physische Hardware (weder Roboter noch ZED-Kamera) angeschlossen. Dieser Modus ist essenziell für die gefahrlose Logik-Entwicklung, das Testen der UI und das Validieren von Trajektorien. Kamera- und Objektdaten (YOLO) werden in diesem Modus durch künstliche Marker (`rviz_marker`) simuliert.
-* **REAL (Hardwaremodus):** Das System ist live mit dem physischen xArm Lite 6 und der Stereolab ZEDm Kamera verbunden. Die vollständige Hardware-Pipeline inklusive echter Sensorik, Live-Bildverarbeitung (YOLOv8) und physischen Sicherheits-Stopps ist aktiv.
+* **FAKE (Simulation Mode):** Der Roboter läuft über das `mock_components/GenericSystem` (bzw. FakeSystem) Hardware Interface innerhalb von `ros2_control`. Es gibt keine physische Controller-Verbindung. Befehle an den `/lite6_traj_controller` oder `/servo_server` werden rein virtuell in RViz2 gerendert, indem die Joint States gespiegelt werden. Proprietäre UFactory API-Calls (wie Mode/State-Switches) laufen in diesem Modus absichtlich ins Leere oder werden softwareseitig ge-bypassed.
+* **REAL (Hardware Mode):** Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein, welches via TCP/IP direkt mit dem physischen Controller des xArm Lite 6 kommuniziert. In diesem Modus greifen Hardware-Limits, physische Sicherheits-Stopps und die exklusive Umschaltung der proprietären xArm Hardware-Modi (z. B. Mode 0 für Pose-Steuerung vs. Mode 1 für Servo/Jogging) über die UFactory API.
 
 ### 2.2 Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform
 Das Kernziel des Projekts ist die Realisierung einer modularen, plattformbasierten Softwarearchitektur für die multimodale Teleoperation und KI-gestützte Assistenzrobotik. Das System fungiert als zentraler, softwareseitiger Integrationsknoten (Middleware-Ebene), der heterogene Teilsysteme in einer einheitlichen Laufzeitumgebung zusammenführt. Durch ein verteiltes Server-Client-Netzwerk (Multi-PC-Setup) und die softwareseitige Kopplung an einen echtzeitfähigen Digitalen Zwilling (NVIDIA Isaac Sim) dient die Plattform sowohl als flexible Entwicklungsumgebung als auch als standardisierte und replizierbare Testumgebung. Das Projekt ist explizit als geschlossener Kreislauf aus Entwicklung und empirischer Validierung konzipiert:
@@ -240,7 +240,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Zweck:** Zustandsverwaltung und sichere Ausführung von kartesischen Bewegungen.
     * **Funktionsweise:** Fungiert als Brücke zwischen der MoveIt Servo-Steuerung (Gamepad) und festen Zielkoordinaten. Der Node stellt spezifische Services bereit (z. B. `/execute_motion_to_pose`).
     * **Detaillierter Ablauf eines Service-Calls:**
-        1. **Hardware State Switch:** Um Konflikte zu vermeiden, wird der laufende MoveIt Servo-Modus unterbrochen und der Roboter über die UFactory API hart in den Modus 0 / State 4 (Pose Mode) geschaltet.
+        1. **Hardware State Switch (REAL vs. FAKE):** Im **REAL-Modus** nutzt der Node proprietäre xArm-Services (z.B. `/ufactory/set_mode`, `/ufactory/set_state`), um den physischen Controller hart zu unterbrechen und zwischen MoveIt Servo (Streaming) und dem UFactory Pose Mode (Diskrete Zielkoordinaten) umzuschalten. Im **FAKE-Modus** fehlen diese physischen Controller-Zustände; der Node erkennt dies und umgeht die API-Calls. Trajektorien werden dann direkt an den `/lite6_traj_controller` des Fake-Interfaces gesendet, wodurch die Logikarchitektur 1:1 identisch zur Realität bleibt, ohne dass proprietäre API-Abstürze in der Simulation provoziert werden.
         2. **Pre-Movement Lift (Sicherheit):** Vor der Fahrt wird die Z-Höhe geprüft. Ist der Greifer unterhalb von 95 mm, wird präventiv ein Befehl gesendet, um ihn auf Z=150 mm anzuheben, damit er nicht über den Tisch schleift.
         3. **Ausführung:** Der kartesische Fahrbefehl wird an die Hardware gesendet. Der Node blockiert und überwacht die API, bis die Bewegung abgeschlossen ist.
         4. **Servo Recovery:** Abschließend schaltet der Node die Hardware wieder in den MoveIt Servo-Modus zurück, sodass nahtlos wieder mit dem Gamepad weitergefahren werden kann.
@@ -268,10 +268,10 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 
 ### 5.5 🖥️ Monitoring (Dashboard), UI & Visualisierung
 
-* **`rviz_marker`** *(nur FAKE-Modus)*
+* **`rviz_marker`**
     * **Zweck:** Visuelles Echtzeit-Feedback in RViz2.
     * **Aufgabe:** Optische Aufwertung des 3D-Arbeitsbereichs.
-    * **Funktionsweise:** Trackt `link_tcp` via TF2. Publiziert `MarkerArray` mit interaktiven Pick-and-Place Zielen (Würfel, Zylinder) und statischen Grenzen (Tischkanten) für die Simulation ohne Live-YOLO Daten. Dient als primärer Ersatz für die Kamera im reinen Simulationsbetrieb.
+    * **Funktionsweise:** Publiziert ROS `MarkerArray` und `InteractiveMarker` Nachrichten in die 3D-Szene von RViz2. Dient der visuellen Repräsentation von statischen Grenzen (wie Tischkanten) sowie interaktiven Zielobjekten zur Validierung von Planungs- und Kollisionsszenarien direkt in der Simulationsumgebung, unabhängig von realer Sensordatenverarbeitung.
 * **`rviz_robot_control_panel`**
     * **Zweck:** 2D Control Panel innerhalb von RViz für manuelles 6-DoF Jogging des Roboters.
     * **Aufgabe:** Bietet ein grafisches Steuerkreuz (D-Pad) für Translationen (X, Y, Z), dedizierte Buttons für Rotationen (Roll, Pitch, Yaw) sowie Schnellzugriffe für die Initial-Pose und das Umschalten des Planungsrahmens (Base/TCP).
@@ -284,7 +284,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
     * **Funktionsweise:** Standard-Paket für WebSockets (Port 9090). Erlaubt Webanwendungen, via `roslib.js` direkt mit dem ROS-Netzwerk zu interagieren.
-* **`zed_wrapper`** *(nur REAL-Modus)*
+* **`zed_wrapper`** *(Physische Kamera)*
     * **Zweck:** Hardware-Treiber für Stereolabs ZEDm.
     * **Aufgabe:** Direktes Streaming an RViz2 und Logik-Nodes ohne Drittsoftware.
     * **Funktionsweise:** Nativer C++ Node, der den generischen USB-Cam Node ersetzt. Publiziert `Image` und `CameraInfo` unter `/zed/zed_node/...`. Ist nur aktiv, wenn die physische Kamera angeschlossen ist.

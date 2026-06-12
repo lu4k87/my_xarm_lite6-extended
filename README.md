@@ -53,11 +53,11 @@ A key core and innovative character of the project lies in the scientific analys
 
 ## 2. 🔬 Architecture & Guiding Principles
 
-### 2.1 Operating Modes: FAKE vs. REAL (Simulation vs. Hardware)
-The platform supports two fundamental operating modes, enabling a seamless transition from software development to hardware execution:
+### 2.1 Operating Modes: FAKE vs. REAL (Hardware Interfaces)
+The platform strictly distinguishes between two operating modes for the robot arm. This distinction refers **exclusively to the `ros2_control` hardware interface** and is independent of sensors (like the camera or YOLO, which can run live in both modes):
 
-* **FAKE (Simulation Mode):** The robot exists purely virtually in RViz2 / MoveIt. No physical hardware (neither the robot nor the ZED camera) is connected. This mode is essential for risk-free logic development, UI testing, and trajectory validation. Camera and object data (YOLO) are simulated in this mode using artificial markers (`rviz_marker`).
-* **REAL (Hardware Mode):** The system is connected live to the physical xArm Lite 6 and the Stereolab ZEDm camera. The complete hardware pipeline, including real sensors, live image processing (YOLOv8), and physical safety stops, is active.
+* **FAKE (Simulation Mode):** The robot runs via the `mock_components/GenericSystem` (or FakeSystem) hardware interface within `ros2_control`. There is no physical controller connection. Commands to the `/lite6_traj_controller` or `/servo_server` are purely virtually rendered in RViz2 by mirroring the joint states. Proprietary UFactory API calls (like Mode/State switches) intentionally lead nowhere in this mode or are bypassed in software.
+* **REAL (Hardware Mode):** The `ros2_control` framework integrates the real `xarm_api` hardware interface, which communicates directly via TCP/IP with the physical controller of the xArm Lite 6. In this mode, hardware limits, physical safety stops, and the exclusive switching of proprietary xArm hardware modes (e.g., Mode 0 for pose control vs. Mode 1 for Servo/jogging) take effect via the UFactory API.
 
 ### 2.2 The System Concept: An Integrated Development, Evaluation, and Validation Platform
 The core objective of the project is the realization of a modular, platform-based software architecture for multimodal teleoperation and AI-supported assistive robotics. The system acts as a central, software-side integration node (middleware level) that unifies heterogeneous subsystems into a consistent runtime environment. Through a distributed server-client network (multi-PC setup) and the software-side coupling to a real-time capable Digital Twin (NVIDIA Isaac Sim), the platform serves as both a flexible development environment and a standardized, replicable test environment. The project is explicitly designed as a closed loop of development and empirical validation:
@@ -239,7 +239,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Task:** Physical control and switching of hardware modes.
     * **How it works:** Acts as the bridge between continuous MoveIt Servo control (Gamepad) and discrete target coordinates. It provides specific services like `/execute_motion_to_pose`. 
     * **Detailed Service Call Execution Flow:**
-        1. **Hardware State Switch:** To prevent command conflicts, it interrupts the running MoveIt Servo mode and shifts the robot hardware into Mode 0 / State 4 (Pose Mode) via the proprietary UFactory API.
+        1. **Hardware State Switch (REAL vs. FAKE):** In **REAL mode**, the node uses proprietary xArm services (e.g., `/ufactory/set_mode`, `/ufactory/set_state`) to hard-interrupt the physical controller and switch between MoveIt Servo (streaming) and the UFactory Pose Mode (discrete target coordinates). In **FAKE mode**, these physical controller states do not exist; the node detects this and bypasses the API calls. Trajectories are then sent directly to the `/lite6_traj_controller` of the Fake interface, keeping the logic architecture 1:1 identical to reality without provoking proprietary API crashes in the simulation.
         2. **Pre-Movement Lift (Safety):** It checks the current Z-height. If the gripper is below 95 mm, it preventively executes a vertical lift to Z=150 mm to avoid dragging across the table.
         3. **Execution:** Sends the Cartesian target to the hardware and actively blocks/monitors the API until the robot signals completion.
         4. **Servo Recovery:** Finally, it switches the hardware back into MoveIt Servo mode, allowing a seamless handover back to manual Gamepad control.
@@ -266,10 +266,10 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ### 5.5 🖥️ Monitoring (Dashboard), UI & Visualization
 
-* **`rviz_marker`** *(FAKE mode only)*
+* **`rviz_marker`**
     * **Purpose:** Real-time visual feedback in RViz2.
     * **Task:** Visual enhancement of the 3D simulation work area.
-    * **How it works:** Tracks `link_tcp` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data. Serves as the primary camera replacement during pure simulation operation.
+    * **How it works:** Publishes ROS `MarkerArray` and `InteractiveMarker` messages into the 3D scene of RViz2. Serves for the visual representation of static boundaries (like table edges) as well as interactive target objects to validate planning and collision scenarios directly within the simulation environment, independent of real sensor data processing.
 * **`rviz_robot_control_panel`**
     * **Purpose:** 2D Control Panel inside RViz for manual 6-DoF robot jogging.
     * **Task:** Provides a graphical control pad (D-Pad) for translations (X, Y, Z), dedicated buttons for rotations (Roll, Pitch, Yaw), and quick-access buttons for the fake initial pose and planning frame switching (Base/TCP).
@@ -282,7 +282,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Purpose:** WebSocket bridge for web browsers.
     * **Task:** Native communication between dashboard and robot.
     * **How it works:** Standard package for WebSockets (Port 9090). Allows web applications to interact directly with the ROS network via `roslib.js`.
-* **`zed_wrapper`** *(REAL mode only)*
+* **`zed_wrapper`** *(Physical Camera)*
     * **Purpose:** Hardware driver for Stereolabs ZEDm.
     * **Task:** Direct streaming to RViz2 and logic nodes without third-party software.
     * **How it works:** Native C++ node replacing the generic USB-Cam node. Publishes `Image` and `CameraInfo` under `/zed/zed_node/...`. Only active when the physical camera is connected.
