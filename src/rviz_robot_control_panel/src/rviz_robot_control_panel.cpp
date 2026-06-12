@@ -55,15 +55,14 @@ void ControlPanel::setupUI()
   main_layout->addLayout(top_grid_layout);
 
   // Create Translation Buttons (D-Pad)
-  btn_x_plus_ = new QPushButton("Forward\n(X+)");
-  btn_x_minus_ = new QPushButton("Backward\n(X-)");
-  btn_y_plus_ = new QPushButton("Left\n(Y+)");
-  btn_y_minus_ = new QPushButton("Right\n(Y-)");
-  btn_z_plus_ = new QPushButton("Up\n(Z+)");
-  btn_z_minus_ = new QPushButton("Down\n(Z-)");
-  btn_z_minus_ = new QPushButton("Down\n(Z-)");
-  btn_initial_pose_ = new QPushButton("Move to Initial Position");
-  btn_scan_ = new QPushButton("Vision Scan");
+  btn_x_plus_ = new QPushButton("↑ Forward\n(X+)");
+  btn_x_minus_ = new QPushButton("↓ Backward\n(X-)");
+  btn_y_plus_ = new QPushButton("← Left\n(Y+)");
+  btn_y_minus_ = new QPushButton("→ Right\n(Y-)");
+  btn_z_plus_ = new QPushButton("⇈ Up\n(Z+)");
+  btn_z_minus_ = new QPushButton("⇊ Down\n(Z-)");
+  btn_initial_pose_ = new QPushButton("Move to\nInitial Position");
+  btn_scan_ = new QPushButton("Vision\nScan");
   
   grid_layout->addWidget(btn_z_plus_, 0, 0);
   grid_layout->addWidget(btn_x_plus_, 0, 1);
@@ -73,8 +72,8 @@ void ControlPanel::setupUI()
   grid_layout->addWidget(btn_y_minus_, 1, 2);
 
   grid_layout->addWidget(btn_z_minus_, 2, 0);
-  grid_layout->addWidget(btn_scan_, 2, 1);
-  grid_layout->addWidget(btn_x_minus_, 2, 2);
+  grid_layout->addWidget(btn_x_minus_, 2, 1);
+  grid_layout->addWidget(btn_scan_, 2, 2);
 
   main_layout->addLayout(grid_layout);
 
