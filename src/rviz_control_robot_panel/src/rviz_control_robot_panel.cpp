@@ -78,8 +78,8 @@ void ControlPanel::setupUI()
   // Rotation (Z-Achse) = Orange (zur Unterscheidung von Translation Z)
   QString styleRot = makeStyle("#d35400", "#e67e22");
 
-  btn_x_plus_->setStyleSheet(styleX);
-  btn_x_minus_->setStyleSheet(styleX);
+  btn_x_plus_->setStyleSheet(styleY);
+  btn_x_minus_->setStyleSheet(styleY);
   
   btn_y_plus_->setStyleSheet(styleY);
   btn_y_minus_->setStyleSheet(styleY);
