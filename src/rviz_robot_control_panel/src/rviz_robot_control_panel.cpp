@@ -296,8 +296,8 @@ void ControlPanel::onButtonMoveTo()
   request->acc = 1000.0;
   request->mvtime = 0.0;
   
-  if (!move_cartesian_client_->wait_for_service(std::chrono::seconds(1))) {
-    RCLCPP_ERROR(node_->get_logger(), "Service /execute_motion_to_pose not available.");
+  if (!move_cartesian_client_->service_is_ready()) {
+    RCLCPP_ERROR(node_->get_logger(), "Service /execute_motion_to_pose not ready. Make sure motion_sequence.py is running!");
     return;
   }
   
