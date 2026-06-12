@@ -40,6 +40,12 @@ class UniversalInitialPoseNode(Node):
         
         self.servo_stop_client = self.create_client(Trigger, '/servo_server/stop_servo', callback_group=self.cb_group)
         self.servo_start_client = self.create_client(Trigger, '/servo_server/start_servo', callback_group=self.cb_group)
+        self.srv = self.create_service(
+            Trigger, 
+            '/ui/execute_initial_pose', 
+            self.execute_initial_pose_cb,
+            callback_group=self.cb_group
+        )
         self.get_logger().info('Universal Control Services (/ui/execute_initial_pose) ready.')
         self.is_executing = False
 
