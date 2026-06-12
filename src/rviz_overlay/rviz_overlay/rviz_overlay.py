@@ -57,7 +57,7 @@ class RvizOverlayNode(Node):
             
             # Banner-Größe: Schmaler und dünner, passend zur Schrift
             msg.width = 750
-            msg.height = 22
+            msg.height = 45
             
             # Hintergrund: Sehr stark transparent (nur 20% Deckkraft)
             msg.bg_color = ColorRGBA(r=0.0, g=0.0, b=0.0, a=0.2)
@@ -73,13 +73,16 @@ class RvizOverlayNode(Node):
             html_text = (
                 f'<div align="center">'
                 f'<nobr>'
-                f'<span style="color:#ffffff;">Frame: {self.active_frame} &nbsp;|&nbsp; </span>'
                 f'<span style="color:#aaaaaa;">[tcp_link] </span>'
                 f'<span style="color:#ff4444;">X: {x_mm:4d} mm</span>'
                 f' &nbsp;|&nbsp; '
                 f'<span style="color:#44ff44;">Y: {y_mm:4d} mm</span>'
                 f' &nbsp;|&nbsp; '
                 f'<span style="color:#44bbff;">Z: {z_mm:4d} mm</span>'
+                f'</nobr>'
+                f'<br>'
+                f'<nobr>'
+                f'<span style="color:#ffffff;">Frame: {self.active_frame}</span>'
                 f'</nobr>'
                 f'</div>'
             )
