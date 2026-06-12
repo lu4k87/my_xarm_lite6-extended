@@ -6,10 +6,31 @@ from rclpy.node import Node
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from builtin_interfaces.msg import Duration
 from std_srvs.srv import Trigger
+from xarm_msgs.srv import MoveCartesian
+from moveit_msgs.srv import GetPositionIK
+import math
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+
+def get_quaternion_from_euler(roll, pitch, yaw):
+    cy = math.cos(yaw * 0.5)
+    sy = math.sin(yaw * 0.5)
+    cp = math.cos(pitch * 0.5)
+    sp = math.sin(pitch * 0.5)
+    cr = math.cos(roll * 0.5)
+    sr = math.sin(roll * 0.5)
+    q = [0]*4
+    q[0] = sr * cp * cy - cr * sp * sy # w
+    q[1] = cr * sp * cy + sr * cp * sy # x
+    q[2] = cr * cp * sy - sr * sp * cy # y
+    q[3] = cr * cp * cy + sr * sp * sy # z
+    return q[1], q[2], q[3], q[0]
 
 class UniversalInitialPoseNode(Node):
     def __init__(self):
         super().__init__('universal_initial_pose_node')
+        
+        self.cb_group = ReentrantCallbackGroup()
         
         self.publisher_ = self.create_publisher(
             JointTrajectory, 
@@ -17,15 +38,24 @@ class UniversalInitialPoseNode(Node):
             10
         )
         
-        self.servo_stop_client = self.create_client(Trigger, '/servo_server/stop_servo')
-        self.servo_start_client = self.create_client(Trigger, '/servo_server/start_servo')
+        self.servo_stop_client = self.create_client(Trigger, '/servo_server/stop_servo', callback_group=self.cb_group)
+        self.servo_start_client = self.create_client(Trigger, '/servo_server/start_servo', callback_group=self.cb_group)
+        self.ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
         
         self.srv = self.create_service(
             Trigger, 
             '/ui/execute_initial_pose', 
-            self.execute_initial_pose_cb
+            self.execute_initial_pose_cb,
+            callback_group=self.cb_group
         )
-        self.get_logger().info('Universal Initial Pose Service /ui/execute_initial_pose ready.')
+        
+        self.move_srv = self.create_service(
+            MoveCartesian,
+            '/ui/execute_move_to_pose',
+            self.execute_move_to_pose_cb,
+            callback_group=self.cb_group
+        )
+        self.get_logger().info('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose) ready.')
         self.is_executing = False
 
     def execute_initial_pose_cb(self, request, response):
@@ -78,12 +108,90 @@ class UniversalInitialPoseNode(Node):
             
         return response
 
+    def execute_move_to_pose_cb(self, request, response):
+        if self.is_executing:
+            response.ret = -1
+            response.message = "Already executing."
+            return response
+            
+        self.is_executing = True
+        try:
+            x, y, z = request.pose[0]/1000.0, request.pose[1]/1000.0, request.pose[2]/1000.0
+            roll, pitch, yaw = request.pose[3], request.pose[4], request.pose[5]
+            
+            if not self.ik_client.wait_for_service(timeout_sec=2.0):
+                raise Exception("IK service not available")
+                
+            ik_req = GetPositionIK.Request()
+            ik_req.ik_request.group_name = 'lite6'
+            ik_req.ik_request.pose_stamped.header.frame_id = 'link_base'
+            ik_req.ik_request.pose_stamped.pose.position.x = x
+            ik_req.ik_request.pose_stamped.pose.position.y = y
+            ik_req.ik_request.pose_stamped.pose.position.z = z
+            qx, qy, qz, qw = get_quaternion_from_euler(roll, pitch, yaw)
+            ik_req.ik_request.pose_stamped.pose.orientation.x = qx
+            ik_req.ik_request.pose_stamped.pose.orientation.y = qy
+            ik_req.ik_request.pose_stamped.pose.orientation.z = qz
+            ik_req.ik_request.pose_stamped.pose.orientation.w = qw
+            
+            self.get_logger().info(f'Computing IK for XYZ: {x},{y},{z} RPY: {roll},{pitch},{yaw}')
+            ik_res = self.ik_client.call(ik_req)
+            if ik_res.error_code.val != 1:
+                raise Exception(f"IK failed with error code: {ik_res.error_code.val}")
+                
+            joint_positions = ik_res.solution.joint_state.position
+            names = ik_res.solution.joint_state.name
+            
+            if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
+                self.servo_stop_client.call(Trigger.Request())
+                time.sleep(0.5)
+                
+            msg = JointTrajectory()
+            msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+            point = JointTrajectoryPoint()
+            positions = []
+            for jn in msg.joint_names:
+                if jn in names:
+                    positions.append(joint_positions[names.index(jn)])
+                else:
+                    positions.append(0.0)
+                    
+            point.positions = positions
+            point.time_from_start = Duration(sec=2, nanosec=0)
+            msg.points.append(point)
+            
+            self.publisher_.publish(msg)
+            self.get_logger().info('MoveTo Trajektorie gesendet...')
+            time.sleep(2.5)
+            
+            if self.servo_start_client.wait_for_service(timeout_sec=1.0):
+                self.servo_start_client.call(Trigger.Request())
+                
+            response.ret = 0
+            response.message = "Success"
+            
+        except Exception as e:
+            self.get_logger().error(f"Error in MoveTo: {e}")
+            response.ret = -1
+            response.message = str(e)
+        finally:
+            self.is_executing = False
+            
+        return response
+
 def main(args=None):
     rclpy.init(args=args)
     node = UniversalInitialPoseNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        executor.shutdown()
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

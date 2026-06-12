@@ -14,6 +14,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(xarm_msgs REQUIRED)
 
 # Qt5
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets)
@@ -42,6 +43,7 @@ ament_target_dependencies(${PROJECT_NAME}
   std_srvs
   moveit_ros_planning_interface
   tf2_geometry_msgs
+  xarm_msgs
 )
 
 pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)

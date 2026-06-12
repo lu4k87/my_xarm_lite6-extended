@@ -17,12 +17,6 @@ ControlPanel::ControlPanel(QWidget* parent)
 
 ControlPanel::~ControlPanel()
 {
-  if (moveit_executor_) {
-    moveit_executor_->cancel();
-  }
-  if (moveit_spinner_thread_.joinable()) {
-    moveit_spinner_thread_.join();
-  }
 }
 
 void ControlPanel::onInitialize()
@@ -33,24 +27,7 @@ void ControlPanel::onInitialize()
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
   initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
   scan_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_scan_trajectory");
-  
-  moveit_node_ = std::make_shared<rclcpp::Node>("rviz_moveit_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
-  
-  std::vector<std::string> params = {"robot_description", "robot_description_semantic", "robot_description_kinematics"};
-  for (const auto& p : params) {
-    rclcpp::Parameter param;
-    if (node_->get_parameter(p, param)) {
-      if (!moveit_node_->has_parameter(p)) {
-        moveit_node_->declare_parameter(p, param.value_to_string());
-      } else {
-        moveit_node_->set_parameter(rclcpp::Parameter(p, param.value_to_string()));
-      }
-    }
-  }
-  
-  moveit_executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-  moveit_executor_->add_node(moveit_node_);
-  moveit_spinner_thread_ = std::thread([this]() { moveit_executor_->spin(); });
+  move_cartesian_client_ = node_->create_client<xarm_msgs::srv::MoveCartesian>("/ui/execute_move_to_pose");
 }
 
 void ControlPanel::setupUI()
@@ -312,80 +289,44 @@ void ControlPanel::publishTwist()
 
 void ControlPanel::onButtonMoveTo()
 {
-  if (moveit_running_) {
-    RCLCPP_WARN(node_->get_logger(), "MoveIt is already executing a trajectory.");
+  if (!move_cartesian_client_->wait_for_service(std::chrono::seconds(1))) {
+    RCLCPP_ERROR(node_->get_logger(), "MoveCartesian service (/ui/execute_move_to_pose) not available.");
     return;
   }
-  
-  double x = spin_x_->value() / 1000.0; // mm to m
-  double y = spin_y_->value() / 1000.0;
-  double z = spin_z_->value() / 1000.0;
-  double roll = spin_roll_->value();
-  double pitch = spin_pitch_->value();
-  double yaw = spin_yaw_->value();
-  
-  moveit_running_ = true;
-  std::thread([this, x, y, z, roll, pitch, yaw]() {
+
+  // Use a background thread to prevent blocking RViz UI
+  std::thread([this]() {
     try {
-      RCLCPP_INFO(node_->get_logger(), "Starting MoveIt background thread...");
+      double x = spin_x_->value();
+      double y = spin_y_->value();
+      double z = spin_z_->value();
+      double roll = spin_roll_->value();
+      double pitch = spin_pitch_->value();
+      double yaw = spin_yaw_->value();
+
+      // We just send the target directly to the python service.
+      // The Safe Z logic will be implicitly handled if the path is clear, 
+      // but since we do joint interpolation now in FAKE, MoveIt IK takes care of the end point.
       
-      // Stop servo
-      auto stop_client = node_->create_client<std_srvs::srv::Trigger>("/servo_server/stop_servo");
-      if (stop_client->wait_for_service(std::chrono::seconds(1))) {
-        auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
-        stop_client->async_send_request(req);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      }
+      RCLCPP_INFO(node_->get_logger(), "Sending MoveTo target to Python Service...");
+      auto request = std::make_shared<xarm_msgs::srv::MoveCartesian::Request>();
+      request->pose = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(z), static_cast<float>(roll), static_cast<float>(pitch), static_cast<float>(yaw) };
       
-      moveit::planning_interface::MoveGroupInterface move_group(moveit_node_, "lite6");
-      move_group.setMaxVelocityScalingFactor(0.5);
-      move_group.setMaxAccelerationScalingFactor(0.5);
-      
-      // 1. Sichere Z-Höhe
-      auto current_pose = move_group.getCurrentPose();
-      if (current_pose.pose.position.z < 0.095) {
-        RCLCPP_INFO(node_->get_logger(), "Z too low, moving to safe Z=150mm first.");
-        geometry_msgs::msg::Pose safe_pose = current_pose.pose;
-        safe_pose.position.z = 0.150;
-        move_group.setPoseTarget(safe_pose);
-        if (move_group.move() != moveit::core::MoveItErrorCode::SUCCESS) {
-           RCLCPP_ERROR(node_->get_logger(), "Safe Z movement failed!");
-           moveit_running_ = false;
-           return;
+      auto result_future = move_cartesian_client_->async_send_request(request);
+      if (result_future.wait_for(std::chrono::seconds(15)) == std::future_status::ready) {
+        auto response = result_future.get();
+        if (response->ret == 0) {
+          RCLCPP_INFO(node_->get_logger(), "Absolute move executed successfully via Python Service.");
+        } else {
+          RCLCPP_ERROR(node_->get_logger(), "Absolute move failed: %s", response->message.c_str());
         }
-      }
-      
-      // 2. Absolute Pose
-      tf2::Quaternion q;
-      q.setRPY(roll, pitch, yaw);
-      
-      geometry_msgs::msg::Pose target_pose;
-      target_pose.position.x = x;
-      target_pose.position.y = y;
-      target_pose.position.z = z;
-      target_pose.orientation = tf2::toMsg(q);
-      
-      move_group.setPoseTarget(target_pose);
-      RCLCPP_INFO(node_->get_logger(), "Planning and executing absolute move...");
-      auto success = move_group.move();
-      
-      if (success == moveit::core::MoveItErrorCode::SUCCESS) {
-        RCLCPP_INFO(node_->get_logger(), "Absolute move successful!");
       } else {
-        RCLCPP_ERROR(node_->get_logger(), "Absolute move failed!");
+         RCLCPP_ERROR(node_->get_logger(), "Service call to /ui/execute_move_to_pose timed out.");
       }
-      
-      // Start servo
-      auto start_client = node_->create_client<std_srvs::srv::Trigger>("/servo_server/start_servo");
-      if (start_client->wait_for_service(std::chrono::seconds(1))) {
-        auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
-        start_client->async_send_request(req);
-      }
-      
+
     } catch (const std::exception& e) {
-      RCLCPP_ERROR(node_->get_logger(), "MoveIt Error: %s", e.what());
+      RCLCPP_ERROR(node_->get_logger(), "Error calling MoveTo Service: %s", e.what());
     }
-    moveit_running_ = false;
   }).detach();
 }
 

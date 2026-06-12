@@ -6,6 +6,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <xarm_msgs/srv/move_cartesian.hpp>
 #include <QPushButton>
 #include <QTimer>
 #include <QGridLayout>
@@ -100,11 +101,8 @@ protected:
   
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr initial_pose_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr scan_client_;
+  rclcpp::Client<xarm_msgs::srv::MoveCartesian>::SharedPtr move_cartesian_client_;
   
-  // MoveIt Node & Threading
-  rclcpp::Node::SharedPtr moveit_node_;
-  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> moveit_executor_;
-  std::thread moveit_spinner_thread_;
   std::atomic<bool> moveit_running_{false};
   
   void setupUI();
