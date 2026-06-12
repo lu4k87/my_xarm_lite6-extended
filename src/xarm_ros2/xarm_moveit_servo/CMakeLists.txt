@@ -29,6 +29,7 @@ find_package(moveit_ros_planning REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(xarm_msgs REQUIRED)
 # NEU: Füge die Pakete für Action Client und die Whisper Action Definition hinzu
 find_package(rclcpp_action REQUIRED)
@@ -53,6 +54,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   moveit_ros_planning_interface
   tf2
   tf2_geometry_msgs
+  tf2_ros
   xarm_msgs
 )
 

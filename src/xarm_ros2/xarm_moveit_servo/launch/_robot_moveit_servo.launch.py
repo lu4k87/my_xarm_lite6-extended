@@ -248,18 +248,6 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
-    # MoveIt move_group Action Server — enables RViz MotionPlanning plugin
-    # (Waypoints, Path Planning, Plan & Execute) alongside MoveIt Servo.
-    move_group_node = Node(
-        package='moveit_ros_move_group',
-        executable='move_group',
-        output='screen',
-        parameters=[
-            moveit_config.to_dict(),
-            {'moveit_manage_controllers': True},
-        ],
-    )
-
     return [
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -270,7 +258,6 @@ def launch_setup(context, *args, **kwargs):
         rviz_node,
         ros2_control_launch,
         traj_controller_node,
-        move_group_node,
     ] + controller_nodes
 
 

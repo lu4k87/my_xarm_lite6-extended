@@ -1,7 +1,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
-#include <moveit/move_group_interface/move_group_interface.h>
-#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <cmath>
@@ -10,48 +11,38 @@ class ScanTrajectoryNode : public rclcpp::Node
 {
 public:
   ScanTrajectoryNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions()) 
-    : Node("scan_trajectory_node", options)
+    : Node("scan_trajectory_node", options),
+      tf_buffer_(this->get_clock()),
+      tf_listener_(tf_buffer_)
   {
-    // Service endpoint — triggered by the "Vision Scan" button in the RViz Control Panel
     scan_service_ = this->create_service<std_srvs::srv::Trigger>(
       "/ui/execute_scan_trajectory",
       std::bind(&ScanTrajectoryNode::handle_scan_request, this, std::placeholders::_1, std::placeholders::_2)
     );
 
-    // Separate node for service client calls (stop/start servo)
-    client_node_ = std::make_shared<rclcpp::Node>("scan_traj_client_node");
-    stop_servo_cli_ = client_node_->create_client<std_srvs::srv::Trigger>("/servo_server/stop_servo");
-    start_servo_cli_ = client_node_->create_client<std_srvs::srv::Trigger>("/servo_server/start_servo");
+    twist_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_server/delta_twist_cmds", 10);
 
-    // Separate node for MoveGroupInterface (needs its own spinning context)
-    move_group_node_ = std::make_shared<rclcpp::Node>("scan_traj_moveit_node", options);
-    move_group_spin_thread_ = std::thread([this]() {
-      rclcpp::spin(move_group_node_);
-    });
+    timer_ = this->create_wall_timer(
+      std::chrono::milliseconds(20), // 50 Hz
+      std::bind(&ScanTrajectoryNode::control_loop, this)
+    );
 
-    // Initialize MoveGroupInterface — requires the move_group action server to be running
-    RCLCPP_INFO(this->get_logger(), "Waiting for move_group action server...");
-    move_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(move_group_node_, "lite6");
-    move_group_->setPlanningTime(10.0);
-    move_group_->setMaxVelocityScalingFactor(0.3);
-    move_group_->setMaxAccelerationScalingFactor(0.3);
-    move_group_->setPoseReferenceFrame("link_base");
-    move_group_->setEndEffectorLink("link_tcp");
-
-    RCLCPP_INFO(this->get_logger(), "ScanTrajectoryNode ready. Call /ui/execute_scan_trajectory to run Vision Scan.");
-  }
-
-  ~ScanTrajectoryNode() {
-    if (move_group_spin_thread_.joinable()) {
-      rclcpp::shutdown();
-      move_group_spin_thread_.join();
-    }
+    RCLCPP_INFO(this->get_logger(), "ScanTrajectoryNode (P-Controller) ready. Call /ui/execute_scan_trajectory to run Vision Scan.");
   }
 
 private:
-  // ═══════════════════════════════════════════════════════════
-  // Look-At Orientation: TCP Z-axis points from 'from' towards 'to'
-  // ═══════════════════════════════════════════════════════════
+  void handle_scan_request(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  {
+    (void)request;
+    RCLCPP_INFO(this->get_logger(), "=== Vision Scan: Starting ===");
+    is_scanning_ = true;
+    start_time_ = this->now();
+    response->success = true;
+    response->message = "Vision Scan started.";
+  }
+
   tf2::Quaternion compute_look_at(const tf2::Vector3& from, const tf2::Vector3& to)
   {
     tf2::Vector3 z_d = (to - from).normalized();
@@ -73,152 +64,111 @@ private:
     return q;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // Service Handler
-  // ═══════════════════════════════════════════════════════════
-  void handle_scan_request(
-    const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
-    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  void control_loop()
   {
-    (void)request;
-    RCLCPP_INFO(this->get_logger(), "=== Vision Scan: Starting ===");
+    if (!is_scanning_) return;
 
-    // Step 1: Stop MoveIt Servo to prevent command conflicts
-    if (!call_trigger_service(stop_servo_cli_, "stop_servo")) {
-      RCLCPP_ERROR(this->get_logger(), "Failed to stop servo. Aborting scan.");
-      response->success = false;
-      response->message = "Failed to stop servo.";
+    double t = (this->now() - start_time_).seconds();
+    const double total_duration = 20.0; // 20 seconds for the scan
+
+    if (t > total_duration) {
+      is_scanning_ = false;
+      RCLCPP_INFO(this->get_logger(), "=== Vision Scan: Complete ===");
+      // Send a few zero twists to stop
+      for(int i=0; i<5; i++) {
+        geometry_msgs::msg::TwistStamped stop_twist;
+        stop_twist.header.stamp = this->now();
+        stop_twist.header.frame_id = "link_base";
+        twist_pub_->publish(stop_twist);
+      }
       return;
     }
-    RCLCPP_INFO(this->get_logger(), "Servo stopped.");
 
-    // ═══════════════════════════════════════════════════════════
-    // Step 2: Generate Cartesian waypoints for the scan path
-    // 
-    // Trajectory: Half-circle arc around focus point (300, 0, 0)
-    //   - Radius: 150mm
-    //   - Theta sweeps from -80° to +80° (stays in reachable workspace)
-    //   - Z increases from 100mm to 300mm during the sweep
-    //   - TCP Z-axis always points at the focus point (look-at)
-    // ═══════════════════════════════════════════════════════════
-    std::vector<geometry_msgs::msg::Pose> waypoints;
-    
+    geometry_msgs::msg::TransformStamped tfs;
+    try {
+      tfs = tf_buffer_.lookupTransform("link_base", "link_tcp", tf2::TimePointZero);
+    } catch (tf2::TransformException &ex) {
+      return;
+    }
+
+    tf2::Vector3 current_pos(
+      tfs.transform.translation.x,
+      tfs.transform.translation.y,
+      tfs.transform.translation.z
+    );
+
+    tf2::Quaternion current_q(
+      tfs.transform.rotation.x,
+      tfs.transform.rotation.y,
+      tfs.transform.rotation.z,
+      tfs.transform.rotation.w
+    );
+
+    // Target Path Logic
+    // Radius 150, Focus (300, 0, 0), Z increasing
     double focus_x = 0.3;
     double focus_y = 0.0;
     double focus_z = 0.0;
     double radius = 0.15;
-    int num_waypoints = 40;
+    
+    double phase = t / total_duration;
+    double theta = (-80.0 + 160.0 * phase) * M_PI / 180.0; // -80 to +80
+    
+    tf2::Vector3 target_pos(
+      focus_x - radius * std::cos(theta),
+      focus_y + radius * std::sin(theta),
+      0.10 + 0.20 * phase // Z increases from 100mm to 300mm
+    );
 
-    for (int i = 0; i <= num_waypoints; ++i) {
-      double phase = static_cast<double>(i) / num_waypoints;
-      
-      // Z increases linearly
-      double z = 0.10 + 0.20 * phase;
-      
-      // Theta sweeps from -80° to +80°
-      double theta = (-80.0 + 160.0 * phase) * M_PI / 180.0;
-      
-      double x = focus_x - radius * std::cos(theta);
-      double y = focus_y + radius * std::sin(theta);
-      
-      // Compute look-at orientation
-      tf2::Quaternion q = compute_look_at(tf2::Vector3(x, y, z), tf2::Vector3(focus_x, focus_y, focus_z));
-      
-      geometry_msgs::msg::Pose p;
-      p.position.x = x;
-      p.position.y = y;
-      p.position.z = z;
-      p.orientation.x = q.x();
-      p.orientation.y = q.y();
-      p.orientation.z = q.z();
-      p.orientation.w = q.w();
-      waypoints.push_back(p);
+    tf2::Quaternion target_q = compute_look_at(target_pos, tf2::Vector3(focus_x, focus_y, focus_z));
+
+    // P-Controller
+    double Kp_pos = 1.0;
+    tf2::Vector3 pos_error = target_pos - current_pos;
+
+    // Angular error
+    tf2::Quaternion q_error = target_q * current_q.inverse();
+    tf2::Vector3 axis = q_error.getAxis();
+    double angle = q_error.getAngle();
+    
+    // Ensure shortest path
+    if (angle > M_PI) {
+        angle -= 2.0 * M_PI;
     }
 
-    RCLCPP_INFO(this->get_logger(), "Generated %zu waypoints.", waypoints.size());
+    double Kp_ang = 0.5;
+    tf2::Vector3 angular_vel = axis * angle * Kp_ang;
 
-    // ═══════════════════════════════════════════════════════════
-    // Step 3: Move to the first waypoint (free-space planning)
-    // ═══════════════════════════════════════════════════════════
-    RCLCPP_INFO(this->get_logger(), "Planning move to scan start pose...");
-    move_group_->setPoseTarget(waypoints.front());
-    moveit::planning_interface::MoveGroupInterface::Plan plan_to_start;
-    if (move_group_->plan(plan_to_start) != moveit::core::MoveItErrorCode::SUCCESS) {
-      RCLCPP_ERROR(this->get_logger(), "Failed to plan path to scan start pose.");
-      call_trigger_service(start_servo_cli_, "start_servo");
-      response->success = false;
-      response->message = "Planning to start pose failed.";
-      return;
-    }
-    RCLCPP_INFO(this->get_logger(), "Executing move to start pose...");
-    move_group_->execute(plan_to_start);
+    geometry_msgs::msg::TwistStamped twist_msg;
+    twist_msg.header.stamp = this->now();
+    twist_msg.header.frame_id = "link_base";
+    
+    twist_msg.twist.linear.x = pos_error.x() * Kp_pos;
+    twist_msg.twist.linear.y = pos_error.y() * Kp_pos;
+    twist_msg.twist.linear.z = pos_error.z() * Kp_pos;
+    
+    twist_msg.twist.angular.x = angular_vel.x();
+    twist_msg.twist.angular.y = angular_vel.y();
+    twist_msg.twist.angular.z = angular_vel.z();
 
-    // ═══════════════════════════════════════════════════════════
-    // Step 4: Execute Cartesian path (smooth, continuous motion)
-    // ═══════════════════════════════════════════════════════════
-    RCLCPP_INFO(this->get_logger(), "Computing Cartesian path...");
-    moveit_msgs::msg::RobotTrajectory trajectory;
-    const double jump_threshold = 0.0;  // Disable jump detection
-    const double eef_step = 0.01;       // 1cm interpolation resolution
-    double fraction = move_group_->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
-
-    if (fraction > 0.9) {
-      RCLCPP_INFO(this->get_logger(), "Cartesian path %.1f%% achieved. Executing...", fraction * 100.0);
-      move_group_->execute(trajectory);
-      RCLCPP_INFO(this->get_logger(), "=== Vision Scan: Complete ===");
-      response->success = true;
-      response->message = "Vision Scan trajectory finished.";
-    } else {
-      RCLCPP_WARN(this->get_logger(), "Cartesian path only %.1f%% achievable. Aborting.", fraction * 100.0);
-      response->success = false;
-      response->message = "Cartesian path planning insufficient.";
-    }
-
-    // Step 5: Re-enable MoveIt Servo for manual control
-    call_trigger_service(start_servo_cli_, "start_servo");
-    RCLCPP_INFO(this->get_logger(), "Servo re-enabled.");
+    twist_pub_->publish(twist_msg);
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // Helper: Call a Trigger service (stop_servo / start_servo)
-  // ═══════════════════════════════════════════════════════════
-  bool call_trigger_service(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client, const std::string& name)
-  {
-    if (!client->wait_for_service(std::chrono::seconds(3))) {
-      RCLCPP_ERROR(this->get_logger(), "Service %s not available.", name.c_str());
-      return false;
-    }
-    auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
-    auto future = client->async_send_request(req);
-    if (rclcpp::spin_until_future_complete(client_node_, future, std::chrono::seconds(5)) ==
-        rclcpp::FutureReturnCode::SUCCESS)
-    {
-      return future.get()->success;
-    }
-    RCLCPP_ERROR(this->get_logger(), "Failed to call service %s.", name.c_str());
-    return false;
-  }
-
-  // Members
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr scan_service_;
-  std::shared_ptr<rclcpp::Node> client_node_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr stop_servo_cli_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr start_servo_cli_;
+  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
 
-  std::shared_ptr<rclcpp::Node> move_group_node_;
-  std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
-  std::thread move_group_spin_thread_;
+  bool is_scanning_ = false;
+  rclcpp::Time start_time_;
 };
 
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::NodeOptions node_options;
-  node_options.automatically_declare_parameters_from_overrides(true);
-  auto node = std::make_shared<ScanTrajectoryNode>(node_options);
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node);
-  executor.spin();
+  rclcpp::spin(std::make_shared<ScanTrajectoryNode>());
   rclcpp::shutdown();
   return 0;
 }
