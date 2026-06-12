@@ -33,12 +33,11 @@ void ControlPanel::setupUI()
 {
   // Global Dark Theme
   this->setStyleSheet(
-    "rviz_robot_control_panel--ControlPanel { background-color: #2c3e50; }"
     "QPushButton { background-color: #7f8c8d; color: white; border-radius: 6px; padding: 8px; border: 1px solid #95a5a6; font-weight: bold; }"
     "QPushButton:hover { background-color: #95a5a6; }"
     "QPushButton:pressed { background-color: #636e72; }"
     "QDoubleSpinBox { background-color: #95a5a6; color: #2c3e50; border: 1px solid #7f8c8d; border-radius: 4px; padding: 4px; font-weight: bold; }"
-    "QLabel { color: #ecf0f1; font-weight: bold; }"
+    "QLabel { color: #2c3e50; font-weight: bold; }"
   );
 
   QVBoxLayout* main_layout = new QVBoxLayout(this);
