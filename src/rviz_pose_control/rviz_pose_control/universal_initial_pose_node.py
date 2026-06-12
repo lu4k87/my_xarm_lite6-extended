@@ -121,7 +121,7 @@ class UniversalInitialPoseNode(Node):
                 
             # 2. Call IK
             ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
-            if not ik_client.wait_for_service(timeout_sec=3.0):
+            if not ik_client.wait_for_service(timeout_sec=15.0):
                 raise Exception("IK service not available")
                 
             ik_req = GetPositionIK.Request()

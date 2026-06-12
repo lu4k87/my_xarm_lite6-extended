@@ -264,7 +264,7 @@ def launch_setup(context, *args, **kwargs):
         executable='move_group',
         output='screen',
         parameters=[
-            robot_description_parameters,
+            moveit_config.to_dict(),
             {'use_sim_time': False},
         ],
     )
