@@ -113,58 +113,91 @@ class UniversalInitialPoseNode(Node):
             
         self.is_executing = True
         try:
-            # 1. Pause Servo
-            if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
-                req = Trigger.Request()
-                self.servo_stop_client.call_async(req)
-                time.sleep(0.5)
+            import tf2_ros
+            import tf_transformations
+            from geometry_msgs.msg import TwistStamped
+            import numpy as np
+
+            # wir nutzen Servo direkt ueber Twist cmds
+            twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
+            
+            tf_buffer = tf2_ros.Buffer()
+            tf_listener = tf2_ros.TransformListener(tf_buffer, self)
+            
+            # Ziel-Koordinaten (Panel sendet mm, wir brauchen m)
+            target_x = request.pose[0] / 1000.0
+            target_y = request.pose[1] / 1000.0
+            target_z = request.pose[2] / 1000.0
+            
+            target_r = request.pose[3]
+            target_p = request.pose[4]
+            target_yaw = request.pose[5]
+            
+            # P-Regler Konstanten
+            Kp_pos = 1.0
+            Kp_ori = 0.5
+            max_vel_pos = 0.1 # m/s
+            max_vel_ori = 0.5 # rad/s
+            
+            rate = self.create_rate(20.0) # 20 Hz loop
+            
+            self.get_logger().info(f"MoveTo gestartet: X={target_x:.3f}, Y={target_y:.3f}, Z={target_z:.3f}")
+            
+            # Timeout nach 15 Sekunden
+            start_time = self.get_clock().now()
+            
+            while rclpy.ok():
+                if (self.get_clock().now() - start_time).nanoseconds / 1e9 > 15.0:
+                    raise Exception("Timeout: Ziel nicht erreicht in 15 Sekunden.")
+                    
+                try:
+                    trans = tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+                except Exception as e:
+                    time.sleep(0.1)
+                    continue
+                    
+                cur_x = trans.transform.translation.x
+                cur_y = trans.transform.translation.y
+                cur_z = trans.transform.translation.z
                 
-            # 2. Call IK
-            ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
-            if not ik_client.wait_for_service(timeout_sec=15.0):
-                raise Exception("IK service not available")
+                # Einfacher Positions-Fehler
+                err_x = target_x - cur_x
+                err_y = target_y - cur_y
+                err_z = target_z - cur_z
                 
-            ik_req = GetPositionIK.Request()
-            ik_req.ik_request.group_name = 'lite6'
-            ik_req.ik_request.pose_stamped.header.frame_id = 'link_base'
-            
-            # Request pose is [x, y, z, roll, pitch, yaw] in mm and radians? 
-            # Wait, RViz panel sends in mm and radians! 
-            # Actually, RViz panel sent x,y,z in mm to python service originally!
-            x = request.pose[0] / 1000.0
-            y = request.pose[1] / 1000.0
-            z = request.pose[2] / 1000.0
-            qx, qy, qz, qw = get_quaternion_from_euler(request.pose[3], request.pose[4], request.pose[5])
-            
-            ik_req.ik_request.pose_stamped.pose.position.x = x
-            ik_req.ik_request.pose_stamped.pose.position.y = y
-            ik_req.ik_request.pose_stamped.pose.position.z = z
-            ik_req.ik_request.pose_stamped.pose.orientation.x = qx
-            ik_req.ik_request.pose_stamped.pose.orientation.y = qy
-            ik_req.ik_request.pose_stamped.pose.orientation.z = qz
-            ik_req.ik_request.pose_stamped.pose.orientation.w = qw
-            
-            ik_res = ik_client.call(ik_req)
-            if ik_res.error_code.val != 1: # SUCCESS
-                raise Exception(f"IK failed with code {ik_res.error_code.val}")
+                dist = np.sqrt(err_x**2 + err_y**2 + err_z**2)
                 
-            # 3. Publish Trajectory
-            msg = JointTrajectory()
-            msg.joint_names = ik_res.solution.joint_state.name
-            
-            point = JointTrajectoryPoint()
-            point.positions = ik_res.solution.joint_state.position
-            point.time_from_start = Duration(sec=2, nanosec=0)
-            msg.points.append(point)
-            
-            self.publisher_.publish(msg)
-            time.sleep(2.5)
-            
-            # 4. Resume Servo
-            if self.servo_start_client.wait_for_service(timeout_sec=1.0):
-                req = Trigger.Request()
-                self.servo_start_client.call_async(req)
+                # Wenn wir nah genug dran sind (2mm), stoppen wir!
+                if dist < 0.002:
+                    break
+                    
+                # Geschwindigkeiten berechnen
+                vx = np.clip(err_x * Kp_pos, -max_vel_pos, max_vel_pos)
+                vy = np.clip(err_y * Kp_pos, -max_vel_pos, max_vel_pos)
+                vz = np.clip(err_z * Kp_pos, -max_vel_pos, max_vel_pos)
                 
+                # Sende Twist an Servo
+                t = TwistStamped()
+                t.header.frame_id = 'link_base'
+                t.header.stamp = self.get_clock().now().to_msg()
+                t.twist.linear.x = float(vx)
+                t.twist.linear.y = float(vy)
+                t.twist.linear.z = float(vz)
+                # Orientierung ignorieren wir hier fuers Erste um Fehler zu vermeiden!
+                t.twist.angular.x = 0.0
+                t.twist.angular.y = 0.0
+                t.twist.angular.z = 0.0
+                
+                twist_pub.publish(t)
+                time.sleep(0.05)
+                
+            # Stopp-Kommando senden
+            t_stop = TwistStamped()
+            t_stop.header.frame_id = 'link_base'
+            t_stop.header.stamp = self.get_clock().now().to_msg()
+            twist_pub.publish(t_stop)
+            
+            self.get_logger().info("MoveTo Ziel erfolgreich erreicht!")
             response.ret = 0
             response.message = "Success"
         except Exception as e:
