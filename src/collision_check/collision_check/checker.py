@@ -6,7 +6,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Joy
 from xarm_msgs.srv import GetFloat32List
 import pygame
-from std_msgs.msg import Float32, Float32MultiArray, String 
+from std_msgs.msg import Float32, Float32MultiArray, String, Int8
 import sys
 
 # ANSI-Escape-Codes als globale Konstanten
@@ -40,6 +40,9 @@ class Checker(Node):
         # Publisher für Kollisionsmeldung
         self.collision_pub = self.create_publisher(String, "/ui/collision_msg", 10)
         
+        # Subscriber für MoveIt Servo Warnungen (3D Kollisionen)
+        self.servo_status_sub = self.create_subscription(Int8, "/servo_server/status", self.servo_status_callback, 10)
+        
         while not self.__client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info("Warte auf Service /ufactory/get_position...")
             pass
@@ -66,6 +69,14 @@ class Checker(Node):
     def speed_callback(self, msg):
         """Speichert den aktuellen Geschwindigkeitsfaktor vom Joystick-Node."""
         self.current_speed_factor_from_joy = msg.data
+
+    def servo_status_callback(self, msg):
+        """Reagiert auf dynamische 3D-Kollisionswarnungen von MoveIt Servo."""
+        # 3: APPROACHING COLLISION, 4: HALT: COLLISION, 5: HALT: JOINT BOUND
+        if msg.data in [3, 4, 5]:
+            if self.joystick:
+                # Vibriere intensiv für 500ms
+                self.joystick.rumble(1.0, 1.0, 500)
 
     def check_position(self, response):
         """Callback, der nach Erhalt der aktuellen EEF-Position ausgeführt wird."""
