@@ -200,7 +200,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 * **`my_zed_tf_bringup` [VISION SYSTEM]**
     * **Purpose:** Unified ZED Mini Camera Initialization, TF Broadcasting, 3D Bounding Box Generation, and 3D Visualization.
     * **Task:** Safely launches the `zed_wrapper` node alongside a static TF publisher, generates the 3D camera models in RViz, and projects YOLO detections into 3D space.
-    * **How it works:** Executes `zed_camera.launch.py` to initialize the native Stereolabs driver (configured to use the highly precise ULTRA depth mode and auto-exposure to capture dense PointClouds of the entire workspace) and simultaneously broadcast a static transform from `link_base` to `zed_camera_link`. By default, this is parameterized for a physical tripod setup (x=0.75m, y=0.0m, z=0.40m, pitch=45°, yaw=180°), seamlessly integrating the camera into the robot's world coordinate system in RViz2. It also runs multiple custom Python nodes: `zed_stand_publisher.py` to generate a mathematically accurate 3D V-Slot Aluminum Extrusion profile (20x20mm) and ZED camera mesh (`ZEDM.stl`); and `zed_yolo_3d_bbox.py`, which processes the RGB and Depth streams in parallel using GPU acceleration and the highly accurate **YOLOv8 Large (`yolov8l.pt`)** model. It extracts the true 3D PointCloud of each detected object, transforms it into the robot's world frame, filters out the robot base (`X < 0.25`), robustly filters depth noise (flying pixels) using 2nd/98th percentiles, applies **Exponential Moving Average (EMA) smoothing** to eliminate bounding box jitter, and tightly isolates the object from the background. It then computes a millimeter-perfect 3D bounding box that is **grounded to the table plane (`Z=0.0`)** and published live to RViz as an **1mm wireframe box (`LINE_LIST`)**. Above the box, multiple floating text labels are precisely stacked, displaying the object class (white) alongside its color-coded XYZ coordinates (Red, Green, Blue) formatted with underscores (e.g. `X:_407_mm`) to prevent RViz Ogre3D text-justification bugs. Ghost markers are completely prevented using a robust DELETEALL mechanism. Additionally, it runs `yolo_moveit_collision.py` to seamlessly convert YOLO bounding boxes into dynamic MoveIt `CollisionObject` messages (toggleable via an RViz display checkbox) and seamlessly inserting them as strict, solid obstacles for the entire robot into the environment (including a dynamic ghost-object clearing mechanism for lost tracks), `rviz_overlay.py` which creates a 2D Head-Up Display (HUD) in RViz showing real-time TCP coordinates (X/Y/Z) in matching axis colors while dynamically displaying the active reference frame selected via the gamepad, and `set_fake_initial_pose.py` which automatically positions the simulated Fake-Arm to a defined starting pose (X=200, Y=0, Z=150) upon initialization by temporarily pausing the servo server.
+    * **How it works:** Executes `zed_camera.launch.py` to initialize the native Stereolabs driver (configured to use the highly precise ULTRA depth mode and auto-exposure to capture dense PointClouds of the entire workspace) and simultaneously broadcast a static transform from `link_base` to `zed_camera_link`. By default, this is parameterized for a physical tripod setup (x=0.75m, y=0.0m, z=0.40m, pitch=45°, yaw=180°), seamlessly integrating the camera into the robot's world coordinate system in RViz2. It also runs multiple custom Python nodes: `zed_stand_publisher.py` to generate a mathematically accurate 3D V-Slot Aluminum Extrusion profile (20x20mm) and ZED camera mesh (`ZEDM.stl`); and `zed_yolo_3d_bbox.py`, which processes the RGB and Depth streams in parallel using GPU acceleration and the highly accurate **YOLOv8 Large (`yolov8l.pt`)** model. It extracts the true 3D PointCloud of each detected object, transforms it into the robot's world frame, filters out the robot base (`X < 0.25`), robustly filters depth noise (flying pixels) using 2nd/98th percentiles, applies **Exponential Moving Average (EMA) smoothing** to eliminate bounding box jitter, and tightly isolates the object from the background. It then computes a millimeter-perfect 3D bounding box that is **grounded to the table plane (`Z=0.0`)** and published live to RViz as an **1mm wireframe box (`LINE_LIST`)**. Above the box, multiple floating text labels are precisely stacked, displaying the object class (white) alongside its color-coded XYZ coordinates (Red, Green, Blue) formatted with underscores (e.g. `X:_407_mm`) to prevent RViz Ogre3D text-justification bugs. Ghost markers are completely prevented using a robust DELETEALL mechanism. Additionally, it runs `yolo_moveit_collision.py` to seamlessly convert YOLO bounding boxes into dynamic MoveIt `CollisionObject` messages (toggleable via an RViz display checkbox) and seamlessly inserting them as strict, solid obstacles for the entire robot into the environment (including a dynamic ghost-object clearing mechanism for lost tracks), and `rviz_overlay.py` which creates a 2D Head-Up Display (HUD) in RViz showing real-time TCP coordinates (X/Y/Z) in matching axis colors while dynamically displaying the active reference frame selected via the gamepad.
 
 ### 5.2 🗣️ Voice Control & Interaction
 
@@ -237,6 +237,11 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Task:** Predictive intervention before collisions during manual gamepad control.
     * **How it works:** Intercepts raw `/joy` signals, asynchronously queries the robot's current EEF position, computes a forward-projected position, and publishes a sanitized `/joy_check` signal with the downward axis zeroed if a collision is imminent. See **Section 6** for the full technical deep-dive.
 
+* **`fake_initial_pose`**
+    * **Purpose:** Automatic initialization of the simulated robot arm's starting pose.
+    * **Task:** Moves the fake arm to the default starting position (X=200, Y=0, Z=150).
+    * **How it works:** First, it calls the `/servo_server/stop_servo` service to temporarily pause MoveIt Servo, preventing command conflicts. Then, it constructs and publishes a `JointTrajectory` message containing predefined joint angles (for X=200, Y=0, Z=150) directly to the `/lite6_traj_controller/joint_trajectory` topic. After waiting 1 second for the hardware simulation to execute the movement, it calls the `/servo_server/start_servo` service to seamlessly reactivate manual control via gamepad or HUD.
+
 * **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
     * **Purpose:** Hard-stop collision avoidance at the MoveIt level.
     * **Task:** Strictly blocks movements upon approaching YOLO objects while permitting evasive maneuvers.
@@ -253,6 +258,10 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Purpose:** Real-time visual feedback in RViz2.
     * **Task:** Visual enhancement of the 3D simulation work area.
     * **How it works:** Tracks `link_eef` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data.
+* **`rviz_control_robot_hud`**
+    * **Purpose:** 2D HUD Panel inside RViz for manual robot jogging.
+    * **Task:** Provides a classic D-Pad style graphical user interface to control the robot with mouse clicks.
+    * **How it works:** Implemented in C++ as a Qt plugin. Generates a TwistStamped command on `/servo_server/delta_twist_cmds` upon button clicks. *Activation in RViz:* `Panels -> Add New Panel -> rviz_control_robot_hud -> ControlPanel`.
 * **`rosbridge_server`**
     * **Purpose:** WebSocket bridge for web browsers.
     * **Task:** Native communication between dashboard and robot.
@@ -652,6 +661,8 @@ dev_ws/
 ├── src/
 │   ├── collision_check/            # 🛡️ Python: Predictive collision guard
 │   │   └── collision_check/checker.py
+│   ├── fake_initial_pose/          # 🤖 Python: Sets Fake-Arm initial pose
+│   │   └── fake_initial_pose/set_initial_pose_node.py
 │   ├── gaze_control/               # 👁️ Python: PyQt5 gaze control UI
 │   ├── motion_sequence/            # 🦾 Python: Cartesian motion state machine
 │   │   └── motion_sequence/motion_sequence.py
@@ -664,9 +675,10 @@ dev_ws/
 │   │       ├── rviz_overlay.py                # RViz 2D HUD overlay for TCP
 │   │       ├── yolo_moveit_collision.py      # MoveIt collision objects (on/off)
 │   │       ├── zed_stand_publisher.py        # 3D camera stand/tripod mesh publisher
-│   │       ├── zed_yolo_3d_bbox.py           # 3D object detection & bounding boxes
-│   │       └── set_fake_initial_pose.py      # Init of the simulated robot's TCP pose
+│   │       └── zed_yolo_3d_bbox.py           # 3D object detection & bounding boxes
 │   ├── ros2_whisper/               # 🎙️ Whisper AI speech-to-text node
+│   ├── rviz_control_robot_hud/     # 🖥️ C++: RViz2 2D Control Panel Plugin
+│   │   └── src/control_panel.cpp
 │   ├── rviz_marker/                # 📍 Python: RViz2 marker publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent parser & filter
 │   ├── websocket/                  # 📊 Python/JS: Workspace analyzer & Dashboard

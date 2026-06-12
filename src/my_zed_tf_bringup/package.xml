@@ -12,7 +12,7 @@
   <maintainer email="mk@example.com">mk</maintainer>
   <license>MIT</license>
 
-  <exec_depend>zed_wrapper</exec_depend>
+  <!-- <exec_depend>zed_wrapper</exec_depend> -->
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>

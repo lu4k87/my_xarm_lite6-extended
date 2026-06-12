@@ -153,6 +153,11 @@
     {
       "actions": [
         {
+          "cmd": "ros2 run fake_initial_pose set_fake_pose",
+          "label": "Set Fake Initial Pose",
+          "type": "node"
+        },
+        {
           "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
           "label": "RViz Marker Launch",
           "type": "launch"
@@ -160,7 +165,7 @@
       ],
       "col": 1,
       "icon": "fa-solid fa-chart-network",
-      "title": "Vizualsation (Rviz2)"
+      "title": "Visualization (Rviz2)"
     },
     {
       "actions": [

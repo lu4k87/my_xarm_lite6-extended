@@ -200,7 +200,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 * **`my_zed_tf_bringup` [VISION SYSTEM]**
     * **Zweck:** Einheitliche Initialisierung der ZED Mini Kamera, TF-Broadcasting, 3D Bounding-Box Generierung und 3D-Visualisierung.
     * **Aufgabe:** Startet den `zed_wrapper` Node sicher, kombiniert ihn mit dem statischen TF-Publisher, generiert die 3D-Kameramodelle in RViz und projiziert YOLO-Erkennungen in den 3D-Raum.
-    * **Funktionsweise:** Führt `zed_camera.launch.py` aus, um den nativen Stereolabs-Treiber zu initialisieren (konfiguriert auf den geometrisch hochpräzisen ULTRA Tiefenmodus mit Auto-Belichtung für eine optimale Punktwolken-Dichte im Arbeitsbereich) und sendet simultan eine statische Transformation von `link_base` zu `zed_camera_link`. Standardmäßig ist dies für ein physisches Stativ-Setup parametrisiert (x=0.75m, y=0.0m, z=0.40m, pitch=45°, yaw=180°), wodurch die Kamera in RViz2 direkt in das Weltkoordinatensystem des Roboters eingebunden wird. Zusätzlich laufen mehrere eigene Python-Skripte: `zed_stand_publisher.py` generiert mathematisch exakt das 3D-Modell eines 20x20mm V-Slot Aluminiumprofils sowie das ZED-Kameramesh (`ZEDM.stl`); die Node `zed_yolo_3d_bbox.py` verarbeitet parallel den RGB- und Depth-Stream der Kamera mit GPU-Beschleunigung und dem **YOLOv8 Large (`yolov8l.pt`)** Modell. Sie extrahiert die echte 3D-Punktwolke jedes erkannten Objekts, transformiert diese in das Weltkoordinatensystem des Roboters, filtert den physischen Roboter-Fuß (`X < 0.25`) und Tiefenrauschen ("Flying Pixels") robust über das 2. und 98. Perzentil heraus, wendet eine **Exponentielle Glättung (EMA-Filter)** an, um Zittern der Bounding-Boxen zu eliminieren, und isoliert das Objekt strikt vom Hintergrund. Das Ergebnis sind zitterfreie, millimetergenaue 3D-Bounding-Boxen, die **auf die Tischebene (`Z=0.0`) geerdet** sind und live als **1mm Wireframe-Kanten (`LINE_LIST`)** in RViz publiziert werden. Direkt über der Box werden mehrere, präzise übereinander gestapelte Text-Label eingeblendet. Diese Labels zeigen den Objektnamen (Weiß) sowie die X/Y/Z-Koordinaten in den farblichen Kodierungen der RViz-Achsen (Rot, Grün, Blau), formatiert mit Unterstrichen (z.B. `X:_407_mm`), um Text-Justierungs-Bugs in RViz zu umgehen. Geister-Marker werden durch einen sauberen DELETEALL-Mechanismus komplett verhindert. Zusätzlich laufen die Nodes `yolo_moveit_collision.py`, die die YOLO Bounding-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten umwandelt (direkt über eine RViz Checkbox schaltbar) und diese als strikte, massive Hindernisse (Solid Obstacles) für den gesamten Roboter in die Umgebung einfügt (inklusive eines dynamischen Ghost-Objekt-Clearings für verschwundene Objekte), `rviz_overlay.py`, das ein 2D Head-Up-Display (HUD) mit den Echtzeit-TCP-Koordinaten (X/Y/Z) in den RViz-Achsenfarben direkt in das Sichtfeld projiziert und dabei dynamisch den vom Gamepad gewählten Referenzrahmen anzeigt, sowie `set_fake_initial_pose.py`, welches den simulierten Fake-Arm bei der Initialisierung automatisch auf eine definierte Startpose (X=200, Y=0, Z=150) ausrichtet, indem es den Servo-Server kurzzeitig pausiert.
+    * **Funktionsweise:** Führt `zed_camera.launch.py` aus, um den nativen Stereolabs-Treiber zu initialisieren (konfiguriert auf den geometrisch hochpräzisen ULTRA Tiefenmodus mit Auto-Belichtung für eine optimale Punktwolken-Dichte im Arbeitsbereich) und sendet simultan eine statische Transformation von `link_base` zu `zed_camera_link`. Standardmäßig ist dies für ein physisches Stativ-Setup parametrisiert (x=0.75m, y=0.0m, z=0.40m, pitch=45°, yaw=180°), wodurch die Kamera in RViz2 direkt in das Weltkoordinatensystem des Roboters eingebunden wird. Zusätzlich laufen mehrere eigene Python-Skripte: `zed_stand_publisher.py` generiert mathematisch exakt das 3D-Modell eines 20x20mm V-Slot Aluminiumprofils sowie das ZED-Kameramesh (`ZEDM.stl`); die Node `zed_yolo_3d_bbox.py` verarbeitet parallel den RGB- und Depth-Stream der Kamera mit GPU-Beschleunigung und dem **YOLOv8 Large (`yolov8l.pt`)** Modell. Sie extrahiert die echte 3D-Punktwolke jedes erkannten Objekts, transformiert diese in das Weltkoordinatensystem des Roboters, filtert den physischen Roboter-Fuß (`X < 0.25`) und Tiefenrauschen ("Flying Pixels") robust über das 2. und 98. Perzentil heraus, wendet eine **Exponentielle Glättung (EMA-Filter)** an, um Zittern der Bounding-Boxen zu eliminieren, und isoliert das Objekt strikt vom Hintergrund. Das Ergebnis sind zitterfreie, millimetergenaue 3D-Bounding-Boxen, die **auf die Tischebene (`Z=0.0`) geerdet** sind und live als **1mm Wireframe-Kanten (`LINE_LIST`)** in RViz publiziert werden. Direkt über der Box werden mehrere, präzise übereinander gestapelte Text-Label eingeblendet. Diese Labels zeigen den Objektnamen (Weiß) sowie die X/Y/Z-Koordinaten in den farblichen Kodierungen der RViz-Achsen (Rot, Grün, Blau), formatiert mit Unterstrichen (z.B. `X:_407_mm`), um Text-Justierungs-Bugs in RViz zu umgehen. Geister-Marker werden durch einen sauberen DELETEALL-Mechanismus komplett verhindert. Zusätzlich laufen die Nodes `yolo_moveit_collision.py`, die die YOLO Bounding-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten umwandelt (direkt über eine RViz Checkbox schaltbar) und diese als strikte, massive Hindernisse (Solid Obstacles) für den gesamten Roboter in die Umgebung einfügt (inklusive eines dynamischen Ghost-Objekt-Clearings für verschwundene Objekte), und `rviz_overlay.py`, das ein 2D Head-Up-Display (HUD) mit den Echtzeit-TCP-Koordinaten (X/Y/Z) in den RViz-Achsenfarben direkt in das Sichtfeld projiziert und dabei dynamisch den vom Gamepad gewählten Referenzrahmen anzeigt.
 
 ### 5.2 🗣️ Sprachsteuerung & Interaktion
 
@@ -237,6 +237,11 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Aufgabe:** Prädiktives Eingreifen vor Kollisionen bei manueller Gamepad-Steuerung.
     * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt asynchron die aktuelle EEF-Position ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Kollision droht. Siehe **Abschnitt 6** für die vollständige technische Tiefenanalyse.
 
+* **`fake_initial_pose`**
+    * **Zweck:** Automatische Initialisierung der Startpose des simulierten Roboterarms.
+    * **Aufgabe:** Fährt den Fake-Arm auf die Standard-Startposition (X=200, Y=0, Z=150).
+    * **Funktionsweise:** Ruft zunächst den Service `/servo_server/stop_servo` auf, um den MoveIt Servo Server temporär zu pausieren und Befehlskonflikte zu vermeiden. Konstruiert dann eine `JointTrajectory` Nachricht mit fest vordefinierten Gelenkwinkeln (entspricht X=200, Y=0, Z=150) und publiziert diese direkt auf das Topic `/lite6_traj_controller/joint_trajectory`. Nach 1 Sekunde Wartezeit für die Bewegungsausführung in der Simulation wird der Service `/servo_server/start_servo` aufgerufen, um die manuelle Gamepad- oder HUD-Steuerung nahtlos wieder freizugeben.
+
 * **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
     * **Zweck:** Hard-Stop Kollisionsvermeidung auf MoveIt-Ebene.
     * **Aufgabe:** Blockiert Bewegungen strikt bei Annäherung an YOLO-Objekte, erlaubt aber Ausweichmanöver.
@@ -253,6 +258,10 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Zweck:** Visuelles Echtzeit-Feedback in RViz2.
     * **Aufgabe:** Optische Aufwertung des 3D-Arbeitsbereichs.
     * **Funktionsweise:** Trackt `link_eef` via TF2. Publiziert `MarkerArray` mit interaktiven Pick-and-Place Zielen (Würfel, Zylinder) und statischen Grenzen (Tischkanten) für die Simulation ohne Live-YOLO Daten.
+* **`rviz_control_robot_hud`**
+    * **Zweck:** 2D HUD Panel innerhalb von RViz für manuelles Jogging des Roboters.
+    * **Aufgabe:** Bietet ein grafisches Steuerkreuz (D-Pad) zur Steuerung des Roboters per Mausklick.
+    * **Funktionsweise:** Implementiert in C++ als Qt-Plugin. Generiert beim Button-Klick einen TwistStamped-Befehl auf `/servo_server/delta_twist_cmds`. *Aktivierung in RViz:* `Panels -> Add New Panel -> rviz_control_robot_hud -> ControlPanel`.
 * **`rosbridge_server`**
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
@@ -617,6 +626,8 @@ dev_ws/
 ├── src/
 │   ├── collision_check/            # 🛡️ Python: Prädiktiver Kollisionsschutz
 │   │   └── collision_check/checker.py
+│   ├── fake_initial_pose/          # 🤖 Python: Setzt Fake-Arm Startpose
+│   │   └── fake_initial_pose/set_initial_pose_node.py
 │   ├── gaze_control/               # 👁️ Python: PyQt5 Gaze-Control-UI
 │   ├── motion_sequence/            # 🦾 Python: Kartesische Bewegungs-State-Machine
 │   │   └── motion_sequence/motion_sequence.py
@@ -629,9 +640,10 @@ dev_ws/
 │   │       ├── rviz_overlay.py                # RViz 2D HUD Overlay für TCP
 │   │       ├── yolo_moveit_collision.py      # MoveIt Kollisionsobjekte (on/off)
 │   │       ├── zed_stand_publisher.py        # 3D-Stativ Mesh Publisher
-│   │       ├── zed_yolo_3d_bbox.py           # 3D Objekterkennung & Bounding-Boxen
-│   │       └── set_fake_initial_pose.py      # Init der TCP-Pose des simulierten Arms
+│   │       └── zed_yolo_3d_bbox.py           # 3D Objekterkennung & Bounding-Boxen
 │   ├── ros2_whisper/               # 🎙️ Whisper AI Speech-to-Text
+│   ├── rviz_control_robot_hud/     # 🖥️ C++: RViz2 2D Control Panel Plugin
+│   │   └── src/control_panel.cpp
 │   ├── rviz_marker/                # 📍 Python: RViz2 Marker-Publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent-Parser & Filter
 │   ├── websocket/                  # 📊 Python/JS: Workspace Analyzer & Dashboard

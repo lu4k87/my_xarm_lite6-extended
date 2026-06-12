@@ -140,16 +140,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # -----------------------------------------------------------------------
-    # Set Fake Initial Pose Node
-    # -----------------------------------------------------------------------
-    set_fake_initial_pose_node = Node(
-        package='my_zed_tf_bringup',
-        executable='set_fake_initial_pose.py',
-        name='set_fake_initial_pose',
-        output='screen'
-    )
-
     return LaunchDescription([
         # Arguments
         camera_model_arg,
@@ -166,5 +156,4 @@ def generate_launch_description():
         pointcloud_optimizer_node,
         yolo_moveit_collision_node,
         rviz_overlay_node,
-        set_fake_initial_pose_node,
     ])
