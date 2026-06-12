@@ -259,6 +259,13 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
+    checker_node = Node(
+        package='collision_check',
+        executable='checker',
+        name='collision_checker',
+        output='screen',
+    )
+
     return [
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -270,6 +277,7 @@ def launch_setup(context, *args, **kwargs):
         joint_state_broadcaster,
         ros2_control_launch,
         traj_controller_node,
+        checker_node,
     ] + controller_nodes
 
 

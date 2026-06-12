@@ -21,7 +21,7 @@ This repository is a continuously evolving research and evaluation platform for 
 
 ---
 
-## <a id=\"chapter-1\"></a> 1. 📋 Project Overview
+## <a id="chapter-1"></a> 1. 📋 Project Overview
 
 ### Concept: An Integrated, Multimodal Teleoperation Platform
 The primary goal of this project is the development and implementation of a modular control and interaction platform for the UFactory xArm Lite 6 robot arm. The system consolidates heterogeneous, multimodal input methods into a centralized software environment and places a consistent focus on maximized usability and intuitive operation. The system handles the calculation of complex robot movements in the background. This creates a simple interface that directly translates the user's intentions into robotic actions.
@@ -51,7 +51,7 @@ A key core and innovative character of the project lies in the scientific analys
 * **Answering the Transformation Question:** Concrete practical assistance on the core question: *“How can processes and workplaces be structured to measurably meet the human-centered requirements of Industry 5.0?”*
 * **Service Potential:** The resulting frameworks and guidelines have the potential to be provided as a validated, monetizable consulting and service offering for industry, accompanying digital and demographic changes in production.
 
-## <a id=\"chapter-2\"></a> 2. 🔬 Architecture & Guiding Principles
+## <a id="chapter-2"></a> 2. 🔬 Architecture & Guiding Principles
 
 ### 2.1 Operating Modes: FAKE vs. REAL (Hardware Interfaces)
 The platform strictly distinguishes between two operating modes for the robot arm. This distinction refers **exclusively to the `ros2_control` hardware interface** and is independent of sensors (like the camera or YOLO, which can run live in both modes):
@@ -114,7 +114,7 @@ The software-side infrastructure is modularly encapsulated and fully integrated 
 
 ---
 
-## <a id=\"chapter-3\"></a> 3. 📊 Monitoring: Dashboard & Workspace Analyzer
+## <a id="chapter-3"></a> 3. 📊 Monitoring: Dashboard & Workspace Analyzer
 
 Once the nodes are launched via ROS 2 Nexus, the live state of the system can be monitored using the **ROS2 Core Dashboard**. This is a web-based real-time UI, which fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface.
 
@@ -136,7 +136,7 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 
 ---
 
-## <a id=\"chapter-4\"></a> 4. 🕹️ Multimodal Technologies & Interaction Concepts
+## <a id="chapter-4"></a> 4. 🕹️ Multimodal Technologies & Interaction Concepts
 
 ### 4.1 Robot Control Methods (Inputs)
 **Gamepad Teleoperation:** <br> 
@@ -193,7 +193,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ---
 
-## <a id=\"chapter-5\"></a> 5. ⚙️ Core Features & ROS 2 Nodes
+## <a id="chapter-5"></a> 5. ⚙️ Core Features & ROS 2 Nodes
 
 ### 5.1 👁️ Computer Vision & Perception
 
@@ -299,7 +299,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ---
 
-## <a id=\"chapter-6\"></a> 6. 🎮 Gamepad Control — Deep Dive
+## <a id="chapter-6"></a> 6. 🎮 Gamepad Control — Deep Dive
 
 This section provides a full technical reference for the two-node gamepad pipeline that enables real-time, collision-safe teleoperation of the xArm Lite 6 using an Xbox One Elite Series 2 Controller.
 
@@ -488,7 +488,7 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 
 ---
 
-## <a id=\"chapter-7\"></a> 7. 📦 Dependencies & Requirements
+## <a id="chapter-7"></a> 7. 📦 Dependencies & Requirements
 
 ### System Requirements
 
@@ -594,7 +594,7 @@ source install/setup.bash
 
 ---
 
-## <a id=\"chapter-8\"></a> 8. 🚀 Execution: How to Run the System
+## <a id="chapter-8"></a> 8. 🚀 Execution: How to Run the System
 
 This section describes the step-by-step process to launch both the hardware and the software components. **ROS 2 Nexus** serves as the central web-based GUI to launch all nodes, sensors, and algorithms with a single click.
 
@@ -667,7 +667,7 @@ The buttons, categories, and commands in the ROS 2 Nexus Web interface are highl
 
 ---
 
-## <a id=\"chapter-9\"></a> 9. 🗂️ Repository Structure
+## <a id="chapter-9"></a> 9. 🗂️ Repository Structure
 
 ```
 dev_ws/
