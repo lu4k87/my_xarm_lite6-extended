@@ -247,13 +247,13 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 * **`collision_check`** — `src/collision_check/collision_check/checker.py`
     * **Purpose:** Hardware protection (table surface collision prevention).
     * **Task:** Predictive intervention before collisions during manual gamepad control.
-    * **How it works:** Intercepts raw `/joy` signals, asynchronously queries the robot's current EEF position, computes a forward-projected position, and publishes a sanitized `/joy_check` signal with the downward axis zeroed if a collision is imminent. See **Section 6** for the full technical deep-dive.
+    * **How it works:** Intercepts raw `/joy` signals, synchronously reads the robot's real-time EEF position via `tf2_ros`, computes a forward-projected position, and publishes a sanitized `/joy_check` signal with the downward axis zeroed if a table collision is imminent. Furthermore, it triggers Gamepad Rumble feedback on both table collisions and dynamic 3D MoveIt Servo collisions (`/servo_server/status`). See **Section 6** for the full technical deep-dive.
 
 * **`set_pose_moveit_node`** *(in package `rviz_pose_control` | REAL & FAKE modes)*
     * **Purpose:** Hardware-agnostic initialization of the robot's starting pose and absolute Cartesian positioning without IK servers.
     * **Task:** Safely moves the arm (real or simulated) to a default starting position (Joint Trajectory) OR to a specific X, Y, Z coordinate (Cartesian).
     * **How it works:** Provides TWO services: `/ui/execute_initial_pose` and `/ui/execute_move_to_pose`.
-        * **Initial Pose:** Features an **auto-startup trigger** that automatically executes the initial pose 5 seconds after the node is launched, ensuring the robot is always ready. It calls `/servo_server/stop_servo` to pause MoveIt Servo, constructs a `JointTrajectory` with predefined joint angles, and publishes directly to the `/lite6_traj_controller/joint_trajectory` topic before restarting Servo.
+        * **Initial Pose:** Features an **intelligent auto-startup trigger** that actively monitors the ROS 2 network. Once the internal MoveIt Servo services (`start_servo` & `stop_servo`) are online and the `tf2` tree is stable, it automatically executes the initial pose. It calls `/servo_server/stop_servo` to pause MoveIt Servo, constructs a `JointTrajectory` with predefined joint angles, and publishes directly to the `/lite6_traj_controller/joint_trajectory` topic before restarting Servo.
         * **Absolute Pose (Cartesian):** Features a highly performant **Cartesian P-Controller** (Joystick Mode) in Python. Instead of relying on the heavy `move_group` IK server (which frequently causes `rmw_cyclonedds_cpp` participant limit crashes), this service actively reads the real-time TCP position via `tf2_ros` and streams precise `TwistStamped` velocity commands to `~/delta_twist_cmds` at 20Hz until the target XYZ coordinates are reached within a 2mm tolerance. This ensures extreme stability and keeps the ROS 2 network footprint minimal.
 
 * **`scan_trajectory_node`** *(in package `xarm_moveit_servo` | REAL & FAKE modes)*
@@ -332,7 +332,7 @@ flowchart LR
 
 **File:** `src/collision_check/collision_check/checker.py`
 
-This node acts as a transparent **safety proxy** between the raw joystick driver and the motion controller. Every incoming `/joy` message triggers an asynchronous service call to fetch the current EEF position; only after receiving the position response is the (potentially modified) signal forwarded.
+This node acts as a transparent **safety proxy** between the raw joystick driver and the motion controller. It is **100% hardware-agnostic** (works identically in REAL and FAKE modes). Every incoming `/joy` message triggers a synchronous `tf2_ros` lookup to read the real-time EEF position (`link_base` to `link_tcp`); only after retrieving the coordinates is the (potentially modified) signal forwarded. It also actively provides **haptic feedback** (gamepad vibration) whenever the robot approaches the table or encounters a dynamic YOLO bounding box obstacle via MoveIt Servo.
 
 #### 6.2.1 Predictive Collision Algorithm
 

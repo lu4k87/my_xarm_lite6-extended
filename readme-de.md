@@ -249,13 +249,13 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 * **`collision_check`** — `src/collision_check/collision_check/checker.py`
     * **Zweck:** Hardwareschutz (Verhinderung von Tischkollisionen).
     * **Aufgabe:** Prädiktives Eingreifen vor Kollisionen bei manueller Gamepad-Steuerung.
-    * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt asynchron die aktuelle EEF-Position ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Kollision droht. Siehe **Abschnitt 6** für die vollständige technische Tiefenanalyse.
+    * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt synchron über `tf2_ros` die aktuelle EEF-Position in Echtzeit ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Tischkollision droht. Zudem steuert der Node haptisches Feedback (Gamepad-Vibration) bei Tischkollisionen sowie bei dynamischen 3D-Hindernissen von MoveIt Servo (`/servo_server/status`). Siehe **Abschnitt 6** für die vollständige technische Tiefenanalyse.
 
 * **`set_pose_moveit_node`** *(im Paket `rviz_pose_control` | REAL & FAKE Modi)*
     * **Zweck:** Hardware-unabhängige Initialisierung der Roboter-Startpose sowie absolute kartesische Positionierung ohne IK-Server.
     * **Aufgabe:** Fährt den Arm (Real oder Simulation) sicher auf eine Standard-Startposition (Joint Trajectory) ODER auf eine spezifische X, Y, Z Koordinate (Kartesisch).
     * **Funktionsweise:** Bietet ZWEI Services an: `/ui/execute_initial_pose` und `/ui/execute_move_to_pose`.
-        * **Initial Pose:** Verfügt über einen **Auto-Startup-Trigger**, der exakt 5 Sekunden nach dem Start des Nodes völlig automatisch die Startposition anfährt. Der Node pausiert dafür zunächst den MoveIt Servo Server (`/servo_server/stop_servo`), publiziert eine `JointTrajectory` mit fest vordefinierten Gelenkwinkeln direkt an den `/lite6_traj_controller/joint_trajectory` und reaktiviert anschließend Servo.
+        * **Initial Pose:** Verfügt über einen **intelligenten Auto-Startup-Trigger**, der das ROS 2 Netzwerk überwacht. Sobald die internen Services von MoveIt Servo (`start_servo` & `stop_servo`) erreichbar sind und sich der TF-Baum stabilisiert hat, fährt der Node völlig automatisch die Startposition an. Der Node pausiert dafür zunächst den MoveIt Servo Server (`/servo_server/stop_servo`), publiziert eine `JointTrajectory` mit fest vordefinierten Gelenkwinkeln direkt an den `/lite6_traj_controller/joint_trajectory` und reaktiviert anschließend Servo.
         * **Absolute Pose (Kartesisch):** Implementiert einen hochperformanten **kartesischen P-Regler** (Joystick-Modus) in Python. Anstatt sich auf den ressourcenfressenden `move_group` IK-Server zu verlassen (welcher oftmals zu Abstürzen wegen des `rmw_cyclonedds_cpp` Node-Limits führt), liest dieser Service die aktuelle TCP-Position via `tf2_ros` in Echtzeit aus. Er sendet dann präzise `TwistStamped` Geschwindigkeitsbefehle mit 20Hz an `~/delta_twist_cmds`, bis die gewünschten XYZ-Zielkoordinaten bis auf 2mm genau erreicht sind. Dies garantiert extreme Stabilität und hält das ROS 2 Netzwerk schlank.
 
 * **`scan_trajectory_node`** *(im Paket `xarm_moveit_servo` | REAL & FAKE Modi)*
@@ -334,7 +334,7 @@ flowchart LR
 
 **Datei:** `src/collision_check/collision_check/checker.py`
 
-Fungiert als transparenter **Sicherheits-Proxy** zwischen rohem Joystick-Treiber und Bewegungscontroller. Jede `/joy`-Nachricht löst einen asynchronen Service-Call für die aktuelle EEF-Position aus — erst danach wird das (ggf. modifizierte) Signal weitergeleitet.
+Dieser Node fungiert als transparenter **Sicherheits-Proxy** zwischen dem rohen Joystick-Treiber und dem Motion-Controller. Er ist **zu 100% Hardware-unabhängig** (funktioniert identisch im REAL- und FAKE-Modus). Jedes eingehende `/joy`-Signal löst eine synchrone `tf2_ros`-Abfrage aus, um die Echtzeit-Position des Endeffektors (`link_base` zu `link_tcp`) zu bestimmen; erst nach der Koordinatenabfrage wird das (ggf. modifizierte) Signal weitergeleitet. Er liefert zudem **haptisches Feedback** (Gamepad-Vibration), wenn sich der Roboter dem Tisch nähert oder über MoveIt Servo ein dynamisches 3D-Hindernis (YOLO Bounding Box) erkannt wird.
 
 #### 6.2.1 Prädiktiver Kollisions-Algorithmus
 
