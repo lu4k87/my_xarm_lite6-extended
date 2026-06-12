@@ -10,7 +10,7 @@
 #include <QGridLayout>
 #include <QVBoxLayout>
 
-namespace rviz_control_robot_panel
+namespace rviz_robot_control_panel
 {
 
 class ControlPanel : public rviz_common::Panel
@@ -79,6 +79,6 @@ protected:
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);
 };
 
-} // namespace rviz_control_robot_panel
+} // namespace rviz_robot_control_panel
 
 #endif // RVIZ_CONTROL_ROBOT_PANEL_HPP

@@ -258,10 +258,10 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Purpose:** Real-time visual feedback in RViz2.
     * **Task:** Visual enhancement of the 3D simulation work area.
     * **How it works:** Tracks `link_eef` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data.
-* **`rviz_control_robot_panel`**
+* **`rviz_robot_control_panel`**
     * **Purpose:** 2D HUD Panel inside RViz for manual 6-DoF robot jogging.
     * **Task:** Provides a graphical control pad (D-Pad) for translations (X, Y, Z), dedicated buttons for rotations (Roll, Pitch, Yaw), and quick-access buttons for the fake initial pose and planning frame switching (Base/TCP).
-    * **How it works:** Implemented in C++ as a Qt plugin. Generates a `TwistStamped` command on `/servo_server/delta_twist_cmds` upon button clicks, adapting dynamically to the selected reference frame (`/ui/robot_control/current_frame`). *Activation in RViz:* `Panels -> Add New Panel -> rviz_control_robot_panel -> ControlPanel`.
+    * **How it works:** Implemented in C++ as a Qt plugin. Generates a `TwistStamped` command on `/servo_server/delta_twist_cmds` upon button clicks, adapting dynamically to the selected reference frame (`/ui/robot_control/current_frame`). *Activation in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
 * **`rviz_overlay`**
     * **Purpose:** 2D Head-Up Display (HUD) inside the RViz 3D view.
     * **Task:** Projects real-time TCP coordinates (X/Y/Z) cleanly formatted in their respective axis colors directly into the user's field of view.
@@ -681,8 +681,8 @@ dev_ws/
 │   │       └── zed_yolo_3d_bbox.py           # 3D object detection & bounding boxes
 │   ├── ros2_whisper/               # 🎙️ Whisper AI speech-to-text node
 │   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D HUD Overlay for TCP
-│   ├── rviz_control_robot_panel/   # 🖥️ C++: RViz2 2D Control Panel Plugin
-│   │   └── src/rviz_control_robot_panel.cpp
+│   ├── rviz_robot_control_panel/   # 🖥️ C++: RViz2 2D Control Panel Plugin
+│   │   └── src/rviz_robot_control_panel.cpp
 │   ├── rviz_marker/                # 📍 Python: RViz2 marker publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent parser & filter
 │   ├── websocket/                  # 📊 Python/JS: Workspace analyzer & Dashboard

@@ -22,7 +22,7 @@ Panels:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
-  - Class: rviz_control_robot_panel/ControlPanel
+  - Class: rviz_robot_control_panel/ControlPanel
     Name: ControlPanel
 Visualization Manager:
   Class: ""

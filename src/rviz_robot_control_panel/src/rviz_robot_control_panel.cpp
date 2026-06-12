@@ -1,9 +1,9 @@
-#include "rviz_control_robot_panel/rviz_control_robot_panel.hpp"
+#include "rviz_robot_control_panel/rviz_robot_control_panel.hpp"
 #include <pluginlib/class_list_macros.hpp>
 #include <rviz_common/display_context.hpp>
 #include <cstdlib>
 
-namespace rviz_control_robot_panel
+namespace rviz_robot_control_panel
 {
 
 ControlPanel::ControlPanel(QWidget* parent)
@@ -218,7 +218,7 @@ void ControlPanel::publishTwist()
   }
 }
 
-} // namespace rviz_control_robot_panel
+} // namespace rviz_robot_control_panel
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(rviz_control_robot_panel::ControlPanel, rviz_common::Panel)
+PLUGINLIB_EXPORT_CLASS(rviz_robot_control_panel::ControlPanel, rviz_common::Panel)
