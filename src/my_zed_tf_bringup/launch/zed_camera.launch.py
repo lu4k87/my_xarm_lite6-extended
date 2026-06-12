@@ -61,6 +61,13 @@ def generate_launch_description():
     tf_yaw_arg = DeclareLaunchArgument('tf_yaw', default_value='3.14159',
         description='Kamera Yaw-Winkel [rad] (3.14159 = 180°, zeigt zum Roboter)')
 
+    # Path to parameter override
+    config_override_path = os.path.join(
+        get_package_share_directory('my_zed_tf_bringup'),
+        'config',
+        'zed_override.yaml'
+    )
+
     # -----------------------------------------------------------------------
     # ZED Wrapper Launch
     # -----------------------------------------------------------------------
@@ -76,6 +83,7 @@ def generate_launch_description():
             'camera_model': LaunchConfiguration('camera_model'),
             'publish_tf': 'false',
             'publish_map_tf': 'false',
+            'ros_params_override_path': config_override_path,
         }.items()
     )
 

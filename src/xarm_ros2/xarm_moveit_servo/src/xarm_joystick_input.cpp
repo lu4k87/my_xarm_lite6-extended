@@ -18,6 +18,7 @@
 #include <sensor_msgs/msg/joy.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/int32.hpp>
 #include <xarm_msgs/srv/call.hpp>
 #include <xarm_msgs/srv/get_float32_list.hpp>
 #include <algorithm> // Für std::clamp
@@ -112,6 +113,28 @@ namespace xarm_moveit_servo
         auto frame_msg = std::make_unique<std_msgs::msg::String>();
         frame_msg->data = planning_frame_;
         frame_pub_->publish(std::move(frame_msg));
+        
+        set_speed_index_sub_ = this->create_subscription<std_msgs::msg::Int32>(
+            "/ui/robot_control/set_speed_index", 10,
+            [this](const std_msgs::msg::Int32::SharedPtr msg) {
+                if (msg->data >= 0 && msg->data < static_cast<int>(speed_levels_.size())) {
+                    if (current_speed_index_ != msg->data) {
+                        current_speed_index_ = msg->data;
+                        linear_speed_scale_ = speed_levels_[current_speed_index_];
+                        
+                        auto speed_msg = std::make_unique<std_msgs::msg::Float32>();
+                        speed_msg->data = linear_speed_scale_;
+                        speed_pub_->publish(std::move(speed_msg));
+                        
+                        auto btn_msg = std::make_unique<std_msgs::msg::String>();
+                        btn_msg->data = "Speed (RViz): " + std::to_string(current_speed_index_ + 1);
+                        button_press_pub_->publish(std::move(btn_msg));
+                        
+                        RCLCPP_INFO(this->get_logger(), "Geschwindigkeit gesetzt auf Stufe %d: %.3f (via RViz)", current_speed_index_ + 1, linear_speed_scale_);
+                    }
+                }
+            }
+        );
         
         timeout_timer_ = this->create_wall_timer(
             std::chrono::seconds(5),

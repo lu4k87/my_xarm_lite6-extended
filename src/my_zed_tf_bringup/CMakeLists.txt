@@ -3,8 +3,8 @@ project(my_zed_tf_bringup)
 
 find_package(ament_cmake REQUIRED)
 
-# Install launch files and meshes
-install(DIRECTORY launch meshes
+# Install launch files, meshes, and config
+install(DIRECTORY launch meshes config
   DESTINATION share/${PROJECT_NAME}
 )
 

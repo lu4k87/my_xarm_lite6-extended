@@ -19,6 +19,9 @@
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/LinearMath/Quaternion.h>
+#include <QSlider>
+#include <std_msgs/msg/int32.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 namespace rviz_robot_control_panel
 {
@@ -59,12 +62,17 @@ protected Q_SLOTS:
   
   // Slot for absolute move
   void onButtonMoveTo();
+  
+  // Slot for speed slider
+  void onSpeedSliderChanged(int value);
 
 protected:
   // ROS Node
   rclcpp::Node::SharedPtr node_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr frame_pub_;
+  rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr set_speed_index_pub_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr speed_sub_;
 
   // Qt UI Elements
   QPushButton* btn_x_plus_;
@@ -85,6 +93,9 @@ protected:
   QPushButton* btn_frame_base_;
   QPushButton* btn_frame_tcp_;
   
+  QSlider* speed_slider_;
+  QLabel* speed_label_;
+  
   // Absolute Move Elements
   QDoubleSpinBox* spin_x_;
   QDoubleSpinBox* spin_y_;
@@ -103,6 +114,7 @@ protected:
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr scan_client_;
   
   std::atomic<bool> moveit_running_{false};
+  float current_speed_scale_ = 0.5f;
   
   void setupUI();
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);

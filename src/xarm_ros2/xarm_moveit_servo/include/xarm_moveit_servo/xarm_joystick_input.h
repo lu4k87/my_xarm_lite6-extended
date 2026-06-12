@@ -14,6 +14,7 @@
 #include <std_srvs/srv/set_bool.hpp>
 #include "std_msgs/msg/float32.hpp" // Für die Geschwindigkeitsanzeige
 #include "std_msgs/msg/string.hpp"   // Für Statusmeldungen
+#include "std_msgs/msg/int32.hpp"
 #include <vector>
 
 // ***************************************************************
@@ -108,6 +109,7 @@ private:
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr speed_pub_;            
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr button_press_pub_;      
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr frame_pub_;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr set_speed_index_sub_;
 
     // ***************************************************************
     // 2. ROS 2 Service Clients

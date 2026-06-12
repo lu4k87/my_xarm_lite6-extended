@@ -61,7 +61,7 @@ class RvizServoStatusOverlayNode(Node):
             # Warning Overlay Update
             if self.warning_msg:
                 time_since_warning = time.time() - self.warning_time
-                if time_since_warning < 5.0:
+                if time_since_warning < 2.0:
                     warn_msg = OverlayText()
                     warn_msg.action = OverlayText.ADD
                     warn_msg.horizontal_alignment = OverlayText.CENTER
@@ -71,7 +71,7 @@ class RvizServoStatusOverlayNode(Node):
                     warn_msg.width = 600
                     warn_msg.height = 60
                     
-                    if "HALT" in self.warning_msg or "PLANE" in self.warning_msg:
+                    if "HALT" in self.warning_msg or "PLANE" in self.warning_msg or "APPROACHING COLLISION" in self.warning_msg:
                         warn_msg.bg_color = ColorRGBA(r=1.0, g=0.0, b=0.0, a=0.8) # Rot
                         warn_msg.fg_color = ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)
                     else:
@@ -90,7 +90,7 @@ class RvizServoStatusOverlayNode(Node):
                     warn_msg.text = html_text
                     self.warning_publisher.publish(warn_msg)
                 else:
-                    # Ausblenden nach 5 Sekunden
+                    # Ausblenden nach 2 Sekunden
                     warn_msg = OverlayText()
                     warn_msg.action = OverlayText.DELETE
                     self.warning_publisher.publish(warn_msg)

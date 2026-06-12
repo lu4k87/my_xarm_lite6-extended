@@ -27,6 +27,29 @@ void ControlPanel::onInitialize()
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
   initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
   scan_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_scan_trajectory");
+  
+  set_speed_index_pub_ = node_->create_publisher<std_msgs::msg::Int32>("/ui/robot_control/set_speed_index", 10);
+  speed_sub_ = node_->create_subscription<std_msgs::msg::Float32>(
+    "/ui/robot_control/current_speed", rclcpp::QoS(1).transient_local(),
+    [this](const std_msgs::msg::Float32::SharedPtr msg) {
+        int idx = 2; // Default 0.5
+        if (msg->data == 0.125f) idx = 0;
+        else if (msg->data == 0.25f) idx = 1;
+        else if (msg->data == 0.5f) idx = 2;
+        else if (msg->data == 0.75f) idx = 3;
+        else if (msg->data == 1.0f) idx = 4;
+        
+        QMetaObject::invokeMethod(this, [this, idx, val=msg->data]() {
+            this->current_speed_scale_ = val;
+            speed_slider_->blockSignals(true);
+            speed_slider_->setValue(idx);
+            speed_slider_->blockSignals(false);
+            
+            QString text = QString("Speed: %1").arg(val, 0, 'f', 3);
+            speed_label_->setText(text);
+        });
+    }
+  );
 }
 
 void ControlPanel::setupUI()
@@ -113,6 +136,17 @@ void ControlPanel::setupUI()
   spin_yaw_ = new QDoubleSpinBox(); spin_yaw_->setRange(-3.15, 3.15); spin_yaw_->setSingleStep(0.1); spin_yaw_->setValue(0.0);
   
   btn_move_to_ = new QPushButton("Move To Absolute Pose");
+
+  QHBoxLayout* speed_layout = new QHBoxLayout();
+  speed_label_ = new QLabel("Speed: 0.50");
+  speed_slider_ = new QSlider(Qt::Horizontal);
+  speed_slider_->setRange(0, 4);
+  speed_slider_->setTickPosition(QSlider::TicksBelow);
+  speed_slider_->setTickInterval(1);
+  speed_slider_->setValue(2);
+  speed_layout->addWidget(speed_label_);
+  speed_layout->addWidget(speed_slider_);
+  main_layout->addLayout(speed_layout);
   
   move_layout->addWidget(lbl_x, 0, 0); move_layout->addWidget(spin_x_, 0, 1);
   move_layout->addWidget(lbl_y, 0, 2); move_layout->addWidget(spin_y_, 0, 3);
@@ -186,6 +220,8 @@ void ControlPanel::setupUI()
   connect(btn_frame_base_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameBase);
   connect(btn_frame_tcp_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameTCP);
   connect(btn_move_to_, &QPushButton::clicked, this, &ControlPanel::onButtonMoveTo);
+  
+  connect(speed_slider_, &QSlider::valueChanged, this, &ControlPanel::onSpeedSliderChanged);
 
   // All buttons release
   connect(btn_x_plus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
@@ -213,18 +249,18 @@ void ControlPanel::updateTwist(double x, double y, double z, double rx, double r
   current_twist_.twist.angular.z = rz;
 }
 
-void ControlPanel::onButtonPressXPlus() { updateTwist(0.1, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressXMinus() { updateTwist(-0.1, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressYPlus() { updateTwist(0.0, 0.1, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressYMinus() { updateTwist(0.0, -0.1, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressZPlus() { updateTwist(0.0, 0.0, 0.1, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressZMinus() { updateTwist(0.0, 0.0, -0.1, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotXPlus() { updateTwist(0.0, 0.0, 0.0, 0.2, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotXMinus() { updateTwist(0.0, 0.0, 0.0, -0.2, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotYPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.2, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotYMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, -0.2, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotZPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.2); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotZMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.2); publish_timer_->start(50); }
+void ControlPanel::onButtonPressXPlus() { updateTwist(0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressXMinus() { updateTwist(-0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressYPlus() { updateTwist(0.0, 0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressYMinus() { updateTwist(0.0, -0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressZPlus() { updateTwist(0.0, 0.0, 0.1 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressZMinus() { updateTwist(0.0, 0.0, -0.1 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXPlus() { updateTwist(0.0, 0.0, 0.0, 0.2 * current_speed_scale_, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXMinus() { updateTwist(0.0, 0.0, 0.0, -0.2 * current_speed_scale_, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.2 * current_speed_scale_, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, -0.2 * current_speed_scale_, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotZPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.2 * current_speed_scale_); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotZMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.2 * current_speed_scale_); publish_timer_->start(50); }
 
 void ControlPanel::onButtonInitialPose()
 {
@@ -325,6 +361,13 @@ void ControlPanel::onButtonMoveTo()
     }
     moveit_running_ = false;
   }).detach();
+}
+
+void ControlPanel::onSpeedSliderChanged(int value)
+{
+  auto msg = std_msgs::msg::Int32();
+  msg.data = value;
+  set_speed_index_pub_->publish(msg);
 }
 
 } // namespace rviz_robot_control_panel

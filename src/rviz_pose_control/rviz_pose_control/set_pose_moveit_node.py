@@ -9,6 +9,8 @@ from std_srvs.srv import Trigger
 from xarm_msgs.srv import MoveCartesian
 from moveit_msgs.srv import GetPositionIK
 import math
+import numpy as np
+from scipy.spatial.transform import Rotation as R
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
@@ -52,8 +54,27 @@ class SetPoseMoveitNode(Node):
             self.execute_move_to_pose_cb,
             callback_group=self.cb_group
         )
-        self.get_logger().info('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose) ready.')
+        self.scan_srv = self.create_service(
+            Trigger, 
+            '/ui/execute_scan_path', 
+            self.execute_scan_path_cb,
+            callback_group=self.cb_group
+        )
+        self.get_logger().info('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/execute_scan_path) ready.')
         self.is_executing = False
+        
+        from std_msgs.msg import Float32
+        self.current_speed_scale = 0.5
+        self.speed_sub = self.create_subscription(
+            Float32,
+            '/ui/robot_control/current_speed',
+            self.speed_cb,
+            10,
+            callback_group=self.cb_group
+        )
+        
+    def speed_cb(self, msg):
+        self.current_speed_scale = msg.data
         
         # Start initial pose automatically once MoveIt Servo is ready
         self.startup_timer = self.create_timer(1.0, self._check_servo_ready, callback_group=self.cb_group)
@@ -83,7 +104,7 @@ class SetPoseMoveitNode(Node):
                 self.get_logger().info('MoveIt Servo pausiert.')
                 time.sleep(0.5) 
                 
-            # 2. Publish our trajectory
+            # 2. Publish trajectory
             msg = JointTrajectory()
             msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
             
@@ -117,6 +138,108 @@ class SetPoseMoveitNode(Node):
             
         return response
 
+    def generate_spherical_waypoints(self, center_x, center_y, center_z, radius, num_latitudes=4, num_longitudes=8):
+        """
+        Generiert Wegpunkte auf einer Halbkugel.
+        Die Z-Achse des TCP zeigt auf den Mittelpunkt (center_x, center_y, center_z).
+        """
+        waypoints = []
+        
+        # lat (Theta): 0 (direkt ueber dem Objekt) bis pi/2 (auf Aequator-Hoehe)
+        # lon (Phi): 0 bis 2*pi (einmal um das Objekt herum)
+        for lat in np.linspace(0, math.pi / 2.5, num_latitudes): 
+            for lon in np.linspace(0, 2 * math.pi, num_longitudes, endpoint=False):
+                # 1. Position auf der Kugeloberflaeche berechnen
+                x = center_x + radius * math.sin(lat) * math.cos(lon)
+                y = center_y + radius * math.sin(lat) * math.sin(lon)
+                z = center_z + radius * math.cos(lat)
+                
+                # 2. Look-At Vektor berechnen (Z-Achse des TCP)
+                forward = np.array([center_x - x, center_y - y, center_z - z])
+                forward = forward / np.linalg.norm(forward)
+                
+                # Referenz-Up-Vektor der Welt (Z-Achse)
+                world_up = np.array([0, 0, 1])
+                
+                # Singularitaet abfangen, wenn der Roboter exakt senkrecht ueber dem Objekt steht
+                if abs(np.dot(forward, world_up)) > 0.99:
+                    world_up = np.array([1, 0, 0])
+                
+                # X- und Y-Achse des TCP berechnen (Kreuzprodukt)
+                right = np.cross(world_up, forward)
+                right = right / np.linalg.norm(right)
+                up = np.cross(forward, right)
+                up = up / np.linalg.norm(up)
+                
+                # Rotationsmatrix erstellen: Spalten sind die X, Y, Z Achsen des TCP
+                rot_matrix = np.column_stack((right, up, forward))
+                
+                # In Euler-Winkel konvertieren (Roll, Pitch, Yaw)
+                rot = R.from_matrix(rot_matrix)
+                euler = rot.as_euler('xyz', degrees=False)
+                
+                # Wegpunkt speichern: [x, y, z, roll, pitch, yaw] (in Meter und Radiant)
+                waypoints.append([x, y, z, euler[0], euler[1], euler[2]])
+                
+        return waypoints
+
+    def execute_scan_path_cb(self, request, response):
+        if self.is_executing:
+            response.success = False
+            response.message = "System is already executing a move."
+            return response
+            
+        # Parameter fuer das zu scannende Objekt
+        # Fokuspunkt (x, y, z) im Roboter-Koordinatensystem in Meter
+        obj_center_x = 0.400 
+        obj_center_y = 0.000
+        obj_center_z = 0.050
+        
+        # Scan-Radius um das Objekt in Meter
+        scan_radius = 0.250 
+        
+        self.get_logger().info(f'Generiere 3D Scan Pfad (Radius: {scan_radius}m)...')
+        waypoints = self.generate_spherical_waypoints(
+            obj_center_x, obj_center_y, obj_center_z, scan_radius, 
+            num_latitudes=3, num_longitudes=6
+        )
+        
+        self.get_logger().info(f'{len(waypoints)} Wegpunkte generiert. Starte Scanvorgang.')
+        
+        # Fake-Request Objekt fuer den Aufruf der bestehenden Move-Methode
+        class DummyRequest:
+            pose = [0.0] * 6
+
+        move_req = DummyRequest()
+        move_res = Trigger.Response() # Platzhalter, ret property wird genutzt
+        
+        try:
+            for i, wp in enumerate(waypoints):
+                self.get_logger().info(f'Fahre Wegpunkt {i+1}/{len(waypoints)} an...')
+                
+                # Die Move-Methode erwartet Millimeter fuer XYZ
+                move_req.pose[0] = wp[0] * 1000.0
+                move_req.pose[1] = wp[1] * 1000.0
+                move_req.pose[2] = wp[2] * 1000.0
+                move_req.pose[3] = wp[3] # Roll
+                move_req.pose[4] = wp[4] # Pitch
+                move_req.pose[5] = wp[5] # Yaw
+                
+                # Nutze die Logik zum Anfahren (blockiert bis Ziel erreicht)
+                self.execute_move_to_pose_cb(move_req, move_res)
+                
+                # Kurze Pause an jedem Wegpunkt
+                time.sleep(1.0) 
+                
+            response.success = True
+            response.message = "Scan path completed."
+        except Exception as e:
+            self.get_logger().error(f"Fehler beim Scan-Pfad: {e}")
+            response.success = False
+            response.message = str(e)
+            
+        return response
+
     def execute_move_to_pose_cb(self, request, response):
         if self.is_executing:
             response.ret = -1
@@ -127,15 +250,14 @@ class SetPoseMoveitNode(Node):
         try:
             import tf2_ros
             from geometry_msgs.msg import TwistStamped
-            import numpy as np
 
-            # wir nutzen Servo direkt ueber Twist cmds
+            # Servo direkt ueber Twist cmds
             twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
             
             tf_buffer = tf2_ros.Buffer()
             tf_listener = tf2_ros.TransformListener(tf_buffer, self)
             
-            # Ziel-Koordinaten (Panel sendet mm, wir brauchen m)
+            # Ziel-Koordinaten (Panel sendet mm, Konvertierung in m)
             target_x = request.pose[0] / 1000.0
             target_y = request.pose[1] / 1000.0
             target_z = request.pose[2] / 1000.0
@@ -147,8 +269,11 @@ class SetPoseMoveitNode(Node):
             # P-Regler Konstanten
             Kp_pos = 1.0
             Kp_ori = 0.5
-            max_vel_pos = 0.1 # m/s
-            max_vel_ori = 0.5 # rad/s
+            
+            # Skaliere Geschwindigkeiten anhand des globalen Speed Factors (0.5 ist Standard = 1x)
+            speed_multiplier = self.current_speed_scale / 0.5
+            max_vel_pos = 0.1 * speed_multiplier # m/s
+            max_vel_ori = 0.5 * speed_multiplier # rad/s
             
             rate = self.create_rate(20.0) # 20 Hz loop
             
@@ -171,21 +296,46 @@ class SetPoseMoveitNode(Node):
                 cur_y = trans.transform.translation.y
                 cur_z = trans.transform.translation.z
                 
-                # Einfacher Positions-Fehler
+                # Aktuelle Orientierung (Quaternion) in Euler umwandeln
+                cur_q = [
+                    trans.transform.rotation.x,
+                    trans.transform.rotation.y,
+                    trans.transform.rotation.z,
+                    trans.transform.rotation.w
+                ]
+                cur_rot = R.from_quat(cur_q)
+                cur_euler = cur_rot.as_euler('xyz', degrees=False)
+                
+                cur_roll = cur_euler[0]
+                cur_pitch = cur_euler[1]
+                cur_yaw = cur_euler[2]
+                
+                # Positions-Fehler
                 err_x = target_x - cur_x
                 err_y = target_y - cur_y
                 err_z = target_z - cur_z
                 
-                dist = np.sqrt(err_x**2 + err_y**2 + err_z**2)
+                # Orientierungs-Fehler (kuerzesten Winkelabstand berechnen)
+                err_roll = (target_r - cur_roll + math.pi) % (2 * math.pi) - math.pi
+                err_pitch = (target_p - cur_pitch + math.pi) % (2 * math.pi) - math.pi
+                err_yaw = (target_yaw - cur_yaw + math.pi) % (2 * math.pi) - math.pi
                 
-                # Wenn wir nah genug dran sind (2mm), stoppen wir!
-                if dist < 0.002:
+                dist_pos = np.sqrt(err_x**2 + err_y**2 + err_z**2)
+                dist_ori = np.sqrt(err_roll**2 + err_pitch**2 + err_yaw**2)
+                
+                # Abbruchbedingung: Position < 2mm UND Winkel < ~1.1 Grad
+                if dist_pos < 0.002 and dist_ori < 0.02:
                     break
                     
-                # Geschwindigkeiten berechnen
+                # Geschwindigkeiten berechnen (Linear)
                 vx = np.clip(err_x * Kp_pos, -max_vel_pos, max_vel_pos)
                 vy = np.clip(err_y * Kp_pos, -max_vel_pos, max_vel_pos)
                 vz = np.clip(err_z * Kp_pos, -max_vel_pos, max_vel_pos)
+                
+                # Geschwindigkeiten berechnen (Angular)
+                wx = np.clip(err_roll * Kp_ori, -max_vel_ori, max_vel_ori)
+                wy = np.clip(err_pitch * Kp_ori, -max_vel_ori, max_vel_ori)
+                wz = np.clip(err_yaw * Kp_ori, -max_vel_ori, max_vel_ori)
                 
                 # Sende Twist an Servo
                 t = TwistStamped()
@@ -194,10 +344,11 @@ class SetPoseMoveitNode(Node):
                 t.twist.linear.x = float(vx)
                 t.twist.linear.y = float(vy)
                 t.twist.linear.z = float(vz)
-                # Orientierung ignorieren wir hier fuers Erste um Fehler zu vermeiden!
-                t.twist.angular.x = 0.0
-                t.twist.angular.y = 0.0
-                t.twist.angular.z = 0.0
+                
+                # Orientierung korrigieren
+                t.twist.angular.x = float(wx)
+                t.twist.angular.y = float(wy)
+                t.twist.angular.z = float(wz)
                 
                 twist_pub.publish(t)
                 time.sleep(0.05)

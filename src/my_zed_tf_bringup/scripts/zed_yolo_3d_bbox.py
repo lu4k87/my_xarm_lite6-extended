@@ -204,6 +204,10 @@ class ZedYolo3DNode(Node):
                 min_y, max_y = np.percentile(pts_base[1], 2), np.percentile(pts_base[1], 98)
                 _, max_z = np.percentile(pts_base[2], 2), np.percentile(pts_base[2], 98)
                 
+                # Hardcode physical height for sports ball because BBox was cropped
+                if names[cls_id] == 'sports ball':
+                    max_z = 0.064
+                
                 # Objects always rest on the table, so force min_z to 0.0
                 min_z = 0.0
                 
@@ -223,6 +227,9 @@ class ZedYolo3DNode(Node):
                 min_x, max_x = np.percentile(pts_opt[0], 2), np.percentile(pts_opt[0], 98)
                 min_y, max_y = np.percentile(pts_opt[1], 2), np.percentile(pts_opt[1], 98)
                 min_z, max_z = np.percentile(pts_opt[2], 2), np.percentile(pts_opt[2], 98)
+                
+                if names[cls_id] == 'sports ball':
+                    max_z = 0.064
                 
                 center_x = (min_x + max_x) / 2.0
                 center_y = (min_y + max_y) / 2.0
@@ -298,7 +305,10 @@ class ZedYolo3DNode(Node):
             
             x_mm = int(center_x * 1000)
             y_mm = int(center_y * 1000)
-            z_mm = int(center_z * 1000)
+            
+            # The UI / Text should report the TOP surface of the object
+            display_z = center_z + (scale_z / 2.0)
+            z_mm = int(display_z * 1000)
             safe_class_name = class_name.replace(' ', '_')
             
             # Helper to create a text marker
