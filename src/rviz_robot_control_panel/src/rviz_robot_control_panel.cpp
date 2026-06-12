@@ -293,9 +293,9 @@ void ControlPanel::onButtonMoveTo()
     return;
   }
   
-  double x = spin_x_->value() / 1000.0; // mm to m
-  double y = spin_y_->value() / 1000.0;
-  double z = spin_z_->value() / 1000.0;
+  double x = spin_x_->value();
+  double y = spin_y_->value();
+  double z = spin_z_->value();
   double roll = spin_roll_->value();
   double pitch = spin_pitch_->value();
   double yaw = spin_yaw_->value();
@@ -304,69 +304,24 @@ void ControlPanel::onButtonMoveTo()
 
   std::thread([this, x, y, z, roll, pitch, yaw]() {
     try {
-      RCLCPP_INFO(node_->get_logger(), "Starting MoveIt background thread...");
+      RCLCPP_INFO(node_->get_logger(), "Calling MoveTo service...");
 
-      // Stop servo (wait for response to ensure client stays alive)
-      auto stop_client = node_->create_client<std_srvs::srv::Trigger>("/servo_server/stop_servo");
-      if (stop_client->wait_for_service(std::chrono::seconds(1))) {
-        auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
-        auto res = stop_client->async_send_request(req);
-        if (res.wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
-           RCLCPP_INFO(node_->get_logger(), "Servo paused.");
+      auto move_client = node_->create_client<xarm_msgs::srv::MoveCartesian>("/ui/execute_move_to_pose");
+      if (move_client->wait_for_service(std::chrono::seconds(3))) {
+        auto req = std::make_shared<xarm_msgs::srv::MoveCartesian::Request>();
+        req->pose = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z), static_cast<float>(roll), static_cast<float>(pitch), static_cast<float>(yaw)};
+        
+        auto res = move_client->async_send_request(req);
+        if (res.wait_for(std::chrono::seconds(10)) == std::future_status::ready) {
+           RCLCPP_INFO(node_->get_logger(), "MoveTo finished.");
+        } else {
+           RCLCPP_ERROR(node_->get_logger(), "MoveTo timed out.");
         }
-      }
-
-      // Initialize MoveGroup
-      moveit::planning_interface::MoveGroupInterface move_group(node_, "lite6");
-      move_group.setEndEffectorLink("link_tcp"); // CRITICAL: Ensure we use TCP, not EEF
-      move_group.setMaxVelocityScalingFactor(0.5);
-      move_group.setMaxAccelerationScalingFactor(0.5);
-
-      // Check current Z using MoveGroup's knowledge
-      auto current_pose = move_group.getCurrentPose();
-      if (current_pose.pose.position.z < 0.095) {
-        RCLCPP_INFO(node_->get_logger(), "Z too low (%.3f), moving to safe Z=150mm first.", current_pose.pose.position.z);
-        geometry_msgs::msg::Pose safe_pose = current_pose.pose;
-        safe_pose.position.z = 0.150;
-        move_group.setPoseTarget(safe_pose);
-        if (move_group.move() != moveit::core::MoveItErrorCode::SUCCESS) {
-           RCLCPP_ERROR(node_->get_logger(), "Safe Z movement failed!");
-           moveit_running_ = false;
-           return;
-        }
-      }
-
-      tf2::Quaternion q;
-      q.setRPY(roll, pitch, yaw);
-
-      geometry_msgs::msg::Pose target_pose;
-      target_pose.position.x = x;
-      target_pose.position.y = y;
-      target_pose.position.z = z;
-      target_pose.orientation = tf2::toMsg(q);
-
-      move_group.setPoseTarget(target_pose);
-      RCLCPP_INFO(node_->get_logger(), "Planning and executing absolute move to X:%.2f Y:%.2f Z:%.2f...", x, y, z);
-      auto success = move_group.move();
-
-      if (success == moveit::core::MoveItErrorCode::SUCCESS) {
-        RCLCPP_INFO(node_->get_logger(), "Absolute move executed successfully!");
       } else {
-        RCLCPP_ERROR(node_->get_logger(), "Absolute move failed with error code: %d", success.val);
+        RCLCPP_ERROR(node_->get_logger(), "MoveTo service not available.");
       }
-
-      // Start servo
-      auto start_client = node_->create_client<std_srvs::srv::Trigger>("/servo_server/start_servo");
-      if (start_client->wait_for_service(std::chrono::seconds(1))) {
-        auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
-        auto res = start_client->async_send_request(req);
-        if (res.wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
-           RCLCPP_INFO(node_->get_logger(), "Servo resumed.");
-        }
-      }
-
     } catch (const std::exception& e) {
-      RCLCPP_ERROR(node_->get_logger(), "MoveIt Error: %s", e.what());
+      RCLCPP_ERROR(node_->get_logger(), "MoveTo Error: %s", e.what());
     }
     moveit_running_ = false;
   }).detach();

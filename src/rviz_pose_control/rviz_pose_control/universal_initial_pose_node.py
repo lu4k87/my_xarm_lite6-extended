@@ -46,7 +46,13 @@ class UniversalInitialPoseNode(Node):
             self.execute_initial_pose_cb,
             callback_group=self.cb_group
         )
-        self.get_logger().info('Universal Control Services (/ui/execute_initial_pose) ready.')
+        self.move_srv = self.create_service(
+            MoveCartesian,
+            '/ui/execute_move_to_pose',
+            self.execute_move_to_pose_cb,
+            callback_group=self.cb_group
+        )
+        self.get_logger().info('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose) ready.')
         self.is_executing = False
 
     def execute_initial_pose_cb(self, request, response):
@@ -93,6 +99,77 @@ class UniversalInitialPoseNode(Node):
         except Exception as e:
             self.get_logger().error(f"Error: {e}")
             response.success = False
+            response.message = str(e)
+        finally:
+            self.is_executing = False
+            
+        return response
+
+    def execute_move_to_pose_cb(self, request, response):
+        if self.is_executing:
+            response.ret = -1
+            response.message = "Already executing."
+            return response
+            
+        self.is_executing = True
+        try:
+            # 1. Pause Servo
+            if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
+                req = Trigger.Request()
+                self.servo_stop_client.call_async(req)
+                time.sleep(0.5)
+                
+            # 2. Call IK
+            ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
+            if not ik_client.wait_for_service(timeout_sec=3.0):
+                raise Exception("IK service not available")
+                
+            ik_req = GetPositionIK.Request()
+            ik_req.ik_request.group_name = 'lite6'
+            ik_req.ik_request.pose_stamped.header.frame_id = 'link_base'
+            
+            # Request pose is [x, y, z, roll, pitch, yaw] in mm and radians? 
+            # Wait, RViz panel sends in mm and radians! 
+            # Actually, RViz panel sent x,y,z in mm to python service originally!
+            x = request.pose[0] / 1000.0
+            y = request.pose[1] / 1000.0
+            z = request.pose[2] / 1000.0
+            qx, qy, qz, qw = get_quaternion_from_euler(request.pose[3], request.pose[4], request.pose[5])
+            
+            ik_req.ik_request.pose_stamped.pose.position.x = x
+            ik_req.ik_request.pose_stamped.pose.position.y = y
+            ik_req.ik_request.pose_stamped.pose.position.z = z
+            ik_req.ik_request.pose_stamped.pose.orientation.x = qx
+            ik_req.ik_request.pose_stamped.pose.orientation.y = qy
+            ik_req.ik_request.pose_stamped.pose.orientation.z = qz
+            ik_req.ik_request.pose_stamped.pose.orientation.w = qw
+            
+            ik_res = ik_client.call(ik_req)
+            if ik_res.error_code.val != 1: # SUCCESS
+                raise Exception(f"IK failed with code {ik_res.error_code.val}")
+                
+            # 3. Publish Trajectory
+            msg = JointTrajectory()
+            msg.joint_names = ik_res.solution.joint_state.name
+            
+            point = JointTrajectoryPoint()
+            point.positions = ik_res.solution.joint_state.position
+            point.time_from_start = Duration(sec=2, nanosec=0)
+            msg.points.append(point)
+            
+            self.publisher_.publish(msg)
+            time.sleep(2.5)
+            
+            # 4. Resume Servo
+            if self.servo_start_client.wait_for_service(timeout_sec=1.0):
+                req = Trigger.Request()
+                self.servo_start_client.call_async(req)
+                
+            response.ret = 0
+            response.message = "Success"
+        except Exception as e:
+            self.get_logger().error(f"Error in MoveTo: {e}")
+            response.ret = -1
             response.message = str(e)
         finally:
             self.is_executing = False
