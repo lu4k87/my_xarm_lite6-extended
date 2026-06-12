@@ -9,19 +9,19 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
 </p>
 
 ## Inhaltsverzeichnis
-1. [📋 Projektübersicht](#1--projektübersicht)
-2. [🔬 Architektur & Leitprinzipien](#2--architektur-leitprinzipien)
-3. [📊 Monitoring: Dashboard & Workspace Analyzer](#3--monitoring-dashboard-workspace-analyzer)
-4. [🕹️ Multimodale Technologien & Interaktionskonzepte](#4--multimodale-technologien-interaktionskonzepte)
-5. [⚙️ Core Features & ROS 2 Nodes](#5--core-features-ros-2-nodes)
-6. [🎮 Gamepad-Steuerung — Technische Tiefenanalyse](#6--gamepad-steuerung-technische-tiefenanalyse)
-7. [📦 Abhängigkeiten & Voraussetzungen](#7--abhängigkeiten-voraussetzungen)
-8. [🚀 Ausführung: Systemstart](#8--ausführung-systemstart)
-9. [🗂️ Repository-Struktur](#9--repository-struktur)
+1. [📋 Projektübersicht](#chapter-1)
+2. [🔬 Architektur & Leitprinzipien](#chapter-2)
+3. [📊 Monitoring: Dashboard & Workspace Analyzer](#chapter-3)
+4. [🕹️ Multimodale Technologien & Interaktionskonzepte](#chapter-4)
+5. [⚙️ Core Features & ROS 2 Nodes](#chapter-5)
+6. [🎮 Gamepad-Steuerung — Technische Tiefenanalyse](#chapter-6)
+7. [📦 Abhängigkeiten & Voraussetzungen](#chapter-7)
+8. [🚀 Ausführung: Systemstart](#chapter-8)
+9. [🗂️ Repository-Struktur](#chapter-9)
 
 ---
 
-## 1. 📋 Projektübersicht
+## <a id=\"chapter-1\"></a> 1. 📋 Projektübersicht
 
 ### Konzept: Eine integrierte, multimodale Teleoperationsplattform
 Das primäre Ziel dieses Projekts ist die Entwicklung und Implementierung einer modularen Steuerungs- und Interaktionsplattform für den Roboterarm UFactory xArm Lite 6. Das System bündelt heterogene, multimodale Eingabemethoden in einer zentralisierten Softwareumgebung und legt den Fokus konsequent auf eine maximierte Usability und intuitive Bedienbarkeit. Das System übernimmt die Berechnung der komplizierten Roboterbewegungen im Hintergrund. Dadurch entsteht eine einfache Schnittstelle, die die Wünsche des Nutzers direkt in Aktionen des Roboters übersetzt.
@@ -53,7 +53,7 @@ Ein wesentlicher Kern und Innovationscharakter des Projekts liegt in der wissens
 
 ---
 
-## 2. 🔬 Architektur & Leitprinzipien
+## <a id=\"chapter-2\"></a> 2. 🔬 Architektur & Leitprinzipien
 
 ### 2.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)
 Die Plattform unterscheidet strikt zwischen zwei Betriebsmodi für den Roboterarm. Diese Unterscheidung bezieht sich **ausschließlich auf das `ros2_control` Hardware Interface** und ist unabhängig von der Sensorik (wie Kamera oder YOLO, welche in beiden Modi live laufen können):
@@ -116,7 +116,7 @@ Die softwareseitige Infrastruktur ist modular gekapselt und vollständig in das 
 
 ---
 
-## 3. 📊 Monitoring: Dashboard & Workspace Analyzer
+## <a id=\"chapter-3\"></a> 3. 📊 Monitoring: Dashboard & Workspace Analyzer
 
 Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustand des Systems über das **ROS2 Core Dashboard** überwachen. Dies ist eine webbasierte Echtzeit-UI, die statische Quellcode-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks zu einer einheitlichen Monitoring-Oberfläche zusammenführt.
 
@@ -138,7 +138,7 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ---
 
-## 4. 🕹️ Multimodale Technologien & Interaktionskonzepte
+## <a id=\"chapter-4\"></a> 4. 🕹️ Multimodale Technologien & Interaktionskonzepte
 
 ### 4.1 Roboter-Steuerungsarten (Inputs)
 **Gamepad Teleoperation:** <br> 
@@ -195,7 +195,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 
 ---
 
-## 5. ⚙️ Core Features & ROS 2 Nodes
+## <a id=\"chapter-5\"></a> 5. ⚙️ Core Features & ROS 2 Nodes
 
 ### 5.1 👁️ Computer Vision & Perception
 
@@ -298,7 +298,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 
 ---
 
-## 6. 🎮 Gamepad-Steuerung — Technische Tiefenanalyse
+## <a id=\"chapter-6\"></a> 6. 🎮 Gamepad-Steuerung — Technische Tiefenanalyse
 
 Dieser Abschnitt liefert eine vollständige technische Referenz für die zweistufige Gamepad-Pipeline, die eine kollisionssichere Echtzeit-Teleoperation des xArm Lite 6 mit dem Xbox One Elite Series 2 Controller ermöglicht.
 
@@ -468,7 +468,7 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 
 ---
 
-## 7. 📦 Abhängigkeiten & Voraussetzungen
+## <a id=\"chapter-7\"></a> 7. 📦 Abhängigkeiten & Voraussetzungen
 
 ### Systemanforderungen
 
@@ -558,7 +558,7 @@ source install/setup.bash
 
 ---
 
-## 8. 🚀 Ausführung: Systemstart
+## <a id=\"chapter-8\"></a> 8. 🚀 Ausführung: Systemstart
 
 Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Software. **ROS 2 Nexus** dient dabei als zentrale webbasierte Oberfläche, um alle Nodes, Sensoren und Algorithmen mit nur einem Klick hochzufahren.
 
@@ -630,7 +630,7 @@ Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind voll
 
 ---
 
-## 9. 🗂️ Repository-Struktur
+## <a id=\"chapter-9\"></a> 9. 🗂️ Repository-Struktur
 
 ```
 dev_ws/
