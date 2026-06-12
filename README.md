@@ -272,7 +272,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 * **`xarm_joystick_input`** *(Part of `xarm_moveit_servo`)* — `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`
     * **Purpose:** Gamepad control & button mapping (C++ node).
     * **Task:** Translates filtered joystick signals into `TwistStamped` Cartesian velocity commands and ROS service calls.
-    * **How it works:** Subscribes to the sanitized `/joy_check` topic. Applies exponential smoothing (`factor = 0.5`) to all axes, enforces a deadzone of `|val| > 0.1`, and maps all 11 buttons to robot actions. See **Section 6** for the complete button mapping table and signal flow diagram.
+    * **How it works:** Subscribes to the sanitized `/joy_check` topic. Applies exponential smoothing (`factor = 0.5`) to all axes, enforces a deadzone of `|val| > 0.1`, and maps all 11 buttons to robot actions. **Idle-Timeout Logic:** When the joystick is released (completely within the deadzone), the node sends exactly 5 zero-velocity commands to actively halt the robot and then **stops** publishing entirely. This allows the MoveIt Servo server to enter an idle state, freeing up the trajectory controller for the RViz MotionPlanning plugin ("Plan and Execute"). See **Section 6** for the complete button mapping table and signal flow diagram.
 
 ### 5.5 🖥️ Monitoring (Dashboard), UI & Visualization
 

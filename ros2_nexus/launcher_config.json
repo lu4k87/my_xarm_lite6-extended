@@ -130,6 +130,33 @@
     {
       "actions": [
         {
+          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
+          "label": "RViz Marker Launch",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 run fake_initial_pose universal_initial_pose",
+          "label": "Universal Initial Pose Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run xarm_moveit_servo scan_trajectory_node",
+          "label": "Scan Trajectory Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run rviz_overlay rviz_overlay",
+          "label": "Rviz2 - Overlay: Planning Frame + TCP Coordinates",
+          "type": "node"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-chart-network",
+      "title": "Visualization (Rviz2)"
+    },
+    {
+      "actions": [
+        {
           "cmd": "ros2 launch my_zed_tf_bringup zed_camera.launch.py",
           "label": "ZED M Bringup (Kamera + TF)",
           "type": "launch"
@@ -187,33 +214,6 @@
       "icon": "fa-solid fa-gamepad",
       "style": "break-before: column;",
       "title": "Controllers (Input -> Moveit Servo)"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
-          "label": "RViz Marker Launch",
-          "type": "launch"
-        },
-        {
-          "cmd": "ros2 run fake_initial_pose universal_initial_pose",
-          "label": "Universal Initial Pose Node",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run xarm_moveit_servo scan_trajectory_node",
-          "label": "Scan Trajectory Node",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run rviz_overlay rviz_overlay",
-          "label": "Rviz2 - Overlay: Planning Frame + TCP Coordinates",
-          "type": "node"
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-chart-network",
-      "title": "Visualization (Rviz2)"
     }
   ],
   "system": [
