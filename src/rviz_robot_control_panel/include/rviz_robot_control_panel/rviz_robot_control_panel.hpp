@@ -13,7 +13,11 @@
 #include <QHBoxLayout>
 #include <QDoubleSpinBox>
 #include <QLabel>
-#include <xarm_msgs/srv/move_cartesian.hpp>
+#include <thread>
+#include <atomic>
+#include <moveit/move_group_interface/move_group_interface.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2/LinearMath/Quaternion.h>
 
 namespace rviz_robot_control_panel
 {
@@ -96,7 +100,12 @@ protected:
   
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr initial_pose_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr scan_client_;
-  rclcpp::Client<xarm_msgs::srv::MoveCartesian>::SharedPtr move_cartesian_client_;
+  
+  // MoveIt Node & Threading
+  rclcpp::Node::SharedPtr moveit_node_;
+  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> moveit_executor_;
+  std::thread moveit_spinner_thread_;
+  std::atomic<bool> moveit_running_{false};
   
   void setupUI();
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);

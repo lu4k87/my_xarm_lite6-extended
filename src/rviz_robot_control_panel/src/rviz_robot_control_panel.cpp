@@ -17,6 +17,12 @@ ControlPanel::ControlPanel(QWidget* parent)
 
 ControlPanel::~ControlPanel()
 {
+  if (moveit_executor_) {
+    moveit_executor_->cancel();
+  }
+  if (moveit_spinner_thread_.joinable()) {
+    moveit_spinner_thread_.join();
+  }
 }
 
 void ControlPanel::onInitialize()
@@ -27,11 +33,25 @@ void ControlPanel::onInitialize()
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
   initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
   scan_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_scan_trajectory");
-  move_cartesian_client_ = node_->create_client<xarm_msgs::srv::MoveCartesian>("/execute_motion_to_pose");
+  
+  moveit_node_ = std::make_shared<rclcpp::Node>("rviz_moveit_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
+  moveit_executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  moveit_executor_->add_node(moveit_node_);
+  moveit_spinner_thread_ = std::thread([this]() { moveit_executor_->spin(); });
 }
 
 void ControlPanel::setupUI()
 {
+  // Global Dark Theme
+  this->setStyleSheet(
+    "QWidget { background-color: #2c3e50; color: #ecf0f1; font-size: 13px; font-weight: bold; }"
+    "QPushButton { background-color: #34495e; border-radius: 6px; padding: 8px; border: 1px solid #1abc9c; }"
+    "QPushButton:hover { background-color: #1abc9c; color: #fff; }"
+    "QPushButton:pressed { background-color: #16a085; }"
+    "QDoubleSpinBox { background-color: #34495e; color: #ecf0f1; border: 1px solid #7f8c8d; border-radius: 4px; padding: 2px; }"
+    "QLabel { color: #ecf0f1; }"
+  );
+
   QVBoxLayout* main_layout = new QVBoxLayout(this);
   
   QGridLayout* top_grid_layout = new QGridLayout();
@@ -118,8 +138,9 @@ void ControlPanel::setupUI()
 
   // Funktion zur Erstellung des Stylesheets mit übergebenen Farben
   auto makeStyle = [](const QString& baseColor, const QString& pressedColor) {
-      return "QPushButton { background-color: " + baseColor + "; color: white; border-radius: 5px; padding: 10px; font-weight: bold; } "
-             "QPushButton:pressed { background-color: " + pressedColor + "; }";
+    return QString("QPushButton { background-color: %1; color: white; font-weight: bold; border-radius: 6px; border: 1px solid #2c3e50; padding: 10px; }"
+                   "QPushButton:hover { background-color: %2; }"
+                   "QPushButton:pressed { background-color: %2; }").arg(baseColor, pressedColor);
   };
 
   // Orientierung an den RViz Standard-Achsenfarben:
@@ -151,12 +172,11 @@ void ControlPanel::setupUI()
   btn_rot_z_plus_->setStyleSheet(styleRot);
   btn_rot_z_minus_->setStyleSheet(styleRot);
   
-  QString styleMisc = makeStyle("#7f8c8d", "#95a5a6"); // Gray style
-  btn_initial_pose_->setStyleSheet(styleMisc);
-  btn_frame_base_->setStyleSheet(styleMisc);
-  btn_frame_tcp_->setStyleSheet(styleMisc);
-  
-  btn_move_to_->setStyleSheet(makeStyle("#d35400", "#e67e22")); // Orange style for MoveTo
+  btn_move_to_->setStyleSheet(
+    "QPushButton { background-color: #2980b9; border-radius: 6px; padding: 8px; border: 1px solid #3498db; color: #fff; }"
+    "QPushButton:hover { background-color: #3498db; }"
+    "QPushButton:pressed { background-color: #21618c; }"
+  );
 
   // Connect Signals
   connect(btn_x_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressXPlus);
@@ -280,28 +300,81 @@ void ControlPanel::publishTwist()
 
 void ControlPanel::onButtonMoveTo()
 {
-  RCLCPP_INFO(node_->get_logger(), "Triggering absolute move to pose.");
-  auto request = std::make_shared<xarm_msgs::srv::MoveCartesian::Request>();
-  
-  request->pose = {
-    static_cast<float>(spin_x_->value()),
-    static_cast<float>(spin_y_->value()),
-    static_cast<float>(spin_z_->value()),
-    static_cast<float>(spin_roll_->value()),
-    static_cast<float>(spin_pitch_->value()),
-    static_cast<float>(spin_yaw_->value())
-  };
-  
-  request->speed = 200.0;
-  request->acc = 1000.0;
-  request->mvtime = 0.0;
-  
-  if (!move_cartesian_client_->service_is_ready()) {
-    RCLCPP_ERROR(node_->get_logger(), "Service /execute_motion_to_pose not ready. Make sure motion_sequence.py is running!");
+  if (moveit_running_) {
+    RCLCPP_WARN(node_->get_logger(), "MoveIt is already executing a trajectory.");
     return;
   }
   
-  move_cartesian_client_->async_send_request(request);
+  double x = spin_x_->value() / 1000.0; // mm to m
+  double y = spin_y_->value() / 1000.0;
+  double z = spin_z_->value() / 1000.0;
+  double roll = spin_roll_->value();
+  double pitch = spin_pitch_->value();
+  double yaw = spin_yaw_->value();
+  
+  moveit_running_ = true;
+  std::thread([this, x, y, z, roll, pitch, yaw]() {
+    try {
+      RCLCPP_INFO(node_->get_logger(), "Starting MoveIt background thread...");
+      
+      // Stop servo
+      auto stop_client = node_->create_client<std_srvs::srv::Trigger>("/servo_server/stop_servo");
+      if (stop_client->wait_for_service(std::chrono::seconds(1))) {
+        auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
+        stop_client->async_send_request(req);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      }
+      
+      moveit::planning_interface::MoveGroupInterface move_group(moveit_node_, "lite6");
+      move_group.setMaxVelocityScalingFactor(0.5);
+      move_group.setMaxAccelerationScalingFactor(0.5);
+      
+      // 1. Sichere Z-Höhe
+      auto current_pose = move_group.getCurrentPose();
+      if (current_pose.pose.position.z < 0.095) {
+        RCLCPP_INFO(node_->get_logger(), "Z too low, moving to safe Z=150mm first.");
+        geometry_msgs::msg::Pose safe_pose = current_pose.pose;
+        safe_pose.position.z = 0.150;
+        move_group.setPoseTarget(safe_pose);
+        if (move_group.move() != moveit::core::MoveItErrorCode::SUCCESS) {
+           RCLCPP_ERROR(node_->get_logger(), "Safe Z movement failed!");
+           moveit_running_ = false;
+           return;
+        }
+      }
+      
+      // 2. Absolute Pose
+      tf2::Quaternion q;
+      q.setRPY(roll, pitch, yaw);
+      
+      geometry_msgs::msg::Pose target_pose;
+      target_pose.position.x = x;
+      target_pose.position.y = y;
+      target_pose.position.z = z;
+      target_pose.orientation = tf2::toMsg(q);
+      
+      move_group.setPoseTarget(target_pose);
+      RCLCPP_INFO(node_->get_logger(), "Planning and executing absolute move...");
+      auto success = move_group.move();
+      
+      if (success == moveit::core::MoveItErrorCode::SUCCESS) {
+        RCLCPP_INFO(node_->get_logger(), "Absolute move successful!");
+      } else {
+        RCLCPP_ERROR(node_->get_logger(), "Absolute move failed!");
+      }
+      
+      // Start servo
+      auto start_client = node_->create_client<std_srvs::srv::Trigger>("/servo_server/start_servo");
+      if (start_client->wait_for_service(std::chrono::seconds(1))) {
+        auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
+        start_client->async_send_request(req);
+      }
+      
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR(node_->get_logger(), "MoveIt Error: %s", e.what());
+    }
+    moveit_running_ = false;
+  }).detach();
 }
 
 } // namespace rviz_robot_control_panel
