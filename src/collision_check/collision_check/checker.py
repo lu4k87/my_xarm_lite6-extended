@@ -18,7 +18,7 @@ class Checker(Node):
         super().__init__("checker")
 
         # === GRUNDEINSTELLLUNGEN ===
-        self.Z_LIMIT = 96.5 # Minimale Z-Position (mm)
+        self.Z_LIMIT = 91.0 # Minimale Z-Position (mm)
         self.CAUTION_ZONE_START = 110.0 # Z-Position, ab der die Geschwindigkeit begrenzt wird (mm)
         self.CAUTION_ZONE_SPEED = 0.25 # Maximaler Geschwindigkeitsfaktor in der Caution Zone
         self.DOWN_TRIGGER_AXIS = 5 # Index des rechten Triggers (R2/RT)
@@ -61,7 +61,7 @@ class Checker(Node):
             self.joystick.init()
             self.get_logger().info(f"Joystick '{self.joystick.get_name()}' gefunden.")
             
-        self.collision_message = "❗Kollision - Abwärtsbewegung gesperrt ❌        -> Drücke ( A ) zum Greifen!"
+        self.collision_message = "Plane Collision!"
         self.collision_cleared_message = ""
 
     def speed_callback(self, msg):

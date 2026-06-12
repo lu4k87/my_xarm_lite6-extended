@@ -4,7 +4,7 @@ import rclpy
 from rclpy.node import Node
 from rviz_2d_overlay_msgs.msg import OverlayText
 from std_msgs.msg import ColorRGBA
-from std_msgs.msg import Int8
+from std_msgs.msg import Int8, String
 import time
 
 class RvizServoStatusOverlayNode(Node):
@@ -17,6 +17,12 @@ class RvizServoStatusOverlayNode(Node):
             Int8,
             '/servo_server/status',
             self.status_callback,
+            10
+        )
+        self.plane_col_sub = self.create_subscription(
+            String,
+            '/ui/collision_msg',
+            self.plane_collision_callback,
             10
         )
         self.warning_msg = ""
@@ -38,6 +44,18 @@ class RvizServoStatusOverlayNode(Node):
             self.warning_msg = status_map[msg.data]
             self.warning_time = time.time()
 
+    def plane_collision_callback(self, msg):
+        if msg.data:
+            self.warning_msg = msg.data.upper() # e.g. "PLANE COLLISION!"
+            self.warning_time = time.time()
+        else:
+            # Wenn Leerstring, setze Overlay zurück (sofern es noch von Plane Collision ist)
+            if "PLANE" in self.warning_msg:
+                self.warning_msg = ""
+                warn_msg = OverlayText()
+                warn_msg.action = OverlayText.DELETE
+                self.warning_publisher.publish(warn_msg)
+
     def timer_callback(self):
         try:
             # Warning Overlay Update
@@ -46,14 +64,14 @@ class RvizServoStatusOverlayNode(Node):
                 if time_since_warning < 5.0:
                     warn_msg = OverlayText()
                     warn_msg.action = OverlayText.ADD
-                    warn_msg.horizontal_alignment = OverlayText.LEFT
-                    warn_msg.vertical_alignment = OverlayText.TOP
-                    warn_msg.horizontal_distance = 10
-                    warn_msg.vertical_distance = 10
+                    warn_msg.horizontal_alignment = OverlayText.CENTER
+                    warn_msg.vertical_alignment = OverlayText.CENTER
+                    warn_msg.horizontal_distance = 0
+                    warn_msg.vertical_distance = 0
                     warn_msg.width = 600
                     warn_msg.height = 60
                     
-                    if "HALT" in self.warning_msg:
+                    if "HALT" in self.warning_msg or "PLANE" in self.warning_msg:
                         warn_msg.bg_color = ColorRGBA(r=1.0, g=0.0, b=0.0, a=0.8) # Rot
                         warn_msg.fg_color = ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)
                     else:
