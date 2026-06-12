@@ -241,6 +241,7 @@ def launch_setup(context, *args, **kwargs):
                         'dof': dof, 
                         'ros_queue_size': 10,
                         'joystick_type': joystick_type,
+                        'joy_topic': '/joy'
                     },
                 ],
                 # extra_arguments=[{'use_intra_process_comms': True}],

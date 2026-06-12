@@ -54,8 +54,8 @@ command_out_topic: /xarm7_traj_controller/joint_trajectory # Beibehalten laut Ba
 check_collisions: true 
 collision_check_rate: 10.0 
 
-# UMGESCHALTET auf stop_distance, um Rückwärtsfahren zu ermöglichen
-collision_check_type: stop_distance
+# UMGESCHALTET auf threshold_distance (harte Wand, aber Rückwärtsfahren erlaubt)
+collision_check_type: threshold_distance
 
 # Parameter für "threshold_distance"
 self_collision_proximity_threshold: 0.01 

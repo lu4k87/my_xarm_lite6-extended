@@ -93,6 +93,17 @@ class YoloMoveitCollision(Node):
                 objects_dict[obj_id]['points'] = marker.points
 
         if not objects_dict:
+            # Wenn keine Objekte mehr da sind, aber wir noch welche kennen -> alle löschen!
+            if self.known_objects:
+                scene_msg = PlanningScene()
+                scene_msg.is_diff = True
+                for obj_name in self.known_objects:
+                    co = CollisionObject()
+                    co.id = obj_name
+                    co.operation = CollisionObject.REMOVE
+                    scene_msg.world.collision_objects.append(co)
+                self.pub_planning_scene.publish(scene_msg)
+                self.known_objects.clear()
             return
 
         scene_msg = PlanningScene()
@@ -177,23 +188,8 @@ class YoloMoveitCollision(Node):
         # The known_objects update is moved to the throttle block below
         
         # --- 3. Allowed Collision Matrix (ACM) ---
-        if current_objects:
-            obj_list = list(current_objects)
-            acm.entry_names = obj_list + self.eef_links
-            num_entries = len(acm.entry_names)
-            
-            for i in range(num_entries):
-                entry = AllowedCollisionEntry()
-                entry.enabled = [False] * num_entries
-                acm.entry_values.append(entry)
-                
-            # Enable collision between every object and every EEF link
-            for obj_idx in range(len(obj_list)):
-                for eef_idx in range(len(obj_list), num_entries):
-                    acm.entry_values[obj_idx].enabled[eef_idx] = True
-                    acm.entry_values[eef_idx].enabled[obj_idx] = True
-
-            scene_msg.allowed_collision_matrix = acm
+        # Entfernt: Wir übergeben keine Ausnahmen mehr an MoveIt. Dadurch behandelt
+        # MoveIt jedes YOLO-Objekt automatisch als undurchdringliches Hindernis für den gesamten Roboter.
 
         # Throttling to prevent RViz/MoveIt freezing (Max 2 Hz for position updates)
         now = self.get_clock().now()
