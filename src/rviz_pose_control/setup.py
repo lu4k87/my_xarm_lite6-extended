@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'fake_initial_pose'
+package_name = 'rviz_pose_control'
 
 setup(
     name=package_name,
@@ -17,15 +17,11 @@ setup(
     maintainer_email='mk1@todo.todo',
     description='TODO: Package description',
     license='TODO: License declaration',
-    extras_require={
-        'test': [
-            'pytest',
-        ],
-    },
+    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'set_fake_pose = fake_initial_pose.set_initial_pose_node:main',
-            'universal_initial_pose = fake_initial_pose.universal_initial_pose_node:main'
+            'set_initial_pose = rviz_pose_control.set_initial_pose_node:main',
+            'universal_initial_pose = rviz_pose_control.universal_initial_pose_node:main'
         ],
     },
 )
