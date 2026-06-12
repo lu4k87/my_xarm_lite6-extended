@@ -58,6 +58,9 @@ class ZedYolo3DNode(Node):
         self.ema_states = {} # maps cls_id -> {'state': np.array, 'last_seen': float}
         self.alpha = 0.2 # Smoothing factor (lower = smoother but more delay)
         
+        # Rate Limiting
+        self.last_inference_time = 0.0
+        
         self.get_logger().info('ZED YOLO 3D BBox Node gestartet.')
 
     def camera_info_callback(self, msg):
@@ -69,6 +72,12 @@ class ZedYolo3DNode(Node):
     def sync_callback(self, rgb_msg, depth_msg):
         if self.camera_info is None:
             return
+            
+        # Limit Inference to 2 Hz (0.5 seconds)
+        current_t = self.get_clock().now().nanoseconds / 1e9
+        if (current_t - self.last_inference_time) < 0.5:
+            return
+        self.last_inference_time = current_t
             
         try:
             # Convert ROS messages to OpenCV arrays
@@ -282,8 +291,8 @@ class ZedYolo3DNode(Node):
             marker.color.b = float(color[2])
             marker.color.a = 0.8 # More opaque for thin lines
             
-            marker.lifetime.sec = 0
-            marker.lifetime.nanosec = int(500 * 1e6) # 0.5s lifetime
+            marker.lifetime.sec = 1
+            marker.lifetime.nanosec = int(500 * 1e6) # 1.5s lifetime
             
             marker_array.markers.append(marker)
             
@@ -319,8 +328,8 @@ class ZedYolo3DNode(Node):
                 tm.color.b = float(b)
                 tm.color.a = 1.0
                 tm.text = text
-                tm.lifetime.sec = 0
-                tm.lifetime.nanosec = int(500 * 1e6)
+                tm.lifetime.sec = 1
+                tm.lifetime.nanosec = int(500 * 1e6) # 1.5s
                 return tm
                 
             # Stack the text vertically (No spaces between values to prevent RViz justification bug, use underscores instead)
