@@ -101,7 +101,6 @@ protected:
   
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr initial_pose_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr scan_client_;
-  rclcpp::Client<xarm_msgs::srv::MoveCartesian>::SharedPtr move_cartesian_client_;
   
   std::atomic<bool> moveit_running_{false};
   

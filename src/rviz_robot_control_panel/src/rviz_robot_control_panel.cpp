@@ -27,7 +27,6 @@ void ControlPanel::onInitialize()
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
   initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
   scan_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_scan_trajectory");
-  move_cartesian_client_ = node_->create_client<xarm_msgs::srv::MoveCartesian>("/ui/execute_move_to_pose");
 }
 
 void ControlPanel::setupUI()
@@ -289,44 +288,87 @@ void ControlPanel::publishTwist()
 
 void ControlPanel::onButtonMoveTo()
 {
-  if (!move_cartesian_client_->wait_for_service(std::chrono::seconds(1))) {
-    RCLCPP_ERROR(node_->get_logger(), "MoveCartesian service (/ui/execute_move_to_pose) not available.");
+  if (moveit_running_) {
+    RCLCPP_WARN(node_->get_logger(), "MoveIt is already executing a trajectory.");
     return;
   }
+  
+  double x = spin_x_->value() / 1000.0; // mm to m
+  double y = spin_y_->value() / 1000.0;
+  double z = spin_z_->value() / 1000.0;
+  double roll = spin_roll_->value();
+  double pitch = spin_pitch_->value();
+  double yaw = spin_yaw_->value();
 
-  // Use a background thread to prevent blocking RViz UI
-  std::thread([this]() {
+  moveit_running_ = true;
+
+  std::thread([this, x, y, z, roll, pitch, yaw]() {
     try {
-      double x = spin_x_->value();
-      double y = spin_y_->value();
-      double z = spin_z_->value();
-      double roll = spin_roll_->value();
-      double pitch = spin_pitch_->value();
-      double yaw = spin_yaw_->value();
+      RCLCPP_INFO(node_->get_logger(), "Starting MoveIt background thread...");
 
-      // We just send the target directly to the python service.
-      // The Safe Z logic will be implicitly handled if the path is clear, 
-      // but since we do joint interpolation now in FAKE, MoveIt IK takes care of the end point.
-      
-      RCLCPP_INFO(node_->get_logger(), "Sending MoveTo target to Python Service...");
-      auto request = std::make_shared<xarm_msgs::srv::MoveCartesian::Request>();
-      request->pose = { static_cast<float>(x), static_cast<float>(y), static_cast<float>(z), static_cast<float>(roll), static_cast<float>(pitch), static_cast<float>(yaw) };
-      
-      auto result_future = move_cartesian_client_->async_send_request(request);
-      if (result_future.wait_for(std::chrono::seconds(15)) == std::future_status::ready) {
-        auto response = result_future.get();
-        if (response->ret == 0) {
-          RCLCPP_INFO(node_->get_logger(), "Absolute move executed successfully via Python Service.");
-        } else {
-          RCLCPP_ERROR(node_->get_logger(), "Absolute move failed: %s", response->message.c_str());
+      // Stop servo (wait for response to ensure client stays alive)
+      auto stop_client = node_->create_client<std_srvs::srv::Trigger>("/servo_server/stop_servo");
+      if (stop_client->wait_for_service(std::chrono::seconds(1))) {
+        auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
+        auto res = stop_client->async_send_request(req);
+        if (res.wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
+           RCLCPP_INFO(node_->get_logger(), "Servo paused.");
         }
+      }
+
+      // Initialize MoveGroup
+      moveit::planning_interface::MoveGroupInterface move_group(node_, "lite6");
+      move_group.setEndEffectorLink("link_tcp"); // CRITICAL: Ensure we use TCP, not EEF
+      move_group.setMaxVelocityScalingFactor(0.5);
+      move_group.setMaxAccelerationScalingFactor(0.5);
+
+      // Check current Z using MoveGroup's knowledge
+      auto current_pose = move_group.getCurrentPose();
+      if (current_pose.pose.position.z < 0.095) {
+        RCLCPP_INFO(node_->get_logger(), "Z too low (%.3f), moving to safe Z=150mm first.", current_pose.pose.position.z);
+        geometry_msgs::msg::Pose safe_pose = current_pose.pose;
+        safe_pose.position.z = 0.150;
+        move_group.setPoseTarget(safe_pose);
+        if (move_group.move() != moveit::core::MoveItErrorCode::SUCCESS) {
+           RCLCPP_ERROR(node_->get_logger(), "Safe Z movement failed!");
+           moveit_running_ = false;
+           return;
+        }
+      }
+
+      tf2::Quaternion q;
+      q.setRPY(roll, pitch, yaw);
+
+      geometry_msgs::msg::Pose target_pose;
+      target_pose.position.x = x;
+      target_pose.position.y = y;
+      target_pose.position.z = z;
+      target_pose.orientation = tf2::toMsg(q);
+
+      move_group.setPoseTarget(target_pose);
+      RCLCPP_INFO(node_->get_logger(), "Planning and executing absolute move to X:%.2f Y:%.2f Z:%.2f...", x, y, z);
+      auto success = move_group.move();
+
+      if (success == moveit::core::MoveItErrorCode::SUCCESS) {
+        RCLCPP_INFO(node_->get_logger(), "Absolute move executed successfully!");
       } else {
-         RCLCPP_ERROR(node_->get_logger(), "Service call to /ui/execute_move_to_pose timed out.");
+        RCLCPP_ERROR(node_->get_logger(), "Absolute move failed with error code: %d", success.val);
+      }
+
+      // Start servo
+      auto start_client = node_->create_client<std_srvs::srv::Trigger>("/servo_server/start_servo");
+      if (start_client->wait_for_service(std::chrono::seconds(1))) {
+        auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
+        auto res = start_client->async_send_request(req);
+        if (res.wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
+           RCLCPP_INFO(node_->get_logger(), "Servo resumed.");
+        }
       }
 
     } catch (const std::exception& e) {
-      RCLCPP_ERROR(node_->get_logger(), "Error calling MoveTo Service: %s", e.what());
+      RCLCPP_ERROR(node_->get_logger(), "MoveIt Error: %s", e.what());
     }
+    moveit_running_ = false;
   }).detach();
 }
 
