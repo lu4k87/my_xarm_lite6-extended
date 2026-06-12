@@ -135,7 +135,7 @@
           "type": "launch"
         },
         {
-          "cmd": "ros2 run fake_initial_pose universal_initial_pose",
+          "cmd": "ros2 run rviz_pose_control universal_initial_pose",
           "label": "Universal Initial Pose Node",
           "type": "node"
         },
