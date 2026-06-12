@@ -130,7 +130,7 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
+          "cmd": "ros2 launch rviz_scene_objects_MarkerArray rviz_scene_objects_MarkerArray.launch.py",
           "label": "RViz Marker Launch",
           "type": "launch"
         },
@@ -147,6 +147,11 @@
         {
           "cmd": "ros2 run rviz_overlay rviz_overlay",
           "label": "Rviz2 - Overlay: Planning Frame + TCP Coordinates",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run rviz_overlay servo_status_overlay",
+          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
           "type": "node"
         }
       ],

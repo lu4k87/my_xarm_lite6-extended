@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = 'rviz_marker'
+package_name = 'rviz_scene_objects_MarkerArray'
 
 setup(
     name=package_name,
@@ -28,7 +28,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'marker_publisher = rviz_marker.marker_publisher:main',
+            'rviz_scene_objects_MarkerArray = rviz_scene_objects_MarkerArray.rviz_scene_objects_MarkerArray:main',
         ],
     },
 )

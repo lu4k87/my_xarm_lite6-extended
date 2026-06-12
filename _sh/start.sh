@@ -55,7 +55,7 @@ sleep 1
 
 # Fenster 9:
 echo "Starte[NODE]: [RViz Publisher]"
-gnome-terminal --title="[NODE]: RIZ Publisher" -- bash -c "source /opt/ros/humble/setup.bash; source ~/dev_ws/install/setup.bash; ros2 run rviz_marker marker_publisher; exec bash"
+gnome-terminal --title="[NODE]: RIZ Publisher" -- bash -c "source /opt/ros/humble/setup.bash; source ~/dev_ws/install/setup.bash; ros2 run rviz_scene_objects_MarkerArray rviz_scene_objects_MarkerArray; exec bash"
 sleep 1
 
 # Fenster 10 - Websocket(server) + ROS2 Bridge + web_analyser.py

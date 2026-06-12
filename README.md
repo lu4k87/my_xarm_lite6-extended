@@ -272,7 +272,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ### 5.5 🖥️ Monitoring (Dashboard), UI & Visualization
 
-* **`rviz_marker`**
+* **`rviz_scene_objects_MarkerArray`**
     * **Purpose:** Real-time visual feedback in RViz2.
     * **Task:** Visual enhancement of the 3D simulation work area.
     * **How it works:** Publishes ROS `MarkerArray` and `InteractiveMarker` messages into the 3D scene of RViz2. Serves for the visual representation of static boundaries (like table edges) as well as interactive target objects to validate planning and collision scenarios directly within the simulation environment, independent of real sensor data processing.
@@ -280,10 +280,9 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Purpose:** 2D Control Panel inside RViz for manual 6-DoF robot jogging.
     * **Task:** Provides a graphical control pad (D-Pad) for translations (X, Y, Z), dedicated buttons for rotations (Roll, Pitch, Yaw), and quick-access buttons for the fake initial pose and planning frame switching (Base/TCP).
     * **How it works:** Implemented in C++ as a Qt plugin. The movement buttons generate `TwistStamped` commands on `/servo_server/delta_twist_cmds` to dynamically jog the robot. The "Move to Initial Position" button asynchronously calls the `/ui/execute_initial_pose` ROS 2 service (provided by the `universal_initial_pose_node`). The **"Vision Scan"** button triggers the `/ui/execute_scan_trajectory` service of the `scan_trajectory_node`, which fluidly flies the camera in a 3D spiral from top to bottom around the target object (X=300) while the TCP remains constantly focused on the center. *Note:* Because this workflow relies purely on standardized MoveIt services rather than proprietary hardware APIs, it is completely hardware-agnostic and safely operates on both the real robot and the simulated (FAKE) hardware. *Activation in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
-* **`rviz_overlay`**
-    * **Purpose:** 2D Text Overlay inside the RViz 3D view.
-    * **Task:** Projects real-time TCP coordinates (X/Y/Z) cleanly formatted in their respective axis colors directly into the user's field of view.
-    * **How it works:** Independent Python node utilizing the `rviz_2d_overlay_plugins` package. It calculates real-time TF data and publishes HTML-formatted text as an image overlay. It listens to the `/ui/robot_control/current_frame` topic to synchronize with the Control Panel and dynamically display the selected reference frame (e.g. `[tcp_link]`).
+* **`rviz_overlay` (Package)**
+    * **`rviz_overlay` Node:** Projects real-time TCP coordinates (X/Y/Z) cleanly formatted in their respective axis colors directly into the user's field of view. It listens to the `/ui/robot_control/current_frame` topic to synchronize with the Control Panel and dynamically display the selected reference frame (e.g. `[tcp_link]`).
+    * **`servo_status_overlay` Node:** Subscribes to the MoveIt Servo `/servo_server/status` topic and displays a temporary 5-second, color-coded popup warning (e.g., "APPROACHING SINGULARITY" or "HALT: COLLISION") in the top left corner of the RViz view when critical kinematic thresholds are reached.
 * **`rosbridge_server`**
     * **Purpose:** WebSocket bridge for web browsers.
     * **Task:** Native communication between dashboard and robot.
@@ -698,10 +697,13 @@ dev_ws/
 │   │       ├── zed_stand_publisher.py        # 3D camera stand/tripod mesh publisher
 │   │       └── zed_yolo_3d_bbox.py           # 3D object detection & bounding boxes
 │   ├── ros2_whisper/               # 🎙️ Whisper AI speech-to-text node
-│   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D Text Overlay for TCP
+│   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D Text Overlays
+│   │   └── rviz_overlay/
+│   │       ├── rviz_overlay.py           # TCP & Frame Overlay
+│   │       └── servo_status_overlay.py   # Servo Warning Overlay
 │   ├── rviz_robot_control_panel/   # 🖥️ C++: RViz2 2D Control Panel Plugin
 │   │   └── src/rviz_robot_control_panel.cpp
-│   ├── rviz_marker/                # 📍 Python: RViz2 marker publisher
+│   ├── rviz_scene_objects_MarkerArray/                # 📍 Python: RViz2 marker publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent parser & filter
 │   ├── websocket/                  # 📊 Python/JS: Workspace analyzer & Dashboard
 │   │   ├── workspace_analyzer.py   # Main ROS 2 Node (Pub/Sub & Topology)

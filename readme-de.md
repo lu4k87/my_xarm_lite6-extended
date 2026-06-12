@@ -273,7 +273,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 
 ### 5.5 🖥️ Monitoring (Dashboard), UI & Visualisierung
 
-* **`rviz_marker`**
+* **`rviz_scene_objects_MarkerArray`**
     * **Zweck:** Visuelles Echtzeit-Feedback in RViz2.
     * **Aufgabe:** Optische Aufwertung des 3D-Arbeitsbereichs.
     * **Funktionsweise:** Publiziert ROS `MarkerArray` und `InteractiveMarker` Nachrichten in die 3D-Szene von RViz2. Dient der visuellen Repräsentation von statischen Grenzen (wie Tischkanten) sowie interaktiven Zielobjekten zur Validierung von Planungs- und Kollisionsszenarien direkt in der Simulationsumgebung, unabhängig von realer Sensordatenverarbeitung.
@@ -284,10 +284,9 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
       Der **"Move to Initial Position"** Button ruft asynchron den Service `/ui/execute_initial_pose` auf. 
       Der **"Vision Scan"** Button triggert den Service `/ui/execute_scan_trajectory` des `scan_trajectory_node`, welcher die Kamera in einer 3D-Spirale flüssig von oben nach unten um das Zielobjekt (X=300) fliegen lässt, während der TCP konstant auf das Zentrum fokussiert bleibt.
       *Hinweis:* Da alle automatisierten Button-Abläufe (Initial Pose, Scan) das MoveIt Servo vorher pausieren und ausschließlich standardisierte MoveIt-Aktionen nutzen, sind sie komplett hardware-unabhängig und funktionieren in der Simulation (FAKE) genauso absturzsicher wie am echten Roboter. *Manuelle Aktivierung in RViz (falls geschlossen):* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
-* **`rviz_overlay`**
-    * **Zweck:** 2D Text Overlay innerhalb der RViz 3D-Ansicht.
-    * **Aufgabe:** Projiziert die Echtzeit-Koordinaten (X/Y/Z) übersichtlich in den jeweiligen Achsenfarben in das Sichtfeld.
-    * **Funktionsweise:** Eigenständiger Python-Node, der das `rviz_2d_overlay_plugins` Paket nutzt. Er berechnet die Echtzeit-TF-Daten und publiziert HTML-formatierten Text als Bild-Overlay. Über das Topic `/ui/robot_control/current_frame` synchronisiert er sich mit dem Control Panel und zeigt dynamisch den ausgewählten Frame (z.B. `[tcp_link]`) an.
+* **`rviz_overlay` (Package)**
+    * **`rviz_overlay` Node:** Projiziert die Echtzeit-Koordinaten (X/Y/Z) und den aktiven Planungsrahmen übersichtlich in den jeweiligen Achsenfarben direkt in das Sichtfeld von RViz.
+    * **`servo_status_overlay` Node:** Abonniert das MoveIt Servo `/servo_server/status` Topic und blendet bei kritischen kinematischen Zuständen für 5 Sekunden ein farblich kodiertes Warn-Popup (z.B. "APPROACHING SINGULARITY" oder "HALT: COLLISION") oben links in der RViz-Ansicht ein.
 * **`rosbridge_server`**
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
@@ -667,10 +666,13 @@ dev_ws/
 │   │       ├── zed_stand_publisher.py        # 3D-Stativ Mesh Publisher
 │   │       └── zed_yolo_3d_bbox.py           # 3D Objekterkennung & Bounding-Boxen
 │   ├── ros2_whisper/               # 🎙️ Whisper AI Speech-to-Text
-│   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D Text Overlay für TCP
+│   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D Text Overlays
+│   │   └── rviz_overlay/
+│   │       ├── rviz_overlay.py           # TCP & Frame Overlay
+│   │       └── servo_status_overlay.py   # Servo Warn-Overlay
 │   ├── rviz_robot_control_panel/   # 🖥️ C++: RViz2 2D Control Panel Plugin
 │   │   └── src/rviz_robot_control_panel.cpp
-│   ├── rviz_marker/                # 📍 Python: RViz2 Marker-Publisher
+│   ├── rviz_scene_objects_MarkerArray/                # 📍 Python: RViz2 Marker-Publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent-Parser & Filter
 │   ├── websocket/                  # 📊 Python/JS: Workspace Analyzer & Dashboard
 │   │   ├── workspace_analyzer.py   # Haupt-ROS 2-Node (Pub/Sub & Topologie)

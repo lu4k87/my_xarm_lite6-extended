@@ -480,6 +480,34 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /ui/yolo_collision_toggle
       Value: true
+    - Align Bottom: false
+      Background Alpha: 0.0
+      Background Color: 0; 0; 0
+      Class: rviz_2d_overlay_plugins/TextOverlay
+      Enabled: true
+      Foreground Alpha: 1.0
+      Foreground Color: 255; 255; 255
+      Invert Shadow: false
+      Name: MoveIt Servo Warning Overlay
+      Overtake BG Color Properties: false
+      Overtake FG Color Properties: false
+      Overtake Position Properties: false
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /ui/rviz_overlay_warning
+      Value: true
+      font: DejaVu Sans Mono
+      height: 60
+      hor_alignment: left
+      hor_dist: 10
+      line width: 1
+      text size: 14
+      ver_alignment: top
+      ver_dist: 10
+      width: 600
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

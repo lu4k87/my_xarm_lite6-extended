@@ -36,9 +36,7 @@ SCENE_MARKERS = [
     # Wand Rechts (y = -2.0)
     {"id": 16, "type": Marker.CUBE, "pos": (0.0, -2.0, 1.0), "dims": (4.0, 0.02, 2.0), "color": [1.0, 1.0, 1.0, 1.0]},
     # Wand Vorne (x = 2.0)
-    {"id": 17, "type": Marker.CUBE, "pos": (2.0, 0.0, 1.0), "dims": (0.02, 4.0, 2.0), "color": [1.0, 1.0, 1.0, 1.0]},
-    # Boden (Fläche zwischen den Wänden)
-    {"id": 18, "type": Marker.CUBE, "pos": (0.0, 0.0, -0.005), "dims": (4.0, 4.0, 0.001), "color": [0.0, 0.0, 0.0, 1.0]}
+    {"id": 17, "type": Marker.CUBE, "pos": (2.0, 0.0, 1.0), "dims": (0.02, 4.0, 2.0), "color": [1.0, 1.0, 1.0, 1.0]}
 ]
 
 # =========================================================
