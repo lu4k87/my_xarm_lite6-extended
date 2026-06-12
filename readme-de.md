@@ -237,6 +237,11 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Aufgabe:** Prädiktives Eingreifen vor Kollisionen bei manueller Gamepad-Steuerung.
     * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt asynchron die aktuelle EEF-Position ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Kollision droht. Siehe **Abschnitt 6** für die vollständige technische Tiefenanalyse.
 
+* **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
+    * **Zweck:** Hard-Stop Kollisionsvermeidung auf MoveIt-Ebene.
+    * **Aufgabe:** Blockiert Bewegungen strikt bei Annäherung an YOLO-Objekte, erlaubt aber Ausweichmanöver.
+    * **Funktionsweise:** Nutzt `collision_check_type: threshold_distance` um eine "harte Wand" (z.B. bei 2 cm Abstand) zu errichten. Verhindert das langsame "Hineinkriechen" (Gummiband-Effekt) in Hindernisse, welches bei `stop_distance` auftritt. Durch Gradientenberechnung wird jedoch erkannt, ob der Joystick vom Objekt weggesteuert wird, sodass ein sicheres Rückwärtsfahren aus der Kollisionszone weiterhin möglich bleibt.
+
 * **`xarm_joystick_input`** *(Teil von `xarm_moveit_servo`)* — `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`
     * **Zweck:** Gamepad-Steuerung & Button-Mapping (C++ Node).
     * **Aufgabe:** Übersetzt gefilterte Joystick-Signale in `TwistStamped` Kartesische Geschwindigkeitsbefehle und ROS Service Calls.

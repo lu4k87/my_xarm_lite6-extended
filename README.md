@@ -237,6 +237,11 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Task:** Predictive intervention before collisions during manual gamepad control.
     * **How it works:** Intercepts raw `/joy` signals, asynchronously queries the robot's current EEF position, computes a forward-projected position, and publishes a sanitized `/joy_check` signal with the downward axis zeroed if a collision is imminent. See **Section 6** for the full technical deep-dive.
 
+* **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
+    * **Purpose:** Hard-stop collision avoidance at the MoveIt level.
+    * **Task:** Strictly blocks movements upon approaching YOLO objects while permitting evasive maneuvers.
+    * **How it works:** Utilizes `collision_check_type: threshold_distance` to create a "hard wall" (e.g., at 2 cm distance). This prevents the slow "creeping" (rubber-band effect) into obstacles that occurs with `stop_distance`. However, through gradient calculation, it detects if the joystick is steered away from the object, ensuring that safely reversing out of the collision zone remains possible.
+
 * **`xarm_joystick_input`** *(Part of `xarm_moveit_servo`)* — `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`
     * **Purpose:** Gamepad control & button mapping (C++ node).
     * **Task:** Translates filtered joystick signals into `TwistStamped` Cartesian velocity commands and ROS service calls.
