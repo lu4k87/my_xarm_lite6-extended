@@ -26,6 +26,7 @@ void ControlPanel::onInitialize()
   twist_pub_ = node_->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_server/delta_twist_cmds", 10);
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
   initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
+  scan_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_scan_trajectory");
 }
 
 void ControlPanel::setupUI()
@@ -59,7 +60,9 @@ void ControlPanel::setupUI()
   btn_y_minus_ = new QPushButton("Right\n(Y-)");
   btn_z_plus_ = new QPushButton("Up\n(Z+)");
   btn_z_minus_ = new QPushButton("Down\n(Z-)");
+  btn_z_minus_ = new QPushButton("Down\n(Z-)");
   btn_initial_pose_ = new QPushButton("Move to Initial Position");
+  btn_scan_ = new QPushButton("Vision Scan");
   
   grid_layout->addWidget(btn_z_plus_, 0, 0);
   grid_layout->addWidget(btn_x_plus_, 0, 1);
@@ -69,7 +72,8 @@ void ControlPanel::setupUI()
   grid_layout->addWidget(btn_y_minus_, 1, 2);
 
   grid_layout->addWidget(btn_z_minus_, 2, 0);
-  grid_layout->addWidget(btn_x_minus_, 2, 1);
+  grid_layout->addWidget(btn_scan_, 2, 1);
+  grid_layout->addWidget(btn_x_minus_, 2, 2);
 
   main_layout->addLayout(grid_layout);
 
@@ -139,6 +143,7 @@ void ControlPanel::setupUI()
   connect(btn_rot_z_minus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressRotZMinus);
 
   connect(btn_initial_pose_, &QPushButton::clicked, this, &ControlPanel::onButtonInitialPose);
+  connect(btn_scan_, &QPushButton::clicked, this, &ControlPanel::onButtonScanTrajectory);
   connect(btn_frame_base_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameBase);
   connect(btn_frame_tcp_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameTCP);
 
@@ -181,11 +186,30 @@ void ControlPanel::onButtonPressRotYMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, -0
 void ControlPanel::onButtonPressRotZPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.2); publish_timer_->start(50); }
 void ControlPanel::onButtonPressRotZMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.2); publish_timer_->start(50); }
 
-void ControlPanel::onButtonInitialPose() {
-  if (initial_pose_client_) {
-    auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-    initial_pose_client_->async_send_request(request);
+void ControlPanel::onButtonInitialPose()
+{
+  RCLCPP_INFO(node_->get_logger(), "Triggering initial pose service.");
+  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  
+  if (!initial_pose_client_->wait_for_service(std::chrono::seconds(1))) {
+    RCLCPP_ERROR(node_->get_logger(), "Service /ui/execute_initial_pose not available.");
+    return;
   }
+  
+  initial_pose_client_->async_send_request(request);
+}
+
+void ControlPanel::onButtonScanTrajectory()
+{
+  RCLCPP_INFO(node_->get_logger(), "Triggering scan trajectory service.");
+  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  
+  if (!scan_client_->wait_for_service(std::chrono::seconds(1))) {
+    RCLCPP_ERROR(node_->get_logger(), "Service /ui/execute_scan_trajectory not available.");
+    return;
+  }
+  
+  scan_client_->async_send_request(request);
 }
 
 void ControlPanel::onButtonFrameBase() {

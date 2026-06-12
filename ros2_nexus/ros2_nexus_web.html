@@ -293,16 +293,67 @@
       cursor: grabbing;
     }
 
-    .section-title i {
+    .section-title i.section-icon {
       color: var(--accent);
       font-size: 15px
     }
 
-    .section-title::after {
-      content: "";
+    .section-title .title-line {
       flex: 1;
       height: 1px;
-      background: linear-gradient(90deg, var(--brd) 0%, transparent 100%)
+      background: linear-gradient(90deg, var(--brd) 0%, transparent 100%);
+    }
+
+    .run-all-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: rgba(56, 189, 248, .08);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, .25);
+      cursor: pointer;
+      transition: all .25s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .run-all-badge:hover {
+      background: rgba(56, 189, 248, .2);
+      border-color: rgba(56, 189, 248, .5);
+      box-shadow: 0 0 14px rgba(56, 189, 248, .2);
+      color: #fff;
+      transform: scale(1.05);
+    }
+
+    .run-all-badge:active {
+      transform: scale(0.95);
+      background: rgba(56, 189, 248, .3);
+    }
+
+    .run-all-badge.running {
+      background: rgba(249, 115, 22, .15);
+      color: var(--orange);
+      border-color: rgba(249, 115, 22, .4);
+      pointer-events: none;
+      animation: pulse-badge 1.2s ease-in-out infinite;
+    }
+
+    .run-all-badge.done {
+      background: rgba(16, 185, 129, .15);
+      color: var(--green);
+      border-color: rgba(16, 185, 129, .4);
+    }
+
+    @keyframes pulse-badge {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
     }
 
     /* ── GRID ── */
@@ -716,8 +767,12 @@
       
       sections.forEach((sec, secIndex) => {
         const extraStyle = sec.style ? ` style="${sec.style}"` : '';
+        const actionCount = sec.actions ? sec.actions.length : 0;
+        const runAllBtn = actionCount > 1 
+          ? `<button class="run-all-badge" data-sec-index="${secIndex}" onclick="event.stopPropagation(); runAllInSection(${secIndex})" title="Alle ${actionCount} Befehle nacheinander ausführen"><i class="fa-solid fa-play"></i>RUN ALL</button>` 
+          : '';
         let html = `<div class="section"${extraStyle} data-sec-id="${secIndex}">
-      <div class="section-title"><i class="${sec.icon}"></i>${sec.title}</div>
+      <div class="section-title"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span>${runAllBtn}</div>
       <div class="actions-grid" data-sec-index="${secIndex}">`;
         sec.actions.forEach((a, aIndex) => {
           const mode = a.mode || 'ros';
@@ -867,6 +922,67 @@
         if (data.ok) showToast(`✓ ${title} gestartet`);
         else showToast(`✗ Fehler: ${data.error}`, true);
       } catch { showToast('✗ Nexus Web Backend nicht erreichbar', true); }
+    }
+
+    // ─── RUN ALL IN SECTION ──────────────────────────────────────────────────────
+    async function runAllInSection(secIndex) {
+      const sections = TABS[currentTab];
+      if (!sections || !sections[secIndex]) return;
+      const actions = sections[secIndex].actions;
+      if (!actions || actions.length === 0) return;
+
+      // Find and style the badge
+      const badge = document.querySelector(`.run-all-badge[data-sec-index="${secIndex}"]`);
+      if (badge) {
+        badge.classList.add('running');
+        badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>0 / ${actions.length}`;
+      }
+
+      // Highlight each action card as it runs
+      const cards = document.querySelectorAll(`.actions-grid[data-sec-index="${secIndex}"] .action-card`);
+
+      for (let i = 0; i < actions.length; i++) {
+        const a = actions[i];
+        const mode = a.mode || 'ros';
+
+        // Highlight current card
+        if (cards[i]) {
+          cards[i].style.borderColor = 'rgba(56, 189, 248, .6)';
+          cards[i].style.boxShadow = '0 0 18px rgba(56, 189, 248, .25)';
+        }
+
+        if (badge) badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>${i + 1} / ${actions.length}`;
+
+        try {
+          await runCmd(a.cmd, a.label, mode);
+        } catch (e) {
+          console.error(`RUN ALL: Error running "${a.label}":`, e);
+        }
+
+        // Reset card highlight
+        if (cards[i]) {
+          cards[i].style.borderColor = '';
+          cards[i].style.boxShadow = '';
+        }
+
+        // Short delay between commands so ROS nodes can initialize
+        if (i < actions.length - 1) {
+          await new Promise(r => setTimeout(r, 1500));
+        }
+      }
+
+      // Done state
+      if (badge) {
+        badge.classList.remove('running');
+        badge.classList.add('done');
+        badge.innerHTML = `<i class="fa-solid fa-check"></i>DONE`;
+        setTimeout(() => {
+          badge.classList.remove('done');
+          badge.innerHTML = `<i class="fa-solid fa-play"></i>RUN ALL`;
+        }, 3000);
+      }
+
+      showToast(`✓ Alle ${actions.length} Befehle in "${sections[secIndex].title}" ausgeführt`);
     }
 
     function copyCmd(text, btn) {

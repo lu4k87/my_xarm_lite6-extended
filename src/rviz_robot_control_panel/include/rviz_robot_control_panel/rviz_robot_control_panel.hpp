@@ -41,6 +41,7 @@ protected Q_SLOTS:
   void onButtonRelease();
   
   void onButtonInitialPose();
+  void onButtonScanTrajectory();
   void onButtonFrameBase();
   void onButtonFrameTCP();
 
@@ -68,6 +69,7 @@ protected:
   QPushButton* btn_rot_y_minus_;
   
   QPushButton* btn_initial_pose_;
+  QPushButton* btn_scan_;
   QPushButton* btn_frame_base_;
   QPushButton* btn_frame_tcp_;
 
@@ -77,6 +79,7 @@ protected:
   std::string active_frame_ = "link_base";
   
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr initial_pose_client_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr scan_client_;
   
   void setupUI();
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);

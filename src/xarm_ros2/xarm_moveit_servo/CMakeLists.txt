@@ -26,6 +26,9 @@ find_package(control_msgs REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(moveit_ros_planning REQUIRED)
+find_package(moveit_ros_planning_interface REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(xarm_msgs REQUIRED)
 # NEU: Füge die Pakete für Action Client und die Whisper Action Definition hinzu
 find_package(rclcpp_action REQUIRED)
@@ -47,6 +50,9 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   moveit_msgs
   geometry_msgs
   moveit_ros_planning
+  moveit_ros_planning_interface
+  tf2
+  tf2_geometry_msgs
   xarm_msgs
 )
 
@@ -69,9 +75,15 @@ add_executable(xarm_keyboard_input
 )
 ament_target_dependencies(xarm_keyboard_input ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
+add_executable(scan_trajectory_node
+  src/scan_trajectory_node.cpp
+)
+ament_target_dependencies(scan_trajectory_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
 install(TARGETS
   xarm_joystick_input
   xarm_keyboard_input
+  scan_trajectory_node
   EXPORT export_${PROJECT_NAME}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib

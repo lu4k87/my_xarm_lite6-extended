@@ -153,30 +153,13 @@
     {
       "actions": [
         {
-          "cmd": "ros2 run fake_initial_pose universal_initial_pose",
-          "label": "Universal Initial Pose Node",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run rviz_overlay rviz_overlay",
-          "label": "Rviz2 - Overlay: Planning Frame + TCP Coordinates",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
-          "label": "RViz Marker Launch",
-          "type": "launch"
-        }
-      ],
-      "col": 1,
-      "icon": "fa-solid fa-chart-network",
-      "title": "Visualization (Rviz2)"
-    },
-    {
-      "actions": [
-        {
           "cmd": "ros2 run collision_check checker",
           "label": "Collision Check Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run voice_command_listener listener",
+          "label": "Voice Command Listener",
           "type": "node"
         },
         {
@@ -195,20 +178,42 @@
           "type": "node"
         },
         {
-          "cmd": "ros2 run voice_command_listener listener",
-          "label": "Voice Command Listener",
-          "type": "node"
-        },
-        {
           "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
           "label": "Keyboard Input",
           "type": "node"
         }
       ],
-      "col": 2,
+      "col": 1,
       "icon": "fa-solid fa-gamepad",
       "style": "break-before: column;",
       "title": "Controllers (Input -> Moveit Servo)"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
+          "label": "RViz Marker Launch",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 run fake_initial_pose universal_initial_pose",
+          "label": "Universal Initial Pose Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run xarm_moveit_servo scan_trajectory_node",
+          "label": "Scan Trajectory Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run rviz_overlay rviz_overlay",
+          "label": "Rviz2 - Overlay: Planning Frame + TCP Coordinates",
+          "type": "node"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-chart-network",
+      "title": "Visualization (Rviz2)"
     }
   ],
   "system": [
