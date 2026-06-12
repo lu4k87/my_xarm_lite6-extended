@@ -24,18 +24,29 @@ class TFTunerGUI(QWidget):
 
         # Z Slider
         z_layout = QHBoxLayout()
-        self.z_label = QLabel('Z (Höhe): 0.420 m')
+        self.z_label = QLabel('Z (Höhe): 0.390 m')
         self.z_slider = QSlider(Qt.Horizontal)
         self.z_slider.setRange(200, 600) # 0.2m to 0.6m
-        self.z_slider.setValue(420)
+        self.z_slider.setValue(390)
         self.z_slider.valueChanged.connect(self.update_labels)
         z_layout.addWidget(self.z_label)
         z_layout.addWidget(self.z_slider)
         layout.addLayout(z_layout)
 
+        # Roll Slider
+        roll_layout = QHBoxLayout()
+        self.roll_label = QLabel('Roll (Drehung X): 0.0°')
+        self.roll_slider = QSlider(Qt.Horizontal)
+        self.roll_slider.setRange(-1800, 1800) # -180.0 to 180.0 degrees
+        self.roll_slider.setValue(0)
+        self.roll_slider.valueChanged.connect(self.update_labels)
+        roll_layout.addWidget(self.roll_label)
+        roll_layout.addWidget(self.roll_slider)
+        layout.addLayout(roll_layout)
+
         # Pitch Slider
         pitch_layout = QHBoxLayout()
-        self.pitch_label = QLabel('Pitch (Winkel): 45.0°')
+        self.pitch_label = QLabel('Pitch (Drehung Y): 45.0°')
         self.pitch_slider = QSlider(Qt.Horizontal)
         self.pitch_slider.setRange(200, 700) # 20.0 to 70.0 degrees
         self.pitch_slider.setValue(450)
@@ -43,6 +54,17 @@ class TFTunerGUI(QWidget):
         pitch_layout.addWidget(self.pitch_label)
         pitch_layout.addWidget(self.pitch_slider)
         layout.addLayout(pitch_layout)
+        
+        # Yaw Slider
+        yaw_layout = QHBoxLayout()
+        self.yaw_label = QLabel('Yaw (Drehung Z): 180.0°')
+        self.yaw_slider = QSlider(Qt.Horizontal)
+        self.yaw_slider.setRange(900, 2700) # 90.0 to 270.0 degrees
+        self.yaw_slider.setValue(1800)
+        self.yaw_slider.valueChanged.connect(self.update_labels)
+        yaw_layout.addWidget(self.yaw_label)
+        yaw_layout.addWidget(self.yaw_slider)
+        layout.addLayout(yaw_layout)
         
         # X Slider
         x_layout = QHBoxLayout()
@@ -56,24 +78,31 @@ class TFTunerGUI(QWidget):
         layout.addLayout(x_layout)
 
         self.setLayout(layout)
-        self.resize(400, 150)
+        self.resize(450, 250)
 
     def update_labels(self):
         z_val = self.z_slider.value() / 1000.0
+        roll_val = self.roll_slider.value() / 10.0
         pitch_val = self.pitch_slider.value() / 10.0
+        yaw_val = self.yaw_slider.value() / 10.0
         x_val = self.x_slider.value() / 1000.0
+        
         self.z_label.setText(f'Z (Höhe): {z_val:.3f} m')
-        self.pitch_label.setText(f'Pitch (Winkel): {pitch_val:.1f}°')
+        self.roll_label.setText(f'Roll: {roll_val:.1f}°')
+        self.pitch_label.setText(f'Pitch: {pitch_val:.1f}°')
+        self.yaw_label.setText(f'Yaw: {yaw_val:.1f}°')
         self.x_label.setText(f'X (Vor/Zurück): {x_val:.3f} m')
 
     def publish_tf(self):
         z_val = self.z_slider.value() / 1000.0
+        roll_deg = self.roll_slider.value() / 10.0
         pitch_deg = self.pitch_slider.value() / 10.0
+        yaw_deg = self.yaw_slider.value() / 10.0
         x_val = self.x_slider.value() / 1000.0
         
+        roll_rad = math.radians(roll_deg)
         pitch_rad = math.radians(pitch_deg)
-        yaw_rad = math.radians(180.0)
-        roll_rad = 0.0
+        yaw_rad = math.radians(yaw_deg)
 
         t = TransformStamped()
         t.header.stamp = self.node.get_clock().now().to_msg()
@@ -106,6 +135,11 @@ class TFTunerNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
+    
+    # Kill the static TF publisher from the launch file to prevent flickering / jumping
+    import os
+    os.system("pkill -f 'static_transform_publisher.*zed_camera_link'")
+    
     node = TFTunerNode()
     
     app = QApplication(sys.argv)

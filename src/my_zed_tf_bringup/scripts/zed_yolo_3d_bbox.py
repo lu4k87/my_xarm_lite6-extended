@@ -117,7 +117,7 @@ class ZedYolo3DNode(Node):
 
         # Lookup TF to map 3D points exactly into link_base
         try:
-            trans = self.tf_buffer.lookup_transform('link_base', frame_id, rgb_msg.header.stamp)
+            trans = self.tf_buffer.lookup_transform('link_base', frame_id, rclpy.time.Time())
             q = trans.transform.rotation
             t = trans.transform.translation
             x_q, y_q, z_q, w_q = q.x, q.y, q.z, q.w
@@ -147,40 +147,17 @@ class ZedYolo3DNode(Node):
             # Extract depth ROI
             depth_roi = cv_depth[y_min:y_max, x_min:x_max]
             
-            # Filter out NaNs, zeros, and infinities
-            # Use inner 50% of the bounding box to determine the object's median depth robustly
-            roi_h, roi_w = depth_roi.shape
-            inner_x_min = int(roi_w * 0.25)
-            inner_x_max = int(roi_w * 0.75)
-            inner_y_min = int(roi_h * 0.25)
-            inner_y_max = int(roi_h * 0.75)
+            # Filter out NaNs, zeros, and infinities (all valid points in the bbox)
+            valid_depth_mask = (depth_roi > 0.1) & (depth_roi < 10.0) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi)
             
-            inner_depth_roi = depth_roi[inner_y_min:inner_y_max, inner_x_min:inner_x_max]
-            valid_inner_depths = inner_depth_roi[(inner_depth_roi > 0.1) & (inner_depth_roi < 10.0) & ~np.isnan(inner_depth_roi) & ~np.isinf(inner_depth_roi)]
-            
-            # Fallback to entire ROI if inner ROI is empty or invalid
-            if len(valid_inner_depths) > 10:
-                z_median = np.median(valid_inner_depths)
-            else:
-                valid_depths = depth_roi[(depth_roi > 0.1) & (depth_roi < 10.0) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi)]
-                if len(valid_depths) == 0:
-                    continue
-                z_median = np.median(valid_depths)
-                
-            if np.isnan(z_median) or z_median <= 0:
-                continue
-                
-            # Isolate object from background/table (within 10cm of median depth to encompass the object cleanly but avoid background)
-            obj_mask = (depth_roi > 0.1) & (depth_roi < 10.0) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi) & (np.abs(depth_roi - z_median) < 0.10)
-            
-            if not np.any(obj_mask):
+            if not np.any(valid_depth_mask):
                 continue
                 
             # Extract 2D pixel coordinates for the object
-            v_roi, u_roi = np.where(obj_mask)
+            v_roi, u_roi = np.where(valid_depth_mask)
             u_img = u_roi + x_min
             v_img = v_roi + y_min
-            z_vals = depth_roi[obj_mask]
+            z_vals = depth_roi[valid_depth_mask]
             
             # Convert to 3D Optical Frame
             x_opt = (u_img - cx) * z_vals / fx
@@ -193,8 +170,9 @@ class ZedYolo3DNode(Node):
                 # Transform to link_base
                 pts_base = R @ pts_opt + T
                 
-                # Filter out table points (Z < 0.02) and robot base (X < 0.25)
-                valid_pts_filter = (pts_base[2, :] > 0.02) & (pts_base[0, :] > 0.25)
+                # Robustly filter out table points (Z < 0.015) and robot base (X < 0.25)
+                # also filter out points that are too high (Z > 0.4) to avoid grasping the camera stand or robot arm
+                valid_pts_filter = (pts_base[2, :] > 0.015) & (pts_base[0, :] > 0.25) & (pts_base[2, :] < 0.4)
                 if np.sum(valid_pts_filter) < 10:
                     continue # Not enough points belonging to the object
                 pts_base = pts_base[:, valid_pts_filter]

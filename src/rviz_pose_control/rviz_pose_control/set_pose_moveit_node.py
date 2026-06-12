@@ -73,11 +73,11 @@ class SetPoseMoveitNode(Node):
             callback_group=self.cb_group
         )
         
-    def speed_cb(self, msg):
-        self.current_speed_scale = msg.data
-        
         # Start initial pose automatically once MoveIt Servo is ready
         self.startup_timer = self.create_timer(1.0, self._check_servo_ready, callback_group=self.cb_group)
+        
+    def speed_cb(self, msg):
+        self.current_speed_scale = msg.data
 
     def _check_servo_ready(self):
         if self.servo_start_client.service_is_ready() and self.servo_stop_client.service_is_ready():

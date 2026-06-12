@@ -52,7 +52,7 @@ def generate_launch_description():
         description='Kamera X-Position relativ zu link_base [m]')
     tf_y_arg = DeclareLaunchArgument('tf_y', default_value='0.0',
         description='Kamera Y-Position relativ zu link_base [m]')
-    tf_z_arg = DeclareLaunchArgument('tf_z', default_value='0.38',
+    tf_z_arg = DeclareLaunchArgument('tf_z', default_value='0.39',
         description='Kamera Z-Position (Höhe) relativ zu link_base [m]')
     tf_roll_arg = DeclareLaunchArgument('tf_roll', default_value='0.0',
         description='Kamera Roll-Winkel [rad]')

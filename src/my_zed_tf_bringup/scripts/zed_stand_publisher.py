@@ -14,14 +14,15 @@ class ZedVisualPublisher(Node):
     def publish_markers(self):
         marker_array = MarkerArray()
         
-        now = self.get_clock().now().to_msg()
+        # Set to 0 so RViz always uses the latest available transform
+        now = rclpy.time.Time().to_msg()
 
         # =========================================================
         # MARKER 1: V-Slot Aluminum Profile (20x20mm) Stand
-        h = 0.36
+        h = 0.39
         cx = 0.75
         cy = 0.0
-        cz = 0.18
+        cz = 0.195
         
         # Color: Aluminum / Light Grey
         r, g, b, a = 0.7, 0.7, 0.7, 1.0

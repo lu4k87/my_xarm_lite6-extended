@@ -74,7 +74,7 @@ class Checker(Node):
         if msg.data in [3, 4, 5]:
             if self.joystick:
                 # Vibriere intensiv für 500ms
-                self.joystick.rumble(0.05, 0.05, 100)
+                self.joystick.rumble(1.0, 1.0, 500)
                 self.servo_rumble_active = True
         # 0: NO_WARNING (Kollision verlassen)
         elif msg.data == 0:
@@ -144,7 +144,7 @@ class Checker(Node):
             # KONSOLEN-AUSGABE 
             print(self.collision_message, end='', flush=True) 
             
-            if self.joystick: self.joystick.rumble(0.05, 0.05, 100)
+            if self.joystick: self.joystick.rumble(1.0, 1.0, 1000)
             self.is_blocked_state = True
 
         # Fall 2: Kollision wird aufgehoben -> Freigabe-Nachricht senden UND Konsole löschen
