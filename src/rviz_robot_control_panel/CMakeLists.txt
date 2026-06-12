@@ -12,6 +12,7 @@ find_package(rviz_common REQUIRED)
 find_package(rviz_rendering REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(xarm_msgs REQUIRED)
 
 # Qt5
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets)
@@ -38,6 +39,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rviz_rendering
   geometry_msgs
   std_srvs
+  xarm_msgs
 )
 
 pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)
@@ -58,6 +60,6 @@ install(FILES plugin_description.xml
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(rclcpp rviz_common rviz_rendering geometry_msgs std_srvs)
+ament_export_dependencies(rclcpp rviz_common rviz_rendering geometry_msgs std_srvs xarm_msgs)
 
 ament_package()

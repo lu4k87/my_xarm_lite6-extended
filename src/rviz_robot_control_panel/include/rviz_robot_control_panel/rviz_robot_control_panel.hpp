@@ -10,6 +10,10 @@
 #include <QTimer>
 #include <QGridLayout>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QDoubleSpinBox>
+#include <QLabel>
+#include <xarm_msgs/srv/move_cartesian.hpp>
 
 namespace rviz_robot_control_panel
 {
@@ -47,6 +51,9 @@ protected Q_SLOTS:
 
   // Timer slot for continuous publishing
   void publishTwist();
+  
+  // Slot for absolute move
+  void onButtonMoveTo();
 
 protected:
   // ROS Node
@@ -72,6 +79,15 @@ protected:
   QPushButton* btn_scan_;
   QPushButton* btn_frame_base_;
   QPushButton* btn_frame_tcp_;
+  
+  // Absolute Move Elements
+  QDoubleSpinBox* spin_x_;
+  QDoubleSpinBox* spin_y_;
+  QDoubleSpinBox* spin_z_;
+  QDoubleSpinBox* spin_roll_;
+  QDoubleSpinBox* spin_pitch_;
+  QDoubleSpinBox* spin_yaw_;
+  QPushButton* btn_move_to_;
 
   // State
   QTimer* publish_timer_;
@@ -80,6 +96,7 @@ protected:
   
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr initial_pose_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr scan_client_;
+  rclcpp::Client<xarm_msgs::srv::MoveCartesian>::SharedPtr move_cartesian_client_;
   
   void setupUI();
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);

@@ -27,6 +27,7 @@ void ControlPanel::onInitialize()
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
   initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
   scan_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_scan_trajectory");
+  move_cartesian_client_ = node_->create_client<xarm_msgs::srv::MoveCartesian>("/execute_motion_to_pose");
 }
 
 void ControlPanel::setupUI()
@@ -86,6 +87,35 @@ void ControlPanel::setupUI()
   bottom_layout->addWidget(btn_frame_tcp_);
 
   main_layout->addLayout(bottom_layout);
+  
+  // Absolute Move Row
+  QGridLayout* move_layout = new QGridLayout();
+  
+  QLabel* lbl_x = new QLabel("X:");
+  spin_x_ = new QDoubleSpinBox(); spin_x_->setRange(-2000.0, 2000.0); spin_x_->setValue(300.0);
+  QLabel* lbl_y = new QLabel("Y:");
+  spin_y_ = new QDoubleSpinBox(); spin_y_->setRange(-2000.0, 2000.0); spin_y_->setValue(0.0);
+  QLabel* lbl_z = new QLabel("Z:");
+  spin_z_ = new QDoubleSpinBox(); spin_z_->setRange(-2000.0, 2000.0); spin_z_->setValue(200.0);
+  
+  QLabel* lbl_roll = new QLabel("R:");
+  spin_roll_ = new QDoubleSpinBox(); spin_roll_->setRange(-3.15, 3.15); spin_roll_->setSingleStep(0.1); spin_roll_->setValue(3.14159);
+  QLabel* lbl_pitch = new QLabel("P:");
+  spin_pitch_ = new QDoubleSpinBox(); spin_pitch_->setRange(-3.15, 3.15); spin_pitch_->setSingleStep(0.1); spin_pitch_->setValue(0.0);
+  QLabel* lbl_yaw = new QLabel("Yw:");
+  spin_yaw_ = new QDoubleSpinBox(); spin_yaw_->setRange(-3.15, 3.15); spin_yaw_->setSingleStep(0.1); spin_yaw_->setValue(0.0);
+  
+  btn_move_to_ = new QPushButton("Move To Absolute Pose");
+  
+  move_layout->addWidget(lbl_x, 0, 0); move_layout->addWidget(spin_x_, 0, 1);
+  move_layout->addWidget(lbl_y, 0, 2); move_layout->addWidget(spin_y_, 0, 3);
+  move_layout->addWidget(lbl_z, 0, 4); move_layout->addWidget(spin_z_, 0, 5);
+  move_layout->addWidget(lbl_roll, 1, 0); move_layout->addWidget(spin_roll_, 1, 1);
+  move_layout->addWidget(lbl_pitch, 1, 2); move_layout->addWidget(spin_pitch_, 1, 3);
+  move_layout->addWidget(lbl_yaw, 1, 4); move_layout->addWidget(spin_yaw_, 1, 5);
+  move_layout->addWidget(btn_move_to_, 2, 0, 1, 6);
+  
+  main_layout->addLayout(move_layout);
 
   // Funktion zur Erstellung des Stylesheets mit übergebenen Farben
   auto makeStyle = [](const QString& baseColor, const QString& pressedColor) {
@@ -126,6 +156,8 @@ void ControlPanel::setupUI()
   btn_initial_pose_->setStyleSheet(styleMisc);
   btn_frame_base_->setStyleSheet(styleMisc);
   btn_frame_tcp_->setStyleSheet(styleMisc);
+  
+  btn_move_to_->setStyleSheet(makeStyle("#d35400", "#e67e22")); // Orange style for MoveTo
 
   // Connect Signals
   connect(btn_x_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressXPlus);
@@ -146,6 +178,7 @@ void ControlPanel::setupUI()
   connect(btn_scan_, &QPushButton::clicked, this, &ControlPanel::onButtonScanTrajectory);
   connect(btn_frame_base_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameBase);
   connect(btn_frame_tcp_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameTCP);
+  connect(btn_move_to_, &QPushButton::clicked, this, &ControlPanel::onButtonMoveTo);
 
   // All buttons release
   connect(btn_x_plus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
@@ -244,6 +277,32 @@ void ControlPanel::publishTwist()
     current_twist_.header.frame_id = active_frame_; // dynamically use the selected frame
     twist_pub_->publish(current_twist_);
   }
+}
+
+void ControlPanel::onButtonMoveTo()
+{
+  RCLCPP_INFO(node_->get_logger(), "Triggering absolute move to pose.");
+  auto request = std::make_shared<xarm_msgs::srv::MoveCartesian::Request>();
+  
+  request->pose = {
+    static_cast<float>(spin_x_->value()),
+    static_cast<float>(spin_y_->value()),
+    static_cast<float>(spin_z_->value()),
+    static_cast<float>(spin_roll_->value()),
+    static_cast<float>(spin_pitch_->value()),
+    static_cast<float>(spin_yaw_->value())
+  };
+  
+  request->speed = 200.0;
+  request->acc = 1000.0;
+  request->mvtime = 0.0;
+  
+  if (!move_cartesian_client_->wait_for_service(std::chrono::seconds(1))) {
+    RCLCPP_ERROR(node_->get_logger(), "Service /execute_motion_to_pose not available.");
+    return;
+  }
+  
+  move_cartesian_client_->async_send_request(request);
 }
 
 } // namespace rviz_robot_control_panel
