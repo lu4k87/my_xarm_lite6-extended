@@ -1,5 +1,5 @@
-#ifndef RVIZ_CONTROL_ROBOT_HUD_HPP
-#define RVIZ_CONTROL_ROBOT_HUD_HPP
+#ifndef RVIZ_CONTROL_ROBOT_PANEL_HPP
+#define RVIZ_CONTROL_ROBOT_PANEL_HPP
 
 #include <rviz_common/panel.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -9,7 +9,7 @@
 #include <QGridLayout>
 #include <QVBoxLayout>
 
-namespace rviz_control_robot_hud
+namespace rviz_control_robot_panel
 {
 
 class ControlPanel : public rviz_common::Panel
@@ -60,6 +60,6 @@ protected:
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);
 };
 
-} // namespace rviz_control_robot_hud
+} // namespace rviz_control_robot_panel
 
-#endif // RVIZ_CONTROL_ROBOT_HUD_HPP
+#endif // RVIZ_CONTROL_ROBOT_PANEL_HPP

@@ -258,10 +258,10 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Zweck:** Visuelles Echtzeit-Feedback in RViz2.
     * **Aufgabe:** Optische Aufwertung des 3D-Arbeitsbereichs.
     * **Funktionsweise:** Trackt `link_eef` via TF2. Publiziert `MarkerArray` mit interaktiven Pick-and-Place Zielen (Würfel, Zylinder) und statischen Grenzen (Tischkanten) für die Simulation ohne Live-YOLO Daten.
-* **`rviz_control_robot_hud`**
+* **`rviz_control_robot_panel`**
     * **Zweck:** 2D HUD Panel innerhalb von RViz für manuelles Jogging des Roboters.
     * **Aufgabe:** Bietet ein grafisches Steuerkreuz (D-Pad) zur Steuerung des Roboters per Mausklick.
-    * **Funktionsweise:** Implementiert in C++ als Qt-Plugin. Generiert beim Button-Klick einen TwistStamped-Befehl auf `/servo_server/delta_twist_cmds`. *Aktivierung in RViz:* `Panels -> Add New Panel -> rviz_control_robot_hud -> ControlPanel`.
+    * **Funktionsweise:** Implementiert in C++ als Qt-Plugin. Generiert beim Button-Klick einen TwistStamped-Befehl auf `/servo_server/delta_twist_cmds`. *Aktivierung in RViz:* `Panels -> Add New Panel -> rviz_control_robot_panel -> ControlPanel`.
 * **`rosbridge_server`**
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
@@ -642,8 +642,8 @@ dev_ws/
 │   │       ├── zed_stand_publisher.py        # 3D-Stativ Mesh Publisher
 │   │       └── zed_yolo_3d_bbox.py           # 3D Objekterkennung & Bounding-Boxen
 │   ├── ros2_whisper/               # 🎙️ Whisper AI Speech-to-Text
-│   ├── rviz_control_robot_hud/     # 🖥️ C++: RViz2 2D Control Panel Plugin
-│   │   └── src/control_panel.cpp
+│   ├── rviz_control_robot_panel/   # 🖥️ C++: RViz2 2D Control Panel Plugin
+│   │   └── src/rviz_control_robot_panel.cpp
 │   ├── rviz_marker/                # 📍 Python: RViz2 Marker-Publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent-Parser & Filter
 │   ├── websocket/                  # 📊 Python/JS: Workspace Analyzer & Dashboard

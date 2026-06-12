@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(rviz_control_robot_hud)
+project(rviz_control_robot_panel)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -20,8 +20,8 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 add_library(${PROJECT_NAME} SHARED
-  src/control_panel.cpp
-  include/rviz_control_robot_hud/control_panel.hpp
+  src/rviz_control_robot_panel.cpp
+  include/rviz_control_robot_panel/rviz_control_robot_panel.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

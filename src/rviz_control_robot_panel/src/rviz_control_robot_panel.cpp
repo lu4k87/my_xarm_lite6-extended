@@ -1,8 +1,8 @@
-#include "rviz_control_robot_hud/control_panel.hpp"
+#include "rviz_control_robot_panel/rviz_control_robot_panel.hpp"
 #include <pluginlib/class_list_macros.hpp>
 #include <rviz_common/display_context.hpp>
 
-namespace rviz_control_robot_hud
+namespace rviz_control_robot_panel
 {
 
 ControlPanel::ControlPanel(QWidget* parent)
@@ -59,26 +59,36 @@ void ControlPanel::setupUI()
 
   main_layout->addLayout(grid_layout);
 
-  // Styling buttons to look nice
-  QString btnStyle = "QPushButton {"
-                     "background-color: #34495e;"
-                     "color: white;"
-                     "border-radius: 5px;"
-                     "padding: 10px;"
-                     "font-weight: bold;"
-                     "}"
-                     "QPushButton:pressed {"
-                     "background-color: #2ecc71;"
-                     "}";
+  // Funktion zur Erstellung des Stylesheets mit übergebenen Farben
+  auto makeStyle = [](const QString& baseColor, const QString& pressedColor) {
+      return "QPushButton { background-color: " + baseColor + "; color: white; border-radius: 5px; padding: 10px; font-weight: bold; } "
+             "QPushButton:pressed { background-color: " + pressedColor + "; }";
+  };
 
-  btn_x_plus_->setStyleSheet(btnStyle);
-  btn_x_minus_->setStyleSheet(btnStyle);
-  btn_y_plus_->setStyleSheet(btnStyle);
-  btn_y_minus_->setStyleSheet(btnStyle);
-  btn_z_plus_->setStyleSheet(btnStyle);
-  btn_z_minus_->setStyleSheet(btnStyle);
-  btn_rot_z_plus_->setStyleSheet(btnStyle);
-  btn_rot_z_minus_->setStyleSheet(btnStyle);
+  // Orientierung an den RViz Standard-Achsenfarben:
+  // X-Achse (Vor/Zurück) = Rot
+  QString styleX = makeStyle("#c0392b", "#e74c3c"); 
+  
+  // Y-Achse (Links/Rechts) = Grün
+  QString styleY = makeStyle("#27ae60", "#2ecc71");
+  
+  // Z-Achse (Hoch/Runter) = Blau
+  QString styleZ = makeStyle("#2980b9", "#3498db");
+  
+  // Rotation (Z-Achse) = Orange (zur Unterscheidung von Translation Z)
+  QString styleRot = makeStyle("#d35400", "#e67e22");
+
+  btn_x_plus_->setStyleSheet(styleX);
+  btn_x_minus_->setStyleSheet(styleX);
+  
+  btn_y_plus_->setStyleSheet(styleY);
+  btn_y_minus_->setStyleSheet(styleY);
+  
+  btn_z_plus_->setStyleSheet(styleZ);
+  btn_z_minus_->setStyleSheet(styleZ);
+  
+  btn_rot_z_plus_->setStyleSheet(styleRot);
+  btn_rot_z_minus_->setStyleSheet(styleRot);
 
   // Connect Signals
   connect(btn_x_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressXPlus);
@@ -136,7 +146,7 @@ void ControlPanel::publishTwist()
   }
 }
 
-} // namespace rviz_control_robot_hud
+} // namespace rviz_control_robot_panel
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(rviz_control_robot_hud::ControlPanel, rviz_common::Panel)
+PLUGINLIB_EXPORT_CLASS(rviz_control_robot_panel::ControlPanel, rviz_common::Panel)

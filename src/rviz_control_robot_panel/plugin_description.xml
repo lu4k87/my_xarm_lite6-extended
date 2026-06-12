@@ -1,6 +1,6 @@
-<library path="rviz_control_robot_hud">
-  <class name="rviz_control_robot_hud/ControlPanel"
-         type="rviz_control_robot_hud::ControlPanel"
+<library path="rviz_control_robot_panel">
+  <class name="rviz_control_robot_panel/ControlPanel"
+         type="rviz_control_robot_panel::ControlPanel"
          base_class_type="rviz_common::Panel">
     <description>
       A control panel for manual jogging of the xArm.

@@ -258,10 +258,10 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Purpose:** Real-time visual feedback in RViz2.
     * **Task:** Visual enhancement of the 3D simulation work area.
     * **How it works:** Tracks `link_eef` via TF2. Publishes `MarkerArray` with interactive pick-and-place targets (cubes, cylinders) and static scene boundaries (table limits) for simulation without live YOLO data.
-* **`rviz_control_robot_hud`**
+* **`rviz_control_robot_panel`**
     * **Purpose:** 2D HUD Panel inside RViz for manual robot jogging.
     * **Task:** Provides a classic D-Pad style graphical user interface to control the robot with mouse clicks.
-    * **How it works:** Implemented in C++ as a Qt plugin. Generates a TwistStamped command on `/servo_server/delta_twist_cmds` upon button clicks. *Activation in RViz:* `Panels -> Add New Panel -> rviz_control_robot_hud -> ControlPanel`.
+    * **How it works:** Implemented in C++ as a Qt plugin. Generates a TwistStamped command on `/servo_server/delta_twist_cmds` upon button clicks. *Activation in RViz:* `Panels -> Add New Panel -> rviz_control_robot_panel -> ControlPanel`.
 * **`rosbridge_server`**
     * **Purpose:** WebSocket bridge for web browsers.
     * **Task:** Native communication between dashboard and robot.
@@ -677,8 +677,8 @@ dev_ws/
 │   │       ├── zed_stand_publisher.py        # 3D camera stand/tripod mesh publisher
 │   │       └── zed_yolo_3d_bbox.py           # 3D object detection & bounding boxes
 │   ├── ros2_whisper/               # 🎙️ Whisper AI speech-to-text node
-│   ├── rviz_control_robot_hud/     # 🖥️ C++: RViz2 2D Control Panel Plugin
-│   │   └── src/control_panel.cpp
+│   ├── rviz_control_robot_panel/   # 🖥️ C++: RViz2 2D Control Panel Plugin
+│   │   └── src/rviz_control_robot_panel.cpp
 │   ├── rviz_marker/                # 📍 Python: RViz2 marker publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent parser & filter
 │   ├── websocket/                  # 📊 Python/JS: Workspace analyzer & Dashboard
