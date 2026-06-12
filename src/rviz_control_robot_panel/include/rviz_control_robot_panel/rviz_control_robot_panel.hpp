@@ -65,6 +65,7 @@ protected:
   // State
   QTimer* publish_timer_;
   geometry_msgs::msg::TwistStamped current_twist_;
+  std::string active_frame_ = "link_base";
   
   void setupUI();
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);

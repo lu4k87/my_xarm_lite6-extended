@@ -41,6 +41,7 @@ void ControlPanel::setupUI()
   btn_z_minus_ = new QPushButton("Down\n(Z-)");
   btn_rot_z_plus_ = new QPushButton("Rot Left\n(Z+)");
   btn_rot_z_minus_ = new QPushButton("Rot Right\n(Z-)");
+  btn_initial_pose_ = new QPushButton("Initial Position (FAKE)");
 
   // Layout Option 1 (D-Pad):
   // [ Up ]   [ Fwd ] [ Rot L ]
@@ -52,7 +53,7 @@ void ControlPanel::setupUI()
   grid_layout->addWidget(btn_rot_z_plus_, 0, 2);
 
   grid_layout->addWidget(btn_y_plus_, 1, 0);
-  // (1,1) bleibt leer
+  grid_layout->addWidget(btn_initial_pose_, 1, 1);
   grid_layout->addWidget(btn_y_minus_, 1, 2);
 
   grid_layout->addWidget(btn_z_minus_, 2, 0);
@@ -62,12 +63,10 @@ void ControlPanel::setupUI()
   main_layout->addLayout(grid_layout);
 
   // New Buttons for bottom row
-  btn_initial_pose_ = new QPushButton("Initial Position (FAKE)");
   btn_frame_base_ = new QPushButton("Frame: link_base");
   btn_frame_tcp_ = new QPushButton("Frame: link_tcp");
 
   QHBoxLayout* bottom_layout = new QHBoxLayout();
-  bottom_layout->addWidget(btn_initial_pose_);
   bottom_layout->addWidget(btn_frame_base_);
   bottom_layout->addWidget(btn_frame_tcp_);
 
@@ -158,6 +157,7 @@ void ControlPanel::onButtonInitialPose() {
 }
 
 void ControlPanel::onButtonFrameBase() {
+  active_frame_ = "link_base";
   if (frame_pub_) {
     std_msgs::msg::String msg;
     msg.data = "link_base";
@@ -166,6 +166,7 @@ void ControlPanel::onButtonFrameBase() {
 }
 
 void ControlPanel::onButtonFrameTCP() {
+  active_frame_ = "link_tcp";
   if (frame_pub_) {
     std_msgs::msg::String msg;
     msg.data = "link_tcp";
@@ -184,7 +185,7 @@ void ControlPanel::publishTwist()
 {
   if (twist_pub_ && node_) {
     current_twist_.header.stamp = node_->now();
-    current_twist_.header.frame_id = "link_base"; // matching the gaze ui node
+    current_twist_.header.frame_id = active_frame_; // dynamically use the selected frame
     twist_pub_->publish(current_twist_);
   }
 }
