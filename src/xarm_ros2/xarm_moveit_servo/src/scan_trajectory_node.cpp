@@ -31,16 +31,22 @@ public:
   }
 
 private:
+  enum class ScanState {
+    IDLE,
+    APPROACH,
+    SCAN
+  };
+
   void handle_scan_request(
     const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
     std::shared_ptr<std_srvs::srv::Trigger::Response> response)
   {
     (void)request;
-    RCLCPP_INFO(this->get_logger(), "=== Vision Scan: Starting ===");
-    is_scanning_ = true;
+    RCLCPP_INFO(this->get_logger(), "=== Vision Scan: Approaching Start Point ===");
+    state_ = ScanState::APPROACH;
     start_time_ = this->now();
     response->success = true;
-    response->message = "Vision Scan started.";
+    response->message = "Vision Scan approaching start point.";
   }
 
   tf2::Quaternion compute_look_at(const tf2::Vector3& from, const tf2::Vector3& to)
@@ -66,21 +72,26 @@ private:
 
   void control_loop()
   {
-    if (!is_scanning_) return;
+    if (state_ == ScanState::IDLE) return;
 
     double t = (this->now() - start_time_).seconds();
-    const double total_duration = 20.0; // 20 seconds for the scan
+    const double total_duration = 20.0;
 
-    if (t > total_duration) {
-      is_scanning_ = false;
+    if (state_ == ScanState::SCAN && t > total_duration) {
+      state_ = ScanState::IDLE;
       RCLCPP_INFO(this->get_logger(), "=== Vision Scan: Complete ===");
-      // Send a few zero twists to stop
       for(int i=0; i<5; i++) {
         geometry_msgs::msg::TwistStamped stop_twist;
         stop_twist.header.stamp = this->now();
         stop_twist.header.frame_id = "link_base";
         twist_pub_->publish(stop_twist);
       }
+      return;
+    }
+
+    if (state_ == ScanState::APPROACH && t > 15.0) {
+      state_ = ScanState::IDLE;
+      RCLCPP_WARN(this->get_logger(), "=== Vision Scan: Approach Timeout ===");
       return;
     }
 
@@ -104,39 +115,49 @@ private:
       tfs.transform.rotation.w
     );
 
-    // Target Path Logic
-    // Radius 150, Focus (300, 0, 0), Z increasing
     double focus_x = 0.3;
     double focus_y = 0.0;
     double focus_z = 0.0;
     double radius = 0.15;
     
-    double phase = t / total_duration;
-    double theta = (-80.0 + 160.0 * phase) * M_PI / 180.0; // -80 to +80
+    double phase = 0.0;
+    if (state_ == ScanState::SCAN) {
+      phase = t / total_duration;
+    }
+    // In APPROACH state, phase remains 0.0, so the target is fixed at the start of the arc!
+
+    double theta = (-80.0 + 160.0 * phase) * M_PI / 180.0;
     
     tf2::Vector3 target_pos(
       focus_x - radius * std::cos(theta),
       focus_y + radius * std::sin(theta),
-      0.10 + 0.20 * phase // Z increases from 100mm to 300mm
+      0.10 + 0.20 * phase
     );
 
     tf2::Quaternion target_q = compute_look_at(target_pos, tf2::Vector3(focus_x, focus_y, focus_z));
 
-    // P-Controller
     double Kp_pos = 1.0;
     tf2::Vector3 pos_error = target_pos - current_pos;
 
-    // Angular error
     tf2::Quaternion q_error = target_q * current_q.inverse();
     tf2::Vector3 axis = q_error.getAxis();
     double angle = q_error.getAngle();
     
-    // Ensure shortest path
     if (angle > M_PI) {
         angle -= 2.0 * M_PI;
     }
 
-    double Kp_ang = 0.5;
+    // State transition from APPROACH to SCAN
+    if (state_ == ScanState::APPROACH) {
+      if (pos_error.length() < 0.02 && std::abs(angle) < 0.05) {
+        RCLCPP_INFO(this->get_logger(), "=== Vision Scan: Start Point Reached. Commencing Scan ===");
+        state_ = ScanState::SCAN;
+        start_time_ = this->now(); // Reset timer for the scan duration
+        return;
+      }
+    }
+
+    double Kp_ang = 0.8;
     tf2::Vector3 angular_vel = axis * angle * Kp_ang;
 
     geometry_msgs::msg::TwistStamped twist_msg;
@@ -161,7 +182,7 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  bool is_scanning_ = false;
+  ScanState state_ = ScanState::IDLE;
   rclcpp::Time start_time_;
 };
 
