@@ -75,6 +75,12 @@ class Checker(Node):
             if self.joystick:
                 # Vibriere intensiv für 500ms
                 self.joystick.rumble(1.0, 1.0, 500)
+                self.servo_rumble_active = True
+        # 0: NO_WARNING (Kollision verlassen)
+        elif msg.data == 0:
+            if self.joystick and getattr(self, 'servo_rumble_active', False):
+                self.joystick.rumble(0.0, 0.0, 0)
+                self.servo_rumble_active = False
 
     def check_position(self):
         """Synchrone TF2-Abfrage und Kollisionsprüfung."""
