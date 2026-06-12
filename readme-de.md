@@ -477,8 +477,14 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 
 | Komponente | Version / Details |
 |------------|-----------------|
-| **Betriebssystem** | Ubuntu 22.04 LTS (Jammy) |
+| **Betriebssystem** | Ubuntu 22.04.5 LTS (Jammy) |
 | **ROS 2** | Humble Hawksbill (LTS) |
+| **MoveIt 2** | v2.5.9 |
+| **Python** | v3.10.12 |
+| **OpenCV** | v4.9.0 |
+| **YOLO / Ultralytics**| v8.4.61 |
+| **ZED SDK** | v4.x (ZED M Firmware 1523) |
+| **Pygame** | v2.6.1 |
 | **Build-System** | `colcon` |
 | **Compiler** | GCC 11+ (C++17) |
 
