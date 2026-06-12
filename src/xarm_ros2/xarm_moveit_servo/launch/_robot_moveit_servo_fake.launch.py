@@ -259,6 +259,16 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
+    move_group_node = Node(
+        package='moveit_ros_move_group',
+        executable='move_group',
+        output='screen',
+        parameters=[
+            robot_description_parameters,
+            {'use_sim_time': False},
+        ],
+    )
+
     return [
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -267,6 +277,7 @@ def launch_setup(context, *args, **kwargs):
             )
         ),
         rviz_node,
+        move_group_node,
         joint_state_broadcaster,
         ros2_control_launch,
         traj_controller_node,
