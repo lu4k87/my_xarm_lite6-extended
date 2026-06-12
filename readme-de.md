@@ -252,9 +252,11 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt asynchron die aktuelle EEF-Position ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Kollision droht. Siehe **Abschnitt 6** für die vollständige technische Tiefenanalyse.
 
 * **`universal_initial_pose_node`** *(im Paket `rviz_pose_control` | REAL & FAKE Modi)*
-    * **Zweck:** Hardware-unabhängige Initialisierung der Roboter-Startpose.
-    * **Aufgabe:** Fährt den Arm (Real oder Simulation) sicher auf die Standard-Startposition (X=200, Y=0, Z=150).
-    * **Funktionsweise:** Bietet den Service `/ui/execute_initial_pose` an. Bei Aufruf pausiert der Node zunächst den MoveIt Servo Server (`/servo_server/stop_servo`), um Konflikte mit dem Gamepad zu vermeiden. Dann publiziert er eine `JointTrajectory` mit fest vordefinierten Gelenkwinkeln direkt an den `/lite6_traj_controller/joint_trajectory`. Nach Abschluss der Bewegung wird MoveIt Servo (`/servo_server/start_servo`) wieder aktiviert, sodass die manuelle Steuerung via Gamepad oder RViz Control Panel nahtlos fortgesetzt werden kann.
+    * **Zweck:** Hardware-unabhängige Initialisierung der Roboter-Startpose sowie absolute kartesische Positionierung ohne IK-Server.
+    * **Aufgabe:** Fährt den Arm (Real oder Simulation) sicher auf eine Standard-Startposition (Joint Trajectory) ODER auf eine spezifische X, Y, Z Koordinate (Kartesisch).
+    * **Funktionsweise:** Bietet ZWEI Services an: `/ui/execute_initial_pose` und `/ui/execute_move_to_pose`.
+        * **Initial Pose:** Pausiert zunächst den MoveIt Servo Server (`/servo_server/stop_servo`), publiziert eine `JointTrajectory` mit fest vordefinierten Gelenkwinkeln direkt an den `/lite6_traj_controller/joint_trajectory` und reaktiviert anschließend Servo.
+        * **Absolute Pose (Kartesisch):** Implementiert einen hochperformanten **kartesischen P-Regler** (Joystick-Modus) in Python. Anstatt sich auf den ressourcenfressenden `move_group` IK-Server zu verlassen (welcher oftmals zu Abstürzen wegen des `rmw_cyclonedds_cpp` Node-Limits führt), liest dieser Service die aktuelle TCP-Position via `tf2_ros` in Echtzeit aus. Er sendet dann präzise `TwistStamped` Geschwindigkeitsbefehle mit 20Hz an `~/delta_twist_cmds`, bis die gewünschten XYZ-Zielkoordinaten bis auf 2mm genau erreicht sind. Dies garantiert extreme Stabilität und hält das ROS 2 Netzwerk schlank.
 
 * **`scan_trajectory_node`** *(im Paket `xarm_moveit_servo` | REAL & FAKE Modi)*
     * **Zweck:** Hardware-unabhängige Ausführung komplexer, zusammenhängender Look-At Scan-Trajektorien.
@@ -278,10 +280,11 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Aufgabe:** Optische Aufwertung des 3D-Arbeitsbereichs.
     * **Funktionsweise:** Publiziert ROS `MarkerArray` und `InteractiveMarker` Nachrichten in die 3D-Szene von RViz2. Dient der visuellen Repräsentation von statischen Grenzen (wie Tischkanten) sowie interaktiven Zielobjekten zur Validierung von Planungs- und Kollisionsszenarien direkt in der Simulationsumgebung, unabhängig von realer Sensordatenverarbeitung.
 * **`rviz_robot_control_panel`**
-    * **Zweck:** 2D Control Panel innerhalb von RViz für manuelles 6-DoF Jogging des Roboters.
-    * **Aufgabe:** Bietet ein grafisches Steuerkreuz (D-Pad) für Translationen (X, Y, Z), dedizierte Buttons für Rotationen (Roll, Pitch, Yaw) sowie Schnellzugriffe für die Initial-Pose, eine komplexe Hemisphären-Scan-Bewegung und das Umschalten des Planungsrahmens (Base/TCP).
+    * **Zweck:** 2D Control Panel innerhalb von RViz für manuelles 6-DoF Jogging und Positionierung des Roboters.
+    * **Aufgabe:** Bietet ein grafisches Steuerkreuz (D-Pad) für Translationen (X, Y, Z), dedizierte Buttons für Rotationen (Roll, Pitch, Yaw) sowie Schnellzugriffe für die absolute Positionierung, die Initial-Pose, eine komplexe Hemisphären-Scan-Bewegung und das Umschalten des Planungsrahmens (Base/TCP).
     * **Funktionsweise:** Implementiert in C++ als natives Qt-Plugin, welches **direkt beim Start von RViz2** über die `servo.rviz` Konfigurationsdatei geladen wird. Die Bewegungs-Buttons generieren `TwistStamped`-Befehle auf `/servo_server/delta_twist_cmds`, um den Roboter dynamisch zu verfahren. 
-      Der **"Move to Initial Position"** Button ruft asynchron den Service `/ui/execute_initial_pose` auf. 
+      Der **"Move to Initial Pose"** Button ruft asynchron den Service `/ui/execute_initial_pose` auf. 
+      Die **Absolute Pose** Eingabefelder (X, Y, Z) triggern asynchron den `/ui/execute_move_to_pose` Service. Diese "dummes UI, smarter Hintergrund"-Architektur stellt sicher, dass RViz durch blockierende C++ API-Aufrufe niemals einfriert.
       Der **"Vision Scan"** Button triggert den Service `/ui/execute_scan_trajectory` des `scan_trajectory_node`, welcher die Kamera in einer 3D-Spirale flüssig von oben nach unten um das Zielobjekt (X=300) fliegen lässt, während der TCP konstant auf das Zentrum fokussiert bleibt.
       *Hinweis:* Da alle automatisierten Button-Abläufe (Initial Pose, Scan) das MoveIt Servo vorher pausieren und ausschließlich standardisierte MoveIt-Aktionen nutzen, sind sie komplett hardware-unabhängig und funktionieren in der Simulation (FAKE) genauso absturzsicher wie am echten Roboter. *Manuelle Aktivierung in RViz (falls geschlossen):* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
 * **`rviz_overlay` (Package)**
@@ -575,6 +578,7 @@ cd ~/dev_ws
 python3 ros2_nexus/ros2_nexus_web.py
 # → Öffnet sich unter http://localhost:5000 (auch im LAN erreichbar, z.B. http://192.168.x.x:5000)
 ```
+*Hinweis: Alle ROS 2 Terminals, die über die Nexus Web App gestartet werden, öffnen sich automatisch in einer extrabreiten Fenstergröße (`120x30`). Dies stellt sicher, dass komplexe System-Logs und Befehlsausgaben direkt übersichtlich lesbar bleiben.*
 
 **Quick Launch (Nexus Web Backend automatisch starten + Browser öffnen):**
 ```bash

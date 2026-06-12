@@ -87,7 +87,7 @@ echo -e "\033[1;33m════════════════════�
 def _open_terminal(script: str, title: str):
     safe = shlex.quote(script)
     subprocess.Popen(
-        f'gnome-terminal --title="{title}" -- bash -c \'eval "$1"; exec bash\' _ {safe}',
+        f'gnome-terminal --geometry=120x30 --title="{title}" -- bash -c \'eval "$1"; exec bash\' _ {safe}',
         shell=True,
     )
 
