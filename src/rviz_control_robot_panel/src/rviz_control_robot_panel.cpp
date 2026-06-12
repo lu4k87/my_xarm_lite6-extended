@@ -1,6 +1,7 @@
 #include "rviz_control_robot_panel/rviz_control_robot_panel.hpp"
 #include <pluginlib/class_list_macros.hpp>
 #include <rviz_common/display_context.hpp>
+#include <cstdlib>
 
 namespace rviz_control_robot_panel
 {
@@ -23,6 +24,7 @@ void ControlPanel::onInitialize()
   node_ = getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
   // Using the same topic as the gaze control
   twist_pub_ = node_->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_server/delta_twist_cmds", 10);
+  frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
 }
 
 void ControlPanel::setupUI()
@@ -59,6 +61,18 @@ void ControlPanel::setupUI()
 
   main_layout->addLayout(grid_layout);
 
+  // New Buttons for bottom row
+  btn_initial_pose_ = new QPushButton("Initial Position (FAKE)");
+  btn_frame_base_ = new QPushButton("Frame: link_base");
+  btn_frame_tcp_ = new QPushButton("Frame: link_tcp");
+
+  QHBoxLayout* bottom_layout = new QHBoxLayout();
+  bottom_layout->addWidget(btn_initial_pose_);
+  bottom_layout->addWidget(btn_frame_base_);
+  bottom_layout->addWidget(btn_frame_tcp_);
+
+  main_layout->addLayout(bottom_layout);
+
   // Funktion zur Erstellung des Stylesheets mit übergebenen Farben
   auto makeStyle = [](const QString& baseColor, const QString& pressedColor) {
       return "QPushButton { background-color: " + baseColor + "; color: white; border-radius: 5px; padding: 10px; font-weight: bold; } "
@@ -89,6 +103,11 @@ void ControlPanel::setupUI()
   
   btn_rot_z_plus_->setStyleSheet(styleRot);
   btn_rot_z_minus_->setStyleSheet(styleRot);
+  
+  QString styleMisc = makeStyle("#7f8c8d", "#95a5a6"); // Gray style
+  btn_initial_pose_->setStyleSheet(styleMisc);
+  btn_frame_base_->setStyleSheet(styleMisc);
+  btn_frame_tcp_->setStyleSheet(styleMisc);
 
   // Connect Signals
   connect(btn_x_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressXPlus);
@@ -99,6 +118,10 @@ void ControlPanel::setupUI()
   connect(btn_z_minus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressZMinus);
   connect(btn_rot_z_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressRotZPlus);
   connect(btn_rot_z_minus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressRotZMinus);
+
+  connect(btn_initial_pose_, &QPushButton::clicked, this, &ControlPanel::onButtonInitialPose);
+  connect(btn_frame_base_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameBase);
+  connect(btn_frame_tcp_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameTCP);
 
   // All buttons release
   connect(btn_x_plus_, &QPushButton::released, this, &ControlPanel::onButtonRelease);
@@ -129,6 +152,26 @@ void ControlPanel::onButtonPressZPlus() { updateTwist(0.0, 0.0, 0.1, 0.0, 0.0, 0
 void ControlPanel::onButtonPressZMinus() { updateTwist(0.0, 0.0, -0.1, 0.0, 0.0, 0.0); publish_timer_->start(50); }
 void ControlPanel::onButtonPressRotZPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.1); publish_timer_->start(50); }
 void ControlPanel::onButtonPressRotZMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.1); publish_timer_->start(50); }
+
+void ControlPanel::onButtonInitialPose() {
+  std::system("nohup ros2 run fake_initial_pose set_fake_pose > /dev/null 2>&1 &");
+}
+
+void ControlPanel::onButtonFrameBase() {
+  if (frame_pub_) {
+    std_msgs::msg::String msg;
+    msg.data = "link_base";
+    frame_pub_->publish(msg);
+  }
+}
+
+void ControlPanel::onButtonFrameTCP() {
+  if (frame_pub_) {
+    std_msgs::msg::String msg;
+    msg.data = "link_tcp";
+    frame_pub_->publish(msg);
+  }
+}
 
 void ControlPanel::onButtonRelease()
 {

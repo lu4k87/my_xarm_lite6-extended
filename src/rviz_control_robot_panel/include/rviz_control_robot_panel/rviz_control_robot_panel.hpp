@@ -4,6 +4,7 @@
 #include <rviz_common/panel.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <QPushButton>
 #include <QTimer>
 #include <QGridLayout>
@@ -33,6 +34,10 @@ protected Q_SLOTS:
   void onButtonPressRotZMinus();
   
   void onButtonRelease();
+  
+  void onButtonInitialPose();
+  void onButtonFrameBase();
+  void onButtonFrameTCP();
 
   // Timer slot for continuous publishing
   void publishTwist();
@@ -41,6 +46,7 @@ protected:
   // ROS Node
   rclcpp::Node::SharedPtr node_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr frame_pub_;
 
   // Qt UI Elements
   QPushButton* btn_x_plus_;
@@ -51,6 +57,10 @@ protected:
   QPushButton* btn_z_minus_;
   QPushButton* btn_rot_z_plus_;
   QPushButton* btn_rot_z_minus_;
+  
+  QPushButton* btn_initial_pose_;
+  QPushButton* btn_frame_base_;
+  QPushButton* btn_frame_tcp_;
 
   // State
   QTimer* publish_timer_;
