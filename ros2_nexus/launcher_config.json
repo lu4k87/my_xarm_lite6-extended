@@ -161,6 +161,11 @@
           "cmd": "ros2 launch rviz_marker rviz_marker.launch.py",
           "label": "RViz Marker Launch",
           "type": "launch"
+        },
+        {
+          "cmd": "ros2 run rviz_overlay rviz_overlay",
+          "label": "RViz2 TCP Overlay Node",
+          "type": "node"
         }
       ],
       "col": 1,
