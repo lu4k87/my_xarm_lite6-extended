@@ -17,6 +17,12 @@ ControlPanel::ControlPanel(QWidget* parent)
 
 ControlPanel::~ControlPanel()
 {
+  if (moveit_executor_) {
+    moveit_executor_->cancel();
+  }
+  if (moveit_spinner_thread_.joinable()) {
+    moveit_spinner_thread_.join();
+  }
 }
 
 void ControlPanel::onInitialize()
@@ -27,6 +33,24 @@ void ControlPanel::onInitialize()
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
   initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
   scan_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_scan_trajectory");
+  
+  moveit_node_ = std::make_shared<rclcpp::Node>("rviz_moveit_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
+  
+  std::vector<std::string> params = {"robot_description", "robot_description_semantic", "robot_description_kinematics"};
+  for (const auto& p : params) {
+    rclcpp::Parameter param;
+    if (node_->get_parameter(p, param)) {
+      if (!moveit_node_->has_parameter(p)) {
+        moveit_node_->declare_parameter(p, param.value_to_string());
+      } else {
+        moveit_node_->set_parameter(rclcpp::Parameter(p, param.value_to_string()));
+      }
+    }
+  }
+  
+  moveit_executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  moveit_executor_->add_node(moveit_node_);
+  moveit_spinner_thread_ = std::thread([this]() { moveit_executor_->spin(); });
 }
 
 void ControlPanel::setupUI()
@@ -313,16 +337,7 @@ void ControlPanel::onButtonMoveTo()
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
       }
       
-      rclcpp::NodeOptions options;
-      options.automatically_declare_parameters_from_overrides(true);
-      auto moveit_node = rclcpp::Node::make_shared("rviz_moveit_node", options);
-      
-      // We must explicitly set the robot_description parameter for MoveGroupInterface to work!
-      // RViz stores it, so we can try to copy it, or just let MoveIt fetch it from the parameter server.
-      // MoveIt 2 MoveGroupInterface Options allows fetching from a specific node
-      moveit::planning_interface::MoveGroupInterface::Options mgi_options("lite6", "robot_description");
-      
-      moveit::planning_interface::MoveGroupInterface move_group(node_, mgi_options);
+      moveit::planning_interface::MoveGroupInterface move_group(moveit_node_, "lite6");
       move_group.setMaxVelocityScalingFactor(0.5);
       move_group.setMaxAccelerationScalingFactor(0.5);
       
