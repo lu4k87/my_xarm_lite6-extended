@@ -114,7 +114,6 @@ class UniversalInitialPoseNode(Node):
         self.is_executing = True
         try:
             import tf2_ros
-            import tf_transformations
             from geometry_msgs.msg import TwistStamped
             import numpy as np
 
