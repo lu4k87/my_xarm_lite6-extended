@@ -284,10 +284,10 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Zweck:** WebSocket Bridge für Web-Browser.
     * **Aufgabe:** Native Kommunikation zwischen Dashboard und Roboter.
     * **Funktionsweise:** Standard-Paket für WebSockets (Port 9090). Erlaubt Webanwendungen, via `roslib.js` direkt mit dem ROS-Netzwerk zu interagieren.
-* **`zed_wrapper`** *(Physische Kamera)*
+* **`zed_wrapper`**
     * **Zweck:** Hardware-Treiber für Stereolabs ZEDm.
     * **Aufgabe:** Direktes Streaming an RViz2 und Logik-Nodes ohne Drittsoftware.
-    * **Funktionsweise:** Nativer C++ Node, der den generischen USB-Cam Node ersetzt. Publiziert `Image` und `CameraInfo` unter `/zed/zed_node/...`. Ist nur aktiv, wenn die physische Kamera angeschlossen ist.
+    * **Funktionsweise:** Nativer C++ Node, der den generischen USB-Cam Node ersetzt. Publiziert `Image` und `CameraInfo` unter `/zed/zed_node/...`.
 
 ---
 
