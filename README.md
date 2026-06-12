@@ -261,9 +261,9 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 
 * **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
-    * **Purpose:** Hard-stop collision avoidance at the MoveIt level.
-    * **Task:** Strictly blocks movements upon approaching YOLO objects while permitting evasive maneuvers.
-    * **How it works:** Utilizes `collision_check_type: threshold_distance` to create a "hard wall" (e.g., at 2 cm distance). This prevents the slow "creeping" (rubber-band effect) into obstacles that occurs with `stop_distance`. However, through gradient calculation, it detects if the joystick is steered away from the object, ensuring that safely reversing out of the collision zone remains possible.
+    * **Purpose:** Real-time MoveIt Servo collision avoidance against YOLO 3D Bounding Boxes.
+    * **Task:** Blocks kinematics upon approaching dynamic obstacles while permitting evasive maneuvers, and triggers visual warnings.
+    * **How it works:** The node integrates tightly with the YOLO pipeline: detected objects are injected into the Planning Scene as dynamic `CollisionObject` messages. The Servo config utilizes `collision_check_type: threshold_distance` to create a strict "hard wall" (e.g., at 2 cm distance), preventing the slow "creeping" into obstacles associated with `stop_distance`. When a threshold is violated, MoveIt Servo instantly halts the robot and publishes a status code (e.g., `HALT: COLLISION`) to `~/status`. This code is intercepted by the `servo_status_overlay` node, which immediately renders a 5-second visual warning popup directly in the RViz viewport. Furthermore, thanks to MoveIt's gradient calculation, the system allows the operator to steer away from the obstacle to safely exit the collision zone.
 
 * **`xarm_joystick_input`** *(Part of `xarm_moveit_servo`)* — `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`
     * **Purpose:** Gamepad control & button mapping (C++ node).
