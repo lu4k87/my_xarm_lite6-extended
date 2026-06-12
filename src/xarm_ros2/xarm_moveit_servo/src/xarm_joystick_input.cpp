@@ -357,6 +357,21 @@ namespace xarm_moveit_servo
         smoothed_twist_.angular.x = 0;
         smoothed_twist_.angular.y = 0;
         twist->twist = smoothed_twist_;
+
+        static int zero_twist_count = 0;
+        bool is_zero = (smoothed_twist_.linear.x == 0.0 && smoothed_twist_.linear.y == 0.0 &&
+                        smoothed_twist_.linear.z == 0.0 && smoothed_twist_.angular.x == 0.0 &&
+                        smoothed_twist_.angular.y == 0.0 && smoothed_twist_.angular.z == 0.0);
+
+        if (is_zero) {
+            zero_twist_count++;
+            if (zero_twist_count > 5) {
+                return false; // Stop publishing Twist if joystick is completely idle
+            }
+        } else {
+            zero_twist_count = 0;
+        }
+
         return true;
     }
 
