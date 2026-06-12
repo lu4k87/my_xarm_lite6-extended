@@ -56,7 +56,7 @@ class RvizOverlayNode(Node):
             msg.vertical_distance = 10    # 10px Abstand vom oberen Rand
             
             # Banner-Größe: Schmaler und dünner, passend zur Schrift
-            msg.width = 750
+            msg.width = 450
             msg.height = 45
             
             # Hintergrund: Sehr stark transparent (nur 20% Deckkraft)
@@ -73,16 +73,16 @@ class RvizOverlayNode(Node):
             html_text = (
                 f'<div align="center">'
                 f'<nobr>'
+                f'<span style="color:#ffffff;">Frame: {self.active_frame}</span>'
+                f'</nobr>'
+                f'<br>'
+                f'<nobr>'
                 f'<span style="color:#aaaaaa;">[tcp_link] </span>'
                 f'<span style="color:#ff4444;">X: {x_mm:4d} mm</span>'
                 f' &nbsp;|&nbsp; '
                 f'<span style="color:#44ff44;">Y: {y_mm:4d} mm</span>'
                 f' &nbsp;|&nbsp; '
                 f'<span style="color:#44bbff;">Z: {z_mm:4d} mm</span>'
-                f'</nobr>'
-                f'<br>'
-                f'<nobr>'
-                f'<span style="color:#ffffff;">Frame: {self.active_frame}</span>'
                 f'</nobr>'
                 f'</div>'
             )
