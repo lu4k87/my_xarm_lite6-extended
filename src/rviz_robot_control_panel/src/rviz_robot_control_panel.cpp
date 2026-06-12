@@ -69,7 +69,7 @@ void ControlPanel::setupUI()
   btn_y_minus_ = new QPushButton("→ Right\n(Y-)");
   btn_z_plus_ = new QPushButton("⇈ Up\n(Z+)");
   btn_z_minus_ = new QPushButton("⇊ Down\n(Z-)");
-  btn_initial_pose_ = new QPushButton("Move to\nInitial Position");
+  btn_initial_pose_ = new QPushButton("Move to\nInitial Pose");
   btn_scan_ = new QPushButton("Vision\nScan");
   
   grid_layout->addWidget(btn_z_plus_, 0, 0);
