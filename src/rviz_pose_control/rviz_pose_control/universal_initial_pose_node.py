@@ -54,6 +54,16 @@ class UniversalInitialPoseNode(Node):
         )
         self.get_logger().info('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose) ready.')
         self.is_executing = False
+        
+        # Start initial pose automatically 5 seconds after node startup
+        self.startup_timer = self.create_timer(5.0, self._auto_startup_callback, callback_group=self.cb_group)
+
+    def _auto_startup_callback(self):
+        self.startup_timer.cancel()
+        self.get_logger().info('Auto-triggering initial pose on startup...')
+        req = Trigger.Request()
+        resp = Trigger.Response()
+        self.execute_initial_pose_cb(req, resp)
 
     def execute_initial_pose_cb(self, request, response):
         if self.is_executing:
