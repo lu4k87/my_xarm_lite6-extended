@@ -26,9 +26,9 @@ def get_quaternion_from_euler(roll, pitch, yaw):
     q[3] = cr * cp * cy + sr * sp * sy # z
     return q[1], q[2], q[3], q[0]
 
-class UniversalInitialPoseNode(Node):
+class SetPoseMoveitNode(Node):
     def __init__(self):
-        super().__init__('universal_initial_pose_node')
+        super().__init__('set_pose_moveit_node')
         
         self.cb_group = ReentrantCallbackGroup()
         
@@ -55,15 +55,17 @@ class UniversalInitialPoseNode(Node):
         self.get_logger().info('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose) ready.')
         self.is_executing = False
         
-        # Start initial pose automatically 5 seconds after node startup
-        self.startup_timer = self.create_timer(5.0, self._auto_startup_callback, callback_group=self.cb_group)
+        # Start initial pose automatically once MoveIt Servo is ready
+        self.startup_timer = self.create_timer(1.0, self._check_servo_ready, callback_group=self.cb_group)
 
-    def _auto_startup_callback(self):
-        self.startup_timer.cancel()
-        self.get_logger().info('Auto-triggering initial pose on startup...')
-        req = Trigger.Request()
-        resp = Trigger.Response()
-        self.execute_initial_pose_cb(req, resp)
+    def _check_servo_ready(self):
+        if self.servo_start_client.service_is_ready() and self.servo_stop_client.service_is_ready():
+            self.startup_timer.cancel()
+            self.get_logger().info('MoveIt Servo fully loaded. Auto-triggering initial pose in 1s...')
+            time.sleep(1.0) # Give TF a moment to stabilize
+            req = Trigger.Request()
+            resp = Trigger.Response()
+            self.execute_initial_pose_cb(req, resp)
 
     def execute_initial_pose_cb(self, request, response):
         if self.is_executing:
@@ -220,7 +222,7 @@ class UniversalInitialPoseNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = UniversalInitialPoseNode()
+    node = SetPoseMoveitNode()
     executor = MultiThreadedExecutor()
     executor.add_node(node)
     try:

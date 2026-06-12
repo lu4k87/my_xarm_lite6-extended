@@ -251,7 +251,7 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
     * **Aufgabe:** Prädiktives Eingreifen vor Kollisionen bei manueller Gamepad-Steuerung.
     * **Funktionsweise:** Fängt rohe `/joy`-Signale ab, fragt asynchron die aktuelle EEF-Position ab, berechnet eine vorausschauende Zielposition und publiziert ein bereinigtes `/joy_check`-Signal mit genullter Abwärtsachse, wenn eine Kollision droht. Siehe **Abschnitt 6** für die vollständige technische Tiefenanalyse.
 
-* **`universal_initial_pose_node`** *(im Paket `rviz_pose_control` | REAL & FAKE Modi)*
+* **`set_pose_moveit_node`** *(im Paket `rviz_pose_control` | REAL & FAKE Modi)*
     * **Zweck:** Hardware-unabhängige Initialisierung der Roboter-Startpose sowie absolute kartesische Positionierung ohne IK-Server.
     * **Aufgabe:** Fährt den Arm (Real oder Simulation) sicher auf eine Standard-Startposition (Joint Trajectory) ODER auf eine spezifische X, Y, Z Koordinate (Kartesisch).
     * **Funktionsweise:** Bietet ZWEI Services an: `/ui/execute_initial_pose` und `/ui/execute_move_to_pose`.
@@ -410,7 +410,7 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 | **A (grün)** | Greifer toggle | Service: `open/close_lite6_gripper` | Zustand in `vacuum_gripper_state_` |
 | **B (rot)** | Greifer stopp | Service: `/ufactory/stop_lite6_gripper` | Not-Aus |
 | **X (blau)** | Whisper AI toggle | Action: `/whisper/inference` (max 5 Sek.) | Toggle start/stopp |
-| **Y (gelb)** | Initialposition | Service: `/ui/execute_initial_pose` | `universal_initial_pose_node` |
+| **Y (gelb)** | Initialposition | Service: `/ui/execute_initial_pose` | `set_pose_moveit_node` |
 
 **Geschwindigkeitsstufen (D-Pad):**
 

@@ -264,6 +264,13 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
+    set_pose_moveit_node = Node(
+        package='rviz_pose_control',
+        executable='set_pose_moveit',
+        name='set_pose_moveit_node',
+        output='screen',
+    )
+
     return [
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -276,6 +283,7 @@ def launch_setup(context, *args, **kwargs):
         ros2_control_launch,
         traj_controller_node,
         checker_node,
+        set_pose_moveit_node,
     ] + controller_nodes
 
 

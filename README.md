@@ -249,7 +249,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **Task:** Predictive intervention before collisions during manual gamepad control.
     * **How it works:** Intercepts raw `/joy` signals, asynchronously queries the robot's current EEF position, computes a forward-projected position, and publishes a sanitized `/joy_check` signal with the downward axis zeroed if a collision is imminent. See **Section 6** for the full technical deep-dive.
 
-* **`universal_initial_pose_node`** *(in package `rviz_pose_control` | REAL & FAKE modes)*
+* **`set_pose_moveit_node`** *(in package `rviz_pose_control` | REAL & FAKE modes)*
     * **Purpose:** Hardware-agnostic initialization of the robot's starting pose and absolute Cartesian positioning without IK servers.
     * **Task:** Safely moves the arm (real or simulated) to a default starting position (Joint Trajectory) OR to a specific X, Y, Z coordinate (Cartesian).
     * **How it works:** Provides TWO services: `/ui/execute_initial_pose` and `/ui/execute_move_to_pose`.
@@ -414,7 +414,7 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 | **A (green)** | Gripper toggle (open ↔ close) | Service: `/ufactory/open_lite6_gripper` / `close_lite6_gripper` | State tracked in `vacuum_gripper_state_` |
 | **B (red)** | Gripper stop / off | Service: `/ufactory/stop_lite6_gripper` | Emergency gripper cut-off |
 | **X (blue)** | Whisper AI voice record | Action: `/whisper/inference` (max 5 sec) | Toggle: press once to start, again to stop |
-| **Y (yellow)** | Move to home position | Service: `/ui/execute_initial_pose` | Calls the `universal_initial_pose_node` |
+| **Y (yellow)** | Move to home position | Service: `/ui/execute_initial_pose` | Calls the `set_pose_moveit_node` |
 
 **Speed Levels (D-Pad):**
 

@@ -135,8 +135,8 @@
           "type": "launch"
         },
         {
-          "cmd": "ros2 run rviz_pose_control universal_initial_pose",
-          "label": "Universal Initial Pose Node",
+          "cmd": "ros2 run rviz_pose_control set_pose_moveit",
+          "label": "Set Pose MoveIt Node",
           "type": "node"
         },
 
