@@ -286,7 +286,8 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
       Der **"Move to Initial Pose"** Button ruft asynchron den Service `/ui/execute_initial_pose` auf. 
       Die **Absolute Pose** Eingabefelder (X, Y, Z) triggern asynchron den `/ui/execute_move_to_pose` Service. Diese "dummes UI, smarter Hintergrund"-Architektur stellt sicher, dass RViz durch blockierende C++ API-Aufrufe niemals einfriert.
       Der **"Vision Scan"** Button triggert den Service `/ui/execute_scan_trajectory` des `scan_trajectory_node`, welcher die Kamera in einer 3D-Spirale flüssig von oben nach unten um das Zielobjekt (X=300) fliegen lässt, während der TCP konstant auf das Zentrum fokussiert bleibt.
-      *Hinweis:* Da alle automatisierten Button-Abläufe (Initial Pose, Scan) das MoveIt Servo vorher pausieren und ausschließlich standardisierte MoveIt-Aktionen nutzen, sind sie komplett hardware-unabhängig und funktionieren in der Simulation (FAKE) genauso absturzsicher wie am echten Roboter. *Manuelle Aktivierung in RViz (falls geschlossen):* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
+      Das **"Grasp Object"** Textfeld ermöglicht das dynamische Greifen von YOLO-Objekten (z. B. "sports_ball"). Ein eigener Hintergrundprozess (`yolo_grasp_executor.py`) liest die exakten Koordinaten aus dem `MarkerArray`, berechnet den Anfahrtsweg und führt über einen P-Regler weiche, nicht-blockierende `TwistStamped`-Befehle aus (erst sicheres Hochfahren auf Z=300mm, dann direkte Fahrt zum Ziel). Ein integriertes Live-Log-Fenster im RViz Panel gibt visuelles Echtzeit-Feedback zum Ablauf.
+      *Hinweis:* Da alle automatisierten Button-Abläufe (Initial Pose, Scan, Grasp) das MoveIt Servo vorher pausieren und ausschließlich standardisierte MoveIt-Aktionen oder TwistStamped-Echtzeitkommandos nutzen, sind sie komplett hardware-unabhängig und funktionieren in der Simulation (FAKE) genauso absturzsicher wie am echten Roboter. *Manuelle Aktivierung in RViz (falls geschlossen):* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
 * **`rviz_overlay` (Package)**
     * **`rviz_overlay` Node:** Projiziert die Echtzeit-Koordinaten (X/Y/Z) und den aktiven Planungsrahmen übersichtlich in den jeweiligen Achsenfarben direkt in das Sichtfeld von RViz.
     * **`servo_status_overlay` Node:** Abonniert das MoveIt Servo `/servo_server/status` Topic und blendet bei kritischen kinematischen Zuständen für 5 Sekunden ein farblich kodiertes Warn-Popup (z.B. "APPROACHING SINGULARITY" oder "HALT: COLLISION") oben links in der RViz-Ansicht ein.
@@ -520,6 +521,8 @@ pip install ultralytics     # YOLO-Objekterkennung
 |-------|-------|
 | UFactory xArm Lite 6 | 6-DOF Roboterarm |
 | Xbox One Elite Series 2 | Primärer Teleoperation-Controller |
+| NVIDIA RTX A5000 | Primäre Grafikkarte für Computer Vision / CUDA 12.1 |
+| 12th Gen Intel Core i9-12900K | Primärer Workstation-Prozessor |
 | Tobii Pro Glasses 3 | Eye-Tracking *(in Bearbeitung)* |
 | Stereolabs ZED Mini | Stereo-Tiefenkamera |
 | Raspberry Pi Kamera (×2) | **[VERALTET]** 2D-Objekterkennung via YOLO |

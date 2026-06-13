@@ -25,6 +25,7 @@ void ControlPanel::onInitialize()
   // Using the same topic as the gaze control
   twist_pub_ = node_->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_server/delta_twist_cmds", 10);
   frame_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", 10);
+  grasp_object_pub_ = node_->create_publisher<std_msgs::msg::String>("/ui/grasp_object_cmd", 10);
   initial_pose_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
   scan_client_ = node_->create_client<std_srvs::srv::Trigger>("/ui/execute_scan_trajectory");
   
@@ -47,6 +48,20 @@ void ControlPanel::onInitialize()
             
             QString text = QString("Speed: %1").arg(val, 0, 'f', 3);
             speed_label_->setText(text);
+        });
+    }
+  );
+  
+  status_sub_ = node_->create_subscription<std_msgs::msg::String>(
+    "/ui/grasp_status", 10,
+    [this](const std_msgs::msg::String::SharedPtr msg) {
+        QMetaObject::invokeMethod(this, [this, txt=msg->data]() {
+            if(txt_log_) {
+                txt_log_->append(QString::fromStdString(txt));
+                // Scroll to bottom
+                QScrollBar *vScrollBar = txt_log_->verticalScrollBar();
+                vScrollBar->setValue(vScrollBar->maximum());
+            }
         });
     }
   );
@@ -158,6 +173,27 @@ void ControlPanel::setupUI()
   
   main_layout->addLayout(move_layout);
 
+  // Grasp Object Row
+  QHBoxLayout* grasp_layout = new QHBoxLayout();
+  QLabel* lbl_grasp = new QLabel("Grasp Object:");
+  txt_grasp_object_ = new QLineEdit();
+  txt_grasp_object_->setPlaceholderText("Object Name...");
+  btn_grasp_ = new QPushButton("Grasp");
+  
+  grasp_layout->addWidget(lbl_grasp);
+  grasp_layout->addWidget(txt_grasp_object_);
+  grasp_layout->addWidget(btn_grasp_);
+  
+  main_layout->addLayout(grasp_layout);
+  
+  // Log Window
+  txt_log_ = new QTextEdit();
+  txt_log_->setReadOnly(true);
+  txt_log_->setFixedHeight(100);
+  txt_log_->setStyleSheet("QTextEdit { background-color: #2c3e50; color: #ecf0f1; border: 1px solid #7f8c8d; border-radius: 4px; padding: 4px; font-family: monospace; font-size: 11px; }");
+  txt_log_->append("System ready. Waiting for grasp command...");
+  main_layout->addWidget(txt_log_);
+
   // Funktion zur Erstellung des Stylesheets mit übergebenen Farben
   auto makeStyle = [](const QString& baseColor, const QString& pressedColor) {
     return QString("QPushButton { background-color: %1; color: white; font-weight: bold; border-radius: 6px; border: 1px solid #2c3e50; padding: 10px; }"
@@ -199,6 +235,12 @@ void ControlPanel::setupUI()
     "QPushButton:hover { background-color: #3498db; }"
     "QPushButton:pressed { background-color: #21618c; }"
   );
+  
+  btn_grasp_->setStyleSheet(
+    "QPushButton { background-color: #e67e22; border-radius: 6px; padding: 8px; border: 1px solid #d35400; color: #fff; font-weight: bold; }"
+    "QPushButton:hover { background-color: #d35400; }"
+    "QPushButton:pressed { background-color: #a04000; }"
+  );
 
   // Connect Signals
   connect(btn_x_plus_, &QPushButton::pressed, this, &ControlPanel::onButtonPressXPlus);
@@ -220,6 +262,7 @@ void ControlPanel::setupUI()
   connect(btn_frame_base_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameBase);
   connect(btn_frame_tcp_, &QPushButton::clicked, this, &ControlPanel::onButtonFrameTCP);
   connect(btn_move_to_, &QPushButton::clicked, this, &ControlPanel::onButtonMoveTo);
+  connect(btn_grasp_, &QPushButton::clicked, this, &ControlPanel::onButtonGrasp);
   
   connect(speed_slider_, &QSlider::valueChanged, this, &ControlPanel::onSpeedSliderChanged);
 
@@ -368,6 +411,22 @@ void ControlPanel::onSpeedSliderChanged(int value)
   auto msg = std_msgs::msg::Int32();
   msg.data = value;
   set_speed_index_pub_->publish(msg);
+}
+
+void ControlPanel::onButtonGrasp()
+{
+  QString object_name = txt_grasp_object_->text().trimmed();
+  if (object_name.isEmpty()) {
+    RCLCPP_WARN(node_->get_logger(), "No object name entered.");
+    return;
+  }
+  
+  if (grasp_object_pub_) {
+    std_msgs::msg::String msg;
+    msg.data = object_name.toStdString();
+    grasp_object_pub_->publish(msg);
+    RCLCPP_INFO(node_->get_logger(), "Published Grasp Object command: %s", msg.data.c_str());
+  }
 }
 
 } // namespace rviz_robot_control_panel

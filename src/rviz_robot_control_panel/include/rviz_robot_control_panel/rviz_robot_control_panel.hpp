@@ -14,6 +14,9 @@
 #include <QHBoxLayout>
 #include <QDoubleSpinBox>
 #include <QLabel>
+#include <QLineEdit>
+#include <QTextEdit>
+#include <QScrollBar>
 #include <thread>
 #include <atomic>
 #include <moveit/move_group_interface/move_group_interface.h>
@@ -63,6 +66,9 @@ protected Q_SLOTS:
   // Slot for absolute move
   void onButtonMoveTo();
   
+  // Slot for grasp object
+  void onButtonGrasp();
+  
   // Slot for speed slider
   void onSpeedSliderChanged(int value);
 
@@ -71,8 +77,10 @@ protected:
   rclcpp::Node::SharedPtr node_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr frame_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr grasp_object_pub_;
   rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr set_speed_index_pub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr speed_sub_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr status_sub_;
 
   // Qt UI Elements
   QPushButton* btn_x_plus_;
@@ -104,6 +112,11 @@ protected:
   QDoubleSpinBox* spin_pitch_;
   QDoubleSpinBox* spin_yaw_;
   QPushButton* btn_move_to_;
+
+  // Grasp Object Elements
+  QLineEdit* txt_grasp_object_;
+  QPushButton* btn_grasp_;
+  QTextEdit* txt_log_;
 
   // State
   QTimer* publish_timer_;

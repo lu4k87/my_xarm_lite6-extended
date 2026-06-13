@@ -267,24 +267,24 @@ class SetPoseMoveitNode(Node):
             target_yaw = request.pose[5]
             
             # P-Regler Konstanten
-            Kp_pos = 1.0
-            Kp_ori = 0.5
+            Kp_pos = 2.5
+            Kp_ori = 1.0
             
             # Skaliere Geschwindigkeiten anhand des globalen Speed Factors (0.5 ist Standard = 1x)
             speed_multiplier = self.current_speed_scale / 0.5
-            max_vel_pos = 0.1 * speed_multiplier # m/s
+            max_vel_pos = 0.2 * speed_multiplier # m/s
             max_vel_ori = 0.5 * speed_multiplier # rad/s
             
             rate = self.create_rate(20.0) # 20 Hz loop
             
             self.get_logger().info(f"MoveTo gestartet: X={target_x:.3f}, Y={target_y:.3f}, Z={target_z:.3f}")
             
-            # Timeout nach 15 Sekunden
+            # Timeout nach 30 Sekunden
             start_time = self.get_clock().now()
             
             while rclpy.ok():
-                if (self.get_clock().now() - start_time).nanoseconds / 1e9 > 15.0:
-                    raise Exception("Timeout: Ziel nicht erreicht in 15 Sekunden.")
+                if (self.get_clock().now() - start_time).nanoseconds / 1e9 > 30.0:
+                    raise Exception("Timeout: Ziel nicht erreicht in 30 Sekunden.")
                     
                 try:
                     trans = tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())

@@ -139,6 +139,16 @@ def generate_launch_description():
     )
 
 
+    # -----------------------------------------------------------------------
+    # YOLO Grasp Executor Node
+    # -----------------------------------------------------------------------
+    yolo_grasp_executor_node = Node(
+        package='my_zed_tf_bringup',
+        executable='yolo_grasp_executor.py',
+        name='yolo_grasp_executor',
+        output='screen'
+    )
+
     return LaunchDescription([
         # Arguments
         camera_model_arg,
@@ -154,4 +164,5 @@ def generate_launch_description():
         zed_stand_publisher_node,
         pointcloud_optimizer_node,
         yolo_moveit_collision_node,
+        yolo_grasp_executor_node,
     ])

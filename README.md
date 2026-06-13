@@ -284,7 +284,8 @@ For cognitively relieving teleoperation, the user is provided with a central, im
     * **How it works:** Implemented in C++ as a Qt plugin. The movement buttons generate `TwistStamped` commands on `/servo_server/delta_twist_cmds` to dynamically jog the robot. 
       The **"Move to Initial Pose"** button asynchronously calls the `/ui/execute_initial_pose` ROS 2 service. 
       The **Absolute Pose** input fields (X, Y, Z) asynchronously trigger the `/ui/execute_move_to_pose` service. This "dumb UI, smart background" architecture ensures that RViz never freezes due to blocking C++ API calls.
-      The **"Vision Scan"** button triggers the `/ui/execute_scan_trajectory` service of the `scan_trajectory_node`, which fluidly flies the camera in a 3D spiral from top to bottom around the target object (X=300) while the TCP remains constantly focused on the center. *Note:* Because this workflow relies purely on standardized MoveIt services rather than proprietary hardware APIs, it is completely hardware-agnostic and safely operates on both the real robot and the simulated (FAKE) hardware. *Activation in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
+      The **"Vision Scan"** button triggers the `/ui/execute_scan_trajectory` service of the `scan_trajectory_node`, which fluidly flies the camera in a 3D spiral from top to bottom around the target object (X=300) while the TCP remains constantly focused on the center.
+      The **"Grasp Object"** text field allows dynamic gripping of YOLO-detected objects (e.g., "sports_ball"). A dedicated background process (`yolo_grasp_executor.py`) reads the coordinates from the `MarkerArray`, calculates the optimal approach path, and streams precise, non-blocking `TwistStamped` real-time commands via a P-controller (lifting safely to Z=300mm first, then moving down to the object). A live log window within the RViz panel gives immediate visual feedback on the task status. *Activation in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
 * **`rviz_overlay` (Package)**
     * **`rviz_overlay` Node:** Projects real-time TCP coordinates (X/Y/Z) cleanly formatted in their respective axis colors directly into the user's field of view. It listens to the `/ui/robot_control/current_frame` topic to synchronize with the Control Panel and dynamically display the selected reference frame (e.g. `[tcp_link]`).
     * **`servo_status_overlay` Node:** Subscribes to the MoveIt Servo `/servo_server/status` and the `/ui/collision_msg` topics. It displays a temporary 2-second, color-coded popup warning (e.g., "APPROACHING SINGULARITY" or "PLANE COLLISION!") exactly in the center of the RViz view when critical kinematic or table collision thresholds are reached.
@@ -547,6 +548,8 @@ pip install ultralytics     # YOLO object detection
 |--------|------|
 | UFactory xArm Lite 6 | 6-DOF robot arm |
 | Xbox One Elite Series 2 | Primary teleoperation controller |
+| NVIDIA RTX A5000 | Primary GPU for Computer Vision / CUDA 12.1 |
+| 12th Gen Intel Core i9-12900K | Primary Workstation CPU |
 | Tobii Pro Glasses 3 | Eye-tracking input *(in progress)* |
 | Stereolabs ZED Mini | Stereo depth camera |
 | Raspberry Pi Camera (×2) | **[DEPRECATED]** 2D object detection via YOLO |
