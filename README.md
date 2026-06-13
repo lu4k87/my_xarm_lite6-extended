@@ -198,7 +198,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 To provide a clear understanding of the architecture, the software modules are categorized by their functional **Features (Use-Cases)**. Each module is explicitly labeled as a ROS 2 Node, Script, or Plugin.
 
 ### 🎮 5.1 Feature: Gamepad Teleoperation & Hard Collision Protection
-*This node manages the manual jogging of the robot via the Xbox controller and actively prevents the robot from crashing into the table due to operator error.*
+*This subsystem manages the manual jogging of the robot via the Xbox controller and actively prevents the robot from crashing into the table due to operator error.*
 
 * **`xarm_joystick_input.cpp` [NODE]**
     * 🎯 **Purpose & Task:** Translates the sanitized gamepad signals (analog sticks & triggers) into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies exponential smoothing and handles all button mappings.
@@ -222,7 +222,7 @@ To provide a clear understanding of the architecture, the software modules are c
         * `collision_distance_safety_margin: 0.02` – Defines the 2 cm wide, invisible collision bubble around the robot.
 
 ### 🟢 5.2 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)
-*This node is responsible for locating objects in 3D space, generating virtual obstacles, and navigating the robot precisely to the target.*
+*This subsystem is responsible for locating objects in 3D space, generating virtual obstacles, and navigating the robot precisely to the target.*
 
 * **`zed_wrapper` [NODE]**
     * 🎯 **Purpose & Task:** The native hardware driver for the Stereolabs ZED Mini Camera. 
