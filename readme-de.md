@@ -199,7 +199,31 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 
 Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-Module nach ihren funktionalen **Features (Use-Cases)** gegliedert. Jedes Modul ist dabei explizit als ROS 2 Node, Skript oder Plugin gekennzeichnet.
 
-### 🟢 5.1 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
+### 🎮 5.1 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
+*Dieser Node steuert das manuelle Jogging des Roboters per Xbox-Controller und verhindert aktiv, dass der Roboter durch Bedienfehler in den Tisch kracht.*
+
+* **`xarm_joystick_input.cpp` [NODE]**
+    * 🎯 **Zweck & Aufgabe:** Übersetzt die bereinigten Gamepad-Signale (Analog-Sticks & Trigger) in kartesische Geschwindigkeitsbefehle (`TwistStamped`) für MoveIt Servo. Wendet exponentielles Smoothing an und steuert alle Button-Mappings.
+    * 🟠 📥 **Subscribes:** `/joy_check` (`sensor_msgs/Joy`). Liest die vom Wächter-Node bereinigten Controller-Inputs.
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`). Sendet Motorströme/Geschwindigkeiten an den Servo Server.
+    * 🔄 **Services:** `/servo_server/start_servo`, `/servo_server/stop_servo`, `/servo_server/switch_command_type` (Clients).
+* **`checker.py` (`collision_check`) [NODE]**
+    * 🎯 **Zweck & Aufgabe:** Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Sek. in die Zukunft) die Z-Koordinate. Würde der Roboter den Tisch berühren, wird der Abwärtsbefehl des Controllers hart überschrieben und blockiert. Löst das Rumble-Feedback (Vibration) des Gamepads aus.
+    * 🟠 📥 **Subscribes:** `/joy` (`sensor_msgs/Joy`), `/servo_server/status` (`std_msgs/Int8`). Liest den rohen Controller-Input und Status-Codes des Servo-Servers (z.B. Kollisionswarnungen von YOLO-Boxen).
+    * 🟢 📤 **Publishes:** `/joy_check` (`sensor_msgs/Joy`), `/joy/set_feedback` (`sensor_msgs/JoyFeedbackArray`). Sendet den (ggf. null-korrigierten) Befehl an den `joystick_input` weiter und steuert die Controller-Vibration.
+    * 🔄 **TF2:** Hört auf die aktuelle TCP-Höhe (`link_base` -> `link_tcp`).
+    * ⚙️ **Parameter:**
+        * `look_ahead_time = 0.1` – Prädiktionshorizont (Sekunden) für die Geschwindigkeits-Vorausschau.
+        * `table_z_threshold = 0.0` – Die harte Tischbarriere auf der Z-Achse (World-Frame).
+* **`xarm_moveit_servo` [KONFIGURATION / NODE]**
+    * 🎯 **Zweck & Aufgabe:** Die Echtzeit-Bewegungs-Engine von MoveIt. Reagiert auf dynamische Hindernisse (YOLO-Boxen) über einen `threshold_distance` Parameter und stoppt den Arm, bevor er mit Objekten kollidiert.
+    * 🟠 📥 **Subscribes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/planning_scene` (`moveit_msgs/PlanningScene`).
+    * 🟢 📤 **Publishes:** `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`). Sendet die fertigen Gelenkwinkel an den Roboter.
+    * ⚙️ **Parameter (`xarm_moveit_servo_config.yaml`):**
+        * `collision_check_type: threshold_distance` – Blockiert die Kinematik hart an der Grenze, anstatt langsam abzubremsen (`stop_distance`).
+        * `collision_distance_safety_margin: 0.02` – Definiert die 2 cm breite, unsichtbare Kollisionsblase um den Roboter.
+
+### 🟢 5.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieser Node ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
 
 * **`zed_wrapper` [NODE]**
@@ -232,30 +256,6 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 * **`tf_tuner.py` [SKRIPT / UI]**
     * 🎯 **Zweck & Aufgabe:** Live-Tuner Interface (PyQt5) zur schnellen Justierung von Kamera-Offsets ohne Neustart.
     * 🟢 📤 **Publishes:** Aktualisiert dynamisch die TF-Broadcaster-Werte (`tf2_msgs/TFMessage` auf `/tf_static`).
-
-### 🎮 5.2 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
-*Dieser Node steuert das manuelle Jogging des Roboters per Xbox-Controller und verhindert aktiv, dass der Roboter durch Bedienfehler in den Tisch kracht.*
-
-* **`xarm_joystick_input.cpp` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Übersetzt die bereinigten Gamepad-Signale (Analog-Sticks & Trigger) in kartesische Geschwindigkeitsbefehle (`TwistStamped`) für MoveIt Servo. Wendet exponentielles Smoothing an und steuert alle Button-Mappings.
-    * 🟠 📥 **Subscribes:** `/joy_check` (`sensor_msgs/Joy`). Liest die vom Wächter-Node bereinigten Controller-Inputs.
-    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`). Sendet Motorströme/Geschwindigkeiten an den Servo Server.
-    * 🔄 **Services:** `/servo_server/start_servo`, `/servo_server/stop_servo`, `/servo_server/switch_command_type` (Clients).
-* **`checker.py` (`collision_check`) [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Sek. in die Zukunft) die Z-Koordinate. Würde der Roboter den Tisch berühren, wird der Abwärtsbefehl des Controllers hart überschrieben und blockiert. Löst das Rumble-Feedback (Vibration) des Gamepads aus.
-    * 🟠 📥 **Subscribes:** `/joy` (`sensor_msgs/Joy`), `/servo_server/status` (`std_msgs/Int8`). Liest den rohen Controller-Input und Status-Codes des Servo-Servers (z.B. Kollisionswarnungen von YOLO-Boxen).
-    * 🟢 📤 **Publishes:** `/joy_check` (`sensor_msgs/Joy`), `/joy/set_feedback` (`sensor_msgs/JoyFeedbackArray`). Sendet den (ggf. null-korrigierten) Befehl an den `joystick_input` weiter und steuert die Controller-Vibration.
-    * 🔄 **TF2:** Hört auf die aktuelle TCP-Höhe (`link_base` -> `link_tcp`).
-    * ⚙️ **Parameter:**
-        * `look_ahead_time = 0.1` – Prädiktionshorizont (Sekunden) für die Geschwindigkeits-Vorausschau.
-        * `table_z_threshold = 0.0` – Die harte Tischbarriere auf der Z-Achse (World-Frame).
-* **`xarm_moveit_servo` [KONFIGURATION / NODE]**
-    * 🎯 **Zweck & Aufgabe:** Die Echtzeit-Bewegungs-Engine von MoveIt. Reagiert auf dynamische Hindernisse (YOLO-Boxen) über einen `threshold_distance` Parameter und stoppt den Arm, bevor er mit Objekten kollidiert.
-    * 🟠 📥 **Subscribes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/planning_scene` (`moveit_msgs/PlanningScene`).
-    * 🟢 📤 **Publishes:** `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`). Sendet die fertigen Gelenkwinkel an den Roboter.
-    * ⚙️ **Parameter (`xarm_moveit_servo_config.yaml`):**
-        * `collision_check_type: threshold_distance` – Blockiert die Kinematik hart an der Grenze, anstatt langsam abzubremsen (`stop_distance`).
-        * `collision_distance_safety_margin: 0.02` – Definiert die 2 cm breite, unsichtbare Kollisionsblase um den Roboter.
 
 ### 🗣️ 5.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
