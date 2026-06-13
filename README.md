@@ -198,7 +198,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 To provide a clear understanding of the architecture, the software modules are categorized by their functional **Features (Use-Cases)**. Each module is explicitly labeled as a ROS 2 Node, Script, or Plugin.
 
 ### 🎮 5.1 Feature: Gamepad Teleoperation & Hard Collision Protection
-*This subsystem manages the manual jogging of the robot via the Xbox controller and actively prevents the robot from crashing into the table due to operator error.*
+*This subsystem manages the manual jogging of the robot via the Xbox controller and actively prevents the robot from colliding with the workspace surface due to operator error.*
 
 * **`xarm_joystick_input.cpp` [NODE]**
     * 🎯 **Purpose & Task:** Translates the sanitized gamepad signals (analog sticks & triggers) into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies exponential smoothing and handles all button mappings.
@@ -278,7 +278,7 @@ To provide a clear understanding of the architecture, the software modules are c
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`). Sends jogging velocities and the YOLO target string.
     * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_scan_trajectory` (Clients).
 * **`set_pose_moveit_node.py` [NODE]**
-    * 🎯 **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger (automatically moves to the initial pose) and a robust Cartesian P-Controller for direct coordinate approaches (avoiding IK crashes).
+    * 🎯 **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger (automatically moves to the initial pose) and a robust Cartesian P-Controller for direct coordinate approaches (avoiding IK solving errors).
     * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Scales the velocity of the P-Controller synchronously with the UI.
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
     * 🔄 **Services:** Provides `/ui/execute_initial_pose` and `/ui/execute_move_to_pose` as Server. Has a TF2 listener for real-time TCP coordinates.
@@ -681,7 +681,7 @@ To run the complete system with both web interfaces (Nexus and Dashboard), three
 
 ### 8.5 DDS Multicast Storm Prevention (Critical)
 > [!CAUTION]
-> **Internet Disconnection Issue:** By default, ROS 2 DDS implementations use UDP Multicast, broadcasting all data to the entire local network. Launching the ZED camera (high-res images) and YOLO (dense 3D PointClouds) will flood the network with gigabits of UDP packets, which typically **crashes the local WiFi router or drops the PC's internet connection instantly.**
+> **Internet Disconnection Issue:** By default, ROS 2 DDS implementations use UDP Multicast, broadcasting all data to the entire local network. Launching the ZED camera (high-res images) and YOLO (dense 3D PointClouds) will flood the network with gigabits of UDP packets, which typically **overloads the local WiFi router or drops the PC's internet connection instantly.**
 > 
 > To prevent this and drastically improve system performance, you **must** restrict ROS 2 network traffic to the local machine:
 > ```bash
