@@ -242,12 +242,12 @@ To provide a clear understanding of the architecture, the software modules are c
     * 🟠 📥 **Subscribes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Reads the bounding boxes.
     * 🟢 📤 **Publishes:** `/planning_scene` (`moveit_msgs/PlanningScene`). Sends the `CollisionObjects` directly to the MoveIt Planning Scene to avoid collisions during grasping/driving.
 * **`yolo_grasp_executor.py` [NODE]**
-    * 🎯 **Purpose & Task:** The "brain" of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the box coordinates, and safely navigates the robot via an internal P-Controller to the target (first lifting to Z=300mm, then moving directly).
+    * 🎯 **Purpose & Task:** The central control logic of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the box coordinates, and safely navigates the robot via an internal P-Controller to the target (first lifting to Z=300mm, then moving directly).
     * 🟠 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Waits for the text command from RViz and scans the marker arrays for the corresponding object grasp point.
     * 🟢 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`). Sends live feedback for the log window in the RViz Panel.
     * 🔄 **Services:** `/ui/execute_move_to_pose` (Client). Passes the final X/Y/Z coordinates to the movement node.
     * ⚙️ **Parameters:**
-        * `safe_z_mm = 300` – Guarantees an absolute safety fly-over height before the grasping routine dives vertically down.
+        * `safe_z_mm = 300` – Guarantees an absolute safety fly-over height before the grasping routine descends vertically.
 * **`zed_stand_publisher.py` [SCRIPT]**
     * 🎯 **Purpose & Task:** Mathematically generates the exact 3D mesh model of the camera tripod (aluminum profile) and publishes it statically in RViz.
     * 🟢 📤 **Publishes:** `/zed_stand_marker` (`visualization_msgs/Marker`).
@@ -262,11 +262,11 @@ To provide a clear understanding of the architecture, the software modules are c
     * 🎯 **Purpose & Task:** Local Speech-to-Text AI. Runs Whisper AI continuously on the microphone stream and publishes spoken words as text.
     * 🟢 📤 **Publishes:** `/whisper/text` (`std_msgs/String`).
 * **`voice_command_listener.py` [NODE]**
-    * 🎯 **Purpose & Task:** Analyzes the raw text using regex patterns, filters out "spam" words, and extracts defined action intents (e.g., "move to red").
+    * 🎯 **Purpose & Task:** Analyzes the raw text using regex patterns, filters out filler words, and extracts defined action intents (e.g., "move to red").
     * 🟠 📥 **Subscribes:** `/whisper/text` (`std_msgs/String`).
     * 🟢 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Forwards structured recognized commands and sends UI feedback to the dashboard.
 * **`gaze_control.py` [SCRIPT / UI]**
-    * 🎯 **Purpose & Task:** An isolated PyQt5 "God-Mode" user interface. Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends movement commands.
+    * 🎯 **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends movement commands.
     * 🟢 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`). Translates gazes into text-based target commands.
 
 ### 🖥️ 5.4 Feature: Graphical Control & Visual Feedback
@@ -287,7 +287,7 @@ To provide a clear understanding of the architecture, the software modules are c
         * `max_vel_pos = 0.2` – Limits the TCP velocity to 0.2 m/s.
         * `position_tolerance = 0.002` – The controller stops exactly 2 mm before the absolute target.
 * **`rviz_overlay.py` & `servo_status_overlay.py` [NODES]**
-    * 🎯 **Purpose & Task:** Project colorful warning messages (e.g., "COLLISION!") and live axis coordinates directly onto the camera lens within the RViz viewport.
+    * 🎯 **Purpose & Task:** Project color-coded warning messages (e.g., "COLLISION!") and live axis coordinates directly into the video stream of the RViz viewport.
     * 🟠 📥 **Subscribes:** `/servo_server/status` (`std_msgs/Int8`), `/ui/collision_msg` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`). Listens for critical warning flags and frame updates.
     * 🟢 📤 **Publishes:** Uses `rviz_2d_overlay_msgs/OverlayText`.
 * **`rviz_scene_objects_MarkerArray.py` [NODE]**
@@ -300,7 +300,7 @@ To provide a clear understanding of the architecture, the software modules are c
 *Nodes that orchestrate specific, higher-level movement sequences.*
 
 * **`scan_trajectory_node.py` [NODE]**
-    * 🎯 **Purpose & Task:** Generates a continuous spiral path planning around an object (e.g., triggered by the "Vision Scan" button). Rapidly computes look-at quaternions to keep the camera center permanently focused on the object.
+    * 🎯 **Purpose & Task:** Generates a continuous spiral path planning around an object (e.g., triggered by the "Vision Scan" button). Computes look-at quaternions in real-time to keep the camera center permanently focused on the object.
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`).
     * 🔄 **Services:** Provides `/ui/execute_scan_trajectory` as Server. TF2 listener for real-time TCP coordinates.
     * ⚙️ **Parameters (Trajectory):**
@@ -369,13 +369,13 @@ effective_velocity = target_z_velocity × α          # α = ACCELERATION_FACTOR
 predicted_z        = current_z − (effective_velocity × Δt)
 
 if predicted_z < Z_LIMIT:
-    axes[RT] = 1.0  # zero the downward command
+    axes[RT] = 1.0  # set downward command to 0.0
 ```
 
 | Parameter | Value | Description |
 |---|---|---|
-| `Z_LIMIT` | `96.5 mm` | Hard floor — downward motion is blocked at this height |
-| `CAUTION_ZONE_START` | `110.0 mm` | Soft zone entry — speed clamped to 25% of current level |
+| `Z_LIMIT` | `96.5 mm` | Absolute Z-limit — downward motion is blocked at this height |
+| `CAUTION_ZONE_START` | `110.0 mm` | Tolerance zone entry — speed clamped to 25% of current level |
 | `CAUTION_ZONE_SPEED` | `0.25` | Max speed factor inside the caution zone |
 | `MAX_LINEAR_VELOCITY_MM_S` | `75.0 mm/s` | Assumed max linear velocity for prediction |
 | `LOOKAHEAD_TIME` | `0.1 s` | Prediction horizon |

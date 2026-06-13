@@ -244,12 +244,12 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
     * 🟠 📥 **Subscribes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Liest die Bounding Boxen aus.
     * 🟢 📤 **Publishes:** `/planning_scene` (`moveit_msgs/PlanningScene`). Sendet die `CollisionObjects` direkt an die MoveIt Planning Scene, um Kollisionen beim Greifen/Fahren zu vermeiden.
 * **`yolo_grasp_executor.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Das "Gehirn" der autonomen Greif-Pipeline. Liest das UI-Feld ("Grasp Object") aus, holt sich die Kasten-Koordinate und fährt den Roboter sicher über einen internen P-Regler zum Ziel (erst Z=300mm, dann direkte Fahrt).
+    * 🎯 **Zweck & Aufgabe:** Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("Grasp Object") aus, holt sich die Kasten-Koordinate und fährt den Roboter sicher über einen internen P-Regler zum Ziel (erst Z=300mm, dann direkte Fahrt).
     * 🟠 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Wartet auf den Textbefehl aus RViz und scannt die Marker-Arrays nach dem entsprechenden Objekt-Grasp-Point.
     * 🟢 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`). Sendet Live-Feedback für das Log-Fenster im RViz Panel.
     * 🔄 **Services:** `/ui/execute_move_to_pose` (Client). Übergibt die finalen X/Y/Z-Koordinaten an den Bewegungs-Node.
     * ⚙️ **Parameter:**
-        * `safe_z_mm = 300` – Garantiert eine absolute Sicherheits-Überflughöhe, bevor die Greif-Routine vertikal nach unten eintaucht.
+        * `safe_z_mm = 300` – Garantiert eine absolute Sicherheits-Überflughöhe, bevor die Greif-Routine vertikal absteigt.
 * **`zed_stand_publisher.py` [SKRIPT]**
     * 🎯 **Zweck & Aufgabe:** Generiert mathematisch exakt das 3D-Modell des Kamerastativs (Aluminiumprofil) und publiziert dieses statisch in RViz.
     * 🟢 📤 **Publishes:** `/zed_stand_marker` (`visualization_msgs/Marker`).
@@ -264,11 +264,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
     * 🎯 **Zweck & Aufgabe:** Lokale Speech-to-Text KI. Führt Whisper AI kontinuierlich auf dem Mikrofon-Stream aus und publiziert gesprochene Wörter als Text.
     * 🟢 📤 **Publishes:** `/whisper/text` (`std_msgs/String`).
 * **`voice_command_listener.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Analysiert den Rohtext über Regex-Muster, filtert "Spam"-Wörter heraus und extrahiert definierte Handlungs-Intents (z.B. "Fahre zu Rot").
+    * 🎯 **Zweck & Aufgabe:** Analysiert den Rohtext über Regex-Muster, filtert Füllwörter heraus und extrahiert definierte Handlungs-Intents (z.B. "Fahre zu Rot").
     * 🟠 📥 **Subscribes:** `/whisper/text` (`std_msgs/String`).
     * 🟢 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Leitet erkannte Befehle strukturiert weiter und sendet UI-Feedback an das Dashboard.
 * **`gaze_control.py` [SKRIPT / UI]**
-    * 🎯 **Zweck & Aufgabe:** Eine isolierte PyQt5 "God-Mode" Benutzeroberfläche. Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 0,5 Sek. Fixationsdauer) und sendet Bewegungsbefehle.
+    * 🎯 **Zweck & Aufgabe:** Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 0,5 Sek. Fixationsdauer) und sendet Bewegungsbefehle.
     * 🟢 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`). Übersetzt Blicke in textbasierte Zielbefehle.
 
 ### 🖥️ 5.4 Funktion: Grafische Steuerung & Visuelles Feedback
@@ -280,7 +280,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`). Sendet Jogging-Geschwindigkeiten und den YOLO-Ziel-String.
     * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_scan_trajectory` (Clients).
 * **`set_pose_moveit_node.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger (fährt die Initial-Pose automatisch an) sowie einen robusten, kartesischen P-Regler für direkte Koordinaten-Anfahrten (ohne IK-Crashes).
+    * 🎯 **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger (fährt die Initial-Pose automatisch an) sowie einen robusten, kartesischen P-Regler für direkte Koordinaten-Anfahrten (ohne Singularitäten der Inversen Kinematik).
     * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Skaliert die Geschwindigkeit des P-Reglers synchron zur UI.
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
     * 🔄 **Services:** Bietet `/ui/execute_initial_pose` und `/ui/execute_move_to_pose` als Server an. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
@@ -289,7 +289,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
         * `max_vel_pos = 0.2` – Limitiert die TCP-Geschwindigkeit auf 0.2 m/s.
         * `position_tolerance = 0.002` – Der Regler stoppt exakt 2 mm vor dem absoluten Ziel.
 * **`rviz_overlay.py` & `servo_status_overlay.py` [NODES]**
-    * 🎯 **Zweck & Aufgabe:** Projizieren bunte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koordinaten direkt auf die Kameralinse in das RViz-Sichtfeld.
+    * 🎯 **Zweck & Aufgabe:** Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koordinaten als Overlay in den Video-Stream des RViz-Sichtfelds.
     * 🟠 📥 **Subscribes:** `/servo_server/status` (`std_msgs/Int8`), `/ui/collision_msg` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`). Hören auf kritische Warn-Flags und Frame-Updates.
     * 🟢 📤 **Publishes:** Nutzt `rviz_2d_overlay_msgs/OverlayText`.
 * **`rviz_scene_objects_MarkerArray.py` [NODE]**
@@ -302,7 +302,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 *Nodes, die spezifische, übergeordnete Bewegungsabläufe orchestrieren.*
 
 * **`scan_trajectory_node.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Generiert eine kontinuierliche spiralförmige Pfadplanung um ein Objekt herum (z. B. getriggert durch den "Vision Scan" Button). Berechnet blitzschnell Look-At-Quaternions, um das Kamera-Zentrum permanent auf das Objekt zu fokussieren.
+    * 🎯 **Zweck & Aufgabe:** Generiert eine kontinuierliche spiralförmige Pfadplanung um ein Objekt herum (z. B. getriggert durch den "Vision Scan" Button). Berechnet in Echtzeit Look-At-Quaternions, um das Kamera-Zentrum permanent auf das Objekt zu fokussieren.
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`).
     * 🔄 **Services:** Bietet `/ui/execute_scan_trajectory` als Server an. TF2-Listener für Echtzeit TCP-Koordinaten.
     * ⚙️ **Parameter (Trajektorie):**
@@ -369,13 +369,13 @@ effective_velocity = target_z_velocity × α          # α = 0.9
 predicted_z        = current_z − (effective_velocity × Δt)
 
 if predicted_z < Z_LIMIT:
-    axes[RT] = 1.0  # Abwärtsbefehl nullen
+    axes[RT] = 1.0  # Abwärtsbefehl auf 0.0 setzen
 ```
 
 | Parameter | Wert | Beschreibung |
 |---|---|---|
-| `Z_LIMIT` | `96,5 mm` | Harte Bodenschwelle |
-| `CAUTION_ZONE_START` | `110,0 mm` | Softzone — Geschw. auf 25% begrenzt |
+| `Z_LIMIT` | `96,5 mm` | Absolutes Z-Limit |
+| `CAUTION_ZONE_START` | `110,0 mm` | Toleranzbereich — Geschw. auf 25% begrenzt |
 | `CAUTION_ZONE_SPEED` | `0,25` | Max. Faktor in der Vorsichtszone |
 | `MAX_LINEAR_VELOCITY_MM_S` | `75,0 mm/s` | Angenommene max. Lineargeschwindigkeit |
 | `LOOKAHEAD_TIME` | `0,1 s` | Vorhersagehorizont |
