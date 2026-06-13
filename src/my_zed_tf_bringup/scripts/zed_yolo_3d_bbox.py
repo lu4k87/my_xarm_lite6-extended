@@ -293,7 +293,7 @@ class ZedYolo3DNode(Node):
             point_marker = Marker()
             point_marker.header.stamp = current_time
             point_marker.header.frame_id = marker_frame
-            point_marker.ns = 'yolo_center_point'
+            point_marker.ns = 'yolo_object_grasp_center_point'
             point_marker.id = i
             point_marker.type = Marker.SPHERE
             point_marker.action = Marker.ADD
