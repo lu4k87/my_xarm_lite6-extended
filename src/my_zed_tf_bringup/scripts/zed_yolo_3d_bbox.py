@@ -289,6 +289,36 @@ class ZedYolo3DNode(Node):
             z_mm = int(display_z * 1000)
             safe_class_name = class_name.replace(' ', '_')
             
+            # --- Marker 2: Point (Sphere) at the reported coordinate ---
+            point_marker = Marker()
+            point_marker.header.stamp = current_time
+            point_marker.header.frame_id = marker_frame
+            point_marker.ns = 'yolo_center_point'
+            point_marker.id = i
+            point_marker.type = Marker.SPHERE
+            point_marker.action = Marker.ADD
+            
+            point_marker.pose.position.x = float(center_x)
+            point_marker.pose.position.y = float(center_y)
+            point_marker.pose.position.z = float(display_z)
+            point_marker.pose.orientation.w = 1.0
+            
+            # Make it a small visible dot (2cm diameter)
+            point_marker.scale.x = 0.02
+            point_marker.scale.y = 0.02
+            point_marker.scale.z = 0.02
+            
+            # Bright color (Cyan) to stand out
+            point_marker.color.r = 0.0
+            point_marker.color.g = 1.0
+            point_marker.color.b = 1.0
+            point_marker.color.a = 1.0
+            
+            point_marker.lifetime.sec = 1
+            point_marker.lifetime.nanosec = int(500 * 1e6)
+            
+            marker_array.markers.append(point_marker)
+            
             # Helper to create a text marker
             def create_text_marker(ns_suffix, m_id, text, r, g, b, z_offset):
                 tm = Marker()
