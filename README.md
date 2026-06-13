@@ -195,108 +195,131 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 ## <a id="chapter-5"></a> 5. ⚙️ Core Features & ROS 2 Nodes
 
-### 5.1 👁️ Computer Vision & Perception
+To provide a clear understanding of the architecture, the software modules are categorized by their functional **Features (Use-Cases)**. Each module is explicitly labeled as a ROS 2 Node, Script, or Plugin.
 
-* **`yolo_object_detector` [DEPRECATED]**
-    * **Purpose:** *[Deprecated]* 2D-based object detection and spatial localization via homography.
-    * **Task:** Finds trained objects and ArUco markers in the 2D image stream; projects them into 3D. The 3D vision and object detection is fully handled by the `my_zed_tf_bringup` pipeline.
-    * **How it works:** Reads RTSP/HTTP streams in a background thread. Transforms YOLO bounding boxes via `cv2.findHomography` and ArUco markers into 3D space (Z=90 mm). Publishes `PoseArray` messages under `/objects/<color>_<shape>/world_poses`.
-* **`my_zed_tf_bringup` [VISION SYSTEM]**
-    * **Purpose:** Unified ZED Mini Camera Initialization, TF Broadcasting, 3D Bounding Box Generation, and 3D Visualization.
-    * **Task:** Safely launches the `zed_wrapper` node alongside a static TF publisher, generates the 3D camera models in RViz, and projects YOLO detections into 3D space.
-    * **How it works:** Executes `zed_camera.launch.py` to initialize the native Stereolabs driver (configured to use the highly precise ULTRA depth mode and auto-exposure to capture dense PointClouds of the entire workspace) and simultaneously broadcast a static transform from `link_base` to `zed_camera_link`. By default, this is parameterized for a physical tripod setup (x=0.75m, y=0.0m, z=0.40m, pitch=45°, yaw=180°), seamlessly integrating the camera into the robot's world coordinate system in RViz2. It also runs multiple custom Python nodes: `zed_stand_publisher.py` to generate a mathematically accurate 3D V-Slot Aluminum Extrusion profile (20x20mm) and ZED camera mesh (`ZEDM.stl`); and `zed_yolo_3d_bbox.py`, which processes the RGB and Depth streams in parallel using GPU acceleration and the highly accurate **YOLOv8 Large (`yolov8l.pt`)** model. It extracts the true 3D PointCloud of each detected object, transforms it into the robot's world frame, filters out the robot base (`X < 0.25`), robustly filters depth noise (flying pixels) using 2nd/98th percentiles, applies **Exponential Moving Average (EMA) smoothing** to eliminate bounding box jitter, and tightly isolates the object from the background. It then computes a millimeter-perfect 3D bounding box that is **grounded to the table plane (`Z=0.0`)**. For specific clipped objects (like a `sports ball`), the logic dynamically injects the physical height (e.g. 64mm) to reconstruct a perfect volume. The box is published live to RViz as an **1mm wireframe box (`LINE_LIST`)**. Above the box, multiple floating text labels are precisely stacked, displaying the object class (white) alongside its color-coded XYZ coordinates. The **Z-coordinate represents the exact top-face surface** of the bounding box, formatted with underscores (e.g. `Z:_64_mm`) to prevent RViz Ogre3D text-justification bugs, and is additionally marked with a bright cyan 3D sphere marker (`Marker.SPHERE`, namespace: `yolo_object_grasp_center_point`) for clear visual reference. This grasp marker can be interactively toggled on/off live in RViz via the MarkerArray display's namespace settings. Ghost markers are completely prevented using a robust DELETEALL mechanism. Additionally, it runs `yolo_moveit_collision.py` to seamlessly convert YOLO bounding boxes into dynamic MoveIt `CollisionObject` messages (toggleable via an RViz display checkbox) and seamlessly inserting them as strict, solid obstacles for the entire robot into the environment (including a dynamic ghost-object clearing mechanism for lost tracks). Finally, a live tuner interface (`tf_tuner.py`), accessible via the Nexus Launcher, provides a PyQt5 GUI to dynamically adjust camera height, pitch, and X-offset in real-time without restarting the node.
+### 🎮 5.1 Feature: Gamepad Teleoperation & Hard Collision Protection
+*This pipeline manages the manual jogging of the robot via the Xbox controller and actively prevents the robot from crashing into the table due to operator error.*
 
-### 5.2 🗣️ Voice Control & Interaction
+* **`xarm_joystick_input.cpp` [NODE]**
+    * Translates the sanitized gamepad signals (analog sticks & triggers) into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies exponential smoothing and handles all button mappings.
+    * 📥 **Subscribes:** `/joy_check` (`sensor_msgs/Joy`). Reads the sanitized controller inputs from the guardian node.
+    * 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`). Sends motor currents/velocities to the Servo Server.
+    * 🔄 **Services:** `/servo_server/start_servo`, `/servo_server/stop_servo`, `/servo_server/switch_command_type` (Clients).
+* **`checker.py` (`collision_check`) [NODE]**
+    * Acts as a guardian *before* the movement translation. Predictively computes the Z-coordinate (0.1 sec into the future). If the robot were to touch the table, the controller's downward command is hard-overridden and blocked. Triggers gamepad rumble feedback (vibration).
+    * 📥 **Subscribes:** `/joy` (`sensor_msgs/Joy`), `/servo_server/status` (`std_msgs/Int8`). Reads the raw controller input and status codes of the Servo Server (e.g., collision warnings from YOLO boxes).
+    * 📤 **Publishes:** `/joy_check` (`sensor_msgs/Joy`), `/joy/set_feedback` (`sensor_msgs/JoyFeedbackArray`). Forwards the (potentially zero-corrected) command to the `joystick_input` and controls controller vibration.
+    * 🔄 **TF2:** Listens to the current TCP height (`link_base` -> `link_tcp`).
+    * ⚙️ **Parameters:**
+        * `look_ahead_time = 0.1` – Prediction horizon (seconds) for the velocity look-ahead.
+        * `table_z_threshold = 0.0` – The hard table barrier on the Z-axis (World-Frame).
+* **`xarm_moveit_servo` [CONFIGURATION / NODE]**
+    * The real-time motion engine from MoveIt. Reacts to dynamic obstacles (YOLO boxes) via a `threshold_distance` parameter and halts the arm before it collides with objects.
+    * 📥 **Subscribes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/planning_scene` (`moveit_msgs/PlanningScene`).
+    * 📤 **Publishes:** `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`). Sends the final joint angles to the robot.
+    * ⚙️ **Parameters (`xarm_moveit_servo_config.yaml`):**
+        * `collision_check_type: threshold_distance` – Hard-blocks the kinematics at the boundary, instead of slowly decelerating (`stop_distance`).
+        * `collision_distance_safety_margin: 0.02` – Defines the 2 cm wide, invisible collision bubble around the robot.
 
-* **`ros2_whisper`**
-    * **Purpose:** Local Speech-to-Text recognition.
-    * **Task:** Converts spoken user commands into text.
-    * **How it works:** Runs the Whisper AI model continuously on the microphone stream and publishes the raw transcript as a String.
-* **`voice_command_listener`**
-    * **Purpose:** Interpretation and filtering of speech text.
-    * **Task:** Extracts intents (e.g., "move to red"), blocks spam, and provides visual dashboard feedback.
-    * **How it works:** Subscribes to `/whisper/text`, uses regex filters and a debounce mechanism (5 sec. cooldown in the `action_cooldown` dictionary) to block redundant commands. Publishes to `/voice_cmd` and `/ui/voice_feedback`.
-* **`gaze_control`**
-    * **Purpose:** Robot control via gaze detection (**UI** interaction).
-    * **Task:** "God-Mode" PyQt5 user interface for pure gaze input.
-    * **How it works:** Extracts JSON Gaze2D data from the RTSP stream. Uses ArUco markers for screen detection and transforms gaze coordinates into the **UI**. With a 0.5 sec. dwell time on a button, a `TwistStamped` command is published.
+### 🟢 5.2 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)
+*This pipeline is responsible for locating objects in 3D space, generating virtual obstacles, and navigating the robot precisely to the target.*
 
-### 5.3 🧠 Logic & Coordination
+* **`zed_wrapper` [NODE]**
+    * The native hardware driver for the Stereolabs ZED Mini Camera. 
+    * 📤 **Publishes:** `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`), `/zed/zed_node/depth/depth_registered` (`sensor_msgs/Image`), `/zed/zed_node/point_cloud/cloud_registered` (`sensor_msgs/PointCloud2`). Provides the sensory foundation for the entire system.
+    * ⚙️ **Parameters (`zed_camera.launch.py`):**
+        * `depth_mode: ULTRA` – Forces the most dense 3D point cloud for clean edge calculation.
+        * `auto_exposure: True` – Allows automatic brightness compensation for robust YOLO detection.
+* **`zed_yolo_3d_bbox.py` [NODE]**
+    * Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise (percentiles & EMA smoothing), and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker).
+    * 📥 **Subscribes:** `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`), `/zed/zed_node/depth/depth_registered` (`sensor_msgs/Image`), `/zed/zed_node/rgb/camera_info` (`sensor_msgs/CameraInfo`).
+    * 📤 **Publishes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Sends the finalized 3D boxes and markers to RViz for visualization and to downstream nodes.
+    * ⚙️ **Parameters:**
+        * `percentiles: [2, 98]` – Hard-clips extreme depth noise pixels ("flying pixels" at object edges).
+        * `ema_alpha: 0.3` – Smoothing factor (Exponential Moving Average) to eliminate box jittering between frames.
+* **`yolo_moveit_collision.py` [NODE]**
+    * Seamlessly converts the detected 3D boxes into dynamic MoveIt `CollisionObject` messages and injects them into the planning scene as solid obstacles.
+    * 📥 **Subscribes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Reads the bounding boxes.
+    * 📤 **Publishes:** `/planning_scene` (`moveit_msgs/PlanningScene`). Sends the `CollisionObjects` directly to the MoveIt Planning Scene to avoid collisions during grasping/driving.
+* **`yolo_grasp_executor.py` [NODE]**
+    * The "brain" of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the box coordinates, and safely navigates the robot via an internal P-Controller to the target (first lifting to Z=300mm, then moving directly).
+    * 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Waits for the text command from RViz and scans the marker arrays for the corresponding object grasp point.
+    * 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`). Sends live feedback for the log window in the RViz Panel.
+    * 🔄 **Services:** `/ui/execute_move_to_pose` (Client). Passes the final X/Y/Z coordinates to the movement node.
+    * ⚙️ **Parameters:**
+        * `safe_z_mm = 300` – Guarantees an absolute safety fly-over height before the grasping routine dives vertically down.
+* **`zed_stand_publisher.py` [SCRIPT]**
+    * Mathematically generates the exact 3D mesh model of the camera tripod (aluminum profile) and publishes it statically in RViz.
+    * 📤 **Publishes:** `/zed_stand_marker` (`visualization_msgs/Marker`).
+* **`tf_tuner.py` [SCRIPT / UI]**
+    * A live tuner interface (PyQt5) to quickly adjust camera offsets without restarting nodes.
+    * 📤 **Publishes:** Dynamically updates the TF broadcaster values (`tf2_msgs/TFMessage` on `/tf_static`).
 
-* **`move_to_coordinator`**
-    * **Purpose:** Central "brain" for task-based movements in **Shared Control**.
-    * **Task:** Merges voice/gaze commands with camera data and coordinates movement commands.
-    * **How it works:** Acts as the orchestrator for complex movement sequences. It receives voice commands (e.g., "move to red") and queues them with anti-spam logic. The exact workflow is:
-        1. **Move to Scan Pose:** Calls the `/execute_motion_sequence_scan_object_positions_pos` service (provided by the `motion_sequence` node) to drive the robot to a high overview position.
-        2. **Idle Wait:** Polls the `/get_motion_busy` service until the hardware finishes moving.
-        3. **Vision Update:** Pauses for 2.0 seconds to allow the camera image to stabilize and waits for a fresh object coordinate from the `PoseArray`.
-        4. **Final Approach:** Executes the `/execute_motion_to_pose` service call to navigate the robot exactly over the target object.
+### 🗣️ 5.3 Feature: Multimodal Interaction (Voice & Gaze Control)
+*These experimental modules allow for "hands-free" control of the system.*
 
-### 5.4 🦾 Motion & Safety
+* **`ros2_whisper` [NODE]**
+    * Local Speech-to-Text AI. Runs Whisper AI continuously on the microphone stream and publishes spoken words as text.
+    * 📤 **Publishes:** `/whisper/text` (`std_msgs/String`).
+* **`voice_command_listener.py` [NODE]**
+    * Analyzes the raw text using regex patterns, filters out "spam" words, and extracts defined action intents (e.g., "move to red").
+    * 📥 **Subscribes:** `/whisper/text` (`std_msgs/String`).
+    * 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Forwards structured recognized commands and sends UI feedback to the dashboard.
+* **`gaze_control.py` [SCRIPT / UI]**
+    * An isolated PyQt5 "God-Mode" user interface. Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends movement commands.
+    * 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`). Translates gazes into text-based target commands.
 
-* **`motion_sequence`** — `src/motion_sequence/motion_sequence/motion_sequence.py`
-    * **Purpose:** State management and safe execution of Cartesian movements.
-    * **Task:** Physical control and switching of hardware modes.
-    * **How it works:** Acts as the bridge between continuous MoveIt Servo control (Gamepad) and discrete target coordinates. It provides specific services like `/execute_motion_to_pose`. 
-    * **Detailed Service Call Execution Flow:**
-        1. **Hardware State Switch (REAL vs. FAKE):** In **REAL mode**, the node uses proprietary xArm services (e.g., `/ufactory/set_mode`, `/ufactory/set_state`) to hard-interrupt the physical controller and switch between MoveIt Servo (streaming) and the UFactory Pose Mode (discrete target coordinates). In **FAKE mode**, these physical controller states do not exist; the node detects this and bypasses the API calls. Trajectories are then sent directly to the `/lite6_traj_controller` of the Fake interface, keeping the logic architecture 1:1 identical to reality without provoking proprietary API crashes in the simulation.
-        2. **Pre-Movement Lift (Safety):** It checks the current Z-height. If the gripper is below 95 mm, it preventively executes a vertical lift to Z=150 mm to avoid dragging across the table.
-        3. **Execution:** Sends the Cartesian target to the hardware and actively blocks/monitors the API until the robot signals completion.
-        4. **Servo Recovery:** Finally, it switches the hardware back into MoveIt Servo mode, allowing a seamless handover back to manual Gamepad control.
+### 🖥️ 5.4 Feature: Graphical Control & Visual Feedback
+*Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
 
-* **`collision_check`** — `src/collision_check/collision_check/checker.py`
-    * **Purpose:** Hardware protection (table surface collision prevention).
-    * **Task:** Predictive intervention before collisions during manual gamepad control.
-    * **How it works:** Intercepts raw `/joy` signals, synchronously reads the robot's real-time EEF position via `tf2_ros`, computes a forward-projected position, and publishes a sanitized `/joy_check` signal with the downward axis zeroed if a table collision is imminent. Furthermore, it triggers Gamepad Rumble feedback on both table collisions and dynamic 3D MoveIt Servo collisions (`/servo_server/status`). See **Section 6** for the full technical deep-dive.
+* **`rviz_robot_control_panel.cpp` [RVIZ PLUGIN]**
+    * The native 2D control panel written in C++ for RViz. Provides D-Pad buttons, the **"Grasp Object"** input field (including a live log terminal), and quick-access buttons ("Initial Pose", "Vision Scan"). It only sends service triggers and never freezes the UI.
+    * 📥 **Subscribes:** `/ui/grasp_status` (`std_msgs/String`). Reads logs for the integrated text window.
+    * 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`). Sends jogging velocities and the YOLO target string.
+    * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_scan_trajectory` (Clients).
+* **`set_pose_moveit_node.py` [NODE]**
+    * Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger (automatically moves to the initial pose) and a robust Cartesian P-Controller for direct coordinate approaches (avoiding IK crashes).
+    * 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Scales the velocity of the P-Controller synchronously with the UI.
+    * 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
+    * 🔄 **Services:** Provides `/ui/execute_initial_pose` and `/ui/execute_move_to_pose` as Server. Has a TF2 listener for real-time TCP coordinates.
+    * ⚙️ **Parameters (P-Controller):**
+        * `Kp_pos = 2.5` – Proportional gain for dynamic, yet stable approaches.
+        * `max_vel_pos = 0.2` – Limits the TCP velocity to 0.2 m/s.
+        * `position_tolerance = 0.002` – The controller stops exactly 2 mm before the absolute target.
+* **`rviz_overlay.py` & `servo_status_overlay.py` [NODES]**
+    * Project colorful warning messages (e.g., "COLLISION!") and live axis coordinates directly onto the camera lens within the RViz viewport.
+    * 📥 **Subscribes:** `/servo_server/status` (`std_msgs/Int8`), `/ui/collision_msg` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`). Listens for critical warning flags and frame updates.
+    * 📤 **Publishes:** Uses `rviz_2d_overlay_msgs/OverlayText`.
+* **`rviz_scene_objects_MarkerArray.py` [NODE]**
+    * Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges).
+    * 📤 **Publishes:** `/scene_markers_array` (`visualization_msgs/MarkerArray`).
+* **`rosbridge_server` [NODE]**
+    * Standard WebSocket bridge on Port 9090, allowing the web-based dashboard to access the ROS network directly.
 
-* **`set_pose_moveit_node`** *(in package `rviz_pose_control` | REAL & FAKE modes)*
-    * **Purpose:** Hardware-agnostic initialization of the robot's starting pose and absolute Cartesian positioning without IK servers.
-    * **Task:** Safely moves the arm (real or simulated) to a default starting position (Joint Trajectory) OR to a specific X, Y, Z coordinate (Cartesian).
-    * **How it works:** Provides TWO services: `/ui/execute_initial_pose` and `/ui/execute_move_to_pose`. During operations like "Move to Pose", the node dynamically listens to `/ui/robot_control/current_speed` and directly scales the velocities of its internal P-controllers to match the global UI speed slider.
-        * **Initial Pose:** Features an **intelligent auto-startup trigger** that actively monitors the ROS 2 network. Once the internal MoveIt Servo services (`start_servo` & `stop_servo`) are online and the `tf2` tree is stable, it automatically executes the initial pose. It calls `/servo_server/stop_servo` to pause MoveIt Servo, constructs a `JointTrajectory` with predefined joint angles, and publishes directly to the `/lite6_traj_controller/joint_trajectory` topic before restarting Servo.
-        * **Absolute Pose (Cartesian):** Features a highly performant **Cartesian P-Controller** (Joystick Mode) in Python. Instead of relying on the heavy `move_group` IK server (which frequently causes `rmw_cyclonedds_cpp` participant limit crashes), this service actively reads the real-time TCP position via `tf2_ros` and streams precise `TwistStamped` velocity commands to `~/delta_twist_cmds` at 20Hz until the target XYZ coordinates are reached within a 2mm tolerance. This ensures extreme stability and keeps the ROS 2 network footprint minimal.
+### 🤖 5.5 Feature: Complex Trajectories & Task Coordination
+*Nodes that orchestrate specific, higher-level movement sequences.*
 
-* **`scan_trajectory_node`** *(in package `xarm_moveit_servo` | REAL & FAKE modes)*
-    * **Purpose:** Hardware-agnostic execution of complex, continuous look-at scan trajectories.
-    * **Task:** Generates a continuous 3D spiral path over a target object and computes the exact camera orientation via look-at logic.
-    * **Operation:** Offers the `/ui/execute_scan_trajectory` service (e.g., triggered by the "Vision Scan" button in the RViz Control Panel). The node implements a highly performant closed-loop proportional controller (P-Controller). It reads the real-time TCP pose via `tf2`, rapidly computes the target coordinate on a dynamic 3D spiral around the target (`X=300, Y=0, Z=0`), and publishes smooth `TwistStamped` velocity commands at 50 Hz directly to the MoveIt Servo Server. The camera circles the object while the Z-axis remains perfectly focused on the center. Since this node operates independently of the MoveGroup, it does not require loaded URDF parameters and is extremely robust, fast, and 100% compatible in FAKE and REAL modes.
+* **`scan_trajectory_node.py` [NODE]**
+    * Generates a continuous spiral path planning around an object (e.g., triggered by the "Vision Scan" button). Rapidly computes look-at quaternions to keep the camera center permanently focused on the object.
+    * 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`).
+    * 🔄 **Services:** Provides `/ui/execute_scan_trajectory` as Server. TF2 listener for real-time TCP coordinates.
+    * ⚙️ **Parameters (Trajectory):**
+        * `radius = 0.2` – Orbit radius of 20 cm around the target.
+        * `z_start = 0.4` / `z_end = 0.15` – Start and end height for the downward spiral movement.
+        * `velocity_hz = 50` – High frequency rate (50Hz) for smooth injection into MoveIt Servo.
+* **`motion_sequence.py` [NODE]**
+    * State management between MoveIt Servo and Hardware. Pauses the fluid Servo jogging (gamepad), interrupts the xArm hardware controller, executes a static movement, and seamlessly reactivates Servo afterward.
+    * 🔄 **Services:** `/execute_motion_to_pose` (Server). Also calls hardware-specific UFactory services (`set_mode`, `set_state`).
+* **`move_to_coordinator.py` [NODE]**
+    * Orchestrates look-at commands (voice/gaze) and passes parameters to other motion nodes.
+    * 📥 **Subscribes:** `/voice_cmd` (`std_msgs/String`), `/objects/.../world_poses` (`geometry_msgs/PoseArray`).
 
+### ⚠️ 5.6 Deprecated Modules
+*Historical modules that have been replaced by newer systems (e.g., ZED Mini).*
 
-* **`xarm_moveit_servo` (Collision Config)** — `src/xarm_ros2/xarm_moveit_servo/config/xarm_moveit_servo_config.yaml`
-    * **Purpose:** Real-time MoveIt Servo collision avoidance against YOLO 3D Bounding Boxes.
-    * **Task:** Blocks kinematics upon approaching dynamic obstacles while permitting evasive maneuvers, and triggers visual warnings.
-    * **How it works:** The node integrates tightly with the YOLO pipeline: detected objects are injected into the Planning Scene as dynamic `CollisionObject` messages. The Servo config utilizes `collision_check_type: threshold_distance` to create a strict "hard wall" (e.g., at 2 cm distance), preventing the slow "creeping" into obstacles associated with `stop_distance`. When a threshold is violated, MoveIt Servo instantly halts the robot and publishes a status code (e.g., `HALT: COLLISION`) to `~/status`. This code is intercepted by the `servo_status_overlay` node, which immediately renders a 5-second visual warning popup directly in the RViz viewport. Furthermore, thanks to MoveIt's gradient calculation, the system allows the operator to steer away from the obstacle to safely exit the collision zone.
-
-* **`xarm_joystick_input`** *(Part of `xarm_moveit_servo`)* — `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`
-    * **Purpose:** Gamepad control & button mapping (C++ node).
-    * **Task:** Translates filtered joystick signals into `TwistStamped` Cartesian velocity commands and ROS service calls.
-    * **How it works:** Subscribes to the sanitized `/joy_check` topic. Applies exponential smoothing (`factor = 0.5`) to all axes, enforces a deadzone of `|val| > 0.1`, and maps all 11 buttons to robot actions. **Idle-Timeout Logic:** When the joystick is released (completely within the deadzone), the node sends exactly 5 zero-velocity commands to actively halt the robot and then **stops** publishing entirely. This allows the MoveIt Servo server to enter an idle state, freeing up the trajectory controller for the RViz MotionPlanning plugin ("Plan and Execute"). See **Section 6** for the complete button mapping table and signal flow diagram.
-
-### 5.5 🖥️ Monitoring (Dashboard), UI & Visualization
-
-* **`rviz_scene_objects_MarkerArray`**
-    * **Purpose:** Real-time visual feedback in RViz2.
-    * **Task:** Visual enhancement of the 3D simulation work area.
-    * **How it works:** Publishes ROS `MarkerArray` and `InteractiveMarker` messages into the 3D scene of RViz2. Serves for the visual representation of static boundaries (like table edges) as well as interactive target objects to validate planning and collision scenarios directly within the simulation environment, independent of real sensor data processing.
-* **`rviz_robot_control_panel`**
-    * **Purpose:** 2D Control Panel inside RViz for manual 6-DoF robot jogging and positioning.
-    * **Task:** Provides a graphical control pad (D-Pad) for translations (X, Y, Z), dedicated buttons for rotations (Roll, Pitch, Yaw), and quick-access buttons for absolute positioning, the initial pose, a complex scan trajectory, and planning frame switching (Base/TCP).
-    * **How it works:** Implemented in C++ as a Qt plugin. The movement buttons generate `TwistStamped` commands on `/servo_server/delta_twist_cmds` to dynamically jog the robot. 
-      The **"Move to Initial Pose"** button asynchronously calls the `/ui/execute_initial_pose` ROS 2 service. 
-      The **Absolute Pose** input fields (X, Y, Z) asynchronously trigger the `/ui/execute_move_to_pose` service. This "dumb UI, smart background" architecture ensures that RViz never freezes due to blocking C++ API calls.
-      The **"Vision Scan"** button triggers the `/ui/execute_scan_trajectory` service of the `scan_trajectory_node`, which fluidly flies the camera in a 3D spiral from top to bottom around the target object (X=300) while the TCP remains constantly focused on the center.
-      The **"Grasp Object"** text field allows dynamic gripping of YOLO-detected objects (e.g., "sports_ball"). A dedicated background process (`yolo_grasp_executor.py`) reads the coordinates from the `MarkerArray`, calculates the optimal approach path, and streams precise, non-blocking `TwistStamped` real-time commands via a P-controller (lifting safely to Z=300mm first, then moving down to the object). A live log window within the RViz panel gives immediate visual feedback on the task status. *Activation in RViz:* `Panels -> Add New Panel -> rviz_robot_control_panel -> ControlPanel`.
-* **`rviz_overlay` (Package)**
-    * **`rviz_overlay` Node:** Projects real-time TCP coordinates (X/Y/Z) cleanly formatted in their respective axis colors directly into the user's field of view. It listens to the `/ui/robot_control/current_frame` topic to synchronize with the Control Panel and dynamically display the selected reference frame (e.g. `[tcp_link]`).
-    * **`servo_status_overlay` Node:** Subscribes to the MoveIt Servo `/servo_server/status` and the `/ui/collision_msg` topics. It displays a temporary 2-second, color-coded popup warning (e.g., "APPROACHING SINGULARITY" or "PLANE COLLISION!") exactly in the center of the RViz view when critical kinematic or table collision thresholds are reached.
-* **`rosbridge_server`**
-    * **Purpose:** WebSocket bridge for web browsers.
-    * **Task:** Native communication between dashboard and robot.
-    * **How it works:** Standard package for WebSockets (Port 9090). Allows web applications to interact directly with the ROS network via `roslib.js`.
-* **`zed_wrapper`**
-    * **Purpose:** Hardware driver for Stereolabs ZEDm.
-    * **Task:** Direct streaming to RViz2 and logic nodes without third-party software.
-    * **How it works:** Native C++ node replacing the generic USB-Cam node. Publishes `Image` and `CameraInfo` under `/zed/zed_node/...`.
+* **`yolo_object_detector` [SCRIPT / NODE]**
+    * *[Deprecated]* The old 2D-based object detection using Raspberry Pi cameras. Transformed YOLO bounding boxes via `cv2.findHomography` and flat ArUco markers into rigid 3D space (Z=90 mm). Fully replaced by the `my_zed_tf_bringup` (3D Vision System).
+    * 📤 **Publishes:** `/objects/<color>_<shape>/world_poses` (`geometry_msgs/PoseArray`).
 
 ---
 
