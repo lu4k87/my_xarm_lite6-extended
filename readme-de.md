@@ -695,7 +695,7 @@ dev_ws/
 │   ├── move_to_coordinator/        # 🧠 Python: Shared-Control-Gehirn
 │   │   └── move_to_coordinator/move_to_coordinator.py
 │   ├── my_zed_tf_bringup/          # 🌟 [VISION SYSTEM] Kamera Bringup, TF, 3D BBox & Perception
-│   │   ├── launch/zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py       # ZED-Treiber & statischer TF Launcher
+│   │   ├── launch/zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py       # Zentraler All-In-One Launcher (ZED, TF, YOLO, Greif-Executor)
 │   │   └── scripts/
 │   │       ├── pointcloud_optimizer.py       # 3D Tiefenrauschen reduzieren & filtern
 │   │       ├── yolo_moveit_collision.py      # MoveIt Kollisionsobjekte & dynamisches Ignorieren
