@@ -1,5 +1,5 @@
 """
-zed_camera.launch.py — ZED M Bringup Launch File
+zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py — ZED M Bringup Launch File
 ==================================================
 Startet den ZED M Kameratreiber (zed_wrapper) und publiziert gleichzeitig
 die statische Koordinaten-Transformation (TF) zwischen dem Roboter-Basisrahmen
@@ -17,7 +17,7 @@ TF-Parameter (relativ zu link_base):
   roll=0.0, pitch=-0.35 rad (~20° nach unten), yaw=3.14159 rad (180°, zurück zum Roboter)
 
 Verwendung:
-  ros2 launch zed_bringup zed_camera.launch.py
+  ros2 launch my_zed_tf_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py
 
 Kalibrierung:
   Wenn die Kamera physisch ausgemessen wird, können die TF-Parameter
@@ -157,6 +157,16 @@ def generate_launch_description():
         output='screen'
     )
 
+    # -----------------------------------------------------------------------
+    # YOLO 3D BBox Node
+    # -----------------------------------------------------------------------
+    zed_yolo_3d_bbox_node = Node(
+        package='my_zed_tf_bringup',
+        executable='zed_yolo_3d_bbox.py',
+        name='zed_yolo_3d_bbox',
+        output='screen'
+    )
+
     return LaunchDescription([
         # Arguments
         camera_model_arg,
@@ -173,4 +183,5 @@ def generate_launch_description():
         pointcloud_optimizer_node,
         yolo_moveit_collision_node,
         yolo_planned_grasp_executor_node,
+        zed_yolo_3d_bbox_node,
     ])

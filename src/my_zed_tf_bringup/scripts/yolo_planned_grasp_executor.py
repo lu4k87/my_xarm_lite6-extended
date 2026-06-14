@@ -21,17 +21,13 @@ from scipy.spatial.transform import Rotation as R
 import tf2_ros
 
 def get_quaternion_from_euler(roll, pitch, yaw):
-    cy = math.cos(yaw * 0.5)
-    sy = math.sin(yaw * 0.5)
-    cp = math.cos(pitch * 0.5)
-    sp = math.sin(pitch * 0.5)
-    cr = math.cos(roll * 0.5)
-    sr = math.sin(roll * 0.5)
+    r = R.from_euler('xyz', [roll, pitch, yaw], degrees=False)
+    q_array = r.as_quat()
     q = Quaternion()
-    q.w = sr * cp * cy - cr * sp * sy
-    q.x = cr * sp * cy + sr * cp * sy
-    q.y = cr * cp * sy - sr * sp * cy
-    q.z = cr * cp * cy + sr * sp * sy
+    q.x = q_array[0]
+    q.y = q_array[1]
+    q.z = q_array[2]
+    q.w = q_array[3]
     return q
 
 class YoloPlannedGraspExecutor(Node):
@@ -190,15 +186,14 @@ class YoloPlannedGraspExecutor(Node):
                     trans.transform.rotation.z,
                     trans.transform.rotation.w
                 ]
-                cur_rot = R.from_quat(cur_q)
-                cur_euler = cur_rot.as_euler('xyz', degrees=False)
                 
-                grasp_roll = float(cur_euler[0])
-                grasp_pitch = float(cur_euler[1])
-                grasp_yaw = float(cur_euler[2])
-                target_quat = trans.transform.rotation
+                # Wir erzwingen, dass der TCP immer exakt senkrecht nach unten zeigt
+                grasp_roll = 3.14159
+                grasp_pitch = 0.0
+                grasp_yaw = 0.0
+                target_quat = get_quaternion_from_euler(grasp_roll, grasp_pitch, grasp_yaw)
                 
-                self.publish_status(f"➤ Behalte aktuelle Orientierung bei: Roll={grasp_roll:.2f}, Pitch={grasp_pitch:.2f}, Yaw={grasp_yaw:.2f}")
+                self.publish_status(f"➤ Erzwinge Top-Down Orientierung: Roll={grasp_roll:.2f}, Pitch={grasp_pitch:.2f}, Yaw={grasp_yaw:.2f}")
             except Exception as e:
                 self.get_logger().warn(f"TF lookup failed: {e}. Falling back to default top-down orientation.")
                 cur_x = grasp_x
@@ -262,7 +257,7 @@ class YoloPlannedGraspExecutor(Node):
                 self.publish_status("❌ Error: IK check failed for Phase 3. Using Fallback Direct Move.")
                 self._fallback_move(grasp_x, grasp_y, grasp_z_above, grasp_roll, grasp_pitch, grasp_yaw)
             else:
-                success = self._plan_and_execute(grasp_x, grasp_y, grasp_z_above, target_quat, allow_object=collision_object_name)
+                success = self._plan_and_execute(grasp_x, grasp_y, grasp_z_above, target_quat, allow_object=None)
                 if not success: 
                     self.publish_status("❌ Error: Phase 3 MoveIt Planning failed. Using Fallback Direct Move.")
                     self._fallback_move(grasp_x, grasp_y, grasp_z_above, grasp_roll, grasp_pitch, grasp_yaw)
@@ -289,7 +284,7 @@ class YoloPlannedGraspExecutor(Node):
             if future.result().ret == 0:
                 self.publish_status("✓ Fallback Move Completed")
             else:
-                self.publish_status(f"❌ Fallback Move Failed (ret={future.result().ret})")
+                self.publish_status(f"❌ Fallback Move Failed (ret={future.result().ret}, msg={future.result().message})")
         else:
             self.publish_status("❌ Fallback Move Service Call Failed")
 
@@ -346,7 +341,7 @@ class YoloPlannedGraspExecutor(Node):
         bv = BoundingVolume()
         sphere = SolidPrimitive()
         sphere.type = SolidPrimitive.SPHERE
-        sphere.dimensions = [0.015] # 15mm tolerance for IK success
+        sphere.dimensions = [0.005] # 5mm tolerance for IK success (reduced from 15mm for higher precision)
         bv.primitives.append(sphere)
         
         pose = Pose()
@@ -362,9 +357,9 @@ class YoloPlannedGraspExecutor(Node):
         o_constraint.header.frame_id = "link_base"
         o_constraint.link_name = "link_tcp"
         o_constraint.orientation = quat
-        o_constraint.absolute_x_axis_tolerance = 0.15
-        o_constraint.absolute_y_axis_tolerance = 0.15
-        o_constraint.absolute_z_axis_tolerance = 0.15
+        o_constraint.absolute_x_axis_tolerance = 0.001
+        o_constraint.absolute_y_axis_tolerance = 0.001
+        o_constraint.absolute_z_axis_tolerance = 0.001
         o_constraint.weight = 1.0
 
         constraints = Constraints()

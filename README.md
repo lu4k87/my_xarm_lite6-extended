@@ -227,7 +227,7 @@ To provide a clear understanding of the architecture, the software modules are c
 * **`zed_wrapper` [NODE]**
     * 🎯 **Purpose & Task:** The native hardware driver for the Stereolabs ZED Mini Camera. 
     * 🟢 📤 **Publishes:** `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`), `/zed/zed_node/depth/depth_registered` (`sensor_msgs/Image`), `/zed/zed_node/point_cloud/cloud_registered` (`sensor_msgs/PointCloud2`). Provides the sensory foundation for the entire system.
-    * ⚙️ **Parameters (`zed_camera.launch.py`):**
+    * ⚙️ **Parameters (`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`):**
         * `depth_mode: ULTRA` – Forces the most dense 3D point cloud for clean edge calculation.
         * `auto_exposure: True` – Allows automatic brightness compensation for robust YOLO detection.
 * **`zed_yolo_3d_bbox.py` [NODE]**
@@ -244,7 +244,7 @@ To provide a clear understanding of the architecture, the software modules are c
 * **`yolo_planned_grasp_executor.py` [NODE]**
     * 🎯 **Purpose & Task:** The central control logic of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the YOLO coordinates, and coordinates a robust **3-Phase Collision-Free Grasping Sequence**:
         * **Phase 1 (Retract):** Safely moves the arm strictly upwards from its current position to clear the table.
-        * **Phase 2 (Hover):** Translates horizontally to a safe height (15cm) exactly above the target object.
+        * **Phase 2 (Hover):** Translates horizontally to a safe height (15cm) exactly above the target object. Forces a strict top-down orientation and uses tight IK tolerances (5mm positional, 0.001 rad tilt) to guarantee millimeter-accurate vertical alignment.
         * **Phase 3 (Approach):** Temporarily removes the target object from the MoveIt global collision scene via `/ui/ignore_collision_object` to allow the TCP to physically reach into the object's bounding box without triggering emergency stops, then moves down.
     * 🟠 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`).
     * 🟢 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`) for the RViz console, `/ui/ignore_collision_object` (`std_msgs/String`).
@@ -728,7 +728,7 @@ dev_ws/
 │   ├── move_to_coordinator/        # 🧠 Python: Shared control brain
 │   │   └── move_to_coordinator/move_to_coordinator.py
 │   ├── my_zed_tf_bringup/          # 🌟 [VISION SYSTEM] Camera Bringup, TF, 3D BBox & Perception
-│   │   ├── launch/zed_camera.launch.py       # ZED driver & static TF launcher
+│   │   ├── launch/zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py       # ZED driver & static TF launcher
 │   │   └── scripts/
 │   │       ├── pointcloud_optimizer.py       # 3D depth noise reduction & filtering
 │   │       ├── yolo_moveit_collision.py      # MoveIt collision objects & dynamic ignoring

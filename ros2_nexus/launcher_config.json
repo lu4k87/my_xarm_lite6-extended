@@ -179,7 +179,45 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch my_zed_tf_bringup zed_camera.launch.py",
+          "cmd": "ros2 run collision_check checker",
+          "label": "Collision Check Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run voice_command_listener listener",
+          "label": "Voice Command Listener",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run gaze_control gaze_ui",
+          "label": "Gaze UI Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True",
+          "label": "Whisper Bringup",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 run whisper_demos whisper_on_key",
+          "label": "Whisper Stream Demo",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
+          "label": "Keyboard Input",
+          "type": "node"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-gamepad",
+      "style": "break-before: column;",
+      "title": "Controllers (Input -> Moveit Servo)"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch my_zed_tf_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
           "label": "ZED M Bringup (Kamera + TF)",
           "type": "launch"
         },
@@ -218,44 +256,6 @@
       "icon": "fa-solid fa-camera",
       "style": "break-before: column;",
       "title": "Cameras, Sensors"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 run collision_check checker",
-          "label": "Collision Check Node",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run voice_command_listener listener",
-          "label": "Voice Command Listener",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run gaze_control gaze_ui",
-          "label": "Gaze UI Node",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True",
-          "label": "Whisper Bringup",
-          "type": "launch"
-        },
-        {
-          "cmd": "ros2 run whisper_demos whisper_on_key",
-          "label": "Whisper Stream Demo",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
-          "label": "Keyboard Input",
-          "type": "node"
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-gamepad",
-      "style": "break-before: column;",
-      "title": "Controllers (Input -> Moveit Servo)"
     }
   ],
   "system": [

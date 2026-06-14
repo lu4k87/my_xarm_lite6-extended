@@ -229,7 +229,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 * **`zed_wrapper` [NODE]**
     * 🎯 **Zweck & Aufgabe:** Der native Hardware-Treiber der Stereolabs ZED Mini Kamera. 
     * 🟢 📤 **Publishes:** `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`), `/zed/zed_node/depth/depth_registered` (`sensor_msgs/Image`), `/zed/zed_node/point_cloud/cloud_registered` (`sensor_msgs/PointCloud2`). Bildet die sensorische Grundlage für das gesamte System.
-    * ⚙️ **Parameter (`zed_camera.launch.py`):**
+    * ⚙️ **Parameter (`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`):**
         * `depth_mode: ULTRA` – Erzwingt die maximal dichte 3D-Punktwolke für saubere Kantenberechnung.
         * `auto_exposure: True` – Erlaubt den automatischen Helligkeitsausgleich für robuste YOLO Erkennung.
 * **`zed_yolo_3d_bbox.py` [NODE]**
@@ -246,7 +246,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 * **`yolo_planned_grasp_executor.py` [NODE]**
     * 🎯 **Zweck & Aufgabe:** Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("Grasp Object") aus, holt sich die YOLO-Koordinaten und orchestriert eine robuste **Kollisionsfreie 3-Phasen Greif-Sequenz**:
         * **Phase 1 (Retract):** Fährt den Arm von seiner aktuellen Position exakt nach oben, um eine sichere Überflughöhe zu erreichen.
-        * **Phase 2 (Hover):** Bewegt sich horizontal auf der sicheren Z-Höhe (15cm) exakt über das Zielobjekt.
+        * **Phase 2 (Hover):** Bewegt sich horizontal auf der sicheren Z-Höhe (15cm) exakt über das Zielobjekt. Erzwingt dabei eine strikte Top-Down Orientierung (gerade nach unten) und nutzt sehr enge IK-Toleranzen (5mm Position, 0.001 rad Neigung) für millimetergenaue Ausrichtung.
         * **Phase 3 (Approach):** Schaltet das anvisierte Objekt kurzzeitig über `/ui/ignore_collision_object` in der globalen MoveIt Kollisionsszene ab, damit der Greifer physisch in die Bounding Box eindringen kann, ohne einen Not-Aus auszulösen, und fährt dann nach unten.
     * 🟠 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`).
     * 🟢 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`) für das RViz Console-Log, `/ui/ignore_collision_object` (`std_msgs/String`).
@@ -695,7 +695,7 @@ dev_ws/
 │   ├── move_to_coordinator/        # 🧠 Python: Shared-Control-Gehirn
 │   │   └── move_to_coordinator/move_to_coordinator.py
 │   ├── my_zed_tf_bringup/          # 🌟 [VISION SYSTEM] Kamera Bringup, TF, 3D BBox & Perception
-│   │   ├── launch/zed_camera.launch.py       # ZED-Treiber & statischer TF Launcher
+│   │   ├── launch/zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py       # ZED-Treiber & statischer TF Launcher
 │   │   └── scripts/
 │   │       ├── pointcloud_optimizer.py       # 3D Tiefenrauschen reduzieren & filtern
 │   │       ├── yolo_moveit_collision.py      # MoveIt Kollisionsobjekte & dynamisches Ignorieren

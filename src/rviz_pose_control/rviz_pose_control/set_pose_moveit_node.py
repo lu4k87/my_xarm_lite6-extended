@@ -34,6 +34,13 @@ class SetPoseMoveitNode(Node):
         
         self.cb_group = ReentrantCallbackGroup()
         
+        import tf2_ros
+        from geometry_msgs.msg import TwistStamped
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        self.twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
+
+        
         self.publisher_ = self.create_publisher(
             JointTrajectory, 
             '/lite6_traj_controller/joint_trajectory', 
@@ -248,14 +255,7 @@ class SetPoseMoveitNode(Node):
             
         self.is_executing = True
         try:
-            import tf2_ros
             from geometry_msgs.msg import TwistStamped
-
-            # Servo direkt ueber Twist cmds
-            twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
-            
-            tf_buffer = tf2_ros.Buffer()
-            tf_listener = tf2_ros.TransformListener(tf_buffer, self)
             
             # Ziel-Koordinaten (Panel sendet mm, Konvertierung in m)
             target_x = request.pose[0] / 1000.0
@@ -287,7 +287,7 @@ class SetPoseMoveitNode(Node):
                     raise Exception("Timeout: Ziel nicht erreicht in 30 Sekunden.")
                     
                 try:
-                    trans = tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+                    trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
                 except Exception as e:
                     time.sleep(0.1)
                     continue
@@ -350,14 +350,14 @@ class SetPoseMoveitNode(Node):
                 t.twist.angular.y = float(wy)
                 t.twist.angular.z = float(wz)
                 
-                twist_pub.publish(t)
+                self.twist_pub.publish(t)
                 time.sleep(0.05)
                 
             # Stopp-Kommando senden
             t_stop = TwistStamped()
             t_stop.header.frame_id = 'link_base'
             t_stop.header.stamp = self.get_clock().now().to_msg()
-            twist_pub.publish(t_stop)
+            self.twist_pub.publish(t_stop)
             
             self.get_logger().info("MoveTo Ziel erfolgreich erreicht!")
             response.ret = 0
