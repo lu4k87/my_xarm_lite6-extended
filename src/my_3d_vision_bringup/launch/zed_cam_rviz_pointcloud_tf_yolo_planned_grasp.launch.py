@@ -1,5 +1,5 @@
 """
-zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py — ZED M Bringup Launch File
+zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py — 3D Vision Bringup Launch File
 ==================================================
 Startet den ZED M Kameratreiber (zed_wrapper) und publiziert gleichzeitig
 die statische Koordinaten-Transformation (TF) zwischen dem Roboter-Basisrahmen

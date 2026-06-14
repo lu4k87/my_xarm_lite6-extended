@@ -276,15 +276,15 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
 * **`rviz_robot_control_panel.cpp` [RVIZ PLUGIN]**
-    * 🎯 **Zweck & Aufgabe:** Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Bietet D-Pad Tasten, das **"Grasp Object"** Eingabefeld und ein **Live-Konsolen-Log**. Nutzt eine threadsichere `Qt::QueuedConnection` Signal/Slot Architektur, um asynchrone ROS 2 Statusmeldungen direkt in das UI zu streamen, ohne die Oberfläche einzufrieren oder Abstürze (Segmentation Faults) zu verursachen.
-    * 🟠 📥 **Subscribes:** `/ui/grasp_status` (`std_msgs/String`). Liest Logs für das integrierte Textfenster ein.
+    * 🎯 **Zweck & Aufgabe:** Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Es ist modern in einem Dark-Theme gestaltet und in 4 GroupBoxes unterteilt (Cartesian Jog, Cartesian Absolute, Joint Absolute, Utilities). Bietet D-Pad Tasten, **6-DoF Joint Control Slider**, das **"Grasp Object"** Eingabefeld und ein **farbkodiertes Live-Konsolen-Log**. Nutzt eine threadsichere `Qt::QueuedConnection` Signal/Slot Architektur, um asynchrone ROS 2 Statusmeldungen direkt in das UI zu streamen, ohne die Oberfläche einzufrieren.
+    * 🟠 📥 **Subscribes:** `/ui/grasp_status` (`std_msgs/String`) für das integrierte Textfenster, `/joint_states` (`sensor_msgs/JointState`) zur Synchronisierung der Joint-Slider beim Start.
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`). Sendet Jogging-Geschwindigkeiten und den YOLO-Ziel-String.
-    * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_scan_trajectory` (Clients).
+    * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint`, `/ui/execute_scan_trajectory` (Clients).
 * **`set_pose_moveit_node.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger (fährt die Initial-Pose automatisch an) sowie einen robusten, kartesischen P-Regler für direkte Koordinaten-Anfahrten (ohne Singularitäten der Inversen Kinematik).
-    * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Skaliert die Geschwindigkeit des P-Reglers synchron zur UI.
+    * 🎯 **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger, einen robusten kartesischen P-Regler für direkte Koordinaten-Anfahrten und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo).
+    * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Skaliert die Geschwindigkeit des P-Reglers und der Joint-Bewegungen synchron zur UI.
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
-    * 🔄 **Services:** Bietet `/ui/execute_initial_pose` und `/ui/execute_move_to_pose` als Server an. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
+    * 🔄 **Services:** Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose` und `/ui/execute_move_joint` als Server an. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
     * ⚙️ **Parameter (P-Regler):**
         * `Kp_pos = 2.5` – Proportional-Gain für dynamische, aber stabile Anfahrten.
         * `max_vel_pos = 0.2` – Limitiert die TCP-Geschwindigkeit auf 0.2 m/s.
@@ -576,7 +576,7 @@ Die ZED Mini Kamera erfordert das offizielle ZED SDK und eine passende CUDA-Vers
    ```
 6. **Ausführungs-Workflow & RViz Integration**:
    * Starte zunächst die Roboter-Basis (z. B. **Fake Arm** oder **Real Arm**) über die ROS 2 Nexus WebApp. Dies öffnet automatisch **RViz** mit dem vorkonfigurierten Layout (`servo.rviz`).
-   * Starte im Anschluss das **ZED M Bringup** über Nexus. Dies führt das `my_3d_vision_bringup` Paket aus, welches simultan den ZED-Treiber initialisiert, die statische TF-Transformation sendet (um die Kamera relativ zum `link_base` des Roboters auszurichten) und das dynamisch generierte 3D-Stativ publiziert.
+   * Starte im Anschluss das **3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)** über Nexus. Dies führt das `my_3d_vision_bringup` Paket aus, welches simultan den ZED-Treiber initialisiert, die statische TF-Transformation sendet (um die Kamera relativ zum `link_base` des Roboters auszurichten) und das dynamisch generierte 3D-Stativ publiziert.
    * Die Live-Punktwolke (`PointCloud2`) sowie die Kamera-Achsen erscheinen daraufhin sofort und vollautomatisch in der bereits laufenden RViz-Instanz, ohne dass weitere manuelle Einstellungen nötig sind.
 
 ### Setup & Build
