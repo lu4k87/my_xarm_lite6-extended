@@ -3,9 +3,10 @@
 import rclpy
 from rclpy.node import Node
 from visualization_msgs.msg import MarkerArray, Marker
-from moveit_msgs.msg import PlanningScene, CollisionObject, AllowedCollisionEntry, AllowedCollisionMatrix
+from moveit_msgs.msg import CollisionObject
 from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose
+from std_msgs.msg import String
 
 class YoloMoveitCollision(Node):
     def __init__(self):
@@ -19,10 +20,10 @@ class YoloMoveitCollision(Node):
             10
         )
 
-        # Publisher for the Planning Scene (MoveIt)
-        self.pub_planning_scene = self.create_publisher(
-            PlanningScene,
-            '/planning_scene',
+        # Publisher for CollisionObject (MoveIt)
+        self.pub_collision_object = self.create_publisher(
+            CollisionObject,
+            '/collision_object',
             10
         )
 
@@ -36,7 +37,16 @@ class YoloMoveitCollision(Node):
 
         self.was_active = False
         self.known_objects = set()
+        self.ignored_objects = set()
         self.last_publish_time = self.get_clock().now()
+        
+        # Subscriber to temporarily ignore objects (e.g. during grasping)
+        self.sub_ignore = self.create_subscription(
+            String,
+            '/ui/ignore_collision_object',
+            self.ignore_callback,
+            10
+        )
 
         # End effector links that are allowed to collide with the objects
         # Dies erlaubt das Greifen von oben!
@@ -48,17 +58,27 @@ class YoloMoveitCollision(Node):
 
         self.get_logger().info('YOLO MoveIt Collision Node gestartet. Warte auf RViz Toggle...')
 
+    def ignore_callback(self, msg):
+        obj_name = msg.data.strip()
+        if obj_name and obj_name not in self.ignored_objects:
+            self.ignored_objects.add(obj_name)
+            self.get_logger().info(f'Ignoriere Kollisionsobjekt: {obj_name}')
+            
+            # Immediately remove it if it was known
+            if obj_name in self.known_objects:
+                co = CollisionObject()
+                co.id = obj_name
+                co.operation = CollisionObject.REMOVE
+                self.pub_collision_object.publish(co)
+                self.known_objects.remove(obj_name)
+
     def remove_all_objects(self):
-        scene_msg = PlanningScene()
-        scene_msg.is_diff = True
-        
         for obj_name in self.known_objects:
             co = CollisionObject()
             co.id = obj_name
             co.operation = CollisionObject.REMOVE
-            scene_msg.world.collision_objects.append(co)
+            self.pub_collision_object.publish(co)
             
-        self.pub_planning_scene.publish(scene_msg)
         self.known_objects.clear()
         self.get_logger().info('Kollisions-Toggle in RViz deaktiviert. Alle YOLO-Objekte aus MoveIt entfernt.')
 
@@ -95,21 +115,14 @@ class YoloMoveitCollision(Node):
         if not objects_dict:
             # Wenn keine Objekte mehr da sind, aber wir noch welche kennen -> alle löschen!
             if self.known_objects:
-                scene_msg = PlanningScene()
-                scene_msg.is_diff = True
                 for obj_name in self.known_objects:
                     co = CollisionObject()
                     co.id = obj_name
                     co.operation = CollisionObject.REMOVE
-                    scene_msg.world.collision_objects.append(co)
-                self.pub_planning_scene.publish(scene_msg)
+                    self.pub_collision_object.publish(co)
                 self.known_objects.clear()
             return
 
-        scene_msg = PlanningScene()
-        scene_msg.is_diff = True
-
-        acm = AllowedCollisionMatrix()
         vis_markers = MarkerArray()
         current_objects = set()
 
@@ -135,6 +148,11 @@ class YoloMoveitCollision(Node):
             scale_z = max(0.01, max_z - min_z)
             
             obj_name = data['name'].replace(' ', '_')
+            
+            # Überspringe ignorierte Objekte
+            if obj_name in self.ignored_objects:
+                continue
+                
             current_objects.add(obj_name)
             
             # --- 1. Collision Object for MoveIt ---
@@ -156,7 +174,12 @@ class YoloMoveitCollision(Node):
             co.primitives.append(box)
             co.primitive_poses.append(pose)
             
-            scene_msg.world.collision_objects.append(co)
+            # Throttle updates: only publish if object is new or time expired
+            now = self.get_clock().now()
+            time_since_last = (now - self.last_publish_time).nanoseconds / 1e9
+            if (obj_name not in self.known_objects) or (time_since_last >= 0.5):
+                self.pub_collision_object.publish(co)
+                self.last_publish_time = now
             
             # --- 2. Visual Marker for RViz ---
             vm = Marker()
@@ -184,23 +207,9 @@ class YoloMoveitCollision(Node):
             co = CollisionObject()
             co.id = obj_name
             co.operation = CollisionObject.REMOVE
-            scene_msg.world.collision_objects.append(co)
-        # The known_objects update is moved to the throttle block below
+            self.pub_collision_object.publish(co)
         
-        # --- 3. Allowed Collision Matrix (ACM) ---
-        # Entfernt: Wir übergeben keine Ausnahmen mehr an MoveIt. Dadurch behandelt
-        # MoveIt jedes YOLO-Objekt automatisch als undurchdringliches Hindernis für den gesamten Roboter.
-
-        # Throttling to prevent RViz/MoveIt freezing (Max 2 Hz for position updates)
-        now = self.get_clock().now()
-        time_since_last = (now - self.last_publish_time).nanoseconds / 1e9
-        
-        objects_changed = (self.known_objects != current_objects) or bool(objects_to_remove)
-        
-        if objects_changed or time_since_last >= 0.5:
-            self.pub_planning_scene.publish(scene_msg)
-            self.last_publish_time = now
-            self.known_objects = current_objects
+        self.known_objects = current_objects
         
         # Always publish an empty marker array with DELETEALL to clean up if needed
         # But here we just publish the valid markers.

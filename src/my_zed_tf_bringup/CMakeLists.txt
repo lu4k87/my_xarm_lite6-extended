@@ -8,7 +8,7 @@ install(DIRECTORY launch meshes config
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(PROGRAMS scripts/zed_stand_publisher.py scripts/zed_yolo_3d_bbox.py scripts/pointcloud_optimizer.py scripts/yolo_moveit_collision.py scripts/yolo_grasp_executor.py
+install(PROGRAMS scripts/zed_stand_publisher.py scripts/zed_yolo_3d_bbox.py scripts/pointcloud_optimizer.py scripts/yolo_moveit_collision.py scripts/yolo_grasp_executor.py scripts/yolo_planned_grasp_executor.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

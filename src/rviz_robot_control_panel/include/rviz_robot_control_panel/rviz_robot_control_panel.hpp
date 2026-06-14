@@ -72,6 +72,12 @@ protected Q_SLOTS:
   // Slot for speed slider
   void onSpeedSliderChanged(int value);
 
+private Q_SLOTS:
+  void onLogMessage(const QString& msg);
+
+Q_SIGNALS:
+  void sendLogMessage(const QString& msg);
+
 protected:
   // ROS Node
   rclcpp::Node::SharedPtr node_;
@@ -131,6 +137,7 @@ protected:
   
   void setupUI();
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);
+  void logToConsole(const QString& msg);
 };
 
 } // namespace rviz_robot_control_panel

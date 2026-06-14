@@ -104,7 +104,7 @@ class YoloGraspExecutor(Node):
                 self.publish_status(f"❌ Error: Grasp center point for object '{self.target_object_name}' not found.")
                 return
 
-            self.publish_status(f"✓ Found '{self.target_object_name}' at X={grasp_x:.3f}, Y={grasp_y:.3f}, Z={grasp_z:.3f}")
+            self.publish_status(f"✓ Found '{self.target_object_name}' at X={grasp_x*1000.0:.1f}mm, Y={grasp_y*1000.0:.1f}mm, Z={grasp_z*1000.0:.1f}mm")
 
             # Wait for Move Service
             if not self.move_client.wait_for_service(timeout_sec=5.0):
@@ -121,7 +121,8 @@ class YoloGraspExecutor(Node):
             # Convert meters to mm for MoveCartesian
             target_x_mm = grasp_x * 1000.0
             target_y_mm = grasp_y * 1000.0
-            target_z_mm = grasp_z * 1000.0
+            # Add 2 cm (20 mm) to Z so the TCP stops above the object
+            target_z_mm = (grasp_z * 1000.0) + 20.0
 
             safe_z_mm = 300.0
 

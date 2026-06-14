@@ -20,6 +20,19 @@ window.onload = function () {
     ros.on('close', () => {
         statusValueElement.textContent = 'Offline';
         statusValueElement.className = 'status-value status-offline';
+        setTimeout(() => { 
+            try {
+                window.open('', '_self', '');
+                window.close();
+            } catch (e) {}
+            // Fallback: Falls der Browser das Schließen blockiert, leeren wir die Seite komplett
+            document.body.innerHTML = `
+                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background-color: #1e1e2e; color: #cdd6f4; font-family: sans-serif;">
+                    <h2>Das Terminal wurde beendet.</h2>
+                    <p style="color: #a6adc8;">Die Verbindung zum Roboter ist getrennt. Du kannst diesen Tab jetzt schließen.</p>
+                </div>
+            `;
+        }, 1500);
     });
 
     const iconA = document.getElementById('icon-a');

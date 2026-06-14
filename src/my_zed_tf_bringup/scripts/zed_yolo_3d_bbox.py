@@ -170,9 +170,10 @@ class ZedYolo3DNode(Node):
                 # Transform to link_base
                 pts_base = R @ pts_opt + T
                 
-                # Robustly filter out table points (Z < 0.015) and robot base (X < 0.25)
+                # Robustly filter out table points (Z < 0.015) and robot base (cylinder with radius 12cm)
                 # also filter out points that are too high (Z > 0.4) to avoid grasping the camera stand or robot arm
-                valid_pts_filter = (pts_base[2, :] > 0.015) & (pts_base[0, :] > 0.25) & (pts_base[2, :] < 0.4)
+                dist_from_base = np.sqrt(pts_base[0, :]**2 + pts_base[1, :]**2)
+                valid_pts_filter = (pts_base[2, :] > 0.015) & (dist_from_base > 0.12) & (pts_base[2, :] < 0.4)
                 if np.sum(valid_pts_filter) < 10:
                     continue # Not enough points belonging to the object
                 pts_base = pts_base[:, valid_pts_filter]
@@ -303,15 +304,15 @@ class ZedYolo3DNode(Node):
             point_marker.pose.position.z = float(display_z)
             point_marker.pose.orientation.w = 1.0
             
-            # Make it a small visible dot (2cm diameter)
-            point_marker.scale.x = 0.02
-            point_marker.scale.y = 0.02
-            point_marker.scale.z = 0.02
+            # Make it a small visible dot (1cm diameter)
+            point_marker.scale.x = 0.01
+            point_marker.scale.y = 0.01
+            point_marker.scale.z = 0.01
             
-            # Bright color (Cyan) to stand out
-            point_marker.color.r = 0.0
-            point_marker.color.g = 1.0
-            point_marker.color.b = 1.0
+            # Bright color (Red) to stand out
+            point_marker.color.r = 1.0
+            point_marker.color.g = 0.0
+            point_marker.color.b = 0.0
             point_marker.color.a = 1.0
             
             point_marker.lifetime.sec = 1

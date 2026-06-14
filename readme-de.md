@@ -243,13 +243,14 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
     * 🎯 **Zweck & Aufgabe:** Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten um und fügt diese als massive, solide Hindernisse in den Planungsraum ein.
     * 🟠 📥 **Subscribes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Liest die Bounding Boxen aus.
     * 🟢 📤 **Publishes:** `/planning_scene` (`moveit_msgs/PlanningScene`). Sendet die `CollisionObjects` direkt an die MoveIt Planning Scene, um Kollisionen beim Greifen/Fahren zu vermeiden.
-* **`yolo_grasp_executor.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("Grasp Object") aus, holt sich die Kasten-Koordinate und fährt den Roboter sicher über einen internen P-Regler zum Ziel (erst Z=300mm, dann direkte Fahrt).
-    * 🟠 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Wartet auf den Textbefehl aus RViz und scannt die Marker-Arrays nach dem entsprechenden Objekt-Grasp-Point.
-    * 🟢 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`). Sendet Live-Feedback für das Log-Fenster im RViz Panel.
-    * 🔄 **Services:** `/ui/execute_move_to_pose` (Client). Übergibt die finalen X/Y/Z-Koordinaten an den Bewegungs-Node.
-    * ⚙️ **Parameter:**
-        * `safe_z_mm = 300` – Garantiert eine absolute Sicherheits-Überflughöhe, bevor die Greif-Routine vertikal absteigt.
+* **`yolo_planned_grasp_executor.py` [NODE]**
+    * 🎯 **Zweck & Aufgabe:** Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("Grasp Object") aus, holt sich die YOLO-Koordinaten und orchestriert eine robuste **Kollisionsfreie 3-Phasen Greif-Sequenz**:
+        * **Phase 1 (Retract):** Fährt den Arm von seiner aktuellen Position exakt nach oben, um eine sichere Überflughöhe zu erreichen.
+        * **Phase 2 (Hover):** Bewegt sich horizontal auf der sicheren Z-Höhe (15cm) exakt über das Zielobjekt.
+        * **Phase 3 (Approach):** Schaltet das anvisierte Objekt kurzzeitig über `/ui/ignore_collision_object` in der globalen MoveIt Kollisionsszene ab, damit der Greifer physisch in die Bounding Box eindringen kann, ohne einen Not-Aus auszulösen, und fährt dann nach unten.
+    * 🟠 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`).
+    * 🟢 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`) für das RViz Console-Log, `/ui/ignore_collision_object` (`std_msgs/String`).
+    * 🔄 **Services:** `/compute_ik` (IK Verifizierung), `/move_action` (MoveIt OMPL Planer), `/ui/execute_move_to_pose` (Servo Fallback).
 * **`zed_stand_publisher.py` [SKRIPT]**
     * 🎯 **Zweck & Aufgabe:** Generiert mathematisch exakt das 3D-Modell des Kamerastativs (Aluminiumprofil) und publiziert dieses statisch in RViz.
     * 🟢 📤 **Publishes:** `/zed_stand_marker` (`visualization_msgs/Marker`).
@@ -275,7 +276,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
 * **`rviz_robot_control_panel.cpp` [RVIZ PLUGIN]**
-    * 🎯 **Zweck & Aufgabe:** Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Bietet D-Pad Tasten, das **"Grasp Object"** Eingabefeld (inkl. Live-Log-Terminal) sowie Schnellzugriff-Buttons ("Initial Pose", "Vision Scan"). Sendet lediglich Service-Trigger und friert das UI niemals ein.
+    * 🎯 **Zweck & Aufgabe:** Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Bietet D-Pad Tasten, das **"Grasp Object"** Eingabefeld und ein **Live-Konsolen-Log**. Nutzt eine threadsichere `Qt::QueuedConnection` Signal/Slot Architektur, um asynchrone ROS 2 Statusmeldungen direkt in das UI zu streamen, ohne die Oberfläche einzufrieren oder Abstürze (Segmentation Faults) zu verursachen.
     * 🟠 📥 **Subscribes:** `/ui/grasp_status` (`std_msgs/String`). Liest Logs für das integrierte Textfenster ein.
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`). Sendet Jogging-Geschwindigkeiten und den YOLO-Ziel-String.
     * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_scan_trajectory` (Clients).
@@ -697,9 +698,10 @@ dev_ws/
 │   │   ├── launch/zed_camera.launch.py       # ZED-Treiber & statischer TF Launcher
 │   │   └── scripts/
 │   │       ├── pointcloud_optimizer.py       # 3D Tiefenrauschen reduzieren & filtern
-│   │       ├── yolo_moveit_collision.py      # MoveIt Kollisionsobjekte (on/off)
+│   │       ├── yolo_moveit_collision.py      # MoveIt Kollisionsobjekte & dynamisches Ignorieren
 │   │       ├── zed_stand_publisher.py        # 3D-Stativ Mesh Publisher
-│   │       └── zed_yolo_3d_bbox.py           # 3D Objekterkennung & Bounding-Boxen
+│   │       ├── zed_yolo_3d_bbox.py           # 3D Objekterkennung & Bounding-Boxen
+│   │       └── yolo_planned_grasp_executor.py # 3-Phasen Greiflogik & Planner Fallback
 │   ├── ros2_whisper/               # 🎙️ Whisper AI Speech-to-Text
 │   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D Text Overlays
 │   │   └── rviz_overlay/

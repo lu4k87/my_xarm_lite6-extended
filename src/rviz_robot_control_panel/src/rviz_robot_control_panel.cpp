@@ -13,6 +13,7 @@ ControlPanel::ControlPanel(QWidget* parent)
   
   publish_timer_ = new QTimer(this);
   connect(publish_timer_, &QTimer::timeout, this, &ControlPanel::publishTwist);
+  connect(this, &ControlPanel::sendLogMessage, this, &ControlPanel::onLogMessage, Qt::QueuedConnection);
 }
 
 ControlPanel::~ControlPanel()
@@ -55,14 +56,7 @@ void ControlPanel::onInitialize()
   status_sub_ = node_->create_subscription<std_msgs::msg::String>(
     "/ui/grasp_status", 10,
     [this](const std_msgs::msg::String::SharedPtr msg) {
-        QMetaObject::invokeMethod(this, [this, txt=msg->data]() {
-            if(txt_log_) {
-                txt_log_->append(QString::fromStdString(txt));
-                // Scroll to bottom
-                QScrollBar *vScrollBar = txt_log_->verticalScrollBar();
-                vScrollBar->setValue(vScrollBar->maximum());
-            }
-        });
+        this->logToConsole(QString::fromStdString(msg->data));
     }
   );
 }
@@ -292,47 +286,66 @@ void ControlPanel::updateTwist(double x, double y, double z, double rx, double r
   current_twist_.twist.angular.z = rz;
 }
 
-void ControlPanel::onButtonPressXPlus() { updateTwist(0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressXMinus() { updateTwist(-0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressYPlus() { updateTwist(0.0, 0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressYMinus() { updateTwist(0.0, -0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressZPlus() { updateTwist(0.0, 0.0, 0.1 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressZMinus() { updateTwist(0.0, 0.0, -0.1 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotXPlus() { updateTwist(0.0, 0.0, 0.0, 0.2 * current_speed_scale_, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotXMinus() { updateTwist(0.0, 0.0, 0.0, -0.2 * current_speed_scale_, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotYPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.2 * current_speed_scale_, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotYMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, -0.2 * current_speed_scale_, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotZPlus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.2 * current_speed_scale_); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotZMinus() { updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.2 * current_speed_scale_); publish_timer_->start(50); }
+void ControlPanel::onButtonPressXPlus() { logToConsole("➤ Jog: Forward (X+)"); updateTwist(0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressXMinus() { logToConsole("➤ Jog: Backward (X-)"); updateTwist(-0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressYPlus() { logToConsole("➤ Jog: Left (Y+)"); updateTwist(0.0, 0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressYMinus() { logToConsole("➤ Jog: Right (Y-)"); updateTwist(0.0, -0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressZPlus() { logToConsole("➤ Jog: Up (Z+)"); updateTwist(0.0, 0.0, 0.1 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressZMinus() { logToConsole("➤ Jog: Down (Z-)"); updateTwist(0.0, 0.0, -0.1 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXPlus() { logToConsole("➤ Jog: Roll +"); updateTwist(0.0, 0.0, 0.0, 0.2 * current_speed_scale_, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXMinus() { logToConsole("➤ Jog: Roll -"); updateTwist(0.0, 0.0, 0.0, -0.2 * current_speed_scale_, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYPlus() { logToConsole("➤ Jog: Pitch +"); updateTwist(0.0, 0.0, 0.0, 0.0, 0.2 * current_speed_scale_, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYMinus() { logToConsole("➤ Jog: Pitch -"); updateTwist(0.0, 0.0, 0.0, 0.0, -0.2 * current_speed_scale_, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotZPlus() { logToConsole("➤ Jog: Yaw +"); updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.2 * current_speed_scale_); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotZMinus() { logToConsole("➤ Jog: Yaw -"); updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.2 * current_speed_scale_); publish_timer_->start(50); }
 
 void ControlPanel::onButtonInitialPose()
 {
   RCLCPP_INFO(node_->get_logger(), "Triggering initial pose service.");
+  logToConsole("➤ Triggering Initial Pose...");
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
   
   if (!initial_pose_client_->wait_for_service(std::chrono::seconds(1))) {
     RCLCPP_ERROR(node_->get_logger(), "Service /ui/execute_initial_pose not available.");
+    logToConsole("❌ Error: Initial pose service not available.");
     return;
   }
   
-  initial_pose_client_->async_send_request(request);
+  initial_pose_client_->async_send_request(request, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
+      auto response = future.get();
+      if (response->success) {
+          logToConsole("✓ Initial Pose reached successfully.");
+      } else {
+          logToConsole("❌ Initial Pose failed: " + QString::fromStdString(response->message));
+      }
+  });
 }
 
 void ControlPanel::onButtonScanTrajectory()
 {
   RCLCPP_INFO(node_->get_logger(), "Triggering scan trajectory service.");
+  logToConsole("➤ Triggering Vision Scan Path...");
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
   
   if (!scan_client_->wait_for_service(std::chrono::seconds(1))) {
     RCLCPP_ERROR(node_->get_logger(), "Service /ui/execute_scan_trajectory not available.");
+    logToConsole("❌ Error: Scan service not available.");
     return;
   }
   
-  scan_client_->async_send_request(request);
+  scan_client_->async_send_request(request, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
+      auto response = future.get();
+      if (response->success) {
+          logToConsole("✓ Vision Scan completed successfully.");
+      } else {
+          logToConsole("❌ Vision Scan failed: " + QString::fromStdString(response->message));
+      }
+  });
 }
 
 void ControlPanel::onButtonFrameBase() {
   active_frame_ = "link_base";
+  logToConsole("➤ Jog Frame set to: link_base");
   if (frame_pub_) {
     std_msgs::msg::String msg;
     msg.data = "link_base";
@@ -342,6 +355,7 @@ void ControlPanel::onButtonFrameBase() {
 
 void ControlPanel::onButtonFrameTCP() {
   active_frame_ = "link_tcp";
+  logToConsole("➤ Jog Frame set to: link_tcp");
   if (frame_pub_) {
     std_msgs::msg::String msg;
     msg.data = "link_tcp";
@@ -354,6 +368,7 @@ void ControlPanel::onButtonRelease()
   publish_timer_->stop();
   updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   publishTwist(); // publish one zero twist to stop
+  // Not logging stop to avoid log flooding
 }
 
 void ControlPanel::publishTwist()
@@ -369,6 +384,7 @@ void ControlPanel::onButtonMoveTo()
 {
   if (moveit_running_) {
     RCLCPP_WARN(node_->get_logger(), "MoveIt is already executing a trajectory.");
+    logToConsole("❌ Error: Robot is already executing a move.");
     return;
   }
   
@@ -380,6 +396,7 @@ void ControlPanel::onButtonMoveTo()
   double yaw = spin_yaw_->value();
 
   moveit_running_ = true;
+  logToConsole(QString("➤ MoveTo Absolute Pose: X=%1 Y=%2 Z=%3").arg(x).arg(y).arg(z));
 
   std::thread([this, x, y, z, roll, pitch, yaw]() {
     try {
@@ -393,14 +410,23 @@ void ControlPanel::onButtonMoveTo()
         auto res = move_client->async_send_request(req);
         if (res.wait_for(std::chrono::seconds(10)) == std::future_status::ready) {
            RCLCPP_INFO(node_->get_logger(), "MoveTo finished.");
+           auto response = res.get();
+           if (response->ret == 0) {
+               logToConsole("✓ MoveTo successful.");
+           } else {
+               logToConsole(QString("❌ MoveTo failed (ret=%1): ").arg(response->ret) + QString::fromStdString(response->message));
+           }
         } else {
            RCLCPP_ERROR(node_->get_logger(), "MoveTo timed out.");
+           logToConsole("❌ Error: MoveTo timed out after 10s.");
         }
       } else {
         RCLCPP_ERROR(node_->get_logger(), "MoveTo service not available.");
+        logToConsole("❌ Error: MoveTo service not available.");
       }
     } catch (const std::exception& e) {
       RCLCPP_ERROR(node_->get_logger(), "MoveTo Error: %s", e.what());
+      logToConsole(QString("❌ MoveTo Exception: ") + e.what());
     }
     moveit_running_ = false;
   }).detach();
@@ -418,6 +444,7 @@ void ControlPanel::onButtonGrasp()
   QString object_name = txt_grasp_object_->text().trimmed();
   if (object_name.isEmpty()) {
     RCLCPP_WARN(node_->get_logger(), "No object name entered.");
+    logToConsole("❌ Error: No object name entered for grasp.");
     return;
   }
   
@@ -426,7 +453,22 @@ void ControlPanel::onButtonGrasp()
     msg.data = object_name.toStdString();
     grasp_object_pub_->publish(msg);
     RCLCPP_INFO(node_->get_logger(), "Published Grasp Object command: %s", msg.data.c_str());
+    // NOTE: Grasp status is returned via /ui/grasp_status and handled automatically
   }
+}
+
+void ControlPanel::logToConsole(const QString& msg) {
+    Q_EMIT sendLogMessage(msg);
+}
+
+void ControlPanel::onLogMessage(const QString& msg) {
+    if(txt_log_) {
+        txt_log_->append(msg);
+        QScrollBar *vScrollBar = txt_log_->verticalScrollBar();
+        if (vScrollBar) {
+            vScrollBar->setValue(vScrollBar->maximum());
+        }
+    }
 }
 
 } // namespace rviz_robot_control_panel

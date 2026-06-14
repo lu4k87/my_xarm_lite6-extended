@@ -101,6 +101,23 @@
     {
       "actions": [
         {
+          "cmd": "ros2 launch my_zed_tf_bringup standalone_move_group.launch.py add_gripper:=true",
+          "label": "Start MoveGroup Server (FAKE)",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 launch my_zed_tf_bringup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
+          "label": "Start MoveGroup Server (REAL)",
+          "type": "launch"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-map-location-dot",
+      "title": "MoveIt Planning (OMPL Server)"
+    },
+    {
+      "actions": [
+        {
           "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
           "label": "Real Move Launch",
           "type": "launch"
@@ -167,8 +184,13 @@
           "type": "launch"
         },
         {
-          "cmd": "ros2 run my_zed_tf_bringup tf_tuner.py",
-          "label": "ZED TF Live Tuner",
+          "cmd": "ros2 run my_zed_tf_bringup pointcloud_optimizer.py",
+          "label": "Pointcloud Optimizer",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run my_zed_tf_bringup yolo_planned_grasp_executor.py",
+          "label": "YOLO Planned Grasp Executor",
           "type": "node"
         },
         {
@@ -177,8 +199,18 @@
           "type": "node"
         },
         {
+          "cmd": "ros2 run my_zed_tf_bringup tf_tuner.py",
+          "label": "ZED TF Live Tuner",
+          "type": "node"
+        },
+        {
           "cmd": "ros2 run yolo_object_detector yolo_homography_node",
           "label": "YOLO Homographie",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run my_zed_tf_bringup yolo_grasp_executor.py",
+          "label": "YOLO Grasp Executor (Backup)",
           "type": "node"
         }
       ],
