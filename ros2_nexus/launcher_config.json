@@ -218,7 +218,7 @@
       "actions": [
         {
           "cmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
-          "label": "3D Vision Bringup (Kamera + TF)",
+          "label": "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)",
           "type": "launch"
         },
         {
