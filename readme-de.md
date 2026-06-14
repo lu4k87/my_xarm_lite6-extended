@@ -321,7 +321,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 *Historische Module, die durch neuere Systeme (z.B. ZED Mini) abgelöst wurden.*
 
 * **`yolo_object_detector` [SKRIPT / NODE]**
-    * 🎯 **Zweck & Aufgabe:** *[Veraltet]* Die alte 2D-basierte Objekterkennung über Raspberry Pi Kameras. Transformierte YOLO Bounding Boxes mittels `cv2.findHomography` und flachen ArUco-Markern in den starren 3D-Raum (Z=90 mm). Vollständig durch das `my_zed_tf_bringup` (3D Vision System) ersetzt.
+    * 🎯 **Zweck & Aufgabe:** *[Veraltet]* Die alte 2D-basierte Objekterkennung über Raspberry Pi Kameras. Transformierte YOLO Bounding Boxes mittels `cv2.findHomography` und flachen ArUco-Markern in den starren 3D-Raum (Z=90 mm). Vollständig durch das `my_3d_vision_bringup` (3D Vision System) ersetzt.
     * 🟢 📤 **Publishes:** `/objects/<color>_<shape>/world_poses` (`geometry_msgs/PoseArray`).
 
 ---
@@ -572,11 +572,11 @@ Die ZED Mini Kamera erfordert das offizielle ZED SDK und eine passende CUDA-Vers
    cd ~/dev_ws
    rm -rf build/zed_* install/zed_*  # Alte Fragmente zwingend löschen!
    source /opt/ros/humble/setup.bash
-   colcon build --packages-select zed_interfaces zed_components zed_wrapper my_zed_tf_bringup --symlink-install
+   colcon build --packages-select zed_interfaces zed_components zed_wrapper my_3d_vision_bringup --symlink-install
    ```
 6. **Ausführungs-Workflow & RViz Integration**:
    * Starte zunächst die Roboter-Basis (z. B. **Fake Arm** oder **Real Arm**) über die ROS 2 Nexus WebApp. Dies öffnet automatisch **RViz** mit dem vorkonfigurierten Layout (`servo.rviz`).
-   * Starte im Anschluss das **ZED M Bringup** über Nexus. Dies führt das `my_zed_tf_bringup` Paket aus, welches simultan den ZED-Treiber initialisiert, die statische TF-Transformation sendet (um die Kamera relativ zum `link_base` des Roboters auszurichten) und das dynamisch generierte 3D-Stativ publiziert.
+   * Starte im Anschluss das **ZED M Bringup** über Nexus. Dies führt das `my_3d_vision_bringup` Paket aus, welches simultan den ZED-Treiber initialisiert, die statische TF-Transformation sendet (um die Kamera relativ zum `link_base` des Roboters auszurichten) und das dynamisch generierte 3D-Stativ publiziert.
    * Die Live-Punktwolke (`PointCloud2`) sowie die Kamera-Achsen erscheinen daraufhin sofort und vollautomatisch in der bereits laufenden RViz-Instanz, ohne dass weitere manuelle Einstellungen nötig sind.
 
 ### Setup & Build
@@ -694,7 +694,7 @@ dev_ws/
 │   │   └── motion_sequence/motion_sequence.py
 │   ├── move_to_coordinator/        # 🧠 Python: Shared-Control-Gehirn
 │   │   └── move_to_coordinator/move_to_coordinator.py
-│   ├── my_zed_tf_bringup/          # 🌟 [VISION SYSTEM] Kamera Bringup, TF, 3D BBox & Perception
+│   ├── my_3d_vision_bringup/          # 🌟 [VISION SYSTEM] Kamera Bringup, TF, 3D BBox & Perception
 │   │   ├── launch/zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py       # Zentraler All-In-One Launcher (ZED, TF, YOLO, Greif-Executor)
 │   │   └── scripts/
 │   │       ├── pointcloud_optimizer.py       # 3D Tiefenrauschen reduzieren & filtern

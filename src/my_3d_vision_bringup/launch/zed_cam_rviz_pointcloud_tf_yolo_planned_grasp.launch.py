@@ -17,7 +17,7 @@ TF-Parameter (relativ zu link_base):
   roll=0.0, pitch=-0.35 rad (~20° nach unten), yaw=3.14159 rad (180°, zurück zum Roboter)
 
 Verwendung:
-  ros2 launch my_zed_tf_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py
+  ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py
 
 Kalibrierung:
   Wenn die Kamera physisch ausgemessen wird, können die TF-Parameter
@@ -36,6 +36,13 @@ import os
 
 
 def generate_launch_description():
+
+    # -----------------------------------------------------------------------
+    # Setup Paths
+    # -----------------------------------------------------------------------
+    pkg_share = get_package_share_directory('my_3d_vision_bringup')
+    grasping_params_file = os.path.join(pkg_share, 'config', 'grasping_params.yaml')
+    perception_params_file = os.path.join(pkg_share, 'config', 'perception_params.yaml')
 
     # -----------------------------------------------------------------------
     # Launch Arguments (für spätere Kalibrierung leicht anpassbar)
@@ -63,7 +70,7 @@ def generate_launch_description():
 
     # Path to parameter override
     config_override_path = os.path.join(
-        get_package_share_directory('my_zed_tf_bringup'),
+        get_package_share_directory('my_3d_vision_bringup'),
         'config',
         'zed_override.yaml'
     )
@@ -112,7 +119,7 @@ def generate_launch_description():
     # ZED Stativ (3D Marker) Publisher
     # -----------------------------------------------------------------------
     zed_stand_publisher_node = Node(
-        package='my_zed_tf_bringup',
+        package='my_3d_vision_bringup',
         executable='zed_stand_publisher.py',
         name='zed_stand_publisher',
         output='screen'
@@ -122,7 +129,7 @@ def generate_launch_description():
     # PointCloud ROI Optimizer (Crops Top 50% Background)
     # -----------------------------------------------------------------------
     pointcloud_optimizer_node = Node(
-        package='my_zed_tf_bringup',
+        package='my_3d_vision_bringup',
         executable='pointcloud_optimizer.py',
         name='pointcloud_optimizer',
         output='screen'
@@ -132,7 +139,7 @@ def generate_launch_description():
     # YOLO MoveIt Collision Node
     # -----------------------------------------------------------------------
     yolo_moveit_collision_node = Node(
-        package='my_zed_tf_bringup',
+        package='my_3d_vision_bringup',
         executable='yolo_moveit_collision.py',
         name='yolo_moveit_collision',
         output='screen'
@@ -144,26 +151,35 @@ def generate_launch_description():
     # -----------------------------------------------------------------------
     # Backup: old servo-based node
     # yolo_grasp_executor_node = Node(
-    #     package='my_zed_tf_bringup',
+    #     package='my_3d_vision_bringup',
     #     executable='yolo_grasp_executor.py',
     #     name='yolo_grasp_executor',
     #     output='screen'
     # )
     
     yolo_planned_grasp_executor_node = Node(
-        package='my_zed_tf_bringup',
+        package='my_3d_vision_bringup',
         executable='yolo_planned_grasp_executor.py',
         name='yolo_planned_grasp_executor',
-        output='screen'
+        output='screen',
+        parameters=[grasping_params_file]
     )
 
     # -----------------------------------------------------------------------
     # YOLO 3D BBox Node
     # -----------------------------------------------------------------------
     zed_yolo_3d_bbox_node = Node(
-        package='my_zed_tf_bringup',
+        package='my_3d_vision_bringup',
         executable='zed_yolo_3d_bbox.py',
         name='zed_yolo_3d_bbox',
+        output='screen',
+        parameters=[perception_params_file]
+    )
+
+    grasp_action_bridge_node = Node(
+        package='my_3d_vision_bringup',
+        executable='grasp_action_bridge.py',
+        name='grasp_action_bridge',
         output='screen'
     )
 
@@ -184,4 +200,5 @@ def generate_launch_description():
         yolo_moveit_collision_node,
         yolo_planned_grasp_executor_node,
         zed_yolo_3d_bbox_node,
+        grasp_action_bridge_node,
     ])

@@ -56,11 +56,14 @@ class ZedYolo3DNode(Node):
         
         # EMA Filtering state
         self.ema_states = {} # maps cls_id -> {'state': np.array, 'last_seen': float}
-        self.alpha = 0.2 # Smoothing factor (lower = smoother but more delay)
+        # Declare parameters
+        self.declare_parameter('confidence_threshold', 0.5)
+        self.declare_parameter('ema_alpha', 0.2)
+        self.declare_parameter('class_height_overrides', ['sports ball:0.064'])
         
         # Rate Limiting
         self.last_inference_time = 0.0
-        
+
         self.get_logger().info('ZED YOLO 3D BBox Node gestartet.')
 
     def camera_info_callback(self, msg):
@@ -88,9 +91,24 @@ class ZedYolo3DNode(Node):
             self.get_logger().error(f'Error converting images: {e}')
             return
 
+        # Get parameters
+        conf_thresh = self.get_parameter('confidence_threshold').value
+        self.alpha = self.get_parameter('ema_alpha').value
+        overrides_raw = self.get_parameter('class_height_overrides').value
+        
+        # Parse overrides
+        self.height_overrides = {}
+        for override in overrides_raw:
+            if ':' in override:
+                cls_name, z_val = override.split(':', 1)
+                try:
+                    self.height_overrides[cls_name.strip()] = float(z_val.strip())
+                except ValueError:
+                    self.get_logger().warn(f"Invalid height override: {override}")
+
         # We do not crop the image so YOLO can detect the full objects
         # Run YOLO inference (GPU beschleunigt)
-        results = self.model.predict(cv_rgb, verbose=False, conf=0.5)
+        results = self.model.predict(cv_rgb, verbose=False, conf=conf_thresh)
         
         marker_array = MarkerArray()
         
@@ -183,9 +201,10 @@ class ZedYolo3DNode(Node):
                 min_y, max_y = np.percentile(pts_base[1], 2), np.percentile(pts_base[1], 98)
                 _, max_z = np.percentile(pts_base[2], 2), np.percentile(pts_base[2], 98)
                 
-                # Hardcode physical height for sports ball because BBox was cropped
-                if names[cls_id] == 'sports ball':
-                    max_z = 0.064
+                # Apply physical height override if configured
+                cls_name = names[cls_id]
+                if cls_name in self.height_overrides:
+                    max_z = self.height_overrides[cls_name]
                 
                 # Objects always rest on the table, so force min_z to 0.0
                 min_z = 0.0
@@ -207,8 +226,9 @@ class ZedYolo3DNode(Node):
                 min_y, max_y = np.percentile(pts_opt[1], 2), np.percentile(pts_opt[1], 98)
                 min_z, max_z = np.percentile(pts_opt[2], 2), np.percentile(pts_opt[2], 98)
                 
-                if names[cls_id] == 'sports ball':
-                    max_z = 0.064
+                cls_name = names[cls_id]
+                if cls_name in self.height_overrides:
+                    max_z = self.height_overrides[cls_name]
                 
                 center_x = (min_x + max_x) / 2.0
                 center_y = (min_y + max_y) / 2.0

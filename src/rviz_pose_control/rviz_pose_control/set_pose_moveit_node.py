@@ -6,7 +6,7 @@ from rclpy.node import Node
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from builtin_interfaces.msg import Duration
 from std_srvs.srv import Trigger
-from xarm_msgs.srv import MoveCartesian
+from xarm_msgs.srv import MoveCartesian, MoveJoint
 from moveit_msgs.srv import GetPositionIK
 import math
 import numpy as np
@@ -61,13 +61,19 @@ class SetPoseMoveitNode(Node):
             self.execute_move_to_pose_cb,
             callback_group=self.cb_group
         )
+        self.move_joint_srv = self.create_service(
+            MoveJoint,
+            '/ui/execute_move_joint',
+            self.execute_move_joint_cb,
+            callback_group=self.cb_group
+        )
         self.scan_srv = self.create_service(
             Trigger, 
             '/ui/execute_scan_path', 
             self.execute_scan_path_cb,
             callback_group=self.cb_group
         )
-        self.get_logger().info('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/execute_scan_path) ready.')
+        self.get_logger().info('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/execute_scan_path, /ui/execute_move_joint) ready.')
         self.is_executing = False
         
         from std_msgs.msg import Float32
@@ -139,6 +145,64 @@ class SetPoseMoveitNode(Node):
         except Exception as e:
             self.get_logger().error(f"Error: {e}")
             response.success = False
+            response.message = str(e)
+        finally:
+            self.is_executing = False
+            
+        return response
+
+    def execute_move_joint_cb(self, request, response):
+        if self.is_executing:
+            response.ret = -1
+            response.message = "Already executing."
+            return response
+            
+        self.is_executing = True
+        
+        try:
+            # 1. Stop MoveIt Servo
+            if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
+                req = Trigger.Request()
+                self.servo_stop_client.call_async(req)
+                time.sleep(0.5) 
+                
+            # 2. Publish trajectory
+            msg = JointTrajectory()
+            msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+            
+            point = JointTrajectoryPoint()
+            # request.angles is a list of floats (radians)
+            if len(request.angles) >= 6:
+                point.positions = [float(request.angles[0]), float(request.angles[1]), float(request.angles[2]), 
+                                   float(request.angles[3]), float(request.angles[4]), float(request.angles[5])]
+            else:
+                raise Exception("Not enough joint angles provided")
+                
+            point.velocities = [0.0] * 6
+            # Duration based on speed scale
+            speed_multiplier = self.current_speed_scale / 0.5
+            duration_sec = max(1.0, 2.0 / speed_multiplier)
+            
+            point.time_from_start = Duration(sec=int(duration_sec), nanosec=int((duration_sec - int(duration_sec)) * 1e9))
+            
+            msg.points.append(point)
+            self.publisher_.publish(msg)
+            self.get_logger().info('Trajektorie gesendet. Fahre zu Joint Pose...')
+            
+            # Warte auf die Ausfuehrung der Bewegung
+            time.sleep(duration_sec + 0.5)
+            
+            # 3. Start MoveIt Servo again
+            if self.servo_start_client.wait_for_service(timeout_sec=1.0):
+                req = Trigger.Request()
+                self.servo_start_client.call_async(req)
+                time.sleep(0.5)
+                
+            response.ret = 0
+            response.message = "Joint Pose reached."
+        except Exception as e:
+            self.get_logger().error(f"Error: {e}")
+            response.ret = -1
             response.message = str(e)
         finally:
             self.is_executing = False

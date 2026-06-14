@@ -7,6 +7,8 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <xarm_msgs/srv/move_cartesian.hpp>
+#include <xarm_msgs/srv/move_joint.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 #include <QPushButton>
 #include <QTimer>
 #include <QGridLayout>
@@ -17,6 +19,7 @@
 #include <QLineEdit>
 #include <QTextEdit>
 #include <QScrollBar>
+#include <QGroupBox>
 #include <thread>
 #include <atomic>
 #include <moveit/move_group_interface/move_group_interface.h>
@@ -66,6 +69,12 @@ protected Q_SLOTS:
   // Slot for absolute move
   void onButtonMoveTo();
   
+  // Slot for joint move
+  void onButtonMoveJoints();
+  
+  // Slot for joint slider changes
+  void onJointSliderChanged();
+  
   // Slot for grasp object
   void onButtonGrasp();
   
@@ -87,6 +96,7 @@ protected:
   rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr set_speed_index_pub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr speed_sub_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr status_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
 
   // Qt UI Elements
   QPushButton* btn_x_plus_;
@@ -119,6 +129,11 @@ protected:
   QDoubleSpinBox* spin_yaw_;
   QPushButton* btn_move_to_;
 
+  // Joint Move Elements
+  QSlider* slider_joints_[6];
+  QLabel* lbl_joints_val_[6];
+  QPushButton* btn_move_joints_;
+
   // Grasp Object Elements
   QLineEdit* txt_grasp_object_;
   QPushButton* btn_grasp_;
@@ -134,6 +149,7 @@ protected:
   
   std::atomic<bool> moveit_running_{false};
   float current_speed_scale_ = 0.5f;
+  bool initial_joint_state_received_ = false;
   
   void setupUI();
   void updateTwist(double x, double y, double z, double rx, double ry, double rz);

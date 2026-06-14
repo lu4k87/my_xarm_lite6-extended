@@ -71,7 +71,7 @@ class ZedVisualPublisher(Node):
         camera_mesh.id = 2
         camera_mesh.type = Marker.MESH_RESOURCE
         camera_mesh.action = Marker.ADD
-        camera_mesh.mesh_resource = "package://my_zed_tf_bringup/meshes/ZEDM.stl"
+        camera_mesh.mesh_resource = "package://my_3d_vision_bringup/meshes/ZEDM.stl"
         camera_mesh.mesh_use_embedded_materials = False
 
         # Since it's attached directly to the camera frame, position is 0,0,0

@@ -1,0 +1,13 @@
+zed_yolo_3d_bbox:
+  ros__parameters:
+    # Overrides for specific object classes (if their BBox is often cropped or needs manual adjustment)
+    # Format: "class_name:max_z_override_in_meters"
+    class_height_overrides:
+      - "sports ball:0.064"
+      - "cup:0.120"
+    
+    # Confidence threshold for YOLOv8
+    confidence_threshold: 0.5
+    
+    # EMA Smoothing factor (alpha). Lower is smoother but slower to update.
+    ema_alpha: 0.2

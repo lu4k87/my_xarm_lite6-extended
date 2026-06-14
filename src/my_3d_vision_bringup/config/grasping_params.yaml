@@ -1,0 +1,18 @@
+yolo_planned_grasp_executor:
+  ros__parameters:
+    # Safe Z height for hovering (in meters)
+    safe_z_hover_height: 0.15
+    # Additional Z offset added to the object's top surface for grasping (in meters)
+    grasp_z_offset: 0.02
+    
+    # Target orientation for the grasp (Roll, Pitch, Yaw in radians)
+    # Default is straight down (Roll=180 degrees)
+    target_roll: 3.14159265
+    target_pitch: 0.0
+    target_yaw: 0.0
+    
+    # MoveIt IK tolerances
+    # Position tolerance (radius of the allowed sphere in meters)
+    ik_tolerance_position: 0.005
+    # Orientation tolerance (in radians)
+    ik_tolerance_orientation: 0.001

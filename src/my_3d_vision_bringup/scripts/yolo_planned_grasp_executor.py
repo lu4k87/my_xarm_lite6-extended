@@ -5,7 +5,8 @@ import time
 import math
 import rclpy
 from rclpy.node import Node
-from rclpy.action import ActionClient
+from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
+from my_3d_vision_bringup.action import GraspObject
 from std_msgs.msg import String
 from visualization_msgs.msg import MarkerArray, Marker
 from moveit_msgs.action import MoveGroup
@@ -48,12 +49,23 @@ class YoloPlannedGraspExecutor(Node):
             'vacuum_gripper_link', 'lite_gripper_link', 'other_geometry_link'
         ]
 
-        # Subscribers
-        self.create_subscription(
-            String, 
-            '/ui/grasp_object_cmd', 
-            self.grasp_cmd_callback, 
-            10,
+        # Declare parameters
+        self.declare_parameter('safe_z_hover_height', 0.15)
+        self.declare_parameter('grasp_z_offset', 0.02)
+        self.declare_parameter('target_roll', 3.14159)
+        self.declare_parameter('target_pitch', 0.0)
+        self.declare_parameter('target_yaw', 0.0)
+        self.declare_parameter('ik_tolerance_position', 0.005)
+        self.declare_parameter('ik_tolerance_orientation', 0.001)
+
+        # Action Server
+        self._action_server = ActionServer(
+            self,
+            GraspObject,
+            '/ui/grasp_object',
+            execute_callback=self.execute_grasp_sequence,
+            goal_callback=self.goal_callback,
+            cancel_callback=self.cancel_callback,
             callback_group=self.cb_group
         )
         self.create_subscription(
@@ -95,32 +107,39 @@ class YoloPlannedGraspExecutor(Node):
         import threading
         self.exec_lock = threading.Lock()
 
-    def publish_status(self, msg_str: str):
+    def publish_status(self, msg_str: str, goal_handle=None):
         self.get_logger().info(msg_str)
         self.status_pub.publish(String(data=msg_str))
+        if goal_handle:
+            feedback_msg = GraspObject.Feedback()
+            feedback_msg.current_phase = msg_str
+            feedback_msg.status_message = msg_str
+            goal_handle.publish_feedback(feedback_msg)
 
     def marker_callback(self, msg: MarkerArray):
         self.latest_markers = msg.markers
 
-    def grasp_cmd_callback(self, msg: String):
+    def goal_callback(self, goal_request):
+        self.get_logger().info(f'Received grasp goal request for: {goal_request.object_name}')
         with self.exec_lock:
             if self.is_executing:
-                self.get_logger().warn("Already executing a grasp sequence. Ignoring command.")
-                return
+                self.get_logger().warn("Already executing a grasp sequence. Rejecting new goal.")
+                return GoalResponse.REJECT
+            return GoalResponse.ACCEPT
+
+    def cancel_callback(self, goal_handle):
+        self.get_logger().info('Received cancel request for grasp sequence')
+        return CancelResponse.ACCEPT
+
+    def execute_grasp_sequence(self, goal_handle):
+        with self.exec_lock:
             self.is_executing = True
 
-        self.target_object_name = msg.data.strip().lower()
-        if not self.target_object_name:
-            self.is_executing = False
-            return
+        self.target_object_name = goal_handle.request.object_name.strip().lower()
+        result = GraspObject.Result()
 
-        self.publish_status(f"➤ Start Planned Grasping: '{self.target_object_name}'")
-        
-        import threading
-        threading.Thread(target=self.execute_grasp_sequence).start()
-
-    def execute_grasp_sequence(self):
         try:
+            self.publish_status(f"➤ Start Planned Grasping: '{self.target_object_name}'", goal_handle)
             # 1. Find the object in the latest markers
             target_id = None
             object_base_name = ""
@@ -133,8 +152,11 @@ class YoloPlannedGraspExecutor(Node):
                         break
             
             if target_id is None:
-                self.publish_status(f"❌ Error: Object '{self.target_object_name}' not found in current RViz markers.")
-                return
+                self.publish_status(f"❌ Error: Object '{self.target_object_name}' not found in current RViz markers.", goal_handle)
+                goal_handle.abort()
+                result.success = False
+                result.message = f"Object '{self.target_object_name}' not found."
+                return result
 
             # Construct the MoveIt collision object name exactly as yolo_moveit_collision.py does
             collision_object_name = f"{object_base_name}_{target_id}".replace(' ', '_')
@@ -149,8 +171,11 @@ class YoloPlannedGraspExecutor(Node):
                     break
 
             if grasp_x is None:
-                self.publish_status(f"❌ Error: Grasp center point for object '{self.target_object_name}' not found.")
-                return
+                self.publish_status(f"❌ Error: Grasp center point for object '{self.target_object_name}' not found.", goal_handle)
+                goal_handle.abort()
+                result.success = False
+                result.message = f"Grasp center point for '{self.target_object_name}' not found."
+                return result
 
             # WICHTIG: Entferne das Zielobjekt SOFORT aus der Kollisionswelt!
             # Dadurch blockiert es weder Phase 1 (falls der Arm eng darüber fährt) noch Phase 2.
@@ -159,14 +184,24 @@ class YoloPlannedGraspExecutor(Node):
             self.ignore_pub.publish(ignore_msg)
             time.sleep(0.5) # Kurzer Moment, damit yolo_moveit_collision das Objekt entfernt
 
-            # Target Z is 2 cm (0.02 m) above the object
-            grasp_z_above = grasp_z + 0.02
+            # Get parameters
+            safe_z_hover_height = self.get_parameter('safe_z_hover_height').value
+            grasp_z_offset = self.get_parameter('grasp_z_offset').value
+            target_roll = self.get_parameter('target_roll').value
+            target_pitch = self.get_parameter('target_pitch').value
+            target_yaw = self.get_parameter('target_yaw').value
+
+            # Target Z is slightly above the object
+            grasp_z_above = grasp_z + grasp_z_offset
             
-            self.publish_status(f"✓ Found '{self.target_object_name}' (ID: {collision_object_name}) at X={grasp_x*1000.0:.1f}mm, Y={grasp_y*1000.0:.1f}mm, Z={grasp_z_above*1000.0:.1f}mm")
+            self.publish_status(f"✓ Found '{self.target_object_name}' (ID: {collision_object_name}) at X={grasp_x*1000.0:.1f}mm, Y={grasp_y*1000.0:.1f}mm, Z={grasp_z_above*1000.0:.1f}mm", goal_handle)
 
             if not self.move_group_client.wait_for_server(timeout_sec=5.0):
-                self.publish_status("❌ Error: MoveIt action server /move_action not available!")
-                return
+                self.publish_status("❌ Error: MoveIt action server /move_action not available!", goal_handle)
+                goal_handle.abort()
+                result.success = False
+                result.message = "MoveIt action server /move_action not available!"
+                return result
 
             tf_buffer = tf2_ros.Buffer()
             tf_listener = tf2_ros.TransformListener(tf_buffer, self)
@@ -187,90 +222,109 @@ class YoloPlannedGraspExecutor(Node):
                     trans.transform.rotation.w
                 ]
                 
-                # Wir erzwingen, dass der TCP immer exakt senkrecht nach unten zeigt
-                grasp_roll = 3.14159
-                grasp_pitch = 0.0
-                grasp_yaw = 0.0
+                # Wir nutzen Parameter für die Top-Down Orientierung
+                grasp_roll = target_roll
+                grasp_pitch = target_pitch
+                grasp_yaw = target_yaw
                 target_quat = get_quaternion_from_euler(grasp_roll, grasp_pitch, grasp_yaw)
                 
-                self.publish_status(f"➤ Erzwinge Top-Down Orientierung: Roll={grasp_roll:.2f}, Pitch={grasp_pitch:.2f}, Yaw={grasp_yaw:.2f}")
+                self.publish_status(f"➤ Erzwinge Orientierung: Roll={grasp_roll:.2f}, Pitch={grasp_pitch:.2f}, Yaw={grasp_yaw:.2f}", goal_handle)
             except Exception as e:
                 self.get_logger().warn(f"TF lookup failed: {e}. Falling back to default top-down orientation.")
                 cur_x = grasp_x
                 cur_y = grasp_y
-                cur_z = grasp_z + 0.15
-                grasp_roll = 3.14159
-                grasp_pitch = 0.0
-                grasp_yaw = 0.0
+                cur_z = grasp_z + safe_z_hover_height
+                grasp_roll = target_roll
+                grasp_pitch = target_pitch
+                grasp_yaw = target_yaw
                 target_quat = get_quaternion_from_euler(grasp_roll, grasp_pitch, grasp_yaw)
 
             if not self.ik_client.wait_for_service(timeout_sec=1.0):
                 self.get_logger().warn("IK service not available. Skipping IK check.")
 
-            safe_z = grasp_z + 0.15
+            safe_z = grasp_z + safe_z_hover_height
             retract_z = max(cur_z + 0.10, safe_z)
             
+            # Helper to check cancel
+            def check_cancel():
+                if goal_handle.is_cancel_requested:
+                    goal_handle.canceled()
+                    self.publish_status("❌ Grasping cancelled by user.", goal_handle)
+                    return True
+                return False
+
             # --- PHASE 1: RETRACT (UP) ---
-            self.publish_status("➤ Phase 1: Hebe Arm an, um Kollisionen zu vermeiden.")
+            if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
+            self.publish_status("➤ Phase 1: Hebe Arm an, um Kollisionen zu vermeiden.", goal_handle)
             ik_valid_0 = self._check_ik(cur_x, cur_y, retract_z, target_quat)
             if not ik_valid_0:
-                self.publish_status("❌ Error: IK check failed for Phase 1. Using Fallback Direct Move.")
-                self._fallback_move(cur_x, cur_y, retract_z, grasp_roll, grasp_pitch, grasp_yaw)
+                self.publish_status("❌ Error: IK check failed for Phase 1. Using Fallback Direct Move.", goal_handle)
+                self._fallback_move(cur_x, cur_y, retract_z, grasp_roll, grasp_pitch, grasp_yaw, goal_handle)
             else:
-                success = self._plan_and_execute(cur_x, cur_y, retract_z, target_quat, allow_object=None)
+                success = self._plan_and_execute(cur_x, cur_y, retract_z, target_quat, allow_object=None, goal_handle=goal_handle)
                 if not success: 
-                    self.publish_status("❌ Error: Phase 1 MoveIt Planning failed. Using Fallback Direct Move.")
-                    self._fallback_move(cur_x, cur_y, retract_z, grasp_roll, grasp_pitch, grasp_yaw)
+                    self.publish_status("❌ Error: Phase 1 MoveIt Planning failed. Using Fallback Direct Move.", goal_handle)
+                    self._fallback_move(cur_x, cur_y, retract_z, grasp_roll, grasp_pitch, grasp_yaw, goal_handle)
             
             time.sleep(1.0)
             
             # --- PHASE 2: HOVER (OVER OBJECT) ---
-            self.publish_status("➤ Phase 2: Bewege Arm direkt über das Zielobjekt.")
+            if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
+            self.publish_status("➤ Phase 2: Bewege Arm direkt über das Zielobjekt.", goal_handle)
             ik_valid_1 = self._check_ik(grasp_x, grasp_y, safe_z, target_quat)
             if not ik_valid_1:
-                self.publish_status("❌ Error: IK check failed for Phase 2. Using Fallback Direct Move.")
-                self._fallback_move(grasp_x, grasp_y, safe_z, grasp_roll, grasp_pitch, grasp_yaw)
+                self.publish_status("❌ Error: IK check failed for Phase 2. Using Fallback Direct Move.", goal_handle)
+                self._fallback_move(grasp_x, grasp_y, safe_z, grasp_roll, grasp_pitch, grasp_yaw, goal_handle)
             else:
-                success = self._plan_and_execute(grasp_x, grasp_y, safe_z, target_quat, allow_object=None)
+                success = self._plan_and_execute(grasp_x, grasp_y, safe_z, target_quat, allow_object=None, goal_handle=goal_handle)
                 if not success: 
-                    self.publish_status("❌ Error: Phase 2 MoveIt Planning failed. Using Fallback Direct Move.")
-                    self._fallback_move(grasp_x, grasp_y, safe_z, grasp_roll, grasp_pitch, grasp_yaw)
+                    self.publish_status("❌ Error: Phase 2 MoveIt Planning failed. Using Fallback Direct Move.", goal_handle)
+                    self._fallback_move(grasp_x, grasp_y, safe_z, grasp_roll, grasp_pitch, grasp_yaw, goal_handle)
             
             time.sleep(1.0)
 
             # --- PREPARE PHASE 3 ---
-            # To prevent MoveIt and Servo from rejecting the downward motion due to collision,
-            # we must temporarily remove the target object from the global planning scene!
-            self.publish_status(f"➤ Vorbereitung Phase 3: Schalte Kollisionserkennung für '{collision_object_name}' aus, um zugreifen zu können.")
+            if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
+            self.publish_status(f"➤ Vorbereitung Phase 3: Schalte Kollisionserkennung für '{collision_object_name}' aus, um zugreifen zu können.", goal_handle)
             ignore_msg = String()
             ignore_msg.data = collision_object_name
             self.ignore_pub.publish(ignore_msg)
             
-            # Wait a moment for yolo_moveit_collision to remove it
             time.sleep(0.5)
 
             # --- PHASE 3: APPROACH (DOWN TO OBJECT) ---
-            self.publish_status(f"➤ Phase 3: Greifer fährt nach unten zum Zugreifen.")
+            if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
+            self.publish_status(f"➤ Phase 3: Greifer fährt nach unten zum Zugreifen.", goal_handle)
             
             ik_valid_2 = self._check_ik(grasp_x, grasp_y, grasp_z_above, target_quat)
             if not ik_valid_2:
-                self.publish_status("❌ Error: IK check failed for Phase 3. Using Fallback Direct Move.")
-                self._fallback_move(grasp_x, grasp_y, grasp_z_above, grasp_roll, grasp_pitch, grasp_yaw)
+                self.publish_status("❌ Error: IK check failed for Phase 3. Using Fallback Direct Move.", goal_handle)
+                self._fallback_move(grasp_x, grasp_y, grasp_z_above, grasp_roll, grasp_pitch, grasp_yaw, goal_handle)
             else:
-                success = self._plan_and_execute(grasp_x, grasp_y, grasp_z_above, target_quat, allow_object=None)
+                success = self._plan_and_execute(grasp_x, grasp_y, grasp_z_above, target_quat, allow_object=None, goal_handle=goal_handle)
                 if not success: 
-                    self.publish_status("❌ Error: Phase 3 MoveIt Planning failed. Using Fallback Direct Move.")
-                    self._fallback_move(grasp_x, grasp_y, grasp_z_above, grasp_roll, grasp_pitch, grasp_yaw)
+                    self.publish_status("❌ Error: Phase 3 MoveIt Planning failed. Using Fallback Direct Move.", goal_handle)
+                    self._fallback_move(grasp_x, grasp_y, grasp_z_above, grasp_roll, grasp_pitch, grasp_yaw, goal_handle)
 
-            self.publish_status("✓ Planned Grasp Sequence Completed Successfully!")
+            self.publish_status("✓ Planned Grasp Sequence Completed Successfully!", goal_handle)
+            
+            goal_handle.succeed()
+            result.success = True
+            result.message = "Successfully grasped."
+            return result
 
         except Exception as e:
-            self.publish_status(f"❌ Error executing planned grasp sequence: {e}")
+            self.publish_status(f"❌ Error executing planned grasp sequence: {e}", goal_handle)
+            goal_handle.abort()
+            result.success = False
+            result.message = str(e)
+            return result
         finally:
-            self.is_executing = False
+            with self.exec_lock:
+                self.is_executing = False
 
-    def _fallback_move(self, x, y, z, roll, pitch, yaw):
-        self.publish_status("➤ Executing Fallback Move via Servo...")
+    def _fallback_move(self, x, y, z, roll, pitch, yaw, goal_handle=None):
+        self.publish_status("➤ Executing Fallback Move via Servo...", goal_handle)
         req = MoveCartesian.Request()
         req.pose = [float(x * 1000.0), float(y * 1000.0), float(z * 1000.0), float(roll), float(pitch), float(yaw)]
         req.speed = 0.0
@@ -279,14 +333,17 @@ class YoloPlannedGraspExecutor(Node):
         
         future = self.servo_client.call_async(req)
         while rclpy.ok() and not future.done():
+            if goal_handle and goal_handle.is_cancel_requested:
+                return
             time.sleep(0.1)
+            
         if future.result() is not None:
             if future.result().ret == 0:
-                self.publish_status("✓ Fallback Move Completed")
+                self.publish_status("✓ Fallback Move Completed", goal_handle)
             else:
-                self.publish_status(f"❌ Fallback Move Failed (ret={future.result().ret}, msg={future.result().message})")
+                self.publish_status(f"❌ Fallback Move Failed (ret={future.result().ret}, msg={future.result().message})", goal_handle)
         else:
-            self.publish_status("❌ Fallback Move Service Call Failed")
+            self.publish_status("❌ Fallback Move Service Call Failed", goal_handle)
 
 
     def _check_ik(self, x, y, z, quat) -> bool:
@@ -316,7 +373,10 @@ class YoloPlannedGraspExecutor(Node):
         except Exception:
             return False
 
-    def _plan_and_execute(self, x, y, z, quat, allow_object=None) -> bool:
+    def _plan_and_execute(self, x, y, z, quat, allow_object=None, goal_handle=None) -> bool:
+        ik_tol_pos = self.get_parameter('ik_tolerance_position').value
+        ik_tol_ori = self.get_parameter('ik_tolerance_orientation').value
+
         goal_msg = MoveGroup.Goal()
         
         req = MotionPlanRequest()
@@ -341,7 +401,7 @@ class YoloPlannedGraspExecutor(Node):
         bv = BoundingVolume()
         sphere = SolidPrimitive()
         sphere.type = SolidPrimitive.SPHERE
-        sphere.dimensions = [0.005] # 5mm tolerance for IK success (reduced from 15mm for higher precision)
+        sphere.dimensions = [float(ik_tol_pos)] 
         bv.primitives.append(sphere)
         
         pose = Pose()
@@ -357,9 +417,9 @@ class YoloPlannedGraspExecutor(Node):
         o_constraint.header.frame_id = "link_base"
         o_constraint.link_name = "link_tcp"
         o_constraint.orientation = quat
-        o_constraint.absolute_x_axis_tolerance = 0.001
-        o_constraint.absolute_y_axis_tolerance = 0.001
-        o_constraint.absolute_z_axis_tolerance = 0.001
+        o_constraint.absolute_x_axis_tolerance = float(ik_tol_ori)
+        o_constraint.absolute_y_axis_tolerance = float(ik_tol_ori)
+        o_constraint.absolute_z_axis_tolerance = float(ik_tol_ori)
         o_constraint.weight = 1.0
 
         constraints = Constraints()
@@ -395,6 +455,9 @@ class YoloPlannedGraspExecutor(Node):
         future = self.move_group_client.send_goal_async(goal_msg)
         
         while rclpy.ok() and not future.done():
+            if goal_handle and goal_handle.is_cancel_requested:
+                future.cancel()
+                return False
             time.sleep(0.1)
             
         if not future.done() or not future.result().accepted:
@@ -403,6 +466,9 @@ class YoloPlannedGraspExecutor(Node):
             
         result_future = future.result().get_result_async()
         while rclpy.ok() and not result_future.done():
+            if goal_handle and goal_handle.is_cancel_requested:
+                # Note: We should actually send a cancel goal to MoveIt here for robustness
+                return False
             time.sleep(0.1)
             
         result = result_future.result().result
@@ -410,10 +476,10 @@ class YoloPlannedGraspExecutor(Node):
         # moveit_msgs/MoveItErrorCodes
         # 1 = SUCCESS
         if result.error_code.val != 1:
-            self.publish_status(f"❌ MoveIt Planning failed with error code: {result.error_code.val}")
+            self.publish_status(f"❌ MoveIt Planning failed with error code: {result.error_code.val}", goal_handle)
             return False
             
-        self.publish_status("✓ MoveIt Path Planned! Executing via Trajectory Controller...")
+        self.publish_status("✓ MoveIt Path Planned! Executing via Trajectory Controller...", goal_handle)
         
         # Execute by publishing the planned trajectory directly
         if result.planned_trajectory and result.planned_trajectory.joint_trajectory.points:
@@ -423,9 +489,16 @@ class YoloPlannedGraspExecutor(Node):
             # Wait for execution to finish
             duration = traj_msg.points[-1].time_from_start
             wait_time = duration.sec + duration.nanosec * 1e-9 + 0.5
-            time.sleep(wait_time)
+            
+            # Non-blocking wait to allow cancellation
+            start_wait = time.time()
+            while time.time() - start_wait < wait_time:
+                if goal_handle and goal_handle.is_cancel_requested:
+                    return False
+                time.sleep(0.1)
+                
         else:
-            self.publish_status("❌ No valid trajectory generated by MoveIt.")
+            self.publish_status("❌ No valid trajectory generated by MoveIt.", goal_handle)
             return False
             
         return True
