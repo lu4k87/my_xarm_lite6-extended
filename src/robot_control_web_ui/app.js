@@ -200,35 +200,41 @@ jointStateSub.subscribe((msg) => {
   }
 });
 
-// TF Client for Cartesian Telemetry
-const tfClient = new ROSLIB.TFClient({
+// Subscribe directly to the Guardian Node for TCP Position
+const eefSub = new ROSLIB.Topic({
   ros: ros,
-  fixedFrame: 'link_base',
-  angularThres: 0.01,
-  transThres: 0.01
+  name: '/ui/eef_position',
+  messageType: 'std_msgs/Float32MultiArray'
 });
 
-tfClient.subscribe('link_tcp', (tf) => {
-  document.getElementById('telem-x').innerText = (tf.translation.x * 1000.0).toFixed(1);
-  document.getElementById('telem-y').innerText = (tf.translation.y * 1000.0).toFixed(1);
-  document.getElementById('telem-z').innerText = (tf.translation.z * 1000.0).toFixed(1);
-  
-  // Quaternion to Euler (rough approximation for display)
-  const q = tf.rotation;
-  const sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
-  const cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
-  const roll = Math.atan2(sinr_cosp, cosr_cosp);
+eefSub.subscribe((msg) => {
+  if (msg.data.length >= 3) {
+    document.getElementById('telem-x').innerText = msg.data[0].toFixed(1);
+    document.getElementById('telem-y').innerText = msg.data[1].toFixed(1);
+    document.getElementById('telem-z').innerText = msg.data[2].toFixed(1);
+  }
+  if (msg.data.length >= 7) {
+    const qx = msg.data[3];
+    const qy = msg.data[4];
+    const qz = msg.data[5];
+    const qw = msg.data[6];
 
-  const sinp = 2 * (q.w * q.y - q.z * q.x);
-  const pitch = Math.abs(sinp) >= 1 ? (Math.sign(sinp) * Math.PI / 2) : Math.asin(sinp);
+    // Quaternion to Euler
+    const sinr_cosp = 2 * (qw * qx + qy * qz);
+    const cosr_cosp = 1 - 2 * (qx * qx + qy * qy);
+    const roll = Math.atan2(sinr_cosp, cosr_cosp);
 
-  const siny_cosp = 2 * (q.w * q.z + q.x * q.y);
-  const cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
-  const yaw = Math.atan2(siny_cosp, cosy_cosp);
+    const sinp = 2 * (qw * qy - qz * qx);
+    const pitch = Math.abs(sinp) >= 1 ? (Math.sign(sinp) * Math.PI / 2) : Math.asin(sinp);
 
-  document.getElementById('telem-r').innerText = roll.toFixed(2);
-  document.getElementById('telem-p').innerText = pitch.toFixed(2);
-  document.getElementById('telem-yaw').innerText = yaw.toFixed(2);
+    const siny_cosp = 2 * (qw * qz + qx * qy);
+    const cosy_cosp = 1 - 2 * (qy * qy + qz * qz);
+    const yaw = Math.atan2(siny_cosp, cosy_cosp);
+
+    document.getElementById('telem-r').innerText = roll.toFixed(2);
+    document.getElementById('telem-p').innerText = pitch.toFixed(2);
+    document.getElementById('telem-yaw').innerText = yaw.toFixed(2);
+  }
 });
 
 // ── UI Actions ──────────────────────────────────────────────────────────
@@ -479,7 +485,9 @@ window.addEventListener("gamepadconnected", (e) => {
   const status = document.getElementById('gamepad-status');
   if(dot && status) {
     dot.className = 'dot glow-green';
-    status.innerText = e.gamepad.id.split(' ')[0] || 'Gamepad';
+    let gName = e.gamepad.id || 'Gamepad';
+    if(gName.length > 20) gName = gName.substring(0, 20) + '...';
+    status.innerText = gName;
     logMsg('System', `Gamepad connected: ${e.gamepad.id}`, 'info');
   }
 });

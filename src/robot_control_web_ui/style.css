@@ -488,8 +488,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   color: #cbd5e1;
   height: 600px;
 }
-.log-entry { margin-bottom: 4px; }
-.log-time { color: var(--dim); margin-right: 8px; }
+.log-entry { margin-bottom: 4px; word-break: break-word; }
+.log-time { color: var(--mut); margin-right: 8px; }
 .log-info { color: var(--txt); }
 .log-warn { color: var(--orange); }
 .log-err { color: var(--red); }

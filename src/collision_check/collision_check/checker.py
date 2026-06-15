@@ -98,9 +98,10 @@ class Checker(Node):
             # self.get_logger().warn(f"TF Fehler: {e}. Sende unveränderten Joy-Befehl.")
             return
         
-        # FINAL: Veröffentlichung der EEF-Position (x, y, z)
+        # FINAL: Veröffentlichung der EEF-Position (x, y, z) + Rotation (qx, qy, qz, qw)
         eef_data = Float32MultiArray()
-        eef_data.data = [x, y, z] 
+        q = trans.transform.rotation
+        eef_data.data = [x, y, z, q.x, q.y, q.z, q.w] 
         self.eef_pos_pub.publish(eef_data)
         
         # --- Kollisionsprüfung ---
