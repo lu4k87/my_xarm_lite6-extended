@@ -91,7 +91,7 @@ void ControlPanel::setupUI()
   this->setStyleSheet(
     "QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; border-radius: 4px; margin-top: 2ex; color: #ecf0f1; }"
     "QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0 3px; }"
-    "QPushButton { background-color: #7f8c8d; color: white; border-radius: 6px; padding: 8px; border: 1px solid #95a5a6; font-weight: bold; }"
+    "QPushButton { background-color: #7f8c8d; color: white; border-radius: 6px; padding: 6px 5px; border: 1px solid #95a5a6; font-weight: bold; }"
     "QPushButton:hover { background-color: #95a5a6; }"
     "QPushButton:pressed { background-color: #636e72; }"
     "QDoubleSpinBox { background-color: #95a5a6; color: #2c3e50; border: 1px solid #7f8c8d; border-radius: 4px; padding: 4px; font-weight: bold; }"
@@ -217,7 +217,7 @@ void ControlPanel::setupUI()
   
   btn_move_joints_ = new QPushButton("Move To Joints");
   btn_move_joints_->setStyleSheet(
-    "QPushButton { background-color: #8e44ad; border-radius: 6px; padding: 8px; border: 1px solid #9b59b6; color: #fff; }"
+    "QPushButton { background-color: #8e44ad; border-radius: 6px; padding: 6px 5px; border: 1px solid #9b59b6; color: #fff; }"
     "QPushButton:hover { background-color: #9b59b6; }"
     "QPushButton:pressed { background-color: #732d91; }"
   );
@@ -268,7 +268,7 @@ void ControlPanel::setupUI()
 
   // Funktion zur Erstellung des Stylesheets mit übergebenen Farben
   auto makeStyle = [](const QString& baseColor, const QString& pressedColor) {
-    return QString("QPushButton { background-color: %1; color: white; font-weight: bold; border-radius: 6px; border: 1px solid #2c3e50; padding: 10px; }"
+    return QString("QPushButton { background-color: %1; color: white; font-weight: bold; border-radius: 6px; border: 1px solid #2c3e50; padding: 6px 5px; }"
                    "QPushButton:hover { background-color: %2; }"
                    "QPushButton:pressed { background-color: %2; }").arg(baseColor, pressedColor);
   };
@@ -303,13 +303,13 @@ void ControlPanel::setupUI()
   btn_rot_z_minus_->setStyleSheet(styleRot);
   
   btn_move_to_->setStyleSheet(
-    "QPushButton { background-color: #2980b9; border-radius: 6px; padding: 8px; border: 1px solid #3498db; color: #fff; }"
+    "QPushButton { background-color: #2980b9; border-radius: 6px; padding: 6px 5px; border: 1px solid #3498db; color: #fff; }"
     "QPushButton:hover { background-color: #3498db; }"
     "QPushButton:pressed { background-color: #21618c; }"
   );
   
   btn_grasp_->setStyleSheet(
-    "QPushButton { background-color: #e67e22; border-radius: 6px; padding: 8px; border: 1px solid #d35400; color: #fff; font-weight: bold; }"
+    "QPushButton { background-color: #e67e22; border-radius: 6px; padding: 6px 5px; border: 1px solid #d35400; color: #fff; font-weight: bold; }"
     "QPushButton:hover { background-color: #d35400; }"
     "QPushButton:pressed { background-color: #a04000; }"
   );
