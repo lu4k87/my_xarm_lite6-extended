@@ -60,7 +60,7 @@ class ZedYolo3DNode(Node):
         # Declare parameters
         self.declare_parameter('confidence_threshold', 0.5)
         self.declare_parameter('ema_alpha', 0.2)
-        self.declare_parameter('class_height_overrides', ['sports ball:0.064'])
+        self.declare_parameter('class_dimension_overrides', ['sports ball:0.0654'])
         
         # Rate Limiting
         self.last_inference_time = 0.0
@@ -95,17 +95,23 @@ class ZedYolo3DNode(Node):
         # Get parameters
         conf_thresh = self.get_parameter('confidence_threshold').value
         self.alpha = self.get_parameter('ema_alpha').value
-        overrides_raw = self.get_parameter('class_height_overrides').value
+        overrides_raw = self.get_parameter('class_dimension_overrides').value
         
         # Parse overrides
-        self.height_overrides = {}
+        self.dimension_overrides = {}
         for override in overrides_raw:
             if ':' in override:
-                cls_name, z_val = override.split(':', 1)
+                cls_name, dims_val = override.split(':', 1)
                 try:
-                    self.height_overrides[cls_name.strip()] = float(z_val.strip())
+                    dims = [float(d.strip()) for d in dims_val.split(',')]
+                    if len(dims) == 1:
+                        self.dimension_overrides[cls_name.strip()] = (dims[0], dims[0], dims[0])
+                    elif len(dims) == 3:
+                        self.dimension_overrides[cls_name.strip()] = (dims[0], dims[1], dims[2])
+                    else:
+                        self.get_logger().warn(f"Invalid dimension override format: {override}")
                 except ValueError:
-                    self.get_logger().warn(f"Invalid height override: {override}")
+                    self.get_logger().warn(f"Invalid dimension override: {override}")
 
         # We do not crop the image so YOLO can detect the full objects
         # Run YOLO inference (GPU beschleunigt)
@@ -202,15 +208,23 @@ class ZedYolo3DNode(Node):
                 min_y, max_y = np.percentile(pts_base[1], 2), np.percentile(pts_base[1], 98)
                 min_z, max_z = np.percentile(pts_base[2], 2), np.percentile(pts_base[2], 98)
                 
-                # Apply physical height override if configured
                 cls_name = names[cls_id]
-                if cls_name in self.height_overrides:
-                    max_z = self.height_overrides[cls_name]
-                
-                # Wenn das Objekt nah am Tisch ist (< 10cm), zwinge es auf Z=0 (damit es stabil aufliegt).
-                # Wenn es in der Luft schwebt (z.B. eine Hand), behalte die echte 3D-Unterkante!
-                if min_z < 0.10:
-                    min_z = 0.0
+                if cls_name in self.dimension_overrides:
+                    dx, dy, dz = self.dimension_overrides[cls_name]
+                    cx = (min_x + max_x) / 2.0
+                    cy = (min_y + max_y) / 2.0
+                    min_x, max_x = cx - dx/2.0, cx + dx/2.0
+                    min_y, max_y = cy - dy/2.0, cy + dy/2.0
+                    
+                    if min_z < 0.10:
+                        min_z = 0.0
+                        max_z = dz
+                    else:
+                        cz = (min_z + max_z) / 2.0
+                        min_z, max_z = cz - dz/2.0, cz + dz/2.0
+                else:
+                    if min_z < 0.10:
+                        min_z = 0.0
                 
                 center_x = (min_x + max_x) / 2.0
                 center_y = (min_y + max_y) / 2.0
@@ -230,8 +244,14 @@ class ZedYolo3DNode(Node):
                 min_z, max_z = np.percentile(pts_opt[2], 2), np.percentile(pts_opt[2], 98)
                 
                 cls_name = names[cls_id]
-                if cls_name in self.height_overrides:
-                    max_z = self.height_overrides[cls_name]
+                if cls_name in self.dimension_overrides:
+                    dx, dy, dz = self.dimension_overrides[cls_name]
+                    cx = (min_x + max_x) / 2.0
+                    cy = (min_y + max_y) / 2.0
+                    cz = (min_z + max_z) / 2.0
+                    min_x, max_x = cx - dx/2.0, cx + dx/2.0
+                    min_y, max_y = cy - dy/2.0, cy + dy/2.0
+                    min_z, max_z = cz - dz/2.0, cz + dz/2.0
                 
                 center_x = (min_x + max_x) / 2.0
                 center_y = (min_y + max_y) / 2.0
