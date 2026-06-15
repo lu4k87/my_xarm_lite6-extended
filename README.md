@@ -303,6 +303,15 @@ To provide a clear understanding of the architecture, the software modules are c
     * 🟢 📤 **Publishes:** `/scene_markers_array` (`visualization_msgs/MarkerArray`).
 * **`rosbridge_server` [NODE]**
     * 🎯 **Purpose & Task:** Standard WebSocket bridge on Port 9090, allowing the web-based dashboard to access the ROS network directly.
+* **`robot_control_web_ui` [WEB APP]**
+    * 🎯 **Purpose & Task:** A native-feeling, standalone Chrome Web App designed with a modern Glassmorphism aesthetic. It acts as a comprehensive multimodal dashboard directly replicating the RViz control panel features for remote operation. Operates on **Port 8081**.
+    * ✨ **Core Features:**
+      * **Advanced Telemetry:** Live system status pills for network ports (UI, WS, Nexus), active Gamepad connection (USB), and automatic Hardware Mode detection (Fake Arm vs. Real Arm IP).
+      * **MoveIt Servo Monitoring:** Dynamic UI indicators (Green/Orange/Red) with pulsing animations that mirror MoveIt collision/wait states in real-time.
+      * **Virtual Teleoperation:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments.
+      * **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
+    * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status` (via `rosbridge`).
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/ui/robot_control/current_speed` (via `rosbridge`).
 
 ### 🤖 5.5 Feature: Complex Trajectories & Task Coordination
 *Nodes that orchestrate specific, higher-level movement sequences.*

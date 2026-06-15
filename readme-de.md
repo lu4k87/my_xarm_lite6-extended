@@ -305,6 +305,15 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
     * 🟢 📤 **Publishes:** `/scene_markers_array` (`visualization_msgs/MarkerArray`).
 * **`rosbridge_server` [NODE]**
     * 🎯 **Zweck & Aufgabe:** Standard-WebSocket-Brücke auf Port 9090, die dem webbasierten Dashboard erlaubt, direkt auf das ROS-Netzwerk zuzugreifen.
+* **`robot_control_web_ui` [WEB APP]**
+    * 🎯 **Zweck & Aufgabe:** Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorphism-Designsprache. Fungiert als multimodales Dashboard und spiegelt das RViz Control Panel für die Remote-Bedienung. Läuft auf **Port 8081**.
+    * ✨ **Core Features:**
+      * **Erweiterte Telemetrie:** Live-Status-Badges für Netzwerkports (UI, WS, Nexus), Gamepad-Verbindung (USB) und automatische Hardware-Modus-Erkennung (Fake Arm vs. Real Arm IP).
+      * **MoveIt Servo Monitoring:** Dynamische UI-Indikatoren (Grün/Orange/Rot) mit Puls-Animationen, die MoveIt-Kollisions- und Wait-States in Echtzeit spiegeln.
+      * **Virtuelle Teleoperation:** Integrierter 2D-Analogstick für kartesisches Jogging sowie 6-DoF absolute Gelenkwinkel-Slider und Geschwindigkeitsstufen.
+      * **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
+    * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status` (via `rosbridge`).
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/ui/robot_control/current_speed` (via `rosbridge`).
 
 ### 🤖 5.5 Funktion: Komplexe Trajektorien & Task-Koordination
 *Nodes, die spezifische, übergeordnete Bewegungsabläufe orchestrieren.*
