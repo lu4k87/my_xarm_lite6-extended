@@ -211,7 +211,9 @@ class ZedYolo3DNode(Node):
                 cls_name = names[cls_id]
                 if cls_name in self.dimension_overrides:
                     dx, dy, dz = self.dimension_overrides[cls_name]
-                    cx = (min_x + max_x) / 2.0
+                    # Kamera schaut von +X. max_x ist die vorderste sichtbare Kante.
+                    # Der wahre Mittelpunkt liegt die halbe Tiefe dahinter.
+                    cx = max_x - dx / 2.0
                     cy = (min_y + max_y) / 2.0
                     min_x, max_x = cx - dx/2.0, cx + dx/2.0
                     min_y, max_y = cy - dy/2.0, cy + dy/2.0
@@ -252,7 +254,7 @@ class ZedYolo3DNode(Node):
                 cls_name = names[cls_id]
                 if cls_name in self.dimension_overrides:
                     dx, dy, dz = self.dimension_overrides[cls_name]
-                    cx = (min_x + max_x) / 2.0
+                    cx = max_x - dx / 2.0
                     cy = (min_y + max_y) / 2.0
                     cz = (min_z + max_z) / 2.0
                     min_x, max_x = cx - dx/2.0, cx + dx/2.0
