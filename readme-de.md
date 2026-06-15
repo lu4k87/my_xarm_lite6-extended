@@ -233,10 +233,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
         * `depth_mode: ULTRA` – Erzwingt die maximal dichte 3D-Punktwolke für saubere Kantenberechnung.
         * `auto_exposure: True` – Erlaubt den automatischen Helligkeitsausgleich für robuste YOLO Erkennung.
 * **`zed_yolo_3d_bbox.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Verarbeitet parallel den RGB- und Depth-Stream mit GPU-Beschleunigung und dem **YOLOv8 Large** Modell. Isoliert Objekte, filtert Tiefenrauschen (Perzentil & EMA-Glättung) und berechnet millimetergenaue, auf die Tischebene geerdete 3D-Bounding-Boxen (inklusive Greifpunkt-Marker). Nutzt ein **Dictionary-basiertes EMA-Tracking-System** mit persistenten, globalen IDs und einem engen 10cm-Distanz-Threshold, um ID-Swapping und Boxen-Jittering zwischen nah beieinander stehenden Objekten zu verhindern. Erkennt das System mehrere Objekte derselben Klasse, werden diese zur eindeutigen Identifikation dauerhaft durchnummeriert (z.B. `cup_1`, `cup_2`).
+    * 🎯 **Zweck & Aufgabe:** Verarbeitet parallel den RGB- und Depth-Stream mit GPU-Beschleunigung und dem **YOLOv8 Large** Modell. Isoliert Objekte, filtert Tiefenrauschen und berechnet millimetergenaue, auf die Tischebene geerdete 3D-Bounding-Boxen (inklusive Greifpunkt-Marker). Nutzt einen **robusten Oberflächen-Projektionsalgorithmus** (filtert die unteren 20% der Punkte heraus, um Tisch-Rauschen zu ignorieren), um die Bounding-Boxen exakt auf das tatsächliche physikalische Volumen der Objekte zu zentrieren, unabhängig vom Kamerawinkel. Nutzt ein **Dictionary-basiertes EMA-Tracking-System** mit persistenten, globalen IDs und einem engen 10cm-Distanz-Threshold, um ID-Swapping und Boxen-Jittering zwischen nah beieinander stehenden Objekten zu verhindern. Erkennt das System mehrere Objekte derselben Klasse, werden diese zur eindeutigen Identifikation dauerhaft durchnummeriert (z.B. `cup_1`, `cup_2`).
     * 🟠 📥 **Subscribes:** `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`), `/zed/zed_node/depth/depth_registered` (`sensor_msgs/Image`), `/zed/zed_node/rgb/camera_info` (`sensor_msgs/CameraInfo`).
     * 🟢 📤 **Publishes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Sendet die fertigen 3D-Boxen und Marker zur Visualisierung an RViz und an nachgelagerte Nodes.
     * ⚙️ **Parameter:**
+        * `class_dimension_overrides` – Hinterlegt feste metrische Dimensionen (x,y,z) für spezifische Objekte, um sicherzustellen, dass die Box das echte physikalische Volumen umschließt und nicht nur die für die Kamera sichtbare Oberfläche.
         * `percentiles: [2, 98]` – Schneidet extreme Tiefen-Rausch-Pixel ("Flying Pixels" an Objektkanten) hart ab.
         * `ema_alpha: 0.3` – Glättungsfaktor (Exponential Moving Average), um Boxen-Jittering zwischen Frames zu eliminieren.
 * **`yolo_moveit_collision.py` [NODE]**
@@ -617,7 +618,7 @@ cd ~/dev_ws
 python3 ros2_nexus/ros2_nexus_web.py
 # → Öffnet sich unter http://localhost:5000 (auch im LAN erreichbar, z.B. http://192.168.x.x:5000)
 ```
-*Hinweis: Alle ROS 2 Terminals, die über die Nexus Web App gestartet werden, öffnen sich automatisch in einer extrabreiten Fenstergröße (`120x30`). Dies stellt sicher, dass komplexe System-Logs und Befehlsausgaben direkt übersichtlich lesbar bleiben.*
+*Hinweis: Die Nexus Web App verfügt über ein integriertes, ausklappbares Live Console Overlay. Es trackt alle gestarteten Nodes und deren PIDs zuverlässig in Echtzeit. Wird das Backend-Terminal geschlossen, beendet sich der Browser-Tab automatisch selbst.*
 
 **Quick Launch (Nexus Web Backend automatisch starten + Browser öffnen):**
 ```bash

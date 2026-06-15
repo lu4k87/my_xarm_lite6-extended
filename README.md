@@ -231,10 +231,11 @@ To provide a clear understanding of the architecture, the software modules are c
         * `depth_mode: ULTRA` – Forces the most dense 3D point cloud for clean edge calculation.
         * `auto_exposure: True` – Allows automatic brightness compensation for robust YOLO detection.
 * **`zed_yolo_3d_bbox.py` [NODE]**
-    * 🎯 **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise (percentiles & EMA smoothing), and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker). Uses a **dictionary-based EMA tracking system** with persistent global IDs and a tight 10cm distance threshold to prevent ID-swapping and bounding box jitter between closely placed objects. If the system detects multiple objects of the same class, they are permanently numbered for unambiguous identification and targeting (e.g., `cup_1`, `cup_2`).
+    * 🎯 **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise, and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker). Uses a **robust closest-surface projection** algorithm (filtering out the bottom 20% of points to avoid table noise) to perfectly center bounding boxes on the true physical volume of objects, regardless of camera angles. Features a **dictionary-based EMA tracking system** with persistent global IDs and a tight 10cm distance threshold to prevent ID-swapping and bounding box jitter. Multiple objects of the same class are permanently numbered for unambiguous targeting (e.g., `cup_1`, `cup_2`).
     * 🟠 📥 **Subscribes:** `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`), `/zed/zed_node/depth/depth_registered` (`sensor_msgs/Image`), `/zed/zed_node/rgb/camera_info` (`sensor_msgs/CameraInfo`).
     * 🟢 📤 **Publishes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Sends the finalized 3D boxes and markers to RViz for visualization and to downstream nodes.
     * ⚙️ **Parameters:**
+        * `class_dimension_overrides` – Hardcodes expected metric dimensions (x,y,z) for specific objects to ensure the bounding box perfectly encloses the physical volume, not just the visible point cloud surface.
         * `percentiles: [2, 98]` – Hard-clips extreme depth noise pixels ("flying pixels" at object edges).
         * `ema_alpha: 0.3` – Smoothing factor (Exponential Moving Average) to eliminate box jittering between frames.
 * **`yolo_moveit_collision.py` [NODE]**
@@ -650,7 +651,7 @@ cd ~/dev_ws
 python3 ros2_nexus/ros2_nexus_web.py
 # → Opens at http://localhost:5000 (accessible in LAN, e.g., http://192.168.x.x:5000)
 ```
-*Note: All ROS 2 terminals launched via the Nexus Web App automatically spawn with an optimized, wide window geometry (`120x30`) to ensure complex logs and command outputs remain easily readable without manual resizing.*
+*Note: The Nexus Web App features an integrated, expandable Live Console Overlay. It tracks all launched nodes and their PIDs reliably in real-time. If the backend terminal is closed, the browser tab will automatically shut itself down.*
 
 **Quick Launch (auto-start Nexus Web Backend + open browser):**
 ```bash
