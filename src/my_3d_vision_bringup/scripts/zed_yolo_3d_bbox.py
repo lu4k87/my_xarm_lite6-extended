@@ -60,7 +60,7 @@ class ZedYolo3DNode(Node):
         # Declare parameters
         self.declare_parameter('confidence_threshold', 0.5)
         self.declare_parameter('ema_alpha', 0.2)
-        self.declare_parameter('class_dimension_overrides', ['sports ball:0.0654'])
+        self.declare_parameter('class_dimension_overrides', ['sports ball:0.0654', 'cup:0.08,0.08,0.095'])
         
         # Rate Limiting
         self.last_inference_time = 0.0
