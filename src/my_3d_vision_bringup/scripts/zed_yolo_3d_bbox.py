@@ -203,10 +203,10 @@ class ZedYolo3DNode(Node):
                     continue # Not enough points belonging to the object
                 pts_base = pts_base[:, valid_pts_filter]
                 
-                # Compute 3D Bounding Box in link_base (use 2nd/98th percentiles to heavily filter out flying pixels from specular objects like balls)
-                min_x, max_x = np.percentile(pts_base[0], 2), np.percentile(pts_base[0], 98)
-                min_y, max_y = np.percentile(pts_base[1], 2), np.percentile(pts_base[1], 98)
-                min_z, max_z = np.percentile(pts_base[2], 2), np.percentile(pts_base[2], 98)
+                # Compute 3D Bounding Box in link_base (use 0.5/99.5 percentiles to filter out flying pixels but preserve true edges)
+                min_x, max_x = np.percentile(pts_base[0], 0.5), np.percentile(pts_base[0], 99.5)
+                min_y, max_y = np.percentile(pts_base[1], 0.5), np.percentile(pts_base[1], 99.5)
+                min_z, max_z = np.percentile(pts_base[2], 0.5), np.percentile(pts_base[2], 99.5)
                 
                 cls_name = names[cls_id]
                 if cls_name in self.dimension_overrides:
@@ -223,6 +223,12 @@ class ZedYolo3DNode(Node):
                         cz = (min_z + max_z) / 2.0
                         min_z, max_z = cz - dz/2.0, cz + dz/2.0
                 else:
+                    # Dynamische Rekonstruktion: Kamera (X=0.65) schaut von vorne auf das Objekt.
+                    # Daher ist max_x die sichtbare Vorderseite, die Rückseite (min_x) ist verdeckt.
+                    # Wir nehmen symmetrische Objekte an: Tiefe = sichtbare Breite (Y)
+                    width = max_y - min_y
+                    min_x = max_x - width
+                    
                     if min_z < 0.10:
                         min_z = 0.0
                 
@@ -239,9 +245,9 @@ class ZedYolo3DNode(Node):
                 if pts_opt.shape[1] < 10:
                     continue
                 # Fallback to optical frame bounding box
-                min_x, max_x = np.percentile(pts_opt[0], 2), np.percentile(pts_opt[0], 98)
-                min_y, max_y = np.percentile(pts_opt[1], 2), np.percentile(pts_opt[1], 98)
-                min_z, max_z = np.percentile(pts_opt[2], 2), np.percentile(pts_opt[2], 98)
+                min_x, max_x = np.percentile(pts_opt[0], 0.5), np.percentile(pts_opt[0], 99.5)
+                min_y, max_y = np.percentile(pts_opt[1], 0.5), np.percentile(pts_opt[1], 99.5)
+                min_z, max_z = np.percentile(pts_opt[2], 0.5), np.percentile(pts_opt[2], 99.5)
                 
                 cls_name = names[cls_id]
                 if cls_name in self.dimension_overrides:
