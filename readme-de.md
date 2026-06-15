@@ -289,11 +289,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
         * `Kp_pos = 2.5` – Proportional-Gain für dynamische, aber stabile Anfahrten.
         * `max_vel_pos = 0.2` – Limitiert die TCP-Geschwindigkeit auf 0.2 m/s.
         * `position_tolerance = 0.002` – Der Regler stoppt exakt 2 mm vor dem absoluten Ziel.
-* **`rviz_overlay.py` & `servo_status_overlay.py` [NODES]**
+* **`rviz_servo_status_overlay.py` & `servo_status_overlay.py` [NODES]**
     * 🎯 **Zweck & Aufgabe:** Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koordinaten als Overlay in den Video-Stream des RViz-Sichtfelds.
     * 🟠 📥 **Subscribes:** `/servo_server/status` (`std_msgs/Int8`), `/ui/collision_msg` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`). Hören auf kritische Warn-Flags und Frame-Updates.
     * 🟢 📤 **Publishes:** Nutzt `rviz_2d_overlay_msgs/OverlayText`.
-* **`rviz_scene_objects_MarkerArray.py` [NODE]**
+* **`rviz_marker_static_scene_objects.py` [NODE]**
     * 🎯 **Zweck & Aufgabe:** Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuelle Tischkanten).
     * 🟢 📤 **Publishes:** `/scene_markers_array` (`visualization_msgs/MarkerArray`).
 * **`rosbridge_server` [NODE]**
@@ -703,13 +703,13 @@ dev_ws/
 │   │       ├── zed_yolo_3d_bbox.py           # 3D Objekterkennung & Bounding-Boxen
 │   │       └── yolo_planned_grasp_executor.py # 3-Phasen Greiflogik & Planner Fallback
 │   ├── ros2_whisper/               # 🎙️ Whisper AI Speech-to-Text
-│   ├── rviz_overlay/               # 🖥️ Python: RViz2 2D Text Overlays
-│   │   └── rviz_overlay/
-│   │       ├── rviz_overlay.py           # TCP & Frame Overlay
+│   ├── rviz_servo_status_overlay/               # 🖥️ Python: RViz2 2D Text Overlays
+│   │   └── rviz_servo_status_overlay/
+│   │       ├── rviz_servo_status_overlay.py           # TCP & Frame Overlay
 │   │       └── servo_status_overlay.py   # Servo Warn-Overlay
 │   ├── rviz_robot_control_panel/   # 🖥️ C++: RViz2 2D Control Panel Plugin
 │   │   └── src/rviz_robot_control_panel.cpp
-│   ├── rviz_scene_objects_MarkerArray/                # 📍 Python: RViz2 Marker-Publisher
+│   ├── rviz_marker_static_scene_objects/                # 📍 Python: RViz2 Marker-Publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent-Parser & Filter
 │   ├── websocket/                  # 📊 Python/JS: Workspace Analyzer & Dashboard
 │   │   ├── workspace_analyzer.py   # Haupt-ROS 2-Node (Pub/Sub & Topologie)

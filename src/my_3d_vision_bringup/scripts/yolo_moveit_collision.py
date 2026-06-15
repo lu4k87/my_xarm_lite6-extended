@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 import rclpy
+import math
 from rclpy.node import Node
 from visualization_msgs.msg import MarkerArray, Marker
 from moveit_msgs.msg import CollisionObject
 from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose
 from std_msgs.msg import String
+from tf2_ros import Buffer, TransformListener
 
 class YoloMoveitCollision(Node):
     def __init__(self):
@@ -37,8 +39,15 @@ class YoloMoveitCollision(Node):
 
         self.was_active = False
         self.known_objects = set()
-        self.ignored_objects = set()
+        self.ignored_objects = {}
         self.last_publish_time = self.get_clock().now()
+        
+        # TF Buffer and Listener
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+        
+        # Publisher for status messages
+        self.pub_status = self.create_publisher(String, '/ui/grasp_status', 10)
         
         # Subscriber to temporarily ignore objects (e.g. during grasping)
         self.sub_ignore = self.create_subscription(
@@ -60,9 +69,10 @@ class YoloMoveitCollision(Node):
 
     def ignore_callback(self, msg):
         obj_name = msg.data.strip()
-        if obj_name and obj_name not in self.ignored_objects:
-            self.ignored_objects.add(obj_name)
-            self.get_logger().info(f'Ignoriere Kollisionsobjekt: {obj_name}')
+        if obj_name:
+            current_time = self.get_clock().now().nanoseconds / 1e9
+            self.ignored_objects[obj_name] = {'state': 'WAITING', 'timestamp': current_time}
+            self.get_logger().info(f'Ignoriere Kollisionsobjekt: {obj_name} (Warte auf Annäherung)')
             
             # Immediately remove it if it was known
             if obj_name in self.known_objects:
@@ -85,6 +95,18 @@ class YoloMoveitCollision(Node):
     def marker_callback(self, msg):
         # Check if user has enabled the toggle in RViz
         is_active = self.pub_collision_toggle.get_subscription_count() > 0
+
+        current_time = self.get_clock().now().nanoseconds / 1e9
+        
+        # Get TCP position
+        tcp_x, tcp_y, tcp_z = None, None, None
+        try:
+            trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+            tcp_x = trans.transform.translation.x
+            tcp_y = trans.transform.translation.y
+            tcp_z = trans.transform.translation.z
+        except Exception:
+            pass
 
         if not is_active:
             if self.was_active:
@@ -149,10 +171,37 @@ class YoloMoveitCollision(Node):
             
             obj_name = data['name'].replace(' ', '_')
             
-            # Überspringe ignorierte Objekte
+            top_x = center_x
+            top_y = center_y
+            top_z = center_z + scale_z / 2.0
+            
+            # State Machine for Ignored Objects
             if obj_name in self.ignored_objects:
-                continue
-                
+                ign_info = self.ignored_objects[obj_name]
+                if tcp_x is not None:
+                    dist = math.sqrt((tcp_x - top_x)**2 + (tcp_y - top_y)**2 + (tcp_z - top_z)**2)
+                    
+                    if ign_info['state'] == 'WAITING':
+                        if dist < 0.05: # TCP arrived near the object (5cm)
+                            self.ignored_objects[obj_name]['state'] = 'INSIDE'
+                            self.get_logger().info(f"TCP nahe an {obj_name} (< 5cm). State -> INSIDE")
+                        elif (current_time - ign_info['timestamp']) > 20.0: # Timeout 20s
+                            msg_str = f"⚠️ Timeout: Kollision für {obj_name} wieder aktiv"
+                            self.get_logger().info(msg_str)
+                            self.pub_status.publish(String(data=msg_str))
+                            del self.ignored_objects[obj_name]
+                            
+                    elif ign_info['state'] == 'INSIDE':
+                        if dist > 0.10: # TCP moved away (10cm)
+                            msg_str = f"➤ TCP hat {obj_name} verlassen (> 10cm). Kollision wieder aktiv."
+                            self.get_logger().info(msg_str)
+                            self.pub_status.publish(String(data=msg_str))
+                            del self.ignored_objects[obj_name]
+                            
+                # If still ignored (not deleted above), skip collision generation
+                if obj_name in self.ignored_objects:
+                    continue
+            
             current_objects.add(obj_name)
             
             # --- 1. Collision Object for MoveIt ---

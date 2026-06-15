@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'rviz_overlay'
+package_name = 'rviz_servo_status_overlay'
 
 setup(
     name=package_name,
@@ -24,8 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'rviz_overlay = rviz_overlay.rviz_overlay:main',
-            'servo_status_overlay = rviz_overlay.servo_status_overlay:main'
+            'rviz_servo_status_overlay = rviz_servo_status_overlay.rviz_servo_status_overlay:main',
+            'servo_status_overlay = rviz_servo_status_overlay.servo_status_overlay:main'
         ],
     },
 )

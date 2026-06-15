@@ -8,9 +8,9 @@ from launch.substitutions import Command
 def generate_launch_description():
     # 4. Node 2: Der Marker Publisher für das Liniennetz und die Hohlkörper
     marker_node = Node(
-        package='rviz_scene_objects_MarkerArray',
-        executable='rviz_scene_objects_MarkerArray',
-        name='rviz_scene_objects_MarkerArray'
+        package='rviz_marker_static_scene_objects',
+        executable='rviz_marker_static_scene_objects',
+        name='rviz_marker_static_scene_objects'
     )
 
     # 5. Node starten
