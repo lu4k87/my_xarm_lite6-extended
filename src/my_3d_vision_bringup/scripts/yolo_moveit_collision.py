@@ -250,15 +250,32 @@ class YoloMoveitCollision(Node):
             vm.lifetime.nanosec = int(500 * 1e6)
             vis_markers.markers.append(vm)
 
-        # Remove objects that are no longer detected
-        objects_to_remove = self.known_objects - current_objects
+        # Remove objects that are no longer detected with 1.5s persistence
+        current_time_f = self.get_clock().now().nanoseconds / 1e9
+        
+        if not hasattr(self, 'object_last_seen'):
+            self.object_last_seen = {}
+            
+        for obj_name in current_objects:
+            self.object_last_seen[obj_name] = current_time_f
+
+        objects_to_remove = set()
+        for obj_name in self.known_objects:
+            if obj_name not in current_objects:
+                last_seen = self.object_last_seen.get(obj_name, 0)
+                if current_time_f - last_seen > 1.5:  # 1.5s persistence
+                    objects_to_remove.add(obj_name)
+
         for obj_name in objects_to_remove:
             co = CollisionObject()
             co.id = obj_name
             co.operation = CollisionObject.REMOVE
             self.pub_collision_object.publish(co)
+            if obj_name in self.object_last_seen:
+                del self.object_last_seen[obj_name]
         
-        self.known_objects = current_objects
+        self.known_objects.update(current_objects)
+        self.known_objects -= objects_to_remove
         
         # Always publish an empty marker array with DELETEALL to clean up if needed
         # But here we just publish the valid markers.

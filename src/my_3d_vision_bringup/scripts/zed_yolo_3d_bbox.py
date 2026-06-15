@@ -200,15 +200,17 @@ class ZedYolo3DNode(Node):
                 # Compute 3D Bounding Box in link_base (use 2nd/98th percentiles to heavily filter out flying pixels from specular objects like balls)
                 min_x, max_x = np.percentile(pts_base[0], 2), np.percentile(pts_base[0], 98)
                 min_y, max_y = np.percentile(pts_base[1], 2), np.percentile(pts_base[1], 98)
-                _, max_z = np.percentile(pts_base[2], 2), np.percentile(pts_base[2], 98)
+                min_z, max_z = np.percentile(pts_base[2], 2), np.percentile(pts_base[2], 98)
                 
                 # Apply physical height override if configured
                 cls_name = names[cls_id]
                 if cls_name in self.height_overrides:
                     max_z = self.height_overrides[cls_name]
                 
-                # Objects always rest on the table, so force min_z to 0.0
-                min_z = 0.0
+                # Wenn das Objekt nah am Tisch ist (< 10cm), zwinge es auf Z=0 (damit es stabil aufliegt).
+                # Wenn es in der Luft schwebt (z.B. eine Hand), behalte die echte 3D-Unterkante!
+                if min_z < 0.10:
+                    min_z = 0.0
                 
                 center_x = (min_x + max_x) / 2.0
                 center_y = (min_y + max_y) / 2.0

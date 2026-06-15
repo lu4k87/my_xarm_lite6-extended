@@ -68,10 +68,10 @@ class TFTunerGUI(QWidget):
         
         # X Slider
         x_layout = QHBoxLayout()
-        self.x_label = QLabel('X (Vor/Zurück): 0.750 m')
+        self.x_label = QLabel('X (Vor/Zurück): 0.650 m')
         self.x_slider = QSlider(Qt.Horizontal)
         self.x_slider.setRange(500, 1000) # 0.5m to 1.0m
-        self.x_slider.setValue(750)
+        self.x_slider.setValue(650)
         self.x_slider.valueChanged.connect(self.update_labels)
         x_layout.addWidget(self.x_label)
         x_layout.addWidget(self.x_slider)

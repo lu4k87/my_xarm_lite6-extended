@@ -55,7 +55,7 @@ def generate_launch_description():
 
     # TF: Position der Kamera relativ zu link_base
     # ANPASSEN: Wenn die Kamera physisch eingemessen wird, diese 6 Werte ändern!
-    tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.75',
+    tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.65',
         description='Kamera X-Position relativ zu link_base [m]')
     tf_y_arg = DeclareLaunchArgument('tf_y', default_value='0.0',
         description='Kamera Y-Position relativ zu link_base [m]')

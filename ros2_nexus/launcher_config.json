@@ -237,7 +237,7 @@
           "type": "node"
         },
         {
-          "cmd": "ros2 run my_3d_vision_bringup tf_tuner.py",
+          "cmd": "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py",
           "label": "ZED TF Live Tuner",
           "type": "node"
         },

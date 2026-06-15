@@ -241,6 +241,10 @@ To provide a clear understanding of the architecture, the software modules are c
     * 🎯 **Purpose & Task:** Seamlessly converts the detected 3D boxes into dynamic MoveIt `CollisionObject` messages and injects them into the planning scene as solid obstacles.
     * 🟠 📥 **Subscribes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Reads the bounding boxes.
     * 🟢 📤 **Publishes:** `/planning_scene` (`moveit_msgs/PlanningScene`). Sends the `CollisionObjects` directly to the MoveIt Planning Scene to avoid collisions during grasping/driving.
+* **`octomap_server` (Integration via MoveIt 2)**
+    * 🎯 **Purpose & Task:** Dynamic 3D environment mapping. Generates a real-time voxel-based collision map (OctoMap) directly from the ZED point cloud, enabling MoveIt to avoid arbitrary, unrecognized obstacles (e.g., human hands, tools) during trajectory planning and servoing.
+    * 🟠 📥 **Subscribes:** `/zed/zed_node/point_cloud/cloud_registered` (`sensor_msgs/PointCloud2`).
+    * 🟢 📤 **Publishes:** Integrated natively into the MoveIt `/planning_scene`.
 * **`yolo_planned_grasp_executor.py` [NODE]**
     * 🎯 **Purpose & Task:** The central control logic of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the YOLO coordinates, and coordinates a robust **3-Phase Collision-Free Grasping Sequence**:
         * **Phase 1 (Retract):** Safely moves the arm strictly upwards from its current position to clear the table.
@@ -253,7 +257,7 @@ To provide a clear understanding of the architecture, the software modules are c
 * **`zed_stand_publisher.py` [SCRIPT]**
     * 🎯 **Purpose & Task:** Mathematically generates the exact 3D mesh model of the camera tripod (aluminum profile) and publishes it statically in RViz.
     * 🟢 📤 **Publishes:** `/zed_stand_marker` (`visualization_msgs/Marker`).
-* **`tf_tuner.py` [SCRIPT / UI]**
+* **`pointcloud_tf_tuner.py` [SCRIPT / UI]**
     * 🎯 **Purpose & Task:** A live tuner interface (PyQt5) to quickly adjust camera offsets without restarting nodes.
     * 🟢 📤 **Publishes:** Dynamically updates the TF broadcaster values (`tf2_msgs/TFMessage` on `/tf_static`).
 
