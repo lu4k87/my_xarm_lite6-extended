@@ -125,6 +125,25 @@ header {
   transition: all 0.3s;
 }
 
+.status-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 6px;
+}
+.mode-badge {
+  background: rgba(56, 189, 248, 0.15) !important;
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  font-weight: 500;
+  padding: 6px 14px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
 .dot.glow-green {
   background: var(--green);
   box-shadow: 0 0 10px var(--green);
@@ -418,7 +437,7 @@ input[type=range] {
 /* Right Column Panels */
 .input-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 .input-group {
@@ -429,7 +448,7 @@ input[type=range] {
 }
 .input-group label { font-size: 13px; color: var(--mut); margin-bottom: 0; }
 input[type=number], input[type=text] {
-  width: 100px;
+  width: 80px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--txt);
