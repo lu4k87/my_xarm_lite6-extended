@@ -338,7 +338,7 @@
           "type": "sys"
         },
         {
-          "cmd": "(sleep 1 && xdg-open http://localhost:8081/index.html) & python3 -m http.server 8081 -d src/robot_control_web_ui",
+          "cmd": "(sleep 1 && (google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html)) & python3 -m http.server 8081 -d src/robot_control_web_ui",
           "label": "Web Joystick Server Port 8081",
           "type": "sys"
         },
@@ -367,7 +367,7 @@
           "type": "sys"
         },
         {
-          "cmd": "xdg-open http://localhost:8081/index.html",
+          "cmd": "google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html",
           "label": "Web Joystick öffnen",
           "mode": "bg",
           "type": "sys"
