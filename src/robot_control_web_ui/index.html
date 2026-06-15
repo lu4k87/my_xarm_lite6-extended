@@ -26,7 +26,6 @@
     <!-- HEADER -->
     <header>
       <div class="header-title">
-        <i class="fa-solid fa-gamepad" style="color: var(--accent);"></i>
         <h1>xArm Lite6 Web Control</h1>
       </div>
       <div class="header-status">
@@ -127,12 +126,12 @@
             
             <!-- Rotation Controls -->
             <div class="rot-controls" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <button class="btn btn-rot" onmousedown="startJog(0,0,0,1,0,0)" onmouseup="stopJog()">Roll +</button>
-              <button class="btn btn-rot" onmousedown="startJog(0,0,0,-1,0,0)" onmouseup="stopJog()">Roll -</button>
-              <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,1,0)" onmouseup="stopJog()">Pitch +</button>
-              <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,-1,0)" onmouseup="stopJog()">Pitch -</button>
-              <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,0,1)" onmouseup="stopJog()">Yaw +</button>
-              <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,0,-1)" onmouseup="stopJog()">Yaw -</button>
+              <button class="btn btn-rot" onmousedown="startJog(0,0,0,1,0,0)" onmouseup="stopJog()">Roll + (<span style="color: var(--rviz-x);">X</span>)</button>
+              <button class="btn btn-rot" onmousedown="startJog(0,0,0,-1,0,0)" onmouseup="stopJog()">Roll - (<span style="color: var(--rviz-x);">X</span>)</button>
+              <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,1,0)" onmouseup="stopJog()">Pitch + (<span style="color: var(--rviz-y);">Y</span>)</button>
+              <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,-1,0)" onmouseup="stopJog()">Pitch - (<span style="color: var(--rviz-y);">Y</span>)</button>
+              <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,0,1)" onmouseup="stopJog()">Yaw + (<span style="color: var(--rviz-z);">Z</span>)</button>
+              <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,0,-1)" onmouseup="stopJog()">Yaw - (<span style="color: var(--rviz-z);">Z</span>)</button>
             </div>
           </div>
           
@@ -159,12 +158,12 @@
         <section class="glass-panel">
           <h2><i class="fa-solid fa-location-crosshairs"></i> Absolute Pose (MoveTo)</h2>
           <div class="input-grid">
-            <div class="input-group"><label>X [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
-            <div class="input-group"><label>Y [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
-            <div class="input-group"><label>Z [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
-            <div class="input-group"><label>Roll [rad]</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-            <div class="input-group"><label>Pitch [rad]</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-            <div class="input-group"><label>Yaw [rad]</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
+            <div class="input-group"><label><span style="color: var(--rviz-x);">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
+            <div class="input-group"><label><span style="color: var(--rviz-y);">Y</span> [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
+            <div class="input-group"><label><span style="color: var(--rviz-z);">Z</span> [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
+            <div class="input-group"><label>Roll [rad] (<span style="color: var(--rviz-x);">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
+            <div class="input-group"><label>Pitch [rad] (<span style="color: var(--rviz-y);">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
+            <div class="input-group"><label>Yaw [rad] (<span style="color: var(--rviz-z);">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
           </div>
           <div style="display: flex; gap: 12px; margin-top: 12px;">
             <button class="btn btn-primary" style="flex: 2;" onclick="moveToPose()">Execute Move To Pose</button>
