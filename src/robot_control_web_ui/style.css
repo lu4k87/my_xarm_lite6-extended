@@ -145,6 +145,26 @@ header {
   box-shadow: 0 0 10px var(--orange);
 }
 
+@keyframes pulse-bg-green {
+  0% { background-color: rgba(16, 185, 129, 0.05); }
+  50% { background-color: rgba(16, 185, 129, 0.2); }
+  100% { background-color: rgba(16, 185, 129, 0.05); }
+}
+@keyframes pulse-bg-red {
+  0% { background-color: rgba(239, 68, 68, 0.05); }
+  50% { background-color: rgba(239, 68, 68, 0.3); }
+  100% { background-color: rgba(239, 68, 68, 0.05); }
+}
+@keyframes pulse-bg-orange {
+  0% { background-color: rgba(245, 158, 11, 0.05); }
+  50% { background-color: rgba(245, 158, 11, 0.2); }
+  100% { background-color: rgba(245, 158, 11, 0.05); }
+}
+
+.pill-pulse-green { animation: pulse-bg-green 2s infinite; border-color: rgba(16, 185, 129, 0.4); }
+.pill-pulse-red { animation: pulse-bg-red 1s infinite; border-color: rgba(239, 68, 68, 0.5); }
+.pill-pulse-orange { animation: pulse-bg-orange 1.5s infinite; border-color: rgba(245, 158, 11, 0.4); }
+
 .grid-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -398,15 +418,18 @@ input[type=range] {
 /* Right Column Panels */
 .input-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 .input-group {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
-.input-group label { font-size: 12px; color: var(--mut); margin-bottom: 4px; }
+.input-group label { font-size: 13px; color: var(--mut); margin-bottom: 0; }
 input[type=number], input[type=text] {
+  width: 100px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--txt);

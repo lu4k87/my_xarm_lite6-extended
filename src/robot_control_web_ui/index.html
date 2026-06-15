@@ -31,23 +31,27 @@
       <div class="header-status">
         <div class="status-pill">
           <div class="dot glow-green"></div>
-          <span>UI: 8081</span>
+          <span>UI Port: 8081</span>
         </div>
         <div class="status-pill">
           <div id="connection-dot" class="dot glow-red"></div>
-          <span id="connection-status">WS: 9090</span>
+          <span id="connection-status">WS Port: 9090</span>
         </div>
         <div class="status-pill">
           <div class="dot glow-green"></div>
-          <span>Nexus: 5000</span>
+          <span>Nexus Port: 5000</span>
         </div>
         <div class="status-pill" id="gamepad-pill">
           <div id="gp-dot" class="dot glow-red"></div>
-          <span id="gamepad-status">Gamepad</span>
+          <span id="gamepad-status">Gamepad (USB)</span>
         </div>
-        <div class="status-pill">
+        <div class="status-pill" id="mode-pill">
           <div id="mode-dot" class="dot glow-blue"></div>
           <span id="mode-status">Mode: Wait</span>
+        </div>
+        <div class="status-pill" id="eye-pill">
+          <div id="eye-dot" class="dot glow-red"></div>
+          <span id="eye-status">Eyetracking: Offline</span>
         </div>
       </div>
     </header>
@@ -136,9 +140,9 @@
           </div>
           
           <!-- Frame Selection -->
-          <div class="frame-toggles" style="margin-top: 20px;">
-            <button class="btn frame-btn active" id="btn-frame-base" onclick="setFrame('link_base')">Base Frame</button>
-            <button class="btn frame-btn" id="btn-frame-tcp" onclick="setFrame('link_tcp')">TCP Frame</button>
+          <div class="frame-toggles" style="margin-top: 20px; display: flex; gap: 12px;">
+            <button class="btn frame-btn active btn-primary" style="flex: 1;" id="btn-frame-base" onclick="setFrame('link_base')">Base Frame</button>
+            <button class="btn frame-btn" style="flex: 1;" id="btn-frame-tcp" onclick="setFrame('link_tcp')">TCP Frame</button>
           </div>
           
           <!-- Speed Control -->

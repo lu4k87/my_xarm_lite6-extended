@@ -29,7 +29,24 @@ ros.on('connection', () => {
         const text = document.getElementById('mode-status');
         if (result && result.nodes && result.nodes.includes('/xarm_driver')) {
           dot.className = 'dot glow-green';
-          text.innerText = 'Mode: Real Arm';
+          
+          // Try to get IP
+          const paramClient = new ROSLIB.Service({
+            ros: ros,
+            name: '/rosapi/get_param',
+            serviceType: 'rosapi/GetParam'
+          });
+          paramClient.callService(new ROSLIB.ServiceRequest({
+            name: '/xarm_driver/robot_ip',
+            default: '"USB"'
+          }), (paramResult) => {
+            try {
+              let ip = paramResult.value ? JSON.parse(paramResult.value) : 'USB';
+              text.innerText = `Real Arm (${ip})`;
+            } catch (e) {
+              text.innerText = `Mode: Real Arm`;
+            }
+          });
         } else {
           dot.className = 'dot glow-blue';
           text.innerText = 'Mode: Fake Arm';
@@ -237,9 +254,16 @@ function updateSpeed(val) {
 
 function setFrame(frame) {
   currentFrame = frame;
-  document.querySelectorAll('.frame-btn').forEach(b => b.classList.remove('active'));
-  if(frame === 'link_tcp') document.getElementById('btn-frame-tcp').classList.add('active');
-  else document.getElementById('btn-frame-base').classList.add('active');
+  document.querySelectorAll('.frame-btn').forEach(b => {
+    b.classList.remove('active', 'btn-primary');
+  });
+  if(frame === 'link_tcp') {
+    const b = document.getElementById('btn-frame-tcp');
+    b.classList.add('active', 'btn-primary');
+  } else {
+    const b = document.getElementById('btn-frame-base');
+    b.classList.add('active', 'btn-primary');
+  }
   
   twistMsg.header.frame_id = currentFrame;
   logMsg('UI', `Control Frame set to ${frame}`);
@@ -481,16 +505,22 @@ servoStatusSub.subscribe((msg) => {
   const dot = document.getElementById('moveit-dot');
   const text = document.getElementById('moveit-status');
   if(dot && text) {
+    const pill = document.getElementById('moveit-dot').parentElement;
+    pill.classList.remove('pill-pulse-green', 'pill-pulse-red', 'pill-pulse-orange');
+    
     // 1=No warning, 3=Collision, 4=Joint Bound
-    if (msg.data === 1) {
+    if (msg.data === 1 || msg.data === 2) {
       dot.className = 'dot glow-green';
-      text.innerText = 'MoveIt: Active';
+      text.innerText = msg.data === 1 ? 'MoveIt: Moving..' : 'MoveIt: Active';
+      pill.classList.add('pill-pulse-green');
     } else if (msg.data === 3 || msg.data === 4 || msg.data === 5) {
       dot.className = 'dot glow-red';
       text.innerText = 'MoveIt: Warn';
+      pill.classList.add('pill-pulse-red');
     } else {
       dot.className = 'dot glow-orange';
       text.innerText = 'MoveIt: Wait';
+      pill.classList.add('pill-pulse-orange');
     }
   }
 });
