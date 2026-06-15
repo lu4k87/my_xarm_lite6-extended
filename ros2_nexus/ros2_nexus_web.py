@@ -43,6 +43,7 @@ def _build_ros_script(command: str, ws_path: str) -> str:
     )
     safe_disp = formatted_disp.replace('"', '\\"')
     safe_curl_cmd = command.replace('"', '\\"')
+    payload_template = '{"event": "$1", "pid": $TERMINAL_PID, "command": "' + safe_curl_cmd + '"}'
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
@@ -58,8 +59,14 @@ echo -e "\033[1;33m════════════════════�
 echo -e "{safe_disp}"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m\n"
 export TERMINAL_PID=$$
-curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "{{\"event\": \"start\", \"pid\": $TERMINAL_PID, \"command\": \"{safe_curl_cmd}\"}}" > /dev/null 2>&1 &
-trap 'curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "{{\"event\": \"stop\", \"pid\": $TERMINAL_PID, \"command\": \"{safe_curl_cmd}\"}}" > /dev/null 2>&1' EXIT
+send_log() {{
+  read -r -d '' PAYLOAD << EOM
+{payload_template}
+EOM
+  curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "$PAYLOAD" > /dev/null 2>&1
+}}
+send_log "start" &
+trap 'send_log "stop" &' EXIT
 {command}
 """
 
@@ -76,6 +83,7 @@ def _build_interactive_script(command: str) -> str:
     )
     safe_disp = formatted_disp.replace('"', '\\"')
     safe_curl_cmd = command.replace('"', '\\"')
+    payload_template = '{"event": "$1", "pid": $TERMINAL_PID, "command": "' + safe_curl_cmd + '"}'
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
@@ -89,8 +97,14 @@ echo -e "\033[1;33m════════════════════�
 echo -e "{safe_disp}"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m\n"
 export TERMINAL_PID=$$
-curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "{{\"event\": \"start\", \"pid\": $TERMINAL_PID, \"command\": \"{safe_curl_cmd}\"}}" > /dev/null 2>&1 &
-trap 'curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "{{\"event\": \"stop\", \"pid\": $TERMINAL_PID, \"command\": \"{safe_curl_cmd}\"}}" > /dev/null 2>&1' EXIT
+send_log() {{
+  read -r -d '' PAYLOAD << EOM
+{payload_template}
+EOM
+  curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "$PAYLOAD" > /dev/null 2>&1
+}}
+send_log "start" &
+trap 'send_log "stop" &' EXIT
 {command}
 """
 

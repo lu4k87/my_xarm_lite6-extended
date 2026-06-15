@@ -212,13 +212,22 @@ class ZedYolo3DNode(Node):
                 # Kamera Position im link_base
                 cam_x, cam_y = 0.65, 0.0
                 
+                # Filtere Punkte nahe dem Boden heraus (untere 20%), um sicher den Objektkörper zu treffen und nicht den Tisch!
+                z_thresh = min_z + (max_z - min_z) * 0.2
+                body_mask = pts_base[2] > z_thresh
+                if not np.any(body_mask):
+                    body_mask = np.ones(pts_base.shape[1], dtype=bool)
+                
+                body_pts_x = pts_base[0][body_mask]
+                body_pts_y = pts_base[1][body_mask]
+                
                 # Finde den robusten vordersten Oberflächenpunkt (nächste 2% zur Kamera)
-                dists_2d = np.sqrt((pts_base[0] - cam_x)**2 + (pts_base[1] - cam_y)**2)
+                dists_2d = np.sqrt((body_pts_x - cam_x)**2 + (body_pts_y - cam_y)**2)
                 dist_thresh = np.percentile(dists_2d, 2.0)
                 closest_mask = dists_2d <= dist_thresh
                 
-                surf_x = np.mean(pts_base[0][closest_mask])
-                surf_y = np.mean(pts_base[1][closest_mask])
+                surf_x = np.mean(body_pts_x[closest_mask])
+                surf_y = np.mean(body_pts_y[closest_mask])
                 
                 dir_x = surf_x - cam_x
                 dir_y = surf_y - cam_y
