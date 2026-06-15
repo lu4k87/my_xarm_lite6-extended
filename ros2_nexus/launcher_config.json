@@ -162,11 +162,6 @@
           "type": "node"
         },
         {
-          "cmd": "ros2 run rviz_servo_status_overlay rviz_servo_status_overlay",
-          "label": "Rviz2 - Overlay: Planning Frame + TCP Coordinates",
-          "type": "node"
-        },
-        {
           "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
           "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
           "type": "node"

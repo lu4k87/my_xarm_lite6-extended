@@ -233,7 +233,7 @@
     }
 
     .stxt {
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--mut);
       text-transform: uppercase;
@@ -260,11 +260,11 @@
 
     /* ── SECTION ── */
     .section {
-      margin-bottom: 32px;
+      margin-bottom: 24px;
       background: rgba(10, 15, 25, 0.45);
       border: 1px solid var(--brd);
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 12px;
+      padding: 16px;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -276,7 +276,7 @@
     }
 
     .section-title {
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 2px;
@@ -295,7 +295,7 @@
 
     .section-title i.section-icon {
       color: var(--accent);
-      font-size: 15px
+      font-size: 13px
     }
 
     .section-title .title-line {
@@ -305,9 +305,9 @@
     }
 
     .run-all-badge {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 800;
-      padding: 4px 12px;
+      padding: 3px 8px;
       border-radius: 6px;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -435,11 +435,11 @@
 
     .action-btn {
       flex: 1;
-      padding: 16px 18px;
+      padding: 8px 12px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
       background: transparent;
       border: none;
       text-align: left;
@@ -463,7 +463,7 @@
     }
 
     .label {
-      font-size: 17px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--txt);
       white-space: nowrap;
@@ -474,9 +474,9 @@
     }
 
     .badge {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 800;
-      padding: 4px 11px;
+      padding: 3px 8px;
       border-radius: 6px;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -489,7 +489,7 @@
     }
 
     .badge i {
-      font-size: 10px
+      font-size: 9px
     }
 
     .badge-node {
@@ -526,14 +526,14 @@
     .cmd-wrap {
       background: rgba(0, 0, 0, .35);
       border: 1px solid rgba(255, 255, 255, .06);
-      border-radius: 8px;
-      padding: 10px 14px;
+      border-radius: 6px;
+      padding: 6px 10px;
       overflow-x: auto;
     }
 
     .cmd-text {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
+      font-size: 10px;
       color: var(--mut);
       white-space: pre;
       display: block;
@@ -581,9 +581,9 @@
       color: var(--txt);
       border: 1px solid var(--brd);
       border-radius: 8px;
-      padding: 9px 22px;
+      padding: 6px 16px;
       font-family: 'Outfit';
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       transition: all .2s;
@@ -690,6 +690,10 @@
       <span class="logo-badge">WEB</span>
     </a>
 
+    <button id="dev-setup-btn" style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.4); padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; font-family: 'Outfit'; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'" onclick="runDevSetup()">
+      <i class="fa-solid fa-play"></i> RUN DEV Setup
+    </button>
+
     <nav class="tab-nav" id="tab-nav">
       <button class="tab-btn active" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
       <button class="tab-btn" data-tab="topic_pubs"><i class="fa-solid fa-arrow-up-from-bracket"></i> Pub MSG on Topic</button>
@@ -729,8 +733,141 @@
     </p>
   </div>
 
+  <div id="console-popup" style="position: fixed; bottom: 20px; right: 20px; width: 450px; height: 300px; background: rgba(10, 15, 25, 0.95); border: 1px solid var(--brd); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; z-index: 1000; backdrop-filter: blur(10px); transition: height 0.3s;">
+    <div style="background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--brd); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleConsole()">
+      <div style="font-size: 12px; font-weight: 700; color: var(--mut); letter-spacing: 1px;"><i class="fa-solid fa-terminal" style="color: var(--accent); margin-right: 6px;"></i> TERMINAL LOGS</div>
+      <div style="display: flex; gap: 8px;">
+        <i id="console-toggle-icon" class="fa-solid fa-chevron-down" style="color: var(--dim); font-size: 14px;"></i>
+      </div>
+    </div>
+    <div id="console-content" style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script>
+    // ─── CONSOLE LOGIC ────────────────────────────────────────────────────────────
+    let lastLogId = 0;
+    
+    // Drag logic for the console popup
+    const popup = document.getElementById('console-popup');
+    const header = popup.querySelector('div');
+    let isDragging = false;
+    let dragStartX = 0, dragStartY = 0;
+    let popupStartX = 0, popupStartY = 0;
+
+    header.addEventListener('mousedown', (e) => {
+      // Don't drag if clicking the toggle icon area
+      if (e.target.closest('#console-toggle-icon') || e.target.closest('div[onclick]')) return;
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      const rect = popup.getBoundingClientRect();
+      // Calculate start position relative to bottom/right
+      popupStartX = window.innerWidth - rect.right;
+      popupStartY = window.innerHeight - rect.bottom;
+      document.addEventListener('mousemove', dragPopup);
+      document.addEventListener('mouseup', stopDrag);
+    });
+
+    // Handle toggle via icon explicitly
+    document.getElementById('console-toggle-icon').parentElement.onclick = (e) => {
+      e.stopPropagation();
+      toggleConsole();
+    };
+    
+    // Remove the onclick from the header div to prevent conflict with drag
+    header.removeAttribute('onclick');
+    // Add double click to toggle as fallback
+    header.addEventListener('dblclick', toggleConsole);
+
+    function dragPopup(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+      const dx = dragStartX - e.clientX;
+      const dy = dragStartY - e.clientY;
+      
+      let newRight = popupStartX + dx;
+      let newBottom = popupStartY + dy;
+      
+      // Keep within window bounds
+      newRight = Math.max(0, Math.min(newRight, window.innerWidth - popup.offsetWidth));
+      newBottom = Math.max(0, Math.min(newBottom, window.innerHeight - popup.offsetHeight));
+      
+      popup.style.right = newRight + 'px';
+      popup.style.bottom = newBottom + 'px';
+    }
+
+    function stopDrag() {
+      isDragging = false;
+      document.removeEventListener('mousemove', dragPopup);
+      document.removeEventListener('mouseup', stopDrag);
+    }
+
+    function toggleConsole() {
+      const icon = document.getElementById('console-toggle-icon');
+      if (popup.style.height === '40px') {
+        popup.style.height = '300px';
+        icon.className = 'fa-solid fa-chevron-down';
+      } else {
+        popup.style.height = '40px';
+        icon.className = 'fa-solid fa-chevron-up';
+      }
+    }
+
+    async function pollLogs() {
+      try {
+        const res = await fetch(`/api/logs?since=${lastLogId}`);
+        const data = await res.json();
+        if (data.logs && data.logs.length > 0) {
+          const content = document.getElementById('console-content');
+          data.logs.forEach(log => {
+            lastLogId = Math.max(lastLogId, log.id);
+            const div = document.createElement('div');
+            const timeStr = new Date(log.timestamp * 1000).toLocaleTimeString();
+            const color = log.event === 'start' ? 'var(--green)' : 'var(--red)';
+            const icon = log.event === 'start' ? 'fa-play' : 'fa-stop';
+            div.innerHTML = `<span style="color: var(--dim);">[${timeStr}]</span> <span style="color: ${color};"><i class="fa-solid ${icon}"></i> PID ${log.pid}</span> <span style="color: var(--txt);">${log.command}</span>`;
+            content.appendChild(div);
+          });
+          content.scrollTop = content.scrollHeight;
+        }
+      } catch (e) {
+        // Ignore network errors in polling
+      }
+    }
+    
+    setInterval(pollLogs, 1000);
+
+    // ─── DEV SETUP ────────────────────────────────────────────────────────────────
+    async function runDevSetup() {
+      const actions = [
+        {cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true", title: "MoveIt Servo (Fake)"},
+        {cmd: "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true", title: "MoveIt MoveGroup (Standalone)"},
+        {cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch"},
+        {cmd: "ros2 run rviz_pose_control set_pose_moveit", title: "Set Pose MoveIt Node"},
+        {cmd: "ros2 run xarm_moveit_servo scan_trajectory_node", title: "Scan Trajectory Node"},
+        {cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning"},
+        {cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "Launch Complete Perception Pipeline"},
+        {cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check"}
+      ];
+      
+      showToast('🚀 DEV Setup gestartet... (8 Terminals)');
+      
+      for (const a of actions) {
+        try {
+          await fetch('/api/run', {
+            method: 'POST',
+            body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
+          });
+          // Small delay so terminals open sequentially without blocking the UI completely
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (e) {
+          console.error("Failed to start command:", a.cmd, e);
+        }
+      }
+    }
+
     // ─── TAB DATA ────────────────────────────────────────────────────────────────
     let TABS = {};
 

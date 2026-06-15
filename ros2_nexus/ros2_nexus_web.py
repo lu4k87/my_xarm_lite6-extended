@@ -22,6 +22,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WS_PATH  = os.environ.get("ROS2_WS", "~/dev_ws")
 
 active_processes = {}
+global_logs = []
+log_id_counter = 1
+import time
 
 # ... (other code like _build_ros_script is unchanged, but we need to supply the whole block)
 
@@ -39,6 +42,7 @@ def _build_ros_script(command: str, ws_path: str) -> str:
         f" \033[1;36mCMD:\033[0m \033[1;37m{part}\033[0m" for part in cmd_parts
     )
     safe_disp = formatted_disp.replace('"', '\\"')
+    safe_curl_cmd = command.replace('"', '\\"')
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
@@ -53,6 +57,9 @@ echo -e "\033[36m[Terminal: $(tty)  PID: $$]\033[0m"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m"
 echo -e "{safe_disp}"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m\n"
+export TERMINAL_PID=$$
+curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "{{\"event\": \"start\", \"pid\": $TERMINAL_PID, \"command\": \"{safe_curl_cmd}\"}}" > /dev/null 2>&1 &
+trap 'curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "{{\"event\": \"stop\", \"pid\": $TERMINAL_PID, \"command\": \"{safe_curl_cmd}\"}}" > /dev/null 2>&1' EXIT
 {command}
 """
 
@@ -68,6 +75,7 @@ def _build_interactive_script(command: str) -> str:
         f" \033[1;36mCMD:\033[0m \033[1;37m{part}\033[0m" for part in cmd_parts
     )
     safe_disp = formatted_disp.replace('"', '\\"')
+    safe_curl_cmd = command.replace('"', '\\"')
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
@@ -80,6 +88,9 @@ echo -e "\033[36m[Terminal: $(tty)  PID: $$]\033[0m"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m"
 echo -e "{safe_disp}"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m\n"
+export TERMINAL_PID=$$
+curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "{{\"event\": \"start\", \"pid\": $TERMINAL_PID, \"command\": \"{safe_curl_cmd}\"}}" > /dev/null 2>&1 &
+trap 'curl -s -X POST http://localhost:5000/api/log_event -H "Content-Type: application/json" -d "{{\"event\": \"stop\", \"pid\": $TERMINAL_PID, \"command\": \"{safe_curl_cmd}\"}}" > /dev/null 2>&1' EXIT
 {command}
 """
 
@@ -157,6 +168,33 @@ def api_run():
 
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/log_event", methods=["POST"])
+def api_log_event():
+    global log_id_counter
+    try:
+        data = request.get_json(force=True)
+        data['id'] = log_id_counter
+        data['timestamp'] = time.time()
+        # strip ANSI escape sequences from command for display in web
+        import re
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        data['command'] = ansi_escape.sub('', data.get('command', ''))
+        data['command'] = data['command'].replace('CMD: ', '').replace('\n', ' | ')
+        log_id_counter += 1
+        global_logs.append(data)
+        if len(global_logs) > 200:
+            global_logs.pop(0)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route("/api/logs", methods=["GET"])
+def api_logs():
+    since = int(request.args.get("since", 0))
+    new_logs = [l for l in global_logs if l['id'] > since]
+    return jsonify({"ok": True, "logs": new_logs})
 
 @app.route("/api/kill", methods=["POST"])
 def api_kill():

@@ -1,5 +1,5 @@
-import math
 #!/usr/bin/env python3
+import math
 
 import rclpy
 from rclpy.node import Node
@@ -209,13 +209,19 @@ class ZedYolo3DNode(Node):
                 min_y, max_y = np.percentile(pts_base[1], 0.5), np.percentile(pts_base[1], 99.5)
                 min_z, max_z = np.percentile(pts_base[2], 0.5), np.percentile(pts_base[2], 99.5)
                 
-                median_x = np.median(pts_base[0])
-                median_y = np.median(pts_base[1])
-                
                 # Kamera Position im link_base
                 cam_x, cam_y = 0.65, 0.0
-                dir_x = median_x - cam_x
-                dir_y = median_y - cam_y
+                
+                # Finde den robusten vordersten Oberflächenpunkt (nächste 2% zur Kamera)
+                dists_2d = np.sqrt((pts_base[0] - cam_x)**2 + (pts_base[1] - cam_y)**2)
+                dist_thresh = np.percentile(dists_2d, 2.0)
+                closest_mask = dists_2d <= dist_thresh
+                
+                surf_x = np.mean(pts_base[0][closest_mask])
+                surf_y = np.mean(pts_base[1][closest_mask])
+                
+                dir_x = surf_x - cam_x
+                dir_y = surf_y - cam_y
                 length = math.sqrt(dir_x**2 + dir_y**2)
                 if length > 0:
                     ndir_x = dir_x / length
@@ -226,10 +232,9 @@ class ZedYolo3DNode(Node):
                 cls_name = names[cls_id]
                 if cls_name in self.dimension_overrides:
                     dx, dy, dz = self.dimension_overrides[cls_name]
-                    # Der sichtbare Median liegt auf der Kamera-zugewandten Oberfläche.
-                    # Der wahre Mittelpunkt liegt einen halben Radius weiter in Blickrichtung.
-                    center_x = median_x + ndir_x * (dx / 2.0)
-                    center_y = median_y + ndir_y * (dy / 2.0)
+                    # Der wahre Mittelpunkt liegt einen halben Radius hinter der vordersten sichtbaren Oberfläche.
+                    center_x = surf_x + ndir_x * (dx / 2.0)
+                    center_y = surf_y + ndir_y * (dy / 2.0)
                     
                     scale_x, scale_y = dx, dy
                     
@@ -246,8 +251,8 @@ class ZedYolo3DNode(Node):
                     # Dynamische Rekonstruktion: Wir nehmen symmetrische Objekte an: Tiefe = sichtbare Breite (Y)
                     width = max(0.02, max_y - min_y)
                     
-                    center_x = median_x + ndir_x * (width / 2.0)
-                    center_y = median_y + ndir_y * (width / 2.0)
+                    center_x = surf_x + ndir_x * (width / 2.0)
+                    center_y = surf_y + ndir_y * (width / 2.0)
                     
                     scale_x, scale_y = width, width
                     
