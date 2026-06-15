@@ -479,13 +479,6 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .yolo-item:active {
   transform: scale(0.98);
 }
-.yolo-sphere {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--red);
-  flex-shrink: 0;
-}
 .yolo-details {
   display: flex;
   flex-direction: row;

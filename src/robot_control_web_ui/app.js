@@ -124,7 +124,7 @@ yoloSub.subscribe((msg) => {
       executeGrasp();
     };
     item.innerHTML = `
-      <div class="yolo-sphere"></div>
+      <i class="fa-solid fa-cube" style="color: var(--accent); font-size: 16px;"></i>
       <div class="yolo-details">
         <span class="yolo-class">${objName}</span>
         <span class="yolo-coords">

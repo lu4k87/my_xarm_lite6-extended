@@ -154,19 +154,17 @@
           </div>
         </section>
 
-
+        <!-- DETECTED OBJECTS & GRASPING -->
         <section class="glass-panel">
-          <h2><i class="fa-solid fa-boxes-stacked"></i> Detected Objects (YOLO 3D)</h2>
-          <div class="yolo-list-container" id="yolo-list">
-            <div class="yolo-empty">Waiting for objects...</div>
+          <h2><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO 3D)</h2>
+          <div id="yolo-container" class="yolo-container">
+            <div class="yolo-empty">Waiting for /zed/bboxes_3d...</div>
           </div>
-        </section>
-
-        <section class="glass-panel" style="margin-top: 24px;">
-          <h2><i class="fa-solid fa-hand-holding"></i> Grasping</h2>
-          <div class="grasp-group mt-2">
-            <input type="text" id="inp-grasp-obj" placeholder="Object class (e.g. cup)">
-            <button class="btn btn-orange" onclick="executeGrasp()">Grasp Object</button>
+          
+          <h2 style="margin-top: 24px; font-size: 14px;"><i class="fa-solid fa-hand-holding"></i> Manual Grasp Target</h2>
+          <div style="display: flex; gap: 12px;">
+            <input type="text" id="inp-grasp-obj" placeholder="Object class (e.g. cup)" style="flex: 1;">
+            <button class="btn btn-primary" style="background: rgba(245, 158, 11, 0.2); border-color: var(--orange); color: var(--orange);" onclick="executeGrasp()">Grasp Object</button>
           </div>
         </section>
 
