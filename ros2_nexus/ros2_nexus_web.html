@@ -815,10 +815,15 @@
       }
     }
 
+    let pollFailures = 0;
+    let pollInterval;
+
     async function pollLogs() {
       try {
         const res = await fetch(`/api/logs?since=${lastLogId}`);
+        if (!res.ok) throw new Error("Server offline");
         const data = await res.json();
+        pollFailures = 0; // Reset
         if (data.logs && data.logs.length > 0) {
           const content = document.getElementById('console-content');
           data.logs.forEach(log => {
@@ -833,11 +838,26 @@
           content.scrollTop = content.scrollHeight;
         }
       } catch (e) {
-        // Ignore network errors in polling
+        pollFailures++;
+        if (pollFailures >= 3) {
+          clearInterval(pollInterval);
+          // Versuche den Tab automatisch zu schließen (funktioniert meist nur bei --app Modus)
+          window.close();
+          
+          // Fallback-UI, falls der Browser window.close() blockiert
+          document.body.innerHTML = `
+            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#0f172a; font-family:'Inter', sans-serif; text-align:center; padding:20px;">
+              <i class="fa-solid fa-power-off" style="font-size: 64px; color: #ef4444; margin-bottom: 24px;"></i>
+              <h1 style="color:#f8fafc; margin-bottom:8px;">Verbindung getrennt</h1>
+              <p style="color:#94a3b8; font-size:16px;">Das ROS 2 Nexus Backend wurde beendet.</p>
+              <p style="color:#64748b; font-size:14px; margin-top:24px;">Du kannst diesen Tab nun schließen.</p>
+            </div>
+          `;
+        }
       }
     }
     
-    setInterval(pollLogs, 1000);
+    pollInterval = setInterval(pollLogs, 1000);
 
     // ─── DEV SETUP ────────────────────────────────────────────────────────────────
     async function runDevSetup() {

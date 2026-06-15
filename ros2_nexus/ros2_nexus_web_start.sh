@@ -83,7 +83,13 @@ fi
 # ── Browser öffnen ────────────────────────────────────────────
 echo ""
 echo "🌐 Öffne Browser: $URL"
-xdg-open "$URL" 2>/dev/null &
+if command -v google-chrome &> /dev/null; then
+    google-chrome --app="$URL" 2>/dev/null &
+elif command -v chromium-browser &> /dev/null; then
+    chromium-browser --app="$URL" 2>/dev/null &
+else
+    xdg-open "$URL" 2>/dev/null &
+fi
 
 echo ""
 echo "════════════════════════════════════════════════════════"
