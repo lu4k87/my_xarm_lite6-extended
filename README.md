@@ -231,7 +231,7 @@ To provide a clear understanding of the architecture, the software modules are c
         * `depth_mode: ULTRA` – Forces the most dense 3D point cloud for clean edge calculation.
         * `auto_exposure: True` – Allows automatic brightness compensation for robust YOLO detection.
 * **`zed_yolo_3d_bbox.py` [NODE]**
-    * 🎯 **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise (percentiles & EMA smoothing), and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker). If the system detects multiple objects of the same class, they are automatically numbered for unambiguous identification and targeting (e.g., `cup_1`, `cup_2`).
+    * 🎯 **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise (percentiles & EMA smoothing), and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker). Uses a **dictionary-based EMA tracking system** with persistent global IDs and a tight 10cm distance threshold to prevent ID-swapping and bounding box jitter between closely placed objects. If the system detects multiple objects of the same class, they are permanently numbered for unambiguous identification and targeting (e.g., `cup_1`, `cup_2`).
     * 🟠 📥 **Subscribes:** `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`), `/zed/zed_node/depth/depth_registered` (`sensor_msgs/Image`), `/zed/zed_node/rgb/camera_info` (`sensor_msgs/CameraInfo`).
     * 🟢 📤 **Publishes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Sends the finalized 3D boxes and markers to RViz for visualization and to downstream nodes.
     * ⚙️ **Parameters:**
@@ -246,6 +246,7 @@ To provide a clear understanding of the architecture, the software modules are c
         * **Phase 1 (Retract):** Safely moves the arm strictly upwards from its current position to clear the table.
         * **Phase 2 (Hover):** Translates horizontally to a safe height (15cm) exactly above the target object. Forces a strict top-down orientation and uses tight IK tolerances (5mm positional, 0.001 rad tilt) to guarantee millimeter-accurate vertical alignment.
         * **Phase 3 (Approach):** Temporarily removes the target object from the MoveIt global collision scene via `/ui/ignore_collision_object` to allow the TCP to physically reach into the object's bounding box without triggering emergency stops, then moves down.
+    * ⚙️ **Parameters:** Features tunable `velocity_scaling` (default: 0.2) and `acceleration_scaling` (default: 0.1) for extremely smooth, slow, and predictable robotic interactions during the grasp sequence.
     * 🟠 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`).
     * 🟢 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`) for the RViz console, `/ui/ignore_collision_object` (`std_msgs/String`).
     * 🔄 **Services:** `/compute_ik` (IK verification), `/move_action` (MoveIt OMPL Planner), `/ui/execute_move_to_pose` (Servo Fallback).

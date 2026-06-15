@@ -57,6 +57,8 @@ class YoloPlannedGraspExecutor(Node):
         self.declare_parameter('target_yaw', 0.0)
         self.declare_parameter('ik_tolerance_position', 0.005)
         self.declare_parameter('ik_tolerance_orientation', 0.001)
+        self.declare_parameter('velocity_scaling', 0.2)
+        self.declare_parameter('acceleration_scaling', 0.1)
 
         # Action Server
         self._action_server = ActionServer(
@@ -228,7 +230,7 @@ class YoloPlannedGraspExecutor(Node):
                 grasp_yaw = target_yaw
                 target_quat = get_quaternion_from_euler(grasp_roll, grasp_pitch, grasp_yaw)
                 
-                self.publish_status(f"➤ Erzwinge Orientierung: Roll={grasp_roll:.2f}, Pitch={grasp_pitch:.2f}, Yaw={grasp_yaw:.2f}", goal_handle)
+                self.publish_status(f"➤ Forcing orientation: Roll={grasp_roll:.2f}, Pitch={grasp_pitch:.2f}, Yaw={grasp_yaw:.2f}", goal_handle)
             except Exception as e:
                 self.get_logger().warn(f"TF lookup failed: {e}. Falling back to default top-down orientation.")
                 cur_x = grasp_x
@@ -255,7 +257,7 @@ class YoloPlannedGraspExecutor(Node):
 
             # --- PHASE 1: RETRACT (UP) ---
             if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
-            self.publish_status("➤ Phase 1: Hebe Arm an, um Kollisionen zu vermeiden.", goal_handle)
+            self.publish_status("➤ Phase 1: Lifting arm to avoid collisions.", goal_handle)
             ik_valid_0 = self._check_ik(cur_x, cur_y, retract_z, target_quat)
             if not ik_valid_0:
                 self.publish_status("❌ Error: IK check failed for Phase 1. Using Fallback Direct Move.", goal_handle)
@@ -270,7 +272,7 @@ class YoloPlannedGraspExecutor(Node):
             
             # --- PHASE 2: HOVER (OVER OBJECT) ---
             if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
-            self.publish_status("➤ Phase 2: Bewege Arm direkt über das Zielobjekt.", goal_handle)
+            self.publish_status("➤ Phase 2: Moving arm directly over the target object.", goal_handle)
             ik_valid_1 = self._check_ik(grasp_x, grasp_y, safe_z, target_quat)
             if not ik_valid_1:
                 self.publish_status("❌ Error: IK check failed for Phase 2. Using Fallback Direct Move.", goal_handle)
@@ -285,7 +287,7 @@ class YoloPlannedGraspExecutor(Node):
 
             # --- PREPARE PHASE 3 ---
             if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
-            self.publish_status(f"➤ Vorbereitung Phase 3: Schalte Kollisionserkennung für '{collision_object_name}' aus, um zugreifen zu können.", goal_handle)
+            self.publish_status(f"➤ Preparing Phase 3: Disabling collision detection for '{collision_object_name}' to allow grasping.", goal_handle)
             ignore_msg = String()
             ignore_msg.data = collision_object_name
             self.ignore_pub.publish(ignore_msg)
@@ -294,7 +296,7 @@ class YoloPlannedGraspExecutor(Node):
 
             # --- PHASE 3: APPROACH (DOWN TO OBJECT) ---
             if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
-            self.publish_status(f"➤ Phase 3: Greifer fährt nach unten zum Zugreifen.", goal_handle)
+            self.publish_status(f"➤ Phase 3: Gripper moving down to grasp.", goal_handle)
             
             ik_valid_2 = self._check_ik(grasp_x, grasp_y, grasp_z_above, target_quat)
             if not ik_valid_2:
@@ -391,8 +393,8 @@ class YoloPlannedGraspExecutor(Node):
         req.group_name = 'lite6'
         req.num_planning_attempts = 10
         req.allowed_planning_time = 5.0
-        req.max_velocity_scaling_factor = 0.5
-        req.max_acceleration_scaling_factor = 0.5
+        req.max_velocity_scaling_factor = float(self.get_parameter('velocity_scaling').value)
+        req.max_acceleration_scaling_factor = float(self.get_parameter('acceleration_scaling').value)
         
         p_constraint = PositionConstraint()
         p_constraint.header.frame_id = "link_base"

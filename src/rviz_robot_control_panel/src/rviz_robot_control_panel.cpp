@@ -609,7 +609,9 @@ void ControlPanel::onLogMessage(const QString& msg) {
             colored_msg = QString("<span style=\"color: #e74c3c; font-weight: bold;\">%1</span>").arg(colored_msg); // Red
         } else if (msg.contains("✓") || msg.contains("Success", Qt::CaseInsensitive)) {
             colored_msg = QString("<span style=\"color: #2ecc71; font-weight: bold;\">%1</span>").arg(colored_msg); // Green
-        } else if (msg.contains("➤") || msg.contains("Phase", Qt::CaseInsensitive)) {
+        } else if (msg.contains("➤ Phase", Qt::CaseInsensitive)) {
+            colored_msg = QString("<span style=\"color: #e67e22; font-weight: bold;\">%1</span>").arg(colored_msg); // Orange
+        } else if (msg.contains("➤")) {
             colored_msg = QString("<span style=\"color: #3498db;\">%1</span>").arg(colored_msg); // Blue
         } else if (msg.contains("Warning", Qt::CaseInsensitive)) {
             colored_msg = QString("<span style=\"color: #f1c40f; font-weight: bold;\">%1</span>").arg(colored_msg); // Yellow

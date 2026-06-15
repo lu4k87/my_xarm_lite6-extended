@@ -65,14 +65,14 @@ class YoloMoveitCollision(Node):
             'vacuum_gripper_link', 'lite_gripper_link', 'other_geometry_link'
         ]
 
-        self.get_logger().info('YOLO MoveIt Collision Node gestartet. Warte auf RViz Toggle...')
+        self.get_logger().info('YOLO MoveIt Collision Node started. Waiting for RViz Toggle...')
 
     def ignore_callback(self, msg):
         obj_name = msg.data.strip()
         if obj_name:
             current_time = self.get_clock().now().nanoseconds / 1e9
             self.ignored_objects[obj_name] = {'state': 'WAITING', 'timestamp': current_time}
-            self.get_logger().info(f'Ignoriere Kollisionsobjekt: {obj_name} (Warte auf Annäherung)')
+            self.get_logger().info(f'Ignoring collision object: {obj_name} (Waiting for approach)')
             
             # Immediately remove it if it was known
             if obj_name in self.known_objects:
@@ -90,7 +90,7 @@ class YoloMoveitCollision(Node):
             self.pub_collision_object.publish(co)
             
         self.known_objects.clear()
-        self.get_logger().info('Kollisions-Toggle in RViz deaktiviert. Alle YOLO-Objekte aus MoveIt entfernt.')
+        self.get_logger().info('Collision toggle disabled in RViz. Removed all YOLO objects from MoveIt.')
 
     def marker_callback(self, msg):
         # Check if user has enabled the toggle in RViz
@@ -115,7 +115,7 @@ class YoloMoveitCollision(Node):
             return
 
         if not self.was_active:
-            self.get_logger().info('Kollisions-Toggle in RViz aktiviert. Sende YOLO-Objekte an MoveIt...')
+            self.get_logger().info('Collision toggle enabled in RViz. Sending YOLO objects to MoveIt...')
             self.was_active = True
 
         # Parse MarkerArray
@@ -184,16 +184,16 @@ class YoloMoveitCollision(Node):
                     if ign_info['state'] == 'WAITING':
                         if dist < 0.05: # TCP arrived near the object (5cm)
                             self.ignored_objects[obj_name]['state'] = 'INSIDE'
-                            self.get_logger().info(f"TCP nahe an {obj_name} (< 5cm). State -> INSIDE")
+                            self.get_logger().info(f"TCP near {obj_name} (< 5cm). State -> INSIDE")
                         elif (current_time - ign_info['timestamp']) > 20.0: # Timeout 20s
-                            msg_str = f"⚠️ Timeout: Kollision für {obj_name} wieder aktiv"
+                            msg_str = f"⚠️ Timeout: Collision for {obj_name} re-enabled"
                             self.get_logger().info(msg_str)
                             self.pub_status.publish(String(data=msg_str))
                             del self.ignored_objects[obj_name]
                             
                     elif ign_info['state'] == 'INSIDE':
                         if dist > 0.10: # TCP moved away (10cm)
-                            msg_str = f"➤ TCP hat {obj_name} verlassen (> 10cm). Kollision wieder aktiv."
+                            msg_str = f"➤ TCP left {obj_name} (> 10cm). Collision re-enabled."
                             self.get_logger().info(msg_str)
                             self.pub_status.publish(String(data=msg_str))
                             del self.ignored_objects[obj_name]
