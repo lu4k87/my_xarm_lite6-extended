@@ -19,7 +19,7 @@ class TFTunerGUI(QWidget):
         self.timer.start(50) # 20 Hz
 
     def initUI(self):
-        self.setWindowTitle('ZED Camera TF Tuner')
+        self.setWindowTitle('Pointcloud TF Tuner')
         layout = QVBoxLayout()
 
         # Z Slider
