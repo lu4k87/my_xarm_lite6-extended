@@ -1,3 +1,4 @@
+import math
 #!/usr/bin/env python3
 
 import rclpy
@@ -208,15 +209,29 @@ class ZedYolo3DNode(Node):
                 min_y, max_y = np.percentile(pts_base[1], 0.5), np.percentile(pts_base[1], 99.5)
                 min_z, max_z = np.percentile(pts_base[2], 0.5), np.percentile(pts_base[2], 99.5)
                 
+                median_x = np.median(pts_base[0])
+                median_y = np.median(pts_base[1])
+                
+                # Kamera Position im link_base
+                cam_x, cam_y = 0.65, 0.0
+                dir_x = median_x - cam_x
+                dir_y = median_y - cam_y
+                length = math.sqrt(dir_x**2 + dir_y**2)
+                if length > 0:
+                    ndir_x = dir_x / length
+                    ndir_y = dir_y / length
+                else:
+                    ndir_x, ndir_y = -1.0, 0.0
+                
                 cls_name = names[cls_id]
                 if cls_name in self.dimension_overrides:
                     dx, dy, dz = self.dimension_overrides[cls_name]
-                    # Kamera schaut von +X. max_x ist die vorderste sichtbare Kante.
-                    # Der wahre Mittelpunkt liegt die halbe Tiefe dahinter.
-                    cx = max_x - dx / 2.0
-                    cy = (min_y + max_y) / 2.0
-                    min_x, max_x = cx - dx/2.0, cx + dx/2.0
-                    min_y, max_y = cy - dy/2.0, cy + dy/2.0
+                    # Der sichtbare Median liegt auf der Kamera-zugewandten Oberfläche.
+                    # Der wahre Mittelpunkt liegt einen halben Radius weiter in Blickrichtung.
+                    center_x = median_x + ndir_x * (dx / 2.0)
+                    center_y = median_y + ndir_y * (dy / 2.0)
+                    
+                    scale_x, scale_y = dx, dy
                     
                     if min_z < 0.10:
                         min_z = 0.0
@@ -224,23 +239,23 @@ class ZedYolo3DNode(Node):
                     else:
                         cz = (min_z + max_z) / 2.0
                         min_z, max_z = cz - dz/2.0, cz + dz/2.0
+                    
+                    center_z = (min_z + max_z) / 2.0
+                    scale_z = dz
                 else:
-                    # Dynamische Rekonstruktion: Kamera (X=0.65) schaut von vorne auf das Objekt.
-                    # Daher ist max_x die sichtbare Vorderseite, die Rückseite (min_x) ist verdeckt.
-                    # Wir nehmen symmetrische Objekte an: Tiefe = sichtbare Breite (Y)
-                    width = max_y - min_y
-                    min_x = max_x - width
+                    # Dynamische Rekonstruktion: Wir nehmen symmetrische Objekte an: Tiefe = sichtbare Breite (Y)
+                    width = max(0.02, max_y - min_y)
+                    
+                    center_x = median_x + ndir_x * (width / 2.0)
+                    center_y = median_y + ndir_y * (width / 2.0)
+                    
+                    scale_x, scale_y = width, width
                     
                     if min_z < 0.10:
                         min_z = 0.0
                 
-                center_x = (min_x + max_x) / 2.0
-                center_y = (min_y + max_y) / 2.0
-                center_z = (min_z + max_z) / 2.0
-                
-                scale_x = max(0.02, max_x - min_x)
-                scale_y = max(0.02, max_y - min_y)
-                scale_z = max(0.02, max_z - min_z)
+                    center_z = (min_z + max_z) / 2.0
+                    scale_z = max(0.02, max_z - min_z)
                 
                 marker_frame = 'link_base'
             else:
@@ -327,15 +342,23 @@ class ZedYolo3DNode(Node):
             # Line thickness (1mm) to match the thin text
             marker.scale.x = 0.001 
             
-            # 8 corners of the bounding box
-            p1 = Point(x=float(min_x), y=float(min_y), z=float(min_z))
-            p2 = Point(x=float(max_x), y=float(min_y), z=float(min_z))
-            p3 = Point(x=float(max_x), y=float(max_y), z=float(min_z))
-            p4 = Point(x=float(min_x), y=float(max_y), z=float(min_z))
-            p5 = Point(x=float(min_x), y=float(min_y), z=float(max_z))
-            p6 = Point(x=float(max_x), y=float(min_y), z=float(max_z))
-            p7 = Point(x=float(max_x), y=float(max_y), z=float(max_z))
-            p8 = Point(x=float(min_x), y=float(max_y), z=float(max_z))
+            # 8 corners of the bounding box using EMA smoothed state
+            e_min_x, e_max_x = scale_x, scale_x # Dummy if EMA not used
+            e_min_x = center_x - scale_x / 2.0
+            e_max_x = center_x + scale_x / 2.0
+            e_min_y = center_y - scale_y / 2.0
+            e_max_y = center_y + scale_y / 2.0
+            e_min_z = center_z - scale_z / 2.0
+            e_max_z = center_z + scale_z / 2.0
+            
+            p1 = Point(x=float(e_min_x), y=float(e_min_y), z=float(e_min_z))
+            p2 = Point(x=float(e_max_x), y=float(e_min_y), z=float(e_min_z))
+            p3 = Point(x=float(e_max_x), y=float(e_max_y), z=float(e_min_z))
+            p4 = Point(x=float(e_min_x), y=float(e_max_y), z=float(e_min_z))
+            p5 = Point(x=float(e_min_x), y=float(e_min_y), z=float(e_max_z))
+            p6 = Point(x=float(e_max_x), y=float(e_min_y), z=float(e_max_z))
+            p7 = Point(x=float(e_max_x), y=float(e_max_y), z=float(e_max_z))
+            p8 = Point(x=float(e_min_x), y=float(e_max_y), z=float(e_max_z))
             
             # 12 edges (2 points per edge for LINE_LIST)
             marker.points = [
