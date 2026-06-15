@@ -12,20 +12,44 @@ try {
 }
 
 ros.on('connection', () => {
-  document.getElementById('connection-status').innerText = 'Connected';
-  document.getElementById('connection-dot').classList.add('connected');
+  document.getElementById('connection-status').innerText = 'WS: 9090';
+  document.getElementById('connection-dot').className = 'dot glow-green';
   logMsg('System', 'Connected to rosbridge_server (ws://localhost:9090)', 'info');
+
+  // Start checking for real/fake arm
+  setInterval(() => {
+    if (ros.isConnected) {
+      const getNodesClient = new ROSLIB.Service({
+        ros: ros,
+        name: '/rosapi/nodes',
+        serviceType: 'rosapi/Nodes'
+      });
+      getNodesClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
+        const dot = document.getElementById('mode-dot');
+        const text = document.getElementById('mode-status');
+        if (result && result.nodes && result.nodes.includes('/xarm_driver')) {
+          dot.className = 'dot glow-green';
+          text.innerText = 'Mode: Real Arm';
+        } else {
+          dot.className = 'dot glow-blue';
+          text.innerText = 'Mode: Fake Arm';
+        }
+      });
+    }
+  }, 5000);
 });
 
 ros.on('error', (error) => {
-  document.getElementById('connection-status').innerText = 'Error';
-  document.getElementById('connection-dot').classList.remove('connected');
+  document.getElementById('connection-status').innerText = 'WS Error';
+  document.getElementById('connection-dot').className = 'dot glow-red';
   logMsg('System', 'Error connecting to websocket server', 'err');
 });
 
 ros.on('close', () => {
-  document.getElementById('connection-status').innerText = 'Disconnected';
-  document.getElementById('connection-dot').classList.remove('connected');
+  document.getElementById('connection-status').innerText = 'WS Closed';
+  document.getElementById('connection-dot').className = 'dot glow-red';
+  document.getElementById('mode-dot').className = 'dot glow-red';
+  document.getElementById('mode-status').innerText = 'Mode: Offline';
   logMsg('System', 'Connection to websocket server closed', 'warn');
 });
 
@@ -97,7 +121,7 @@ const yoloSub = new ROSLIB.Topic({
   messageType: 'visualization_msgs/MarkerArray'
 });
 yoloSub.subscribe((msg) => {
-  const container = document.getElementById('yolo-list');
+  const container = document.getElementById('yolo-container');
   container.innerHTML = ''; // clear current
   if(!msg.markers || msg.markers.length === 0) {
     container.innerHTML = '<div class="yolo-empty">No objects detected.</div>';
@@ -205,8 +229,10 @@ function logMsg(source, text, type='info') {
 
 function updateSpeed(val) {
   speedIndexPub.publish(new ROSLIB.Message({ data: parseInt(val) }));
-  document.getElementById('speed-val').innerText = val;
-  logMsg('UI', `Speed Level changed to ${val}`);
+  const percentages = ["12.5%", "25%", "50%", "75%", "100%"];
+  const displayLevel = parseInt(val) + 1;
+  document.getElementById('speed-val').innerText = `${displayLevel}/5 (${percentages[parseInt(val)]})`;
+  logMsg('UI', `Speed Level changed to ${displayLevel}/5 (${percentages[parseInt(val)]})`);
 }
 
 function setFrame(frame) {
@@ -425,23 +451,46 @@ function executeGrasp() {
 
 // ── Gamepad API Status ──────────────────────────────────────────────────
 window.addEventListener("gamepadconnected", (e) => {
-  const pill = document.getElementById('gamepad-pill');
+  const dot = document.getElementById('gp-dot');
   const status = document.getElementById('gamepad-status');
-  if(pill && status) {
-    pill.classList.add('active');
-    pill.querySelector('i').style.color = 'var(--green)';
-    status.innerText = `Connected: ${e.gamepad.id.substring(0, 15)}...`;
+  if(dot && status) {
+    dot.className = 'dot glow-green';
+    status.innerText = e.gamepad.id.split(' ')[0] || 'Gamepad';
     logMsg('System', `Gamepad connected: ${e.gamepad.id}`, 'info');
   }
 });
 
 window.addEventListener("gamepaddisconnected", (e) => {
-  const pill = document.getElementById('gamepad-pill');
+  const dot = document.getElementById('gp-dot');
   const status = document.getElementById('gamepad-status');
-  if(pill && status) {
-    pill.classList.remove('active');
-    pill.querySelector('i').style.color = 'var(--mut)';
-    status.innerText = 'Gamepad Disconnected';
-    logMsg('System', 'Gamepad disconnected', 'warn');
+  if(dot && status) {
+    dot.className = 'dot glow-red';
+    status.innerText = 'Gamepad';
+    logMsg('System', 'Gamepad disconnected.', 'warn');
+  }
+});
+
+// ── MoveIt Servo Status ──────────────────────────────────────────────────
+const servoStatusSub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/servo_server/status',
+  messageType: 'std_msgs/Int8'
+});
+
+servoStatusSub.subscribe((msg) => {
+  const dot = document.getElementById('moveit-dot');
+  const text = document.getElementById('moveit-status');
+  if(dot && text) {
+    // 1=No warning, 3=Collision, 4=Joint Bound
+    if (msg.data === 1) {
+      dot.className = 'dot glow-green';
+      text.innerText = 'MoveIt: Active';
+    } else if (msg.data === 3 || msg.data === 4 || msg.data === 5) {
+      dot.className = 'dot glow-red';
+      text.innerText = 'MoveIt: Warn';
+    } else {
+      dot.className = 'dot glow-orange';
+      text.innerText = 'MoveIt: Wait';
+    }
   }
 });

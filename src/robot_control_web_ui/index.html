@@ -30,13 +30,25 @@
         <h1>xArm Lite6 Web Control</h1>
       </div>
       <div class="header-status">
-        <div class="status-pill" id="gamepad-pill">
-          <i class="fa-solid fa-gamepad"></i>
-          <span id="gamepad-status">Gamepad Disconnected</span>
+        <div class="status-pill">
+          <div class="dot glow-green"></div>
+          <span>UI: 8081</span>
         </div>
         <div class="status-pill">
-          <div id="connection-dot" class="dot"></div>
-          <span id="connection-status">Connecting...</span>
+          <div id="connection-dot" class="dot glow-red"></div>
+          <span id="connection-status">WS: 9090</span>
+        </div>
+        <div class="status-pill">
+          <div class="dot glow-green"></div>
+          <span>Nexus: 5000</span>
+        </div>
+        <div class="status-pill" id="gamepad-pill">
+          <div id="gp-dot" class="dot glow-red"></div>
+          <span id="gamepad-status">Gamepad</span>
+        </div>
+        <div class="status-pill">
+          <div id="mode-dot" class="dot glow-blue"></div>
+          <span id="mode-status">Mode: Wait</span>
         </div>
       </div>
     </header>
@@ -88,7 +100,13 @@
 
         <!-- Joystick Panel -->
         <section class="glass-panel joystick-section">
-          <h2><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
+            <div class="status-pill" style="margin-bottom: 15px;">
+              <div id="moveit-dot" class="dot glow-red"></div>
+              <span id="moveit-status">MoveIt: Off</span>
+            </div>
+          </div>
           
           <div class="jogging-container" style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center;">
             <div class="z-controls" style="display: flex; flex-direction: column; gap: 10px;">
