@@ -243,6 +243,7 @@ To provide a clear understanding of the architecture, the software modules are c
     * 🟢 📤 **Publishes:** `/planning_scene` (`moveit_msgs/PlanningScene`). Sends the `CollisionObjects` directly to the MoveIt Planning Scene to avoid collisions during grasping/driving.
 * **`octomap_server` (Integration via MoveIt 2)**
     * 🎯 **Purpose & Task:** Dynamic 3D environment mapping. Generates a real-time voxel-based collision map (OctoMap) directly from the ZED point cloud, enabling MoveIt to avoid arbitrary, unrecognized obstacles (e.g., human hands, tools) during trajectory planning and servoing.
+    * 🛠️ **Activation:** In the base repository (`src/xarm_ros2/xarm_moveit_config/launch/_robot_moveit_common.launch.py`), the OctoMap is configured via the `sensor_manager_parameters` dictionary (setting parameters like `octomap_resolution: 0.03` and `ros.point_cloud_topic`) and injected directly into the `move_group_node`.
     * 🟠 📥 **Subscribes:** `/zed/zed_node/point_cloud/cloud_registered` (`sensor_msgs/PointCloud2`).
     * 🟢 📤 **Publishes:** Integrated natively into the MoveIt `/planning_scene`.
 * **`yolo_planned_grasp_executor.py` [NODE]**
