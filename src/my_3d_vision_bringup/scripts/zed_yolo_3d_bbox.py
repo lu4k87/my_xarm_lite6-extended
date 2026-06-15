@@ -241,22 +241,42 @@ class ZedYolo3DNode(Node):
                 marker_frame = frame_id
             
             # --- Exponential Moving Average (EMA) Smoothing ---
-            # Glättet das Flackern der Bounding Box (nimmt an, 1 Objekt pro Klasse)
+            # Glättet das Flackern der Bounding Box (unterstützt nun mehrere Objekte pro Klasse)
             current_t = current_time.sec + current_time.nanosec * 1e-9
             state = np.array([center_x, center_y, center_z, scale_x, scale_y, scale_z])
             
-            if cls_id not in self.ema_states or (current_t - self.ema_states[cls_id]['last_seen']) > 1.0:
-                # Neues Objekt oder Objekt war für > 1 Sekunde weg
-                self.ema_states[cls_id] = {'state': state, 'last_seen': current_t}
-            else:
-                # Glätten mit vorherigem Zustand
-                self.ema_states[cls_id]['state'] = self.alpha * state + (1.0 - self.alpha) * self.ema_states[cls_id]['state']
-                self.ema_states[cls_id]['last_seen'] = current_t
+            if cls_id not in self.ema_states:
+                self.ema_states[cls_id] = []
                 
-            center_x, center_y, center_z, scale_x, scale_y, scale_z = self.ema_states[cls_id]['state']
+            # Bereinige alte states
+            self.ema_states[cls_id] = [s for s in self.ema_states[cls_id] if (current_t - s['last_seen']) <= 1.0]
+            
+            best_match_idx = -1
+            min_dist = float('inf')
+            
+            for idx, s in enumerate(self.ema_states[cls_id]):
+                if s['last_seen'] == current_t:
+                    continue # Wurde in diesem Frame bereits aktualisiert
+                dist = np.linalg.norm(s['state'][:3] - state[:3])
+                if dist < min_dist:
+                    min_dist = dist
+                    best_match_idx = idx
+            
+            if best_match_idx != -1 and min_dist < 0.3: # Max 30cm Abstand für dasselbe Objekt
+                self.ema_states[cls_id][best_match_idx]['state'] = self.alpha * state + (1.0 - self.alpha) * self.ema_states[cls_id][best_match_idx]['state']
+                self.ema_states[cls_id][best_match_idx]['last_seen'] = current_t
+                center_x, center_y, center_z, scale_x, scale_y, scale_z = self.ema_states[cls_id][best_match_idx]['state']
+            else:
+                self.ema_states[cls_id].append({'state': state, 'last_seen': current_t})
                 
             color = self.colors[cls_id % 100]
             class_name = names[cls_id]
+            
+            # Append numbering if there are multiple objects of the same class
+            if len(self.ema_states[cls_id]) > 1:
+                # obj_idx is best_match_idx if found, else the last appended index
+                obj_idx = best_match_idx if best_match_idx != -1 else len(self.ema_states[cls_id]) - 1
+                class_name = f"{class_name}_{obj_idx + 1}"
             
             # --- Marker 1: The Bounding Box Edges (Line List) ---
             marker = Marker()

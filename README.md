@@ -231,7 +231,7 @@ To provide a clear understanding of the architecture, the software modules are c
         * `depth_mode: ULTRA` – Forces the most dense 3D point cloud for clean edge calculation.
         * `auto_exposure: True` – Allows automatic brightness compensation for robust YOLO detection.
 * **`zed_yolo_3d_bbox.py` [NODE]**
-    * 🎯 **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise (percentiles & EMA smoothing), and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker).
+    * 🎯 **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise (percentiles & EMA smoothing), and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker). If the system detects multiple objects of the same class, they are automatically numbered for unambiguous identification and targeting (e.g., `cup_1`, `cup_2`).
     * 🟠 📥 **Subscribes:** `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`), `/zed/zed_node/depth/depth_registered` (`sensor_msgs/Image`), `/zed/zed_node/rgb/camera_info` (`sensor_msgs/CameraInfo`).
     * 🟢 📤 **Publishes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Sends the finalized 3D boxes and markers to RViz for visualization and to downstream nodes.
     * ⚙️ **Parameters:**

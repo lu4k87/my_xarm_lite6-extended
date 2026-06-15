@@ -102,12 +102,12 @@
       "actions": [
         {
           "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true",
-          "label": "Start MoveGroup Server (FAKE)",
+          "label": "MoveGroup Server (FAKE)",
           "type": "launch"
         },
         {
           "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
-          "label": "Start MoveGroup Server (REAL)",
+          "label": "MoveGroup Server (REAL)",
           "type": "launch"
         }
       ],
