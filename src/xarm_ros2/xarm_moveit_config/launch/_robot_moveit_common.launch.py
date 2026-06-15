@@ -228,7 +228,7 @@ def launch_setup(context, *args, **kwargs):
         'sensors': ['ros'],
         'octomap_resolution': 0.03,
         'ros.sensor_plugin': 'occupancy_map_monitor/PointCloudOctomapUpdater',
-        'ros.point_cloud_topic': '/zed/zed_node/point_cloud/cloud_registered',
+        'ros.point_cloud_topic': '/zed/zed_node/point_cloud/cloud_optimized',
         'ros.max_range': 1.5,
         'ros.point_subsample': 1,
         'ros.padding_offset': 0.05,

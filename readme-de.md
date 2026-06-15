@@ -246,7 +246,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 * **`octomap_server` (Integration via MoveIt 2)**
     * 🎯 **Zweck & Aufgabe:** Dynamische 3D-Umgebungskartierung. Generiert in Echtzeit eine voxelbasierte Kollisionskarte (OctoMap) direkt aus der ZED-Punktwolke. Dadurch kann MoveIt arbiträre, nicht von YOLO erkannte Hindernisse (z. B. menschliche Hände, Werkzeuge) bei der Bahnplanung und im Servo-Betrieb sicher umfahren.
     * 🛠️ **Aktivierung:** Im Basis-Repository (`src/xarm_ros2/xarm_moveit_config/launch/_robot_moveit_common.launch.py`) wird die OctoMap über das Dictionary `sensor_manager_parameters` (mit Parametern wie `octomap_resolution: 0.03` und `ros.point_cloud_topic`) konfiguriert und dem `move_group_node` übergeben.
-    * 🟠 📥 **Subscribes:** `/zed/zed_node/point_cloud/cloud_registered` (`sensor_msgs/PointCloud2`).
+    * 🟠 📥 **Subscribes:** `/zed/zed_node/point_cloud/cloud_optimized` (`sensor_msgs/PointCloud2`).
     * 🟢 📤 **Publishes:** Nativ integriert in die MoveIt `/planning_scene`.
 * **`yolo_planned_grasp_executor.py` [NODE]**
     * 🎯 **Zweck & Aufgabe:** Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("Grasp Object") aus, holt sich die YOLO-Koordinaten und orchestriert eine robuste **Kollisionsfreie 3-Phasen Greif-Sequenz**:
