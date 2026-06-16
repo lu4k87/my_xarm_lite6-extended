@@ -210,18 +210,62 @@ class YoloMoveitCollision(Node):
             co.id = obj_name
             co.operation = CollisionObject.ADD
             
-            box = SolidPrimitive()
-            box.type = SolidPrimitive.BOX
-            box.dimensions = [scale_x, scale_y, scale_z]
+            # We create an open box (cup shape) with 5 extremely thin walls (1mm)
+            # so the TCP can enter from above, but collides from the sides.
+            t = 0.001 # 1 mm wall thickness
             
-            pose = Pose()
-            pose.position.x = center_x
-            pose.position.y = center_y
-            pose.position.z = center_z
-            pose.orientation.w = 1.0
+            # 1. Bottom Floor
+            floor = SolidPrimitive()
+            floor.type = SolidPrimitive.BOX
+            floor.dimensions = [scale_x, scale_y, t]
+            pose_floor = Pose()
+            pose_floor.position.x = center_x
+            pose_floor.position.y = center_y
+            pose_floor.position.z = center_z - scale_z/2.0 + t/2.0
+            pose_floor.orientation.w = 1.0
             
-            co.primitives.append(box)
-            co.primitive_poses.append(pose)
+            # 2. Left Wall
+            left = SolidPrimitive()
+            left.type = SolidPrimitive.BOX
+            left.dimensions = [t, scale_y, scale_z - t]
+            pose_left = Pose()
+            pose_left.position.x = center_x - scale_x/2.0 + t/2.0
+            pose_left.position.y = center_y
+            pose_left.position.z = center_z + t/2.0
+            pose_left.orientation.w = 1.0
+            
+            # 3. Right Wall
+            right = SolidPrimitive()
+            right.type = SolidPrimitive.BOX
+            right.dimensions = [t, scale_y, scale_z - t]
+            pose_right = Pose()
+            pose_right.position.x = center_x + scale_x/2.0 - t/2.0
+            pose_right.position.y = center_y
+            pose_right.position.z = center_z + t/2.0
+            pose_right.orientation.w = 1.0
+            
+            # 4. Front Wall
+            front = SolidPrimitive()
+            front.type = SolidPrimitive.BOX
+            front.dimensions = [scale_x - 2*t, t, scale_z - t]
+            pose_front = Pose()
+            pose_front.position.x = center_x
+            pose_front.position.y = center_y + scale_y/2.0 - t/2.0
+            pose_front.position.z = center_z + t/2.0
+            pose_front.orientation.w = 1.0
+            
+            # 5. Back Wall
+            back = SolidPrimitive()
+            back.type = SolidPrimitive.BOX
+            back.dimensions = [scale_x - 2*t, t, scale_z - t]
+            pose_back = Pose()
+            pose_back.position.x = center_x
+            pose_back.position.y = center_y - scale_y/2.0 + t/2.0
+            pose_back.position.z = center_z + t/2.0
+            pose_back.orientation.w = 1.0
+            
+            co.primitives.extend([floor, left, right, front, back])
+            co.primitive_poses.extend([pose_floor, pose_left, pose_right, pose_front, pose_back])
             
             # Throttle updates: only publish if object is new or time expired
             now = self.get_clock().now()
@@ -231,6 +275,13 @@ class YoloMoveitCollision(Node):
                 self.last_publish_time = now
             
             # --- 2. Visual Marker for RViz ---
+            # We still show a single transparent box in RViz for simplicity
+            pose = Pose()
+            pose.position.x = center_x
+            pose.position.y = center_y
+            pose.position.z = center_z
+            pose.orientation.w = 1.0
+
             vm = Marker()
             vm.header.frame_id = data['frame_id']
             vm.header.stamp = self.get_clock().now().to_msg()
