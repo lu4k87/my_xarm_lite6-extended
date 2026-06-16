@@ -127,8 +127,35 @@ const speedSub = new ROSLIB.Topic({
   name: '/ui/robot_control/current_speed',
   messageType: 'std_msgs/Float32'
 });
+let lastSpeedIndex = -1;
 speedSub.subscribe((msg) => {
   speedScale = msg.data;
+  
+  let index = 2;
+  if (Math.abs(speedScale - 0.25) < 0.01) index = 0;
+  else if (Math.abs(speedScale - 0.5) < 0.01) index = 1;
+  else if (Math.abs(speedScale - 1.0) < 0.01) index = 2;
+  else if (Math.abs(speedScale - 1.5) < 0.01) index = 3;
+  else if (Math.abs(speedScale - 2.0) < 0.01) index = 4;
+  
+  const slider = document.getElementById('speed-slider');
+  if (slider && slider.value != index) {
+    slider.value = index;
+  }
+  
+  const percentages = ["12.5%", "25%", "50%", "75%", "100%"];
+  const displayLevel = index + 1;
+  const speedValElement = document.getElementById('speed-val');
+  if (speedValElement) {
+    speedValElement.innerText = `${displayLevel}/5 (${percentages[index]})`;
+  }
+  
+  if (lastSpeedIndex !== index) {
+    if (lastSpeedIndex !== -1) {
+      logMsg('System', `Speed synchronized to ${displayLevel}/5 (${percentages[index]})`, 'info');
+    }
+    lastSpeedIndex = index;
+  }
 });
 
 // ── YOLO 3D Objects ─────────────────────────────────────────────────────
@@ -271,10 +298,8 @@ function logMsg(source, text, type='info') {
 
 function updateSpeed(val) {
   speedIndexPub.publish(new ROSLIB.Message({ data: parseInt(val) }));
-  const percentages = ["12.5%", "25%", "50%", "75%", "100%"];
-  const displayLevel = parseInt(val) + 1;
-  document.getElementById('speed-val').innerText = `${displayLevel}/5 (${percentages[parseInt(val)]})`;
-  logMsg('UI', `Speed Level changed to ${displayLevel}/5 (${percentages[parseInt(val)]})`);
+  // Visual UI update is now handled centrally by speedSub.subscribe() 
+  // to guarantee exact synchronization with the C++ Node and Gamepad.
 }
 
 function setFrame(frame) {

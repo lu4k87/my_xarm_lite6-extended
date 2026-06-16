@@ -690,9 +690,11 @@
       <span class="logo-badge">WEB</span>
     </a>
 
-    <button id="dev-setup-btn" style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.4); padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; font-family: 'Outfit'; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'" onclick="runDevSetup()">
-      <i class="fa-solid fa-play"></i> RUN DEV Setup
-    </button>
+    <select id="dev-setup-mode" style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.4); padding: 8px 16px; border-radius: 8px; font-weight: 700; font-family: 'Outfit'; outline: none; cursor: pointer; transition: all 0.2s; appearance: none; -webkit-appearance: none; text-align: center;" onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'" onchange="if(this.value) { runDevSetup(this.value); this.value=''; }">
+      <option value="" disabled selected>▶ RUN DEV Setup (Select Mode)</option>
+      <option value="fake" style="background: var(--bg); color: var(--txt);">FAKE (Simulation)</option>
+      <option value="real" style="background: var(--bg); color: var(--txt);">REAL (Hardware)</option>
+    </select>
 
     <nav class="tab-nav" id="tab-nav">
       <button class="tab-btn active" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
@@ -860,11 +862,19 @@
     pollInterval = setInterval(pollLogs, 1000);
 
     // ─── DEV SETUP ────────────────────────────────────────────────────────────────
-    async function runDevSetup() {
+    async function runDevSetup(mode) {
+      let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true";
+      let servoTitle = "MoveIt Servo (Fake)";
+
+      if (mode === "real") {
+        servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=True report_type:=dev";
+        servoTitle = "MoveIt Servo (Real)";
+      }
+
       const actions = [
         {cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Server"},
         {cmd: "(sleep 1 && (google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html)) & python3 -m http.server 8081 -d src/robot_control_web_ui", title: "Web Joystick Server"},
-        {cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true", title: "MoveIt Servo (Fake)"},
+        {cmd: servoCmd, title: servoTitle},
         {cmd: "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true", title: "MoveIt MoveGroup (Standalone)"},
         {cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch"},
         {cmd: "ros2 run rviz_pose_control set_pose_moveit", title: "Set Pose MoveIt Node"},

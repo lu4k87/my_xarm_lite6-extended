@@ -1,4 +1,4 @@
 /**:
   ros__parameters:
     general:
-      grab_resolution: 'HD2K'
+      grab_resolution: 'HD720'

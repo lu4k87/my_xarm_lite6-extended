@@ -507,7 +507,7 @@ namespace xarm_api
             bio_gripper_init_loop_ = false;
             std::thread([this]() {
                 float cur_pos;
-                int ret = arm->get_bio_gripper_position(&cur_pos);
+                int ret = arm->get_bio_gripper_position(reinterpret_cast<int*>(&cur_pos));
                 while (ret == 0 && !bio_gripper_init_loop_)
                 {
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -580,7 +580,7 @@ namespace xarm_api
             RCLCPP_ERROR(node_->get_logger(), "get_bio_gripper_error, ret=%d, err=%d", ret, err);
             return;
         }
-        ret = arm->get_bio_gripper_position(&cur_pos);
+        ret = arm->get_bio_gripper_position(reinterpret_cast<int*>(&cur_pos));
         _pub_bio_gripper_joint_states(cur_pos);
 
         ret = arm->set_bio_gripper_enable(true);
@@ -628,7 +628,7 @@ namespace xarm_api
         while (is_move && rclcpp::ok())
         {
             std::this_thread::sleep_for(sltime);
-            ret = arm->get_bio_gripper_position(&cur_pos);
+            ret = arm->get_bio_gripper_position(reinterpret_cast<int*>(&cur_pos));
             if (ret == 0) {
                 if (!is_succeed) {
                     if (fabs(last_pos - cur_pos) < bio_gripper_threshold_) {
@@ -663,7 +663,7 @@ namespace xarm_api
             //     return;
             // }
         }
-        arm->get_bio_gripper_position(&cur_pos);
+        arm->get_bio_gripper_position(reinterpret_cast<int*>(&cur_pos));
         RCLCPP_INFO(node_->get_logger(), "bio move finish, cur_pos=%f", cur_pos);
         if (rclcpp::ok() && !is_succeed) {
             bio_gripper_result_->position = _bio_gripper_pos_convert(cur_pos);
