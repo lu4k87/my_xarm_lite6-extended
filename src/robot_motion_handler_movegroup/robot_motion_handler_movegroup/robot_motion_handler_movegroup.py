@@ -96,10 +96,10 @@ class RobotMotionHandlerMovegroup(Node):
         if self.servo_start_client.service_is_ready() and self.servo_stop_client.service_is_ready():
             self.startup_timer.cancel()
             self.get_logger().info('MoveIt Servo fully loaded. Auto-triggering initial pose in 1s...')
+            import time
             time.sleep(1.0) # Give TF a moment to stabilize
-            req = Trigger.Request()
-            resp = Trigger.Response()
-            self.execute_initial_pose_cb(req, resp)
+            # Startup: Just move to initial pose directly
+            self._go_to_initial_pose_joints()
 
     def execute_initial_pose_cb(self, request, response):
         if self.is_executing:
@@ -112,7 +112,6 @@ class RobotMotionHandlerMovegroup(Node):
         try:
             # --- PHASE 1: RETRACT (Move up by 15cm) ---
             try:
-                # Get current pose
                 trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
                 cur_x = trans.transform.translation.x * 1000.0
                 cur_y = trans.transform.translation.y * 1000.0
@@ -128,7 +127,6 @@ class RobotMotionHandlerMovegroup(Node):
                 cur_rot = R.from_quat(cur_q)
                 cur_euler = cur_rot.as_euler('xyz', degrees=False)
                 
-                # We want to move Z up by 15cm (150mm), but not higher than 50cm total
                 target_z = min(cur_z + 150.0, 500.0) 
                 
                 class DummyRequest:
@@ -142,48 +140,16 @@ class RobotMotionHandlerMovegroup(Node):
                 move_res = DummyResponse()
                 
                 self.get_logger().info('Phase 1: Fahre zunaechst 15cm nach oben (Retract)...')
-                # Temporarily release lock so the move_to_pose_cb can acquire it
                 self.is_executing = False
                 self.execute_move_to_pose_cb(move_req, move_res)
-                # Re-acquire lock
                 self.is_executing = True
                 
             except Exception as e:
                 self.get_logger().warn(f'Retract Phase fehlgeschlagen oder uebersprungen: {e}')
-                self.is_executing = True # Ensure lock is held
+                self.is_executing = True
 
             # --- PHASE 2: MOVE TO INITIAL POSE ---
-            # 1. Stop MoveIt Servo
-            if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
-                from std_srvs.srv import Trigger
-                req = Trigger.Request()
-                self.servo_stop_client.call_async(req)
-                self.get_logger().info('MoveIt Servo pausiert.')
-                import time
-                time.sleep(0.5) 
-                
-            # 2. Publish trajectory
-            msg = JointTrajectory()
-            msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-            
-            point = JointTrajectoryPoint()
-            point.positions = [0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0]
-            point.velocities = [0.0] * 6
-            point.time_from_start = Duration(sec=1, nanosec=500000000)
-            
-            msg.points.append(point)
-            self.publisher_.publish(msg)
-            self.get_logger().info('Trajektorie gesendet. Fahre auf Startpose...')
-            
-            # Warte auf die Ausfuehrung der Bewegung
-            time.sleep(2.0)
-            
-            # 3. Start MoveIt Servo again
-            if self.servo_start_client.wait_for_service(timeout_sec=1.0):
-                req = Trigger.Request()
-                self.servo_start_client.call_async(req)
-                self.get_logger().info('MoveIt Servo wieder gestartet.')
-                time.sleep(0.5)
+            self._go_to_initial_pose_joints()
                 
             response.success = True
             response.message = "Initial Pose reached."
@@ -195,6 +161,39 @@ class RobotMotionHandlerMovegroup(Node):
             self.is_executing = False
             
         return response
+
+    def _go_to_initial_pose_joints(self):
+        # 1. Stop MoveIt Servo
+        if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
+            from std_srvs.srv import Trigger
+            req = Trigger.Request()
+            self.servo_stop_client.call_async(req)
+            self.get_logger().info('MoveIt Servo pausiert für direkte Gelenk-Fahrt.')
+            import time
+            time.sleep(0.5) 
+            
+        # 2. Publish trajectory
+        msg = JointTrajectory()
+        msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+        
+        point = JointTrajectoryPoint()
+        point.positions = [0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0]
+        point.velocities = [0.0] * 6
+        point.time_from_start = Duration(sec=1, nanosec=500000000)
+        
+        msg.points.append(point)
+        self.publisher_.publish(msg)
+        self.get_logger().info('Trajektorie gesendet. Fahre auf Startpose...')
+        
+        # Warte auf die Ausfuehrung der Bewegung
+        time.sleep(2.0)
+        
+        # 3. Start MoveIt Servo again
+        if self.servo_start_client.wait_for_service(timeout_sec=1.0):
+            req = Trigger.Request()
+            self.servo_start_client.call_async(req)
+            self.get_logger().info('MoveIt Servo wieder gestartet.')
+            time.sleep(0.5)
 
     def execute_move_joint_cb(self, request, response):
         if self.is_executing:
