@@ -132,8 +132,8 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ### 3.3 Startbefehle der UI-Komponenten
 *Starte diese Komponenten über ROS 2 Nexus oder manuell über das Terminal:*
-* **Workspace Analyzer Backend:** `python3 src/websocket/workspace_analyzer.py`
-* **Webserver:** `python3 -m http.server 8080 -d src/websocket`
+* **Workspace Analyzer Backend:** `python3 src/dashboard_monitoring/workspace_analyzer.py`
+* **Webserver:** `python3 -m http.server 8080 -d src/dashboard_monitoring`
 * *(Dashboard erreichbar unter: `http://localhost:8080/dashboard_index.html`)*
 
 ---
@@ -773,7 +773,7 @@ dev_ws/
 │   │   └── src/rviz_robot_control_panel.cpp
 │   ├── rviz_marker_static_scene_objects/                # 📍 Python: RViz2 Marker-Publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent-Parser & Filter
-│   ├── websocket/                  # 📊 Python/JS: Workspace Analyzer & Dashboard
+│   ├── dashboard_monitoring/                  # 📊 Python/JS: Workspace Analyzer & Dashboard
 │   │   ├── workspace_analyzer.py   # Haupt-ROS 2-Node (Pub/Sub & Topologie)
 │   │   ├── workspace_parser.py     # Statische Code-Analyse (Regex)
 │   │   ├── system_utils.py         # Umgebungsvariablen-Parsing

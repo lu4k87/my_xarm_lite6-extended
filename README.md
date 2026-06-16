@@ -130,8 +130,8 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 
 ### 3.3 Launch Commands for UI Components
 *Launch these components via ROS 2 Nexus, or manually via terminal:*
-* **Workspace Analyzer Backend:** `python3 src/websocket/workspace_analyzer.py`
-* **Web Server:** `python3 -m http.server 8080 -d src/websocket`
+* **Workspace Analyzer Backend:** `python3 src/dashboard_monitoring/workspace_analyzer.py`
+* **Web Server:** `python3 -m http.server 8080 -d src/dashboard_monitoring`
 * *(Dashboard accessible at: `http://localhost:8080/dashboard_index.html`)*
 
 ---
@@ -796,7 +796,7 @@ dev_ws/
 │   │   └── src/rviz_robot_control_panel.cpp
 │   ├── rviz_marker_static_scene_objects/                # 📍 Python: RViz2 marker publisher
 │   ├── voice_command_listener/     # 🗣️ Python: Intent parser & filter
-│   ├── websocket/                  # 📊 Python/JS: Workspace analyzer & Dashboard
+│   ├── dashboard_monitoring/                  # 📊 Python/JS: Workspace analyzer & Dashboard
 │   │   ├── workspace_analyzer.py   # Main ROS 2 Node (Pub/Sub & Topology)
 │   │   ├── workspace_parser.py     # Static code analysis (Regex)
 │   │   ├── system_utils.py         # Environment parsing (bashrc cache)

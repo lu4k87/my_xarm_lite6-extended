@@ -75,13 +75,13 @@ sleep 1
 
 # Fenster 12
 echo "Starte[SCRIPT]: [Workspace Analyzer]"
-gnome-terminal --title="[SCRIPT]: Workspace Analyzer" -- bash -c "cd ~/dev_ws/src/websocket/ && python3 workspace_analyzer.py; exec bash"
+gnome-terminal --title="[SCRIPT]: Workspace Analyzer" -- bash -c "cd ~/dev_ws/src/dashboard_monitoring/ && python3 workspace_analyzer.py; exec bash"
 sleep 1
 
 
 # Fenster 13
 echo "Öffne[DASHBOARD]: [dashboard_index.html]"
-xdg-open ~/dev_ws/src/websocket/dashboard_index.html
+xdg-open ~/dev_ws/src/dashboard_monitoring/dashboard_index.html
 sleep 1
 
 echo "Alle ROS 2 Nodes und externen Programme wurden erfolgreich gestartet."
