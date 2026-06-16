@@ -110,11 +110,56 @@ class RobotMotionHandlerMovegroup(Node):
         self.is_executing = True
         
         try:
+            # --- PHASE 1: RETRACT (Move up by 15cm) ---
+            try:
+                # Get current pose
+                trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+                cur_x = trans.transform.translation.x * 1000.0
+                cur_y = trans.transform.translation.y * 1000.0
+                cur_z = trans.transform.translation.z * 1000.0
+                
+                cur_q = [
+                    trans.transform.rotation.x,
+                    trans.transform.rotation.y,
+                    trans.transform.rotation.z,
+                    trans.transform.rotation.w
+                ]
+                from scipy.spatial.transform import Rotation as R
+                cur_rot = R.from_quat(cur_q)
+                cur_euler = cur_rot.as_euler('xyz', degrees=False)
+                
+                # We want to move Z up by 15cm (150mm), but not higher than 50cm total
+                target_z = min(cur_z + 150.0, 500.0) 
+                
+                class DummyRequest:
+                    pose = [cur_x, cur_y, target_z, cur_euler[0], cur_euler[1], cur_euler[2]]
+                
+                class DummyResponse:
+                    ret = 0
+                    message = ""
+                
+                move_req = DummyRequest()
+                move_res = DummyResponse()
+                
+                self.get_logger().info('Phase 1: Fahre zunaechst 15cm nach oben (Retract)...')
+                # Temporarily release lock so the move_to_pose_cb can acquire it
+                self.is_executing = False
+                self.execute_move_to_pose_cb(move_req, move_res)
+                # Re-acquire lock
+                self.is_executing = True
+                
+            except Exception as e:
+                self.get_logger().warn(f'Retract Phase fehlgeschlagen oder uebersprungen: {e}')
+                self.is_executing = True # Ensure lock is held
+
+            # --- PHASE 2: MOVE TO INITIAL POSE ---
             # 1. Stop MoveIt Servo
             if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
+                from std_srvs.srv import Trigger
                 req = Trigger.Request()
                 self.servo_stop_client.call_async(req)
                 self.get_logger().info('MoveIt Servo pausiert.')
+                import time
                 time.sleep(0.5) 
                 
             # 2. Publish trajectory
