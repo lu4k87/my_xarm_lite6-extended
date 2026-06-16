@@ -187,6 +187,7 @@ const jointStateSub = new ROSLIB.Topic({
 });
 jointStateSub.subscribe((msg) => {
   const jointNames = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6'];
+  let moving = false;
   for (let i=0; i<6; i++) {
     const idx = msg.name.indexOf(jointNames[i]);
     if (idx !== -1) {
@@ -196,7 +197,25 @@ jointStateSub.subscribe((msg) => {
       let pct = ((val + 3.14) / 6.28) * 100;
       document.getElementById(`j${i+1}-fill`).style.width = `${pct}%`;
       document.getElementById(`j${i+1}-fill`).style.left = '0%';
+      
+      if (msg.velocity && msg.velocity.length > idx) {
+        if (Math.abs(msg.velocity[idx]) > 0.005) {
+          moving = true;
+        }
+      }
     }
+  }
+  
+  if (moving) {
+    if (!isRobotMoving) {
+      isRobotMoving = true;
+      if (typeof updateMoveItBadge === 'function') updateMoveItBadge();
+    }
+    if (movingTimeout) clearTimeout(movingTimeout);
+    movingTimeout = setTimeout(() => {
+      isRobotMoving = false;
+      if (typeof updateMoveItBadge === 'function') updateMoveItBadge();
+    }, 250);
   }
 });
 
@@ -509,26 +528,38 @@ const servoStatusSub = new ROSLIB.Topic({
   messageType: 'std_msgs/Int8'
 });
 
-servoStatusSub.subscribe((msg) => {
+let currentServoStatus = 0;
+let isRobotMoving = false;
+let movingTimeout = null;
+
+function updateMoveItBadge() {
   const dot = document.getElementById('moveit-dot');
   const text = document.getElementById('moveit-status');
-  if(dot && text) {
-    const pill = document.getElementById('moveit-dot').parentElement;
-    pill.classList.remove('pill-pulse-green', 'pill-pulse-red', 'pill-pulse-orange');
-    
-    // 1=No warning, 3=Collision, 4=Joint Bound
-    if (msg.data === 1 || msg.data === 2) {
-      dot.className = 'dot glow-green';
-      text.innerText = msg.data === 1 ? 'MoveIt: Moving..' : 'MoveIt: Active';
-      pill.classList.add('pill-pulse-green');
-    } else if (msg.data === 3 || msg.data === 4 || msg.data === 5) {
-      dot.className = 'dot glow-red';
-      text.innerText = 'MoveIt: Warn';
-      pill.classList.add('pill-pulse-red');
-    } else {
-      dot.className = 'dot glow-orange';
-      text.innerText = 'MoveIt: Wait';
-      pill.classList.add('pill-pulse-orange');
-    }
+  if(!dot || !text) return;
+  const pill = dot.parentElement;
+  pill.classList.remove('pill-pulse-green', 'pill-pulse-red', 'pill-pulse-orange');
+  
+  if (currentServoStatus === 0) {
+    dot.className = 'dot glow-green';
+    text.innerText = isRobotMoving ? 'MoveIt: Moving' : 'MoveIt: Ready';
+    pill.classList.add('pill-pulse-green');
+  } else if (currentServoStatus === 1 || currentServoStatus === 3 || currentServoStatus === 6) {
+    dot.className = 'dot glow-orange';
+    if (currentServoStatus === 1) text.innerText = 'MoveIt: Sing. Near';
+    else if (currentServoStatus === 3) text.innerText = 'MoveIt: Coll. Near';
+    else text.innerText = 'MoveIt: Leav. Sing.';
+    pill.classList.add('pill-pulse-orange');
+  } else {
+    dot.className = 'dot glow-red';
+    if (currentServoStatus === 2) text.innerText = 'MoveIt: Sing. Halt';
+    else if (currentServoStatus === 4) text.innerText = 'MoveIt: Coll. Halt';
+    else if (currentServoStatus === 5) text.innerText = 'MoveIt: Limit';
+    else text.innerText = 'MoveIt: Error';
+    pill.classList.add('pill-pulse-red');
   }
+}
+
+servoStatusSub.subscribe((msg) => {
+  currentServoStatus = msg.data;
+  updateMoveItBadge();
 });
