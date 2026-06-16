@@ -2,6 +2,24 @@
 
 ## Update Summary
 
+- > ### 1.18.0/1.18.1 
+  - Strengthen the code, fix some hidden bugs, and eliminate security risks.
+  - Supports CMake compilation
+  - Fix document errors and variable name errors
+
+- > ### 1.17.0/1.17.1
+  - Change some API names
+
+- > ### 1.16.0
+  - Added parameter to support get raw data of the Six-axis Force Torque Sensor
+  - Added an interface to control xArm Gripper G2
+  - Optimize the interface for controlling BIO Gripper G2
+  - Extend the get_joint_states interface
+
+- > ### 1.15.0
+  - Added the Six-axis Force Torque Sensor collision detection related interfaces
+  - Added support for the new version of BIO Gripper control interface
+
 - > ### 1.14.2
   - Fix the 503 interface protocol identification error issue
   - Added sync parameters to some gpio interfaces to support immediate execution (requires firmware 2.4.101 or above)
@@ -47,7 +65,7 @@
 
   - The Velocity interface supports the duration parameter (requires firmware 1.8.0 or higher)
   - Added identification interface (current identification and torque identification) (requires firmware 1.8.0 or higher)
-  - Support linear track interface (requires firmware 1.8.0 or higher)
+  - Support linear motor interface (requires firmware 1.8.0 or higher)
   - Fix the problem of not waiting when the timeout parameter of the motion interface is greater than 0
   - Support macos compilation
   - Fix some bugs
@@ -68,7 +86,7 @@
   - Optimize logic, enhance API security, Fix several bugs
 
 - > ### 1.5.0
-  - The new parameter of `set_servo_cartisian` interface is used to support servo cartisian movement of tool coordinate system
+  - The new parameter of `set_servo_cartesian` interface is used to support servo cartesian movement of tool coordinate system
   - Support delayed trigger digital IO
   - Support position detection trigger digital IO
   - Support configure the stop state to automatically reset IO signal

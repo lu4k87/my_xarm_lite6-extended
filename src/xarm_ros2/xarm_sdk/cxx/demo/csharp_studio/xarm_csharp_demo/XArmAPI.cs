@@ -119,11 +119,17 @@ namespace xarm_csharp_demo
         [DllImport("xarm.dll")]
         public static extern int set_gripper_mode(int mode, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int set_gripper_speed(float speed, int instance_id = -1);
+        public static extern int set_gripper_speed(int speed, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int set_gripper_position(float pos, bool wait = false, float timeout = 10, bool wait_motion = true, int instance_id = -1);
+        public static extern int set_gripper_position(int pos, bool wait = false, float timeout = 10, bool wait_motion = true, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_gripper_position(ref float pos, int instance_id = -1);
+        public static extern int set_gripper_g2_position(int pos, int speed = 100, int force = 50, bool wait = false, float timeout = 10, bool wait_motion = true, int instance_id = -1);
+        [DllImport("xarm.dll")]
+        public static extern int get_gripper_position(ref int pos, int instance_id = -1);
+        [DllImport("xarm.dll")]
+        public static extern int get_gripper_g2_position(ref int pos, int instance_id = -1);
+        [DllImport("xarm.dll")]
+        public static extern int get_gripper_status(ref int status, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int get_gripper_err_code(ref int err, int instance_id = -1);
         [DllImport("xarm.dll")]
@@ -183,13 +189,13 @@ namespace xarm_csharp_demo
         [DllImport("xarm.dll")]
         public static extern int get_reduced_mode(ref int mode, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_reduced_states(ref int on, int[] xyz_list, ref float tcp_speed, ref float joint_speed, float[] jrange, ref int fense_is_on, ref int collision_rebound_is_on, int instance_id = -1);
+        public static extern int get_reduced_states(ref int on, int[] xyz_list, ref float tcp_speed, ref float joint_speed, float[] jrange, ref int fence_is_on, ref int collision_rebound_is_on, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int set_reduced_tcp_boundary(int[] boundary, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int set_reduced_joint_range(float[] jrange, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int set_fense_mode(bool on, int instance_id = -1);
+        public static extern int set_fence_mode(bool on, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int set_collision_rebound(bool on, int instance_id = -1);
         [DllImport("xarm.dll")]
@@ -218,7 +224,7 @@ namespace xarm_csharp_demo
         public static extern int set_cgpio_analog_with_xyz(int ionum, float value, float[] xyz, float tol_r, int instance_id = -1);
 
         [DllImport("xarm.dll")]
-        public static extern int get_inverse_kinematics(float[] pose, float[] angles, int instance_id = -1);
+        public static extern int get_inverse_kinematics(float[] pose, float[] angles, bool limited = true, float[] ref_angles = null, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int get_forward_kinematics(float[] angles, float[] pose, int instance_id = -1);
         [DllImport("xarm.dll")]
@@ -247,9 +253,17 @@ namespace xarm_csharp_demo
         [DllImport("xarm.dll")]
         public static extern int set_bio_gripper_speed(int speed, int instance_id = -1);
         [DllImport("xarm.dll")]
+        public static extern int set_bio_gripper_control_mode(int mode, int instance_id = -1);
+        [DllImport("xarm.dll")]
+        public static extern int set_bio_gripper_force(int force, int instance_id = -1);
+        [DllImport("xarm.dll")]
+        public static extern int set_bio_gripper_g2_position(int pos, int speed = 2000, int force = 100, bool wait = true, float timeout = 5, bool wait_motion = true, int instance_id = -1);
+        [DllImport("xarm.dll")]
         public static extern int open_bio_gripper(int speed = 0, bool wait = true, float timeout = 5, bool wait_motion = true, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int close_bio_gripper(int speed = 0, bool wait = true, float timeout = 5, bool wait_motion = true, int instance_id = -1);
+        [DllImport("xarm.dll")]
+        public static extern int get_bio_gripper_g2_position(ref int pos, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int get_bio_gripper_status(ref int status, int instance_id = -1);
         [DllImport("xarm.dll")]
@@ -263,6 +277,8 @@ namespace xarm_csharp_demo
         [DllImport("xarm.dll")]
         public static extern int get_tgpio_modbus_baudrate(ref int baud, int instance_id = -1);
         [DllImport("xarm.dll")]
+        public static extern int set_rs485_use_503_port(bool use_503_port = true, int instance_id = -1);
+        [DllImport("xarm.dll")]
         public static extern int getset_tgpio_modbus_data(byte[] modbus_data, int modbus_length, byte[] ret_data, int ret_length, byte host_id = 9, bool is_transparent_transmission = false, bool use_503_port = false, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int set_self_collision_detection(bool on, int instance_id = -1);
@@ -272,7 +288,7 @@ namespace xarm_csharp_demo
         public static extern int vc_set_joint_velocity(float[] speeds, bool is_sync = true, float duration = -1, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int vc_set_cartesian_velocity(float[] speeds, bool is_tool_coord = false, float duration = -1, int instance_id = -1);
-
+        // // Just to load the overloaded function set_ft_sensor_admittance_parameters/set_ft_sensor_force_parameters
         [DllImport("xarm.dll")]
         public static extern int set_impedance(int coord, int[] c_axis, float[] M, float[] K, float[] B, int instance_id = -1);
         [DllImport("xarm.dll")]
@@ -283,22 +299,27 @@ namespace xarm_csharp_demo
         public static extern int config_force_control(int coord, int[] c_axis, float[] f_ref, float[] limits, int instance_id = -1);
         [DllImport("xarm.dll")]
         public static extern int set_force_control_pid(float[] kp, float[] ki, float[] kd, float[] xe_limit, int instance_id = -1);
+        ///
         [DllImport("xarm.dll")]
-        public static extern int ft_sensor_set_zero(int instance_id = -1);
+        public static extern int set_ft_sensor_admittance_parameters(int coord, int[] c_axis, float[] M, float[] K, float[] B, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int ft_sensor_iden_load(float[] result, int instance_id = -1);
+        public static extern int set_ft_sensor_force_parameters(int coord, int[] c_axis, float[] f_ref, float[] limits, float[] kp, float[] ki, float[] kd, float[] xe_limit, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int ft_sensor_cali_load(float[] load, bool association_setting_tcp_load = false, float m = (float)0.270, float x = -17, float y = 9, float z = (float)11.8, int instance_id = -1);
+        public static extern int set_ft_sensor_zero(int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int ft_sensor_enable(int on_off, int instance_id = -1);
+        public static extern int iden_ft_sensor_load_offset(float[] result, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int ft_sensor_app_set(int app_code, int instance_id = -1);
+        public static extern int set_ft_sensor_load_offset(float[] load_offset, bool association_setting_tcp_load = false, float m = 0.27F, float x = -17, float y = 9, float z = 11.8F, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int ft_sensor_app_get(ref int app_code, int instance_id = -1);
+        public static extern int set_ft_sensor_enable(int on_off, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_ft_sensor_data(float[] ft_data, int instance_id = -1);
+        public static extern int set_ft_sensor_mode(int mode, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_ft_sensor_config(ref int ft_app_status, ref int ft_is_started, ref int ft_type, ref int ft_id, ref int ft_freq, 
+        public static extern int get_ft_sensor_mode(ref int mode, int instance_id = -1);
+        [DllImport("xarm.dll")]
+        public static extern int get_ft_sensor_data(float[] ft_data, bool is_raw = false, int instance_id = -1);
+        [DllImport("xarm.dll")]
+        public static extern int get_ft_sensor_config(ref int ft_mode, ref int ft_is_started, ref int ft_type, ref int ft_id, ref int ft_freq, 
             ref float ft_mass, ref float ft_dir_bias, float[] ft_centroid, float[] ft_zero, ref int imp_coord, int[] imp_c_axis, float[] M, float[] K, float[] B,
             ref int f_coord, int[] f_c_axis, float[] f_ref, float[] f_limits, float[] kp, float[] ki, float[] kd, float[] xe_limit, int instance_id = -1);
         [DllImport("xarm.dll")]
@@ -308,31 +329,31 @@ namespace xarm_csharp_demo
         public static extern int iden_tcp_load(float[] result, float estimated_mass = 0, int instance_id = -1);
 
         [DllImport("xarm.dll")]
-        public static extern int get_linear_track_error(ref int err, int instance_id = -1);
+        public static extern int get_linear_motor_error(ref int err, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_linear_track_status(ref int status, int instance_id = -1);
+        public static extern int get_linear_motor_status(ref int status, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_linear_track_pos(ref int pos, int instance_id = -1);
+        public static extern int get_linear_motor_pos(ref int pos, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_linear_track_is_enabled(ref int status, int instance_id = -1);
+        public static extern int get_linear_motor_is_enabled(ref int status, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_linear_track_on_zero(ref int status, int instance_id = -1);
+        public static extern int get_linear_motor_on_zero(ref int status, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_linear_track_sci(ref int sci1, int instance_id = -1);
+        public static extern int get_linear_motor_sci(ref int sci1, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int get_linear_track_sco(int[] sco, int instance_id = -1);
+        public static extern int get_linear_motor_sco(int[] sco, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int clean_linear_track_error(int instance_id = -1);
+        public static extern int clean_linear_motor_error(int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int set_linear_track_enable(bool enable, int instance_id = -1);
+        public static extern int set_linear_motor_enable(bool enable, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int set_linear_track_speed(int speed, int instance_id = -1);
+        public static extern int set_linear_motor_speed(int speed, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int set_linear_track_back_origin(bool wait = true, bool auto_enable = true, int instance_id = -1);
+        public static extern int set_linear_motor_back_origin(bool wait = true, bool auto_enable = true, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int set_linear_track_pos(int pos, int speed = 0, bool wait = true, float timeout = 100, bool auto_enable = true, int instance_id = -1);
+        public static extern int set_linear_motor_pos(int pos, int speed = 0, bool wait = true, float timeout = 100, bool auto_enable = true, int instance_id = -1);
         [DllImport("xarm.dll")]
-        public static extern int set_linear_track_stop(int instance_id = -1);
+        public static extern int set_linear_motor_stop(int instance_id = -1);
 
         [DllImport("xarm.dll")]
         public static extern int set_timeout(float timeout, int instance_id = -1);
@@ -402,6 +423,9 @@ namespace xarm_csharp_demo
         public static extern int get_c31_error_info(ref int servo_id, ref float theoretical_tau, ref float actual_tau, int instance_id = -1);
         
         [DllImport("xarm.dll")]
+        public static extern int get_c54_error_info(ref int dir, ref float tau_threshold, ref float actual_tau, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
         public static extern int get_c37_error_info(ref int servo_id, ref float diff_angle, int instance_id = -1);
 
         [DllImport("xarm.dll")]
@@ -415,6 +439,48 @@ namespace xarm_csharp_demo
 
         [DllImport("xarm.dll")]
         public static extern int get_c38_error_info(ref int id_bits, float[] angles, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int set_ft_collision_detection(int on_off, int instance_id = -1);
+        
+        [DllImport("xarm.dll")]
+        public static extern int set_ft_collision_rebound(int on_off, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int set_ft_collision_threshold(float[] thresholds, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int set_ft_collision_reb_distance(float[] distances, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int set_ft_admittance_ctrl_threshold(float[] thresholds, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int set_external_device_monitor_params(int dev_type, int frequency, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int set_tgpio_monitor_params(int io_type, int frequency, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int get_ft_collision_detection(ref int on_off, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int get_ft_collision_rebound(ref int on_off, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int get_ft_collision_threshold(float[] thresholds, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int get_ft_collision_reb_distance(float[] distances, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int get_ft_admittance_ctrl_threshold(float[] thresholds, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int get_external_device_monitor_params(int[] monitor_params, int instance_id = -1);
+
+        [DllImport("xarm.dll")]
+        public static extern int get_tgpio_monitor_params(int[] monitor_params, int instance_id = -1);
 
         /* modbus tcp func_code: 0x01 */
         [DllImport("xarm.dll")]
@@ -480,6 +546,123 @@ namespace xarm_csharp_demo
         {
             int tmp = 0;
             return get_tgpio_digital(ref io0_value, ref io1_value, ref tmp, ref tmp, ref tmp);
+        }
+
+        public static int set_gripper_speed(float speed, int instance_id = -1)
+        {
+            return set_gripper_speed((int)speed, instance_id);
+        }
+
+        public static int set_gripper_position(float pos, bool wait = false, float timeout = 10, bool wait_motion = true, int instance_id = -1)
+        {
+            return set_gripper_position((int)pos, wait, timeout, wait_motion, instance_id);
+        }
+
+        public static int get_gripper_position(ref float pos, int instance_id = -1)
+        {
+            int val = 0;
+            int ret = get_gripper_position(ref val, instance_id);
+            pos = (float)val;
+            return ret;
+        }
+
+        public static int set_ft_sensor_admittance_parameters(int coord, int[] c_axis, int instance_id = -1)
+        {
+            return set_impedance_config(coord, c_axis, instance_id);
+        }
+
+        public static int set_ft_sensor_admittance_parameters(float[] M, float[] K, float[] B, int instance_id = -1)
+        {
+            return set_impedance_mbk(M, K, B, instance_id);
+        }
+
+        public static int set_ft_sensor_force_parameters(int coord, int[] c_axis, float[] f_ref, float[] limits, int instance_id = -1)
+        {
+            return config_force_control(coord, c_axis, f_ref, limits, instance_id);
+        }
+
+        public static int set_ft_sensor_force_parameters(float[] kp, float[] ki, float[] kd, float[] xe_limit, int instance_id = -1)
+        {
+            return set_force_control_pid(kp, ki, kd, xe_limit, instance_id);
+        }
+
+        // OLD API
+        public static int get_linear_track_error(ref int err, int instance_id = -1)
+        {
+            return get_linear_track_error(ref err, instance_id);
+        }
+        public static int get_linear_track_status(ref int status, int instance_id = -1)
+        {
+            return get_linear_motor_status(ref status, instance_id);
+        }
+        public static int get_linear_track_pos(ref int pos, int instance_id = -1)
+        {
+            return get_linear_motor_pos(ref pos, instance_id);
+        }
+        public static int get_linear_track_is_enabled(ref int status, int instance_id = -1)
+        {
+            return get_linear_motor_is_enabled(ref status, instance_id);
+        }
+        public static int get_linear_track_on_zero(ref int status, int instance_id = -1)
+        {
+            return get_linear_motor_on_zero(ref status, instance_id);
+        }
+        public static int get_linear_track_sci(ref int sci1, int instance_id = -1)
+        {
+            return get_linear_motor_sci(ref sci1, instance_id);
+        }
+        public static int get_linear_track_sco(int[] sco, int instance_id = -1)
+        {
+            return get_linear_motor_sco(sco, instance_id);
+        }
+        public static int clean_linear_track_error(int instance_id = -1)
+        {
+            return clean_linear_motor_error(instance_id);
+        }
+        public static int set_linear_track_enable(bool enable, int instance_id = -1)
+        {
+            return set_linear_motor_enable(enable, instance_id);
+        }
+        public static int set_linear_track_speed(int speed, int instance_id = -1)
+        {
+            return set_linear_motor_speed(speed, instance_id);
+        }
+        public static int set_linear_track_back_origin(bool wait = true, bool auto_enable = true, int instance_id = -1)
+        {
+            return set_linear_motor_back_origin(wait, auto_enable, instance_id);
+        }
+        public static int set_linear_track_pos(int pos, int speed = 0, bool wait = true, float timeout = 100, bool auto_enable = true, int instance_id = -1)
+        {
+            return set_linear_motor_pos(pos, speed, wait, timeout, auto_enable, instance_id);
+        }
+        public static int set_linear_track_stop(int instance_id = -1)
+        {
+            return set_linear_motor_stop(instance_id);
+        }
+
+        public static int ft_sensor_set_zero(int instance_id = -1)
+        {
+            return set_ft_sensor_zero(instance_id);
+        }
+        public static int ft_sensor_iden_load(float[] result, int instance_id = -1)
+        {
+            return iden_ft_sensor_load_offset(result, instance_id);
+        }
+        public static int ft_sensor_cali_load(float[] load_offset, bool association_setting_tcp_load = false, float m = 0.27F, float x = -17, float y = 9, float z = 11.8F, int instance_id = -1)
+        {
+            return set_ft_sensor_load_offset(load_offset, association_setting_tcp_load, m, x, y, z, instance_id);
+        }
+        public static int ft_sensor_enable(int on_off, int instance_id = -1)
+        {
+            return set_ft_sensor_enable(on_off, instance_id);
+        }
+        public static int ft_sensor_app_set(int mode, int instance_id = -1)
+        {
+            return set_ft_sensor_mode(mode, instance_id);
+        }
+        public static int ft_sensor_app_get(ref int mode, int instance_id = -1)
+        {
+            return get_ft_sensor_mode(ref mode, instance_id);
         }
     }
 }

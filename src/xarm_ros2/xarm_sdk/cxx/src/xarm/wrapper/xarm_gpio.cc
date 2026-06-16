@@ -21,7 +21,7 @@ static int get_baud_inx(int baud) {
 
 int XArmAPI::get_tgpio_version(unsigned char versions[3]) {
   if (!is_connected()) return API_CODE::NOT_CONNECTED;
-  float val1 = 0, val2 = 0, val3 = 0;
+  int val1 = 0, val2 = 0, val3 = 0;
   int code = 0;
   versions[0] = 0;
   versions[1] = 0;
@@ -45,7 +45,7 @@ int XArmAPI::get_tgpio_digital(int *io0, int *io1, int *io2, int *io3, int *io4)
 }
 
 int XArmAPI::set_tgpio_digital(int ionum, int value, float delay_sec, bool sync) {
-  if (ionum != 0 && ionum != 1) return API_CODE::PARAM_ERROR;
+  if (ionum != 0 && ionum != 1 && ionum != 2 && ionum != 3 && ionum != 4) return API_CODE::PARAM_ERROR;
   _wait_until_not_pause();
   _wait_until_cmdnum_lt_max();
   int code = _xarm_is_ready();
@@ -76,7 +76,7 @@ int XArmAPI::get_cgpio_digital(int *digitals, int *digitals2) {
   for (int i = 0; i < 8; i++) {
     digitals[i] = tmp >> i & 0x0001;
   }
-  if (digitals2 != NULL) {
+  if (digitals2 != nullptr) {
     for (int i = 8; i < 16; i++) {
       digitals2[i-8] = tmp >> i & 0x0001;
     }
@@ -141,12 +141,35 @@ int XArmAPI::get_cgpio_state(int *state_, int *digit_io, fp32 *analog, int *inpu
 }
 
 
-int XArmAPI::get_suction_cup(int *val, int hardware_version) {
-  int io1 = hardware_version == 1 ? 0 : 3;
-  return get_tgpio_digital(val, &io1);
+int XArmAPI::get_vacuum_gripper(int *val, int hardware_version) {
+  int tmp = 0;
+  int ret = core->tgpio_addr_r16(0x0A18, &tmp);
+
+  if (hardware_version == 1) {
+    int dig1 = tmp & 0x01;
+    int dig2 = (tmp & 0x02) >> 1;
+    if (dig1 != 1 || dig2 != 0) {
+      // off
+      *val = -1;
+      return ret;
+    }
+    int io1;
+    return get_tgpio_digital(val, &io1);
+  }
+  else {
+    int dig1 = (tmp & 0x04) >> 2;
+    int dig2 = (tmp & 0x08) >> 3;
+    if (dig1 != 1 || dig2 != 0) {
+      // off
+      *val = -1;
+      return ret;
+    }
+    int io0, io1;
+    return get_tgpio_digital(&io0, &io1, nullptr, val);
+  }
 }
 
-int XArmAPI::set_suction_cup(bool on, bool wait, float timeout, float delay_sec, bool sync, int hardware_version) {
+int XArmAPI::set_vacuum_gripper(bool on, bool wait, float timeout, float delay_sec, bool sync, int hardware_version) {
   _wait_until_not_pause();
   _wait_until_cmdnum_lt_max();
   int code = _xarm_is_ready();
@@ -215,10 +238,10 @@ int XArmAPI::set_cgpio_analog_with_xyz(int ionum, float value, float xyz[3], flo
 int XArmAPI::_check_modbus_code(int ret, unsigned char *rx_data, unsigned char host_id) {
   if (!is_connected()) return API_CODE::NOT_CONNECTED;
   if (ret == 0 || ret == UXBUS_STATE::ERR_CODE || ret == UXBUS_STATE::WAR_CODE) {
-    if (rx_data != NULL && rx_data[0] != host_id)
+    if (rx_data != nullptr && rx_data[0] != host_id)
       return API_CODE::HOST_ID_ERR;
     if (ret != 0) {
-      if (host_id == UXBUS_CONF::TGPIO_HOST_ID) {
+      if (host_id == UXBUS_CONF::ROBOT_RS485_HOST_ID) {
         if (error_code != 19 && error_code != 28) {
           int err_warn[2] = { 0 };
           get_err_warn_code(err_warn);
@@ -239,11 +262,11 @@ int XArmAPI::_check_modbus_code(int ret, unsigned char *rx_data, unsigned char h
 
 int XArmAPI::_get_modbus_baudrate(int *baud_inx, unsigned char host_id) {
   if (!is_connected()) return API_CODE::NOT_CONNECTED;
-  float val = 0;
+  int val = 0;
   int ret = core->tgpio_addr_r16(SERVO3_RG::MODBUS_BAUDRATE & 0x0FFF, &val, host_id);
-  *baud_inx = (int)val;
+  *baud_inx = val;
   if (ret == UXBUS_STATE::ERR_CODE || ret == UXBUS_STATE::WAR_CODE) {
-    if (host_id == UXBUS_CONF::TGPIO_HOST_ID) {
+    if (host_id == UXBUS_CONF::ROBOT_RS485_HOST_ID) {
       if (error_code != 19 && error_code != 28) {
         int err_warn[2] = { 0 };
         get_err_warn_code(err_warn);
@@ -260,11 +283,11 @@ int XArmAPI::_get_modbus_baudrate(int *baud_inx, unsigned char host_id) {
     ret = (error_code != 19 && error_code != 28) ? 0 : ret;
   }
   if (ret == 0 && *baud_inx >= 0 && *baud_inx < 13) {
-    if (host_id == UXBUS_CONF::TGPIO_HOST_ID) {
-      modbus_baud_ = BAUDRATES[*baud_inx];
+    if (host_id == UXBUS_CONF::ROBOT_RS485_HOST_ID) {
+      tgpio_modbus_baud_ = BAUDRATES[*baud_inx];
     }
-    else if (host_id == UXBUS_CONF::LINEAR_TRACK_HOST_ID) {
-      linear_track_baud_ = BAUDRATES[*baud_inx];
+    else if (host_id == UXBUS_CONF::CONTROL_BOX_RS485_HOST_ID) {
+      control_box_modbus_baud_ = BAUDRATES[*baud_inx];
     }
   }
   return ret;
@@ -274,7 +297,7 @@ int XArmAPI::_checkset_modbus_baud(int baudrate, bool check, unsigned char host_
   if (!is_connected()) return API_CODE::NOT_CONNECTED;
   // skip checkset if check is true and (baud_checkset_flag_ is false or baudrate == 0)
   if (check && (!baud_checkset_flag_ || baudrate <= 0)) return 0;
-  if (check && ((host_id == UXBUS_CONF::TGPIO_HOST_ID && modbus_baud_ == baudrate) || (host_id == UXBUS_CONF::LINEAR_TRACK_HOST_ID && linear_track_baud_ == baudrate)))
+  if (check && ((host_id == UXBUS_CONF::ROBOT_RS485_HOST_ID && tgpio_modbus_baud_ == baudrate) || (host_id == UXBUS_CONF::CONTROL_BOX_RS485_HOST_ID && control_box_modbus_baud_ == baudrate)))
     return 0;
   int baud_inx = get_baud_inx(baudrate);
   if (baud_inx == -1) return API_CODE::MODBUS_BAUD_NOT_SUPPORT;
@@ -292,7 +315,7 @@ int XArmAPI::_checkset_modbus_baud(int baudrate, bool check, unsigned char host_
         core->tgpio_addr_w16(SERVO3_RG::SOFT_REBOOT, 1, host_id);
         int err_warn[2] = { 0 };
         get_err_warn_code(err_warn);
-        if (host_id == UXBUS_CONF::TGPIO_HOST_ID) {
+        if (host_id == UXBUS_CONF::ROBOT_RS485_HOST_ID) {
           if (error_code == 19 || error_code == 28) {
             clean_error();
             if (ignore_state_) set_state(state_ >= 3 ? state_ : 0);
@@ -307,9 +330,16 @@ int XArmAPI::_checkset_modbus_baud(int baudrate, bool check, unsigned char host_
           sleep_milliseconds(1000);
         }
       }
+      catch (const std::exception& e) {
+        ignore_error_ = false;
+        ignore_state_ = false;
+        XARM_LOG_WARN("checkset_modbus_baud exception: %s\n", e.what());
+        return API_CODE::API_EXCEPTION;
+      }
       catch (...) {
         ignore_error_ = false;
         ignore_state_ = false;
+        XARM_LOG_WARN("checkset_modbus_baud exception: unknown\n");
         return API_CODE::API_EXCEPTION;
       }
       ignore_error_ = false;
@@ -317,19 +347,19 @@ int XArmAPI::_checkset_modbus_baud(int baudrate, bool check, unsigned char host_
       ret = _get_modbus_baudrate(&cur_baud_inx, host_id);
     }
     if (ret == 0 && cur_baud_inx < 13) {
-      if (host_id == UXBUS_CONF::TGPIO_HOST_ID) {
-        modbus_baud_ = BAUDRATES[cur_baud_inx];
+      if (host_id == UXBUS_CONF::ROBOT_RS485_HOST_ID) {
+        tgpio_modbus_baud_ = BAUDRATES[cur_baud_inx];
       }
-      else if (host_id == UXBUS_CONF::LINEAR_TRACK_HOST_ID) {
-        linear_track_baud_ = BAUDRATES[cur_baud_inx];
+      else if (host_id == UXBUS_CONF::CONTROL_BOX_RS485_HOST_ID) {
+        control_box_modbus_baud_ = BAUDRATES[cur_baud_inx];
       }
     }
   }
-  if (host_id == UXBUS_CONF::TGPIO_HOST_ID) {
-    return modbus_baud_ == baudrate ? 0 : API_CODE::MODBUS_BAUD_NOT_CORRECT;
+  if (host_id == UXBUS_CONF::ROBOT_RS485_HOST_ID) {
+    return tgpio_modbus_baud_ == baudrate ? 0 : API_CODE::MODBUS_BAUD_NOT_CORRECT;
   }
-  else if (host_id == UXBUS_CONF::LINEAR_TRACK_HOST_ID) {
-    return linear_track_baud_ == baudrate ? 0 : API_CODE::MODBUS_BAUD_NOT_CORRECT;
+  else if (host_id == UXBUS_CONF::CONTROL_BOX_RS485_HOST_ID) {
+    return control_box_modbus_baud_ == baudrate ? 0 : API_CODE::MODBUS_BAUD_NOT_CORRECT;
   }
   else {
     if (ret == 0 && cur_baud_inx < 13) {
@@ -339,46 +369,95 @@ int XArmAPI::_checkset_modbus_baud(int baudrate, bool check, unsigned char host_
   }
 }
 
-int XArmAPI::set_tgpio_modbus_timeout(int timeout, bool is_transparent_transmission) {
+int XArmAPI::set_rs485_timeout(int timeout, std::string target, std::string protocol)
+{
   if (!is_connected()) return API_CODE::NOT_CONNECTED;
-  return core->set_modbus_timeout(timeout, is_transparent_transmission);
+  bool is_tt = protocol == "transparent";
+  if (target == "control_box")
+    return core->set_common_param(is_tt ? 25 : 24, timeout);
+  else
+    return core->set_modbus_timeout(timeout, is_tt);
 }
 
-int XArmAPI::set_tgpio_modbus_baudrate(int baud) {
-  return _checkset_modbus_baud(baud, false);
+int XArmAPI::set_rs485_timeout(int timeout, bool is_transparent_transmission) {
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  if (is_transparent_transmission)
+    return set_rs485_timeout(timeout, "robot", "transparent");
+  else
+    return set_rs485_timeout(timeout, "robot", "modbus_rtu");
 }
 
-int XArmAPI::get_tgpio_modbus_baudrate(int *baud) {
+int XArmAPI::get_rs485_timeout(int *timeout, std::string target, std::string protocol)
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  bool is_tt = protocol == "transparent";
+  if (target == "control_box")
+    return core->get_common_param(is_tt ? 25 : 24, timeout);
+  else
+    return core->get_common_param(is_tt ? 5 : 4, timeout);
+}
+
+int XArmAPI::get_rs485_timeout(int *timeout, bool is_transparent_transmission)
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  if (is_transparent_transmission)
+    return get_rs485_timeout(timeout, "robot", "transparent");
+  else
+    return get_rs485_timeout(timeout, "robot", "modbus_rtu");
+}
+
+int XArmAPI::set_rs485_baudrate(int baud, std::string target) {
+  int host_id = target == "control_box" ? UXBUS_CONF::CONTROL_BOX_RS485_HOST_ID : UXBUS_CONF::ROBOT_RS485_HOST_ID;
+  return _checkset_modbus_baud(baud, false, host_id);
+}
+
+int XArmAPI::get_rs485_baudrate(int *baud, std::string target) {
   int cur_baud_inx = 0;
-  int ret = _get_modbus_baudrate(&cur_baud_inx);
-  if (ret == 0 && cur_baud_inx < 13) 
-    modbus_baud_ = BAUDRATES[cur_baud_inx];
-  *baud = modbus_baud_;
+  int host_id = target == "control_box" ? UXBUS_CONF::CONTROL_BOX_RS485_HOST_ID : UXBUS_CONF::ROBOT_RS485_HOST_ID;
+  int ret = _get_modbus_baudrate(&cur_baud_inx, host_id);
+  *baud = target == "control_box" ? control_box_modbus_baud_ : tgpio_modbus_baud_;
   return ret;
+}
+
+int XArmAPI::set_rs485_use_503_port(bool use_503_port)
+{
+  if (use_503_port) {
+    if (!_is_connected_503() && _connect_503() != 0) {
+      core->tgpio_set_modbus_func = std::bind(&UxbusCmdTcp::tgpio_set_modbus, core, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6);
+      return API_CODE::RET_IS_INVALID;
+    }
+    core->tgpio_set_modbus_func = std::bind(&UxbusCmdTcp::tgpio_set_modbus, core503_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6);
+  }
+  else {
+    core->tgpio_set_modbus_func = std::bind(&UxbusCmdTcp::tgpio_set_modbus, core, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6);
+  }
+  return 0;
+}
+
+int XArmAPI::set_rs485_data(unsigned char *modbus_data, int modbus_length, unsigned char *ret_data, int ret_length, unsigned char host_id, bool is_transparent_transmission, bool use_503_port) {
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  std::vector<unsigned char> rx_data(ret_length + 1, 0);
+  int ret = 0;
+  if (use_503_port) {
+    if (!_is_connected_503() && _connect_503() != 0) {
+      return API_CODE::NOT_CONNECTED;
+    }
+    ret = core503_->tgpio_set_modbus_func(modbus_data, modbus_length, rx_data.data(), host_id, 0.0, is_transparent_transmission);
+  }
+  else {
+    ret = core->tgpio_set_modbus_func(modbus_data, modbus_length, rx_data.data(), host_id, 0.0, is_transparent_transmission);
+  }
+  ret = _check_modbus_code(ret, rx_data.data());
+  memcpy(ret_data, rx_data.data() + 1, ret_length);
+  return ret;
+}
+
+int XArmAPI::set_rs485_data(unsigned char *modbus_data, int modbus_length, unsigned char *ret_data, int ret_length, std::string target, std::string protocol, bool use_503_port) {
+  int host_id = target == "control_box" ? UXBUS_CONF::CONTROL_BOX_RS485_HOST_ID : UXBUS_CONF::ROBOT_RS485_HOST_ID;
+  bool is_tt = protocol == "transparent";
+  return set_rs485_data(modbus_data, modbus_length, ret_data, ret_length, host_id, is_tt, use_503_port);
 }
 
 int XArmAPI::getset_tgpio_modbus_data(unsigned char *modbus_data, int modbus_length, unsigned char *ret_data, int ret_length, unsigned char host_id, bool is_transparent_transmission, bool use_503_port) {
-  if (!is_connected()) return API_CODE::NOT_CONNECTED;
-  unsigned char *rx_data = new unsigned char[ret_length + 1]();
-  int ret = 0;
-  if (is_transparent_transmission) {
-    if (use_503_port) {
-      if (!_is_connected_503() && _connect_503() != 0) {
-        delete[] rx_data;
-        return API_CODE::NOT_CONNECTED;
-      }
-      ret = core503_->tgpio_set_modbus(modbus_data, modbus_length, rx_data, host_id, 0.0, true);
-      
-    }
-    else {
-      ret = core->tgpio_set_modbus(modbus_data, modbus_length, rx_data, host_id, 0.0, true);
-    }
-  }
-  else {
-    ret = core->tgpio_set_modbus(modbus_data, modbus_length, rx_data, host_id);
-  }
-  ret = _check_modbus_code(ret, rx_data);
-  memcpy(ret_data, rx_data + 1, ret_length);
-  delete[] rx_data;
-  return ret;
+  return set_rs485_data(modbus_data, modbus_length, ret_data, ret_length, host_id, is_transparent_transmission, use_503_port);
 }

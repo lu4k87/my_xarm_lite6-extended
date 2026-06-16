@@ -137,14 +137,14 @@ int XArmAPI::get_reduced_mode(int *mode) {
   return core->get_reduced_mode(mode);
 }
 
-int XArmAPI::get_reduced_states(int *on, int *xyz_list, float *tcp_speed, float *joint_speed, float jrange[14], int *fense_is_on, int *collision_rebound_is_on) {
+int XArmAPI::get_reduced_states(int *on, int *xyz_list, float *tcp_speed, float *joint_speed, float jrange[14], int *fence_is_on, int *collision_rebound_is_on) {
   if (!is_connected()) return API_CODE::NOT_CONNECTED;
-  int ret = core->get_reduced_states(on, xyz_list, tcp_speed, joint_speed, jrange, fense_is_on, collision_rebound_is_on, _version_is_ge() ? 79 : 21);
+  int ret = core->get_reduced_states(on, xyz_list, tcp_speed, joint_speed, jrange, fence_is_on, collision_rebound_is_on, _version_is_ge() ? 79 : 21);
   if (!default_is_radian) {
     *joint_speed = to_degree(*joint_speed);
   }
   if (_version_is_ge()) {
-    if (jrange != NULL && !default_is_radian) {
+    if (jrange != nullptr && !default_is_radian) {
       for (int i = 0; i < 14; i++) {
         jrange[i] = to_degree(jrange[i]);
       }
@@ -183,9 +183,9 @@ int XArmAPI::set_reduced_joint_range(float jrange[14]) {
   return core->set_reduced_jrange(joint_range);
 }
 
-int XArmAPI::set_fense_mode(bool on) {
+int XArmAPI::set_fence_mode(bool on) {
   if (!is_connected()) return API_CODE::NOT_CONNECTED;
-  return core->set_fense_on(int(on));
+  return core->set_fence_on(int(on));
 }
 
 int XArmAPI::set_collision_rebound(bool on) {
@@ -242,18 +242,23 @@ int XArmAPI::set_collision_tool_model(int tool_type, int n, ...) {
   }
   if (n <= (tool_type == COLLISION_TOOL_TYPE::BOX ? 2 : tool_type == COLLISION_TOOL_TYPE::CYLINDER ? 1 : 0))
     return API_CODE::PARAM_ERROR;
-  fp32 *params = new fp32[n]();
-  va_list args;
-  va_start(args, n);
-  int inx = 0;
-  while (inx < n)
-  {
-    params[inx] = (fp32)va_arg(args, double);
-    inx++;
+  int params_len = tool_type == COLLISION_TOOL_TYPE::BOX ? 6 : tool_type == COLLISION_TOOL_TYPE::CYLINDER ? 5 : 0;
+  params_len = params_len < n ? params_len : n;
+  std::vector<fp32> params(params_len, 0);
+  
+  std::fill(params.begin(), params.end(), 0); 
+  if (tool_type == COLLISION_TOOL_TYPE::BOX || tool_type == COLLISION_TOOL_TYPE::CYLINDER) {
+    va_list args;
+    va_start(args, n);
+    int inx = 0;
+    while (inx < n && inx < params_len)
+    {
+      params[inx] = (fp32)va_arg(args, double);
+      inx++;
+    }
+    va_end(args);
   }
-  va_end(args);
-  int ret = core->set_collision_tool_model(tool_type, n, params);
-  delete[] params;
+  int ret = core->set_collision_tool_model(tool_type, params_len, params.data());
   return ret;
 }
 
@@ -309,15 +314,6 @@ int XArmAPI::get_fdb_mat_history_num(int *num)
   return core->get_common_param(3, num);
 }
 
-int XArmAPI::get_tgpio_modbus_timeout(int *timeout, bool is_transparent_transmission)
-{
-  if (!is_connected()) return API_CODE::NOT_CONNECTED;
-  if (is_transparent_transmission)
-    return core->get_common_param(5, timeout);
-  else
-    return core->get_common_param(4, timeout);
-}
-
 int XArmAPI::get_poe_status(int *status)
 {
   if (!is_connected()) return API_CODE::NOT_CONNECTED;
@@ -334,6 +330,12 @@ int XArmAPI::get_c31_error_info(int *servo_id, float *theoretical_tau, float *ac
 {
   if (!is_connected()) return API_CODE::NOT_CONNECTED;
   return core->get_c31_error_info(servo_id, theoretical_tau, actual_tau);
+}
+
+int XArmAPI::get_c54_error_info(int *dir, float *tau_threshold, float *actual_tau)
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->get_c54_error_info(dir, tau_threshold, actual_tau);
 }
 
 int XArmAPI::get_c37_error_info(int *servo_id, float *diff_angle)
@@ -382,4 +384,100 @@ int XArmAPI::get_c38_error_info(int *id_bits, float angles[7])
       angles[i] = to_degree(angles[i]);
   }
   return ret;
+}
+
+int XArmAPI::set_ft_collision_detection(int on_off)
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->set_common_param(11, on_off);
+}
+
+int XArmAPI::set_ft_collision_rebound(int on_off)
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->set_common_param(13, on_off);
+}
+
+int XArmAPI::set_ft_collision_threshold(float thresholds[6])
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->set_common_param(12, thresholds, 6);
+}
+
+int XArmAPI::set_ft_collision_reb_distance(float distances[6])
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  float dis[6];
+  for (int i = 0; i < 6; i++) {
+    dis[i] = i < 3 || default_is_radian ? distances[i] : to_radian(distances[i]);
+  }
+  return core->set_common_param(14, dis, 6);
+}
+
+int XArmAPI::set_ft_admittance_ctrl_threshold(float thresholds[6])
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->set_common_param(6, thresholds, 6);
+}
+
+int XArmAPI::set_external_device_monitor_params(int dev_type, int frequency)
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  int params[2] = {dev_type, frequency};
+  return core->set_common_param(15, params, 2);
+}
+
+int XArmAPI::set_tgpio_monitor_params(int dev_type, int frequency)
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  int params[2] = {dev_type, frequency};
+  return core->set_common_param(16, params, 2);
+}
+
+int XArmAPI::get_ft_collision_detection(int *on_off)
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->get_common_param(11, on_off);
+}
+
+int XArmAPI::get_ft_collision_rebound(int *on_off)
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->get_common_param(13, on_off);
+}
+
+int XArmAPI::get_ft_collision_threshold(float thresholds[6])
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->get_common_param(12, thresholds, 6);
+}
+
+int XArmAPI::get_ft_collision_reb_distance(float distances[6])
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  int ret = core->get_common_param(14, distances, 6);
+  if (ret == 0 && !default_is_radian) {
+    for (int i = 3; i < 6; i++) {
+      distances[i] = to_degree(distances[i]);
+    }
+  }
+  return ret;
+}
+
+int XArmAPI::get_ft_admittance_ctrl_threshold(float thresholds[6])
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->get_common_param(6, thresholds, 6);
+}
+
+int XArmAPI::get_external_device_monitor_params(int params[2])
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->get_common_param(15, params, 2);
+}
+
+int XArmAPI::get_tgpio_monitor_params(int params[2])
+{
+  if (!is_connected()) return API_CODE::NOT_CONNECTED;
+  return core->get_common_param(16, params, 2);
 }

@@ -14,7 +14,7 @@
 
 namespace XArmWrapper
 {
-  XArmAPI* arm = NULL;
+  XArmAPI* arm = nullptr;
   int id = 0;
   int active_instance_id = 0;
   std::map<int, XArmAPI*> xarm_map;
@@ -22,7 +22,7 @@ namespace XArmWrapper
   int __stdcall switch_xarm(int instance_id) {
     std::map<int, XArmAPI*>::iterator iter = xarm_map.find(instance_id);
     if (iter != xarm_map.end()) {
-      if (arm != NULL && arm != iter->second) {
+      if (arm != nullptr && arm != iter->second) {
         bool removed = true;
         for (std::map<int, XArmAPI*>::iterator it = xarm_map.begin(); it != xarm_map.end(); ++it) {
           if (it->second == arm) {
@@ -34,18 +34,18 @@ namespace XArmWrapper
           arm->disconnect();
           delete arm;
         }
-        printf("current active instance_id: %d\n", iter->first);
+        XARM_LOG_INFO("current active instance_id: %d\n", iter->first);
       }
       arm = iter->second;
       active_instance_id = iter->first;
       return 0;
     }
-    fprintf(stderr, "[switch failed], instance %d is not exist, ", instance_id);
+    XARM_LOG_ERROR("[switch failed], instance %d is not exist, ", instance_id);
     if (active_instance_id != 0) {
-      printf("current active instance_id: %d\n", active_instance_id);
+      XARM_LOG_INFO("current active instance_id: %d\n", active_instance_id);
     }
     else {
-      printf("no active instance\n");
+      XARM_LOG_WARN("no active instance\n");
     }
     return -1;
   }
@@ -54,7 +54,7 @@ namespace XArmWrapper
     std::map<int, XArmAPI*>::iterator iter = xarm_map.find(instance_id);
     if (iter != xarm_map.end()) {
       if (iter->second == arm) {
-        printf("You removed the instance you are using, and the instance will be disconnected and destroyed when you successfully switch to another instance\n");
+        XARM_LOG_WARN("You removed the instance you are using, and the instance will be disconnected and destroyed when you successfully switch to another instance\n");
       }
       else {
         arm->disconnect();
@@ -74,7 +74,7 @@ namespace XArmWrapper
         return iter->second;
       }
       else {
-        printf("instance %d is not exist, use default instance\n", instance_id);
+        XARM_LOG_WARN("instance %d is not exist, use default instance\n", instance_id);
       }
     }
     return arm;
@@ -203,14 +203,23 @@ namespace XArmWrapper
   int __stdcall set_gripper_mode(int mode, int instance_id) {
     return get_instance(instance_id)->set_gripper_mode(mode);
   }
-  int __stdcall set_gripper_speed(fp32 speed, int instance_id) {
+  int __stdcall set_gripper_speed(int speed, int instance_id) {
     return get_instance(instance_id)->set_gripper_speed(speed);
   }
-  int __stdcall set_gripper_position(fp32 pos, bool wait, fp32 timeout, bool wait_motion, int instance_id) {
+  int __stdcall set_gripper_position(int pos, bool wait, fp32 timeout, bool wait_motion, int instance_id) {
     return get_instance(instance_id)->set_gripper_position(pos, wait, timeout, wait_motion);
   }
-  int __stdcall get_gripper_position(fp32 *pos, int instance_id) {
+  int __stdcall set_gripper_g2_position(int pos, int speed, int force, bool wait, fp32 timeout, bool wait_motion, int instance_id) {
+    return get_instance(instance_id)->set_gripper_g2_position(pos, speed, force, wait, timeout, wait_motion);
+  }
+  int __stdcall get_gripper_position(int *pos, int instance_id) {
     return get_instance(instance_id)->get_gripper_position(pos);
+  }
+  int __stdcall get_gripper_g2_position(int *pos, int instance_id) {
+    return get_instance(instance_id)->get_gripper_g2_position(pos);
+  }
+  int __stdcall get_gripper_status(int *status, int instance_id) {
+    return get_instance(instance_id)->get_gripper_status(status);
   }
   int __stdcall get_gripper_err_code(int *err, int instance_id) {
     return get_instance(instance_id)->get_gripper_err_code(err);
@@ -301,8 +310,8 @@ namespace XArmWrapper
   int __stdcall get_reduced_mode(int *mode, int instance_id) {
     return get_instance(instance_id)->get_reduced_mode(mode);
   }
-  int __stdcall get_reduced_states(int *on, int *xyz_list, float *tcp_speed, float *joint_speed, float jrange[14], int *fense_is_on, int *collision_rebound_is_on, int instance_id) {
-    return get_instance(instance_id)->get_reduced_states(on, xyz_list, tcp_speed, joint_speed, jrange, fense_is_on, collision_rebound_is_on);
+  int __stdcall get_reduced_states(int *on, int *xyz_list, float *tcp_speed, float *joint_speed, float jrange[14], int *fence_is_on, int *collision_rebound_is_on, int instance_id) {
+    return get_instance(instance_id)->get_reduced_states(on, xyz_list, tcp_speed, joint_speed, jrange, fence_is_on, collision_rebound_is_on);
   }
   int __stdcall set_reduced_tcp_boundary(int boundary[6], int instance_id) {
     return get_instance(instance_id)->set_reduced_tcp_boundary(boundary);
@@ -311,7 +320,7 @@ namespace XArmWrapper
     return get_instance(instance_id)->set_reduced_joint_range(jrange);
   }
   int __stdcall set_fense_mode(bool on, int instance_id) {
-    return get_instance(instance_id)->set_fense_mode(on);
+    return get_instance(instance_id)->set_fence_mode(on);
   }
   int __stdcall set_fence_mode(bool on, int instance_id) {
     return get_instance(instance_id)->set_fence_mode(on);
@@ -325,16 +334,16 @@ namespace XArmWrapper
   int __stdcall start_record_trajectory(int instance_id) {
     return get_instance(instance_id)->start_record_trajectory();
   }
-  int __stdcall stop_record_trajectory(char* filename, int instance_id) {
+  int __stdcall stop_record_trajectory(const char* filename, int instance_id) {
     return get_instance(instance_id)->stop_record_trajectory(filename);
   }
-  int __stdcall save_record_trajectory(char* filename, float timeout, int instance_id) {
+  int __stdcall save_record_trajectory(const char* filename, float timeout, int instance_id) {
     return get_instance(instance_id)->save_record_trajectory(filename, timeout);
   }
-  int __stdcall load_trajectory(char* filename, float timeout, int instance_id) {
+  int __stdcall load_trajectory(const char* filename, float timeout, int instance_id) {
     return get_instance(instance_id)->load_trajectory(filename, timeout);
   }
-  int __stdcall playback_trajectory(int times, char* filename, bool wait, int double_speed, int instance_id) {
+  int __stdcall playback_trajectory(int times, const char* filename, bool wait, int double_speed, int instance_id) {
     return get_instance(instance_id)->playback_trajectory(times, filename, wait, double_speed);
   }
   int __stdcall get_trajectory_rw_status(int *status, int instance_id) {
@@ -356,8 +365,8 @@ namespace XArmWrapper
     return get_instance(instance_id)->set_cgpio_analog_with_xyz(ionum, value, xyz, tol_r);
   }
 
-  int __stdcall get_inverse_kinematics(fp32 pose[6], fp32 angles[7], int instance_id) {
-    return get_instance(instance_id)->get_inverse_kinematics(pose, angles);
+  int __stdcall get_inverse_kinematics(fp32 pose[6], fp32 angles[7], bool limited, fp32 ref_angles[7], int instance_id) {
+    return get_instance(instance_id)->get_inverse_kinematics(pose, angles, limited, ref_angles);
   }
   int __stdcall get_forward_kinematics(fp32 angles[7], fp32 pose[6], int instance_id) {
     return get_instance(instance_id)->get_forward_kinematics(angles, pose);
@@ -400,11 +409,23 @@ namespace XArmWrapper
   int __stdcall set_bio_gripper_speed(int speed, int instance_id) {
     return get_instance(instance_id)->set_bio_gripper_speed(speed);
   }
+  int __stdcall set_bio_gripper_control_mode(int mode, int instance_id) {
+    return get_instance(instance_id)->set_bio_gripper_control_mode(mode);
+  }
+  int __stdcall set_bio_gripper_force(int force, int instance_id) {
+    return get_instance(instance_id)->set_bio_gripper_force(force);
+  }
+  int __stdcall set_bio_gripper_g2_position(int pos, int speed, int force, bool wait, fp32 timeout, bool wait_motion, int instance_id) {
+    return get_instance(instance_id)->set_bio_gripper_g2_position(pos, speed, force, wait, timeout, wait_motion);
+  }
   int __stdcall open_bio_gripper(int speed, bool wait, fp32 timeout, bool wait_motion, int instance_id) {
     return get_instance(instance_id)->open_bio_gripper(speed, wait, timeout, wait_motion);
   }
   int __stdcall close_bio_gripper(int speed, bool wait, fp32 timeout, bool wait_motion, int instance_id) {
     return get_instance(instance_id)->close_bio_gripper(speed, wait, timeout, wait_motion);
+  }
+  int __stdcall get_bio_gripper_g2_position(int *pos, int instance_id) {
+    return get_instance(instance_id)->get_bio_gripper_g2_position(pos);
   }
   int __stdcall get_bio_gripper_status(int *status, int instance_id) {
     return get_instance(instance_id)->get_bio_gripper_status(status);
@@ -428,6 +449,9 @@ namespace XArmWrapper
   int __stdcall getset_tgpio_modbus_data(unsigned char *modbus_data, int modbus_length, unsigned char *ret_data, int ret_length, unsigned char host_id, bool is_transparent_transmission, bool use_503_port, int instance_id) {
     return get_instance(instance_id)->getset_tgpio_modbus_data(modbus_data, modbus_length, ret_data, ret_length, host_id, is_transparent_transmission, use_503_port);
   }
+  int __stdcall set_rs485_use_503_port(bool use_503_port, int instance_id) {
+    return get_instance(instance_id)->set_rs485_use_503_port(use_503_port);
+  }
   int __stdcall set_self_collision_detection(bool on, int instance_id) {
     return get_instance(instance_id)->set_self_collision_detection(on);
   }
@@ -440,7 +464,7 @@ namespace XArmWrapper
   int __stdcall vc_set_cartesian_velocity(fp32 speeds[6], bool is_tool_coord, fp32 duration, int instance_id) {
     return get_instance(instance_id)->vc_set_cartesian_velocity(speeds, is_tool_coord, duration);
   }
-
+  // // Just to load the overloaded function set_ft_sensor_admittance_parameters/set_ft_sensor_force_parameters
   int __stdcall set_impedance(int coord, int c_axis[6], float M[6], float K[6], float B[6], int instance_id) {
     return get_instance(instance_id)->set_impedance(coord, c_axis, M, K, B);
   }
@@ -456,31 +480,38 @@ namespace XArmWrapper
   int __stdcall set_force_control_pid(float kp[6], float ki[6], float kd[6], float xe_limit[6], int instance_id) {
     return get_instance(instance_id)->set_force_control_pid(kp, ki, kd, xe_limit);
   }
-  int __stdcall ft_sensor_set_zero(int instance_id) {
-    return get_instance(instance_id)->ft_sensor_set_zero();
+  //
+  int __stdcall set_ft_sensor_admittance_parameters(int coord, int c_axis[6], float M[6], float K[6], float B[6], int instance_id) {
+    return get_instance(instance_id)->set_ft_sensor_admittance_parameters(coord, c_axis, M, K, B);
   }
-  int __stdcall ft_sensor_iden_load(float result[10], int instance_id) {
-    return get_instance(instance_id)->ft_sensor_iden_load(result);
+  int __stdcall set_ft_sensor_force_parameters(int coord, int c_axis[6], float f_ref[6], float limits[6], float kp[6], float ki[6], float kd[6], float xe_limit[6], int instance_id) {
+    return get_instance(instance_id)->set_ft_sensor_force_parameters(coord, c_axis, f_ref, limits, kp, ki, kd, xe_limit);
   }
-  int __stdcall ft_sensor_cali_load(float load[10], bool association_setting_tcp_load, float m, float x, float y, float z, int instance_id) {
-    return get_instance(instance_id)->ft_sensor_cali_load(load, association_setting_tcp_load, m, x, y, z);
+  int __stdcall set_ft_sensor_zero(int instance_id) {
+    return get_instance(instance_id)->set_ft_sensor_zero();
   }
-  int __stdcall ft_sensor_enable(int on_off, int instance_id) {
-    return get_instance(instance_id)->ft_sensor_enable(on_off);
+  int __stdcall iden_ft_sensor_load_offset(float result[10], int instance_id) {
+    return get_instance(instance_id)->iden_ft_sensor_load_offset(result);
   }
-  int __stdcall ft_sensor_app_set(int app_code, int instance_id) {
-    return get_instance(instance_id)->ft_sensor_app_set(app_code);
+  int __stdcall set_ft_sensor_load_offset(float load_offset[10], bool association_setting_tcp_load, float m, float x, float y, float z, int instance_id) {
+    return get_instance(instance_id)->set_ft_sensor_load_offset(load_offset, association_setting_tcp_load, m, x, y, z);
   }
-  int __stdcall ft_sensor_app_get(int *app_code, int instance_id) {
-    return get_instance(instance_id)->ft_sensor_app_get(app_code);
+  int __stdcall set_ft_sensor_enable(int on_off, int instance_id) {
+    return get_instance(instance_id)->set_ft_sensor_enable(on_off);
   }
-  int __stdcall get_ft_sensor_data(float ft_data[6], int instance_id) {
-    return get_instance(instance_id)->get_ft_sensor_data(ft_data);
+  int __stdcall set_ft_sensor_mode(int mode, int instance_id) {
+    return get_instance(instance_id)->set_ft_sensor_mode(mode);
   }
-  int __stdcall get_ft_sensor_config(int *ft_app_status, int *ft_is_started, int *ft_type, int *ft_id, int *ft_freq, 
+  int __stdcall get_ft_sensor_mode(int *mode, int instance_id) {
+    return get_instance(instance_id)->get_ft_sensor_mode(mode);
+  }
+  int __stdcall get_ft_sensor_data(float ft_data[6], bool is_raw, int instance_id) {
+    return get_instance(instance_id)->get_ft_sensor_data(ft_data, is_raw);
+  }
+  int __stdcall get_ft_sensor_config(int *ft_mode, int *ft_is_started, int *ft_type, int *ft_id, int *ft_freq, 
     float *ft_mass, float *ft_dir_bias, float ft_centroid[3], float ft_zero[6], int *imp_coord, int imp_c_axis[6], float M[6], float K[6], float B[6],
     int *f_coord, int f_c_axis[6], float f_ref[6], float f_limits[6], float kp[6], float ki[6], float kd[6], float xe_limit[6], int instance_id) {
-    return get_instance(instance_id)->get_ft_sensor_config(ft_app_status, ft_is_started, ft_type, ft_id, ft_freq,
+    return get_instance(instance_id)->get_ft_sensor_config(ft_mode, ft_is_started, ft_type, ft_id, ft_freq,
       ft_mass, ft_dir_bias, ft_centroid, ft_zero, imp_coord, imp_c_axis, M, K, B,
       f_coord, f_c_axis, f_ref, f_limits, kp, ki, kd, xe_limit);
   }
@@ -492,44 +523,44 @@ namespace XArmWrapper
     return get_instance(instance_id)->iden_tcp_load(result, estimated_mass);
   }
 
-  int __stdcall get_linear_track_error(int *err, int instance_id) {
-    return get_instance(instance_id)->get_linear_track_error(err);
+  int __stdcall get_linear_motor_error(int *err, int instance_id) {
+    return get_instance(instance_id)->get_linear_motor_error(err);
   }
-  int __stdcall get_linear_track_status(int *status, int instance_id) {
-    return get_instance(instance_id)->get_linear_track_status(status);
+  int __stdcall get_linear_motor_status(int *status, int instance_id) {
+    return get_instance(instance_id)->get_linear_motor_status(status);
   }
-  int __stdcall get_linear_track_pos(int *pos, int instance_id) {
-    return get_instance(instance_id)->get_linear_track_pos(pos);
+  int __stdcall get_linear_motor_pos(int *pos, int instance_id) {
+    return get_instance(instance_id)->get_linear_motor_pos(pos);
   }
-  int __stdcall get_linear_track_is_enabled(int *status, int instance_id) {
-    return get_instance(instance_id)->get_linear_track_is_enabled(status);
+  int __stdcall get_linear_motor_is_enabled(int *status, int instance_id) {
+    return get_instance(instance_id)->get_linear_motor_is_enabled(status);
   }
-  int __stdcall get_linear_track_on_zero(int *status, int instance_id) {
-    return get_instance(instance_id)->get_linear_track_on_zero(status);
+  int __stdcall get_linear_motor_on_zero(int *status, int instance_id) {
+    return get_instance(instance_id)->get_linear_motor_on_zero(status);
   }
-  int __stdcall get_linear_track_sci(int *sci1, int instance_id) {
-    return get_instance(instance_id)->get_linear_track_sci(sci1);
+  int __stdcall get_linear_motor_sci(int *sci1, int instance_id) {
+    return get_instance(instance_id)->get_linear_motor_sci(sci1);
   }
-  int __stdcall get_linear_track_sco(int sco[2], int instance_id) {
-    return get_instance(instance_id)->get_linear_track_sco(sco);
+  int __stdcall get_linear_motor_sco(int sco[2], int instance_id) {
+    return get_instance(instance_id)->get_linear_motor_sco(sco);
   }
-  int __stdcall clean_linear_track_error(int instance_id) {
-    return get_instance(instance_id)->clean_linear_track_error();
+  int __stdcall clean_linear_motor_error(int instance_id) {
+    return get_instance(instance_id)->clean_linear_motor_error();
   }
-  int __stdcall set_linear_track_enable(bool enable, int instance_id) {
-    return get_instance(instance_id)->set_linear_track_enable(enable);
+  int __stdcall set_linear_motor_enable(bool enable, int instance_id) {
+    return get_instance(instance_id)->set_linear_motor_enable(enable);
   }
-  int __stdcall set_linear_track_speed(int speed, int instance_id) {
-    return get_instance(instance_id)->set_linear_track_speed(speed);
+  int __stdcall set_linear_motor_speed(int speed, int instance_id) {
+    return get_instance(instance_id)->set_linear_motor_speed(speed);
   }
-  int __stdcall set_linear_track_back_origin(bool wait, bool auto_enable, int instance_id) {
-    return get_instance(instance_id)->set_linear_track_back_origin(wait, auto_enable);
+  int __stdcall set_linear_motor_back_origin(bool wait, bool auto_enable, int instance_id) {
+    return get_instance(instance_id)->set_linear_motor_back_origin(wait, auto_enable);
   }
-  int __stdcall set_linear_track_pos(int pos, int speed, bool wait, fp32 timeout, bool auto_enable, int instance_id) {
-    return get_instance(instance_id)->set_linear_track_pos(pos, speed, wait, timeout, auto_enable);
+  int __stdcall set_linear_motor_pos(int pos, int speed, bool wait, fp32 timeout, bool auto_enable, int instance_id) {
+    return get_instance(instance_id)->set_linear_motor_pos(pos, speed, wait, timeout, auto_enable);
   }
-  int __stdcall set_linear_track_stop(int instance_id) {
-    return get_instance(instance_id)->set_linear_track_stop();
+  int __stdcall set_linear_motor_stop(int instance_id) {
+    return get_instance(instance_id)->set_linear_motor_stop();
   }
 
   int __stdcall set_timeout(float timeout, int instance_id) {
@@ -645,6 +676,11 @@ namespace XArmWrapper
     return get_instance(instance_id)->get_c31_error_info(servo_id, theoretical_tau, actual_tau);
   }
 
+  int __stdcall get_c54_error_info(int *dir, float *tau_threshold, float *actual_tau, int instance_id)
+  {
+    return get_instance(instance_id)->get_c54_error_info(dir, tau_threshold, actual_tau);
+  }
+
   int __stdcall get_c37_error_info(int *servo_id, float *diff_angle, int instance_id)
   {
     return get_instance(instance_id)->get_c37_error_info(servo_id, diff_angle);
@@ -668,6 +704,76 @@ namespace XArmWrapper
   int __stdcall get_c38_error_info(int *id_bits, float angles[7], int instance_id)
   {
     return get_instance(instance_id)->get_c38_error_info(id_bits, angles);
+  }
+
+  int __stdcall set_ft_collision_detection(int on_off, int instance_id)
+  {
+    return get_instance(instance_id)->set_ft_collision_detection(on_off);
+  }
+
+  int __stdcall set_ft_collision_rebound(int on_off, int instance_id)
+  {
+    return get_instance(instance_id)->set_ft_collision_rebound(on_off);
+  }
+
+  int __stdcall set_ft_collision_threshold(float thresholds[6], int instance_id)
+  {
+    return get_instance(instance_id)->set_ft_collision_threshold(thresholds);
+  }
+
+  int __stdcall set_ft_collision_reb_distance(float distances[6], int instance_id)
+  {
+    return get_instance(instance_id)->set_ft_collision_reb_distance(distances);
+  }
+
+  int __stdcall set_ft_admittance_ctrl_threshold(float thresholds[6], int instance_id)
+  {
+    return get_instance(instance_id)->set_ft_admittance_ctrl_threshold(thresholds);
+  }
+
+  int __stdcall set_external_device_monitor_params(int dev_type, int frequency, int instance_id)
+  {
+    return get_instance(instance_id)->set_external_device_monitor_params(dev_type, frequency);
+  }
+
+  int __stdcall set_tgpio_monitor_params(int io_type, int frequency, int instance_id)
+  {
+    return get_instance(instance_id)->set_tgpio_monitor_params(io_type, frequency);
+  }
+
+  int __stdcall get_ft_collision_detection(int *on_off, int instance_id)
+  {
+    return get_instance(instance_id)->get_ft_collision_detection(on_off);
+  }
+
+  int __stdcall get_ft_collision_rebound(int *on_off, int instance_id)
+  {
+    return get_instance(instance_id)->get_ft_collision_rebound(on_off);
+  }
+
+  int __stdcall get_ft_collision_threshold(float thresholds[6], int instance_id)
+  {
+    return get_instance(instance_id)->get_ft_collision_threshold(thresholds);
+  }
+
+  int __stdcall get_ft_collision_reb_distance(float distances[6], int instance_id)
+  {
+    return get_instance(instance_id)->get_ft_collision_reb_distance(distances);
+  }
+
+  int __stdcall get_ft_admittance_ctrl_threshold(float thresholds[6], int instance_id)
+  {
+    return get_instance(instance_id)->get_ft_admittance_ctrl_threshold(thresholds);
+  }
+
+  int __stdcall get_external_device_monitor_params(int params[2], int instance_id)
+  {
+    return get_instance(instance_id)->get_external_device_monitor_params(params);
+  }
+
+  int __stdcall get_tgpio_monitor_params(int params[2], int instance_id)
+  {
+    return get_instance(instance_id)->get_tgpio_monitor_params(params);
   }
 
   /* modbus tcp func_code: 0x01 */

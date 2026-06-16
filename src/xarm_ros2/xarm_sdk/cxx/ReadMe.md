@@ -11,26 +11,69 @@
 - Protect the arm before unlocking the motor.
 
 ## Update Summary
+- > ### 1.18.0/1.18.1 
+  - Strengthen the code, fix some hidden bugs, and eliminate security risks.
+  - Supports CMake compilation
+  - Fix document errors and variable name errors
+
+- > ### 1.17.0/1.17.1 
+  - Change some API names
+
+- > ### 1.16.0
+  - Added parameter to support get raw data of the Six-axis Force Torque Sensor
+  - Added an interface to control xArm Gripper G2
+  - Optimize the interface for controlling BIO Gripper G2
+  - Extend the get_joint_states interface
+
+- > ### 1.15.0
+  - Added the Six-axis Force Torque Sensor collision detection related interfaces
+  - Added support for the new version of BIO Gripper control interface
+
 - > ### 1.14.2
   - Fix the 503 interface protocol identification error issue
   - Added sync parameters to some gpio interfaces to support immediate execution (requires firmware 2.4.101 or above)
   - Added XArmAPIWrapper to C# calls to support simultaneous control of multiple robotic arms
   - Added new interface to support obtaining some error information
-- > ### 1.13.0
-  - Compatible with the standard Modbus TCP protocol, providing part of the standard Modbus TCP protocol interface
-
-- > ### 1.12.2
-  - Support partial Task feedback (requires firmware version greater than or equal to v2.1.0)
-  
-- > ### 1.11.6
-  - Correct the ambiguity that the `set_position_aa` interface is true when both relative and is_tool_coord are true. After the correction, when is_tool_coord is true, relative is invalid (previously is_tool_coord was invalid when relative was true)
-
-- > ### 1.11.5
-  - Optimization pause time is too long (wait=true)
-  - Add common motion api (Enabled after firmware version 1.11.100)
-  - The Cartesian motion-related interface adds the motion_type parameter to determine the planning method (Enabled after firmware version 1.11.100)
 
 - > ### [More](./ReleaseNotes.md)
+
+## API Change List
+  | OLD API NAME   | NEW API NAME  |  SDK VERSION  |
+  | -------------- | ------------- |  ------------  |
+  | set_tgpio_modbus_timeout  |  set_rs485_timeout  |  1.17.1  |
+  | get_tgpio_modbus_timeout  |  get_rs485_timeout  |  1.17.1  |
+  | set_tgpio_modbus_baudrate  |  set_rs485_baudrate  |  1.17.1  |
+  | get_tgpio_modbus_baudrate  |  get_rs485_baudrate  |  1.17.1  |
+  | getset_tgpio_modbus_data  |  set_rs485_data  |  1.17.1  |
+  | set_impedance  |  set_ft_sensor_admittance_parameters  |  1.17.0  |
+  | set_impedance_mbk  |  set_ft_sensor_admittance_parameters  |  1.17.0  |
+  | set_impedance_config  |  set_ft_sensor_admittance_parameters  |  1.17.0  |
+  | set_force_control_pid  |  set_ft_sensor_force_parameters  |  1.17.0  |
+  | config_force_control  |  set_ft_sensor_force_parameters  |  1.17.0  |
+  | ft_sensor_set_zero  |  set_ft_sensor_zero  |  1.17.0  |
+  | ft_sensor_iden_load  |  iden_ft_sensor_load_offset  |  1.17.0  |
+  | ft_sensor_cali_load  |  set_ft_sensor_load_offset  |  1.17.0  |
+  | ft_sensor_enable  |  set_ft_sensor_enable  |  1.17.0  |
+  | ft_sensor_app_set  |  set_ft_sensor_mode  |  1.17.0  |
+  | ft_sensor_app_get  |  get_ft_sensor_mode  |  1.17.0  |
+  | get_linear_track_registers  |  get_linear_motor_registers  |  1.17.0  |
+  | get_linear_track_pos  |  get_linear_motor_pos  |  1.17.0  |
+  | get_linear_track_status  |  get_linear_motor_status  |  1.17.0  |
+  | get_linear_track_error  |  get_linear_motor_error  |  1.17.0  |
+  | get_linear_track_is_enabled  |  get_linear_motor_is_enabled  |  1.17.0  |
+  | get_linear_track_on_zero  |  get_linear_motor_on_zero  |  1.17.0  |
+  | get_linear_track_sci  |  get_linear_motor_sci  |  1.17.0  |
+  | get_linear_track_sco  |  get_linear_motor_sco  |  1.17.0  |
+  | clean_linear_track_error  |  clean_linear_motor_error  |  1.17.0  |
+  | set_linear_track_enable  |  set_linear_motor_enable  |  1.17.0  |
+  | set_linear_track_speed  |  set_linear_motor_speed  |  1.17.0  |
+  | set_linear_track_back_origin  |  set_linear_motor_back_origin  |  1.17.0  |
+  | set_linear_track_pos  |  set_linear_motor_pos  |  1.17.0  |
+  | set_linear_track_stop  |  set_linear_motor_stop  |  1.17.0  |
+  | shutdown_system  |  system_control  |  1.13.6  |
+  | get_suction_cup  |  get_vacuum_gripper  |  1.8.0  |
+  | set_suction_cup  |  set_vacuum_gripper  |  1.8.0  |
+  
 
 ## Doc
 - #### [API Document](doc/xarm_cplus_api.md)
@@ -39,145 +82,196 @@
 
 - #### [UFACTORY ModbusTCP Manual](doc/UF_ModbusTCP_Manual.md)
 
-## Linux
+## Build
 
-- Get the code:
+### Requirements
 
-  ```
-  git clone https://github.com/xArm-Developer/xArm-CPLUS-SDK.git
-  ```
+- CMake 3.5 or newer
+- A C++11 compiler
+- Linux/macOS: `g++` or `clang++`
+- Windows: Visual Studio 2015/2017/2019/2022 with Desktop development for C++
 
-- Change directory
+The top-level `CMakeLists.txt` is written against CMake 3.5 features.
 
-  ```
-  cd ./xArm-CPLUS-SDK/
-  ```
+### Get the code
 
+```bash
+git clone https://github.com/xArm-Developer/xArm-CPLUS-SDK.git
+cd xArm-CPLUS-SDK
+```
 
-- Build library:
-  ```bash
-  make xarm
-  ```
+### Output layout
 
-- Build all example
+By default, the current CMake build generates:
 
-    ```bash
-    make test
-    ```
+- libraries in `build/lib`
+- executables in `build/bin`
 
-- Build a example
+When building shared libraries, make sure the runtime loader can find `build/lib`.
 
-    ```bash
-    make test-0002-get_property # build example/test-0002-get_property.cc
-    ```
+## Build With CMake
 
-- Build all (build library and build all example)
+### Linux
 
-    ```bash
-    make clean
-    make # make xarm && make test
-    ```
+Configure and build:
 
-- Install
+```bash
+mkdir -p build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j
+```
 
-    ```bash
-    sudo make install
-    ```
+Build static library instead of shared library:
 
-- Uninstall
+```bash
+mkdir -p build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
+make -j
+```
 
-    ```bash
-    sudo make uninstall
-    ```
+Disable examples:
 
-- Run a example
+```bash
+mkdir -p build
+cd build
+cmake .. -DXARM_BUILD_EXAMPLES=OFF
+make -j
+```
 
-    ```bash
-    ./build/example/0002-get_property 192.168.1.221
-    ```
+Run an example with shared library output:
 
+```bash
+LD_LIBRARY_PATH=./build/lib ./build/bin/0002-get_property 192.168.1.221
+```
 
+Install:
 
+```bash
+mkdir -p build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j
+sudo make install
+```
 
-## Windows
+### macOS
 
-- Running environment
+Configure and build:
 
-  ```
-  It is recommended to run the project with visual studio 2015.Make sure your visual studio 2015 has a visual C++ development environment installed before running.
-  ```
-  
-- Get the code:
+```bash
+mkdir -p build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j
+```
 
-  ```
-  git clone https://github.com/xArm-Developer/xArm-CPLUS-SDK.git
-  ```
+Run an example with shared library output:
 
-- Change directory
+```bash
+DYLD_LIBRARY_PATH=./build/lib ./build/bin/0002-get_property 192.168.1.221
+```
 
-  ```
-  Change your directory xArm-CPLUS-SDK/visual_studio
-  ```
+### Windows
 
-- Open project
+Configure with Visual Studio 2015:
 
-  ```
-  If you changed your directory, you can see a visual_studio.sln file. Click this file you will open the project.
-  ```
+```powershell
+mkdir build
+cd build
+cmake .. -G "Visual Studio 14 2015" -A x64
+cmake --build . --config Release
+```
 
+Configure with Visual Studio 2017:
 
-- Check the xarm project properties
+```powershell
+mkdir build
+cd build
+cmake .. -G "Visual Studio 15 2017" -A x64
+cmake --build . --config Release
+```
 
-  ```markdown
-  Open the xarm property pages and make sure your project configuration is the same as the following screenshot configuration.
-  
-  VC++ Directories path 
-  	$(ProjectDir)..\..\include
-  	$(ProjectDir)..\..\src
-  ```
+Configure with Visual Studio 2019:
 
-  ![image-20191217153415733](doc/img/image-20191217153415733.png)
+```powershell
+mkdir build
+cd build
+cmake .. -G "Visual Studio 16 2019" -A x64
+cmake --build . --config Release
+```
 
-  ![image-20191217152542587](doc/img/image-20191217152542587.png)
+If you use Visual Studio 2022:
 
-  
+```powershell
+mkdir build
+cd build
+cmake .. -G "Visual Studio 17 2022" -A x64
+cmake --build . --config Release
+```
 
-- Check the example project properties
+Run an example:
 
-  ```markdown
-  Open the example property pages and make sure your project configuration is the same as the following screenshot configuration.
-  Example project dependencies and xarm projects so references must be added to run.
-  ```
-  ![image-20191217154258804](doc/img/image-20191217154258804.png)
+```powershell
+.\build\bin\Release\0002-get_property.exe 192.168.1.221
+```
 
-  ![image-20191217154111439](doc/img/image-20191217154111439.png)
+Build the optional C# wrapper:
 
+```powershell
+mkdir build
+cd build
+cmake .. -G "Visual Studio 17 2022" -A x64 -DXARM_BUILD_CSHARP_WRAPPER=ON
+cmake --build . --config Release
+```
 
-- Build project
+## Build With Makefile
 
-  ```markdown
-  Right click example project and build the projiect.If the example project bulid successful you will get a .exe file in you project path.
-  
-  .exe path like this C:\Users\ufactory\Desktop\xArm-CPLUS-SDK\visual_studio\x64\Debug\0002-get_property.exe
-  ```
+The repository still keeps the original `Makefile` for Linux-style builds.
 
-  ![image-20191217155932743](doc/img/image-20191217155932743.png)
+Build library:
 
+```bash
+make xarm
+```
 
-- Run project
+Build all examples:
 
-  ```markdown
-  You can use cmd run project.  
-  ```
+```bash
+make test
+```
 
-  ![image-20191217160911893](doc/img/image-20191217160911893.png)
+Build one example:
 
-- New project
+```bash
+make test-0002-get_property
+```
 
-  ```markdown
-  If you want to create a new project, you need to pay attention to the dependent path of your new project. 
-  You must make sure that the configuration of the project you create is the same as that of the example project.
-  ```
+Build everything:
+
+```bash
+make clean
+make
+```
+
+Run an example with shared library output:
+
+```bash
+LD_LIBRARY_PATH=./build/lib ./build/bin/0002-get_property 192.168.1.221
+```
+
+Install:
+
+```bash
+sudo make install
+```
+
+Uninstall:
+
+```bash
+sudo make uninstall
+```
 
 
 
@@ -231,7 +325,7 @@
 
 - ##### [5005-get_cgpio_digital_analog](example/5005-get_cgpio_digital_analog.cc)
 
-- ##### [5006-set_cgpio_dialog_analog](example/5006-set_cgpio_digital_analog.cc)
+- ##### [5006-set_cgpio_digital_analog](example/5006-set_cgpio_digital_analog.cc)
 
 - ##### [5008-get_cgpio_state](example/5008-get_cgpio_state.cc)
 
@@ -239,7 +333,7 @@
 
 - ##### [6001-set_reduced_mode](example/6001-set_reduced_mode.cc)
 
-- ##### [6002-set_fense_mode](example/6002-set_fense_mode.cc)
+- ##### [6002-set_fence_mode](example/6002-set_fence_mode.cc)
 
 - ##### [7001-servo_j](example/7001-servo_j.cc)
 
@@ -251,7 +345,7 @@
 
 - ##### [8001-force_tech](example/8001-force_tech.cc)
 
-- ##### [8002-impedance](example/8002-impedance.cc)
+- ##### [8002-admittance_control](example/8002-admittance_control.cc)
 
 - ##### [8003-force_control](example/8003-force_control.cc)
 

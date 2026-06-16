@@ -66,15 +66,18 @@ namespace XArmWrapper {
   
   extern "C" __declspec(dllexport) int __stdcall set_gripper_enable(bool enable, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_gripper_mode(int mode, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall set_gripper_speed(fp32 speed, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall set_gripper_position(fp32 pos, bool wait=false, fp32 timeout=10, bool wait_motion = true, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_gripper_position(fp32 *pos, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_gripper_speed(int speed, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_gripper_position(int pos, bool wait=false, fp32 timeout=10, bool wait_motion = true, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_gripper_g2_position(int pos, int speed = 100, int force = 50, bool wait = false, fp32 timeout = 10, bool wait_motion = true, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_gripper_position(int *pos, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_gripper_g2_position(int *pos, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_gripper_status(int *status, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_gripper_err_code(int *err, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall clean_gripper_error(int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_tgpio_digital(int *io0_value, int *io1_value, int *io2_value = NULL, int *io3_value = NULL, int *io4_value = NULL, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_tgpio_digital(int *io0_value, int *io1_value, int *io2_value = nullptr, int *io3_value = nullptr, int *io4_value = nullptr, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_tgpio_digital(int ionum, int value, fp32 delay_sec = 0, bool sync = true, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_tgpio_analog(int ionum, fp32 *value, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_cgpio_digital(int *digitals, int *digitals2 = NULL, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_cgpio_digital(int *digitals, int *digitals2 = nullptr, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_cgpio_analog(int ionum, fp32 *value, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_cgpio_digital(int ionum, int value, float delay_sec = 0, bool sync = true, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_cgpio_analog(int ionum, float value, bool sync = true, int instance_id = -1);
@@ -92,7 +95,7 @@ namespace XArmWrapper {
   extern "C" __declspec(dllexport) int __stdcall get_position(fp32 pose[6], int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_servo_angle(fp32 angles[7], bool is_real = false, int instance_id = -1);
 
-  extern "C" __declspec(dllexport) int __stdcall get_inverse_kinematics(fp32 pose[6], fp32 angles[7], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_inverse_kinematics(fp32 pose[6], fp32 angles[7], bool limited = true, fp32 ref_angles[7] = nullptr, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_forward_kinematics(fp32 angles[7], fp32 pose[6], int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall is_joint_limit(fp32 angles[7], int *limit, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall is_tcp_limit(fp32 pose[6], int *limit, int instance_id = -1);
@@ -105,7 +108,7 @@ namespace XArmWrapper {
   extern "C" __declspec(dllexport) int __stdcall set_reduced_max_tcp_speed(float speed, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_reduced_max_joint_speed(float speed, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_reduced_mode(int *mode, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_reduced_states(int *on, int *xyz_list, float *tcp_speed, float *joint_speed, float jrange[14] = NULL, int *fense_is_on = NULL, int *collision_rebound_is_on = NULL, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_reduced_states(int *on, int *xyz_list, float *tcp_speed, float *joint_speed, float jrange[14] = nullptr, int *fence_is_on = nullptr, int *collision_rebound_is_on = nullptr, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_reduced_tcp_boundary(int boundary[6], int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_reduced_joint_range(float jrange[14], int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_fense_mode(bool on, int instance_id = -1);
@@ -113,10 +116,10 @@ namespace XArmWrapper {
   extern "C" __declspec(dllexport) int __stdcall set_collision_rebound(bool on, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_world_offset(float pose_offset[6], bool wait = true, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall start_record_trajectory(int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall stop_record_trajectory(char* filename = NULL, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall save_record_trajectory(char* filename, float timeout = 10, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall load_trajectory(char* filename, float timeout = 10, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall playback_trajectory(int times = 1, char* filename = NULL, bool wait = false, int double_speed = 1, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall stop_record_trajectory(const char* filename = nullptr, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall save_record_trajectory(const char* filename, float timeout = 10, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall load_trajectory(const char* filename, float timeout = 10, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall playback_trajectory(int times = 1, const char* filename = nullptr, bool wait = false, int double_speed = 1, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_trajectory_rw_status(int *status, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_counter_reset(int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_counter_increase(int instance_id = -1);
@@ -128,16 +131,20 @@ namespace XArmWrapper {
   extern "C" __declspec(dllexport) int __stdcall set_position_aa(fp32 pose[6], fp32 speed = 0, fp32 acc = 0, fp32 mvtime = 0, bool is_tool_coord = false, bool relative = false, bool wait = false, fp32 timeout = NO_TIMEOUT, fp32 radius = -1, unsigned char motion_type = 0, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_servo_cartesian_aa(fp32 pose[6], fp32 speed = 0, fp32 acc = 0, bool is_tool_coord = false, bool relative = false, int instance_id = -1);
   
-  extern "C" __declspec(dllexport) int __stdcall robotiq_reset(unsigned char ret_data[6] = NULL, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall robotiq_set_activate(bool wait = true, fp32 timeout = 3, unsigned char ret_data[6] = NULL, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall robotiq_set_position(unsigned char pos, unsigned char speed = 0xFF, unsigned char force = 0xFF, bool wait = true, fp32 timeout = 5, unsigned char ret_data[6] = NULL, bool wait_motion = true, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall robotiq_open(unsigned char speed = 0xFF, unsigned char force = 0xFF, bool wait = true, fp32 timeout = 5, unsigned char ret_data[6] = NULL, bool wait_motion = true, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall robotiq_close(unsigned char speed = 0xFF, unsigned char force = 0xFF, bool wait = true, fp32 timeout = 5, unsigned char ret_data[6] = NULL, bool wait_motion = true, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall robotiq_reset(unsigned char ret_data[6] = nullptr, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall robotiq_set_activate(bool wait = true, fp32 timeout = 3, unsigned char ret_data[6] = nullptr, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall robotiq_set_position(unsigned char pos, unsigned char speed = 0xFF, unsigned char force = 0xFF, bool wait = true, fp32 timeout = 5, unsigned char ret_data[6] = nullptr, bool wait_motion = true, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall robotiq_open(unsigned char speed = 0xFF, unsigned char force = 0xFF, bool wait = true, fp32 timeout = 5, unsigned char ret_data[6] = nullptr, bool wait_motion = true, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall robotiq_close(unsigned char speed = 0xFF, unsigned char force = 0xFF, bool wait = true, fp32 timeout = 5, unsigned char ret_data[6] = nullptr, bool wait_motion = true, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall robotiq_get_status(unsigned char ret_data[9], unsigned char number_of_registers = 3, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_bio_gripper_enable(bool enable, bool wait = true, fp32 timeout = 3, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_bio_gripper_speed(int speed, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_bio_gripper_control_mode(int mode, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_bio_gripper_force(int force, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_bio_gripper_g2_position(int pos, int speed = 2000, int force = 100, bool wait = true, fp32 timeout = 5, bool wait_motion = true, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall open_bio_gripper(int speed = 0, bool wait = true, fp32 timeout = 5, bool wait_motion = true, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall close_bio_gripper(int speed = 0, bool wait = true, fp32 timeout = 5, bool wait_motion = true, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_bio_gripper_g2_position(int *pos, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_bio_gripper_status(int *status, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_bio_gripper_error(int *err, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall clean_bio_gripper_error(int instance_id = -1);
@@ -145,42 +152,46 @@ namespace XArmWrapper {
   extern "C" __declspec(dllexport) int __stdcall set_tgpio_modbus_baudrate(int baud, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_tgpio_modbus_baudrate(int *baud, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall getset_tgpio_modbus_data(unsigned char *modbus_data, int modbus_length, unsigned char *ret_data, int ret_length, unsigned char host_id = 9, bool is_transparent_transmission = false, bool use_503_port = false, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_rs485_use_503_port(bool use_503_port = true, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_self_collision_detection(bool on, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_simulation_robot(bool on, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall vc_set_joint_velocity(fp32 speeds[7], bool is_sync = true, fp32 duration = -1.0, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall vc_set_cartesian_velocity(fp32 speeds[6], bool is_tool_coord = false, fp32 duration = -1.0, int instance_id = -1);
-
+  // Just to load the overloaded function set_ft_sensor_admittance_parameters/set_ft_sensor_force_parameters
   extern "C" __declspec(dllexport) int __stdcall set_impedance(int coord, int c_axis[6], float M[6], float K[6], float B[6], int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_impedance_mbk(float M[6], float K[6], float B[6], int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_impedance_config(int coord, int c_axis[6], int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall config_force_control(int coord, int c_axis[6], float f_ref[6], float limits[6], int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_force_control_pid(float kp[6], float ki[6], float kd[6], float xe_limit[6], int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall ft_sensor_set_zero(int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall ft_sensor_iden_load(float result[10], int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall ft_sensor_cali_load(float load[10], bool association_setting_tcp_load = false, float m = 0.270, float x = -17, float y = 9, float z = 11.8, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall ft_sensor_enable(int on_off, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall ft_sensor_app_set(int app_code, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall ft_sensor_app_get(int *app_code, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_ft_sensor_data(float ft_data[6], int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_ft_sensor_config(int *ft_app_status = NULL, int *ft_is_started = NULL, int *ft_type = NULL, int *ft_id = NULL, int *ft_freq = NULL, 
-    float *ft_mass = NULL, float *ft_dir_bias = NULL, float ft_centroid[3] = NULL, float ft_zero[6] = NULL, int *imp_coord = NULL, int imp_c_axis[6] = NULL, float M[6] = NULL, float K[6] = NULL, float B[6] = NULL,
-    int *f_coord = NULL, int f_c_axis[6] = NULL, float f_ref[6] = NULL, float f_limits[6] = NULL, float kp[6] = NULL, float ki[6] = NULL, float kd[6] = NULL, float xe_limit[6] = NULL, int instance_id = -1);
+  // 
+  extern "C" __declspec(dllexport) int __stdcall set_ft_sensor_admittance_parameters(int coord, int c_axis[6], float M[6], float K[6], float B[6], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_ft_sensor_force_parameters(int coord, int c_axis[6], float f_ref[6], float limits[6], float kp[6], float ki[6], float kd[6], float xe_limit[6], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_ft_sensor_zero(int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall iden_ft_sensor_load_offset(float result[10], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_ft_sensor_load_offset(float load_offset[10], bool association_setting_tcp_load = false, float m = 0.270, float x = -17, float y = 9, float z = 11.8, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_ft_sensor_enable(int on_off, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_ft_sensor_mode(int mode, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_ft_sensor_mode(int *mode, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_ft_sensor_data(float ft_data[6], bool is_raw = false, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_ft_sensor_config(int *ft_mode = nullptr, int *ft_is_started = nullptr, int *ft_type = nullptr, int *ft_id = nullptr, int *ft_freq = nullptr, 
+    float *ft_mass = nullptr, float *ft_dir_bias = nullptr, float ft_centroid[3] = nullptr, float ft_zero[6] = nullptr, int *imp_coord = nullptr, int imp_c_axis[6] = nullptr, float M[6] = nullptr, float K[6] = nullptr, float B[6] = nullptr,
+    int *f_coord = nullptr, int f_c_axis[6] = nullptr, float f_ref[6] = nullptr, float f_limits[6] = nullptr, float kp[6] = nullptr, float ki[6] = nullptr, float kd[6] = nullptr, float xe_limit[6] = nullptr, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_ft_sensor_error(int *err, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall iden_tcp_load(float result[4], float estimated_mass = 0.0, int instance_id = -1);
 
-  extern "C" __declspec(dllexport) int __stdcall get_linear_track_error(int *err, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_linear_track_status(int *status, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_linear_track_pos(int *pos, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_linear_track_is_enabled(int *status, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_linear_track_on_zero(int *status, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_linear_track_sci(int *sci1, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall get_linear_track_sco(int sco[2], int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall clean_linear_track_error(int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall set_linear_track_enable(bool enable, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall set_linear_track_speed(int speed, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall set_linear_track_back_origin(bool wait = true, bool auto_enable = true, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall set_linear_track_pos(int pos, int speed = 0, bool wait = true, fp32 timeout = 100, bool auto_enable = true, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall set_linear_track_stop(int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_linear_motor_error(int *err, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_linear_motor_status(int *status, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_linear_motor_pos(int *pos, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_linear_motor_is_enabled(int *status, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_linear_motor_on_zero(int *status, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_linear_motor_sci(int *sci1, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_linear_motor_sco(int sco[2], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall clean_linear_motor_error(int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_linear_motor_enable(bool enable, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_linear_motor_speed(int speed, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_linear_motor_back_origin(bool wait = true, bool auto_enable = true, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_linear_motor_pos(int pos, int speed = 0, bool wait = true, fp32 timeout = 100, bool auto_enable = true, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_linear_motor_stop(int instance_id = -1);
   
   extern "C" __declspec(dllexport) int __stdcall set_timeout(float timeout, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_baud_checkset_enable(bool enable, int instance_id = -1);
@@ -189,7 +200,7 @@ namespace XArmWrapper {
   extern "C" __declspec(dllexport) int __stdcall set_cartesian_velo_continuous(bool on_off, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_allow_approx_motion(bool on_off, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_joint_states(fp32 position[7], fp32 velocity[7], fp32 effort[7], int num = 3, int instance_id = -1);
-  extern "C" __declspec(dllexport) int __stdcall iden_joint_friction(int *result, unsigned char *sn = NULL, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall iden_joint_friction(int *result, unsigned char *sn = nullptr, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall set_only_check_type(unsigned char only_check_type = 0, int instance_id = -1);
 
   extern "C" __declspec(dllexport) int __stdcall open_lite6_gripper(bool sync = true, int instance_id = -1);
@@ -210,11 +221,27 @@ namespace XArmWrapper {
   extern "C" __declspec(dllexport) int __stdcall get_poe_status(int *status, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_iden_status(int *status, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_c31_error_info(int *servo_id, float *theoretical_tau, float *actual_tau, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_c54_error_info(int *dir, float *tau_threshold, float *actual_tau, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_c37_error_info(int *servo_id, float *diff_angle, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_c23_error_info(int *id_bits, float angle[7], int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_c24_error_info(int *servo_id, float *speed, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_c60_error_info(float *max_velo, float *curr_velo, int instance_id = -1);
   extern "C" __declspec(dllexport) int __stdcall get_c38_error_info(int *id_bits, float angle[7], int instance_id = -1);
+  
+  extern "C" __declspec(dllexport) int __stdcall set_ft_collision_detection(int on_off, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_ft_collision_rebound(int on_off, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_ft_collision_threshold(float thresholds[6], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_ft_collision_reb_distance(float distances[6], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_ft_admittance_ctrl_threshold(float thresholds[6], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_external_device_monitor_params(int dev_type, int frequency, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall set_tgpio_monitor_params(int io_type, int frequency, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_ft_collision_detection(int *on_off, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_ft_collision_rebound(int *on_off, int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_ft_collision_threshold(float thresholds[6], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_ft_collision_reb_distance(float distances[6], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_ft_admittance_ctrl_threshold(float thresholds[6], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_external_device_monitor_params(int params[2], int instance_id = -1);
+  extern "C" __declspec(dllexport) int __stdcall get_tgpio_monitor_params(int params[2], int instance_id = -1);
 
   /* modbus tcp func_code: 0x01 */
   extern "C" __declspec(dllexport) int __stdcall read_coil_bits(unsigned short addr, unsigned short quantity, unsigned char *bits, int instance_id = -1);

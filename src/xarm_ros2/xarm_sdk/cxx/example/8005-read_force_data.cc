@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
   }
   std::string port(argv[1]);
 
-  XArmAPI *arm = new XArmAPI(port);
+  auto arm = std::make_shared<XArmAPI>(port);
   sleep_milliseconds(500);
   if (arm->error_code != 0) arm->clean_error();
   if (arm->warn_code != 0) arm->clean_warn();
@@ -30,9 +30,8 @@ int main(int argc, char **argv) {
   printf("=========================================\n");
 
   int ret;
-  ret = arm->ft_sensor_enable(1);
-  printf("ft_sensor_enable, ret=%d\n", ret);
-  int err;
+  ret = arm->set_ft_sensor_enable(1);
+  printf("set_ft_sensor_enable, ret=%d\n", ret);
 
   while (arm->is_connected() && arm->error_code == 0) {
     print_nvect("raw_force: ", arm->ft_raw_force, 6);
@@ -41,8 +40,8 @@ int main(int argc, char **argv) {
   }
 
 
-  ret = arm->ft_sensor_enable(0);
-  printf("ft_sensor_enable, ret=%d\n", ret);
+  ret = arm->set_ft_sensor_enable(0);
+  printf("set_ft_sensor_enable, ret=%d\n", ret);
 
   arm->disconnect();
 

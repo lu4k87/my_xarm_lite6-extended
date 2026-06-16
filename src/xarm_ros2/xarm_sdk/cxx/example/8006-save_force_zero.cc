@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
   }
   std::string port(argv[1]);
 
-  XArmAPI *arm = new XArmAPI(port);
+  auto arm = std::make_shared<XArmAPI>(port);
   sleep_milliseconds(500);
   if (arm->error_code != 0) arm->clean_error();
   if (arm->warn_code != 0) arm->clean_warn();
@@ -31,10 +31,10 @@ int main(int argc, char **argv) {
 
   int ret;
 
-  ret = arm->ft_sensor_enable(1);
-  printf("ft_sensor_enable, ret=%d\n", ret);
-  ret = arm->ft_sensor_set_zero();
-  printf("ft_sensor_set_zero, ret=%d\n", ret);
+  ret = arm->set_ft_sensor_enable(1);
+  printf("set_ft_sensor_enable, ret=%d\n", ret);
+  ret = arm->set_ft_sensor_zero();
+  printf("set_ft_sensor_zero, ret=%d\n", ret);
   sleep_milliseconds(200);
 
   arm->save_conf();
