@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>rviz_pose_control</name>
+  <name>robot_motion_handler_movegroup</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Universal robot motion services utilizing MoveIt MoveGroup and Servo</description>
   <maintainer email="mk1@todo.todo">mk1</maintainer>
   <license>TODO: License declaration</license>
 

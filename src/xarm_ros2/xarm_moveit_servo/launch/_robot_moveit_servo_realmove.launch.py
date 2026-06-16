@@ -265,9 +265,9 @@ def launch_setup(context, *args, **kwargs):
     )
 
     set_pose_moveit_node = Node(
-        package='rviz_pose_control',
-        executable='set_pose_moveit',
-        name='set_pose_moveit_node',
+        package='robot_motion_handler_movegroup',
+        executable='robot_motion_handler_movegroup',
+        name='robot_motion_handler_movegroup',
         output='screen',
     )
 

@@ -211,7 +211,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 * **`checker.py` (`collision_check`) [NODE]**
     * 🎯 **Zweck & Aufgabe:** Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Sek. in die Zukunft) die Z-Koordinate. Würde der Roboter den Tisch berühren, wird der Abwärtsbefehl des Controllers hart überschrieben und blockiert. Löst das Rumble-Feedback (Vibration) des Gamepads aus.
     * 🟠 📥 **Subscribes:** `/joy` (`sensor_msgs/Joy`), `/servo_server/status` (`std_msgs/Int8`), `/ui/eef_position` (`std_msgs/Float32MultiArray`). Liest den rohen Controller-Input, Status-Codes des Servo-Servers sowie die aktuelle Z-Höhe für den Kollisions-Check.
-    * 🟢 📤 **Publishes:** `/joy_check` (`sensor_msgs/Joy`), `/joy/set_feedback` (`sensor_msgs/JoyFeedbackArray`). Sendet den (ggf. null-korrigierten) Befehl an den `joystick_input` weiter und steuert die Controller-Vibration.
+    * 🟢 📤 **Publishes:** `/joy_check` (`sensor_msgs/Joy`), `/ui/collision_msg` (`std_msgs/String`). Leitet den (ggf. null-korrigierten) Befehl an den `joystick_input` weiter und meldet harte Stopps an die UI. Die Gamepad-Vibration wird direkt lokal über `pygame` (ohne ROS Topic) angesteuert.
     * ⚙️ **Parameter:**
         * `look_ahead_time = 0.1` – Prädiktionshorizont (Sekunden) für die Geschwindigkeits-Vorausschau.
         * `table_z_threshold = 0.0` – Die harte Tischbarriere auf der Z-Achse (World-Frame).
@@ -255,9 +255,14 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
         * **Phase 2 (Hover):** Bewegt sich horizontal auf der sicheren Z-Höhe (15cm) exakt über das Zielobjekt. Erzwingt dabei eine strikte Top-Down Orientierung (gerade nach unten) und nutzt sehr enge IK-Toleranzen (5mm Position, 0.001 rad Neigung) für millimetergenaue Ausrichtung.
         * **Phase 3 (Approach):** Schaltet das anvisierte Objekt kurzzeitig über `/ui/ignore_collision_object` in der globalen MoveIt Kollisionsszene ab, damit der Greifer physisch in die Bounding Box eindringen kann, ohne einen Not-Aus auszulösen, und fährt dann nach unten.
     * ⚙️ **Parameter:** Bietet einstellbare Parameter für `velocity_scaling` (Standard: 0.2) und `acceleration_scaling` (Standard: 0.1) für extrem weiche, langsame und vorhersehbare Roboterbewegungen während der Greifsequenz.
-    * 🟠 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`).
-    * 🟢 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`) für das RViz Console-Log, `/ui/ignore_collision_object` (`std_msgs/String`).
+    * 🟠 📥 **Subscribes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`).
+    * 🟢 📤 **Publishes:** `/ui/grasp_status` (`std_msgs/String`) für das RViz Console-Log, `/ui/ignore_collision_object` (`std_msgs/String`), `/planning_scene` (`moveit_msgs/PlanningScene`).
+    * 🔄 **Action Server:** `/ui/grasp_object` (`my_3d_vision_msgs/action/GraspObject`).
     * 🔄 **Services:** `/compute_ik` (IK Verifizierung), `/move_action` (MoveIt OMPL Planer), `/ui/execute_move_to_pose` (Servo Fallback).
+* **`grasp_action_bridge.py` [NODE]**
+    * 🎯 **Zweck & Aufgabe:** Übersetzer-Node zwischen dem RViz Control Panel und dem Action Server. Nimmt den simplen String des Zielobjekts aus dem UI entgegen und wandelt ihn in ein blockierungsfreies ROS 2 Action Goal um.
+    * 🟠 📥 **Subscribes:** `/ui/grasp_object_cmd` (`std_msgs/String`).
+    * 🔄 **Action Client:** `/ui/grasp_object` (`my_3d_vision_msgs/action/GraspObject`).
 * **`zed_stand_publisher.py` [SKRIPT]**
     * 🎯 **Zweck & Aufgabe:** Generiert mathematisch exakt das 3D-Modell des Kamerastativs (Aluminiumprofil) und publiziert dieses statisch in RViz.
     * 🟢 📤 **Publishes:** `/zed_stand_marker` (`visualization_msgs/Marker`).
@@ -282,16 +287,16 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🖥️ 5.4 Funktion: Grafische Steuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
-* **`rviz_robot_control_panel.cpp` [RVIZ PLUGIN]**
+* **`rviz_robot_control_panel.cpp` [C++ GUI NODE]**
     * 🎯 **Zweck & Aufgabe:** Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Es ist modern in einem Dark-Theme gestaltet und in 4 GroupBoxes unterteilt (Cartesian Jog, Cartesian Absolute, Joint Absolute, Utilities). Bietet D-Pad Tasten, **6-DoF Joint Control Slider**, das **"Grasp Object"** Eingabefeld und ein **farbkodiertes Live-Konsolen-Log**. Nutzt eine threadsichere `Qt::QueuedConnection` Signal/Slot Architektur, um asynchrone ROS 2 Statusmeldungen direkt in das UI zu streamen, ohne die Oberfläche einzufrieren.
-    * 🟠 📥 **Subscribes:** `/ui/grasp_status` (`std_msgs/String`) für das integrierte Textfenster, `/joint_states` (`sensor_msgs/JointState`) zur Synchronisierung der Joint-Slider beim Start.
-    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`). Sendet Jogging-Geschwindigkeiten und den YOLO-Ziel-String.
+    * 🟠 📥 **Subscribes:** `/ui/grasp_status` (`std_msgs/String`), `/joint_states` (`sensor_msgs/JointState`), `/ui/robot_control/current_speed` (`std_msgs/Float32`).
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`), `/ui/robot_control/set_speed_index` (`std_msgs/Int32`).
     * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint`, `/ui/execute_scan_trajectory` (Clients).
-* **`set_pose_moveit_node.py` [NODE]**
+* **`robot_motion_handler_movegroup.py` [NODE]**
     * 🎯 **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger, einen robusten kartesischen P-Regler für direkte Koordinaten-Anfahrten und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo).
     * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Skaliert die Geschwindigkeit des P-Reglers und der Joint-Bewegungen synchron zur UI.
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
-    * 🔄 **Services:** Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose` und `/ui/execute_move_joint` als Server an. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
+    * 🔄 **Services:** Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint` und `/ui/execute_scan_trajectory` als Server an. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
     * ⚙️ **Parameter (P-Regler):**
         * `Kp_pos = 2.5` – Proportional-Gain für dynamische, aber stabile Anfahrten.
         * `max_vel_pos = 0.2` – Limitiert die TCP-Geschwindigkeit auf 0.2 m/s.
@@ -314,19 +319,12 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
       * **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
       * **Farbkodiertes Konsolen-Log:** Ein live scrollbares Konsolen-Log mit detailliertem Feedback für alle Bewegungsbefehle — inklusive Koordinatenanzeige (`X`, `Y`, `Z`) bei MoveTo-Befehlen und expliziten Erfolgs- (✓) / Fehler- (❌) Statusanzeigen mit Fehlercodes.
     * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status` (via `rosbridge`).
-    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/ui/robot_control/current_speed` (via `rosbridge`).
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/ui/robot_control/set_speed_index` (via `rosbridge`).
 
 ### 🤖 5.5 Funktion: Komplexe Trajektorien & Task-Koordination
 *Nodes, die spezifische, übergeordnete Bewegungsabläufe orchestrieren.*
 
-* **`scan_trajectory_node.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Generiert eine kontinuierliche spiralförmige Pfadplanung um ein Objekt herum (z. B. getriggert durch den "Vision Scan" Button). Berechnet in Echtzeit Look-At-Quaternions, um das Kamera-Zentrum permanent auf das Objekt zu fokussieren.
-    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`).
-    * 🔄 **Services:** Bietet `/ui/execute_scan_trajectory` als Server an. TF2-Listener für Echtzeit TCP-Koordinaten.
-    * ⚙️ **Parameter (Trajektorie):**
-        * `radius = 0.2` – Orbit-Radius von 20 cm um das Ziel.
-        * `z_start = 0.4` / `z_end = 0.15` – Start- und Endhöhe für die Spiralfahrt nach unten.
-        * `velocity_hz = 50` – Hohe Rate (50Hz) für flüssiges Einspeisen in MoveIt Servo.
+
 * **`motion_sequence.py` [NODE]**
     * 🎯 **Zweck & Aufgabe:** Zustandsverwaltung zwischen MoveIt Servo und Hardware. Pausiert das flüssige Servo-Jogging (Gamepad), unterbricht den xArm Hardware-Controller, führt eine statische Fahrt aus und aktiviert danach Servo wieder nahtlos zurück.
     * 🔄 **Services:** `/execute_motion_to_pose` (Server). Ruft zudem Hardware-Spezifische UFactory Services ab (`set_mode`, `set_state`).
@@ -453,7 +451,7 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 | **A (grün)** | Greifer toggle | Service: `open/close_lite6_gripper` | Zustand in `vacuum_gripper_state_` |
 | **B (rot)** | Greifer stopp | Service: `/ufactory/stop_lite6_gripper` | Not-Aus |
 | **X (blau)** | Whisper AI toggle | Action: `/whisper/inference` (max 5 Sek.) | Toggle start/stopp |
-| **Y (gelb)** | Initialposition | Service: `/ui/execute_initial_pose` | `set_pose_moveit_node` |
+| **Y (gelb)** | Initialposition | Service: `/ui/execute_initial_pose` | `robot_motion_handler_movegroup` |
 
 **Geschwindigkeitsstufen (D-Pad):**
 
@@ -531,6 +529,25 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 | **Pygame** | v2.6.1 |
 | **Build-System** | `colcon` |
 | **Compiler** | GCC 11+ (C++17) |
+
+### ⚠️ Kritische Systemkonfigurationen (Troubleshooting)
+
+> [!WARNING]
+> **1. `.bashrc` Konfiguration (CUDA & ROS 2 Nexus Kompatibilität)**
+> Wenn du die ZED Kamera (CUDA) über die ROS 2 Nexus WebApp startest, öffnet das Backend die Terminals als *non-interactive shell*. Das bedeutet, Ubuntu bricht das Laden der `~/.bashrc` extrem früh ab. Um zu verhindern, dass die ZED auf die CPU zurückfällt (massives Ruckeln!), **müssen** alle CUDA- und ROS-Pfade **ganz oben** in der `~/.bashrc` stehen (noch vor dem `case $- in *i*) ;; *) return;; esac` Block!). Beispiel für den korrekten Header der `.bashrc`:
+> ```bash
+> source /opt/ros/humble/setup.bash
+> source ~/dev_ws/install/setup.bash
+> export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+> export PATH=/usr/local/cuda-12.1/bin${PATH:+:${PATH}}
+> export LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+> export ROS_LOCALHOST_ONLY=1
+> ```
+> 
+> **2. Display Server: X11 vs. Wayland (RViz2 Performance)**
+> Ubuntu 22.04 nutzt standardmäßig Wayland. In Kombination mit NVIDIA-Karten und RViz2 führt Wayland oft zu katastrophalen Frameraten und stark stotternden 3D-Punktwolken. 
+> Prüfe dein System im Terminal: `echo $XDG_SESSION_TYPE`
+> Wenn die Ausgabe `wayland` lautet, logge dich aus (Logout), klicke unten rechts auf das Zahnrad-Symbol und wähle **Ubuntu on Xorg (X11)**, bevor du dich wieder einloggst.
 
 ### Basis-System (Grundvoraussetzung)
 
@@ -732,7 +749,7 @@ dev_ws/
 ├── src/
 │   ├── collision_check/            # 🛡️ Python: Prädiktiver Kollisionsschutz
 │   │   └── collision_check/checker.py
-│   ├── rviz_pose_control/          # 🤖 Python: Setzt Fake-Arm Startpose
+│   ├── robot_motion_handler_movegroup/ # 🤖 Python: Setzt Fake-Arm Startpose
 │   ├── gaze_control/               # 👁️ Python: PyQt5 Gaze-Control-UI
 │   ├── motion_sequence/            # 🦾 Python: Kartesische Bewegungs-State-Machine
 │   │   └── motion_sequence/motion_sequence.py
@@ -745,7 +762,8 @@ dev_ws/
 │   │       ├── yolo_moveit_collision.py      # MoveIt Kollisionsobjekte & dynamisches Ignorieren
 │   │       ├── zed_stand_publisher.py        # 3D-Stativ Mesh Publisher
 │   │       ├── zed_yolo_3d_bbox.py           # 3D Objekterkennung & Bounding-Boxen
-│   │       └── yolo_planned_grasp_executor.py # 3-Phasen Greiflogik & Planner Fallback
+│   │       ├── yolo_planned_grasp_executor.py # 3-Phasen Greiflogik & Planner Fallback
+│   │       └── grasp_action_bridge.py        # Übersetzer für RViz Grasp Action
 │   ├── ros2_whisper/               # 🎙️ Whisper AI Speech-to-Text
 │   ├── rviz_servo_status_overlay/               # 🖥️ Python: RViz2 2D Text Overlays
 │   │   └── rviz_servo_status_overlay/

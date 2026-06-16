@@ -6,6 +6,7 @@ import math
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
+from std_srvs.srv import Trigger
 from my_3d_vision_bringup.action import GraspObject
 from std_msgs.msg import String
 from visualization_msgs.msg import MarkerArray, Marker
@@ -92,6 +93,10 @@ class YoloPlannedGraspExecutor(Node):
         # Fallback Servo Client
         self.servo_client = self.create_client(MoveCartesian, '/ui/execute_move_to_pose', callback_group=self.cb_group)
         
+        # MoveIt Servo Stop/Start — CRITICAL: Servo must be paused during MoveGroup execution
+        self.servo_stop_client = self.create_client(Trigger, '/servo_server/stop_servo', callback_group=self.cb_group)
+        self.servo_start_client = self.create_client(Trigger, '/servo_server/start_servo', callback_group=self.cb_group)
+        
         # Trajectory Publisher
         self.traj_pub = self.create_publisher(JointTrajectory, '/lite6_traj_controller/joint_trajectory', 10)
         
@@ -142,6 +147,11 @@ class YoloPlannedGraspExecutor(Node):
 
         try:
             self.publish_status(f"➤ Start Planned Grasping: '{self.target_object_name}'", goal_handle)
+            
+            # CRITICAL: Stop MoveIt Servo before MoveGroup execution!
+            # MoveIt Servo and MoveGroup cannot control the trajectory controller simultaneously.
+            self._stop_servo(goal_handle)
+            
             # 1. Find the object in the latest markers
             target_id = None
             object_base_name = ""
@@ -310,6 +320,9 @@ class YoloPlannedGraspExecutor(Node):
 
             self.publish_status("✓ Planned Grasp Sequence Completed Successfully!", goal_handle)
             
+            # Restart MoveIt Servo after successful execution
+            self._start_servo(goal_handle)
+            
             goal_handle.succeed()
             result.success = True
             result.message = "Successfully grasped."
@@ -317,6 +330,8 @@ class YoloPlannedGraspExecutor(Node):
 
         except Exception as e:
             self.publish_status(f"❌ Error executing planned grasp sequence: {e}", goal_handle)
+            # Restart MoveIt Servo even on error so joystick/gamepad control resumes
+            self._start_servo(goal_handle)
             goal_handle.abort()
             result.success = False
             result.message = str(e)
@@ -324,6 +339,30 @@ class YoloPlannedGraspExecutor(Node):
         finally:
             with self.exec_lock:
                 self.is_executing = False
+
+    def _stop_servo(self, goal_handle=None):
+        """Stop MoveIt Servo to release the trajectory controller for MoveGroup."""
+        self.publish_status("➤ Pausing MoveIt Servo for MoveGroup execution...", goal_handle)
+        if self.servo_stop_client.wait_for_service(timeout_sec=2.0):
+            future = self.servo_stop_client.call_async(Trigger.Request())
+            while rclpy.ok() and not future.done():
+                time.sleep(0.05)
+            time.sleep(0.3)  # Short pause to let Servo fully release the controller
+            self.publish_status("✓ MoveIt Servo paused.", goal_handle)
+        else:
+            self.publish_status("⚠ MoveIt Servo stop service not available (continuing anyway).", goal_handle)
+
+    def _start_servo(self, goal_handle=None):
+        """Restart MoveIt Servo after MoveGroup execution."""
+        self.publish_status("➤ Resuming MoveIt Servo...", goal_handle)
+        if self.servo_start_client.wait_for_service(timeout_sec=2.0):
+            future = self.servo_start_client.call_async(Trigger.Request())
+            while rclpy.ok() and not future.done():
+                time.sleep(0.05)
+            time.sleep(0.3)
+            self.publish_status("✓ MoveIt Servo resumed.", goal_handle)
+        else:
+            self.publish_status("⚠ MoveIt Servo start service not available.", goal_handle)
 
     def _fallback_move(self, x, y, z, roll, pitch, yaw, goal_handle=None):
         self.publish_status("➤ Executing Fallback Move via Servo...", goal_handle)
@@ -430,7 +469,7 @@ class YoloPlannedGraspExecutor(Node):
         req.goal_constraints.append(constraints)
 
         goal_msg.request = req
-        goal_msg.planning_options.plan_only = True # <--- Wir lassen MoveIt NUR planen!
+        goal_msg.planning_options.plan_only = False # Let MoveIt plan AND execute
         goal_msg.planning_options.look_around = False
         goal_msg.planning_options.replan = True
         goal_msg.planning_options.replan_attempts = 3
@@ -481,28 +520,8 @@ class YoloPlannedGraspExecutor(Node):
             self.publish_status(f"❌ MoveIt Planning failed with error code: {result.error_code.val}", goal_handle)
             return False
             
-        self.publish_status("✓ MoveIt Path Planned! Executing via Trajectory Controller...", goal_handle)
+        self.publish_status("✓ MoveIt Path Planned and Executed successfully!", goal_handle)
         
-        # Execute by publishing the planned trajectory directly
-        if result.planned_trajectory and result.planned_trajectory.joint_trajectory.points:
-            traj_msg = result.planned_trajectory.joint_trajectory
-            self.traj_pub.publish(traj_msg)
-            
-            # Wait for execution to finish
-            duration = traj_msg.points[-1].time_from_start
-            wait_time = duration.sec + duration.nanosec * 1e-9 + 0.5
-            
-            # Non-blocking wait to allow cancellation
-            start_wait = time.time()
-            while time.time() - start_wait < wait_time:
-                if goal_handle and goal_handle.is_cancel_requested:
-                    return False
-                time.sleep(0.1)
-                
-        else:
-            self.publish_status("❌ No valid trajectory generated by MoveIt.", goal_handle)
-            return False
-            
         return True
 
 def main(args=None):

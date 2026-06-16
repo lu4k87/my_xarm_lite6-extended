@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'rviz_pose_control'
+package_name = 'robot_motion_handler_movegroup'
 
 setup(
     name=package_name,
@@ -13,14 +13,14 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='mk1',
-    maintainer_email='mk1@todo.todo',
-    description='TODO: Package description',
+    maintainer='mk',
+    maintainer_email='mk@todo.todo',
+    description='Universal robot motion handler using MoveGroup and Servo',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'set_pose_moveit = rviz_pose_control.set_pose_moveit_node:main'
+            'robot_motion_handler_movegroup = robot_motion_handler_movegroup.robot_motion_handler_movegroup:main'
         ],
     },
 )

@@ -291,7 +291,23 @@ function logMsg(source, text, type='info') {
   const timeStr = d.toTimeString().split(' ')[0];
   const div = document.createElement('div');
   div.className = 'log-entry';
-  div.innerHTML = `<span class="log-time">[${timeStr}]</span><span class="log-${type}">[${source}] ${text}</span>`;
+
+  // Auto-detect type from ROS message content (emoji prefixes)
+  let autoType = type;
+  if (text.includes('✓')) autoType = 'success';
+  else if (text.includes('❌')) autoType = 'err';
+  else if (text.includes('➤')) autoType = 'action';
+  else if (text.includes('⚠')) autoType = 'warn';
+
+  // Source badge color
+  const srcColors = {
+    'ROS':    'log-src-ros',
+    'UI':     'log-src-ui',
+    'System': 'log-src-sys'
+  };
+  const srcClass = srcColors[source] || 'log-src-sys';
+
+  div.innerHTML = `<span class="log-time">[${timeStr}]</span><span class="log-src ${srcClass}">[${source}]</span> <span class="log-${autoType}">${text}</span>`;
   win.appendChild(div);
   win.scrollTop = win.scrollHeight;
 }

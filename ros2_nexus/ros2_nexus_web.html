@@ -29,11 +29,16 @@
       --gold: #f0b429;
 
       /* Badge-Farben — nach Wunsch angepasst */
-      --c-node:   #06b6d4;   /* Türkis/Blau      — ros2 run Node      */
-      --c-launch: #f97316;   /* Orange           — ros2 launch File   */
-      --c-pub:    #10b981;   /* Grün             — ros2 topic pub     */
-      --c-cmd:    #a78bfa;   /* Violett          — System CMD         */
-      --c-kill:   #f87171;   /* Rot              — Kill / Danger      */
+      --c-node: #06b6d4;
+      /* Türkis/Blau      — ros2 run Node      */
+      --c-launch: #f97316;
+      /* Orange           — ros2 launch File   */
+      --c-pub: #10b981;
+      /* Grün             — ros2 topic pub     */
+      --c-cmd: #a78bfa;
+      /* Violett          — System CMD         */
+      --c-kill: #f87171;
+      /* Rot              — Kill / Danger      */
 
       --glow-a: 0 0 18px rgba(56, 189, 248, .25);
       --glow-o: 0 0 18px rgba(249, 115, 22, .3);
@@ -240,6 +245,69 @@
       letter-spacing: .5px
     }
 
+    /* ── TOOLTIP ── */
+    .info-tooltip-container {
+      position: relative;
+      display: inline-block;
+      margin-left: 12px;
+      cursor: help;
+    }
+    .info-tooltip-content {
+      visibility: hidden;
+      opacity: 0;
+      width: 680px;
+      background: #111827;
+      color: var(--txt);
+      text-align: left;
+      border-radius: 12px;
+      padding: 20px;
+      position: absolute;
+      z-index: 1000;
+      top: 150%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid var(--brd);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      transition: opacity 0.2s, transform 0.2s;
+      font-size: 13px;
+      line-height: 1.5;
+      font-family: 'Outfit', sans-serif;
+    }
+    .info-tooltip-container:hover .info-tooltip-content {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(-50%) translateY(5px);
+    }
+    .info-tooltip-content h3 {
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-size: 15px;
+      border-bottom: 1px solid var(--brd);
+      padding-bottom: 8px;
+    }
+    .info-tooltip-content ul {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 16px;
+    }
+    .info-tooltip-content li {
+      margin-bottom: 8px;
+      padding-left: 20px;
+      position: relative;
+    }
+    .info-tooltip-content li::before {
+      content: '■';
+      position: absolute;
+      left: 0;
+      color: rgba(255,255,255,0.2);
+      font-size: 10px;
+      top: 3px;
+    }
+    .info-tooltip-content .highlight {
+      color: var(--green);
+      font-weight: 600;
+    }
+
     /* ── MAIN ── */
     main {
       flex: 1;
@@ -270,7 +338,7 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
       min-width: 0;
     }
-    
+
     .section:last-child {
       margin-bottom: 0;
     }
@@ -352,8 +420,15 @@
     }
 
     @keyframes pulse-badge {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .5; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .5;
+      }
     }
 
     /* ── GRID ── */
@@ -690,15 +765,73 @@
       <span class="logo-badge">WEB</span>
     </a>
 
-    <select id="dev-setup-mode" style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.4); padding: 8px 16px; border-radius: 8px; font-weight: 700; font-family: 'Outfit'; outline: none; cursor: pointer; transition: all 0.2s; appearance: none; -webkit-appearance: none; text-align: center;" onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'" onchange="if(this.value) { runDevSetup(this.value); this.value=''; }">
-      <option value="" disabled selected>▶ RUN DEV Setup (Select Mode)</option>
-      <option value="fake" style="background: var(--bg); color: var(--txt);">FAKE (Simulation)</option>
-      <option value="real" style="background: var(--bg); color: var(--txt);">REAL (Hardware)</option>
-    </select>
+    <div style="display: flex; align-items: center;">
+      <select id="dev-setup-mode"
+        style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.4); padding: 8px 16px; border-radius: 8px; font-weight: 700; font-family: 'Outfit'; outline: none; cursor: pointer; transition: all 0.2s; appearance: none; -webkit-appearance: none; text-align: center;"
+        onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'"
+        onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'"
+        onchange="if(this.value) { runDevSetup(this.value); this.value=''; }">
+        <option value="" disabled selected>▶ RUN DEV Setup (Select Mode)</option>
+        <option value="fake" style="background: var(--bg); color: var(--txt);">FAKE (Simulation)</option>
+        <option value="real" style="background: var(--bg); color: var(--txt);">REAL (Hardware)</option>
+      </select>
+
+      <div class="info-tooltip-container">
+        <i class="fa-solid fa-circle-info" style="color: var(--mut); font-size: 20px; transition: color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--mut)'"></i>
+        <div class="info-tooltip-content">
+           <h3><i class="fa-solid fa-network-wired"></i> Was startet das DEV Setup?</h3>
+           <ul style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 1-2: Web-Interface & ROS Bridge</span><br>
+                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                - <b>rosbridge_websocket</b> (<i>rosbridge_websocket_launch.xml</i>)<br>
+                - <b>Robot Control Web UI</b> (<i>http.server Port 8081</i>)
+                </span>
+             </li>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 3: MoveIt Servo Base</span><br>
+                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                <b>Launch:</b> <i>_robot_moveit_servo_fake.launch.py</i> (bzw. <i>realmove</i>) startet:<br>
+                - <b>controller_manager</b> (<i>ros2_control_node</i>)<br>
+                - <b>servo_node</b> (<i>MoveIt Servo C++ Komponente</i>)<br>
+                - <b>xarm_joystick_input</b> (<i>Gamepad C++ Treiber</i>)<br>
+                - <b>collision_checker</b> (<i>checker.py</i>)<br>
+                - <b>rviz2</b> (<i>Visualisierung</i>)
+                </span>
+             </li>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 4: Motion Planning</span><br>
+                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                <b>Launch:</b> <i>standalone_move_group.launch.py</i> startet:<br>
+                - <b>move_group</b> (<i>MoveIt 2 Planungs-Server</i>)
+                </span>
+             </li>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 5-8: Assistenz- & Steuerungs-Nodes</span><br>
+                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                - <b>scene_objects_node</b> (<i>rviz_marker_static_scene_objects.launch.py</i>)<br>
+                - <b>robot_motion_handler_movegroup</b> (<i>robot_motion_handler_movegroup.py</i>)<br>
+                - <b>scan_trajectory_node</b> (<i>C++ Scan Generator</i>)<br>
+                - <b>servo_status_overlay</b> (<i>rviz_overlay.py HUD</i>)
+                </span>
+             </li>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 9-10: 3D Vision & Grasping Pipeline</span><br>
+                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                <b>Launch:</b> <i>zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</i> startet:<br>
+                - <b>zed_wrapper_node</b> / <b>fake_camera</b> (<i>Kamera-Treiber</i>)<br>
+                - <b>tf_camera_to_robot</b> (<i>tf_camera_to_robot.py</i>)<br>
+                - <b>yolov8_3d_node</b> (<i>yolov8_3d_node.py</i>)<br>
+                - <b>yolo_planned_grasp_executor</b> (<i>yolo_planned_grasp_executor.py</i>)
+                </span>
+             </li>
+           </ul>
+           <div style="color: var(--orange); font-size: 11px; background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.2);">
+             <i class="fa-solid fa-triangle-exclamation"></i> <b>Unterschied:</b> Im FAKE-Modus wird ein simulierter Arm geladen. Im REAL-Modus verbindet sich der Hardware-Treiber via TCP/IP mit dem echten xArm Lite 6.
+           </div>
+        </div>
+      </div>
+    </div>
 
     <nav class="tab-nav" id="tab-nav">
       <button class="tab-btn active" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
-      <button class="tab-btn" data-tab="topic_pubs"><i class="fa-solid fa-arrow-up-from-bracket"></i> Pub MSG on Topic</button>
+      <button class="tab-btn" data-tab="topic_pubs"><i class="fa-solid fa-arrow-up-from-bracket"></i> Pub MSG on
+        Topic</button>
       <button class="tab-btn" data-tab="web"><i class="fa-solid fa-server"></i> Web- / Server + UI</button>
       <button class="tab-btn" data-tab="info"><i class="fa-solid fa-gauge-high"></i> ROS Info</button>
       <button class="tab-btn" data-tab="system"><i class="fa-solid fa-terminal"></i> System</button>
@@ -715,18 +848,24 @@
   <main id="main-content"></main>
 
   <footer>
-    <button class="footer-btn" onclick="runCmd('bash','Terminal','interactive')"><i class="fa-solid fa-terminal"></i> Terminal</button>
+    <button class="footer-btn" onclick="runCmd('bash','Terminal','interactive')"><i class="fa-solid fa-terminal"></i>
+      Terminal</button>
     <button class="footer-btn" onclick="runCmd('nano ~/.bashrc','~/.bashrc Editor','interactive')"><i
         class="fa-solid fa-file-code"></i> ~/.bashrc</button>
-    <button class="footer-btn" onclick="runCmd('nano ~/dev_ws/ros2_nexus/ros2_nexus_web.py','Code: ROS2 Nexus WebApp','interactive')"><i class="fa-solid fa-code"></i> Code: ROS2 Nexus WebApp</button>
+    <button class="footer-btn"
+      onclick="runCmd('nano ~/dev_ws/ros2_nexus/ros2_nexus_web.py','Code: ROS2 Nexus WebApp','interactive')"><i
+        class="fa-solid fa-code"></i> Code: ROS2 Nexus WebApp</button>
     <button class="footer-btn primary" onclick="location.reload()"><i class="fa-solid fa-arrows-rotate"></i>
       Reload ROS2 Nexus</button>
-    <button class="footer-btn" style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3);" onclick="killAllProcesses()"><i class="fa-solid fa-skull"></i> Kill all ROS2 Processes</button>
+    <button class="footer-btn"
+      style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3);"
+      onclick="killAllProcesses()"><i class="fa-solid fa-skull"></i> Kill all ROS2 Processes</button>
   </footer>
 
   <div class="toast" id="toast"></div>
 
-  <div id="offline-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Outfit',sans-serif;">
+  <div id="offline-overlay"
+    style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Outfit',sans-serif;">
     <i class="fa-solid fa-power-off" style="font-size: 80px; color: var(--red); margin-bottom: 20px;"></i>
     <h1 style="font-size: 32px; margin: 0 0 10px 0;">SYSTEM OFFLINE</h1>
     <p style="font-size: 18px; color: #a5b4fc; max-width: 600px; text-align: center; line-height: 1.5;">
@@ -735,14 +874,19 @@
     </p>
   </div>
 
-  <div id="console-popup" style="position: fixed; bottom: 20px; right: 20px; width: 1012px; height: 300px; background: rgba(10, 15, 25, 0.95); border: 1px solid var(--brd); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; z-index: 1000; backdrop-filter: blur(10px); transition: height 0.3s;">
-    <div style="background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--brd); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleConsole()">
-      <div style="font-size: 12px; font-weight: 700; color: var(--mut); letter-spacing: 1px;"><i class="fa-solid fa-terminal" style="color: var(--accent); margin-right: 6px;"></i> TERMINAL LOGS</div>
+  <div id="console-popup"
+    style="position: fixed; bottom: 20px; right: 20px; width: 1012px; height: 300px; min-width: 300px; min-height: 40px; background: rgba(10, 15, 25, 0.95); border: 1px solid var(--brd); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; z-index: 1000; backdrop-filter: blur(10px); resize: both;">
+    <div
+      style="background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--brd); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;"
+      onclick="toggleConsole()">
+      <div style="font-size: 12px; font-weight: 700; color: var(--mut); letter-spacing: 1px;"><i
+          class="fa-solid fa-terminal" style="color: var(--accent); margin-right: 6px;"></i> TERMINAL LOGS</div>
       <div style="display: flex; gap: 8px;">
-        <i id="console-toggle-icon" class="fa-solid fa-chevron-down" style="color: var(--dim); font-size: 14px;"></i>
+        <i id="console-toggle-icon" class="fa-solid fa-minus" style="color: var(--dim); font-size: 14px;" title="Minimieren/Wiederherstellen"></i>
       </div>
     </div>
-    <div id="console-content" style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
+    <div id="console-content"
+      style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
     </div>
   </div>
 
@@ -750,7 +894,7 @@
   <script>
     // ─── CONSOLE LOGIC ────────────────────────────────────────────────────────────
     let lastLogId = 0;
-    
+
     // Drag logic for the console popup
     const popup = document.getElementById('console-popup');
     const header = popup.querySelector('div');
@@ -777,7 +921,7 @@
       e.stopPropagation();
       toggleConsole();
     };
-    
+
     // Remove the onclick from the header div to prevent conflict with drag
     header.removeAttribute('onclick');
     // Add double click to toggle as fallback
@@ -788,14 +932,14 @@
       e.preventDefault();
       const dx = dragStartX - e.clientX;
       const dy = dragStartY - e.clientY;
-      
+
       let newRight = popupStartX + dx;
       let newBottom = popupStartY + dy;
-      
+
       // Keep within window bounds
       newRight = Math.max(0, Math.min(newRight, window.innerWidth - popup.offsetWidth));
       newBottom = Math.max(0, Math.min(newBottom, window.innerHeight - popup.offsetHeight));
-      
+
       popup.style.right = newRight + 'px';
       popup.style.bottom = newBottom + 'px';
     }
@@ -806,14 +950,20 @@
       document.removeEventListener('mouseup', stopDrag);
     }
 
+    let lastConsoleHeight = '300px';
+    let lastConsoleWidth = '1012px';
+
     function toggleConsole() {
       const icon = document.getElementById('console-toggle-icon');
       if (popup.style.height === '40px') {
-        popup.style.height = '300px';
-        icon.className = 'fa-solid fa-chevron-down';
+        popup.style.height = lastConsoleHeight;
+        popup.style.width = lastConsoleWidth;
+        icon.className = 'fa-solid fa-minus';
       } else {
+        lastConsoleHeight = popup.style.height || '300px';
+        lastConsoleWidth = popup.style.width || '1012px';
         popup.style.height = '40px';
-        icon.className = 'fa-solid fa-chevron-up';
+        icon.className = 'fa-solid fa-window-maximize';
       }
     }
 
@@ -845,7 +995,7 @@
           clearInterval(pollInterval);
           // Versuche den Tab automatisch zu schließen (funktioniert meist nur bei --app Modus)
           window.close();
-          
+
           // Fallback-UI, falls der Browser window.close() blockiert
           document.body.innerHTML = `
             <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#0f172a; font-family:'Inter', sans-serif; text-align:center; padding:20px;">
@@ -858,34 +1008,38 @@
         }
       }
     }
-    
+
     pollInterval = setInterval(pollLogs, 1000);
 
     // ─── DEV SETUP ────────────────────────────────────────────────────────────────
     async function runDevSetup(mode) {
       let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true";
       let servoTitle = "MoveIt Servo (Fake)";
+      let moveGroupCmd = "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true";
+      let moveGroupTitle = "MoveIt MoveGroup (Standalone/Fake)";
 
       if (mode === "real") {
-        servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=True report_type:=dev";
+        servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=True report_type:=dev";
         servoTitle = "MoveIt Servo (Real)";
+        moveGroupCmd = "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true robot_ip:=192.168.1.175";
+        moveGroupTitle = "MoveIt MoveGroup (Standalone/Real)";
       }
 
       const actions = [
-        {cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Server"},
-        {cmd: "(sleep 1 && (google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html)) & python3 -m http.server 8081 -d src/robot_control_web_ui", title: "Web Joystick Server"},
-        {cmd: servoCmd, title: servoTitle},
-        {cmd: "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true", title: "MoveIt MoveGroup (Standalone)"},
-        {cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch"},
-        {cmd: "ros2 run rviz_pose_control set_pose_moveit", title: "Set Pose MoveIt Node"},
-        {cmd: "ros2 run xarm_moveit_servo scan_trajectory_node", title: "Scan Trajectory Node"},
-        {cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning"},
-        {cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "Launch Complete Perception Pipeline"},
-        {cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check"}
+        { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
+        { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
+        { cmd: servoCmd, title: servoTitle },
+        { cmd: moveGroupCmd, title: moveGroupTitle },
+        { cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch" },
+        { cmd: "ros2 run robot_motion_handler_movegroup robot_motion_handler_movegroup", title: "Robot Motion Handler MoveGroup Node" },
+        { cmd: "ros2 run xarm_moveit_servo scan_trajectory_node", title: "Scan Trajectory Node" },
+        { cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning" },
+        { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
+        { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" }
       ];
-      
+
       showToast('🚀 DEV Setup gestartet... (10 Terminals)');
-      
+
       for (const a of actions) {
         try {
           await fetch('/api/run', {
@@ -917,29 +1071,29 @@
 
     // ─── BADGE CONFIG ─────────────────────────────────────────────────────────────
     const BADGE = {
-      node:   { cls: "badge-node",   icon: "fa-solid fa-circle-dot",        label: "NODE"      },
-      launch: { cls: "badge-launch", icon: "fa-solid fa-rocket",             label: "LAUNCH"    },
-      pub:    { cls: "badge-pub",    icon: "fa-solid fa-arrow-up-from-bracket", label: "PUB MSG ON TOPIC" },
-      sys:    { cls: "badge-sys",    icon: "fa-solid fa-terminal",            label: "CMD"       },
-      kill:   { cls: "badge-kill",   icon: "fa-solid fa-skull-crossbones",    label: "KILL"      },
+      node: { cls: "badge-node", icon: "fa-solid fa-circle-dot", label: "NODE" },
+      launch: { cls: "badge-launch", icon: "fa-solid fa-rocket", label: "LAUNCH" },
+      pub: { cls: "badge-pub", icon: "fa-solid fa-arrow-up-from-bracket", label: "PUB MSG ON TOPIC" },
+      sys: { cls: "badge-sys", icon: "fa-solid fa-terminal", label: "CMD" },
+      kill: { cls: "badge-kill", icon: "fa-solid fa-skull-crossbones", label: "KILL" },
     };
 
     // ─── RENDER ───────────────────────────────────────────────────────────────────
     function renderTab(tabId) {
       const sections = TABS[tabId] || [];
-      
+
       // Ensure each section has a column assignment, default to distributing 0, 1, 2
       sections.forEach((sec, i) => {
-         if (sec.col === undefined) sec.col = i % 3;
+        if (sec.col === undefined) sec.col = i % 3;
       });
 
       let colHtml = ['<div class="col" id="col-0">', '<div class="col" id="col-1">', '<div class="col" id="col-2">'];
-      
+
       sections.forEach((sec, secIndex) => {
         const extraStyle = sec.style ? ` style="${sec.style}"` : '';
         const actionCount = sec.actions ? sec.actions.length : 0;
-        const runAllBtn = actionCount > 1 
-          ? `<button class="run-all-badge" data-sec-index="${secIndex}" onclick="event.stopPropagation(); runAllInSection(${secIndex})" title="Alle ${actionCount} Befehle nacheinander ausführen"><i class="fa-solid fa-play"></i>RUN ALL</button>` 
+        const runAllBtn = actionCount > 1
+          ? `<button class="run-all-badge" data-sec-index="${secIndex}" onclick="event.stopPropagation(); runAllInSection(${secIndex})" title="Alle ${actionCount} Befehle nacheinander ausführen"><i class="fa-solid fa-play"></i>RUN ALL</button>`
           : '';
         let html = `<div class="section"${extraStyle} data-sec-id="${secIndex}">
       <div class="section-title"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span>${runAllBtn}</div>
@@ -951,18 +1105,18 @@
           const safeLbl = a.label.replace(/"/g, '&quot;');
           html += `
         <div class="action-card" data-type="${a.type}" data-action-index="${aIndex}">
-          <button class="action-btn" data-cmd="${safeCmd}" data-label="${safeLbl}" data-mode="${mode}" title="Ausführen">
+          <div class="action-btn" data-cmd="${safeCmd}" data-label="${safeLbl}" data-mode="${mode}" title="Ausführen">
             <div class="btn-top">
               <span class="badge ${b.cls}"><i class="${b.icon}"></i>${b.label}</span>
               <span class="label">${a.label}</span>
             </div>
-            <div class="cmd-wrap"><span class="cmd-text">${a.cmd}</span></div>
-          </button>
+            <div class="cmd-wrap" title="${a.cmd.replace(/"/g, '&quot;')}"><span class="cmd-text">${a.cmd}</span></div>
+          </div>
           <button class="copy-btn" data-cmd="${safeCmd}" title="Befehl kopieren"><i class="fa-regular fa-copy"></i></button>
         </div>`;
         });
         html += `</div></div>`;
-        
+
         colHtml[sec.col] += html;
       });
       document.getElementById('main-content').innerHTML = colHtml[0] + '</div>' + colHtml[1] + '</div>' + colHtml[2] + '</div>';
@@ -984,18 +1138,18 @@
             const oldIdx = evt.oldIndex;
             const newIdx = evt.newIndex;
             if (oldIdx === newIdx) return;
-            
+
             // Update internal state
             const arr = TABS[tabId][secIndex].actions;
             const movedItem = arr.splice(oldIdx, 1)[0];
             arr.splice(newIdx, 0, movedItem);
-            
+
             // Save to backend
             try {
-              const res = await fetch('/api/config', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(TABS) 
+              const res = await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(TABS)
               });
               const data = await res.json();
               if (data.ok) showToast('✓ Layout gespeichert');
@@ -1003,7 +1157,7 @@
             } catch {
               showToast('✗ Speichern fehlgeschlagen', true);
             }
-            
+
             // Re-render to ensure DOM perfectly matches internal state
             renderTab(tabId);
           }
@@ -1026,38 +1180,38 @@
             let c0 = Array.from(document.getElementById('col-0').querySelectorAll('.section'));
             let c1 = Array.from(document.getElementById('col-1').querySelectorAll('.section'));
             let c2 = Array.from(document.getElementById('col-2').querySelectorAll('.section'));
-            
+
             c0.forEach(el => {
-              if(!el.dataset.secId) return;
+              if (!el.dataset.secId) return;
               let s = TABS[tabId][parseInt(el.dataset.secId)];
-              if(s) { s.col = 0; newSections.push(s); }
+              if (s) { s.col = 0; newSections.push(s); }
             });
             c1.forEach(el => {
-              if(!el.dataset.secId) return;
+              if (!el.dataset.secId) return;
               let s = TABS[tabId][parseInt(el.dataset.secId)];
-              if(s) { s.col = 1; newSections.push(s); }
+              if (s) { s.col = 1; newSections.push(s); }
             });
             c2.forEach(el => {
-              if(!el.dataset.secId) return;
+              if (!el.dataset.secId) return;
               let s = TABS[tabId][parseInt(el.dataset.secId)];
-              if(s) { s.col = 2; newSections.push(s); }
+              if (s) { s.col = 2; newSections.push(s); }
             });
-            
+
             // CRITICAL SAFETY CHECK: Prevent data loss if DOM misread
             if (newSections.length !== TABS[tabId].length) {
               console.error("Data loss detected! Aborting save.");
               renderTab(tabId);
               return;
             }
-            
+
             TABS[tabId] = newSections;
-            
+
             // Save to backend
             try {
-              const res = await fetch('/api/config', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(TABS) 
+              const res = await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(TABS)
               });
               const data = await res.json();
               if (data.ok) showToast('✓ Layout gespeichert');
@@ -1065,7 +1219,7 @@
             } catch {
               showToast('✗ Speichern fehlgeschlagen', true);
             }
-            
+
             // Re-render
             renderTab(tabId);
           }

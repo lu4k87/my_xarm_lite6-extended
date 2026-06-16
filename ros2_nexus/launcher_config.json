@@ -329,23 +329,23 @@
       "actions": [
         {
           "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-          "label": "ROS Bridge Launch",
+          "label": "ROS Bridge Websocket Launch PORT: 9090",
           "type": "launch"
         },
         {
-          "cmd": "python3 -m http.server 8080 -d src/websocket",
-          "label": "Webserver Port 8080",
-          "type": "sys"
+          "cmd": "python3 -m http.server 8080 -d src/websocket & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
+          "label": "Webserver Port: 8080 - Dashboard(workspace analyser)",
+          "type": "node"
         },
         {
-          "cmd": "(sleep 1 && (google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html)) & python3 -m http.server 8081 -d src/robot_control_web_ui",
-          "label": "Web Joystick Server Port 8081",
-          "type": "sys"
+          "cmd": "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html) & wait",
+          "label": "Webserver Port 8081 - Robot Control Web UI",
+          "type": "node"
         },
         {
           "cmd": "python3 src/websocket/workspace_analyzer.py",
           "label": "Workspace Analyzer",
-          "type": "sys"
+          "type": "node"
         }
       ],
       "col": 1,
@@ -355,12 +355,6 @@
     {
       "actions": [
         {
-          "cmd": "(google-chrome --app=http://localhost:8080/index.html || chromium-browser --app=http://localhost:8080/index.html || xdg-open http://localhost:8080/index.html) &",
-          "label": "UI - Teleoperation - Telemetrie",
-          "mode": "bg",
-          "type": "sys"
-        },
-        {
           "cmd": "(google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) &",
           "label": "Dashboard öffnen",
           "mode": "bg",
@@ -368,7 +362,7 @@
         },
         {
           "cmd": "google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html",
-          "label": "Web Joystick öffnen",
+          "label": "Robot Control Web UI öffnen",
           "mode": "bg",
           "type": "sys"
         },

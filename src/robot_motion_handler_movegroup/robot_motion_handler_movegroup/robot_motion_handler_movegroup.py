@@ -28,9 +28,9 @@ def get_quaternion_from_euler(roll, pitch, yaw):
     q[3] = cr * cp * cy + sr * sp * sy # z
     return q[1], q[2], q[3], q[0]
 
-class SetPoseMoveitNode(Node):
+class RobotMotionHandlerMovegroup(Node):
     def __init__(self):
-        super().__init__('set_pose_moveit_node')
+        super().__init__('robot_motion_handler_movegroup')
         
         self.cb_group = ReentrantCallbackGroup()
         
@@ -437,7 +437,7 @@ class SetPoseMoveitNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = SetPoseMoveitNode()
+    node = RobotMotionHandlerMovegroup()
     executor = MultiThreadedExecutor()
     executor.add_node(node)
     try:

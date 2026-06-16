@@ -278,7 +278,7 @@ header {
   left: 50%;
   top: 0;
   height: 100%;
-  background: rgba(139, 92, 246, 0.4);
+  background: rgba(56, 189, 248, 0.4);
   width: 0%;
   transition: width 0.1s, left 0.1s;
 }
@@ -507,11 +507,21 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   color: #cbd5e1;
   height: 600px;
 }
-.log-entry { margin-bottom: 4px; word-break: break-word; }
-.log-time { color: var(--mut); margin-right: 8px; }
-.log-info { color: var(--txt); }
-.log-warn { color: var(--orange); }
-.log-err { color: var(--red); }
+.log-entry { margin-bottom: 4px; word-break: break-word; line-height: 1.6; }
+.log-time { color: #64748b; margin-right: 6px; }
+
+/* Source Badges */
+.log-src { font-weight: 600; margin-right: 6px; }
+.log-src-ros { color: #a78bfa; }
+.log-src-ui { color: #38bdf8; }
+.log-src-sys { color: #60a5fa; }
+
+/* Message Types */
+.log-info { color: #cbd5e1; }
+.log-success { color: #34d399; }
+.log-action { color: #67e8f9; }
+.log-warn { color: #fbbf24; }
+.log-err { color: #f87171; font-weight: 500; }
 
 /* YOLO Objects List */
 .yolo-list-container {
