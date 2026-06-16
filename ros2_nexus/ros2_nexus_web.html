@@ -817,7 +817,15 @@
                 - <b>zed_wrapper_node</b> / <b>fake_camera</b> (<i>Kamera-Treiber</i>)<br>
                 - <b>tf_camera_to_robot</b> (<i>tf_camera_to_robot.py</i>)<br>
                 - <b>yolov8_3d_node</b> (<i>yolov8_3d_node.py</i>)<br>
-                - <b>yolo_planned_grasp_executor</b> (<i>yolo_planned_grasp_executor.py</i>)
+                - <b>yolo_planned_grasp_executor</b> (<i>yolo_planned_grasp_executor.py</i>)<br>
+                - <b>pointcloud_tf_tuner</b> (<i>Collision Tuning</i>)
+                </span>
+             </li>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 11-12: Voice Control & AI</span><br>
+                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                <b>Launch:</b> <i>Whisper Bringup & Listener</i> starten:<br>
+                - <b>whisper_server</b> (<i>OpenAI Whisper Engine</i>)<br>
+                - <b>voice_command_listener</b> (<i>Grasp Object Voice Trigger</i>)
                 </span>
              </li>
            </ul>
@@ -1035,10 +1043,12 @@
         { cmd: "ros2 run xarm_moveit_servo scan_trajectory_node", title: "Scan Trajectory Node" },
         { cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning" },
         { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
-        { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" }
+        { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" },
+        { cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", title: "Whisper Bringup (Voice AI)" },
+        { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" }
       ];
 
-      showToast('🚀 DEV Setup gestartet... (10 Terminals)');
+      showToast('🚀 DEV Setup gestartet... (12 Terminals)');
 
       for (const a of actions) {
         try {
