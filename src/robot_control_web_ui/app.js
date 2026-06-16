@@ -546,6 +546,47 @@ function executeGrasp() {
   graspPub.publish(new ROSLIB.Message({ data: obj }));
 }
 
+// Subscribe to Voice Feedback
+const voiceFeedbackSub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/ui/voice_feedback',
+  messageType: 'std_msgs/String'
+});
+
+voiceFeedbackSub.subscribe((msg) => {
+  logMsg('VOICE', `🗣️ Voice Command Recognized: ${msg.data}`);
+  
+  // Update the Voice Control mockup UI
+  const voiceSpan = document.getElementById('voice-recognized-cmd');
+  if (voiceSpan) {
+    voiceSpan.innerText = msg.data;
+    
+    // Add glowing effect to the span
+    voiceSpan.style.textShadow = "0 0 10px var(--green)";
+    voiceSpan.style.color = "var(--green)";
+    
+    setTimeout(() => {
+      voiceSpan.style.textShadow = "none";
+      voiceSpan.style.color = "var(--purple)";
+    }, 2000);
+  }
+  
+  // Also visually flash the Grasp input if it corresponds to a grasp command
+  if (msg.data.startsWith('Grasp: ')) {
+    const objName = msg.data.split('Grasp: ')[1];
+    const graspInput = document.getElementById('inp-grasp-obj');
+    if (graspInput) {
+      graspInput.value = objName;
+      graspInput.style.boxShadow = "0 0 15px var(--green)";
+      graspInput.style.borderColor = "var(--green)";
+      setTimeout(() => {
+        graspInput.style.boxShadow = "none";
+        graspInput.style.borderColor = "";
+      }, 2000);
+    }
+  }
+});
+
 // ── Gamepad API Status ──────────────────────────────────────────────────
 window.addEventListener("gamepadconnected", (e) => {
   const dot = document.getElementById('gp-dot');

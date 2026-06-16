@@ -86,45 +86,37 @@ def reconstruct_text_from_words(words):
 # Hauptklasse: VoiceCommandListener Node
 # -------------------------------------------------------------------------
 class VoiceCommandListener(Node):
-    COLORS = ("red", "green", "blue")
-
     def __init__(self):
         super().__init__("voice_command_listener")
 
         # ---- Parameter Initialisierung ----
-        self.declare_parameter("cooldown_sec", 0.3)
-        self.declare_parameter("refractory_sec", 1.5)
+        self.declare_parameter("cooldown_sec", 1.0)
         self.declare_parameter("whisper_topic", "/whisper/transcript_stream")
         
         self.cooldown_sec = float(self.get_parameter("cooldown_sec").value)
-        self.refractory_sec = float(self.get_parameter("refractory_sec").value)
         self.whisper_topic = str(self.get_parameter("whisper_topic").value)
 
         # Startmeldung im Terminal
         print(CLEAR_SCREEN + HIDE_CURSOR, end='')
         print("✅ Voice Command Listener ist bereit.")
-        print("   Warte auf Sprachbefehle...")
+        print("   Warte auf Sprachbefehle (z.B. 'Greife apfel', 'Grasp cup')...")
 
         # ---- Publisher Setup ----
         qos_cmd = QoSProfile(depth=1, history=HistoryPolicy.KEEP_LAST, reliability=ReliabilityPolicy.RELIABLE, durability=DurabilityPolicy.TRANSIENT_LOCAL)
-        self.cmd_pub = self.create_publisher(StringMsg, "/voice_cmd", qos_cmd)
+        self.cmd_pub = self.create_publisher(StringMsg, "/ui/grasp_object_cmd", qos_cmd)
 
         # <<< Publisher fuer UI-Feedback >>>
         self.feedback_pub = self.create_publisher(StringMsg, UI_VOICE_FEEDBACK_TOPIC, 10)
 
         # ---- State-Variablen fuer Entprellung und Matching ----
         self.word_buffer = deque(maxlen=50)                     
-        self.last_any_trigger_ts = 0.0                          
-        self.refractory_until = {c: 0.0 for c in self.COLORS}   
-        self.last_match_count = {c: 0 for c in self.COLORS}     
-        self.present_last = {c: False for c in self.COLORS}     
+        self.last_trigger_ts = 0.0                          
         
-        # Regex-Pattern fuer die Befehlserkennung
-        self.patterns = {
-            "red":   [re.compile(r"\bmove to red\b"),   re.compile(r"\bbewege dich zu rot\b")],
-            "blue":  [re.compile(r"\bmove to blue\b"),  re.compile(r"\bbewege dich zu blau\b")],
-            "green": [re.compile(r"\bmove to green\b"), re.compile(r"\bbewege dich zu gruen\b")],
-        }
+        # Regex-Pattern fuer die Befehlserkennung (Deutsch & Englisch)
+        trigger_words = r"greife|greif|bewege dich zu|geh zu|gehe zu|grab|grasp|move to|pick|pick up|catch"
+        # Match trigger word, optional colon, and up to 3 following words as object name
+        self.cmd_pattern = re.compile(rf"\b(?:{trigger_words})\s*:?\s*([a-z0-9]+(?:\s+[a-z0-9]+){{0,2}})", re.IGNORECASE)
+        
         self._last_cmd_text = ""
 
         # ---- Subscriptions ----
@@ -177,63 +169,45 @@ class VoiceCommandListener(Node):
     # -------------------------------------------------------------------------
     def handle_text(self, text_raw: str):
         now = time.time()
-        if (now - self.last_any_trigger_ts) < self.cooldown_sec: return
+        if (now - self.last_trigger_ts) < self.cooldown_sec: return
 
-        norm = normalize(text_raw).replace("grun", "gruen") 
+        norm = normalize(text_raw)
         
-        present_now = {c: False for c in self.COLORS}
-        match_count = {c: 0 for c in self.COLORS}
-        
-        for color, pats in self.patterns.items():
-            for p in pats:
-                hits = list(p.finditer(norm))
-                if hits:
-                    present_now[color] = True
-                    match_count[color] = max(match_count[color], len(hits))
-
-        for color in self.COLORS:
-            if self.present_last[color] and not present_now[color]:
-                self.last_match_count[color] = 0
+        # Suchen nach dem Grasp Befehl im Text
+        matches = list(self.cmd_pattern.finditer(norm))
+        if matches:
+            # Letzter Treffer im Text wird ausgefuehrt
+            last_match = matches[-1]
+            obj_name = last_match.group(1).strip()
             
-            if present_now[color]:
-                if now < self.refractory_until[color]:
-                    self.get_logger().debug(f"[{color}] suppressed: refractory")
-                else:
-                    if match_count[color] > self.last_match_count[color]:
-                        self.emit_command(color, text_raw) 
-                        
-                        self.last_any_trigger_ts = now
-                        self.refractory_until[color] = now + self.refractory_sec
-                        self.last_match_count[color] = match_count[color]
-                        break 
-                    else:
-                         self.get_logger().debug(f"[{color}] suppressed: no new match")
-
-        self.present_last = present_now
-        self.word_buffer.clear()
+            # Falls nur kurze Fuellwoerter erkannt wurden, ueberspringen
+            if len(obj_name) < 2: return
+            
+            self.emit_command(obj_name, text_raw)
+            self.last_trigger_ts = now
+            self.word_buffer.clear()
 
     # -------------------------------------------------------------------------
     # Output: Befehl senden und UI informieren
     # -------------------------------------------------------------------------
-    def emit_command(self, color: str, original: str):
-        cmd_text = f"move to {color}"
-        
-        # 1. Im Terminal ausgeben (Kompakte Ausgabe ohne die alten Texte)
+    def emit_command(self, obj_name: str, original: str):
+        # 1. Im Terminal ausgeben
         print(CLEAR_SCREEN, end='')
-        print(f"✅ Sprachbefehl erkannt: {cmd_text}")
+        print(f"✅ Sprachbefehl erkannt: Grasp '{obj_name}'")
         self.get_logger().debug(f'(Originales Transkript: "{original}")')
 
-        # 2. Kommando auf /voice_cmd publishen (fuer MoveToCoordinator)
+        # 2. Kommando auf /ui/grasp_object_cmd publishen (Triggert den YOLO Grasp Executor)
         cmd_msg = StringMsg()
-        cmd_msg.data = cmd_text
+        cmd_msg.data = obj_name
         self.cmd_pub.publish(cmd_msg)
-        self._last_cmd_text = cmd_text
+        
+        cmd_feedback = f"Grasp: {obj_name}"
+        self._last_cmd_text = cmd_feedback
 
-        # 3. <<< NEU: Feedback-String auf /ui/voice_feedback publishen >>>
+        # 3. Feedback-String auf /ui/voice_feedback publishen (fuer Web UI)
         try:
             feedback_msg = StringMsg()
-            # Wir senden NUR noch den reinen Befehl ("move to red") an die JS-Oberflaeche
-            feedback_msg.data = cmd_text
+            feedback_msg.data = cmd_feedback
             self.feedback_pub.publish(feedback_msg)
         except Exception as e:
             self.get_logger().error(f"Error publishing voice feedback: {e}")
