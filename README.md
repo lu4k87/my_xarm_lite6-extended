@@ -555,14 +555,17 @@ The absolute core prerequisite for this workspace is the official UFactory ROS 2
 ### Core ROS 2 Packages
 
 ```bash
+# Build Tools & Audio (Required for PyAudio & Whisper microphone)
+sudo apt install python3-pip portaudio19-dev
+
 # MoveIt 2 & Servo
 sudo apt install ros-humble-moveit ros-humble-moveit-servo
 
 # Joystick driver
 sudo apt install ros-humble-joy ros-humble-teleop-twist-joy
 
-# Web Dashboard bridge
-sudo apt install ros-humble-rosbridge-server ros-humble-rosbridge-suite
+# Web Dashboard bridge & CV
+sudo apt install ros-humble-rosbridge-server ros-humble-rosbridge-suite ros-humble-cv-bridge
 
 # TF2 & visualization
 sudo apt install ros-humble-tf2-ros ros-humble-rviz2
@@ -574,12 +577,23 @@ sudo apt install ros-humble-rviz-2d-overlay-plugins ros-humble-rviz-2d-overlay-m
 ### Python Dependencies
 
 ```bash
-pip install pygame          # Haptic feedback (rumble) for collision_check
-pip install openai-whisper  # Local speech recognition (ros2_whisper)
-pip install flask           # ROS 2 Nexus Web Backend
-pip install opencv-python   # Computer vision (yolo_object_detector, gaze_control)
-pip install PyQt5           # Gaze control UI (gaze_control)
-pip install ultralytics     # YOLO object detection
+# Critical Core Dependencies
+pip install "numpy==1.24.4"         # CRITICAL: Must be < 2.0 to avoid breaking ROS 2 cv_bridge and tf2
+pip install scipy==1.8.0            # Math and rotations
+
+# Hardware & Audio Interfaces
+pip install pygame==2.1.2           # Haptic feedback (controller vibration)
+pip install PyAudio==0.2.14         # Microphone stream for Whisper
+pip install pynput==1.8.1           # Keyboard/Mouse listener
+
+# Web Backend & UI
+pip install Flask==3.1.3            # ROS 2 Nexus Web Backend
+pip install Flask-SocketIO==5.6.1   # WebSockets for Nexus Backend
+pip install PyQt5==5.15.6           # Python UI (Gaze-Control & Pointcloud Tuner)
+
+# Vision & Perception
+pip install opencv-python==4.9.0.80 # Computer Vision
+pip install ultralytics==8.3.171    # YOLO 3D Object detection
 ```
 
 ### Hardware

@@ -538,21 +538,45 @@ Die absolute Grundvoraussetzung für diesen Workspace ist das offizielle UFactor
 ### Kern-ROS-2-Pakete
 
 ```bash
+# Build Tools & Audio (Zwingend für PyAudio & Whisper-Mikrofon)
+sudo apt install python3-pip portaudio19-dev
+
+# MoveIt 2 & Servo
 sudo apt install ros-humble-moveit ros-humble-moveit-servo
+
+# Joystick driver
 sudo apt install ros-humble-joy ros-humble-teleop-twist-joy
-sudo apt install ros-humble-rosbridge-server ros-humble-rosbridge-suite
+
+# Web Dashboard bridge & CV
+sudo apt install ros-humble-rosbridge-server ros-humble-rosbridge-suite ros-humble-cv-bridge
+
+# TF2 & visualization
 sudo apt install ros-humble-tf2-ros ros-humble-rviz2
+
+# RViz 2D Overlay Plugins
+sudo apt install ros-humble-rviz-2d-overlay-plugins ros-humble-rviz-2d-overlay-msgs
 ```
 
 ### Python-Abhängigkeiten
 
 ```bash
-pip install pygame          # Haptisches Feedback für collision_check
-pip install openai-whisper  # Lokale Spracherkennung
-pip install flask           # ROS 2 Nexus Web Backend
-pip install opencv-python   # Computer Vision
-pip install PyQt5           # Gaze-Control-UI
-pip install ultralytics     # YOLO-Objekterkennung
+# Kritische Basis-Pakete
+pip install "numpy==1.24.4"         # KRITISCH: Muss < 2.0 sein, sonst brechen ROS 2 cv_bridge und tf2
+pip install scipy==1.8.0            # Mathematik und Transformationen
+
+# Hardware & Audio
+pip install pygame==2.1.2           # Haptisches Feedback (Controller-Vibration)
+pip install PyAudio==0.2.14         # Mikrofon-Stream für Whisper
+pip install pynput==1.8.1           # Keyboard/Mouse Listener
+
+# Web Backend & UI
+pip install Flask==3.1.3            # ROS 2 Nexus Web Backend
+pip install Flask-SocketIO==5.6.1   # WebSockets für Nexus Backend
+pip install PyQt5==5.15.6           # Python UI (Gaze-Control & Pointcloud Tuner)
+
+# Computer Vision & Perception
+pip install opencv-python==4.9.0.80 # Computer Vision
+pip install ultralytics==8.3.171    # YOLO 3D Objekterkennung
 ```
 
 ### Hardware
