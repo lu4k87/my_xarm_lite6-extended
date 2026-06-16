@@ -476,7 +476,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /ui/rviz_servo_status_overlay
+        Value: /ui/rviz_overlay
       Value: true
       font: DejaVu Sans Mono
       height: 128
@@ -504,7 +504,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /ui/rviz_servo_status_overlay_warning
+        Value: /ui/rviz_overlay_warning
       Value: true
       font: DejaVu Sans Mono
       height: 128

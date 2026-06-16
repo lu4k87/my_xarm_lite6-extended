@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'rviz_servo_status_overlay = rviz_servo_status_overlay.rviz_servo_status_overlay:main',
+            'rviz_overlay = rviz_servo_status_overlay.rviz_overlay:main',
             'servo_status_overlay = rviz_servo_status_overlay.servo_status_overlay:main'
         ],
     },
