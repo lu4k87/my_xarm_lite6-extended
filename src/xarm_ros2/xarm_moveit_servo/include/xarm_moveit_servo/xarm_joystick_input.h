@@ -15,6 +15,9 @@
 #include "std_msgs/msg/float32.hpp" // Für die Geschwindigkeitsanzeige
 #include "std_msgs/msg/string.hpp"   // Für Statusmeldungen
 #include "std_msgs/msg/int32.hpp"
+#include "std_msgs/msg/float32_multi_array.hpp"
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 #include <vector>
 
 // ***************************************************************
@@ -109,6 +112,7 @@ private:
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr speed_pub_;            
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr button_press_pub_;      
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr frame_pub_;
+    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr eef_pos_pub_;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr set_speed_index_sub_;
 
     // ***************************************************************
@@ -169,8 +173,11 @@ private:
     
     // --- NEUE Timer-Variablen ---
     rclcpp::TimerBase::SharedPtr timeout_timer_; 
-    
-        
+    rclcpp::TimerBase::SharedPtr eef_timer_;
+    std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+    std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
+    void _publish_eef_position();
 };
 
 } // namespace xarm_moveit_servo

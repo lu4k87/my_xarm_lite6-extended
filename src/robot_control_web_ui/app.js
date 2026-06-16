@@ -451,9 +451,9 @@ function moveToPose() {
   const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
   const req = new ROSLIB.ServiceRequest({
     pose: [
-      parseFloat(document.getElementById('inp-x').value) / 1000.0, // Convert from mm UI to m for C++ node
-      parseFloat(document.getElementById('inp-y').value) / 1000.0,
-      parseFloat(document.getElementById('inp-z').value) / 1000.0,
+      parseFloat(document.getElementById('inp-x').value), // backend expects mm
+      parseFloat(document.getElementById('inp-y').value),
+      parseFloat(document.getElementById('inp-z').value),
       parseFloat(document.getElementById('inp-r').value),
       parseFloat(document.getElementById('inp-p').value),
       parseFloat(document.getElementById('inp-yw').value)
@@ -467,15 +467,16 @@ function moveToPose() {
 }
 
 function setInitialPose() {
-  const srv = createSrv('/ui/execute_move_pose', 'xarm_msgs/MoveCartesian');
-  const req = new ROSLIB.ServiceRequest({
-    pose: [0.200, 0.0, 0.150, 3.14, 0.0, 0.0],
-    speed: 100.0,
-    acc: 1000.0,
-    mvtime: 0.0
-  });
+  const srv = createSrv('/ui/execute_initial_pose', 'std_srvs/Trigger');
+  const req = new ROSLIB.ServiceRequest({});
   logMsg('UI', 'Sending Initial Pose command...');
-  srv.callService(req, (res) => logMsg('ROS', `Initial Pose Result: ${res.ret}`, 'info'));
+  srv.callService(req, (res) => {
+    if (res.success) {
+      logMsg('ROS', `Initial Pose Result: ${res.message}`, 'info');
+    } else {
+      logMsg('ROS', `Initial Pose Failed: ${res.message}`, 'err');
+    }
+  });
 }
 
 

@@ -205,13 +205,13 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 * **`xarm_joystick_input.cpp` [NODE]**
     * 🎯 **Zweck & Aufgabe:** Übersetzt die bereinigten Gamepad-Signale (Analog-Sticks & Trigger) in kartesische Geschwindigkeitsbefehle (`TwistStamped`) für MoveIt Servo. Wendet exponentielles Smoothing an und steuert alle Button-Mappings.
     * 🟠 📥 **Subscribes:** `/joy_check` (`sensor_msgs/Joy`). Liest die vom Wächter-Node bereinigten Controller-Inputs.
-    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`). Sendet Motorströme/Geschwindigkeiten an den Servo Server.
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/eef_position` (`std_msgs/Float32MultiArray`). Sendet Motorströme an den Servo Server und publiziert mit 10 Hz die Live-Pose für die Web-UI.
+    * 🔄 **TF2:** Hört auf die aktuelle TCP-Position (`link_base` -> `link_tcp`).
     * 🔄 **Services:** `/servo_server/start_servo`, `/servo_server/stop_servo`, `/servo_server/switch_command_type` (Clients).
 * **`checker.py` (`collision_check`) [NODE]**
     * 🎯 **Zweck & Aufgabe:** Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Sek. in die Zukunft) die Z-Koordinate. Würde der Roboter den Tisch berühren, wird der Abwärtsbefehl des Controllers hart überschrieben und blockiert. Löst das Rumble-Feedback (Vibration) des Gamepads aus.
-    * 🟠 📥 **Subscribes:** `/joy` (`sensor_msgs/Joy`), `/servo_server/status` (`std_msgs/Int8`). Liest den rohen Controller-Input und Status-Codes des Servo-Servers (z.B. Kollisionswarnungen von YOLO-Boxen).
+    * 🟠 📥 **Subscribes:** `/joy` (`sensor_msgs/Joy`), `/servo_server/status` (`std_msgs/Int8`), `/ui/eef_position` (`std_msgs/Float32MultiArray`). Liest den rohen Controller-Input, Status-Codes des Servo-Servers sowie die aktuelle Z-Höhe für den Kollisions-Check.
     * 🟢 📤 **Publishes:** `/joy_check` (`sensor_msgs/Joy`), `/joy/set_feedback` (`sensor_msgs/JoyFeedbackArray`). Sendet den (ggf. null-korrigierten) Befehl an den `joystick_input` weiter und steuert die Controller-Vibration.
-    * 🔄 **TF2:** Hört auf die aktuelle TCP-Höhe (`link_base` -> `link_tcp`).
     * ⚙️ **Parameter:**
         * `look_ahead_time = 0.1` – Prädiktionshorizont (Sekunden) für die Geschwindigkeits-Vorausschau.
         * `table_z_threshold = 0.0` – Die harte Tischbarriere auf der Z-Achse (World-Frame).
@@ -363,7 +363,8 @@ flowchart LR
     JOY --> CHECKER
     POS --> CHECKER
     CHECKER --> JOY_CHECK
-    CHECKER --> UI
+    CPP --> |"/ui/eef_position"| CHECKER
+    CPP --> |"/ui/eef_position"| UI
     JOY_CHECK --> CPP
     CPP --> SERVO
     CPP --> |"/ui/joy_button_presses\n/ui/robot_control/current_speed"| UI
@@ -375,7 +376,7 @@ flowchart LR
 
 **Datei:** `src/collision_check/collision_check/checker.py`
 
-Dieser Node fungiert als transparenter **Sicherheits-Proxy** zwischen dem rohen Joystick-Treiber und dem Motion-Controller. Er ist **zu 100% Hardware-unabhängig** (funktioniert identisch im REAL- und FAKE-Modus). Jedes eingehende `/joy`-Signal löst eine synchrone `tf2_ros`-Abfrage aus, um die Echtzeit-Position des Endeffektors (`link_base` zu `link_tcp`) zu bestimmen; erst nach der Koordinatenabfrage wird das (ggf. modifizierte) Signal weitergeleitet. Er liefert zudem **haptisches Feedback** (Gamepad-Vibration), wenn sich der Roboter dem Tisch nähert oder über MoveIt Servo ein dynamisches 3D-Hindernis (YOLO Bounding Box) erkannt wird.
+Dieser Node fungiert als transparenter **Sicherheits-Proxy** zwischen dem rohen Joystick-Treiber und dem Motion-Controller. Er ist **zu 100% Hardware-unabhängig** (funktioniert identisch im REAL- und FAKE-Modus). Er abonniert kontinuierlich die Live-Z-Höhe von `/ui/eef_position` und prüft bei jedem eingehenden `/joy`-Signal prädiktiv, ob sich der Roboter dem Tisch nähert. Würde ein Limit unterschritten, wird das Signal blockiert. Er liefert zudem **haptisches Feedback** (Gamepad-Vibration), wenn sich der Roboter dem Tisch nähert oder über MoveIt Servo ein dynamisches 3D-Hindernis (YOLO Bounding Box) erkannt wird.
 
 #### 6.2.1 Prädiktiver Kollisions-Algorithmus
 
@@ -420,8 +421,8 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 | Typ | Name | Message-Typ | Beschreibung |
 |-----|------|------------|-------------|
 | **Subscriber** | `/joy` | `sensor_msgs/Joy` | Rohes Gamepad-Signal |
+| **Subscriber** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | Liest Live-Z-Position für Kollisionsprüfung |
 | **Publisher** | `/joy_check` | `sensor_msgs/Joy` | Bereinigtes Ausgangssignal |
-| **Publisher** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | Live EEF-Position [x, y, z] |
 | **Publisher** | `/ui/collision_msg` | `std_msgs/String` | Kollisionswarnung für UI |
 | **Subscriber** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | Geschwindigkeitsfaktor vom C++ Node |
 | **Service Client** | `/ufactory/get_position` | `xarm_msgs/GetFloat32List` | Echtzeit-EEF-Pose |
@@ -498,6 +499,7 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 | Typ | Name | Message-Typ | Beschreibung |
 |-----|------|------------|-------------|
 | **Subscriber** | `/joy_check` | `sensor_msgs/Joy` | Bereinigtes Signal von `checker.py` |
+| **Publisher** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | 10 Hz Live-Pose (x,y,z,r,p,y) für Telemetrie |
 | **Publisher** | `/servo_server/delta_twist_cmds` | `geometry_msgs/TwistStamped` | Kartesischer Geschwindigkeitsbefehl |
 | **Publisher** | `/servo_server/delta_joint_cmds` | `control_msgs/JointJog` | Gelenkraum-Befehl (Initialisierung) |
 | **Publisher** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | Geschwindigkeitsfaktor (Latched QoS) |

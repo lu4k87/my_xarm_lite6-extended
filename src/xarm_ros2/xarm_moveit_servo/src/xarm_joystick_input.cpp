@@ -82,6 +82,11 @@ namespace xarm_moveit_servo
         button_press_pub_ = this->create_publisher<std_msgs::msg::String>("/ui/joy_button_presses", 10);
         frame_pub_ = this->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", rclcpp::QoS(1).transient_local());
 
+        tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+        tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+        eef_pos_pub_ = this->create_publisher<std_msgs::msg::Float32MultiArray>("/ui/eef_position", 10);
+        eef_timer_ = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&JoyToServoPub::_publish_eef_position, this));
+
         servo_start_client_ = this->create_client<std_srvs::srv::Trigger>("/servo_server/start_servo");
         servo_start_client_->wait_for_service(std::chrono::seconds(1));
         servo_start_client_->async_send_request(std::make_shared<std_srvs::srv::Trigger::Request>());
@@ -143,6 +148,24 @@ namespace xarm_moveit_servo
         timeout_timer_->cancel();
     }
     
+    void JoyToServoPub::_publish_eef_position()
+    {
+        try {
+            auto trans = tf_buffer_->lookupTransform("link_base", "link_tcp", tf2::TimePointZero);
+            auto msg = std::make_unique<std_msgs::msg::Float32MultiArray>();
+            msg->data.push_back(trans.transform.translation.x * 1000.0);
+            msg->data.push_back(trans.transform.translation.y * 1000.0);
+            msg->data.push_back(trans.transform.translation.z * 1000.0);
+            msg->data.push_back(trans.transform.rotation.x);
+            msg->data.push_back(trans.transform.rotation.y);
+            msg->data.push_back(trans.transform.rotation.z);
+            msg->data.push_back(trans.transform.rotation.w);
+            eef_pos_pub_->publish(std::move(msg));
+        } catch (const tf2::TransformException & ex) {
+            // Ignorieren, wenn TF noch nicht bereit ist
+        }
+    }
+
     void JoyToServoPub::_timeout_timer_callback()
     {
         if (this->is_whisper_listening_) {

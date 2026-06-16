@@ -31,13 +31,10 @@ class Checker(Node):
         # --- ROS2-Setup ---
         self.__sub = self.create_subscription(Joy, "/joy", self.pre_joy_callback, 10)
         
-        # TF2 Setup für hardware-unabhängige Positionserfassung
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        # Subscribes to EEF position for collision checking
+        self.eef_sub = self.create_subscription(Float32MultiArray, "/ui/eef_position", self.eef_callback, 10)
         
         self.__pub = self.create_publisher(Joy, "/joy_check", 10)
-        # FINAL: Publisher für EEF-Position auf /ui/eef_position
-        self.eef_pos_pub = self.create_publisher(Float32MultiArray, "/ui/eef_position", 10) 
         self.speed_sub = self.create_subscription(Float32, '/ui/robot_control/current_speed', self.speed_callback, 10)
         
         # Publisher für Kollisionsmeldung
@@ -68,6 +65,11 @@ class Checker(Node):
         """Speichert den aktuellen Geschwindigkeitsfaktor vom Joystick-Node."""
         self.current_speed_factor_from_joy = msg.data
 
+    def eef_callback(self, msg):
+        """Aktualisiert die interne Z-Position basierend auf den Daten von /ui/eef_position."""
+        if len(msg.data) >= 3:
+            self.current_z = msg.data[2]
+
     def servo_status_callback(self, msg):
         """Reagiert auf dynamische 3D-Kollisionswarnungen von MoveIt Servo."""
         # 3: APPROACHING COLLISION, 4: HALT: COLLISION, 5: HALT: JOINT BOUND
@@ -83,30 +85,13 @@ class Checker(Node):
                 self.servo_rumble_active = False
 
     def check_position(self):
-        """Synchrone TF2-Abfrage und Kollisionsprüfung."""
-        try:
-            # Hole die Transformation von link_base zu link_tcp
-            trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
-            # TF2 liefert Meter, wir rechnen in Millimeter um
-            x = trans.transform.translation.x * 1000.0
-            y = trans.transform.translation.y * 1000.0
-            z = trans.transform.translation.z * 1000.0
-        except Exception as e:
+        """Kollisionsprüfung basierend auf letzter EEF-Position."""
+        if self.current_z == 0.0:
             if self.joy_cmd: 
                 self.__pub.publish(self.joy_cmd)
-            # Nicht spammen, wenn TF noch nicht da ist
-            # self.get_logger().warn(f"TF Fehler: {e}. Sende unveränderten Joy-Befehl.")
             return
         
-        # FINAL: Veröffentlichung der EEF-Position (x, y, z) + Rotation (qx, qy, qz, qw)
-        eef_data = Float32MultiArray()
-        q = trans.transform.rotation
-        eef_data.data = [x, y, z, q.x, q.y, q.z, q.w] 
-        self.eef_pos_pub.publish(eef_data)
-        
         # --- Kollisionsprüfung ---
-        
-        self.current_z = z
         
         # Geschwindigkeitsbegrenzung in der Nähe des Bodens
         effective_speed_factor = self.current_speed_factor_from_joy
