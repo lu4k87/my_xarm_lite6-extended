@@ -449,32 +449,38 @@ function createSrv(name, type) {
 
 function moveToPose() {
   const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
+  const x = parseFloat(document.getElementById('inp-x').value);
+  const y = parseFloat(document.getElementById('inp-y').value);
+  const z = parseFloat(document.getElementById('inp-z').value);
+  const r = parseFloat(document.getElementById('inp-r').value);
+  const p = parseFloat(document.getElementById('inp-p').value);
+  const yw = parseFloat(document.getElementById('inp-yw').value);
+
   const req = new ROSLIB.ServiceRequest({
-    pose: [
-      parseFloat(document.getElementById('inp-x').value), // backend expects mm
-      parseFloat(document.getElementById('inp-y').value),
-      parseFloat(document.getElementById('inp-z').value),
-      parseFloat(document.getElementById('inp-r').value),
-      parseFloat(document.getElementById('inp-p').value),
-      parseFloat(document.getElementById('inp-yw').value)
-    ],
+    pose: [x, y, z, r, p, yw],
     speed: 100.0,
     acc: 1000.0,
     mvtime: 0.0
   });
-  logMsg('UI', 'Sending MoveTo Pose command...');
-  srv.callService(req, (res) => logMsg('ROS', `MoveTo Result: ${res.ret}`, 'info'));
+  logMsg('UI', `➤ MoveTo Absolute Pose: X=${x} Y=${y} Z=${z}`);
+  srv.callService(req, (res) => {
+    if (res.ret === 0) {
+      logMsg('ROS', '✓ MoveTo successful.', 'info');
+    } else {
+      logMsg('ROS', `❌ MoveTo failed (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
+    }
+  });
 }
 
 function setInitialPose() {
   const srv = createSrv('/ui/execute_initial_pose', 'std_srvs/Trigger');
   const req = new ROSLIB.ServiceRequest({});
-  logMsg('UI', 'Sending Initial Pose command...');
+  logMsg('UI', '➤ Triggering Initial Pose...');
   srv.callService(req, (res) => {
     if (res.success) {
-      logMsg('ROS', `Initial Pose Result: ${res.message}`, 'info');
+      logMsg('ROS', '✓ Initial Pose reached successfully.', 'info');
     } else {
-      logMsg('ROS', `Initial Pose Failed: ${res.message}`, 'err');
+      logMsg('ROS', `❌ Initial Pose failed: ${res.message}`, 'err');
     }
   });
 }
@@ -492,10 +498,10 @@ const graspPub = new ROSLIB.Topic({
 function executeGrasp() {
   const obj = document.getElementById('inp-grasp-obj').value;
   if(!obj) {
-    logMsg('UI', 'Please enter an object class to grasp!', 'warn');
+    logMsg('UI', '❌ Error: No object name entered for grasp.', 'err');
     return;
   }
-  logMsg('UI', `Sending Grasp Command for: ${obj}`);
+  logMsg('UI', `➤ Triggering Grasp for object: ${obj}`);
   graspPub.publish(new ROSLIB.Message({ data: obj }));
 }
 

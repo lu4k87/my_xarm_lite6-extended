@@ -310,6 +310,7 @@ To provide a clear understanding of the architecture, the software modules are c
       * **MoveIt Servo Monitoring:** Dynamic UI indicators (Green/Orange/Red) with pulsing animations that mirror MoveIt collision/wait states in real-time.
       * **Virtual Teleoperation:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments.
       * **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
+      * **Color-Coded Console Log:** A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
     * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status` (via `rosbridge`).
     * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/ui/robot_control/current_speed` (via `rosbridge`).
 
@@ -708,7 +709,8 @@ To run the complete system with both web interfaces (Nexus and Dashboard), three
 |------|---------|------|-------------|
 | **`5000`** | **ROS 2 Nexus Web** | Nexus Web Backend | Provides the graphical Nexus UI. Receives button clicks from the browser, executes ROS shell commands as subprocesses using `gnome-terminal` on the host PC. |
 | **`8080`** | **Dashboard Frontend** | HTTP Server | Hosts the static HTML/CSS/JS files for the ROS2 Core Dashboard. |
-| **`9090`** | **ROS Bridge** | WebSocket | The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services. |
+| **`8081`** | **Robot Control Web UI** | HTTP Server | Hosts the standalone Chrome Web App for remote robot control (Glassmorphism dashboard with joystick, joint sliders, YOLO grasp, and console log). |
+| **`9090`** | **ROS Bridge** | WebSocket | The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) and the Robot Control Web UI (Port 8081) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services. |
 
 > **Why strict port separation?** Ports 8080 and 9090 serve fundamentally different purposes and protocols. Port 8080 (HTTP) acts as a standard web server to deliver the static UI files (HTML/CSS) to the browser. Port 9090 (WebSocket via `rosbridge`) is a highly specialized data broker that exclusively streams live ROS telemetry and lacks the capability to serve web pages. Port 5000 (Flask) provides Nexus Web Backend business logic independent of ROS.
 
