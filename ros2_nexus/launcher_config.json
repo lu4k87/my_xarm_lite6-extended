@@ -333,7 +333,7 @@
           "type": "launch"
         },
         {
-          "cmd": "python3 -m http.server 8080 -d src/websocket & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
+          "cmd": "python3 -m http.server 8080 -d src/dashboard_monitoring & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
           "label": "Webserver Port: 8080 - Dashboard(workspace analyser)",
           "type": "node"
         },
@@ -343,7 +343,7 @@
           "type": "node"
         },
         {
-          "cmd": "python3 src/websocket/workspace_analyzer.py",
+          "cmd": "python3 src/dashboard_monitoring/workspace_analyzer.py",
           "label": "Workspace Analyzer",
           "type": "node"
         }
