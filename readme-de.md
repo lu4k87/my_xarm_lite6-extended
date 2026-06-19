@@ -1,6 +1,8 @@
 # xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
 ### 🚀 Aktuelle Updates
+- **Dynamische Initial Pose & Y-BTN Sync**: Die Bewegung zur "Initial Pose" (ausgelöst über Web UI oder Gamepad Y-BTN) reagiert nun dynamisch auf die globale Geschwindigkeit (`speedScale`). Das sorgt für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung.
+- **Optimierte Startsequenz**: Die Nexus `runDevSetup` Sequenz startet die Backend-Nodes und MoveIt nun mit einer Sekunde Verzögerung dazwischen, während die ROS Bridge und Web UI als Letztes laden. Dies beugt WebSocket-Abbrüchen vor.
 - **Web UI & Gamepad Synchronisation**: Die Geschwindigkeitsskalierung für kartesisches Jogging über die Web UI und das physische Gamepad wurde harmonisiert. Die Geschwindigkeitsstufen nutzen nun ein optimiertes Limit von `0.1` bis `0.5` m/s. Dies sorgt für flüssige Bewegungen ohne Ruckeln, selbst bei 100% Geschwindigkeit.
 - **Zuverlässige IP-Anzeige**: Das Telemetrie-Badge in der Web UI wurde aktualisiert, um die Roboter-IP über die globalen `rosapi` Endpunkte stabil darzustellen.
 
@@ -762,6 +764,7 @@ sudo systemctl enable lo-multicast.service
 
 # 4. Den Dienst jetzt direkt einmal starten (ohne Neustart)
 sudo systemctl start lo-multicast.service
+```
 
 ---
 

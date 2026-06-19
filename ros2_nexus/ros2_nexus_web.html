@@ -1092,8 +1092,6 @@
       }
 
       const actions = [
-        { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
-        { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
         { cmd: servoCmd, title: servoTitle },
         { cmd: moveGroupCmd, title: moveGroupTitle },
         { cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch" },
@@ -1103,7 +1101,9 @@
         { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
         { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" },
         { cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", title: "Whisper Bringup (Voice AI)" },
-        { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" }
+        { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" },
+        { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
+        { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" }
       ];
 
       showToast('🚀 DEV Setup gestartet... (12 Terminals)');
@@ -1115,8 +1115,8 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
           });
-          // Small delay so terminals open sequentially without blocking the UI completely
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Delay so terminals open sequentially and nodes have time to initialize
+          await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (e) {
           console.error("Failed to start command:", a.cmd, e);
         }

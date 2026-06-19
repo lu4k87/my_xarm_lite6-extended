@@ -1,8 +1,10 @@
-# xArm ROS 2 Extended Workspace
+# xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
 ### 🚀 Recent Updates
+- **Dynamic Initial Pose & Y-BTN Sync**: The "Initial Pose" movement (triggered via Web UI or Gamepad Y-BTN) now perfectly respects the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution.
+- **Optimized Launch Sequence**: Restructured the Nexus `runDevSetup` sequence. Base nodes and the MoveIt Servo now boot with a 1-second interval, while the ROS Bridge and Web UI boot last. This prevents WebSocket crashes and startup race conditions.
 - **Web UI Control Sync**: The Web UI movement speed and Cartesian jogging have been synchronized with the physical Gamepad controllers. The system now uses a `0.1` to `0.5` m/s range and dynamic trajectory recalculations to ensure 100% stutter-free and fast robotic movement at any speed.
-- **Robust IP Display**: Fixed dynamic Web UI telemetry showing the Real Arm IP utilizing global `rosapi` endpoints. (ROS2 Humble) **[IN DEV]**
+- **Robust IP Display**: Fixed dynamic Web UI telemetry showing the Real Arm IP utilizing global `rosapi` endpoints.
 
 This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
 > [!IMPORTANT]
@@ -784,6 +786,8 @@ sudo systemctl enable lo-multicast.service
 
 # 4. Start the service immediately (no reboot required)
 sudo systemctl start lo-multicast.service
+```
+
 ---
 
 ## <a id="chapter-9"></a> 9. 🗂️ Repository Structure

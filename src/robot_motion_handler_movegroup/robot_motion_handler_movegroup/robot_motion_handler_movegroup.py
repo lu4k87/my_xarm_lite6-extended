@@ -179,14 +179,18 @@ class RobotMotionHandlerMovegroup(Node):
         point = JointTrajectoryPoint()
         point.positions = [0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0]
         point.velocities = [0.0] * 6
-        point.time_from_start = Duration(sec=1, nanosec=500000000)
+        
+        # Skaliere Dauer anhand des globalen Speed Factors (0.5 = 1x Speed)
+        speed_multiplier = self.current_speed_scale / 0.5
+        duration_sec = max(1.0, 2.0 / speed_multiplier)
+        point.time_from_start = Duration(sec=int(duration_sec), nanosec=int((duration_sec - int(duration_sec)) * 1e9))
         
         msg.points.append(point)
         self.publisher_.publish(msg)
         self.get_logger().info('Trajektorie gesendet. Fahre auf Startpose...')
         
         # Warte auf die Ausfuehrung der Bewegung
-        time.sleep(2.0)
+        time.sleep(duration_sec + 0.5)
         
         # 3. Start MoveIt Servo again
         if self.servo_start_client.wait_for_service(timeout_sec=1.0):
