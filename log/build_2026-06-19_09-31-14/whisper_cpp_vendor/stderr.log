@@ -1,4 +1,0 @@
-[0mINSTALL TARGETS - target ggml has PUBLIC_HEADER files but no PUBLIC_HEADER DESTINATION.[0m
-[01m[K/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/src/whisper.cpp:226:29:[m[K [01;35m[Kwarning: [m[K‘[01m[Kggml_tensor* ggml_mul_mat_pad(ggml_context*, ggml_tensor*, ggml_tensor*, int)[m[K’ defined but not used [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-function-Wunused-function]8;;[m[K]
-  226 | static struct ggml_tensor * [01;35m[Kggml_mul_mat_pad[m[K(struct ggml_context * ctx, struct ggml_tensor * x, struct ggml_tensor * y, int pad = 32) {
-      |                             [01;35m[K^~~~~~~~~~~~~~~~[m[K

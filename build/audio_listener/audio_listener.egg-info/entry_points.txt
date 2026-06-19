@@ -1,3 +1,0 @@
-[console_scripts]
-audio_listener = audio_listener.audio_listener:main
-

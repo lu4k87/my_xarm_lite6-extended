@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/xarm_msgs/rosidl_generator_py/xarm_msgs/msg/_io_state_s.c

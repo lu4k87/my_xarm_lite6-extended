@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/whisper_idl/ament_cmake_export_libraries/ament_cmake_export_libraries-extras.cmake

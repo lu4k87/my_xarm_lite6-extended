@@ -1,3 +1,0 @@
-[console_scripts]
-motion_sequence = motion_sequence.motion_sequence:main
-

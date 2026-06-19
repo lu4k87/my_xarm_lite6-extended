@@ -1,1 +1,0 @@
-ament_cmake_symlink_install_targets("TARGET_FILES" "/home/mk/dev_ws/build/rviz_robot_control_panel/librviz_robot_control_panel.so" "TARGETS" "rviz_robot_control_panel" "ARCHIVE_DESTINATION" "lib" "LIBRARY_DESTINATION" "lib" "RUNTIME_DESTINATION" "bin")

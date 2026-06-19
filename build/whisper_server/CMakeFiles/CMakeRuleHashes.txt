@@ -1,2 +1,0 @@
-# Hashes of file build rules.
-57e102b4d1bd597e3595c1dd7d405b64 CMakeFiles/whisper_server_uninstall

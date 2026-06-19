@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/transcript_manager/ament_cmake_core/transcript_managerConfig-version.cmake

@@ -1,1 +1,0 @@
-/home/mk/dev_ws/src/xarm_ros2/xarm_moveit_config/launch/lib/robot_moveit_config_lib.py

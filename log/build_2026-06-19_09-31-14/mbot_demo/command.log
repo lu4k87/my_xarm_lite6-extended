@@ -1,6 +1,0 @@
-Invoking command in '/home/mk/dev_ws/build/mbot_demo': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/demo/mbot_demo -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/mbot_demo
-Invoked command in '/home/mk/dev_ws/build/mbot_demo' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/demo/mbot_demo -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/mbot_demo
-Invoking command in '/home/mk/dev_ws/build/mbot_demo': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/mbot_demo -- -j20 -l20
-Invoked command in '/home/mk/dev_ws/build/mbot_demo' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/mbot_demo -- -j20 -l20
-Invoking command in '/home/mk/dev_ws/build/mbot_demo': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/mbot_demo
-Invoked command in '/home/mk/dev_ws/build/mbot_demo' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/mbot_demo

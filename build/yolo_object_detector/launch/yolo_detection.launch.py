@@ -1,1 +1,0 @@
-/home/mk/dev_ws/src/yolo_object_detector/launch/yolo_detection.launch.py

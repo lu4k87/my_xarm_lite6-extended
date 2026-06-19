@@ -1,1 +1,0 @@
-/home/mk/dev_ws/src/ros2_whisper/whisper_bringup/launch/bringup.launch.py

@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/my_3d_vision_bringup/rosidl_typesupport_introspection_cpp/my_3d_vision_bringup/action/detail/grasp_object__rosidl_typesupport_introspection_cpp.hpp

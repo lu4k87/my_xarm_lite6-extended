@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/zed_interfaces/rosidl_generator_rs/zed_interfaces/rust/src/msg/rmw.rs

@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/rviz_marker_static_scene_objects/launch/rviz_marker_static_scene_objects.launch.py

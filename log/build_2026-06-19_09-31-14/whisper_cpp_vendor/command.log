@@ -1,6 +1,0 @@
-Invoking command in '/home/mk/dev_ws/build/whisper_cpp_vendor': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mk/dev_ws/src/ros2_whisper/whisper_cpp_vendor -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/whisper_cpp_vendor
-Invoked command in '/home/mk/dev_ws/build/whisper_cpp_vendor' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mk/dev_ws/src/ros2_whisper/whisper_cpp_vendor -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/whisper_cpp_vendor
-Invoking command in '/home/mk/dev_ws/build/whisper_cpp_vendor': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/whisper_cpp_vendor -- -j20 -l20
-Invoked command in '/home/mk/dev_ws/build/whisper_cpp_vendor' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/whisper_cpp_vendor -- -j20 -l20
-Invoking command in '/home/mk/dev_ws/build/whisper_cpp_vendor': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/whisper_cpp_vendor
-Invoked command in '/home/mk/dev_ws/build/whisper_cpp_vendor' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/whisper_cpp_vendor

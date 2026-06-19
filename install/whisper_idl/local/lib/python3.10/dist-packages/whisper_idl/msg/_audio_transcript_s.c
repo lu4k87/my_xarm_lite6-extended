@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/whisper_idl/rosidl_generator_py/whisper_idl/msg/_audio_transcript_s.c

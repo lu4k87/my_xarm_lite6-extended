@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/xarm_msgs/rosidl_cmake/srv/SetInt16List_Request.msg

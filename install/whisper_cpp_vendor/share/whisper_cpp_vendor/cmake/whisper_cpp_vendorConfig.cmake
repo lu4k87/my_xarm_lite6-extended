@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/whisper_cpp_vendor/ament_cmake_core/whisper_cpp_vendorConfig.cmake

@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/whisper_idl/rosidl_generator_cpp/whisper_idl/msg/rosidl_generator_cpp__visibility_control.hpp

@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/zed_interfaces/rosidl_generator_py/zed_interfaces/msg/_skeleton2_d.py

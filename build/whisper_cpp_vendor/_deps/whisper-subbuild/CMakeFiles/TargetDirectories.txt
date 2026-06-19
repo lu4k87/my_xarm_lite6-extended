@@ -1,3 +1,0 @@
-/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-subbuild/CMakeFiles/whisper-populate.dir
-/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-subbuild/CMakeFiles/edit_cache.dir
-/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-subbuild/CMakeFiles/rebuild_cache.dir

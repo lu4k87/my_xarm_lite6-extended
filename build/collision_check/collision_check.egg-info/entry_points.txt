@@ -1,3 +1,0 @@
-[console_scripts]
-checker = collision_check.checker:main
-

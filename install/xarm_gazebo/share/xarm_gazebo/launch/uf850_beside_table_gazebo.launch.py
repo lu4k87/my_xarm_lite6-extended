@@ -1,1 +1,0 @@
-/home/mk/dev_ws/src/xarm_ros2/xarm_gazebo/launch/uf850_beside_table_gazebo.launch.py

@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/motion_sequence/launch/motion_sequence_launch.py

@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/whisper_idl/rosidl_typesupport_fastrtps_cpp/whisper_idl/msg/detail/audio_transcript__rosidl_typesupport_fastrtps_cpp.hpp

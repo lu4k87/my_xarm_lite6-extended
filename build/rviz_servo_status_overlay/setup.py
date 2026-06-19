@@ -1,1 +1,0 @@
-/home/mk/dev_ws/src/rviz_servo_status_overlay/setup.py

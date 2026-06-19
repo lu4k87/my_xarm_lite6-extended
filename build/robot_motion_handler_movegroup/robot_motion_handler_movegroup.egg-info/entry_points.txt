@@ -1,3 +1,0 @@
-[console_scripts]
-robot_motion_handler_movegroup = robot_motion_handler_movegroup.robot_motion_handler_movegroup:main
-

@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/whisper_idl/rosidl_typesupport_fastrtps_c/whisper_idl/action/detail/inference__rosidl_typesupport_fastrtps_c.h

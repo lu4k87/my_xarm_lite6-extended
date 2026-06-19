@@ -1,1 +1,0 @@
-/home/mk/dev_ws/src/ros2_whisper/whisper_util/include/whisper_util/model_manager.hpp

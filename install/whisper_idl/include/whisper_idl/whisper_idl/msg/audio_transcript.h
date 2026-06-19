@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/whisper_idl/rosidl_generator_c/whisper_idl/msg/audio_transcript.h

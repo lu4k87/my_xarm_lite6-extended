@@ -1,9 +1,0 @@
-source;share/audio_listener/hook/pythonpath.ps1
-source;share/audio_listener/hook/pythonpath.dsv
-source;share/audio_listener/hook/pythonpath.sh
-source;share/audio_listener/hook/ament_prefix_path.ps1
-source;share/audio_listener/hook/ament_prefix_path.dsv
-source;share/audio_listener/hook/ament_prefix_path.sh
-source;../../build/audio_listener/share/audio_listener/hook/pythonpath_develop.ps1
-source;../../build/audio_listener/share/audio_listener/hook/pythonpath_develop.dsv
-source;../../build/audio_listener/share/audio_listener/hook/pythonpath_develop.sh

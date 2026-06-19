@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/zed_interfaces/rosidl_cmake/srv/SetROI_Request.msg

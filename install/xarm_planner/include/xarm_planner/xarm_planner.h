@@ -1,1 +1,0 @@
-/home/mk/dev_ws/src/xarm_ros2/xarm_planner/include/xarm_planner/xarm_planner.h

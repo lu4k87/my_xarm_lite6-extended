@@ -1,3 +1,0 @@
-[console_scripts]
-yolo_homography_node = yolo_object_detector.yolo_homography_node:main
-

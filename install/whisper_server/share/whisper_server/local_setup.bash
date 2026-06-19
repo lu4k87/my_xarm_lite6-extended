@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/whisper_server/ament_cmake_environment_hooks/local_setup.bash

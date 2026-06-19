@@ -1,9 +1,0 @@
-source;share/rviz_servo_status_overlay/hook/pythonpath.ps1
-source;share/rviz_servo_status_overlay/hook/pythonpath.dsv
-source;share/rviz_servo_status_overlay/hook/pythonpath.sh
-source;share/rviz_servo_status_overlay/hook/ament_prefix_path.ps1
-source;share/rviz_servo_status_overlay/hook/ament_prefix_path.dsv
-source;share/rviz_servo_status_overlay/hook/ament_prefix_path.sh
-source;../../build/rviz_servo_status_overlay/share/rviz_servo_status_overlay/hook/pythonpath_develop.ps1
-source;../../build/rviz_servo_status_overlay/share/rviz_servo_status_overlay/hook/pythonpath_develop.dsv
-source;../../build/rviz_servo_status_overlay/share/rviz_servo_status_overlay/hook/pythonpath_develop.sh

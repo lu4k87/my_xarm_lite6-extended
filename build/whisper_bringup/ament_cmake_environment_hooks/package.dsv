@@ -1,4 +1,0 @@
-source;share/whisper_bringup/local_setup.bash
-source;share/whisper_bringup/local_setup.dsv
-source;share/whisper_bringup/local_setup.sh
-source;share/whisper_bringup/local_setup.zsh

@@ -1,1 +1,0 @@
-/home/mk/dev_ws/build/xarm_msgs/rosidl_generator_py/xarm_msgs/srv/_set_float32.py

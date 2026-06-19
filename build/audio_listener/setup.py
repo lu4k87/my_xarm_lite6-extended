@@ -1,1 +1,0 @@
-/home/mk/dev_ws/src/ros2_whisper/audio_listener/setup.py
