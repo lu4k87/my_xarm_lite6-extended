@@ -1,14 +1,36 @@
-// ── ROS Connection ────────────────────────────────────────────────────────
+// ── Globals & States (Strikt oben deklariert!) ──────────────────────────
 let ros;
+let currentFrame = 'link_base';
+let speedScale = 0.5;
+let lastSpeedIndex = -1;
+
+let jogActive = false;
+let jogTimer = null;
+let jogZeroCount = 0;
+let targetTwist = { lx: 0, ly: 0, lz: 0, ax: 0, ay: 0, az: 0 };
+let smoothedTwist = { lx: 0, ly: 0, lz: 0, ax: 0, ay: 0, az: 0 };
+const SMOOTHING_FACTOR = 0.5;
+const JOYSTICK_DEADZONE = 0.001;
+
+let activeJointJog = -1;
+let jointJogVelocity = 0;
+let jointJogStartX = 0;
+let jointJogTimer = null;
+
+let currentServoStatus = 0;
+let isRobotMoving = false;
+let movingTimeout = null;
+
+// ── ROS Connection ────────────────────────────────────────────────────────
 try {
   const host = window.location.hostname || 'localhost';
   ros = new ROSLIB.Ros({
     url: 'ws://' + host + ':9090'
   });
 } catch (e) {
-  document.getElementById('connection-status').innerText = 'JS Error';
+  const statusEl = document.getElementById('connection-status');
+  if (statusEl) statusEl.innerText = 'JS Error';
   console.error("Failed to init ROSLIB", e);
-  alert("Fehler beim Laden von ROSLIB: " + e.message);
 }
 
 ros.on('connection', () => {
@@ -16,41 +38,64 @@ ros.on('connection', () => {
   document.getElementById('connection-dot').className = 'dot glow-green';
   logMsg('System', 'Connected to rosbridge_server (ws://localhost:9090)', 'info');
 
-  // Start checking for real/fake arm
+  // Node Checker (mit Error-Handling, um Websocket-Crashes zu vermeiden)
   setInterval(() => {
-    if (ros.isConnected) {
+    if (ros && ros.isConnected) {
       const getNodesClient = new ROSLIB.Service({
         ros: ros,
         name: '/rosapi/nodes',
         serviceType: 'rosapi/Nodes'
       });
+      
       getNodesClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
         const dot = document.getElementById('mode-dot');
         const text = document.getElementById('mode-status');
-        if (result && result.nodes && result.nodes.includes('/xarm_driver')) {
+        if (!dot || !text) return;
+
+        let driverNode = null;
+        if (result && result.nodes) {
+          driverNode = result.nodes.find(n => n.includes('ufactory_driver'));
+        }
+
+        if (driverNode) {
           dot.className = 'dot glow-green';
           
-          // Try to get IP
           const paramClient = new ROSLIB.Service({
             ros: ros,
             name: '/rosapi/get_param',
             serviceType: 'rosapi/GetParam'
           });
+          
           paramClient.callService(new ROSLIB.ServiceRequest({
-            name: '/xarm_driver/robot_ip',
-            default: '"USB"'
+            name: `${driverNode}/robot_ip`,
+            default: ''
           }), (paramResult) => {
             try {
-              let ip = paramResult.value ? JSON.parse(paramResult.value) : 'USB';
-              text.innerText = `Real Arm (${ip})`;
+              if (paramResult && paramResult.value) {
+                let ip = paramResult.value;
+                // rosapi in ROS2 returns JSON encoded strings, e.g. '"192.168.1.127"'
+                ip = ip.replace(/"/g, ''); 
+                if (ip && ip.length > 5) {
+                  text.innerHTML = `Real Arm<br><span style="font-size:0.85em; color:#00cec9;">${ip}</span>`;
+                } else {
+                  text.innerText = `Mode: Real Arm`;
+                }
+              } else {
+                text.innerText = `Mode: Real Arm`;
+              }
             } catch (e) {
               text.innerText = `Mode: Real Arm`;
             }
+          }, (err) => { 
+            text.innerText = `Mode: Real Arm`;
           });
         } else {
           dot.className = 'dot glow-blue';
           text.innerText = 'Mode: Fake Arm';
         }
+      }, (err) => {
+        // Fehler stumm abfangen, falls /rosapi/nodes noch nicht existiert.
+        // Verhindert das "Verschmutzen" der WebSocket-Verbindung.
       });
     }
   }, 5000);
@@ -70,12 +115,7 @@ ros.on('close', () => {
   logMsg('System', 'Connection to websocket server closed', 'warn');
 });
 
-// ── Globals ─────────────────────────────────────────────────────────────
-let currentFrame = 'link_base';
-let speedScale = 0.5; // Start with default wait for /current_speed
-
-let jogActive = false;
-let jogTimer = null;
+// ── Shared Messages ─────────────────────────────────────────────────────
 let twistMsg = new ROSLIB.Message({
   header: { frame_id: currentFrame },
   twist: {
@@ -84,10 +124,6 @@ let twistMsg = new ROSLIB.Message({
   }
 });
 
-let activeJointJog = -1; // 0 to 5 for J1 to J6
-let jointJogVelocity = 0;
-let jointJogStartX = 0;
-let jointJogTimer = null;
 let jointJogMsg = new ROSLIB.Message({
   header: { frame_id: currentFrame },
   joint_names: [],
@@ -127,10 +163,9 @@ const speedSub = new ROSLIB.Topic({
   name: '/ui/robot_control/current_speed',
   messageType: 'std_msgs/Float32'
 });
-let lastSpeedIndex = -1;
+
 speedSub.subscribe((msg) => {
   speedScale = msg.data;
-  
   let index = 2;
   if (Math.abs(speedScale - 0.25) < 0.01) index = 0;
   else if (Math.abs(speedScale - 0.5) < 0.01) index = 1;
@@ -164,18 +199,19 @@ const yoloSub = new ROSLIB.Topic({
   name: '/zed/bboxes_3d',
   messageType: 'visualization_msgs/MarkerArray'
 });
+
 yoloSub.subscribe((msg) => {
   const container = document.getElementById('yolo-container');
-  container.innerHTML = ''; // clear current
+  if (!container) return;
+  
+  container.innerHTML = '';
   if(!msg.markers || msg.markers.length === 0) {
     container.innerHTML = '<div class="yolo-empty">No objects detected.</div>';
     return;
   }
   
-  // Create an entry for each marker
   msg.markers.forEach(m => {
-    // skip bounding box lines if they exist, look for text markers usually
-    if(m.type !== 9) return; // 9 = TEXT_VIEW_FACING
+    if(m.type !== 9) return;
     
     const objName = m.text || 'Unknown';
     if(objName.startsWith('X:') || objName.startsWith('Y:') || objName.startsWith('Z:')) return;
@@ -212,6 +248,7 @@ const jointStateSub = new ROSLIB.Topic({
   name: '/joint_states',
   messageType: 'sensor_msgs/JointState'
 });
+
 jointStateSub.subscribe((msg) => {
   const jointNames = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6'];
   let moving = false;
@@ -219,12 +256,14 @@ jointStateSub.subscribe((msg) => {
     const idx = msg.name.indexOf(jointNames[i]);
     if (idx !== -1) {
       let val = msg.position[idx];
-      document.getElementById(`j${i+1}-val`).innerText = val.toFixed(2);
-      // Update bar width (-3.14 to 3.14 -> 0 to 100%)
-      let pct = ((val + 3.14) / 6.28) * 100;
-      document.getElementById(`j${i+1}-fill`).style.width = `${pct}%`;
-      document.getElementById(`j${i+1}-fill`).style.left = '0%';
-      
+      const valEl = document.getElementById(`j${i+1}-val`);
+      const fillEl = document.getElementById(`j${i+1}-fill`);
+      if(valEl) valEl.innerText = val.toFixed(2);
+      if(fillEl) {
+        let pct = ((val + 3.14) / 6.28) * 100;
+        fillEl.style.width = `${pct}%`;
+        fillEl.style.left = '0%';
+      }
       if (msg.velocity && msg.velocity.length > idx) {
         if (Math.abs(msg.velocity[idx]) > 0.005) {
           moving = true;
@@ -246,7 +285,6 @@ jointStateSub.subscribe((msg) => {
   }
 });
 
-// Subscribe directly to the Guardian Node for TCP Position
 const eefSub = new ROSLIB.Topic({
   ros: ros,
   name: '/ui/eef_position',
@@ -255,17 +293,15 @@ const eefSub = new ROSLIB.Topic({
 
 eefSub.subscribe((msg) => {
   if (msg.data.length >= 3) {
-    document.getElementById('telem-x').innerText = msg.data[0].toFixed(1);
-    document.getElementById('telem-y').innerText = msg.data[1].toFixed(1);
-    document.getElementById('telem-z').innerText = msg.data[2].toFixed(1);
+    const tx = document.getElementById('telem-x');
+    const ty = document.getElementById('telem-y');
+    const tz = document.getElementById('telem-z');
+    if(tx) tx.innerText = msg.data[0].toFixed(1);
+    if(ty) ty.innerText = msg.data[1].toFixed(1);
+    if(tz) tz.innerText = msg.data[2].toFixed(1);
   }
   if (msg.data.length >= 7) {
-    const qx = msg.data[3];
-    const qy = msg.data[4];
-    const qz = msg.data[5];
-    const qw = msg.data[6];
-
-    // Quaternion to Euler
+    const qx = msg.data[3], qy = msg.data[4], qz = msg.data[5], qw = msg.data[6];
     const sinr_cosp = 2 * (qw * qx + qy * qz);
     const cosr_cosp = 1 - 2 * (qx * qx + qy * qy);
     const roll = Math.atan2(sinr_cosp, cosr_cosp);
@@ -277,34 +313,31 @@ eefSub.subscribe((msg) => {
     const cosy_cosp = 1 - 2 * (qy * qy + qz * qz);
     const yaw = Math.atan2(siny_cosp, cosy_cosp);
 
-    document.getElementById('telem-r').innerText = roll.toFixed(2);
-    document.getElementById('telem-p').innerText = pitch.toFixed(2);
-    document.getElementById('telem-yaw').innerText = yaw.toFixed(2);
+    const tr = document.getElementById('telem-r');
+    const tp = document.getElementById('telem-p');
+    const tyaw = document.getElementById('telem-yaw');
+    if(tr) tr.innerText = roll.toFixed(2);
+    if(tp) tp.innerText = pitch.toFixed(2);
+    if(tyaw) tyaw.innerText = yaw.toFixed(2);
   }
 });
 
 // ── UI Actions ──────────────────────────────────────────────────────────
-
 function logMsg(source, text, type='info') {
   const win = document.getElementById('log-window');
+  if(!win) return;
   const d = new Date();
   const timeStr = d.toTimeString().split(' ')[0];
   const div = document.createElement('div');
   div.className = 'log-entry';
 
-  // Auto-detect type from ROS message content (emoji prefixes)
   let autoType = type;
   if (text.includes('✓')) autoType = 'success';
   else if (text.includes('❌')) autoType = 'err';
   else if (text.includes('➤')) autoType = 'action';
   else if (text.includes('⚠')) autoType = 'warn';
 
-  // Source badge color
-  const srcColors = {
-    'ROS':    'log-src-ros',
-    'UI':     'log-src-ui',
-    'System': 'log-src-sys'
-  };
+  const srcColors = { 'ROS': 'log-src-ros', 'UI': 'log-src-ui', 'System': 'log-src-sys' };
   const srcClass = srcColors[source] || 'log-src-sys';
 
   div.innerHTML = `<span class="log-time">[${timeStr}]</span><span class="log-src ${srcClass}">[${source}]</span> <span class="log-${autoType}">${text}</span>`;
@@ -314,64 +347,134 @@ function logMsg(source, text, type='info') {
 
 function updateSpeed(val) {
   speedIndexPub.publish(new ROSLIB.Message({ data: parseInt(val) }));
-  // Visual UI update is now handled centrally by speedSub.subscribe() 
-  // to guarantee exact synchronization with the C++ Node and Gamepad.
 }
 
 function setFrame(frame) {
   currentFrame = frame;
-  document.querySelectorAll('.frame-btn').forEach(b => {
-    b.classList.remove('active', 'btn-primary');
-  });
-  if(frame === 'link_tcp') {
-    const b = document.getElementById('btn-frame-tcp');
-    b.classList.add('active', 'btn-primary');
-  } else {
-    const b = document.getElementById('btn-frame-base');
-    b.classList.add('active', 'btn-primary');
-  }
+  document.querySelectorAll('.frame-btn').forEach(b => b.classList.remove('active', 'btn-primary'));
+  const btn = document.getElementById(frame === 'link_tcp' ? 'btn-frame-tcp' : 'btn-frame-base');
+  if(btn) btn.classList.add('active', 'btn-primary');
   
   twistMsg.header.frame_id = currentFrame;
   logMsg('UI', `Control Frame set to ${frame}`);
 }
 
-// ── Jogging Logic ───────────────────────────────────────────────────────
-
-function startJog(lx, ly, lz, ax, ay, az) {
-  jogActive = true;
-  let s = speedScale * 0.1; // Base scaling factor to match C++
-  twistMsg.twist.linear.x = lx * s;
-  twistMsg.twist.linear.y = ly * s;
-  twistMsg.twist.linear.z = lz * s;
-  twistMsg.twist.angular.x = ax * s * 2.0; // rotation is 0.2 * scale
-  twistMsg.twist.angular.y = ay * s * 2.0;
-  twistMsg.twist.angular.z = az * s * 2.0;
+function setGripper(state) {
+  logMsg('UI', `➤ Gripper Command: ${state.toUpperCase()}`);
   
-  if(jogTimer) clearInterval(jogTimer);
-  jogTimer = setInterval(() => {
-    twistMsg.header.stamp = {sec: Math.floor(Date.now()/1000), nanosec: (Date.now()%1000)*1000000};
-    twistPub.publish(twistMsg);
-  }, 20); // 50 Hz
+  const btnOpen = document.getElementById('btn-grip-open');
+  const btnClose = document.getElementById('btn-grip-close');
+  const btnOff = document.getElementById('btn-grip-off');
+  
+  if(!btnOpen || !btnClose || !btnOff) return;
+
+  btnOpen.classList.remove('grip-flash-open');
+  btnClose.classList.remove('grip-flash-close');
+  btnOff.classList.remove('grip-off-active');
+
+  void btnOpen.offsetWidth;
+  void btnClose.offsetWidth;
+
+  if (state === 'open') {
+    btnOpen.classList.add('grip-flash-open');
+  } else if (state === 'close') {
+    btnClose.classList.add('grip-flash-close');
+  } else if (state === 'off') {
+    btnOff.classList.add('grip-off-active');
+  }
 }
 
-function stopJog() {
-  jogActive = false;
-  if(jogTimer) clearInterval(jogTimer);
+// ── Jogging Logic ───────────────────────────────────────────────────────
+function processJogTimer() {
+  if (Math.abs(targetTwist.lx) > JOYSTICK_DEADZONE) {
+    smoothedTwist.lx += (targetTwist.lx - smoothedTwist.lx) * SMOOTHING_FACTOR;
+  } else {
+    smoothedTwist.lx = 0.0;
+  }
+  if (Math.abs(targetTwist.ly) > JOYSTICK_DEADZONE) {
+    smoothedTwist.ly += (targetTwist.ly - smoothedTwist.ly) * SMOOTHING_FACTOR;
+  } else {
+    smoothedTwist.ly = 0.0;
+  }
+  if (Math.abs(targetTwist.lz) > JOYSTICK_DEADZONE) {
+    smoothedTwist.lz += (targetTwist.lz - smoothedTwist.lz) * SMOOTHING_FACTOR;
+  } else {
+    smoothedTwist.lz = 0.0;
+  }
   
-  // Publish zero twist to halt
-  twistMsg.twist.linear.x = 0; twistMsg.twist.linear.y = 0; twistMsg.twist.linear.z = 0;
-  twistMsg.twist.angular.x = 0; twistMsg.twist.angular.y = 0; twistMsg.twist.angular.z = 0;
+  if (Math.abs(targetTwist.ax) > JOYSTICK_DEADZONE) {
+    smoothedTwist.ax += (targetTwist.ax - smoothedTwist.ax) * SMOOTHING_FACTOR;
+  } else {
+    smoothedTwist.ax = 0.0;
+  }
+  if (Math.abs(targetTwist.ay) > JOYSTICK_DEADZONE) {
+    smoothedTwist.ay += (targetTwist.ay - smoothedTwist.ay) * SMOOTHING_FACTOR;
+  } else {
+    smoothedTwist.ay = 0.0;
+  }
+  if (Math.abs(targetTwist.az) > JOYSTICK_DEADZONE) {
+    smoothedTwist.az += (targetTwist.az - smoothedTwist.az) * SMOOTHING_FACTOR;
+  } else {
+    smoothedTwist.az = 0.0;
+  }
+
+  let isZero = (smoothedTwist.lx === 0 && smoothedTwist.ly === 0 && smoothedTwist.lz === 0 &&
+                smoothedTwist.ax === 0 && smoothedTwist.ay === 0 && smoothedTwist.az === 0);
+
+  if (isZero && !jogActive) {
+    jogZeroCount++;
+    if (jogZeroCount > 5) {
+      clearInterval(jogTimer);
+      jogTimer = null;
+      return; 
+    }
+  } else {
+    jogZeroCount = 0;
+  }
+
+  twistMsg.twist.linear.x = smoothedTwist.lx;
+  twistMsg.twist.linear.y = smoothedTwist.ly;
+  twistMsg.twist.linear.z = smoothedTwist.lz;
+  twistMsg.twist.angular.x = smoothedTwist.ax;
+  twistMsg.twist.angular.y = smoothedTwist.ay;
+  twistMsg.twist.angular.z = smoothedTwist.az;
+
   twistMsg.header.stamp = {sec: Math.floor(Date.now()/1000), nanosec: (Date.now()%1000)*1000000};
   twistPub.publish(twistMsg);
 }
 
-// ── Live Joint Jogging (Slider Controls) ────────────────────────────────
+function startJog(lx, ly, lz, ax, ay, az) {
+  jogActive = true;
+  jogZeroCount = 0;
+  
+  targetTwist.lx = lx * speedScale;
+  targetTwist.ly = ly * speedScale;
+  targetTwist.lz = lz * speedScale;
+  targetTwist.ax = ax; 
+  targetTwist.ay = ay; 
+  targetTwist.az = az;
+
+  if (!jogTimer) {
+    jogTimer = setInterval(processJogTimer, 20);
+  }
+}
+
+function stopJog() {
+  jogActive = false;
+  targetTwist.lx = 0;
+  targetTwist.ly = 0;
+  targetTwist.lz = 0;
+  targetTwist.ax = 0;
+  targetTwist.ay = 0;
+  targetTwist.az = 0;
+}
+
+// ── Live Joint Jogging ──────────────────────────────────────────────────
 function startJointJog(idx, e) {
   activeJointJog = idx;
   jointJogStartX = e.clientX;
   jointJogVelocity = 0;
   
-  // Set global mouse tracking for the duration of the drag
   document.addEventListener('pointermove', onJointJogMove);
   document.addEventListener('pointerup', stopJointJog);
 
@@ -379,32 +482,24 @@ function startJointJog(idx, e) {
   jointJogTimer = setInterval(() => {
     if(activeJointJog >= 0 && activeJointJog <= 5) {
       jointJogMsg.header.stamp = {sec: Math.floor(Date.now()/1000), nanosec: (Date.now()%1000)*1000000};
-      jointJogMsg.joint_names = [`joint${activeJointJog + 1}`]; // e.g. "joint1"
-      
-      // Calculate velocity based on how far mouse moved from click point
-      // Scale down so it moves very slowly as requested
+      jointJogMsg.joint_names = [`joint${activeJointJog + 1}`];
       let scaledVel = jointJogVelocity * 0.005 * speedScale;
-      
-      // Cap max velocity to avoid dangerous speeds
       if(scaledVel > 1.0) scaledVel = 1.0;
       if(scaledVel < -1.0) scaledVel = -1.0;
-      
       jointJogMsg.velocities = [scaledVel];
       jointJogPub.publish(jointJogMsg);
     }
-  }, 50); // 20 Hz for joints
+  }, 50);
 }
 
 function onJointJogMove(e) {
   if (activeJointJog !== -1) {
-    // Delta X determines direction and speed
     jointJogVelocity = e.clientX - jointJogStartX;
   }
 }
 
 function stopJointJog() {
   if(activeJointJog !== -1) {
-    // Send one last zero velocity message to stop it instantly
     jointJogMsg.header.stamp = {sec: Math.floor(Date.now()/1000), nanosec: (Date.now()%1000)*1000000};
     jointJogMsg.joint_names = [`joint${activeJointJog + 1}`];
     jointJogMsg.velocities = [0.0];
@@ -419,16 +514,17 @@ function stopJointJog() {
   document.removeEventListener('pointerup', stopJointJog);
 }
 
-// ── Analog Joystick Implementation ───────────────────────────────────────
-
+// ── Analog Joystick Implementation ──────────────────────────────────────
 const zone = document.getElementById('joystick-zone');
 const stick = document.getElementById('joystick-stick');
 let joyActive = false;
-const maxRadius = 50; // Max visual displacement
+const maxRadius = 50;
 let joyCenterX = 0, joyCenterY = 0;
 
-zone.addEventListener('mousedown', initJoy);
-zone.addEventListener('touchstart', initJoy, {passive: false});
+if(zone && stick) {
+  zone.addEventListener('mousedown', initJoy);
+  zone.addEventListener('touchstart', initJoy, {passive: false});
+}
 
 function initJoy(e) {
   joyActive = true;
@@ -441,7 +537,7 @@ function initJoy(e) {
   document.addEventListener('touchmove', moveJoy, {passive: false});
   document.addEventListener('touchend', endJoy);
   moveJoy(e);
-  e.preventDefault();
+  if(e.cancelable) e.preventDefault();
 }
 
 function moveJoy(e) {
@@ -460,15 +556,8 @@ function moveJoy(e) {
   
   stick.style.transform = `translate(${dx}px, ${dy}px)`;
   
-  // Map to Cartesian. 
-  // Stick UP (dy < 0) -> X+ (Forward)
-  // Stick DOWN (dy > 0) -> X- (Backward)
-  // Stick LEFT (dx < 0) -> Y+ (Left in ROS is usually positive Y)
-  // Stick RIGHT (dx > 0) -> Y- (Right in ROS)
-  
-  const nx = -(dy / maxRadius); // Forward is +X
-  const ny = -(dx / maxRadius); // Left is +Y
-  
+  const nx = -(dy / maxRadius);
+  const ny = -(dx / maxRadius);
   startJog(nx, ny, 0, 0, 0, 0);
 }
 
@@ -483,7 +572,6 @@ function endJoy() {
 }
 
 // ── Services (MoveTo, Utils, Grasp) ─────────────────────────────────────
-
 function createSrv(name, type) {
   return new ROSLIB.Service({ ros: ros, name: name, serviceType: type });
 }
@@ -505,30 +593,19 @@ function moveToPose() {
   });
   logMsg('UI', `➤ MoveTo Absolute Pose: X=${x} Y=${y} Z=${z}`);
   srv.callService(req, (res) => {
-    if (res.ret === 0) {
-      logMsg('ROS', '✓ MoveTo successful.', 'info');
-    } else {
-      logMsg('ROS', `❌ MoveTo failed (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
-    }
-  });
+    if (res.ret === 0) logMsg('ROS', '✓ MoveTo successful.', 'info');
+    else logMsg('ROS', `❌ MoveTo failed (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
+  }, (err) => { logMsg('ROS', `❌ MoveTo Error: ${err}`, 'err'); });
 }
 
 function setInitialPose() {
   const srv = createSrv('/ui/execute_initial_pose', 'std_srvs/Trigger');
-  const req = new ROSLIB.ServiceRequest({});
   logMsg('UI', '➤ Triggering Initial Pose...');
-  srv.callService(req, (res) => {
-    if (res.success) {
-      logMsg('ROS', '✓ Initial Pose reached successfully.', 'info');
-    } else {
-      logMsg('ROS', `❌ Initial Pose failed: ${res.message}`, 'err');
-    }
-  });
+  srv.callService(new ROSLIB.ServiceRequest({}), (res) => {
+    if (res.success) logMsg('ROS', '✓ Initial Pose reached successfully.', 'info');
+    else logMsg('ROS', `❌ Initial Pose failed: ${res.message}`, 'err');
+  }, (err) => { logMsg('ROS', `❌ Trigger Error: ${err}`, 'err'); });
 }
-
-
-
-
 
 const graspPub = new ROSLIB.Topic({
   ros: ros,
@@ -546,7 +623,7 @@ function executeGrasp() {
   graspPub.publish(new ROSLIB.Message({ data: obj }));
 }
 
-// Subscribe to Voice Feedback
+// ── Voice Feedback ──────────────────────────────────────────────────────
 const voiceFeedbackSub = new ROSLIB.Topic({
   ros: ros,
   name: '/ui/voice_feedback',
@@ -555,23 +632,17 @@ const voiceFeedbackSub = new ROSLIB.Topic({
 
 voiceFeedbackSub.subscribe((msg) => {
   logMsg('VOICE', `🗣️ Voice Command Recognized: ${msg.data}`);
-  
-  // Update the Voice Control mockup UI
   const voiceSpan = document.getElementById('voice-recognized-cmd');
   if (voiceSpan) {
     voiceSpan.innerText = msg.data;
-    
-    // Add glowing effect to the span
     voiceSpan.style.textShadow = "0 0 10px var(--green)";
     voiceSpan.style.color = "var(--green)";
-    
     setTimeout(() => {
       voiceSpan.style.textShadow = "none";
       voiceSpan.style.color = "var(--purple)";
     }, 2000);
   }
   
-  // Also visually flash the Grasp input if it corresponds to a grasp command
   if (msg.data.startsWith('Grasp: ')) {
     const objName = msg.data.split('Grasp: ')[1];
     const graspInput = document.getElementById('inp-grasp-obj');
@@ -610,16 +681,12 @@ window.addEventListener("gamepaddisconnected", (e) => {
   }
 });
 
-// ── MoveIt Servo Status ──────────────────────────────────────────────────
+// ── MoveIt Servo Status ─────────────────────────────────────────────────
 const servoStatusSub = new ROSLIB.Topic({
   ros: ros,
   name: '/servo_server/status',
   messageType: 'std_msgs/Int8'
 });
-
-let currentServoStatus = 0;
-let isRobotMoving = false;
-let movingTimeout = null;
 
 function updateMoveItBadge() {
   const dot = document.getElementById('moveit-dot');

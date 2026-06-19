@@ -1,5 +1,9 @@
 # xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
+### 🚀 Aktuelle Updates
+- **Web UI & Gamepad Synchronisation**: Die Geschwindigkeitsskalierung für kartesisches Jogging über die Web UI und das physische Gamepad wurde harmonisiert. Die Geschwindigkeitsstufen nutzen nun ein optimiertes Limit von `0.1` bis `0.5` m/s. Dies sorgt für flüssige Bewegungen ohne Ruckeln, selbst bei 100% Geschwindigkeit.
+- **Zuverlässige IP-Anzeige**: Das Telemetrie-Badge in der Web UI wurde aktualisiert, um die Roboter-IP über die globalen `rosapi` Endpunkte stabil darzustellen.
+
 Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- und Evaluationsplattform für multimodale Teleoperation und Mensch-Computer-Interaktion (HCI). <br>
 > [!IMPORTANT]
 > **Grundvoraussetzung:** Dieses Repository ist ein *Erweiterungs-Workspace*. Es baut vollständig auf dem offiziellen [xarm_ros2 Repository (Branch: humble)](https://github.com/xArm-Developer/xarm_ros2/tree/humble) von UFactory auf. Das offizielle Repository, dessen Struktur und all seine Systemabhängigkeiten bilden das zwingende Basis-Fundament für diese Software!
@@ -121,7 +125,7 @@ Die softwareseitige Infrastruktur ist modular gekapselt und vollständig in das 
 Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustand des Systems über das **ROS2 Core Dashboard** überwachen. Dies ist eine webbasierte Echtzeit-UI, die statische Quellcode-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks zu einer einheitlichen Monitoring-Oberfläche zusammenführt.
 
 ### 3.1 Workspace Analyzer Backend (`workspace_analyzer.py`)
-Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, regex-basierte statische Code-Analyse durchführt. Es wurde stark modularisiert in drei Kerndateien: `workspace_analyzer.py` (behandelt ROS Pub/Sub), `workspace_parser.py` (führt die Regex-Analyse aus) und `system_utils.py` (parst Umgebungsvariablen). Dabei werden Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten extrahiert. Diese strukturierten JSON-Metadaten werden kontinuierlich an `/dashboard/workspace_metadata` publiziert (im 10-Sekunden-Timer-Zyklus). Zusätzlich werden Umgebungsvariablen (ROS Distro, Domain ID, DDS-Middleware, Localhost-Modus) aus `~/.bashrc` ausgelesen und als Live-Status-Badges bereitgestellt.
+Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, regex-basierte statische Code-Analyse durchführt. Es wurde stark modularisiert in drei Kerndateien: `workspace_analyzer.py` (behandelt ROS Pub/Sub), `workspace_parser.py` (führt die Regex-Analyse aus) und `system_utils.py` (parst Umgebungsvariablen). Dabei werden Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten extrahiert. Diese strukturierten JSON-Metadaten werden kontinuierlich an `/dashboard/workspace_metadata` publiziert (im 10-Sekunden-Timer-Zyklus). Es publiziert außerdem Dateiinhalte über `/dashboard/file_content` und ROS Topic-Aktivitäten über `/dashboard/topic_activity`. Zusätzlich werden Umgebungsvariablen (ROS Distro, Domain ID, DDS-Middleware, Localhost-Modus) aus `~/.bashrc` ausgelesen und als Live-Status-Badges bereitgestellt.
 
 > **Hinweis zu `workspace_analyzer.py`:** Dies ist **kein** Netzwerk-Server, sondern ein normaler ROS 2 Node. Das Dashboard greift über die ROS Bridge (Port 9090) auf dessen publizierte Topics zu.
 
@@ -277,12 +281,12 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
     * 🎯 **Zweck & Aufgabe:** Lokale Speech-to-Text KI. Führt Whisper AI kontinuierlich auf dem Mikrofon-Stream aus und publiziert gesprochene Wörter als Text.
     * 🟢 📤 **Publishes:** `/whisper/text` (`std_msgs/String`).
 * **`voice_command_listener.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Analysiert den Rohtext über Regex-Muster, filtert Füllwörter heraus und extrahiert definierte Handlungs-Intents (z.B. "Fahre zu Rot").
-    * 🟠 📥 **Subscribes:** `/whisper/text` (`std_msgs/String`).
-    * 🟢 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Leitet erkannte Befehle strukturiert weiter und sendet UI-Feedback an das Dashboard.
-* **`gaze_control.py` [SKRIPT / UI]**
-    * 🎯 **Zweck & Aufgabe:** Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 0,5 Sek. Fixationsdauer) und sendet Bewegungsbefehle.
-    * 🟢 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`). Übersetzt Blicke in textbasierte Zielbefehle.
+    * 🎯 **Zweck & Aufgabe:** Analysiert den Rohtext über Regex-Muster, filtert Füllwörter heraus und extrahiert definierte Handlungs-Intents (z.B. "Greife Apfel").
+    * 🟠 📥 **Subscribes:** `/whisper/transcript_stream` (`std_msgs/String`).
+    * 🟢 📤 **Publishes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Triggert den YOLO Grasp Executor direkt und sendet UI-Feedback an das Dashboard.
+* **`gaze_ui_node.py` [SKRIPT / UI]**
+    * 🎯 **Zweck & Aufgabe:** Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 0,5 Sek. Fixationsdauer) und sendet direkte Bewegungs- und Greiferbefehle.
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`). Steuert direkt die kartesische Geschwindigkeit des Roboterarms und nutzt UFactory Services zur Bedienung des Greifers.
 
 ### 🖥️ 5.4 Funktion: Grafische Steuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
@@ -301,7 +305,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
         * `Kp_pos = 2.5` – Proportional-Gain für dynamische, aber stabile Anfahrten.
         * `max_vel_pos = 0.2` – Limitiert die TCP-Geschwindigkeit auf 0.2 m/s.
         * `position_tolerance = 0.002` – Der Regler stoppt exakt 2 mm vor dem absoluten Ziel.
-* **`rviz_servo_status_overlay.py` & `servo_status_overlay.py` [NODES]**
+* **`rviz_overlay.py` & `servo_status_overlay.py` [NODES]**
     * 🎯 **Zweck & Aufgabe:** Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koordinaten als Overlay in den Video-Stream des RViz-Sichtfelds.
     * 🟠 📥 **Subscribes:** `/servo_server/status` (`std_msgs/Int8`), `/ui/collision_msg` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`). Hören auf kritische Warn-Flags und Frame-Updates.
     * 🟢 📤 **Publishes:** Nutzt `rviz_2d_overlay_msgs/OverlayText`.
@@ -318,8 +322,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
       * **Virtuelle Teleoperation:** Integrierter 2D-Analogstick für kartesisches Jogging sowie 6-DoF absolute Gelenkwinkel-Slider und Geschwindigkeitsstufen.
       * **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
       * **Farbkodiertes Konsolen-Log:** Ein live scrollbares Konsolen-Log mit detailliertem Feedback für alle Bewegungsbefehle — inklusive Koordinatenanzeige (`X`, `Y`, `Z`) bei MoveTo-Befehlen und expliziten Erfolgs- (✓) / Fehler- (❌) Statusanzeigen mit Fehlercodes.
-    * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status` (via `rosbridge`).
-    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/ui/robot_control/set_speed_index` (via `rosbridge`).
+    * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status`, `/zed/bboxes_3d`, `/ui/voice_feedback`, `/ui/robot_control/current_speed`, `/ui/grasp_status` (via `rosbridge`).
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/servo_server/delta_joint_cmds`, `/ui/robot_control/set_speed_index`, `/ui/grasp_object_cmd` (via `rosbridge`).
 
 ### 🤖 5.5 Funktion: Komplexe Trajektorien & Task-Koordination
 *Nodes, die spezifische, übergeordnete Bewegungsabläufe orchestrieren.*
@@ -329,7 +333,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
     * 🎯 **Zweck & Aufgabe:** Zustandsverwaltung zwischen MoveIt Servo und Hardware. Pausiert das flüssige Servo-Jogging (Gamepad), unterbricht den xArm Hardware-Controller, führt eine statische Fahrt aus und aktiviert danach Servo wieder nahtlos zurück.
     * 🔄 **Services:** `/execute_motion_to_pose` (Server). Ruft zudem Hardware-Spezifische UFactory Services ab (`set_mode`, `set_state`).
 * **`move_to_coordinator.py` [NODE]**
-    * 🎯 **Zweck & Aufgabe:** Orchestriert Look-At-Befehle (Sprache/Auge) und übergibt Parameter an andere Motion-Nodes.
+    * 🎯 **Zweck & Aufgabe:** Orchestriert Look-At-Befehle und übergibt Parameter an andere Motion-Nodes. *(Hinweis: Obwohl der Node noch auf `/voice_cmd` lauscht, ruft die neue Sprachsteuerung nun direkt den Grasp-Executor auf. Dieser Node verbleibt als Legacy-API für die Orchestrierung farbbasierter Koordinatenfahrten).*
     * 🟠 📥 **Subscribes:** `/voice_cmd` (`std_msgs/String`), `/objects/.../world_poses` (`geometry_msgs/PoseArray`).
 
 ### ⚠️ 5.6 Veraltete / Deprecated Module
@@ -725,6 +729,39 @@ Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind voll
 **Interaktives Drag & Drop:** Das Nexus-Interface verfügt über ein hochgradig responsives, permanentes 3-Spalten-Drag-&-Drop-System. Einzelne Aktions-Buttons können innerhalb ihrer Sektionen frei angeordnet werden. Komplette Kategorie-Sektionen (gegriffen am Titel) lassen sich nahtlos über drei vertikale Spalten verteilen. Alle im Browser vorgenommenen Layout-Änderungen werden sofort und dauerhaft im Backend gespeichert.
 
 **Manuelle Konfiguration:** Das gesamte UI-Layout und alle Befehle werden persistent in einer externen Konfigurationsdatei unter `ros2_nexus/launcher_config.json` gespeichert. Um eigene Skripte, Debugging-Tools oder ROS 2 Nodes manuell zur Launcher-UI hinzuzufügen, muss lediglich diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch, sodass manuelle Änderungen nach einem simplen Neuladen der Seite im Browser sofort aktiv werden, ohne dass das Nexus Web Backend neugestartet werden muss.
+
+
+### 8.7 DDS Multicast Storm & Loopback Discovery (Kritisch)
+> [!CAUTION]
+> **Netzwerk-Überlastung & Participant-Fehler:** Standardmäßig verwendet ROS 2 "UDP Multicast", wodurch alle Daten in das gesamte lokale Netzwerk (LAN/WLAN) gefunkt werden. Das Starten der ZED-Kamera und YOLO überflutet das Netzwerk mit Gigabit-Mengen an Daten, was oft zum sofortigen Absturz des Routers oder der Internetverbindung führt.
+> 
+> Das Setzen von `export ROS_LOCALHOST_ONLY=1` in der `.bashrc` löst dieses Problem, indem es den Traffic sicher auf das interne Loopback-Interface (`lo`) zwingt. **Allerdings deaktiviert Ubuntu nach jedem Neustart standardmäßig die Multicast-Fähigkeit auf diesem internen Interface**. Das führt dazu, dass CycloneDDS mit dem Fehler `Failed to find a free participant index` abstürzt, da die Nodes sich intern nicht mehr finden können und als "Zombies" im Arbeitsspeicher hängenbleiben.
+
+Um dieses Problem dauerhaft zu beheben, muss ein Systemd-Dienst eingerichtet werden, der Multicast auf dem `lo`-Interface bei jedem Systemstart automatisch aktiviert:
+
+```bash
+# 1. Die Datei sauber anlegen
+sudo bash -c 'cat > /etc/systemd/system/lo-multicast.service <<EOF
+[Unit]
+Description=Enable Multicast on Loopback interface for ROS 2
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link set lo multicast on
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+
+# 2. Dem System sagen, dass die Datei jetzt existiert
+sudo systemctl daemon-reload
+
+# 3. Den Dienst aktivieren (Autostart beim Booten)
+sudo systemctl enable lo-multicast.service
+
+# 4. Den Dienst jetzt direkt einmal starten (ohne Neustart)
+sudo systemctl start lo-multicast.service
 
 ---
 

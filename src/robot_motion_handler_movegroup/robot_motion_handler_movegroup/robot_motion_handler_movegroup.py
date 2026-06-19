@@ -375,13 +375,13 @@ class RobotMotionHandlerMovegroup(Node):
             target_yaw = request.pose[5]
             
             # P-Regler Konstanten
-            Kp_pos = 2.5
-            Kp_ori = 1.0
+            Kp_pos = 4.0
+            Kp_ori = 2.0
             
             # Skaliere Geschwindigkeiten anhand des globalen Speed Factors (0.5 ist Standard = 1x)
             speed_multiplier = self.current_speed_scale / 0.5
-            max_vel_pos = 0.2 * speed_multiplier # m/s
-            max_vel_ori = 0.5 * speed_multiplier # rad/s
+            max_vel_pos = 0.5 * speed_multiplier # m/s (erhoeht fuer schnellere Moves)
+            max_vel_ori = 1.0 * speed_multiplier # rad/s (erhoeht)
             
             rate = self.create_rate(20.0) # 20 Hz loop
             

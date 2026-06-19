@@ -59,7 +59,7 @@ namespace xarm_moveit_servo
           prev_cross_key_fb_state_(0.0f)
 
     { 
-        speed_levels_ = {0.25, 0.5, 1.0, 1.5, 2.0};
+        speed_levels_ = {0.1, 0.2, 0.3, 0.4, 0.5};
         linear_speed_scale_ = speed_levels_[current_speed_index_];
 
         _declare_or_get_param<int>(dof_, "dof", dof_);

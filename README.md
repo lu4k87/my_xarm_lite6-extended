@@ -1,4 +1,8 @@
-# xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
+# xArm ROS 2 Extended Workspace
+
+### 🚀 Recent Updates
+- **Web UI Control Sync**: The Web UI movement speed and Cartesian jogging have been synchronized with the physical Gamepad controllers. The system now uses a `0.1` to `0.5` m/s range and dynamic trajectory recalculations to ensure 100% stutter-free and fast robotic movement at any speed.
+- **Robust IP Display**: Fixed dynamic Web UI telemetry showing the Real Arm IP utilizing global `rosapi` endpoints. (ROS2 Humble) **[IN DEV]**
 
 This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
 > [!IMPORTANT]
@@ -119,7 +123,7 @@ The software-side infrastructure is modularly encapsulated and fully integrated 
 Once the nodes are launched via ROS 2 Nexus, the live state of the system can be monitored using the **ROS2 Core Dashboard**. This is a web-based real-time UI, which fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface.
 
 ### 3.1 Workspace Analyzer Backend (`workspace_analyzer.py`)
-The Workspace Analyzer Backend is a ROS 2 node that performs execution-free, regex-based static code analysis. It has been highly modularized into three core files: `workspace_analyzer.py` (handles ROS Pub/Sub), `workspace_parser.py` (executes the regex analysis), and `system_utils.py` (parses environment variables). It extracts node names, publishers, subscribers, services, actions, and package dependencies. These structured JSON metadata are continuously published to `/dashboard/workspace_metadata` via a 10-second timer cycle. Additionally, it reads environment variables (ROS Distro, Domain ID, DDS middleware, Localhost mode) from `~/.bashrc` and provides them as live status badges.
+The Workspace Analyzer Backend is a ROS 2 node that performs execution-free, regex-based static code analysis. It has been highly modularized into three core files: `workspace_analyzer.py` (handles ROS Pub/Sub), `workspace_parser.py` (executes the regex analysis), and `system_utils.py` (parses environment variables). It extracts node names, publishers, subscribers, services, actions, and package dependencies. These structured JSON metadata are continuously published to `/dashboard/workspace_metadata` via a 10-second timer cycle. It also publishes file contents via `/dashboard/file_content` and ROS topic activity via `/dashboard/topic_activity`. Additionally, it reads environment variables (ROS Distro, Domain ID, DDS middleware, Localhost mode) from `~/.bashrc` and provides them as live status badges.
 
 > **Note on `workspace_analyzer.py`:** This is **not** a network server, but a standard ROS 2 node. The Dashboard accesses its published topics via the ROS Bridge (Port 9090).
 
@@ -275,12 +279,12 @@ To provide a clear understanding of the architecture, the software modules are c
     * 🎯 **Purpose & Task:** Local Speech-to-Text AI. Runs Whisper AI continuously on the microphone stream and publishes spoken words as text.
     * 🟢 📤 **Publishes:** `/whisper/text` (`std_msgs/String`).
 * **`voice_command_listener.py` [NODE]**
-    * 🎯 **Purpose & Task:** Analyzes the raw text using regex patterns, filters out filler words, and extracts defined action intents (e.g., "move to red").
-    * 🟠 📥 **Subscribes:** `/whisper/text` (`std_msgs/String`).
-    * 🟢 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Forwards structured recognized commands and sends UI feedback to the dashboard.
-* **`gaze_control.py` [SCRIPT / UI]**
-    * 🎯 **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends movement commands.
-    * 🟢 📤 **Publishes:** `/voice_cmd` (`std_msgs/String`). Translates gazes into text-based target commands.
+    * 🎯 **Purpose & Task:** Analyzes the raw text using regex patterns, filters out filler words, and extracts defined action intents (e.g., "Grasp cup").
+    * 🟠 📥 **Subscribes:** `/whisper/transcript_stream` (`std_msgs/String`).
+    * 🟢 📤 **Publishes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Directly triggers the YOLO Grasp Executor and sends UI feedback to the dashboard.
+* **`gaze_ui_node.py` [SCRIPT / UI]**
+    * 🎯 **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends direct movement and gripper commands.
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`). Directly controls the Cartesian velocity of the robot arm and uses UFactory services to operate the gripper.
 
 ### 🖥️ 5.4 Feature: Graphical Control & Visual Feedback
 *Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
@@ -299,7 +303,7 @@ To provide a clear understanding of the architecture, the software modules are c
         * `Kp_pos = 2.5` – Proportional gain for dynamic, yet stable approaches.
         * `max_vel_pos = 0.2` – Limits the TCP velocity to 0.2 m/s.
         * `position_tolerance = 0.002` – The controller stops exactly 2 mm before the absolute target.
-* **`rviz_servo_status_overlay.py` & `servo_status_overlay.py` [NODES]**
+* **`rviz_overlay.py` & `servo_status_overlay.py` [NODES]**
     * 🎯 **Purpose & Task:** Project color-coded warning messages (e.g., "COLLISION!") and live axis coordinates directly into the video stream of the RViz viewport.
     * 🟠 📥 **Subscribes:** `/servo_server/status` (`std_msgs/Int8`), `/ui/collision_msg` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`). Listens for critical warning flags and frame updates.
     * 🟢 📤 **Publishes:** Uses `rviz_2d_overlay_msgs/OverlayText`.
@@ -316,8 +320,8 @@ To provide a clear understanding of the architecture, the software modules are c
       * **Virtual Teleoperation:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments.
       * **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
       * **Color-Coded Console Log:** A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
-    * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status` (via `rosbridge`).
-    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/ui/robot_control/set_speed_index` (via `rosbridge`).
+    * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status`, `/zed/bboxes_3d`, `/ui/voice_feedback`, `/ui/robot_control/current_speed`, `/ui/grasp_status` (via `rosbridge`).
+    * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/servo_server/delta_joint_cmds`, `/ui/robot_control/set_speed_index`, `/ui/grasp_object_cmd` (via `rosbridge`).
 
 ### 🤖 5.5 Feature: Complex Trajectories & Task Coordination
 *Nodes that orchestrate specific, higher-level movement sequences.*
@@ -327,7 +331,7 @@ To provide a clear understanding of the architecture, the software modules are c
     * 🎯 **Purpose & Task:** State management between MoveIt Servo and Hardware. Pauses the fluid Servo jogging (gamepad), interrupts the xArm hardware controller, executes a static movement, and seamlessly reactivates Servo afterward.
     * 🔄 **Services:** `/execute_motion_to_pose` (Server). Also calls hardware-specific UFactory services (`set_mode`, `set_state`).
 * **`move_to_coordinator.py` [NODE]**
-    * 🎯 **Purpose & Task:** Orchestrates look-at commands (voice/gaze) and passes parameters to other motion nodes.
+    * 🎯 **Purpose & Task:** Orchestrates look-at commands and passes parameters to other motion nodes. *(Note: While it still subscribes to `/voice_cmd`, the voice pipeline now triggers the grasp executor directly. This node remains as a legacy API for orchestrating color-based coordinate movements).*
     * 🟠 📥 **Subscribes:** `/voice_cmd` (`std_msgs/String`), `/objects/.../world_poses` (`geometry_msgs/PoseArray`).
 
 ### ⚠️ 5.6 Deprecated Modules
@@ -741,7 +745,7 @@ To run the complete system with both web interfaces (Nexus and Dashboard), three
 > source ~/.bashrc
 > ```
 
-### 8.5 Launcher Configuration (`launcher_config.json`)
+### 8.6 Launcher Configuration (`launcher_config.json`)
 
 The buttons, categories, and commands in the ROS 2 Nexus Web interface are highly customizable.
 
@@ -749,6 +753,37 @@ The buttons, categories, and commands in the ROS 2 Nexus Web interface are highl
 
 **Manual Configuration:** The entire UI layout and commands are persistently stored in an external configuration file located at `ros2_nexus/launcher_config.json`. To manually add custom scripts, debugging tools, or ROS 2 nodes to the launcher UI, simply modify this JSON file. The web application dynamically fetches the configuration, so manual changes take effect upon the next page reload without requiring Nexus Web Backend restarts.
 
+### 8.7 DDS Multicast Storm & Loopback Discovery (Critical)
+> [!CAUTION]
+> **Network Flooding & Participant Errors:** By default, ROS 2 DDS implementations broadcast all data to the entire local network via UDP Multicast. Launching the ZED camera and YOLO will flood the network with gigabits of data, which typically overloads the local network or drops the PC's internet connection instantly.
+> 
+> While setting `export ROS_LOCALHOST_ONLY=1` in your `.bashrc` prevents this by routing traffic through the internal loopback (`lo`), **Ubuntu disables multicast on the loopback interface by default after every reboot**. This will cause CycloneDDS to crash with a `Failed to find a free participant index` error, as nodes cannot discover each other locally and become blocked "zombie" processes.
+
+To permanently fix this, you must create a systemd service that automatically enables multicast on the `lo` interface at boot:
+
+```bash
+# 1. Create the systemd service file
+sudo bash -c 'cat > /etc/systemd/system/lo-multicast.service <<EOF
+[Unit]
+Description=Enable Multicast on Loopback interface for ROS 2
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link set lo multicast on
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+
+# 2. Reload the systemd daemon
+sudo systemctl daemon-reload
+
+# 3. Enable the service to run at boot
+sudo systemctl enable lo-multicast.service
+
+# 4. Start the service immediately (no reboot required)
+sudo systemctl start lo-multicast.service
 ---
 
 ## <a id="chapter-9"></a> 9. 🗂️ Repository Structure

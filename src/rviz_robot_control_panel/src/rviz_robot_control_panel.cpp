@@ -34,12 +34,12 @@ void ControlPanel::onInitialize()
   speed_sub_ = node_->create_subscription<std_msgs::msg::Float32>(
     "/ui/robot_control/current_speed", rclcpp::QoS(1).transient_local(),
     [this](const std_msgs::msg::Float32::SharedPtr msg) {
-        int idx = 2; // Default 0.5
-        if (msg->data == 0.125f) idx = 0;
-        else if (msg->data == 0.25f) idx = 1;
-        else if (msg->data == 0.5f) idx = 2;
-        else if (msg->data == 0.75f) idx = 3;
-        else if (msg->data == 1.0f) idx = 4;
+        int idx = 2; // Default 0.3
+        if (std::abs(msg->data - 0.1f) < 0.05f) idx = 0;
+        else if (std::abs(msg->data - 0.2f) < 0.05f) idx = 1;
+        else if (std::abs(msg->data - 0.3f) < 0.05f) idx = 2;
+        else if (std::abs(msg->data - 0.4f) < 0.05f) idx = 3;
+        else if (std::abs(msg->data - 0.5f) < 0.05f) idx = 4;
         
         QMetaObject::invokeMethod(this, [this, idx, val=msg->data]() {
             this->current_speed_scale_ = val;
@@ -365,18 +365,18 @@ void ControlPanel::updateTwist(double x, double y, double z, double rx, double r
   current_twist_.twist.angular.z = rz;
 }
 
-void ControlPanel::onButtonPressXPlus() { logToConsole("➤ Jog: Forward (X+)"); updateTwist(0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressXMinus() { logToConsole("➤ Jog: Backward (X-)"); updateTwist(-0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressYPlus() { logToConsole("➤ Jog: Left (Y+)"); updateTwist(0.0, 0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressYMinus() { logToConsole("➤ Jog: Right (Y-)"); updateTwist(0.0, -0.1 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressZPlus() { logToConsole("➤ Jog: Up (Z+)"); updateTwist(0.0, 0.0, 0.1 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressZMinus() { logToConsole("➤ Jog: Down (Z-)"); updateTwist(0.0, 0.0, -0.1 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotXPlus() { logToConsole("➤ Jog: Roll +"); updateTwist(0.0, 0.0, 0.0, 0.2 * current_speed_scale_, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotXMinus() { logToConsole("➤ Jog: Roll -"); updateTwist(0.0, 0.0, 0.0, -0.2 * current_speed_scale_, 0.0, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotYPlus() { logToConsole("➤ Jog: Pitch +"); updateTwist(0.0, 0.0, 0.0, 0.0, 0.2 * current_speed_scale_, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotYMinus() { logToConsole("➤ Jog: Pitch -"); updateTwist(0.0, 0.0, 0.0, 0.0, -0.2 * current_speed_scale_, 0.0); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotZPlus() { logToConsole("➤ Jog: Yaw +"); updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 0.2 * current_speed_scale_); publish_timer_->start(50); }
-void ControlPanel::onButtonPressRotZMinus() { logToConsole("➤ Jog: Yaw -"); updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -0.2 * current_speed_scale_); publish_timer_->start(50); }
+void ControlPanel::onButtonPressXPlus() { logToConsole("➤ Jog: Forward (X+)"); updateTwist(1.0 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressXMinus() { logToConsole("➤ Jog: Backward (X-)"); updateTwist(-1.0 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressYPlus() { logToConsole("➤ Jog: Left (Y+)"); updateTwist(0.0, 1.0 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressYMinus() { logToConsole("➤ Jog: Right (Y-)"); updateTwist(0.0, -1.0 * current_speed_scale_, 0.0, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressZPlus() { logToConsole("➤ Jog: Up (Z+)"); updateTwist(0.0, 0.0, 1.0 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressZMinus() { logToConsole("➤ Jog: Down (Z-)"); updateTwist(0.0, 0.0, -1.0 * current_speed_scale_, 0.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXPlus() { logToConsole("➤ Jog: Roll +"); updateTwist(0.0, 0.0, 0.0, 1.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotXMinus() { logToConsole("➤ Jog: Roll -"); updateTwist(0.0, 0.0, 0.0, -1.0, 0.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYPlus() { logToConsole("➤ Jog: Pitch +"); updateTwist(0.0, 0.0, 0.0, 0.0, 1.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotYMinus() { logToConsole("➤ Jog: Pitch -"); updateTwist(0.0, 0.0, 0.0, 0.0, -1.0, 0.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotZPlus() { logToConsole("➤ Jog: Yaw +"); updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, 1.0); publish_timer_->start(50); }
+void ControlPanel::onButtonPressRotZMinus() { logToConsole("➤ Jog: Yaw -"); updateTwist(0.0, 0.0, 0.0, 0.0, 0.0, -1.0); publish_timer_->start(50); }
 
 void ControlPanel::onButtonInitialPose()
 {
