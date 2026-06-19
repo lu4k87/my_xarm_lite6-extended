@@ -1,20 +1,58 @@
 cmake_minimum_required(VERSION 3.8)
 project(my_3d_vision_bringup)
 
+# ==========================================
+# 1. Abhängigkeiten finden
+# ==========================================
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
+# ==========================================
+# 2. Interfaces (Actions/Messages/Services)
+# ==========================================
 rosidl_generate_interfaces(${PROJECT_NAME}
   "action/GraspObject.action"
+  # Falls deine Action z. B. geometry_msgs nutzt, müsstest du diese so hinzufügen:
+  # DEPENDENCIES geometry_msgs
 )
 
-# Install launch files, meshes, and config
-install(DIRECTORY launch meshes config
+# ==========================================
+# 3. Verzeichnisse installieren
+# ==========================================
+install(DIRECTORY 
+  launch 
+  meshes 
+  config
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(PROGRAMS scripts/zed_stand_publisher.py scripts/zed_yolo_3d_bbox.py scripts/pointcloud_optimizer.py scripts/yolo_moveit_collision.py scripts/yolo_grasp_executor.py scripts/yolo_planned_grasp_executor.py scripts/grasp_action_bridge.py scripts/pointcloud_tf_tuner.py
+# ==========================================
+# 4. Python-Skripte installieren (Executables)
+# ==========================================
+# WICHTIG: Die Skripte müssen zwingend ausführbar sein (chmod +x)
+install(PROGRAMS 
+  scripts/zed_stand_publisher.py 
+  scripts/zed_yolo_3d_bbox.py 
+  scripts/pointcloud_optimizer.py 
+  scripts/yolo_moveit_collision.py 
+  scripts/yolo_grasp_executor.py 
+  scripts/yolo_planned_grasp_executor.py 
+  scripts/grasp_action_bridge.py 
+  scripts/pointcloud_tf_tuner.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# ==========================================
+# 5. Tests konfigurieren (aus deiner package.xml)
+# ==========================================
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  set(ament_cmake_copyright_FOUND TRUE)
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+# ==========================================
+# 6. Paket abschließen
+# ==========================================
 ament_package()

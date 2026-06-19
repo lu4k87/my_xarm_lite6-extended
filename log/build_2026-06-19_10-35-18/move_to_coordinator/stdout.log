@@ -1,0 +1,17 @@
+running develop
+running egg_info
+writing move_to_coordinator.egg-info/PKG-INFO
+writing dependency_links to move_to_coordinator.egg-info/dependency_links.txt
+writing entry points to move_to_coordinator.egg-info/entry_points.txt
+writing requirements to move_to_coordinator.egg-info/requires.txt
+writing top-level names to move_to_coordinator.egg-info/top_level.txt
+reading manifest file 'move_to_coordinator.egg-info/SOURCES.txt'
+writing manifest file 'move_to_coordinator.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/mk/dev_ws/install/move_to_coordinator/lib/python3.10/site-packages/move-to-coordinator.egg-link (link to .)
+Installing move_to_coordinator script to /home/mk/dev_ws/install/move_to_coordinator/lib/move_to_coordinator
+
+Installed /home/mk/dev_ws/build/move_to_coordinator
+running symlink_data
+symbolically linking /home/mk/dev_ws/build/move_to_coordinator/resource/move_to_coordinator -> /home/mk/dev_ws/install/move_to_coordinator/share/ament_index/resource_index/packages
+symbolically linking /home/mk/dev_ws/build/move_to_coordinator/package.xml -> /home/mk/dev_ws/install/move_to_coordinator/share/move_to_coordinator

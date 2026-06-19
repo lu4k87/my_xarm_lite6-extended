@@ -1,0 +1,21 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/whisper_idl__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/whisper_idl/action/detail/inference__type_support.cpp.o"
+  "CMakeFiles/whisper_idl__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/whisper_idl/action/detail/inference__type_support.cpp.o.d"
+  "CMakeFiles/whisper_idl__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/whisper_idl/msg/detail/audio_transcript__type_support.cpp.o"
+  "CMakeFiles/whisper_idl__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/whisper_idl/msg/detail/audio_transcript__type_support.cpp.o.d"
+  "CMakeFiles/whisper_idl__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/whisper_idl/msg/detail/whisper_tokens__type_support.cpp.o"
+  "CMakeFiles/whisper_idl__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/whisper_idl/msg/detail/whisper_tokens__type_support.cpp.o.d"
+  "libwhisper_idl__rosidl_typesupport_introspection_cpp.pdb"
+  "libwhisper_idl__rosidl_typesupport_introspection_cpp.so"
+  "rosidl_typesupport_introspection_cpp/whisper_idl/action/detail/inference__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/whisper_idl/action/detail/inference__type_support.cpp"
+  "rosidl_typesupport_introspection_cpp/whisper_idl/msg/detail/audio_transcript__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/whisper_idl/msg/detail/audio_transcript__type_support.cpp"
+  "rosidl_typesupport_introspection_cpp/whisper_idl/msg/detail/whisper_tokens__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/whisper_idl/msg/detail/whisper_tokens__type_support.cpp"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/whisper_idl__rosidl_typesupport_introspection_cpp.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

@@ -1,0 +1,82 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"_install",
+			"ament_cmake_symlink_install_targets",
+			"install"
+		],
+		"files" : 
+		[
+			"/opt/ros/humble/share/ament_cmake_core/cmake/symlink_install/ament_cmake_symlink_install_targets.cmake",
+			"/opt/ros/humble/share/ament_cmake_core/cmake/symlink_install/install.cmake",
+			"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 238,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 37,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 2
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 3,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"_deps/whisper-build/ggml/src/libggml.so"
+			],
+			"targetId" : "ggml::@adb943a8c98c89f2306b",
+			"targetIndex" : 0,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "Unspecified",
+			"destination" : "include",
+			"paths" : 
+			[
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-cpu.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-alloc.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-backend.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-blas.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-cann.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-cuda.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-kompute.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-metal.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-rpc.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-sycl.h",
+				"/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/include/ggml-vulkan.h"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "_deps/whisper-build/ggml",
+		"source" : "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml"
+	}
+}

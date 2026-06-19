@@ -1,0 +1,13 @@
+package.xml
+setup.cfg
+setup.py
+resource/whisper_demos
+whisper_demos/__init__.py
+whisper_demos/stream.py
+whisper_demos.egg-info/PKG-INFO
+whisper_demos.egg-info/SOURCES.txt
+whisper_demos.egg-info/dependency_links.txt
+whisper_demos.egg-info/entry_points.txt
+whisper_demos.egg-info/requires.txt
+whisper_demos.egg-info/top_level.txt
+whisper_demos.egg-info/zip-safe

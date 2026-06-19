@@ -1,0 +1,1 @@
+/home/mk/dev_ws/build/whisper_idl/rosidl_generator_py/whisper_idl/action/_inference_s.c

@@ -1,0 +1,1 @@
+/home/mk/dev_ws/build/whisper_idl/rosidl_typesupport_introspection_c/whisper_idl/msg/rosidl_typesupport_introspection_c__visibility_control.h

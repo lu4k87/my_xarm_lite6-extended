@@ -1,0 +1,1 @@
+/home/mk/dev_ws/build/whisper_util/ament_cmake_core/whisper_utilConfig.cmake

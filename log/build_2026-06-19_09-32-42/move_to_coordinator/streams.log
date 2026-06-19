@@ -1,0 +1,17 @@
+[0.770s] Invoking command in '/home/mk/dev_ws/build/move_to_coordinator': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/build/move_to_coordinator/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/move_to_coordinator/lib/python3.10/site-packages:/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/move_to_coordinator/build --no-deps symlink_data
+[0.914s] running develop
+[1.000s] running egg_info
+[1.000s] writing move_to_coordinator.egg-info/PKG-INFO
+[1.000s] writing dependency_links to move_to_coordinator.egg-info/dependency_links.txt
+[1.000s] writing entry points to move_to_coordinator.egg-info/entry_points.txt
+[1.000s] writing requirements to move_to_coordinator.egg-info/requires.txt
+[1.000s] writing top-level names to move_to_coordinator.egg-info/top_level.txt
+[1.001s] reading manifest file 'move_to_coordinator.egg-info/SOURCES.txt'
+[1.001s] writing manifest file 'move_to_coordinator.egg-info/SOURCES.txt'
+[1.032s] running build_ext
+[1.032s] Creating /home/mk/dev_ws/install/move_to_coordinator/lib/python3.10/site-packages/move-to-coordinator.egg-link (link to .)
+[1.032s] Installing move_to_coordinator script to /home/mk/dev_ws/install/move_to_coordinator/lib/move_to_coordinator
+[1.032s] 
+[1.032s] Installed /home/mk/dev_ws/build/move_to_coordinator
+[1.032s] running symlink_data
+[1.056s] Invoked command in '/home/mk/dev_ws/build/move_to_coordinator' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/build/move_to_coordinator/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/move_to_coordinator/lib/python3.10/site-packages:/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/move_to_coordinator/build --no-deps symlink_data

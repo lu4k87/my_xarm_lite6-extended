@@ -1,0 +1,28 @@
+// generated from rosidl_adapter/resource/action.idl.em
+// with input from my_3d_vision_bringup/action/GraspObject.action
+// generated code does not contain a copyright notice
+
+
+module my_3d_vision_bringup {
+  module action {
+    @verbatim (language="comment", text=
+      "Goal: The exact name of the object to grasp (e.g. \"cup\", \"sports ball\")")
+    struct GraspObject_Goal {
+      string object_name;
+    };
+    @verbatim (language="comment", text=
+      "Result: True if successfully grasped, False if failed")
+    struct GraspObject_Result {
+      boolean success;
+
+      string message;
+    };
+    @verbatim (language="comment", text=
+      "Feedback: Current status to show in the UI")
+    struct GraspObject_Feedback {
+      string current_phase;
+
+      string status_message;
+    };
+  };
+};

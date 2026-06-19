@@ -1,0 +1,35 @@
+[0.321s] Invoking command in '/home/mk/dev_ws/build/rviz_robot_control_panel': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/mk/dev_ws/build/rviz_robot_control_panel -- -j20 -l20
+[0.353s] [ 25%] [34m[1mAutomatic MOC and UIC for target rviz_robot_control_panel[0m
+[0.367s] [ 25%] Built target rviz_robot_control_panel_autogen
+[0.375s] [35m[1mConsolidate compiler generated dependencies of target rviz_robot_control_panel[0m
+[0.393s] [100%] Built target rviz_robot_control_panel
+[0.505s] Invoked command in '/home/mk/dev_ws/build/rviz_robot_control_panel' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/mk/dev_ws/build/rviz_robot_control_panel -- -j20 -l20
+[0.505s] Invoking command in '/home/mk/dev_ws/build/rviz_robot_control_panel': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/mk/dev_ws/build/rviz_robot_control_panel
+[0.515s] -- Install configuration: ""
+[0.516s] -- Execute custom install script
+[0.516s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel//plugin_description.xml
+[0.516s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/lib/librviz_robot_control_panel.so
+[0.516s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/include/rviz_robot_control_panel/rviz_robot_control_panel.hpp
+[0.517s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/plugin_description.xml
+[0.517s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/environment/library_path.sh
+[0.517s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/environment/library_path.dsv
+[0.517s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/ament_index/resource_index/package_run_dependencies/rviz_robot_control_panel
+[0.518s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/ament_index/resource_index/parent_prefix_path/rviz_robot_control_panel
+[0.518s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/environment/ament_prefix_path.sh
+[0.518s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/environment/ament_prefix_path.dsv
+[0.518s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/environment/path.sh
+[0.518s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/environment/path.dsv
+[0.518s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/local_setup.bash
+[0.518s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/local_setup.sh
+[0.518s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/local_setup.zsh
+[0.518s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/local_setup.dsv
+[0.518s] -- Symlinking: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/package.dsv
+[0.524s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/ament_index/resource_index/packages/rviz_robot_control_panel
+[0.524s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/ament_index/resource_index/rviz_common__pluginlib__plugin/rviz_robot_control_panel
+[0.524s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/cmake/ament_cmake_export_include_directories-extras.cmake
+[0.524s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/cmake/ament_cmake_export_libraries-extras.cmake
+[0.525s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/cmake/ament_cmake_export_dependencies-extras.cmake
+[0.525s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/cmake/rviz_robot_control_panelConfig.cmake
+[0.526s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/cmake/rviz_robot_control_panelConfig-version.cmake
+[0.526s] -- Up-to-date symlink: /home/mk/dev_ws/install/rviz_robot_control_panel/share/rviz_robot_control_panel/package.xml
+[0.573s] Invoked command in '/home/mk/dev_ws/build/rviz_robot_control_panel' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/mk/dev_ws/build/rviz_robot_control_panel

@@ -1,0 +1,2 @@
+source;share/whisper_server/environment/ament_prefix_path.sh
+source;share/whisper_server/environment/path.sh

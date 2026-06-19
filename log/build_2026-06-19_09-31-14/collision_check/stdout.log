@@ -1,0 +1,22 @@
+running develop
+running egg_info
+creating collision_check.egg-info
+writing collision_check.egg-info/PKG-INFO
+writing dependency_links to collision_check.egg-info/dependency_links.txt
+writing entry points to collision_check.egg-info/entry_points.txt
+writing requirements to collision_check.egg-info/requires.txt
+writing top-level names to collision_check.egg-info/top_level.txt
+writing manifest file 'collision_check.egg-info/SOURCES.txt'
+reading manifest file 'collision_check.egg-info/SOURCES.txt'
+writing manifest file 'collision_check.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/mk/dev_ws/install/collision_check/lib/python3.10/site-packages/collision-check.egg-link (link to .)
+Installing checker script to /home/mk/dev_ws/install/collision_check/lib/collision_check
+
+Installed /home/mk/dev_ws/build/collision_check
+running symlink_data
+creating /home/mk/dev_ws/install/collision_check/share/ament_index
+creating /home/mk/dev_ws/install/collision_check/share/ament_index/resource_index
+creating /home/mk/dev_ws/install/collision_check/share/ament_index/resource_index/packages
+symbolically linking /home/mk/dev_ws/build/collision_check/resource/collision_check -> /home/mk/dev_ws/install/collision_check/share/ament_index/resource_index/packages
+symbolically linking /home/mk/dev_ws/build/collision_check/package.xml -> /home/mk/dev_ws/install/collision_check/share/collision_check

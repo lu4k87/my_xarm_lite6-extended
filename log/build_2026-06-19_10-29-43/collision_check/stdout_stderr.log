@@ -1,0 +1,32 @@
+running develop
+Removing /home/mk/dev_ws/install/collision_check/lib/python3.10/site-packages/collision-check.egg-link (link to .)
+running egg_info
+writing ../../build/collision_check/collision_check.egg-info/PKG-INFO
+writing dependency_links to ../../build/collision_check/collision_check.egg-info/dependency_links.txt
+writing entry points to ../../build/collision_check/collision_check.egg-info/entry_points.txt
+writing requirements to ../../build/collision_check/collision_check.egg-info/requires.txt
+writing top-level names to ../../build/collision_check/collision_check.egg-info/top_level.txt
+reading manifest file '../../build/collision_check/collision_check.egg-info/SOURCES.txt'
+writing manifest file '../../build/collision_check/collision_check.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/mk/dev_ws/build/collision_check/build
+creating /home/mk/dev_ws/build/collision_check/build/lib
+creating /home/mk/dev_ws/build/collision_check/build/lib/collision_check
+copying collision_check/checker.py -> /home/mk/dev_ws/build/collision_check/build/lib/collision_check
+copying collision_check/__init__.py -> /home/mk/dev_ws/build/collision_check/build/lib/collision_check
+running install
+running install_lib
+creating /home/mk/dev_ws/install/collision_check/lib/python3.10/site-packages/collision_check
+copying /home/mk/dev_ws/build/collision_check/build/lib/collision_check/checker.py -> /home/mk/dev_ws/install/collision_check/lib/python3.10/site-packages/collision_check
+copying /home/mk/dev_ws/build/collision_check/build/lib/collision_check/__init__.py -> /home/mk/dev_ws/install/collision_check/lib/python3.10/site-packages/collision_check
+byte-compiling /home/mk/dev_ws/install/collision_check/lib/python3.10/site-packages/collision_check/checker.py to checker.cpython-310.pyc
+byte-compiling /home/mk/dev_ws/install/collision_check/lib/python3.10/site-packages/collision_check/__init__.py to __init__.cpython-310.pyc
+running install_data
+copying resource/collision_check -> /home/mk/dev_ws/install/collision_check/share/ament_index/resource_index/packages
+copying package.xml -> /home/mk/dev_ws/install/collision_check/share/collision_check
+running install_egg_info
+Copying ../../build/collision_check/collision_check.egg-info to /home/mk/dev_ws/install/collision_check/lib/python3.10/site-packages/collision_check-0.0.0-py3.10.egg-info
+running install_scripts
+Installing checker script to /home/mk/dev_ws/install/collision_check/lib/collision_check
+writing list of installed files to '/home/mk/dev_ws/build/collision_check/install.log'

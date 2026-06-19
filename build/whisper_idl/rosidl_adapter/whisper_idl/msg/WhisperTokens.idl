@@ -1,0 +1,33 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from whisper_idl/msg/WhisperTokens.msg
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+
+module whisper_idl {
+  module msg {
+    struct WhisperTokens {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        "Token data")
+      sequence<int32> token_ids;
+
+      sequence<string> token_texts;
+
+      sequence<float> token_probs;
+
+      @verbatim (language="comment", text=
+        "Segment data")
+      sequence<int32> segment_start_token_idxs;
+
+      sequence<int64> start_times;
+
+      sequence<int64> end_times;
+
+      @verbatim (language="comment", text=
+        "Runtime data")
+      int64 inference_duration;
+    };
+  };
+};

@@ -1,0 +1,3 @@
+source;share/whisper_cpp_vendor/environment/ament_prefix_path.sh
+source;share/whisper_cpp_vendor/environment/library_path.sh
+source;share/whisper_cpp_vendor/environment/path.sh

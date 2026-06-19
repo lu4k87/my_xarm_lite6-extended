@@ -1,0 +1,18 @@
+[1.470s] Invoking command in '/home/mk/dev_ws/build/rviz_servo_status_overlay': PYTHONPATH=/home/mk/dev_ws/build/rviz_servo_status_overlay/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/rviz_servo_status_overlay/build --no-deps symlink_data
+[1.624s] running develop
+[1.709s] running egg_info
+[1.709s] writing rviz_servo_status_overlay.egg-info/PKG-INFO
+[1.709s] writing dependency_links to rviz_servo_status_overlay.egg-info/dependency_links.txt
+[1.709s] writing entry points to rviz_servo_status_overlay.egg-info/entry_points.txt
+[1.709s] writing requirements to rviz_servo_status_overlay.egg-info/requires.txt
+[1.709s] writing top-level names to rviz_servo_status_overlay.egg-info/top_level.txt
+[1.710s] reading manifest file 'rviz_servo_status_overlay.egg-info/SOURCES.txt'
+[1.711s] writing manifest file 'rviz_servo_status_overlay.egg-info/SOURCES.txt'
+[1.739s] running build_ext
+[1.739s] Creating /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz-servo-status-overlay.egg-link (link to .)
+[1.739s] Installing rviz_overlay script to /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/rviz_servo_status_overlay
+[1.740s] Installing servo_status_overlay script to /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/rviz_servo_status_overlay
+[1.740s] 
+[1.740s] Installed /home/mk/dev_ws/build/rviz_servo_status_overlay
+[1.740s] running symlink_data
+[1.940s] Invoked command in '/home/mk/dev_ws/build/rviz_servo_status_overlay' returned '0': PYTHONPATH=/home/mk/dev_ws/build/rviz_servo_status_overlay/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/rviz_servo_status_overlay/build --no-deps symlink_data

@@ -1,0 +1,18 @@
+running develop
+running egg_info
+writing rviz_servo_status_overlay.egg-info/PKG-INFO
+writing dependency_links to rviz_servo_status_overlay.egg-info/dependency_links.txt
+writing entry points to rviz_servo_status_overlay.egg-info/entry_points.txt
+writing requirements to rviz_servo_status_overlay.egg-info/requires.txt
+writing top-level names to rviz_servo_status_overlay.egg-info/top_level.txt
+reading manifest file 'rviz_servo_status_overlay.egg-info/SOURCES.txt'
+writing manifest file 'rviz_servo_status_overlay.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz-servo-status-overlay.egg-link (link to .)
+Installing rviz_overlay script to /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/rviz_servo_status_overlay
+Installing servo_status_overlay script to /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/rviz_servo_status_overlay
+
+Installed /home/mk/dev_ws/build/rviz_servo_status_overlay
+running symlink_data
+symbolically linking /home/mk/dev_ws/build/rviz_servo_status_overlay/resource/rviz_servo_status_overlay -> /home/mk/dev_ws/install/rviz_servo_status_overlay/share/ament_index/resource_index/packages
+symbolically linking /home/mk/dev_ws/build/rviz_servo_status_overlay/package.xml -> /home/mk/dev_ws/install/rviz_servo_status_overlay/share/rviz_servo_status_overlay

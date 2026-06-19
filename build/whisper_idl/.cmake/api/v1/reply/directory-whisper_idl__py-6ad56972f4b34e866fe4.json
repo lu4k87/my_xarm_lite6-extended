@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "whisper_idl__py",
+		"source" : "/home/mk/dev_ws/build/whisper_idl/whisper_idl__py"
+	}
+}

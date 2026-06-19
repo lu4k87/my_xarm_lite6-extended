@@ -1,0 +1,23 @@
+[100%] Built target whisper
+[100%] Built target inference_component
+-- Install configuration: "Release"
+-- Execute custom install script
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/lib/whisper_server/whisper
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/lib/libinference_component.so
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/config/whisper.yaml
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/ament_index/resource_index/package_run_dependencies/whisper_server
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/ament_index/resource_index/parent_prefix_path/whisper_server
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/environment/path.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/environment/path.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/local_setup.bash
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/local_setup.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/local_setup.zsh
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/local_setup.dsv
+-- Symlinking: /home/mk/dev_ws/install/whisper_server/share/whisper_server/package.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/ament_index/resource_index/packages/whisper_server
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/ament_index/resource_index/rclcpp_components/whisper_server
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/cmake/whisper_serverConfig.cmake
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/cmake/whisper_serverConfig-version.cmake
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_server/share/whisper_server/package.xml

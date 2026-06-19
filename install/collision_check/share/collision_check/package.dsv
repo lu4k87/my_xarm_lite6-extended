@@ -1,0 +1,9 @@
+source;share/collision_check/hook/pythonpath.ps1
+source;share/collision_check/hook/pythonpath.dsv
+source;share/collision_check/hook/pythonpath.sh
+source;share/collision_check/hook/ament_prefix_path.ps1
+source;share/collision_check/hook/ament_prefix_path.dsv
+source;share/collision_check/hook/ament_prefix_path.sh
+source;../../build/collision_check/share/collision_check/hook/pythonpath_develop.ps1
+source;../../build/collision_check/share/collision_check/hook/pythonpath_develop.dsv
+source;../../build/collision_check/share/collision_check/hook/pythonpath_develop.sh

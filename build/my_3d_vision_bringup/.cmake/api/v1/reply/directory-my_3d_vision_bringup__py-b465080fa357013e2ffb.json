@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "my_3d_vision_bringup__py",
+		"source" : "/home/mk/dev_ws/build/my_3d_vision_bringup/my_3d_vision_bringup__py"
+	}
+}

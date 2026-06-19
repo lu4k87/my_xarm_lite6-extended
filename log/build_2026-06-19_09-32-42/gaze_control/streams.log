@@ -1,0 +1,17 @@
+[1.479s] Invoking command in '/home/mk/dev_ws/build/gaze_control': PYTHONPATH=/home/mk/dev_ws/build/gaze_control/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/gaze_control/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/gaze_control/build --no-deps symlink_data
+[1.628s] running develop
+[1.712s] running egg_info
+[1.713s] writing gaze_control.egg-info/PKG-INFO
+[1.713s] writing dependency_links to gaze_control.egg-info/dependency_links.txt
+[1.713s] writing entry points to gaze_control.egg-info/entry_points.txt
+[1.713s] writing requirements to gaze_control.egg-info/requires.txt
+[1.713s] writing top-level names to gaze_control.egg-info/top_level.txt
+[1.714s] reading manifest file 'gaze_control.egg-info/SOURCES.txt'
+[1.714s] writing manifest file 'gaze_control.egg-info/SOURCES.txt'
+[1.742s] running build_ext
+[1.743s] Creating /home/mk/dev_ws/install/gaze_control/lib/python3.10/site-packages/gaze-control.egg-link (link to .)
+[1.743s] Installing gaze_ui script to /home/mk/dev_ws/install/gaze_control/lib/gaze_control
+[1.743s] 
+[1.743s] Installed /home/mk/dev_ws/build/gaze_control
+[1.743s] running symlink_data
+[1.941s] Invoked command in '/home/mk/dev_ws/build/gaze_control' returned '0': PYTHONPATH=/home/mk/dev_ws/build/gaze_control/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/gaze_control/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/gaze_control/build --no-deps symlink_data

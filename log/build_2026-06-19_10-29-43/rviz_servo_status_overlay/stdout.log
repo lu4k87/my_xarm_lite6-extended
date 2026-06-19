@@ -1,0 +1,36 @@
+running develop
+Removing /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz-servo-status-overlay.egg-link (link to .)
+running egg_info
+writing ../../build/rviz_servo_status_overlay/rviz_servo_status_overlay.egg-info/PKG-INFO
+writing dependency_links to ../../build/rviz_servo_status_overlay/rviz_servo_status_overlay.egg-info/dependency_links.txt
+writing entry points to ../../build/rviz_servo_status_overlay/rviz_servo_status_overlay.egg-info/entry_points.txt
+writing requirements to ../../build/rviz_servo_status_overlay/rviz_servo_status_overlay.egg-info/requires.txt
+writing top-level names to ../../build/rviz_servo_status_overlay/rviz_servo_status_overlay.egg-info/top_level.txt
+reading manifest file '../../build/rviz_servo_status_overlay/rviz_servo_status_overlay.egg-info/SOURCES.txt'
+writing manifest file '../../build/rviz_servo_status_overlay/rviz_servo_status_overlay.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/mk/dev_ws/build/rviz_servo_status_overlay/build
+creating /home/mk/dev_ws/build/rviz_servo_status_overlay/build/lib
+creating /home/mk/dev_ws/build/rviz_servo_status_overlay/build/lib/rviz_servo_status_overlay
+copying rviz_servo_status_overlay/servo_status_overlay.py -> /home/mk/dev_ws/build/rviz_servo_status_overlay/build/lib/rviz_servo_status_overlay
+copying rviz_servo_status_overlay/rviz_overlay.py -> /home/mk/dev_ws/build/rviz_servo_status_overlay/build/lib/rviz_servo_status_overlay
+copying rviz_servo_status_overlay/__init__.py -> /home/mk/dev_ws/build/rviz_servo_status_overlay/build/lib/rviz_servo_status_overlay
+running install
+running install_lib
+creating /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz_servo_status_overlay
+copying /home/mk/dev_ws/build/rviz_servo_status_overlay/build/lib/rviz_servo_status_overlay/servo_status_overlay.py -> /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz_servo_status_overlay
+copying /home/mk/dev_ws/build/rviz_servo_status_overlay/build/lib/rviz_servo_status_overlay/rviz_overlay.py -> /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz_servo_status_overlay
+copying /home/mk/dev_ws/build/rviz_servo_status_overlay/build/lib/rviz_servo_status_overlay/__init__.py -> /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz_servo_status_overlay
+byte-compiling /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz_servo_status_overlay/servo_status_overlay.py to servo_status_overlay.cpython-310.pyc
+byte-compiling /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz_servo_status_overlay/rviz_overlay.py to rviz_overlay.cpython-310.pyc
+byte-compiling /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz_servo_status_overlay/__init__.py to __init__.cpython-310.pyc
+running install_data
+copying resource/rviz_servo_status_overlay -> /home/mk/dev_ws/install/rviz_servo_status_overlay/share/ament_index/resource_index/packages
+copying package.xml -> /home/mk/dev_ws/install/rviz_servo_status_overlay/share/rviz_servo_status_overlay
+running install_egg_info
+Copying ../../build/rviz_servo_status_overlay/rviz_servo_status_overlay.egg-info to /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz_servo_status_overlay-0.0.0-py3.10.egg-info
+running install_scripts
+Installing rviz_overlay script to /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/rviz_servo_status_overlay
+Installing servo_status_overlay script to /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/rviz_servo_status_overlay
+writing list of installed files to '/home/mk/dev_ws/build/rviz_servo_status_overlay/install.log'

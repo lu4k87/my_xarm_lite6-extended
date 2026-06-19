@@ -1,0 +1,258 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-f5838d3b6302c0f90f08.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						18
+					]
+				},
+				{
+					"build" : "whisper_idl__py",
+					"jsonFile" : "directory-whisper_idl__py-6ad56972f4b34e866fe4.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "/home/mk/dev_ws/build/whisper_idl/whisper_idl__py",
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"build" : "whisper_idl__rs",
+					"jsonFile" : "directory-whisper_idl__rs-77002af1400b1d632463.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "/home/mk/dev_ws/build/whisper_idl/whisper_idl__rs",
+					"targetIndexes" : 
+					[
+						17
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2
+					],
+					"name" : "whisper_idl",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_build_whisper_idl_egg::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_build_whisper_idl_egg-9981a157a3beeca73de0.json",
+					"name" : "ament_cmake_python_build_whisper_idl_egg",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_symlink_whisper_idl::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_symlink_whisper_idl-e1236e765feb876f13bc.json",
+					"name" : "ament_cmake_python_symlink_whisper_idl",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-048030ba79f92b499b97.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl-bc867eef047b21cf27eb.json",
+					"name" : "whisper_idl",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__cpp-60aa6242d51708c0fa7b.json",
+					"name" : "whisper_idl__cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "whisper_idl__py::@af02257478744be35f3c",
+					"jsonFile" : "target-whisper_idl__py-e991c9de5d77a7bff125.json",
+					"name" : "whisper_idl__py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_generator_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_generator_c-ef1cd2e52e43e3cfadb1.json",
+					"name" : "whisper_idl__rosidl_generator_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_generator_py::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_generator_py-7c8980290eb208dbb34c.json",
+					"name" : "whisper_idl__rosidl_generator_py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_typesupport_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_typesupport_c-85928f316096f4a87515.json",
+					"name" : "whisper_idl__rosidl_typesupport_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_typesupport_c__pyext::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_typesupport_c__pyext-97342570001925fa56b0.json",
+					"name" : "whisper_idl__rosidl_typesupport_c__pyext",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_typesupport_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_typesupport_cpp-c80759370b83f2fafbad.json",
+					"name" : "whisper_idl__rosidl_typesupport_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_typesupport_fastrtps_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_typesupport_fastrtps_c-2b2b641806a65c5f9c32.json",
+					"name" : "whisper_idl__rosidl_typesupport_fastrtps_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_typesupport_fastrtps_c__pyext::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_typesupport_fastrtps_c__pyext-914ec3b7b59e094d196c.json",
+					"name" : "whisper_idl__rosidl_typesupport_fastrtps_c__pyext",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_typesupport_fastrtps_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_typesupport_fastrtps_cpp-4d0f680ececd7d9fc472.json",
+					"name" : "whisper_idl__rosidl_typesupport_fastrtps_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_typesupport_introspection_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_typesupport_introspection_c-13de3a4a8e76a6e5d8f1.json",
+					"name" : "whisper_idl__rosidl_typesupport_introspection_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_typesupport_introspection_c__pyext::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_typesupport_introspection_c__pyext-535bee1f53e661619090.json",
+					"name" : "whisper_idl__rosidl_typesupport_introspection_c__pyext",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl__rosidl_typesupport_introspection_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl__rosidl_typesupport_introspection_cpp-a59e63eb46ca18efa853.json",
+					"name" : "whisper_idl__rosidl_typesupport_introspection_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "whisper_idl__rs::@1f41babdcf8a6704a122",
+					"jsonFile" : "target-whisper_idl__rs-47c4f49a5a3a46871560.json",
+					"name" : "whisper_idl__rs",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_idl_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_idl_uninstall-3adfd436af912bd45b4d.json",
+					"name" : "whisper_idl_uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/mk/dev_ws/build/whisper_idl",
+		"source" : "/home/mk/dev_ws/src/ros2_whisper/whisper_idl"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

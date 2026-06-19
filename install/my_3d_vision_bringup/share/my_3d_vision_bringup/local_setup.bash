@@ -1,0 +1,1 @@
+/home/mk/dev_ws/build/my_3d_vision_bringup/ament_cmake_environment_hooks/local_setup.bash

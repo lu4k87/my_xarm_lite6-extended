@@ -1,0 +1,11 @@
+setup.py
+whisper_idl/__init__.py
+whisper_idl.egg-info/PKG-INFO
+whisper_idl.egg-info/SOURCES.txt
+whisper_idl.egg-info/dependency_links.txt
+whisper_idl.egg-info/top_level.txt
+whisper_idl/action/__init__.py
+whisper_idl/action/_inference.py
+whisper_idl/msg/__init__.py
+whisper_idl/msg/_audio_transcript.py
+whisper_idl/msg/_whisper_tokens.py

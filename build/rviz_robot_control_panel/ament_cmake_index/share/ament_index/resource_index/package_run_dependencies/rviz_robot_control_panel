@@ -1,0 +1,1 @@
+rclcpp;rviz_common;rviz_rendering;geometry_msgs;std_srvs;moveit_ros_planning_interface;tf2_geometry_msgs;xarm_msgs;ament_lint_auto;ament_lint_common

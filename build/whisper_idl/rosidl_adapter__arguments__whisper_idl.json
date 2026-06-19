@@ -1,0 +1,8 @@
+{
+  "package_name": "whisper_idl",
+  "non_idl_tuples": [
+    "/home/mk/dev_ws/src/ros2_whisper/whisper_idl:action/Inference.action",
+    "/home/mk/dev_ws/src/ros2_whisper/whisper_idl:msg/WhisperTokens.msg",
+    "/home/mk/dev_ws/src/ros2_whisper/whisper_idl:msg/AudioTranscript.msg"
+  ]
+}

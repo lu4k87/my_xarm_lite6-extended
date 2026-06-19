@@ -1,0 +1,17 @@
+running develop
+running egg_info
+writing gaze_control.egg-info/PKG-INFO
+writing dependency_links to gaze_control.egg-info/dependency_links.txt
+writing entry points to gaze_control.egg-info/entry_points.txt
+writing requirements to gaze_control.egg-info/requires.txt
+writing top-level names to gaze_control.egg-info/top_level.txt
+reading manifest file 'gaze_control.egg-info/SOURCES.txt'
+writing manifest file 'gaze_control.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/mk/dev_ws/install/gaze_control/lib/python3.10/site-packages/gaze-control.egg-link (link to .)
+Installing gaze_ui script to /home/mk/dev_ws/install/gaze_control/lib/gaze_control
+
+Installed /home/mk/dev_ws/build/gaze_control
+running symlink_data
+symbolically linking /home/mk/dev_ws/build/gaze_control/resource/gaze_control -> /home/mk/dev_ws/install/gaze_control/share/ament_index/resource_index/packages
+symbolically linking /home/mk/dev_ws/build/gaze_control/package.xml -> /home/mk/dev_ws/install/gaze_control/share/gaze_control

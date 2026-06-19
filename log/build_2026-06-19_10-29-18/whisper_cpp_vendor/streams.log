@@ -1,0 +1,56 @@
+[0.048s] Invoking command in '/home/mk/dev_ws/build/whisper_cpp_vendor': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mk/dev_ws/install/yolo_object_detector:/home/mk/dev_ws/install/move_to_coordinator:/home/mk/dev_ws/install/motion_sequence:/home/mk/dev_ws/install/whisper_demos:/home/mk/dev_ws/install/voice_command_listener:/home/mk/dev_ws/install/uf_ros_lib:/home/mk/dev_ws/install/rviz_servo_status_overlay:/home/mk/dev_ws/install/rviz_marker_static_scene_objects:/home/mk/dev_ws/install/robot_motion_handler_movegroup:/home/mk/dev_ws/install/gaze_control:/home/mk/dev_ws/install/collision_check:/home/mk/dev_ws/install/audio_listener:/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/whisper_cpp_vendor -- -j20 -l20
+[1.216s] [ 77%] Built target ggml
+[1.216s] [100%] Built target whisper
+[1.377s] Invoked command in '/home/mk/dev_ws/build/whisper_cpp_vendor' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mk/dev_ws/install/yolo_object_detector:/home/mk/dev_ws/install/move_to_coordinator:/home/mk/dev_ws/install/motion_sequence:/home/mk/dev_ws/install/whisper_demos:/home/mk/dev_ws/install/voice_command_listener:/home/mk/dev_ws/install/uf_ros_lib:/home/mk/dev_ws/install/rviz_servo_status_overlay:/home/mk/dev_ws/install/rviz_marker_static_scene_objects:/home/mk/dev_ws/install/robot_motion_handler_movegroup:/home/mk/dev_ws/install/gaze_control:/home/mk/dev_ws/install/collision_check:/home/mk/dev_ws/install/audio_listener:/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/whisper_cpp_vendor -- -j20 -l20
+[1.378s] Invoking command in '/home/mk/dev_ws/build/whisper_cpp_vendor': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mk/dev_ws/install/yolo_object_detector:/home/mk/dev_ws/install/move_to_coordinator:/home/mk/dev_ws/install/motion_sequence:/home/mk/dev_ws/install/whisper_demos:/home/mk/dev_ws/install/voice_command_listener:/home/mk/dev_ws/install/uf_ros_lib:/home/mk/dev_ws/install/rviz_servo_status_overlay:/home/mk/dev_ws/install/rviz_marker_static_scene_objects:/home/mk/dev_ws/install/robot_motion_handler_movegroup:/home/mk/dev_ws/install/gaze_control:/home/mk/dev_ws/install/collision_check:/home/mk/dev_ws/install/audio_listener:/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/whisper_cpp_vendor
+[1.399s] -- Install configuration: "Release"
+[1.400s] -- Execute custom install script
+[1.400s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor//libggml.so
+[1.400s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/cmake/whisper/whisper-config.cmake
+[1.400s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/cmake/whisper/whisper-version.cmake
+[1.400s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/pkgconfig/whisper.pc
+[1.400s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/whisper.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-alloc.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-amx.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-backend.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-blas.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-cann.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-cpp.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-cpu.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-cuda.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-kompute.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-metal.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-rpc.h
+[1.401s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-sycl.h
+[1.402s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-vulkan.h
+[1.402s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml.h
+[1.402s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/library_path.sh
+[1.402s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/library_path.dsv
+[1.402s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/ament_index/resource_index/package_run_dependencies/whisper_cpp_vendor
+[1.402s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/ament_index/resource_index/parent_prefix_path/whisper_cpp_vendor
+[1.402s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/ament_prefix_path.sh
+[1.403s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/ament_prefix_path.dsv
+[1.403s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/path.sh
+[1.403s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/path.dsv
+[1.403s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/local_setup.bash
+[1.403s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/local_setup.sh
+[1.403s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/local_setup.zsh
+[1.403s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/local_setup.dsv
+[1.403s] -- Symlinking: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/package.dsv
+[1.432s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/ament_index/resource_index/packages/whisper_cpp_vendor
+[1.436s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/ament_cmake_export_targets-extras.cmake
+[1.436s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/whisper_cpp_vendorConfig.cmake
+[1.436s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/whisper_cpp_vendorConfig-version.cmake
+[1.436s] -- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/package.xml
+[1.436s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libggml.so
+[1.436s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1.7.2
+[1.436s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1
+[1.436s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so
+[1.438s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/export_whisperExport.cmake
+[1.438s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/export_whisperExport-release.cmake
+[1.439s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1.7.2
+[1.439s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1
+[1.439s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so
+[1.441s] -- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libggml.so
+[1.550s] Invoked command in '/home/mk/dev_ws/build/whisper_cpp_vendor' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mk/dev_ws/install/yolo_object_detector:/home/mk/dev_ws/install/move_to_coordinator:/home/mk/dev_ws/install/motion_sequence:/home/mk/dev_ws/install/whisper_demos:/home/mk/dev_ws/install/voice_command_listener:/home/mk/dev_ws/install/uf_ros_lib:/home/mk/dev_ws/install/rviz_servo_status_overlay:/home/mk/dev_ws/install/rviz_marker_static_scene_objects:/home/mk/dev_ws/install/robot_motion_handler_movegroup:/home/mk/dev_ws/install/gaze_control:/home/mk/dev_ws/install/collision_check:/home/mk/dev_ws/install/audio_listener:/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/whisper_cpp_vendor

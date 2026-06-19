@@ -1,0 +1,25 @@
+[2.047s] Invoking command in '/home/mk/dev_ws/build/rviz_servo_status_overlay': PYTHONPATH=/home/mk/dev_ws/build/rviz_servo_status_overlay/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/rviz_servo_status_overlay/build --no-deps symlink_data
+[2.766s] running develop
+[3.224s] running egg_info
+[3.229s] creating rviz_servo_status_overlay.egg-info
+[3.230s] writing rviz_servo_status_overlay.egg-info/PKG-INFO
+[3.230s] writing dependency_links to rviz_servo_status_overlay.egg-info/dependency_links.txt
+[3.230s] writing entry points to rviz_servo_status_overlay.egg-info/entry_points.txt
+[3.230s] writing requirements to rviz_servo_status_overlay.egg-info/requires.txt
+[3.230s] writing top-level names to rviz_servo_status_overlay.egg-info/top_level.txt
+[3.230s] writing manifest file 'rviz_servo_status_overlay.egg-info/SOURCES.txt'
+[3.231s] reading manifest file 'rviz_servo_status_overlay.egg-info/SOURCES.txt'
+[3.236s] writing manifest file 'rviz_servo_status_overlay.egg-info/SOURCES.txt'
+[3.355s] running build_ext
+[3.355s] Creating /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages/rviz-servo-status-overlay.egg-link (link to .)
+[3.355s] Installing rviz_overlay script to /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/rviz_servo_status_overlay
+[3.355s] Installing servo_status_overlay script to /home/mk/dev_ws/install/rviz_servo_status_overlay/lib/rviz_servo_status_overlay
+[3.355s] 
+[3.356s] Installed /home/mk/dev_ws/build/rviz_servo_status_overlay
+[3.356s] running symlink_data
+[3.356s] creating /home/mk/dev_ws/install/rviz_servo_status_overlay/share/ament_index
+[3.356s] creating /home/mk/dev_ws/install/rviz_servo_status_overlay/share/ament_index/resource_index
+[3.356s] creating /home/mk/dev_ws/install/rviz_servo_status_overlay/share/ament_index/resource_index/packages
+[3.357s] symbolically linking /home/mk/dev_ws/build/rviz_servo_status_overlay/resource/rviz_servo_status_overlay -> /home/mk/dev_ws/install/rviz_servo_status_overlay/share/ament_index/resource_index/packages
+[3.358s] symbolically linking /home/mk/dev_ws/build/rviz_servo_status_overlay/package.xml -> /home/mk/dev_ws/install/rviz_servo_status_overlay/share/rviz_servo_status_overlay
+[3.434s] Invoked command in '/home/mk/dev_ws/build/rviz_servo_status_overlay' returned '0': PYTHONPATH=/home/mk/dev_ws/build/rviz_servo_status_overlay/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/rviz_servo_status_overlay/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/rviz_servo_status_overlay/build --no-deps symlink_data

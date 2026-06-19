@@ -1,0 +1,3 @@
+[console_scripts]
+gaze_ui = gaze_control.gaze_ui_node:main
+

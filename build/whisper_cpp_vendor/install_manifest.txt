@@ -1,0 +1,10 @@
+/home/mk/dev_ws/install/whisper_cpp_vendor/lib/libggml.so
+/home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1.7.2
+/home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1
+/home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so
+/home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/export_whisperExport.cmake
+/home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/export_whisperExport-release.cmake
+/home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1.7.2
+/home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1
+/home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so
+/home/mk/dev_ws/install/whisper_cpp_vendor/lib/libggml.so

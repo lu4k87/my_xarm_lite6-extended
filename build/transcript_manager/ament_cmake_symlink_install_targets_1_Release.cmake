@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/mk/dev_ws/build/transcript_manager/libtranscript_manager_component.so" "TARGETS" "transcript_manager_component" "LIBRARY_DESTINATION" "lib" "RUNTIME_DESTINATION" "lib/transcript_manager")

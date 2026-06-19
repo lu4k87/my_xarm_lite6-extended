@@ -1,0 +1,16 @@
+running develop
+running egg_info
+writing voice_command_listener.egg-info/PKG-INFO
+writing dependency_links to voice_command_listener.egg-info/dependency_links.txt
+writing entry points to voice_command_listener.egg-info/entry_points.txt
+writing requirements to voice_command_listener.egg-info/requires.txt
+writing top-level names to voice_command_listener.egg-info/top_level.txt
+reading manifest file 'voice_command_listener.egg-info/SOURCES.txt'
+writing manifest file 'voice_command_listener.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/mk/dev_ws/install/voice_command_listener/lib/python3.10/site-packages/voice-command-listener.egg-link (link to .)
+Installing listener script to /home/mk/dev_ws/install/voice_command_listener/lib/voice_command_listener
+Installing voice_command_listener script to /home/mk/dev_ws/install/voice_command_listener/lib/voice_command_listener
+
+Installed /home/mk/dev_ws/build/voice_command_listener
+running symlink_data

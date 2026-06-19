@@ -1,0 +1,2 @@
+# Hashes of file build rules.
+2338cab449aa6089c9755a69d3085d44 CMakeFiles/whisper_cpp_vendor_uninstall

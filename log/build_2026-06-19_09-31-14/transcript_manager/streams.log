@@ -1,0 +1,71 @@
+[0.009s] Invoking command in '/home/mk/dev_ws/build/transcript_manager': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_util/lib:/home/mk/dev_ws/install/whisper_idl/lib:/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake /home/mk/dev_ws/src/ros2_whisper/transcript_manager -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/transcript_manager
+[0.043s] -- The C compiler identification is GNU 11.4.0
+[0.078s] -- The CXX compiler identification is GNU 11.4.0
+[0.082s] -- Detecting C compiler ABI info
+[0.125s] -- Detecting C compiler ABI info - done
+[0.132s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.132s] -- Detecting C compile features
+[0.132s] -- Detecting C compile features - done
+[0.135s] -- Detecting CXX compiler ABI info
+[0.185s] -- Detecting CXX compiler ABI info - done
+[0.190s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.191s] -- Detecting CXX compile features
+[0.191s] -- Detecting CXX compile features - done
+[0.192s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.311s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.407s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.452s] -- Found rclcpp_components: 16.0.19 (/opt/ros/humble/share/rclcpp_components/cmake)
+[0.520s] -- Found rosidl_generator_c: 3.1.8 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.524s] -- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.533s] -- Found rosidl_generator_cpp: 3.1.8 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.547s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.562s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.628s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[0.631s] -- Found rmw_cyclonedds_cpp: 1.3.4 (/opt/ros/humble/share/rmw_cyclonedds_cpp/cmake)
+[0.651s] -- Using RMW implementation 'rmw_cyclonedds_cpp' as default
+[0.658s] -- Looking for pthread.h
+[0.713s] -- Looking for pthread.h - found
+[0.713s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[0.769s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[0.770s] -- Found Threads: TRUE  
+[0.820s] -- Found rclcpp_action: 16.0.19 (/opt/ros/humble/share/rclcpp_action/cmake)
+[0.854s] -- Found std_srvs: 4.9.1 (/opt/ros/humble/share/std_srvs/cmake)
+[0.863s] -- Found whisper_idl: 1.4.0 (/home/mk/dev_ws/install/whisper_idl/share/whisper_idl/cmake)
+[0.872s] -- Found whisper_util: 1.4.0 (/home/mk/dev_ws/install/whisper_util/share/whisper_util/cmake)
+[0.940s] -- Configuring done
+[0.950s] -- Generating done
+[0.952s] -- Build files have been written to: /home/mk/dev_ws/build/transcript_manager
+[0.958s] Invoked command in '/home/mk/dev_ws/build/transcript_manager' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_util/lib:/home/mk/dev_ws/install/whisper_idl/lib:/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake /home/mk/dev_ws/src/ros2_whisper/transcript_manager -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/transcript_manager
+[0.960s] Invoking command in '/home/mk/dev_ws/build/transcript_manager': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_util/lib:/home/mk/dev_ws/install/whisper_idl/lib:/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/mk/dev_ws/build/transcript_manager -- -j20 -l20
+[1.000s] [ 14%] [32mBuilding CXX object CMakeFiles/transcript_manager_component.dir/src/transcript_manager.cpp.o[0m
+[1.001s] [ 28%] [32mBuilding CXX object CMakeFiles/transcript_manager_comp.dir/rclcpp_components/node_main_transcript_manager_comp.cpp.o[0m
+[1.001s] [ 42%] [32mBuilding CXX object CMakeFiles/transcript_manager_component.dir/src/transcript_operations.cpp.o[0m
+[1.002s] [ 57%] [32mBuilding CXX object CMakeFiles/transcript_manager_component.dir/src/transcript_algorithms.cpp.o[0m
+[1.003s] [ 71%] [32mBuilding CXX object CMakeFiles/transcript_manager_component.dir/src/transcript.cpp.o[0m
+[3.268s] [ 85%] [32m[1mLinking CXX executable transcript_manager_comp[0m
+[3.337s] [ 85%] Built target transcript_manager_comp
+[10.053s] [100%] [32m[1mLinking CXX shared library libtranscript_manager_component.so[0m
+[10.165s] [100%] Built target transcript_manager_component
+[10.175s] Invoked command in '/home/mk/dev_ws/build/transcript_manager' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_util/lib:/home/mk/dev_ws/install/whisper_idl/lib:/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --build /home/mk/dev_ws/build/transcript_manager -- -j20 -l20
+[10.176s] Invoking command in '/home/mk/dev_ws/build/transcript_manager': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_util/lib:/home/mk/dev_ws/install/whisper_idl/lib:/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/mk/dev_ws/build/transcript_manager
+[10.182s] -- Install configuration: "Release"
+[10.183s] -- Execute custom install script
+[10.183s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/lib/transcript_manager/transcript_manager_comp
+[10.189s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/lib/libtranscript_manager_component.so
+[10.197s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/ament_index/resource_index/package_run_dependencies/transcript_manager
+[10.204s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/ament_index/resource_index/parent_prefix_path/transcript_manager
+[10.212s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/environment/ament_prefix_path.sh
+[10.219s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/environment/ament_prefix_path.dsv
+[10.227s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/environment/path.sh
+[10.234s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/environment/path.dsv
+[10.241s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/local_setup.bash
+[10.248s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/local_setup.sh
+[10.254s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/local_setup.zsh
+[10.261s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/local_setup.dsv
+[10.269s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/package.dsv
+[10.275s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/ament_index/resource_index/packages/transcript_manager
+[10.281s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/ament_index/resource_index/rclcpp_components/transcript_manager
+[10.288s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/cmake/transcript_managerConfig.cmake
+[10.296s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/cmake/transcript_managerConfig-version.cmake
+[10.302s] -- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/package.xml
+[10.311s] Invoked command in '/home/mk/dev_ws/build/transcript_manager' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_util/lib:/home/mk/dev_ws/install/whisper_idl/lib:/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/cmake --install /home/mk/dev_ws/build/transcript_manager

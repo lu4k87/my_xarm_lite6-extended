@@ -1,0 +1,1 @@
+/home/mk/dev_ws/build/whisper_bringup/ament_cmake_core/whisper_bringupConfig.cmake

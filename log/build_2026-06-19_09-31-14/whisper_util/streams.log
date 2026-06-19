@@ -1,0 +1,59 @@
+[0.006s] Invoking command in '/home/mk/dev_ws/build/whisper_util': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} /usr/bin/cmake /home/mk/dev_ws/src/ros2_whisper/whisper_util -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/whisper_util
+[0.045s] -- The C compiler identification is GNU 11.4.0
+[0.086s] -- The CXX compiler identification is GNU 11.4.0
+[0.092s] -- Detecting C compiler ABI info
+[0.144s] -- Detecting C compiler ABI info - done
+[0.150s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.150s] -- Detecting C compile features
+[0.150s] -- Detecting C compile features - done
+[0.152s] -- Detecting CXX compiler ABI info
+[0.209s] -- Detecting CXX compiler ABI info - done
+[0.214s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.214s] -- Detecting CXX compile features
+[0.215s] -- Detecting CXX compile features - done
+[0.216s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.328s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.375s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.390s] -- Found whisper_cpp_vendor: 1.4.0 (/home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake)
+[0.454s] -- Configuring done
+[0.456s] -- Generating done
+[0.457s] -- Build files have been written to: /home/mk/dev_ws/build/whisper_util
+[0.461s] Invoked command in '/home/mk/dev_ws/build/whisper_util' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} /usr/bin/cmake /home/mk/dev_ws/src/ros2_whisper/whisper_util -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/whisper_util
+[0.461s] Invoking command in '/home/mk/dev_ws/build/whisper_util': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} /usr/bin/cmake --build /home/mk/dev_ws/build/whisper_util -- -j20 -l20
+[0.495s] [ 25%] [32mBuilding CXX object CMakeFiles/whisper_util.dir/src/whisper.cpp.o[0m
+[0.496s] [ 50%] [32mBuilding CXX object CMakeFiles/whisper_util.dir/src/model_manager.cpp.o[0m
+[0.497s] [ 75%] [32mBuilding CXX object CMakeFiles/whisper_util.dir/src/audio_buffers.cpp.o[0m
+[0.861s] [100%] [32m[1mLinking CXX shared library libwhisper_util.so[0m
+[0.908s] [100%] Built target whisper_util
+[0.916s] Invoked command in '/home/mk/dev_ws/build/whisper_util' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} /usr/bin/cmake --build /home/mk/dev_ws/build/whisper_util -- -j20 -l20
+[0.917s] Invoking command in '/home/mk/dev_ws/build/whisper_util': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} /usr/bin/cmake --install /home/mk/dev_ws/build/whisper_util
+[0.923s] -- Install configuration: "Release"
+[0.923s] -- Execute custom install script
+[0.923s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/environment/library_path.sh
+[0.929s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/environment/library_path.dsv
+[0.936s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/include/whisper_util/audio_buffers.hpp
+[0.942s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/include/whisper_util/chrono_utils.hpp
+[0.947s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/include/whisper_util/model_manager.hpp
+[0.952s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/include/whisper_util/whisper.hpp
+[0.959s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/ament_index/resource_index/package_run_dependencies/whisper_util
+[0.966s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/ament_index/resource_index/parent_prefix_path/whisper_util
+[0.971s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/environment/ament_prefix_path.sh
+[0.978s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/environment/ament_prefix_path.dsv
+[0.984s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/environment/path.sh
+[0.989s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/environment/path.dsv
+[0.995s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/local_setup.bash
+[1.002s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/local_setup.sh
+[1.007s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/local_setup.zsh
+[1.012s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/local_setup.dsv
+[1.019s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/package.dsv
+[1.024s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/ament_index/resource_index/packages/whisper_util
+[1.029s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/cmake/ament_cmake_export_targets-extras.cmake
+[1.034s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/cmake/ament_cmake_export_dependencies-extras.cmake
+[1.041s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/cmake/whisper_utilConfig.cmake
+[1.047s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/cmake/whisper_utilConfig-version.cmake
+[1.053s] -- Symlinking: /home/mk/dev_ws/install/whisper_util/share/whisper_util/package.xml
+[1.059s] -- Installing: /home/mk/dev_ws/install/whisper_util/lib/libwhisper_util.so
+[1.059s] -- Set runtime path of "/home/mk/dev_ws/install/whisper_util/lib/libwhisper_util.so" to ""
+[1.059s] -- Installing: /home/mk/dev_ws/install/whisper_util/share/whisper_util/cmake/export_whisper_utilExport.cmake
+[1.059s] -- Installing: /home/mk/dev_ws/install/whisper_util/share/whisper_util/cmake/export_whisper_utilExport-release.cmake
+[1.061s] Invoked command in '/home/mk/dev_ws/build/whisper_util' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} /usr/bin/cmake --install /home/mk/dev_ws/build/whisper_util

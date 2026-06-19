@@ -1,0 +1,52 @@
+[0.019s] Invoking command in '/home/mk/dev_ws/build/xarm_sdk': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mk/dev_ws/install/yolo_object_detector:/home/mk/dev_ws/install/move_to_coordinator:/home/mk/dev_ws/install/motion_sequence:/home/mk/dev_ws/install/whisper_demos:/home/mk/dev_ws/install/voice_command_listener:/home/mk/dev_ws/install/uf_ros_lib:/home/mk/dev_ws/install/rviz_servo_status_overlay:/home/mk/dev_ws/install/rviz_marker_static_scene_objects:/home/mk/dev_ws/install/robot_motion_handler_movegroup:/home/mk/dev_ws/install/gaze_control:/home/mk/dev_ws/install/collision_check:/home/mk/dev_ws/install/audio_listener:/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/xarm_sdk -- -j16 -l16
+[0.223s] [100%] Built target xarm_cxx_sdk
+[0.232s] Invoked command in '/home/mk/dev_ws/build/xarm_sdk' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mk/dev_ws/install/yolo_object_detector:/home/mk/dev_ws/install/move_to_coordinator:/home/mk/dev_ws/install/motion_sequence:/home/mk/dev_ws/install/whisper_demos:/home/mk/dev_ws/install/voice_command_listener:/home/mk/dev_ws/install/uf_ros_lib:/home/mk/dev_ws/install/rviz_servo_status_overlay:/home/mk/dev_ws/install/rviz_marker_static_scene_objects:/home/mk/dev_ws/install/robot_motion_handler_movegroup:/home/mk/dev_ws/install/gaze_control:/home/mk/dev_ws/install/collision_check:/home/mk/dev_ws/install/audio_listener:/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/xarm_sdk -- -j16 -l16
+[0.232s] Invoking command in '/home/mk/dev_ws/build/xarm_sdk': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mk/dev_ws/install/yolo_object_detector:/home/mk/dev_ws/install/move_to_coordinator:/home/mk/dev_ws/install/motion_sequence:/home/mk/dev_ws/install/whisper_demos:/home/mk/dev_ws/install/voice_command_listener:/home/mk/dev_ws/install/uf_ros_lib:/home/mk/dev_ws/install/rviz_servo_status_overlay:/home/mk/dev_ws/install/rviz_marker_static_scene_objects:/home/mk/dev_ws/install/robot_motion_handler_movegroup:/home/mk/dev_ws/install/gaze_control:/home/mk/dev_ws/install/collision_check:/home/mk/dev_ws/install/audio_listener:/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/xarm_sdk
+[0.238s] -- Install configuration: ""
+[0.238s] -- Execute custom install script
+[0.238s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/environment/library_path.sh
+[0.238s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/environment/library_path.dsv
+[0.238s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/serial/impl/unix.h
+[0.239s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/serial/impl/win.h
+[0.239s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/serial/serial.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/serial/v8stdint.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/common/crc16.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/common/data_type.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/common/queue_memcpy.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/connect.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/debug/debug_print.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/instruction/servo3_config.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/instruction/uxbus_cmd.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/instruction/uxbus_cmd_config.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/instruction/uxbus_cmd_ser.h
+[0.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/instruction/uxbus_cmd_tcp.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/os/bak/thread.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/os/network.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/port/ser.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/port/socket.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/report_data.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/utils/log.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/utils/thread_pool.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/utils/timer.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/utils/utils.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/core/xarm_config.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/cxx/include/xarm/wrapper/xarm_api.h
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/lib/libxarm_cxx_sdk.so
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/ament_index/resource_index/package_run_dependencies/xarm_sdk
+[0.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/ament_index/resource_index/parent_prefix_path/xarm_sdk
+[0.242s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/environment/ament_prefix_path.sh
+[0.242s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/environment/ament_prefix_path.dsv
+[0.242s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/environment/path.sh
+[0.242s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/environment/path.dsv
+[0.242s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/local_setup.bash
+[0.242s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/local_setup.sh
+[0.242s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/local_setup.zsh
+[0.242s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/local_setup.dsv
+[0.242s] -- Symlinking: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/package.dsv
+[0.248s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/ament_index/resource_index/packages/xarm_sdk
+[0.249s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/cmake/ament_cmake_export_libraries-extras.cmake
+[0.249s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/cmake/ament_cmake_export_include_directories-extras.cmake
+[0.249s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/cmake/xarm_sdkConfig.cmake
+[0.249s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/cmake/xarm_sdkConfig-version.cmake
+[0.249s] -- Up-to-date symlink: /home/mk/dev_ws/install/xarm_sdk/share/xarm_sdk/package.xml
+[0.251s] Invoked command in '/home/mk/dev_ws/build/xarm_sdk' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/mk/dev_ws/install/yolo_object_detector:/home/mk/dev_ws/install/move_to_coordinator:/home/mk/dev_ws/install/motion_sequence:/home/mk/dev_ws/install/whisper_demos:/home/mk/dev_ws/install/voice_command_listener:/home/mk/dev_ws/install/uf_ros_lib:/home/mk/dev_ws/install/rviz_servo_status_overlay:/home/mk/dev_ws/install/rviz_marker_static_scene_objects:/home/mk/dev_ws/install/robot_motion_handler_movegroup:/home/mk/dev_ws/install/gaze_control:/home/mk/dev_ws/install/collision_check:/home/mk/dev_ws/install/audio_listener:/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/xarm_sdk

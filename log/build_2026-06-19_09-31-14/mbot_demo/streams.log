@@ -1,0 +1,66 @@
+[0.616s] Invoking command in '/home/mk/dev_ws/build/mbot_demo': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/demo/mbot_demo -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/mbot_demo
+[1.216s] -- The C compiler identification is GNU 11.4.0
+[1.216s] -- The CXX compiler identification is GNU 11.4.0
+[1.216s] -- Detecting C compiler ABI info
+[1.217s] -- Detecting C compiler ABI info - done
+[1.217s] -- Check for working C compiler: /usr/bin/cc - skipped
+[1.217s] -- Detecting C compile features
+[1.217s] -- Detecting C compile features - done
+[1.217s] -- Detecting CXX compiler ABI info
+[1.217s] -- Detecting CXX compiler ABI info - done
+[1.217s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[1.217s] -- Detecting CXX compile features
+[1.217s] -- Detecting CXX compile features - done
+[1.217s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[1.217s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[1.217s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[1.217s] -- Found ament_lint_auto: 0.12.15 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.217s] -- Added test 'copyright' to check source files copyright and LICENSE
+[1.217s] -- Added test 'flake8' to check Python code syntax and style conventions
+[1.217s] -- Added test 'lint_cmake' to check CMake code style
+[1.217s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[1.218s] -- Added test 'xmllint' to check XML markup files
+[1.218s] -- Configuring done
+[1.218s] -- Generating done
+[1.218s] -- Build files have been written to: /home/mk/dev_ws/build/mbot_demo
+[1.222s] Invoked command in '/home/mk/dev_ws/build/mbot_demo' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/demo/mbot_demo -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/mbot_demo
+[1.223s] Invoking command in '/home/mk/dev_ws/build/mbot_demo': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/mbot_demo -- -j20 -l20
+[1.245s] Invoked command in '/home/mk/dev_ws/build/mbot_demo' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/mbot_demo -- -j20 -l20
+[1.253s] Invoking command in '/home/mk/dev_ws/build/mbot_demo': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/mbot_demo
+[1.258s] -- Install configuration: ""
+[1.258s] -- Execute custom install script
+[1.259s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//rviz/moveit.rviz
+[1.269s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//urdf/mbot.gazebo.xacro
+[1.273s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//urdf/mbot.ros2_control.xacro
+[1.285s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//urdf/mbot.transmission.xacro
+[1.286s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//urdf/mbot.urdf.xacro
+[1.297s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//urdf/mbot_macro.xacro
+[1.313s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//urdf/mbot_with_xarm.urdf.xacro
+[1.330s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//srdf/mbot_macro.srdf.xacro
+[1.351s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//srdf/mbot_with_xarm.srdf.xacro
+[1.369s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//config/controllers.yaml
+[1.386s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//config/joint_limits.yaml
+[1.403s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//config/kinematics.yaml
+[1.420s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//config/ompl_planning.yaml
+[1.437s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//config/ros2_controllers.yaml
+[1.458s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//worlds/empty.world
+[1.473s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//launch/_robot_on_mbot_gazebo.launch.py
+[1.492s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//launch/mbot_moveit_fake.launch.py
+[1.509s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//launch/mbot_moveit_gazebo.launch.py
+[1.530s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo//launch/mbot_moveit_realmove.launch.py
+[1.551s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/ament_index/resource_index/package_run_dependencies/mbot_demo
+[1.571s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/ament_index/resource_index/parent_prefix_path/mbot_demo
+[1.588s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/environment/ament_prefix_path.sh
+[1.602s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/environment/ament_prefix_path.dsv
+[1.625s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/environment/path.sh
+[1.642s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/environment/path.dsv
+[1.659s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/local_setup.bash
+[1.672s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/local_setup.sh
+[1.689s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/local_setup.zsh
+[1.705s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/local_setup.dsv
+[1.720s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/package.dsv
+[1.741s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/ament_index/resource_index/packages/mbot_demo
+[1.748s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/cmake/mbot_demoConfig.cmake
+[1.757s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/cmake/mbot_demoConfig-version.cmake
+[1.777s] -- Symlinking: /home/mk/dev_ws/install/mbot_demo/share/mbot_demo/package.xml
+[1.803s] Invoked command in '/home/mk/dev_ws/build/mbot_demo' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/mbot_demo

@@ -1,0 +1,1 @@
+/home/mk/dev_ws/build/whisper_util/ament_cmake_environment_hooks/local_setup.zsh

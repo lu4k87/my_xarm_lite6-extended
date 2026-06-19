@@ -1,0 +1,32 @@
+running develop
+Removing /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages/robot-motion-handler-movegroup.egg-link (link to .)
+running egg_info
+writing ../../build/robot_motion_handler_movegroup/robot_motion_handler_movegroup.egg-info/PKG-INFO
+writing dependency_links to ../../build/robot_motion_handler_movegroup/robot_motion_handler_movegroup.egg-info/dependency_links.txt
+writing entry points to ../../build/robot_motion_handler_movegroup/robot_motion_handler_movegroup.egg-info/entry_points.txt
+writing requirements to ../../build/robot_motion_handler_movegroup/robot_motion_handler_movegroup.egg-info/requires.txt
+writing top-level names to ../../build/robot_motion_handler_movegroup/robot_motion_handler_movegroup.egg-info/top_level.txt
+reading manifest file '../../build/robot_motion_handler_movegroup/robot_motion_handler_movegroup.egg-info/SOURCES.txt'
+writing manifest file '../../build/robot_motion_handler_movegroup/robot_motion_handler_movegroup.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/mk/dev_ws/build/robot_motion_handler_movegroup/build
+creating /home/mk/dev_ws/build/robot_motion_handler_movegroup/build/lib
+creating /home/mk/dev_ws/build/robot_motion_handler_movegroup/build/lib/robot_motion_handler_movegroup
+copying robot_motion_handler_movegroup/robot_motion_handler_movegroup.py -> /home/mk/dev_ws/build/robot_motion_handler_movegroup/build/lib/robot_motion_handler_movegroup
+copying robot_motion_handler_movegroup/__init__.py -> /home/mk/dev_ws/build/robot_motion_handler_movegroup/build/lib/robot_motion_handler_movegroup
+running install
+running install_lib
+creating /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages/robot_motion_handler_movegroup
+copying /home/mk/dev_ws/build/robot_motion_handler_movegroup/build/lib/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py -> /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages/robot_motion_handler_movegroup
+copying /home/mk/dev_ws/build/robot_motion_handler_movegroup/build/lib/robot_motion_handler_movegroup/__init__.py -> /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages/robot_motion_handler_movegroup
+byte-compiling /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py to robot_motion_handler_movegroup.cpython-310.pyc
+byte-compiling /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages/robot_motion_handler_movegroup/__init__.py to __init__.cpython-310.pyc
+running install_data
+copying resource/robot_motion_handler_movegroup -> /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/ament_index/resource_index/packages
+copying package.xml -> /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/robot_motion_handler_movegroup
+running install_egg_info
+Copying ../../build/robot_motion_handler_movegroup/robot_motion_handler_movegroup.egg-info to /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages/robot_motion_handler_movegroup-0.0.0-py3.10.egg-info
+running install_scripts
+Installing robot_motion_handler_movegroup script to /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/robot_motion_handler_movegroup
+writing list of installed files to '/home/mk/dev_ws/build/robot_motion_handler_movegroup/install.log'

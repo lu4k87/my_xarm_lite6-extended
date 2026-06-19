@@ -259,18 +259,17 @@ header {
 .joints-bars {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 32px 16px;
+  margin-top: 28px;
 }
 
 .j-bar {
   background: rgba(0,0,0,0.4);
-  height: 24px;
+  height: 8px;
   border-radius: 4px;
   position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  padding: 0 8px;
+  overflow: visible;
+  cursor: grab;
 }
 
 .j-fill {
@@ -278,19 +277,37 @@ header {
   left: 50%;
   top: 0;
   height: 100%;
-  background: rgba(56, 189, 248, 0.4);
+  background: var(--accent);
   width: 0%;
+  border-radius: 4px;
   transition: width 0.1s, left 0.1s;
 }
 
+/* Pseudo element to create the "thumb" of the slider */
+.j-fill::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+
 .j-lbl {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  top: -20px;
+  left: 0;
   font-size: 12px;
   font-family: 'JetBrains Mono', monospace;
   display: flex;
   justify-content: space-between;
   width: 100%;
+  pointer-events: none;
 }
 
 /* Joystick Section */
@@ -351,14 +368,32 @@ header {
 
 .joy-label {
   position: absolute;
-  font-size: 10px;
-  color: var(--mut);
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  opacity: 0.6;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.joy-label.top { top: -20px; left: 50%; transform: translateX(-50%); color: var(--rviz-x); }
-.joy-label.bottom { bottom: -20px; left: 50%; transform: translateX(-50%); color: var(--rviz-x); }
-.joy-label.left { left: -20px; top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
-.joy-label.right { right: -20px; top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
+
+.joy-label i {
+  color: rgba(255, 255, 255, 0.4); /* Dezentes, leicht transparentes Grau */
+}
+
+/* X-Achsen Labels vertikal anordnen (Pfeil über/unter Text) */
+.joy-label.top { 
+  bottom: calc(50% + 85px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
+  flex-direction: column; gap: 0px; 
+}
+.joy-label.bottom { 
+  top: calc(50% + 85px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
+  flex-direction: column; gap: 0px; 
+}
+
+/* Y-Achsen Labels horizontal belassen */
+.joy-label.left { right: calc(50% + 85px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
+.joy-label.right { left: calc(50% + 85px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
 
 
 .z-rot-controls {
@@ -403,21 +438,8 @@ header {
 
 .frame-toggles {
   display: flex;
-  background: rgba(0,0,0,0.3);
-  border-radius: 6px;
-  padding: 4px;
-  margin-top: 4px;
-}
-.frame-btn {
-  flex: 1;
-  background: transparent;
-  border: none;
-  font-size: 12px;
-}
-.frame-btn.active {
-  background: var(--accent);
-  color: #000;
-  font-weight: 700;
+  gap: 12px;
+  margin-top: 32px;
 }
 
 .speed-control {

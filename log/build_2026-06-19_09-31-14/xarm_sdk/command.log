@@ -1,0 +1,6 @@
+Invoking command in '/home/mk/dev_ws/build/xarm_sdk': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/xarm_sdk -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/xarm_sdk
+Invoked command in '/home/mk/dev_ws/build/xarm_sdk' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/xarm_sdk -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/xarm_sdk
+Invoking command in '/home/mk/dev_ws/build/xarm_sdk': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/xarm_sdk -- -j20 -l20
+Invoked command in '/home/mk/dev_ws/build/xarm_sdk' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/xarm_sdk -- -j20 -l20
+Invoking command in '/home/mk/dev_ws/build/xarm_sdk': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/xarm_sdk
+Invoked command in '/home/mk/dev_ws/build/xarm_sdk' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/xarm_sdk

@@ -1,0 +1,185 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-2e506795bd6efe061ac5.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						1,
+						3
+					]
+				},
+				{
+					"build" : "_deps/whisper-build",
+					"childIndexes" : 
+					[
+						2,
+						4
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.whisper-build-Release-3ab62563cc95494b4cff.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src"
+				},
+				{
+					"build" : "_deps/whisper-build/ggml",
+					"childIndexes" : 
+					[
+						3
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-_deps.whisper-build.ggml-Release-45cce7bd9a7cf8d8b4ad.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 2,
+					"source" : "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml"
+				},
+				{
+					"build" : "_deps/whisper-build/ggml/src",
+					"jsonFile" : "directory-_deps.whisper-build.ggml.src-Release-4d69cd58ef35c5e40c23.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"parentIndex" : 2,
+					"projectIndex" : 2,
+					"source" : "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "_deps/whisper-build/src",
+					"jsonFile" : "directory-_deps.whisper-build.src-Release-06bf740c667d23c51049.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/src",
+					"targetIndexes" : 
+					[
+						2
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "whisper_cpp_vendor",
+					"targetIndexes" : 
+					[
+						1,
+						3
+					]
+				},
+				{
+					"childIndexes" : 
+					[
+						2
+					],
+					"directoryIndexes" : 
+					[
+						1,
+						4
+					],
+					"name" : "whisper.cpp",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2,
+						3
+					],
+					"name" : "ggml",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 3,
+					"id" : "ggml::@adb943a8c98c89f2306b",
+					"jsonFile" : "target-ggml-Release-98cfd0c2deb36da93d5e.json",
+					"name" : "ggml",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-Release-b5cccde0fbf8116f6b87.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "whisper::@042bb418fb5bf6c59093",
+					"jsonFile" : "target-whisper-Release-414df6bd98a47374d32c.json",
+					"name" : "whisper",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "whisper_cpp_vendor_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-whisper_cpp_vendor_uninstall-Release-65f8dbbd9fff64c6bd47.json",
+					"name" : "whisper_cpp_vendor_uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/mk/dev_ws/build/whisper_cpp_vendor",
+		"source" : "/home/mk/dev_ws/src/ros2_whisper/whisper_cpp_vendor"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

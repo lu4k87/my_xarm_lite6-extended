@@ -1,0 +1,1 @@
+/home/mk/dev_ws/build/my_3d_vision_bringup/rosidl_generator_cpp/my_3d_vision_bringup/action/detail/grasp_object__struct.hpp

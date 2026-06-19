@@ -1,0 +1,3 @@
+/home/mk/dev_ws/install/whisper_util/lib/libwhisper_util.so
+/home/mk/dev_ws/install/whisper_util/share/whisper_util/cmake/export_whisper_utilExport.cmake
+/home/mk/dev_ws/install/whisper_util/share/whisper_util/cmake/export_whisper_utilExport-release.cmake

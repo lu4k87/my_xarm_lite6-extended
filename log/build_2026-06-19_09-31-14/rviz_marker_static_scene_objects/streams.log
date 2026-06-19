@@ -1,0 +1,28 @@
+[1.964s] Invoking command in '/home/mk/dev_ws/build/rviz_marker_static_scene_objects': PYTHONPATH=/home/mk/dev_ws/build/rviz_marker_static_scene_objects/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/rviz_marker_static_scene_objects/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/rviz_marker_static_scene_objects/build --no-deps symlink_data
+[2.568s] running develop
+[3.064s] running egg_info
+[3.064s] creating rviz_marker_static_scene_objects.egg-info
+[3.065s] writing rviz_marker_static_scene_objects.egg-info/PKG-INFO
+[3.065s] writing dependency_links to rviz_marker_static_scene_objects.egg-info/dependency_links.txt
+[3.065s] writing entry points to rviz_marker_static_scene_objects.egg-info/entry_points.txt
+[3.065s] writing requirements to rviz_marker_static_scene_objects.egg-info/requires.txt
+[3.065s] writing top-level names to rviz_marker_static_scene_objects.egg-info/top_level.txt
+[3.066s] writing manifest file 'rviz_marker_static_scene_objects.egg-info/SOURCES.txt'
+[3.073s] reading manifest file 'rviz_marker_static_scene_objects.egg-info/SOURCES.txt'
+[3.074s] writing manifest file 'rviz_marker_static_scene_objects.egg-info/SOURCES.txt'
+[3.188s] running build_ext
+[3.188s] Creating /home/mk/dev_ws/install/rviz_marker_static_scene_objects/lib/python3.10/site-packages/rviz-marker-static-scene-objects.egg-link (link to .)
+[3.188s] Installing rviz_marker_static_scene_objects script to /home/mk/dev_ws/install/rviz_marker_static_scene_objects/lib/rviz_marker_static_scene_objects
+[3.188s] 
+[3.188s] Installed /home/mk/dev_ws/build/rviz_marker_static_scene_objects
+[3.188s] running symlink_data
+[3.188s] creating /home/mk/dev_ws/install/rviz_marker_static_scene_objects/share/ament_index
+[3.188s] creating /home/mk/dev_ws/install/rviz_marker_static_scene_objects/share/ament_index/resource_index
+[3.188s] creating /home/mk/dev_ws/install/rviz_marker_static_scene_objects/share/ament_index/resource_index/packages
+[3.188s] symbolically linking /home/mk/dev_ws/build/rviz_marker_static_scene_objects/resource/rviz_marker_static_scene_objects -> /home/mk/dev_ws/install/rviz_marker_static_scene_objects/share/ament_index/resource_index/packages
+[3.191s] symbolically linking /home/mk/dev_ws/build/rviz_marker_static_scene_objects/package.xml -> /home/mk/dev_ws/install/rviz_marker_static_scene_objects/share/rviz_marker_static_scene_objects
+[3.192s] creating /home/mk/dev_ws/install/rviz_marker_static_scene_objects/share/rviz_marker_static_scene_objects/urdf
+[3.192s] creating /home/mk/dev_ws/install/rviz_marker_static_scene_objects/share/rviz_marker_static_scene_objects/meshes
+[3.192s] creating /home/mk/dev_ws/install/rviz_marker_static_scene_objects/share/rviz_marker_static_scene_objects/launch
+[3.192s] symbolically linking /home/mk/dev_ws/build/rviz_marker_static_scene_objects/launch/rviz_marker_static_scene_objects.launch.py -> /home/mk/dev_ws/install/rviz_marker_static_scene_objects/share/rviz_marker_static_scene_objects/launch
+[3.273s] Invoked command in '/home/mk/dev_ws/build/rviz_marker_static_scene_objects' returned '0': PYTHONPATH=/home/mk/dev_ws/build/rviz_marker_static_scene_objects/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/rviz_marker_static_scene_objects/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/rviz_marker_static_scene_objects/build --no-deps symlink_data

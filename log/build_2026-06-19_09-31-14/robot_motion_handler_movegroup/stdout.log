@@ -1,0 +1,22 @@
+running develop
+running egg_info
+creating robot_motion_handler_movegroup.egg-info
+writing robot_motion_handler_movegroup.egg-info/PKG-INFO
+writing dependency_links to robot_motion_handler_movegroup.egg-info/dependency_links.txt
+writing entry points to robot_motion_handler_movegroup.egg-info/entry_points.txt
+writing requirements to robot_motion_handler_movegroup.egg-info/requires.txt
+writing top-level names to robot_motion_handler_movegroup.egg-info/top_level.txt
+writing manifest file 'robot_motion_handler_movegroup.egg-info/SOURCES.txt'
+reading manifest file 'robot_motion_handler_movegroup.egg-info/SOURCES.txt'
+writing manifest file 'robot_motion_handler_movegroup.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages/robot-motion-handler-movegroup.egg-link (link to .)
+Installing robot_motion_handler_movegroup script to /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/robot_motion_handler_movegroup
+
+Installed /home/mk/dev_ws/build/robot_motion_handler_movegroup
+running symlink_data
+creating /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/ament_index
+creating /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/ament_index/resource_index
+creating /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/ament_index/resource_index/packages
+symbolically linking /home/mk/dev_ws/build/robot_motion_handler_movegroup/resource/robot_motion_handler_movegroup -> /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/ament_index/resource_index/packages
+symbolically linking /home/mk/dev_ws/build/robot_motion_handler_movegroup/package.xml -> /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/robot_motion_handler_movegroup

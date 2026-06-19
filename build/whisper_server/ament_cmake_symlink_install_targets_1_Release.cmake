@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/mk/dev_ws/build/whisper_server/libinference_component.so" "TARGETS" "inference_component" "LIBRARY_DESTINATION" "lib" "RUNTIME_DESTINATION" "lib/whisper_server")

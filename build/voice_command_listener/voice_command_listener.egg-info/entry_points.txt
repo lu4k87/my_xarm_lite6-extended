@@ -1,0 +1,4 @@
+[console_scripts]
+listener = voice_command_listener.voice_command_listener:main
+voice_command_listener = voice_command_listener.voice_command_listener:main
+

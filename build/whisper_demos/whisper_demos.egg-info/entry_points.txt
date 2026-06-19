@@ -1,0 +1,4 @@
+[console_scripts]
+stream = whisper_demos.stream:main
+whisper_on_key = whisper_demos.whisper_on_key:main
+

@@ -1,0 +1,19 @@
+[1.810s] Invoking command in '/home/mk/dev_ws/build/gaze_control': PYTHONPATH=/home/mk/dev_ws/build/gaze_control/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/gaze_control/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/gaze_control/build --no-deps symlink_data --force
+[1.965s] running develop
+[2.054s] running egg_info
+[2.054s] writing gaze_control.egg-info/PKG-INFO
+[2.054s] writing dependency_links to gaze_control.egg-info/dependency_links.txt
+[2.054s] writing entry points to gaze_control.egg-info/entry_points.txt
+[2.054s] writing requirements to gaze_control.egg-info/requires.txt
+[2.054s] writing top-level names to gaze_control.egg-info/top_level.txt
+[2.055s] reading manifest file 'gaze_control.egg-info/SOURCES.txt'
+[2.056s] writing manifest file 'gaze_control.egg-info/SOURCES.txt'
+[2.088s] running build_ext
+[2.088s] Creating /home/mk/dev_ws/install/gaze_control/lib/python3.10/site-packages/gaze-control.egg-link (link to .)
+[2.089s] Installing gaze_ui script to /home/mk/dev_ws/install/gaze_control/lib/gaze_control
+[2.089s] 
+[2.089s] Installed /home/mk/dev_ws/build/gaze_control
+[2.089s] running symlink_data
+[2.089s] symbolically linking /home/mk/dev_ws/build/gaze_control/resource/gaze_control -> /home/mk/dev_ws/install/gaze_control/share/ament_index/resource_index/packages
+[2.089s] symbolically linking /home/mk/dev_ws/build/gaze_control/package.xml -> /home/mk/dev_ws/install/gaze_control/share/gaze_control
+[2.198s] Invoked command in '/home/mk/dev_ws/build/gaze_control' returned '0': PYTHONPATH=/home/mk/dev_ws/build/gaze_control/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/gaze_control/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/gaze_control/build --no-deps symlink_data --force

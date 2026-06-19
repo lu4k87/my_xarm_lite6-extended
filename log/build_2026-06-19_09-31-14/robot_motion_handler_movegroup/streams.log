@@ -1,0 +1,24 @@
+[2.212s] Invoking command in '/home/mk/dev_ws/build/robot_motion_handler_movegroup': PYTHONPATH=/home/mk/dev_ws/build/robot_motion_handler_movegroup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/robot_motion_handler_movegroup/build --no-deps symlink_data
+[2.956s] running develop
+[3.089s] running egg_info
+[3.094s] creating robot_motion_handler_movegroup.egg-info
+[3.094s] writing robot_motion_handler_movegroup.egg-info/PKG-INFO
+[3.094s] writing dependency_links to robot_motion_handler_movegroup.egg-info/dependency_links.txt
+[3.095s] writing entry points to robot_motion_handler_movegroup.egg-info/entry_points.txt
+[3.095s] writing requirements to robot_motion_handler_movegroup.egg-info/requires.txt
+[3.095s] writing top-level names to robot_motion_handler_movegroup.egg-info/top_level.txt
+[3.095s] writing manifest file 'robot_motion_handler_movegroup.egg-info/SOURCES.txt'
+[3.099s] reading manifest file 'robot_motion_handler_movegroup.egg-info/SOURCES.txt'
+[3.100s] writing manifest file 'robot_motion_handler_movegroup.egg-info/SOURCES.txt'
+[3.178s] running build_ext
+[3.178s] Creating /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages/robot-motion-handler-movegroup.egg-link (link to .)
+[3.180s] Installing robot_motion_handler_movegroup script to /home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/robot_motion_handler_movegroup
+[3.180s] 
+[3.180s] Installed /home/mk/dev_ws/build/robot_motion_handler_movegroup
+[3.180s] running symlink_data
+[3.181s] creating /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/ament_index
+[3.181s] creating /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/ament_index/resource_index
+[3.181s] creating /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/ament_index/resource_index/packages
+[3.181s] symbolically linking /home/mk/dev_ws/build/robot_motion_handler_movegroup/resource/robot_motion_handler_movegroup -> /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/ament_index/resource_index/packages
+[3.181s] symbolically linking /home/mk/dev_ws/build/robot_motion_handler_movegroup/package.xml -> /home/mk/dev_ws/install/robot_motion_handler_movegroup/share/robot_motion_handler_movegroup
+[3.259s] Invoked command in '/home/mk/dev_ws/build/robot_motion_handler_movegroup' returned '0': PYTHONPATH=/home/mk/dev_ws/build/robot_motion_handler_movegroup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/robot_motion_handler_movegroup/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/robot_motion_handler_movegroup/build --no-deps symlink_data

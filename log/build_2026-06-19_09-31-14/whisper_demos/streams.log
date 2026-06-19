@@ -1,0 +1,25 @@
+[0.510s] Invoking command in '/home/mk/dev_ws/build/whisper_demos': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_server:/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:/home/mk/dev_ws/install/audio_listener:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_server:/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_server/lib:/home/mk/dev_ws/install/whisper_util/lib:/home/mk/dev_ws/install/whisper_idl/lib:/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/build/whisper_demos/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/whisper_demos/lib/python3.10/site-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/audio_listener:/home/mk/dev_ws/install/audio_listener/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/whisper_demos/build --no-deps symlink_data
+[0.674s] running develop
+[0.783s] running egg_info
+[0.783s] creating whisper_demos.egg-info
+[0.783s] writing whisper_demos.egg-info/PKG-INFO
+[0.783s] writing dependency_links to whisper_demos.egg-info/dependency_links.txt
+[0.783s] writing entry points to whisper_demos.egg-info/entry_points.txt
+[0.783s] writing requirements to whisper_demos.egg-info/requires.txt
+[0.784s] writing top-level names to whisper_demos.egg-info/top_level.txt
+[0.784s] writing manifest file 'whisper_demos.egg-info/SOURCES.txt'
+[0.785s] reading manifest file 'whisper_demos.egg-info/SOURCES.txt'
+[0.786s] writing manifest file 'whisper_demos.egg-info/SOURCES.txt'
+[0.833s] running build_ext
+[0.833s] Creating /home/mk/dev_ws/install/whisper_demos/lib/python3.10/site-packages/whisper-demos.egg-link (link to .)
+[0.834s] Installing stream script to /home/mk/dev_ws/install/whisper_demos/lib/whisper_demos
+[0.834s] Installing whisper_on_key script to /home/mk/dev_ws/install/whisper_demos/lib/whisper_demos
+[0.834s] 
+[0.834s] Installed /home/mk/dev_ws/build/whisper_demos
+[0.834s] running symlink_data
+[0.834s] creating /home/mk/dev_ws/install/whisper_demos/share/ament_index
+[0.834s] creating /home/mk/dev_ws/install/whisper_demos/share/ament_index/resource_index
+[0.834s] creating /home/mk/dev_ws/install/whisper_demos/share/ament_index/resource_index/packages
+[0.834s] symbolically linking /home/mk/dev_ws/build/whisper_demos/resource/whisper_demos -> /home/mk/dev_ws/install/whisper_demos/share/ament_index/resource_index/packages
+[0.834s] symbolically linking /home/mk/dev_ws/build/whisper_demos/package.xml -> /home/mk/dev_ws/install/whisper_demos/share/whisper_demos
+[0.865s] Invoked command in '/home/mk/dev_ws/build/whisper_demos' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_server:/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor:/home/mk/dev_ws/install/audio_listener:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_server:/home/mk/dev_ws/install/whisper_util:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/whisper_cpp_vendor LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_server/lib:/home/mk/dev_ws/install/whisper_util/lib:/home/mk/dev_ws/install/whisper_idl/lib:/home/mk/dev_ws/install/whisper_cpp_vendor/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/build/whisper_demos/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/whisper_demos/lib/python3.10/site-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/audio_listener:/home/mk/dev_ws/install/audio_listener/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/whisper_demos/build --no-deps symlink_data

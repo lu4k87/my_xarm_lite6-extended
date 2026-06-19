@@ -1,0 +1,152 @@
+[0.607s] Invoking command in '/home/mk/dev_ws/build/my_3d_vision_bringup': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/my_3d_vision_bringup -- -j20 -l20
+[1.173s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_generator_c[0m
+[1.173s] [  3%] Built target my_3d_vision_bringup__cpp
+[1.173s] [ 12%] Built target my_3d_vision_bringup__rosidl_generator_c
+[1.173s] [ 15%] Built target my_3d_vision_bringup__rs
+[1.173s] [ 15%] Built target ament_cmake_python_symlink_my_3d_vision_bringup
+[1.173s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_typesupport_cpp[0m
+[1.173s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_typesupport_introspection_cpp[0m
+[1.173s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_typesupport_fastrtps_cpp[0m
+[1.173s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_typesupport_fastrtps_c[0m
+[1.173s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_typesupport_c[0m
+[1.173s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_typesupport_introspection_c[0m
+[1.173s] [ 25%] Built target my_3d_vision_bringup__rosidl_typesupport_fastrtps_cpp
+[1.173s] [ 34%] Built target my_3d_vision_bringup__rosidl_typesupport_fastrtps_c
+[1.173s] [ 43%] Built target my_3d_vision_bringup__rosidl_typesupport_c
+[1.174s] [ 53%] Built target my_3d_vision_bringup__rosidl_typesupport_introspection_cpp
+[1.174s] [ 62%] Built target my_3d_vision_bringup__rosidl_typesupport_cpp
+[1.174s] [ 71%] Built target my_3d_vision_bringup__rosidl_typesupport_introspection_c
+[1.174s] [ 71%] Built target my_3d_vision_bringup
+[1.174s] [ 75%] Built target my_3d_vision_bringup__py
+[1.174s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_generator_py[0m
+[1.174s] [ 81%] Built target my_3d_vision_bringup__rosidl_generator_py
+[1.174s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_typesupport_fastrtps_c__pyext[0m
+[1.174s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_typesupport_c__pyext[0m
+[1.174s] [35m[1mConsolidate compiler generated dependencies of target my_3d_vision_bringup__rosidl_typesupport_introspection_c__pyext[0m
+[1.174s] [ 87%] Built target my_3d_vision_bringup__rosidl_typesupport_fastrtps_c__pyext
+[1.174s] [100%] Built target my_3d_vision_bringup__rosidl_typesupport_introspection_c__pyext
+[1.174s] [100%] Built target my_3d_vision_bringup__rosidl_typesupport_c__pyext
+[1.174s] running egg_info
+[1.174s] writing my_3d_vision_bringup.egg-info/PKG-INFO
+[1.174s] writing dependency_links to my_3d_vision_bringup.egg-info/dependency_links.txt
+[1.174s] writing top-level names to my_3d_vision_bringup.egg-info/top_level.txt
+[1.174s] reading manifest file 'my_3d_vision_bringup.egg-info/SOURCES.txt'
+[1.174s] writing manifest file 'my_3d_vision_bringup.egg-info/SOURCES.txt'
+[1.174s] [100%] Built target ament_cmake_python_build_my_3d_vision_bringup_egg
+[1.188s] Invoked command in '/home/mk/dev_ws/build/my_3d_vision_bringup' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/mk/dev_ws/build/my_3d_vision_bringup -- -j20 -l20
+[1.189s] Invoking command in '/home/mk/dev_ws/build/my_3d_vision_bringup': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/my_3d_vision_bringup
+[1.227s] -- Install configuration: ""
+[1.227s] -- Execute custom install script
+[1.227s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/ament_index/resource_index/rosidl_interfaces/my_3d_vision_bringup
+[1.227s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__functions.h
+[1.227s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__struct.h
+[1.227s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__type_support.h
+[1.227s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/grasp_object.h
+[1.227s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/msg/rosidl_generator_c__visibility_control.h
+[1.227s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/environment/library_path.sh
+[1.227s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/environment/library_path.dsv
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__rosidl_typesupport_fastrtps_c.h
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__rosidl_typesupport_introspection_c.h
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__builder.hpp
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__struct.hpp
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__traits.hpp
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__type_support.hpp
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/grasp_object.hpp
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/msg/rosidl_generator_cpp__visibility_control.hpp
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__rosidl_typesupport_fastrtps_cpp.hpp
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/include/my_3d_vision_bringup/my_3d_vision_bringup/action/detail/grasp_object__rosidl_typesupport_introspection_cpp.hpp
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/environment/pythonpath.sh
+[1.228s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/environment/pythonpath.dsv
+[1.229s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup-0.1.0-py3.10.egg-info/PKG-INFO
+[1.229s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup-0.1.0-py3.10.egg-info/SOURCES.txt
+[1.229s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup-0.1.0-py3.10.egg-info/dependency_links.txt
+[1.229s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup-0.1.0-py3.10.egg-info/top_level.txt
+[1.229s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/__init__.py
+[1.229s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/_my_3d_vision_bringup_s.ep.rosidl_typesupport_c.c
+[1.231s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/_my_3d_vision_bringup_s.ep.rosidl_typesupport_fastrtps_c.c
+[1.231s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/_my_3d_vision_bringup_s.ep.rosidl_typesupport_introspection_c.c
+[1.231s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/action/__init__.py
+[1.233s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/action/_grasp_object.py
+[1.233s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/action/_grasp_object_s.c
+[1.233s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/libmy_3d_vision_bringup__rosidl_generator_py.so
+[1.233s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/my_3d_vision_bringup_s__rosidl_typesupport_c.cpython-310-x86_64-linux-gnu.so
+[1.233s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/my_3d_vision_bringup_s__rosidl_typesupport_fastrtps_c.cpython-310-x86_64-linux-gnu.so
+[1.233s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/my_3d_vision_bringup_s__rosidl_typesupport_introspection_c.cpython-310-x86_64-linux-gnu.so
+[1.233s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/my_3d_vision_bringup_s__rosidl_typesupport_fastrtps_c.cpython-310-x86_64-linux-gnu.so
+[1.234s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/my_3d_vision_bringup_s__rosidl_typesupport_introspection_c.cpython-310-x86_64-linux-gnu.so
+[1.235s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/my_3d_vision_bringup_s__rosidl_typesupport_c.cpython-310-x86_64-linux-gnu.so
+[1.236s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/ament_index/resource_index/rust_packages/my_3d_vision_bringup
+[1.237s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/rust/Cargo.toml
+[1.237s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/rust/build.rs
+[1.237s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/rust/src/action.rs
+[1.237s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/rust/src/action/rmw.rs
+[1.237s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/rust/src/lib.rs
+[1.237s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/action/GraspObject.idl
+[1.237s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/action/GraspObject.action
+[1.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/launch/standalone_move_group.launch.py
+[1.240s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/launch/zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py
+[1.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/meshes/ZEDM.stl
+[1.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/config/grasping_params.yaml
+[1.241s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/config/perception_params.yaml
+[1.246s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/config/zed_override.yaml
+[1.251s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/my_3d_vision_bringup/zed_stand_publisher.py
+[1.251s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/my_3d_vision_bringup/zed_yolo_3d_bbox.py
+[1.252s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/my_3d_vision_bringup/pointcloud_optimizer.py
+[1.252s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/my_3d_vision_bringup/yolo_moveit_collision.py
+[1.252s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/my_3d_vision_bringup/yolo_grasp_executor.py
+[1.252s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/my_3d_vision_bringup/yolo_planned_grasp_executor.py
+[1.252s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/my_3d_vision_bringup/grasp_action_bridge.py
+[1.252s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/my_3d_vision_bringup/pointcloud_tf_tuner.py
+[1.252s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/ament_index/resource_index/package_run_dependencies/my_3d_vision_bringup
+[1.252s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/ament_index/resource_index/parent_prefix_path/my_3d_vision_bringup
+[1.253s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/environment/ament_prefix_path.sh
+[1.253s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/environment/ament_prefix_path.dsv
+[1.253s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/environment/path.sh
+[1.253s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/environment/path.dsv
+[1.253s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/local_setup.bash
+[1.253s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/local_setup.sh
+[1.253s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/local_setup.zsh
+[1.253s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/local_setup.dsv
+[1.253s] -- Symlinking: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/package.dsv
+[1.291s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/ament_index/resource_index/packages/my_3d_vision_bringup
+[1.291s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/rosidl_cmake-extras.cmake
+[1.291s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/ament_cmake_export_dependencies-extras.cmake
+[1.291s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/ament_cmake_export_include_directories-extras.cmake
+[1.292s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/ament_cmake_export_libraries-extras.cmake
+[1.293s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/ament_cmake_export_targets-extras.cmake
+[1.294s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[1.295s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[1.295s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringupConfig.cmake
+[1.295s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringupConfig-version.cmake
+[1.295s] -- Up-to-date symlink: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/package.xml
+[1.295s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/libmy_3d_vision_bringup__rosidl_generator_c.so
+[1.296s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/libmy_3d_vision_bringup__rosidl_typesupport_fastrtps_c.so
+[1.296s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/libmy_3d_vision_bringup__rosidl_typesupport_introspection_c.so
+[1.296s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/libmy_3d_vision_bringup__rosidl_typesupport_c.so
+[1.303s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/libmy_3d_vision_bringup__rosidl_typesupport_fastrtps_cpp.so
+[1.303s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/libmy_3d_vision_bringup__rosidl_typesupport_introspection_cpp.so
+[1.303s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/libmy_3d_vision_bringup__rosidl_typesupport_cpp.so
+[1.357s] Listing '/home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup'...
+[1.357s] Listing '/home/mk/dev_ws/install/my_3d_vision_bringup/local/lib/python3.10/dist-packages/my_3d_vision_bringup/action'...
+[1.364s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/lib/libmy_3d_vision_bringup__rosidl_generator_py.so
+[1.364s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/export_my_3d_vision_bringup__rosidl_generator_cExport.cmake
+[1.364s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/export_my_3d_vision_bringup__rosidl_generator_cExport-noconfig.cmake
+[1.364s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/export_my_3d_vision_bringup__rosidl_typesupport_fastrtps_cExport.cmake
+[1.364s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/export_my_3d_vision_bringup__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+[1.364s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringup__rosidl_typesupport_introspection_cExport.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringup__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringup__rosidl_typesupport_cExport.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringup__rosidl_typesupport_cExport-noconfig.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/export_my_3d_vision_bringup__rosidl_generator_cppExport.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/export_my_3d_vision_bringup__rosidl_typesupport_fastrtps_cppExport.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/export_my_3d_vision_bringup__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringup__rosidl_typesupport_introspection_cppExport.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringup__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringup__rosidl_typesupport_cppExport.cmake
+[1.365s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/my_3d_vision_bringup__rosidl_typesupport_cppExport-noconfig.cmake
+[1.366s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/export_my_3d_vision_bringup__rosidl_generator_pyExport.cmake
+[1.366s] -- Up-to-date: /home/mk/dev_ws/install/my_3d_vision_bringup/share/my_3d_vision_bringup/cmake/export_my_3d_vision_bringup__rosidl_generator_pyExport-noconfig.cmake
+[1.416s] Invoked command in '/home/mk/dev_ws/build/my_3d_vision_bringup' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/mk/dev_ws/build/my_3d_vision_bringup

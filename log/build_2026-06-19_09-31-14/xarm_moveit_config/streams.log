@@ -1,0 +1,155 @@
+[0.011s] Invoking command in '/home/mk/dev_ws/build/xarm_moveit_config': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/xarm_moveit_config -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/xarm_moveit_config
+[0.045s] -- The C compiler identification is GNU 11.4.0
+[0.079s] -- The CXX compiler identification is GNU 11.4.0
+[0.083s] -- Detecting C compiler ABI info
+[0.125s] -- Detecting C compiler ABI info - done
+[0.128s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.129s] -- Detecting C compile features
+[0.129s] -- Detecting C compile features - done
+[0.131s] -- Detecting CXX compiler ABI info
+[0.178s] -- Detecting CXX compiler ABI info - done
+[0.182s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.183s] -- Detecting CXX compile features
+[0.183s] -- Detecting CXX compile features - done
+[0.184s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.278s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.313s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.328s] -- Found ament_lint_auto: 0.12.15 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[0.386s] -- Added test 'copyright' to check source files copyright and LICENSE
+[0.390s] -- Added test 'flake8' to check Python code syntax and style conventions
+[0.391s] -- Added test 'lint_cmake' to check CMake code style
+[0.391s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[0.393s] -- Added test 'xmllint' to check XML markup files
+[0.394s] -- Configuring done
+[0.395s] -- Generating done
+[0.396s] -- Build files have been written to: /home/mk/dev_ws/build/xarm_moveit_config
+[0.399s] Invoked command in '/home/mk/dev_ws/build/xarm_moveit_config' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/xarm_moveit_config -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/xarm_moveit_config
+[0.400s] Invoking command in '/home/mk/dev_ws/build/xarm_moveit_config': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/mk/dev_ws/build/xarm_moveit_config -- -j20 -l20
+[0.423s] Invoked command in '/home/mk/dev_ws/build/xarm_moveit_config' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/mk/dev_ws/build/xarm_moveit_config -- -j20 -l20
+[0.423s] Invoking command in '/home/mk/dev_ws/build/xarm_moveit_config': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/mk/dev_ws/build/xarm_moveit_config
+[0.426s] -- Install configuration: ""
+[0.426s] -- Execute custom install script
+[0.426s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/bio_gripper/controllers.yaml
+[0.433s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/bio_gripper/fake_controllers.yaml
+[0.438s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/bio_gripper/joint_limits.yaml
+[0.443s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/bio_gripper/ompl_planning.yaml
+[0.449s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/lite6/controllers.yaml
+[0.455s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/lite6/fake_controllers.yaml
+[0.459s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/lite6/joint_limits.yaml
+[0.463s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/lite6/kinematics.yaml
+[0.468s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/lite6/ompl_planning.yaml
+[0.472s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/moveit_configs/chomp_planning.yaml
+[0.478s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/moveit_configs/ompl_defaults.yaml
+[0.482s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/moveit_configs/ompl_planning.yaml
+[0.487s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/moveit_configs/pilz_cartesian_limits.yaml
+[0.494s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/moveit_configs/pilz_industrial_motion_planner_planning.yaml
+[0.499s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/uf850/controllers.yaml
+[0.503s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/uf850/fake_controllers.yaml
+[0.508s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/uf850/joint_limits.yaml
+[0.512s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/uf850/kinematics.yaml
+[0.518s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/uf850/ompl_planning.yaml
+[0.522s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/uf850_gripper/controllers.yaml
+[0.527s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/uf850_gripper/fake_controllers.yaml
+[0.532s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/uf850_gripper/joint_limits.yaml
+[0.538s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/uf850_gripper/ompl_planning.yaml
+[0.542s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm5/controllers.yaml
+[0.547s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm5/fake_controllers.yaml
+[0.553s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm5/joint_limits.yaml
+[0.557s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm5/kinematics.yaml
+[0.562s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm5/ompl_planning.yaml
+[0.566s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm6/controllers.yaml
+[0.571s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm6/fake_controllers.yaml
+[0.576s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm6/joint_limits.yaml
+[0.581s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm6/kinematics.yaml
+[0.586s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm6/ompl_planning.yaml
+[0.592s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7/controllers.yaml
+[0.596s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7/fake_controllers.yaml
+[0.601s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7/joint_limits.yaml
+[0.605s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7/kinematics.yaml
+[0.609s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7/ompl_planning.yaml
+[0.616s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7_mirror/controllers.yaml
+[0.621s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7_mirror/fake_controllers.yaml
+[0.625s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7_mirror/joint_limits.yaml
+[0.629s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7_mirror/kinematics.yaml
+[0.636s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7_mirror/ompl_planning.yaml
+[0.640s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7_mirror_gripper/controllers.yaml
+[0.644s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7_mirror_gripper/fake_controllers.yaml
+[0.649s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7_mirror_gripper/joint_limits.yaml
+[0.653s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm7_mirror_gripper/ompl_planning.yaml
+[0.658s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm_gripper/controllers.yaml
+[0.663s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm_gripper/fake_controllers.yaml
+[0.668s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm_gripper/joint_limits.yaml
+[0.673s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//config/xarm_gripper/ompl_planning.yaml
+[0.677s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//rviz/dual_moveit.rviz
+[0.681s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//rviz/dual_planner.rviz
+[0.685s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//rviz/moveit.rviz
+[0.689s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//rviz/planner.rviz
+[0.694s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//srdf/_lite6_macro.srdf.xacro
+[0.699s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//srdf/_uf850_macro.srdf.xacro
+[0.704s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//srdf/_xarm5_macro.srdf.xacro
+[0.709s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//srdf/_xarm6_macro.srdf.xacro
+[0.714s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//srdf/_xarm7_macro.srdf.xacro
+[0.719s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//srdf/_xarm7_mirror_macro.srdf.xacro
+[0.724s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//srdf/dual_xarm.srdf.xacro
+[0.728s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//srdf/xarm.srdf.xacro
+[0.734s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//srdf/xarm_macro.srdf.xacro
+[0.739s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_dual_robot_moveit_common.launch.py
+[0.743s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_dual_robot_moveit_common2.launch.py
+[0.747s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_dual_robot_moveit_fake.launch.py
+[0.753s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_dual_robot_moveit_gazebo.launch.py
+[0.759s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_dual_robot_moveit_realmove.launch.py
+[0.765s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_robot_moveit_common.launch.py
+[0.771s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_robot_moveit_common2.launch.py
+[0.775s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_robot_moveit_fake.launch.py
+[0.780s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_robot_moveit_gazebo.launch.py
+[0.785s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_robot_moveit_ignition.launch.py
+[0.789s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/_robot_moveit_realmove.launch.py
+[0.794s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/demo/demo_dual_fake.launch.py
+[0.798s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/demo/demo_dual_realmove.launch.py
+[0.804s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/demo/demo_fake.launch.py
+[0.809s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/demo/demo_realmove.launch.py
+[0.815s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_lite6_moveit_fake.launch.py
+[0.821s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_lite6_moveit_realmove.launch.py
+[0.826s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_uf850_moveit_fake.launch.py
+[0.830s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_uf850_moveit_realmove.launch.py
+[0.835s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_xarm5_moveit_fake.launch.py
+[0.839s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_xarm5_moveit_realmove.launch.py
+[0.845s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_xarm6_moveit_fake.launch.py
+[0.850s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_xarm6_moveit_realmove.launch.py
+[0.855s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_xarm7_moveit_fake.launch.py
+[0.861s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/dual_xarm7_moveit_realmove.launch.py
+[0.865s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/lib/robot_moveit_config_lib.py
+[0.870s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/lite6_moveit_fake.launch.py
+[0.875s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/lite6_moveit_gazebo.launch.py
+[0.880s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/lite6_moveit_realmove.launch.py
+[0.884s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/uf850_moveit_fake.launch.py
+[0.889s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/uf850_moveit_gazebo.launch.py
+[0.893s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/uf850_moveit_realmove.launch.py
+[0.899s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm5_moveit_fake.launch.py
+[0.903s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm5_moveit_gazebo.launch.py
+[0.909s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm5_moveit_realmove.launch.py
+[0.915s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm6_moveit_fake.launch.py
+[0.920s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm6_moveit_gazebo.launch.py
+[0.924s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm6_moveit_realmove.launch.py
+[0.930s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm7_mirror_moveit_fake.launch.py
+[0.935s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm7_mirror_moveit_gazebo.launch.py
+[0.940s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm7_mirror_moveit_realmove.launch.py
+[0.945s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm7_moveit_fake.launch.py
+[0.950s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm7_moveit_gazebo.launch.py
+[0.956s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config//launch/xarm7_moveit_realmove.launch.py
+[0.960s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/ament_index/resource_index/package_run_dependencies/xarm_moveit_config
+[0.964s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/ament_index/resource_index/parent_prefix_path/xarm_moveit_config
+[0.969s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/environment/ament_prefix_path.sh
+[0.975s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/environment/ament_prefix_path.dsv
+[0.981s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/environment/path.sh
+[0.987s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/environment/path.dsv
+[0.991s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/local_setup.bash
+[0.996s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/local_setup.sh
+[1.001s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/local_setup.zsh
+[1.006s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/local_setup.dsv
+[1.012s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/package.dsv
+[1.017s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/ament_index/resource_index/packages/xarm_moveit_config
+[1.022s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/cmake/xarm_moveit_configConfig.cmake
+[1.029s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/cmake/xarm_moveit_configConfig-version.cmake
+[1.034s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_config/share/xarm_moveit_config/package.xml
+[1.039s] Invoked command in '/home/mk/dev_ws/build/xarm_moveit_config' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/mk/dev_ws/build/xarm_moveit_config

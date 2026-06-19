@@ -5,31 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>xArm Lite6 Web Control</title>
   
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- ROS Libs -->
   <script src="roslib.min.js"></script>
 
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   
-  <!-- Background Elements -->
   <div class="bg-shape bg-shape-1"></div>
   <div class="bg-shape bg-shape-2"></div>
   
   <div class="app-container">
     
-    <!-- HEADER -->
     <header>
       <div class="header-title">
         <h1>xArm Lite6 Web Control</h1>
       </div>
       <div class="header-status">
-        <!-- Group 1: Ports -->
         <div class="status-group">
           <div class="status-pill">
             <div class="dot glow-green"></div>
@@ -47,7 +41,6 @@
 
         <div class="status-divider"></div>
 
-        <!-- Group 2: Peripherals -->
         <div class="status-group">
           <div class="status-pill" id="gamepad-pill">
             <div id="gp-dot" class="dot glow-red"></div>
@@ -61,7 +54,6 @@
 
         <div class="status-divider"></div>
 
-        <!-- Group 3: Robot Mode -->
         <div class="status-group">
           <div class="status-pill mode-badge" id="mode-pill">
             <div id="mode-dot" class="dot glow-blue"></div>
@@ -71,13 +63,10 @@
       </div>
     </header>
 
-    <!-- MAIN GRID -->
     <main class="grid-layout">
 
-      <!-- LEFT COLUMN: Joystick & Telemetry -->
       <div class="col-left">
         
-        <!-- Telemetry Panel -->
         <section class="glass-panel">
           <h2><i class="fa-solid fa-satellite-dish"></i> Telemetry Live</h2>
           <div class="telemetry-grid">
@@ -110,16 +99,15 @@
             </div>
           </div>
           <div class="joints-bars">
-            <div class="j-bar" style="cursor: grab; user-select: none;" onpointerdown="startJointJog(0, event)"><div class="j-fill" id="j1-fill"></div><span class="j-lbl">J1 <span id="j1-val">0.0</span></span></div>
-            <div class="j-bar" style="cursor: grab; user-select: none;" onpointerdown="startJointJog(1, event)"><div class="j-fill" id="j2-fill"></div><span class="j-lbl">J2 <span id="j2-val">0.0</span></span></div>
-            <div class="j-bar" style="cursor: grab; user-select: none;" onpointerdown="startJointJog(2, event)"><div class="j-fill" id="j3-fill"></div><span class="j-lbl">J3 <span id="j3-val">0.0</span></span></div>
-            <div class="j-bar" style="cursor: grab; user-select: none;" onpointerdown="startJointJog(3, event)"><div class="j-fill" id="j4-fill"></div><span class="j-lbl">J4 <span id="j4-val">0.0</span></span></div>
-            <div class="j-bar" style="cursor: grab; user-select: none;" onpointerdown="startJointJog(4, event)"><div class="j-fill" id="j5-fill"></div><span class="j-lbl">J5 <span id="j5-val">0.0</span></span></div>
-            <div class="j-bar" style="cursor: grab; user-select: none;" onpointerdown="startJointJog(5, event)"><div class="j-fill" id="j6-fill"></div><span class="j-lbl">J6 <span id="j6-val">0.0</span></span></div>
+            <div class="j-bar" onpointerdown="startJointJog(0, event)"><div class="j-fill" id="j1-fill"></div><span class="j-lbl">J1 <span id="j1-val">0.0</span></span></div>
+            <div class="j-bar" onpointerdown="startJointJog(1, event)"><div class="j-fill" id="j2-fill"></div><span class="j-lbl">J2 <span id="j2-val">0.0</span></span></div>
+            <div class="j-bar" onpointerdown="startJointJog(2, event)"><div class="j-fill" id="j3-fill"></div><span class="j-lbl">J3 <span id="j3-val">0.0</span></span></div>
+            <div class="j-bar" onpointerdown="startJointJog(3, event)"><div class="j-fill" id="j4-fill"></div><span class="j-lbl">J4 <span id="j4-val">0.0</span></span></div>
+            <div class="j-bar" onpointerdown="startJointJog(4, event)"><div class="j-fill" id="j5-fill"></div><span class="j-lbl">J5 <span id="j5-val">0.0</span></span></div>
+            <div class="j-bar" onpointerdown="startJointJog(5, event)"><div class="j-fill" id="j6-fill"></div><span class="j-lbl">J6 <span id="j6-val">0.0</span></span></div>
           </div>
         </section>
 
-        <!-- Joystick Panel -->
         <section class="glass-panel joystick-section">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
@@ -130,23 +118,27 @@
           </div>
           
           <div class="jogging-container" style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center;">
-            <div class="z-controls" style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="z-controls" style="display: flex; flex-direction: column; gap: 36px;">
               <button class="btn btn-z" style="height: 80px; width: 60px;" onmousedown="startJog(0,0,1,0,0,0)" onmouseup="stopJog()">⇈<br>Z+</button>
               <button class="btn btn-z" style="height: 80px; width: 60px;" onmousedown="startJog(0,0,-1,0,0,0)" onmouseup="stopJog()">⇊<br>Z-</button>
             </div>
 
-            <!-- The Visual Analog Joystick -->
             <div class="joystick-wrapper">
               <div id="joystick-zone">
                 <div id="joystick-stick"></div>
               </div>
-              <div class="joy-label top">X+</div>
-              <div class="joy-label bottom">X-</div>
-              <div class="joy-label left">Y+</div>
-              <div class="joy-label right">Y-</div>
+              <div class="joy-label top"><i class="fa-solid fa-caret-up"></i> X+</div>
+              <div class="joy-label bottom">X- <i class="fa-solid fa-caret-down"></i></div>
+              <div class="joy-label left"><i class="fa-solid fa-caret-left"></i> Y+</div>
+              <div class="joy-label right">Y- <i class="fa-solid fa-caret-right"></i></div>
             </div>
             
-            <!-- Rotation Controls -->
+            <div class="gripper-controls" style="display: flex; flex-direction: column; gap: 20px;">
+              <button id="btn-grip-open" class="btn btn-primary" style="height: 52px; width: 60px; padding: 0;" onclick="setGripper('open')">Open</button>
+              <button id="btn-grip-close" class="btn btn-orange" style="height: 52px; width: 60px; padding: 0;" onclick="setGripper('close')">Close</button>
+              <button id="btn-grip-off" class="btn" style="height: 52px; width: 60px; padding: 0; border-color: rgba(239, 68, 68, 0.4); color: var(--red);" onclick="setGripper('off')">Off</button>
+            </div>
+            
             <div class="rot-controls" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               <button class="btn btn-rot" onmousedown="startJog(0,0,0,1,0,0)" onmouseup="stopJog()">Roll + (<span style="color: var(--rviz-x);">X</span>)</button>
               <button class="btn btn-rot" onmousedown="startJog(0,0,0,-1,0,0)" onmouseup="stopJog()">Roll - (<span style="color: var(--rviz-x);">X</span>)</button>
@@ -157,13 +149,11 @@
             </div>
           </div>
           
-          <!-- Frame Selection -->
-          <div class="frame-toggles" style="margin-top: 20px; display: flex; gap: 12px;">
+          <div class="frame-toggles">
             <button class="btn frame-btn active btn-primary" style="flex: 1;" id="btn-frame-base" onclick="setFrame('link_base')">Base Frame</button>
             <button class="btn frame-btn" style="flex: 1;" id="btn-frame-tcp" onclick="setFrame('link_tcp')">TCP Frame</button>
           </div>
           
-          <!-- Speed Control -->
           <div class="speed-control">
             <label><i class="fa-solid fa-gauge"></i> Speed Level: <span id="speed-val">2</span></label>
             <input type="range" id="speed-slider" min="0" max="4" value="2" oninput="updateSpeed(this.value)">
@@ -173,10 +163,8 @@
 
       </div>
 
-      <!-- RIGHT COLUMN: Absolute Controls & Utils -->
       <div class="col-right">
         
-        <!-- Absolute Pose -->
         <section class="glass-panel">
           <h2><i class="fa-solid fa-location-crosshairs"></i> Absolute Pose (MoveTo)</h2>
           <div class="input-grid">
@@ -193,7 +181,6 @@
           </div>
         </section>
 
-        <!-- DETECTED OBJECTS & GRASPING -->
         <section class="glass-panel">
           <h2><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO 3D)</h2>
           <div id="yolo-container" class="yolo-container">
@@ -207,7 +194,6 @@
           </div>
         </section>
 
-        <!-- SPEECH CONTROL (MOCKUP) -->
         <section class="glass-panel">
           <h2><i class="fa-solid fa-microphone"></i> Speech Control (Whisper AI)</h2>
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
@@ -221,7 +207,6 @@
           </div>
         </section>
 
-        <!-- Console Log -->
         <section class="glass-panel console-section">
           <h2><i class="fa-solid fa-terminal"></i> Log Output</h2>
           <div id="log-window"></div>

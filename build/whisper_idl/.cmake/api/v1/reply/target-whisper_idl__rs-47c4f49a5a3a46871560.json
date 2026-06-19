@@ -1,0 +1,73 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target"
+		],
+		"files" : 
+		[
+			"/home/mk/dev_ws/build/whisper_idl/whisper_idl__rs/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 35,
+				"parent" : 0
+			}
+		]
+	},
+	"id" : "whisper_idl__rs::@1f41babdcf8a6704a122",
+	"name" : "whisper_idl__rs",
+	"paths" : 
+	{
+		"build" : "whisper_idl__rs",
+		"source" : "/home/mk/dev_ws/build/whisper_idl/whisper_idl__rs"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				1,
+				2
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"isGenerated" : true,
+			"path" : "/home/mk/dev_ws/build/whisper_idl/whisper_idl__rs/CMakeFiles/whisper_idl__rs",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "/home/mk/dev_ws/build/whisper_idl/whisper_idl__rs/CMakeFiles/whisper_idl__rs.rule",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "/home/mk/dev_ws/build/whisper_idl/rosidl_generator_rs/whisper_idl/rust/src/lib.rs.rule",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "UTILITY"
+}

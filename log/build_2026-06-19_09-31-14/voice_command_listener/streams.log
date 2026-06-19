@@ -1,0 +1,25 @@
+[0.695s] Invoking command in '/home/mk/dev_ws/build/voice_command_listener': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_idl:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_idl LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_idl/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/build/voice_command_listener/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/voice_command_listener/lib/python3.10/site-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/voice_command_listener/build --no-deps symlink_data
+[0.855s] running develop
+[1.000s] running egg_info
+[1.000s] creating voice_command_listener.egg-info
+[1.000s] writing voice_command_listener.egg-info/PKG-INFO
+[1.000s] writing dependency_links to voice_command_listener.egg-info/dependency_links.txt
+[1.000s] writing entry points to voice_command_listener.egg-info/entry_points.txt
+[1.000s] writing requirements to voice_command_listener.egg-info/requires.txt
+[1.000s] writing top-level names to voice_command_listener.egg-info/top_level.txt
+[1.001s] writing manifest file 'voice_command_listener.egg-info/SOURCES.txt'
+[1.002s] reading manifest file 'voice_command_listener.egg-info/SOURCES.txt'
+[1.002s] writing manifest file 'voice_command_listener.egg-info/SOURCES.txt'
+[1.032s] running build_ext
+[1.032s] Creating /home/mk/dev_ws/install/voice_command_listener/lib/python3.10/site-packages/voice-command-listener.egg-link (link to .)
+[1.033s] Installing listener script to /home/mk/dev_ws/install/voice_command_listener/lib/voice_command_listener
+[1.033s] Installing voice_command_listener script to /home/mk/dev_ws/install/voice_command_listener/lib/voice_command_listener
+[1.033s] 
+[1.033s] Installed /home/mk/dev_ws/build/voice_command_listener
+[1.033s] running symlink_data
+[1.033s] creating /home/mk/dev_ws/install/voice_command_listener/share/ament_index
+[1.033s] creating /home/mk/dev_ws/install/voice_command_listener/share/ament_index/resource_index
+[1.033s] creating /home/mk/dev_ws/install/voice_command_listener/share/ament_index/resource_index/packages
+[1.033s] symbolically linking /home/mk/dev_ws/build/voice_command_listener/resource/voice_command_listener -> /home/mk/dev_ws/install/voice_command_listener/share/ament_index/resource_index/packages
+[1.033s] symbolically linking /home/mk/dev_ws/build/voice_command_listener/package.xml -> /home/mk/dev_ws/install/voice_command_listener/share/voice_command_listener
+[1.058s] Invoked command in '/home/mk/dev_ws/build/voice_command_listener' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/whisper_idl:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/whisper_idl LD_LIBRARY_PATH=/home/mk/dev_ws/install/whisper_idl/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/build/voice_command_listener/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mk/dev_ws/install/voice_command_listener/lib/python3.10/site-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/mk/dev_ws/build/voice_command_listener/build --no-deps symlink_data

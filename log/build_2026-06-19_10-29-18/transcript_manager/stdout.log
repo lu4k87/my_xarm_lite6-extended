@@ -1,0 +1,22 @@
+[ 28%] Built target transcript_manager_comp
+[100%] Built target transcript_manager_component
+-- Install configuration: "Release"
+-- Execute custom install script
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/lib/transcript_manager/transcript_manager_comp
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/lib/libtranscript_manager_component.so
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/ament_index/resource_index/package_run_dependencies/transcript_manager
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/ament_index/resource_index/parent_prefix_path/transcript_manager
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/environment/path.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/environment/path.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/local_setup.bash
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/local_setup.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/local_setup.zsh
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/local_setup.dsv
+-- Symlinking: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/package.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/ament_index/resource_index/packages/transcript_manager
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/ament_index/resource_index/rclcpp_components/transcript_manager
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/cmake/transcript_managerConfig.cmake
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/cmake/transcript_managerConfig-version.cmake
+-- Up-to-date symlink: /home/mk/dev_ws/install/transcript_manager/share/transcript_manager/package.xml

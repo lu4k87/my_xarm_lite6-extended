@@ -26,9 +26,6 @@ global_logs = []
 log_id_counter = 1
 import time
 
-# ... (other code like _build_ros_script is unchanged, but we need to supply the whole block)
-
-
 def _build_ros_script(command: str, ws_path: str) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")

@@ -1,0 +1,37 @@
+[
+{
+  "directory": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-build/ggml/src",
+  "command": "/usr/bin/cc -DGGML_BUILD -DGGML_SCHED_MAX_COPIES=4 -DGGML_SHARED -DGGML_USE_OPENMP -D_GNU_SOURCE -D_XOPEN_SOURCE=600 -Dggml_EXPORTS -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/../include -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/. -O3 -DNDEBUG -fPIC -Wall -Wextra -Wpedantic -Wshadow -Wstrict-prototypes -Wpointer-arith -Wmissing-prototypes -Werror=implicit-int -Werror=implicit-function-declaration -Wcast-qual -Wno-unused-function -Wdouble-promotion -march=native -fopenmp -std=gnu11 -o CMakeFiles/ggml.dir/ggml.c.o -c /home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml.c",
+  "file": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml.c"
+},
+{
+  "directory": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-build/ggml/src",
+  "command": "/usr/bin/cc -DGGML_BUILD -DGGML_SCHED_MAX_COPIES=4 -DGGML_SHARED -DGGML_USE_OPENMP -D_GNU_SOURCE -D_XOPEN_SOURCE=600 -Dggml_EXPORTS -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/../include -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/. -O3 -DNDEBUG -fPIC -Wall -Wextra -Wpedantic -Wshadow -Wstrict-prototypes -Wpointer-arith -Wmissing-prototypes -Werror=implicit-int -Werror=implicit-function-declaration -Wcast-qual -Wno-unused-function -Wdouble-promotion -march=native -fopenmp -std=gnu11 -o CMakeFiles/ggml.dir/ggml-cpu.c.o -c /home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-cpu.c",
+  "file": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-cpu.c"
+},
+{
+  "directory": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-build/ggml/src",
+  "command": "/usr/bin/cc -DGGML_BUILD -DGGML_SCHED_MAX_COPIES=4 -DGGML_SHARED -DGGML_USE_OPENMP -D_GNU_SOURCE -D_XOPEN_SOURCE=600 -Dggml_EXPORTS -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/../include -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/. -O3 -DNDEBUG -fPIC -Wall -Wextra -Wpedantic -Wshadow -Wstrict-prototypes -Wpointer-arith -Wmissing-prototypes -Werror=implicit-int -Werror=implicit-function-declaration -Wcast-qual -Wno-unused-function -Wdouble-promotion -march=native -fopenmp -std=gnu11 -o CMakeFiles/ggml.dir/ggml-alloc.c.o -c /home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-alloc.c",
+  "file": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-alloc.c"
+},
+{
+  "directory": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-build/ggml/src",
+  "command": "/usr/bin/c++ -DGGML_BUILD -DGGML_SCHED_MAX_COPIES=4 -DGGML_SHARED -DGGML_USE_OPENMP -D_GNU_SOURCE -D_XOPEN_SOURCE=600 -Dggml_EXPORTS -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/../include -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/. -O3 -DNDEBUG -fPIC -Wall -Wextra -Wpedantic -Wmissing-declarations -Wmissing-noreturn -Wcast-qual -Wno-unused-function -Wno-array-bounds -Wno-format-truncation -Wextra-semi -march=native -fopenmp -std=gnu++11 -o CMakeFiles/ggml.dir/ggml-backend.cpp.o -c /home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-backend.cpp",
+  "file": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-backend.cpp"
+},
+{
+  "directory": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-build/ggml/src",
+  "command": "/usr/bin/cc -DGGML_BUILD -DGGML_SCHED_MAX_COPIES=4 -DGGML_SHARED -DGGML_USE_OPENMP -D_GNU_SOURCE -D_XOPEN_SOURCE=600 -Dggml_EXPORTS -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/../include -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/. -O3 -DNDEBUG -fPIC -Wall -Wextra -Wpedantic -Wshadow -Wstrict-prototypes -Wpointer-arith -Wmissing-prototypes -Werror=implicit-int -Werror=implicit-function-declaration -Wcast-qual -Wno-unused-function -Wdouble-promotion -march=native -fopenmp -std=gnu11 -o CMakeFiles/ggml.dir/ggml-quants.c.o -c /home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-quants.c",
+  "file": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-quants.c"
+},
+{
+  "directory": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-build/ggml/src",
+  "command": "/usr/bin/cc -DGGML_BUILD -DGGML_SCHED_MAX_COPIES=4 -DGGML_SHARED -DGGML_USE_OPENMP -D_GNU_SOURCE -D_XOPEN_SOURCE=600 -Dggml_EXPORTS -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/../include -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/. -O3 -DNDEBUG -fPIC -Wall -Wextra -Wpedantic -Wshadow -Wstrict-prototypes -Wpointer-arith -Wmissing-prototypes -Werror=implicit-int -Werror=implicit-function-declaration -Wcast-qual -Wno-unused-function -Wdouble-promotion -march=native -fopenmp -std=gnu11 -o CMakeFiles/ggml.dir/ggml-aarch64.c.o -c /home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-aarch64.c",
+  "file": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/ggml-aarch64.c"
+},
+{
+  "directory": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-build/src",
+  "command": "/usr/bin/c++ -DWHISPER_BUILD -DWHISPER_SHARED -Dwhisper_EXPORTS -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/src/. -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/src/../include -I/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/ggml/src/../include -O3 -DNDEBUG -fPIC -Wall -Wextra -Wpedantic -std=gnu++11 -o CMakeFiles/whisper.dir/whisper.cpp.o -c /home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/src/whisper.cpp",
+  "file": "/home/mk/dev_ws/build/whisper_cpp_vendor/_deps/whisper-src/src/whisper.cpp"
+}
+]

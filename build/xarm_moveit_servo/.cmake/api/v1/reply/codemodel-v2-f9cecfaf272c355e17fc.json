@@ -1,0 +1,97 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-33cbb44f677fe34c2a63.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "xarm_moveit_servo",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "scan_trajectory_node::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-scan_trajectory_node-a9b76dda032ced6c3ef0.json",
+					"name" : "scan_trajectory_node",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-c149b9f36b55c346368a.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "xarm_joystick_input::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-xarm_joystick_input-030be99db95ccc2da2da.json",
+					"name" : "xarm_joystick_input",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "xarm_keyboard_input::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-xarm_keyboard_input-0da47900b72e0674fe3d.json",
+					"name" : "xarm_keyboard_input",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "xarm_moveit_servo_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-xarm_moveit_servo_uninstall-e4679dea4fa95b4726e6.json",
+					"name" : "xarm_moveit_servo_uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/mk/dev_ws/build/xarm_moveit_servo",
+		"source" : "/home/mk/dev_ws/src/xarm_ros2/xarm_moveit_servo"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

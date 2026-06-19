@@ -1,0 +1,116 @@
+[0.015s] Invoking command in '/home/mk/dev_ws/build/xarm_moveit_servo': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:/home/mk/dev_ws/install/whisper_idl/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/xarm_moveit_servo -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/xarm_moveit_servo
+[0.049s] -- The C compiler identification is GNU 11.4.0
+[0.081s] -- The CXX compiler identification is GNU 11.4.0
+[0.086s] -- Detecting C compiler ABI info
+[0.132s] -- Detecting C compiler ABI info - done
+[0.136s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.136s] -- Detecting C compile features
+[0.136s] -- Detecting C compile features - done
+[0.138s] -- Detecting CXX compiler ABI info
+[0.187s] -- Detecting CXX compiler ABI info - done
+[0.192s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.192s] -- Detecting CXX compile features
+[0.192s] -- Detecting CXX compile features - done
+[0.194s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.290s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.326s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.345s] -- Found rclcpp: 16.0.19 (/opt/ros/humble/share/rclcpp/cmake)
+[0.370s] -- Found rosidl_generator_c: 3.1.8 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.373s] -- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.378s] -- Found rosidl_generator_cpp: 3.1.8 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.385s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.394s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.419s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[0.420s] -- Found rmw_cyclonedds_cpp: 1.3.4 (/opt/ros/humble/share/rmw_cyclonedds_cpp/cmake)
+[0.433s] -- Using RMW implementation 'rmw_cyclonedds_cpp' as default
+[0.438s] -- Looking for pthread.h
+[0.482s] -- Looking for pthread.h - found
+[0.482s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[0.526s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[0.527s] -- Found Threads: TRUE  
+[0.555s] -- Found rclcpp_components: 16.0.19 (/opt/ros/humble/share/rclcpp_components/cmake)
+[0.570s] -- Found std_srvs: 4.9.1 (/opt/ros/humble/share/std_srvs/cmake)
+[0.575s] -- Found sensor_msgs: 4.9.1 (/opt/ros/humble/share/sensor_msgs/cmake)
+[0.592s] -- Found control_msgs: 4.9.0 (/opt/ros/humble/share/control_msgs/cmake)
+[0.626s] -- Found moveit_msgs: 2.2.1 (/opt/ros/humble/share/moveit_msgs/cmake)
+[0.669s] -- Found moveit_ros_planning: 2.5.9 (/opt/ros/humble/share/moveit_ros_planning/cmake)
+[0.684s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: system filesystem date_time program_options thread chrono 
+[0.743s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: chrono date_time filesystem iostreams program_options regex serialization system thread 
+[0.765s] -- Found parameter_traits: 0.7.1 (/opt/ros/humble/share/parameter_traits/cmake)
+[0.774s] -- Found rclcpp_lifecycle: 16.0.19 (/opt/ros/humble/share/rclcpp_lifecycle/cmake)
+[0.788s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: filesystem 
+[0.840s] -- library: /usr/lib/x86_64-linux-gnu/libcurl.so
+[0.858s] -- Found Eigen3: TRUE (found version "3.4.0") 
+[0.858s] -- Ensuring Eigen3 include directory is part of orocos-kdl CMake target
+[0.884s] -- Found moveit_ros_planning_interface: 2.5.9 (/opt/ros/humble/share/moveit_ros_planning_interface/cmake)
+[0.887s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: date_time filesystem program_options system thread 
+[0.895s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: thread system filesystem regex date_time program_options 
+[0.947s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: system filesystem date_time program_options thread 
+[0.958s] -- Found xarm_msgs: 0.0.0 (/home/mk/dev_ws/install/xarm_msgs/share/xarm_msgs/cmake)
+[0.966s] -- Found whisper_idl: 1.4.0 (/home/mk/dev_ws/install/whisper_idl/share/whisper_idl/cmake)
+[0.975s] -- Found ament_lint_auto: 0.12.15 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.048s] -- Added test 'copyright' to check source files copyright and LICENSE
+[1.048s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[1.049s] -- Configured cppcheck include dirs: /home/mk/dev_ws/src/xarm_ros2/xarm_moveit_servo/include
+[1.049s] -- Configured cppcheck exclude dirs and/or files: 
+[1.049s] -- Added test 'cpplint' to check C / C++ code against the Google style
+[1.049s] -- Configured cpplint exclude dirs and/or files: 
+[1.050s] -- Added test 'flake8' to check Python code syntax and style conventions
+[1.050s] -- Added test 'lint_cmake' to check CMake code style
+[1.050s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[1.051s] -- Added test 'uncrustify' to check C / C++ code style
+[1.051s] -- Configured uncrustify additional arguments: 
+[1.051s] -- Added test 'xmllint' to check XML markup files
+[1.052s] -- Configuring done
+[1.085s] -- Generating done
+[1.094s] -- Build files have been written to: /home/mk/dev_ws/build/xarm_moveit_servo
+[1.102s] Invoked command in '/home/mk/dev_ws/build/xarm_moveit_servo' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:/home/mk/dev_ws/install/whisper_idl/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/mk/dev_ws/src/xarm_ros2/xarm_moveit_servo -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/mk/dev_ws/install/xarm_moveit_servo
+[1.104s] Invoking command in '/home/mk/dev_ws/build/xarm_moveit_servo': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:/home/mk/dev_ws/install/whisper_idl/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/mk/dev_ws/build/xarm_moveit_servo -- -j20 -l20
+[1.138s] [ 16%] [32mBuilding CXX object CMakeFiles/xarm_keyboard_input.dir/src/xarm_keyboard_input.cpp.o[0m
+[1.140s] [ 33%] [32mBuilding CXX object CMakeFiles/scan_trajectory_node.dir/src/scan_trajectory_node.cpp.o[0m
+[1.143s] [ 50%] [32mBuilding CXX object CMakeFiles/xarm_joystick_input.dir/src/xarm_joystick_input.cpp.o[0m
+[4.344s] [ 66%] [32m[1mLinking CXX executable scan_trajectory_node[0m
+[4.588s] [ 83%] [32m[1mLinking CXX executable xarm_keyboard_input[0m
+[4.840s] [ 83%] Built target scan_trajectory_node
+[5.074s] [ 83%] Built target xarm_keyboard_input
+[10.633s] [100%] [32m[1mLinking CXX shared library libxarm_joystick_input.so[0m
+[11.593s] [100%] Built target xarm_joystick_input
+[11.608s] Invoked command in '/home/mk/dev_ws/build/xarm_moveit_servo' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:/home/mk/dev_ws/install/whisper_idl/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/mk/dev_ws/build/xarm_moveit_servo -- -j20 -l20
+[11.609s] Invoking command in '/home/mk/dev_ws/build/xarm_moveit_servo': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:/home/mk/dev_ws/install/whisper_idl/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/mk/dev_ws/build/xarm_moveit_servo
+[11.614s] -- Install configuration: ""
+[11.614s] -- Execute custom install script
+[11.614s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//config/xarm_moveit_servo_config BACKUP (copy).yaml
+[11.619s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//config/xarm_moveit_servo_config.yaml
+[11.623s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//launch/_robot_moveit_servo.launch.py
+[11.627s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//launch/_robot_moveit_servo_fake.launch.py
+[11.631s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//launch/_robot_moveit_servo_realmove.launch.py
+[11.637s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//launch/lite6_moveit_servo_fake.launch.py
+[11.643s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//launch/lite6_moveit_servo_realmove.launch.py
+[11.647s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//launch/uf850_moveit_servo_fake.launch.py
+[11.651s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//launch/uf850_moveit_servo_realmove.launch.py
+[11.656s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//launch/xarm_moveit_servo_fake.launch.py
+[11.660s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//launch/xarm_moveit_servo_realmove.launch.py
+[11.665s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo//rviz/servo.rviz
+[11.669s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/ament_index/resource_index/package_run_dependencies/xarm_moveit_servo
+[11.674s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/ament_index/resource_index/parent_prefix_path/xarm_moveit_servo
+[11.678s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/environment/ament_prefix_path.sh
+[11.684s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/environment/ament_prefix_path.dsv
+[11.689s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/environment/path.sh
+[11.694s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/environment/path.dsv
+[11.698s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/local_setup.bash
+[11.704s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/local_setup.sh
+[11.709s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/local_setup.zsh
+[11.714s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/local_setup.dsv
+[11.718s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/package.dsv
+[11.724s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/ament_index/resource_index/packages/xarm_moveit_servo
+[11.729s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/ament_index/resource_index/rclcpp_components/xarm_moveit_servo
+[11.734s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/cmake/xarm_moveit_servoConfig.cmake
+[11.739s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/cmake/xarm_moveit_servoConfig-version.cmake
+[11.744s] -- Symlinking: /home/mk/dev_ws/install/xarm_moveit_servo/share/xarm_moveit_servo/package.xml
+[11.748s] -- Installing: /home/mk/dev_ws/install/xarm_moveit_servo/lib/libxarm_joystick_input.so
+[11.754s] -- Set runtime path of "/home/mk/dev_ws/install/xarm_moveit_servo/lib/libxarm_joystick_input.so" to ""
+[11.754s] -- Installing: /home/mk/dev_ws/install/xarm_moveit_servo/lib/xarm_moveit_servo/xarm_keyboard_input
+[11.755s] -- Set runtime path of "/home/mk/dev_ws/install/xarm_moveit_servo/lib/xarm_moveit_servo/xarm_keyboard_input" to ""
+[11.755s] -- Installing: /home/mk/dev_ws/install/xarm_moveit_servo/lib/xarm_moveit_servo/scan_trajectory_node
+[11.756s] -- Set runtime path of "/home/mk/dev_ws/install/xarm_moveit_servo/lib/xarm_moveit_servo/scan_trajectory_node" to ""
+[11.757s] Invoked command in '/home/mk/dev_ws/build/xarm_moveit_servo' returned '0': AMENT_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/home/mk/dev_ws/install/uf_ros_lib:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/mk/dev_ws/install/xarm_moveit_config:/home/mk/dev_ws/install/xarm_gazebo:/home/mk/dev_ws/install/xarm_controller:/home/mk/dev_ws/install/xarm_api:/home/mk/dev_ws/install/xarm_sdk:/home/mk/dev_ws/install/xarm_msgs:/home/mk/dev_ws/install/xarm_description:/home/mk/dev_ws/install/whisper_idl:/opt/ros/humble LD_LIBRARY_PATH=/home/mk/dev_ws/install/xarm_gazebo/lib:/home/mk/dev_ws/install/xarm_controller/lib:/home/mk/dev_ws/install/xarm_api/lib:/home/mk/dev_ws/install/xarm_sdk/lib:/home/mk/dev_ws/install/xarm_msgs/lib:/home/mk/dev_ws/install/whisper_idl/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/mk/dev_ws/install/xarm_msgs/local/lib/python3.10/dist-packages:/home/mk/dev_ws/install/whisper_idl/local/lib/python3.10/dist-packages:/home/mk/dev_ws/build/uf_ros_lib:/home/mk/dev_ws/install/uf_ros_lib/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/mk/dev_ws/build/xarm_moveit_servo

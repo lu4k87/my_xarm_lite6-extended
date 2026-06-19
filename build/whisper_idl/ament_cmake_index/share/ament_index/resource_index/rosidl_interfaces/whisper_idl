@@ -1,0 +1,6 @@
+action/Inference.action
+action/Inference.idl
+msg/AudioTranscript.idl
+msg/AudioTranscript.msg
+msg/WhisperTokens.idl
+msg/WhisperTokens.msg

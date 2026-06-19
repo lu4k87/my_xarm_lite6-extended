@@ -1,0 +1,63 @@
+-- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- OpenMP found
+-- Warning: ccache not found - consider installing it for faster compilation or disable this warning with GGML_CCACHE=OFF
+-- CMAKE_SYSTEM_PROCESSOR: x86_64
+-- x86 detected
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/mk/dev_ws/build/whisper_cpp_vendor
+[35m[1mConsolidate compiler generated dependencies of target ggml[0m
+[ 77%] Built target ggml
+[35m[1mConsolidate compiler generated dependencies of target whisper[0m
+[100%] Built target whisper
+-- Install configuration: "Release"
+-- Execute custom install script
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor//libggml.so
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/cmake/whisper/whisper-config.cmake
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/cmake/whisper/whisper-version.cmake
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/pkgconfig/whisper.pc
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/whisper.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-alloc.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-amx.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-backend.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-blas.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-cann.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-cpp.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-cpu.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-cuda.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-kompute.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-metal.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-rpc.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-sycl.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml-vulkan.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/include/ggml.h
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/library_path.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/library_path.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/ament_index/resource_index/package_run_dependencies/whisper_cpp_vendor
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/ament_index/resource_index/parent_prefix_path/whisper_cpp_vendor
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/path.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/environment/path.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/local_setup.bash
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/local_setup.sh
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/local_setup.zsh
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/local_setup.dsv
+-- Symlinking: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/package.dsv
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/ament_index/resource_index/packages/whisper_cpp_vendor
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/ament_cmake_export_targets-extras.cmake
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/whisper_cpp_vendorConfig.cmake
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/whisper_cpp_vendorConfig-version.cmake
+-- Up-to-date symlink: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/package.xml
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libggml.so
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1.7.2
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/export_whisperExport.cmake
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/share/whisper_cpp_vendor/cmake/export_whisperExport-release.cmake
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1.7.2
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so.1
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libwhisper.so
+-- Up-to-date: /home/mk/dev_ws/install/whisper_cpp_vendor/lib/libggml.so
