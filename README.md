@@ -788,6 +788,24 @@ sudo systemctl enable lo-multicast.service
 sudo systemctl start lo-multicast.service
 ```
 
+### 8.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
+> [!TIP]
+> **Stuttering Pointclouds in RViz:** ROS 2 (especially CycloneDDS) transmits large payloads like Pointclouds (ZED Camera) by fragmenting them into many small UDP packets. The default Linux kernel network buffer size (~200 KB) is vastly insufficient for this. When the buffer overflows, the OS drops packets ("Receive Buffer Errors"), resulting in severe lag in RViz.
+
+To resolve this issue and guarantee a smooth data stream, the system's UDP buffer sizes must be permanently increased to the maximum (2 GB):
+
+```bash
+# Temporary increase (takes effect immediately, resets on reboot):
+sudo sysctl -w net.core.rmem_max=2147483647
+sudo sysctl -w net.core.rmem_default=2147483647
+sudo sysctl -w net.core.wmem_max=2147483647
+sudo sysctl -w net.core.wmem_default=2147483647
+
+# Permanent configuration (survives reboots):
+echo -e "net.core.rmem_max=2147483647\nnet.core.rmem_default=2147483647\nnet.core.wmem_max=2147483647\nnet.core.wmem_default=2147483647" | sudo tee /etc/sysctl.d/60-cyclonedds.conf
+sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
+```
+
 ---
 
 ## <a id="chapter-9"></a> 9. 🗂️ Repository Structure
