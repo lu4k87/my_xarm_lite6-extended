@@ -322,13 +322,13 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
  * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`), `/ui/robot_control/set_speed_index` (`std_msgs/Int32`).
  * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint`, `/ui/execute_scan_trajectory` (Clients).
 * **`robot_motion_handler_movegroup.py` [NODE]**
- * 🎯 **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger, einen robusten kartesischen P-Regler für direkte Koordinaten-Anfahrten und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Die Bewegung zur "Initial Pose" (ausgelöst über Web UI oder Gamepad Y-BTN) reagiert nun dynamisch auf die globale Geschwindigkeit (`speedScale`), was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt.
+ * 🎯 **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger, einen hochrobusten kartesischen P-Regler, der **Axis-Angle (Rotationsvektor) Mathematik** nutzt, um Gimbal Lock / Euler-Flip Probleme bei Orientierungsfahrten komplett zu eliminieren, und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Integriert zudem eine **2-Sekunden Blockade-Erkennung (Stuck-Detection)**, um 30-sekündige UI-Freezes sicher abzufangen, falls der Roboter ein Limit erreicht. Die Bewegung zur "Initial Pose" (ausgelöst über Web UI oder Gamepad Y-BTN) reagiert dynamisch auf die globale Geschwindigkeit (`speedScale`).
  * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Skaliert die Geschwindigkeit des P-Reglers und der Joint-Bewegungen synchron zur UI.
  * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
  * 🔄 **Services:** Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint` und `/ui/execute_scan_trajectory` als Server an. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
  * ⚙️ **Parameter (P-Regler):**
  * `Kp_pos = 4.0` – Proportional-Gain für dynamische, aber stabile Positions-Anfahrten.
- * `Kp_ori = 2.0` – Proportional-Gain für die Orientierungskontrolle.
+ * `Kp_ori = 2.0` – Proportional-Gain für die Orientierungskontrolle (Axis-Angle).
  * `max_vel_pos = 0.5 * speed_multiplier` – Limitiert die TCP-Geschwindigkeit dynamisch basierend auf der UI-Skalierung.
  * `max_vel_ori = 1.0 * speed_multiplier` – Limitiert die Rotationsgeschwindigkeit dynamisch.
  * `position_tolerance = 0.002` – Der Regler stoppt exakt 2 mm vor dem absoluten Ziel.

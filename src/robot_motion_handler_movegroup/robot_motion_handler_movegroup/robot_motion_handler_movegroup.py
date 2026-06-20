@@ -393,9 +393,13 @@ class RobotMotionHandlerMovegroup(Node):
             
             # Timeout nach 30 Sekunden
             start_time = self.get_clock().now()
+            last_dist_pos = float('inf')
+            last_dist_ori = float('inf')
+            stuck_time = None
             
             while rclpy.ok():
-                if (self.get_clock().now() - start_time).nanoseconds / 1e9 > 30.0:
+                now_time = self.get_clock().now()
+                if (now_time - start_time).nanoseconds / 1e9 > 30.0:
                     raise Exception("Timeout: Ziel nicht erreicht in 30 Sekunden.")
                     
                 try:
@@ -408,7 +412,7 @@ class RobotMotionHandlerMovegroup(Node):
                 cur_y = trans.transform.translation.y
                 cur_z = trans.transform.translation.z
                 
-                # Aktuelle Orientierung (Quaternion) in Euler umwandeln
+                # Aktuelle Orientierung
                 cur_q = [
                     trans.transform.rotation.x,
                     trans.transform.rotation.y,
@@ -416,24 +420,35 @@ class RobotMotionHandlerMovegroup(Node):
                     trans.transform.rotation.w
                 ]
                 cur_rot = R.from_quat(cur_q)
-                cur_euler = cur_rot.as_euler('xyz', degrees=False)
                 
-                cur_roll = cur_euler[0]
-                cur_pitch = cur_euler[1]
-                cur_yaw = cur_euler[2]
-                
-                # Positions-Fehler
+                # Positions-Fehler im link_base
                 err_x = target_x - cur_x
                 err_y = target_y - cur_y
                 err_z = target_z - cur_z
                 
-                # Orientierungs-Fehler (kuerzesten Winkelabstand berechnen)
-                err_roll = (target_r - cur_roll + math.pi) % (2 * math.pi) - math.pi
-                err_pitch = (target_p - cur_pitch + math.pi) % (2 * math.pi) - math.pi
-                err_yaw = (target_yaw - cur_yaw + math.pi) % (2 * math.pi) - math.pi
+                # Orientierungs-Fehler als Rotationsvektor (Axis-Angle) im link_base
+                target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
+                err_rot = target_rot * cur_rot.inv()
+                err_rot_vec = err_rot.as_rotvec()
+                
+                err_roll = err_rot_vec[0]
+                err_pitch = err_rot_vec[1]
+                err_yaw = err_rot_vec[2]
                 
                 dist_pos = np.sqrt(err_x**2 + err_y**2 + err_z**2)
                 dist_ori = np.sqrt(err_roll**2 + err_pitch**2 + err_yaw**2)
+                
+                # Blockade-Erkennung (Stuck Detection)
+                if dist_pos > 0.01 or dist_ori > 0.05:
+                    if abs(last_dist_pos - dist_pos) < 0.0005 and abs(last_dist_ori - dist_ori) < 0.005:
+                        if stuck_time is None:
+                            stuck_time = now_time
+                        elif (now_time - stuck_time).nanoseconds / 1e9 > 2.0:
+                            raise Exception("Blockiert: Roboter bewegt sich nicht. Wahrscheinlich Kollision oder Limit erreicht.")
+                    else:
+                        stuck_time = None
+                        last_dist_pos = dist_pos
+                        last_dist_ori = dist_ori
                 
                 # Abbruchbedingung: Position < 2mm UND Winkel < ~1.1 Grad
                 if dist_pos < 0.002 and dist_ori < 0.02:
