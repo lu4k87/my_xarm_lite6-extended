@@ -102,7 +102,7 @@ class RobotMotionHandlerMovegroup(Node):
             import time
             time.sleep(1.0) # Give TF a moment to stabilize
             # Startup: Just move to initial pose directly
-            self._go_to_initial_pose_joints()
+            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Fahre auf Startpose...")
 
     def execute_initial_pose_cb(self, request, response):
         if self.is_executing:
