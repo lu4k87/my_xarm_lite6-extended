@@ -1,11 +1,5 @@
 # xArm ROS 2 Extended Workspace (ROS2 Humble) **[IN DEV]**
 
-### 🚀 Recent Updates
-- **Dynamic Initial Pose & Y-BTN Sync**: The "Initial Pose" movement (triggered via Web UI or Gamepad Y-BTN) now perfectly respects the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution.
-- **Optimized Launch Sequence**: Restructured the Nexus `runDevSetup` sequence. Base nodes and the MoveIt Servo now boot with a 1-second interval, while the ROS Bridge and Web UI boot last. This prevents WebSocket crashes and startup race conditions.
-- **Web UI Control Sync**: The Web UI movement speed and Cartesian jogging have been synchronized with the physical Gamepad controllers. The system now uses a `0.1` to `0.5` m/s range and dynamic trajectory recalculations to ensure 100% stutter-free and fast robotic movement at any speed.
-- **Robust IP Display**: Fixed dynamic Web UI telemetry showing the Real Arm IP utilizing global `rosapi` endpoints.
-
 This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
 > [!IMPORTANT]
 > **Core Prerequisite:** This repository is an *extension workspace*. It is built entirely on top of the official [xarm_ros2 repository (Branch: humble)](https://github.com/xArm-Developer/xarm_ros2/tree/humble) from UFactory. The official repository, its structure, and all of its system dependencies form the mandatory foundational baseline for this software!
@@ -268,8 +262,10 @@ To provide a clear understanding of the architecture, the software modules are c
  * 🟢 📤 **Publishes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Sends the finalized 3D boxes and markers to RViz for visualization and to downstream nodes.
  * ⚙️ **Parameters:**
  * `class_dimension_overrides` – Hardcodes expected metric dimensions (x,y,z) for specific objects to ensure the bounding box perfectly encloses the physical volume, not just the visible point cloud surface.
- * `percentiles: [2, 98]` – Hard-clips extreme depth noise pixels ("flying pixels" at object edges).
- * `ema_alpha: 0.3` – Smoothing factor (Exponential Moving Average) to eliminate box jittering between frames.
+ * `percentiles: [0.5, 99.5]` – Hard-clips extreme depth noise pixels ("flying pixels" at object edges) while preserving true boundaries.
+ * `ema_alpha: 0.2` – Smoothing factor (Exponential Moving Average) to safely eliminate box jittering between frames.
+* **`pointcloud_optimizer.py` [NODE]**
+ * 🎯 **Purpose & Task:** Actively runs in the background during the 3D Vision Bringup. It intercepts the raw ZED point cloud and transforms the coordinate system from the optical frame (`Z=forward`) to the standard ROS frame (`X=forward`) while preserving RGB data.
 * **`yolo_moveit_collision.py` [NODE]**
  * 🎯 **Purpose & Task:** Seamlessly converts the detected 3D boxes into dynamic MoveIt `CollisionObject` messages. Instead of a solid block, it generates an **open-top cup shape** (5 ultra-thin 1mm walls). This allows the gripper to safely penetrate the bounding box from above for top-down grasps, while securely blocking lateral collisions.
  * 🟠 📥 **Subscribes:** `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`). Reads the bounding boxes.
@@ -309,7 +305,7 @@ To provide a clear understanding of the architecture, the software modules are c
 * **`voice_command_listener.py` [NODE]**
  * 🎯 **Purpose & Task:** Analyzes the raw text using regex patterns, filters out filler words, and extracts defined action intents (e.g., "Grasp cup").
  * 🟠 📥 **Subscribes:** `/whisper/transcript_stream` (`std_msgs/String`).
- * 🟢 📤 **Publishes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Directly triggers the YOLO Grasp Executor and sends UI feedback to the dashboard.
+ * 🟢 📤 **Publishes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Publishes to the Action-Bridge to trigger the YOLO Grasp Executor and sends UI feedback to the dashboard.
 * **`gaze_ui_node.py` [SCRIPT / UI]**
  * 🎯 **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends direct movement and gripper commands.
  * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`). Directly controls the Cartesian velocity of the robot arm and uses UFactory services to operate the gripper.
@@ -323,13 +319,15 @@ To provide a clear understanding of the architecture, the software modules are c
  * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`), `/ui/robot_control/set_speed_index` (`std_msgs/Int32`).
  * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint`, `/ui/execute_scan_trajectory` (Clients).
 * **`robot_motion_handler_movegroup.py` [NODE]**
- * 🎯 **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger, a robust Cartesian P-Controller for direct coordinate approaches, and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo).
+ * 🎯 **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger, a robust Cartesian P-Controller for direct coordinate approaches, and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). The "Initial Pose" movement (triggered via Web UI or Gamepad Y-BTN) now perfectly respects the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution.
  * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Scales the velocity of the P-Controller and Joint movements synchronously with the UI.
  * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
  * 🔄 **Services:** Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint` and `/ui/execute_scan_trajectory` as Server. Has a TF2 listener for real-time TCP coordinates.
  * ⚙️ **Parameters (P-Controller):**
- * `Kp_pos = 2.5` – Proportional gain for dynamic, yet stable approaches.
- * `max_vel_pos = 0.2` – Limits the TCP velocity to 0.2 m/s.
+ * `Kp_pos = 4.0` – Proportional gain for dynamic, yet stable positional approaches.
+ * `Kp_ori = 2.0` – Proportional gain for orientation control.
+ * `max_vel_pos = 0.5 * speed_multiplier` – Dynamically limits TCP velocity based on UI speed scale.
+ * `max_vel_ori = 1.0 * speed_multiplier` – Dynamically limits orientation velocity.
  * `position_tolerance = 0.002` – The controller stops exactly 2 mm before the absolute target.
 * **`rviz_overlay.py` & `servo_status_overlay.py` [NODES]**
  * 🎯 **Purpose & Task:** Project color-coded warning messages (e.g., "COLLISION!") and live axis coordinates directly into the video stream of the RViz viewport.
@@ -343,9 +341,9 @@ To provide a clear understanding of the architecture, the software modules are c
 * **`robot_control_web_ui` [WEB APP]**
  * 🎯 **Purpose & Task:** A native-feeling, standalone Chrome Web App designed with a modern Glassmorphism aesthetic. It acts as a comprehensive multimodal dashboard directly replicating the RViz control panel features for remote operation. Operates on **Port 8081**.
  * ✨ **Core Features:**
- * **Advanced Telemetry:** Live system status pills for network ports (UI, WS, Nexus), active Gamepad connection (USB), and automatic Hardware Mode detection (Fake Arm vs. Real Arm IP).
+ * **Advanced Telemetry:** Live system status pills for network ports (UI, WS, Nexus), active Gamepad connection (USB), and automatic Hardware Mode detection (Fake Arm vs. Real Arm IP, reliably sourced via global `rosapi` endpoints).
  * **MoveIt Servo Monitoring:** Dynamic UI indicators (Green/Orange/Red) with pulsing animations that mirror MoveIt collision/wait states in real-time.
- * **Virtual Teleoperation:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments.
+ * **Virtual Teleoperation:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments. Movement speed and Cartesian jogging have been perfectly synchronized with the physical Gamepad controllers, utilizing a `0.1` to `0.5` m/s range and dynamic trajectory recalculations to ensure 100% stutter-free and fast robotic movement at any speed.
  * **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
  * **Color-Coded Console Log:** A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
  * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status`, `/zed/bboxes_3d`, `/ui/voice_feedback`, `/ui/robot_control/current_speed`, `/ui/grasp_status` (via `rosbridge`).
@@ -718,7 +716,7 @@ This section describes the step-by-step process to launch both the hardware and 
 2. **Connect the Controller:** Turn on the Xbox One Elite Series 2 Controller and ensure it is connected to the host PC via Bluetooth or USB.
 
 ### <a id="subchapter-8-2"></a> 8.2 Step 2: Launch the System (ROS 2 Nexus)
-Normally in robotics, multiple terminals must be opened to execute a multitude of long `ros2 run` or `ros2 launch` commands in parallel to start the individual nodes. The **ROS 2 Nexus** WebApp was built precisely to solve this problem: Instead of memorizing complex CLI commands, all required nodes and launch files can be conveniently started with a single click directly from the browser.
+Normally in robotics, multiple terminals must be opened to execute a multitude of long `ros2 run` or `ros2 launch` commands in parallel to start the individual nodes. The **ROS 2 Nexus** WebApp was built precisely to solve this problem: Instead of memorizing complex CLI commands, all required nodes and launch files can be conveniently started with a single click directly from the browser. The Nexus `runDevSetup` sequence has been highly optimized: Base nodes and the MoveIt Servo now boot with a 1-second interval, while the ROS Bridge and Web UI boot last. This structured startup order strictly prevents WebSocket crashes and startup race conditions.
 
 **Launch via Terminal:**
 ```bash
