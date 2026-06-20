@@ -174,8 +174,11 @@ speedSub.subscribe((msg) => {
   else if (Math.abs(speedScale - 2.0) < 0.01) index = 4;
   
   const slider = document.getElementById('speed-slider');
-  if (slider && slider.value != index) {
-    slider.value = index;
+  if (slider) {
+    if (slider.value != index) {
+      slider.value = index;
+    }
+    slider.style.backgroundSize = (index / 4 * 100) + '% 100%';
   }
   
   const percentages = ["12.5%", "25%", "50%", "75%", "100%"];
@@ -347,6 +350,8 @@ function logMsg(source, text, type='info') {
 
 function updateSpeed(val) {
   speedIndexPub.publish(new ROSLIB.Message({ data: parseInt(val) }));
+  const slider = document.getElementById('speed-slider');
+  if (slider) slider.style.backgroundSize = (val / 4 * 100) + '% 100%';
 }
 
 function setFrame(frame) {

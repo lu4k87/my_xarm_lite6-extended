@@ -265,8 +265,8 @@ header {
 
 .j-bar {
   background: rgba(0,0,0,0.4);
-  height: 8px;
-  border-radius: 4px;
+  height: 4px;
+  border-radius: 2px;
   position: relative;
   overflow: visible;
   cursor: grab;
@@ -277,9 +277,9 @@ header {
   left: 50%;
   top: 0;
   height: 100%;
-  background: var(--accent);
+  background: rgba(56, 189, 248, 0.5);
   width: 0%;
-  border-radius: 4px;
+  border-radius: 2px;
   transition: width 0.1s, left 0.1s;
 }
 
@@ -287,14 +287,14 @@ header {
 .j-fill::after {
   content: '';
   position: absolute;
-  right: -8px;
+  right: -6px;
   top: 50%;
   transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  background: var(--accent);
+  width: 12px;
+  height: 12px;
+  background: rgba(56, 189, 248, 0.8);
   border-radius: 50%;
-  box-shadow: 0 0 5px rgba(0,0,0,0.5);
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
   pointer-events: none;
 }
 
@@ -452,8 +452,35 @@ header {
 .speed-control label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--mut); }
 .speed-control span { color: var(--accent); font-weight: 700; }
 input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
-  accent-color: var(--accent);
+  background: rgba(0, 0, 0, 0.4);
+  background-image: linear-gradient(rgba(56, 189, 248, 0.5), rgba(56, 189, 248, 0.5));
+  background-repeat: no-repeat;
+  background-size: 50% 100%;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: rgba(56, 189, 248, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+input[type=range]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: rgba(56, 189, 248, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  cursor: pointer;
+  border: none;
 }
 
 /* Right Column Panels */
