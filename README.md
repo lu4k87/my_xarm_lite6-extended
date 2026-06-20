@@ -319,16 +319,10 @@ To provide a clear understanding of the architecture, the software modules are c
  * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`), `/ui/robot_control/set_speed_index` (`std_msgs/Int32`).
  * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint`, `/ui/execute_scan_trajectory` (Clients).
 * **`robot_motion_handler_movegroup.py` [NODE]**
- * 🎯 **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger, a highly robust Cartesian P-Controller using **Axis-Angle (Rotation Vector) mathematics** to completely eliminate Gimbal Lock/Euler flip issues during coordinate approaches, and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). It also features a **2-second Stuck-Detection** (Blockade-Erkennung) to safely abort and prevent 30-second UI freezes if the robot hits a physical limit or singularity. The "Initial Pose" movement (triggered via Web UI or Gamepad Y-BTN) perfectly respects the global `speedScale`.
- * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Scales the velocity of the P-Controller and Joint movements synchronously with the UI.
- * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
- * 🔄 **Services:** Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint` and `/ui/execute_scan_trajectory` as Server. Has a TF2 listener for real-time TCP coordinates.
- * ⚙️ **Parameters (P-Controller):**
- * `Kp_pos = 4.0` – Proportional gain for dynamic, yet stable positional approaches.
- * `Kp_ori = 2.0` – Proportional gain for orientation control (Axis-Angle).
- * `max_vel_pos = 0.5 * speed_multiplier` – Dynamically limits TCP velocity based on UI speed scale.
- * `max_vel_ori = 1.0 * speed_multiplier` – Dynamically limits orientation velocity.
- * `position_tolerance = 0.002` – The controller stops exactly 2 mm before the absolute target.
+ * 🎯 **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Execute to Pose" and "Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The joint movements perfectly respect the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution.
+ * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Scales the velocity of the Joint movements synchronously with the UI.
+ * 🟢 📤 **Publishes:** `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
+ * 🔄 **Services:** Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint` and `/ui/execute_scan_trajectory` as Server. Uses `/compute_ik` (MoveIt IK) as a Client to resolve Cartesian targets. Has a TF2 listener for real-time TCP coordinates.
 * **`rviz_overlay.py` & `servo_status_overlay.py` [NODES]**
  * 🎯 **Purpose & Task:** Project color-coded warning messages (e.g., "COLLISION!") and live axis coordinates directly into the video stream of the RViz viewport.
  * 🟠 📥 **Subscribes:** `/servo_server/status` (`std_msgs/Int8`), `/ui/collision_msg` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`). Listens for critical warning flags and frame updates.

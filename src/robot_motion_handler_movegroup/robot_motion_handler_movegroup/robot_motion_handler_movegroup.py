@@ -47,6 +47,9 @@ class RobotMotionHandlerMovegroup(Node):
             10
         )
         
+        from moveit_msgs.srv import GetPositionIK
+        self.ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
+        
         self.servo_stop_client = self.create_client(Trigger, '/servo_server/stop_servo', callback_group=self.cb_group)
         self.servo_start_client = self.create_client(Trigger, '/servo_server/start_servo', callback_group=self.cb_group)
         self.srv = self.create_service(
@@ -149,7 +152,7 @@ class RobotMotionHandlerMovegroup(Node):
                 self.is_executing = True
 
             # --- PHASE 2: MOVE TO INITIAL POSE ---
-            self._go_to_initial_pose_joints()
+            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Fahre auf Startpose...")
                 
             response.success = True
             response.message = "Initial Pose reached."
@@ -162,7 +165,7 @@ class RobotMotionHandlerMovegroup(Node):
             
         return response
 
-    def _go_to_initial_pose_joints(self):
+    def _go_to_joints(self, target_joints, log_msg="Fahre zu Zielpose..."):
         # 1. Stop MoveIt Servo
         if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
             from std_srvs.srv import Trigger
@@ -177,7 +180,7 @@ class RobotMotionHandlerMovegroup(Node):
         msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
         
         point = JointTrajectoryPoint()
-        point.positions = [0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0]
+        point.positions = target_joints
         point.velocities = [0.0] * 6
         
         # Skaliere Dauer anhand des globalen Speed Factors (0.5 = 1x Speed)
@@ -187,7 +190,7 @@ class RobotMotionHandlerMovegroup(Node):
         
         msg.points.append(point)
         self.publisher_.publish(msg)
-        self.get_logger().info('Trajektorie gesendet. Fahre auf Startpose...')
+        self.get_logger().info(f'Trajektorie gesendet. {log_msg}')
         
         # Warte auf die Ausfuehrung der Bewegung
         time.sleep(duration_sec + 0.5)
@@ -367,7 +370,9 @@ class RobotMotionHandlerMovegroup(Node):
             
         self.is_executing = True
         try:
-            from geometry_msgs.msg import TwistStamped
+            from moveit_msgs.srv import GetPositionIK
+            from geometry_msgs.msg import PoseStamped
+            from scipy.spatial.transform import Rotation as R
             
             # Ziel-Koordinaten (Panel sendet mm, Konvertierung in m)
             target_x = request.pose[0] / 1000.0
@@ -378,117 +383,66 @@ class RobotMotionHandlerMovegroup(Node):
             target_p = request.pose[4]
             target_yaw = request.pose[5]
             
-            # P-Regler Konstanten
-            Kp_pos = 4.0
-            Kp_ori = 2.0
+            self.get_logger().info(f"MoveTo gestartet (IK-Modus): X={target_x:.3f}, Y={target_y:.3f}, Z={target_z:.3f}")
             
-            # Skaliere Geschwindigkeiten anhand des globalen Speed Factors (0.5 ist Standard = 1x)
-            speed_multiplier = self.current_speed_scale / 0.5
-            max_vel_pos = 0.5 * speed_multiplier # m/s (erhoeht fuer schnellere Moves)
-            max_vel_ori = 1.0 * speed_multiplier # rad/s (erhoeht)
+            # 1. Konvertiere Euler zu Quaternion
+            target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
+            q = target_rot.as_quat() # [x, y, z, w]
             
-            rate = self.create_rate(20.0) # 20 Hz loop
+            # 2. IK Request aufbauen
+            ik_req = GetPositionIK.Request()
+            ik_req.ik_request.group_name = "lite6"
+            ik_req.ik_request.pose_stamped = PoseStamped()
+            ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
+            ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
+            ik_req.ik_request.pose_stamped.pose.position.y = float(target_y)
+            ik_req.ik_request.pose_stamped.pose.position.z = float(target_z)
+            ik_req.ik_request.pose_stamped.pose.orientation.x = float(q[0])
+            ik_req.ik_request.pose_stamped.pose.orientation.y = float(q[1])
+            ik_req.ik_request.pose_stamped.pose.orientation.z = float(q[2])
+            ik_req.ik_request.pose_stamped.pose.orientation.w = float(q[3])
+            ik_req.ik_request.timeout.sec = 1
             
-            self.get_logger().info(f"MoveTo gestartet: X={target_x:.3f}, Y={target_y:.3f}, Z={target_z:.3f}")
+            # 3. Call IK Service
+            if not self.ik_client.wait_for_service(timeout_sec=2.0):
+                raise Exception("IK Service /compute_ik nicht verfuegbar!")
+                
+            future = self.ik_client.call_async(ik_req)
             
-            # Timeout nach 30 Sekunden
-            start_time = self.get_clock().now()
-            last_dist_pos = float('inf')
-            last_dist_ori = float('inf')
-            stuck_time = None
-            
-            while rclpy.ok():
-                now_time = self.get_clock().now()
-                if (now_time - start_time).nanoseconds / 1e9 > 30.0:
-                    raise Exception("Timeout: Ziel nicht erreicht in 30 Sekunden.")
-                    
-                try:
-                    trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
-                except Exception as e:
-                    time.sleep(0.1)
-                    continue
-                    
-                cur_x = trans.transform.translation.x
-                cur_y = trans.transform.translation.y
-                cur_z = trans.transform.translation.z
-                
-                # Aktuelle Orientierung
-                cur_q = [
-                    trans.transform.rotation.x,
-                    trans.transform.rotation.y,
-                    trans.transform.rotation.z,
-                    trans.transform.rotation.w
-                ]
-                cur_rot = R.from_quat(cur_q)
-                
-                # Positions-Fehler im link_base
-                err_x = target_x - cur_x
-                err_y = target_y - cur_y
-                err_z = target_z - cur_z
-                
-                # Orientierungs-Fehler als Rotationsvektor (Axis-Angle) im link_base
-                target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
-                err_rot = target_rot * cur_rot.inv()
-                err_rot_vec = err_rot.as_rotvec()
-                
-                err_roll = err_rot_vec[0]
-                err_pitch = err_rot_vec[1]
-                err_yaw = err_rot_vec[2]
-                
-                dist_pos = np.sqrt(err_x**2 + err_y**2 + err_z**2)
-                dist_ori = np.sqrt(err_roll**2 + err_pitch**2 + err_yaw**2)
-                
-                # Blockade-Erkennung (Stuck Detection)
-                if dist_pos > 0.01 or dist_ori > 0.05:
-                    if abs(last_dist_pos - dist_pos) < 0.0005 and abs(last_dist_ori - dist_ori) < 0.005:
-                        if stuck_time is None:
-                            stuck_time = now_time
-                        elif (now_time - stuck_time).nanoseconds / 1e9 > 2.0:
-                            raise Exception("Blockiert: Roboter bewegt sich nicht. Wahrscheinlich Kollision oder Limit erreicht.")
-                    else:
-                        stuck_time = None
-                        last_dist_pos = dist_pos
-                        last_dist_ori = dist_ori
-                
-                # Abbruchbedingung: Position < 2mm UND Winkel < ~1.1 Grad
-                if dist_pos < 0.002 and dist_ori < 0.02:
-                    break
-                    
-                # Geschwindigkeiten berechnen (Linear)
-                vx = np.clip(err_x * Kp_pos, -max_vel_pos, max_vel_pos)
-                vy = np.clip(err_y * Kp_pos, -max_vel_pos, max_vel_pos)
-                vz = np.clip(err_z * Kp_pos, -max_vel_pos, max_vel_pos)
-                
-                # Geschwindigkeiten berechnen (Angular)
-                wx = np.clip(err_roll * Kp_ori, -max_vel_ori, max_vel_ori)
-                wy = np.clip(err_pitch * Kp_ori, -max_vel_ori, max_vel_ori)
-                wz = np.clip(err_yaw * Kp_ori, -max_vel_ori, max_vel_ori)
-                
-                # Sende Twist an Servo
-                t = TwistStamped()
-                t.header.frame_id = 'link_base'
-                t.header.stamp = self.get_clock().now().to_msg()
-                t.twist.linear.x = float(vx)
-                t.twist.linear.y = float(vy)
-                t.twist.linear.z = float(vz)
-                
-                # Orientierung korrigieren
-                t.twist.angular.x = float(wx)
-                t.twist.angular.y = float(wy)
-                t.twist.angular.z = float(wz)
-                
-                self.twist_pub.publish(t)
+            # Warte auf IK Antwort
+            import time
+            start_wait = time.time()
+            while not future.done():
+                if time.time() - start_wait > 2.0:
+                    raise Exception("Timeout beim Warten auf IK-Antwort.")
                 time.sleep(0.05)
                 
-            # Stopp-Kommando senden
-            t_stop = TwistStamped()
-            t_stop.header.frame_id = 'link_base'
-            t_stop.header.stamp = self.get_clock().now().to_msg()
-            self.twist_pub.publish(t_stop)
+            ik_res = future.result()
+            
+            if ik_res.error_code.val != 1: # 1 == SUCCESS
+                raise Exception(f"IK Berechnung fehlgeschlagen (Error Code: {ik_res.error_code.val}). Ziel auerhalb der Reichweite oder in Kollision.")
+                
+            # 4. Extrahiere Gelenkwinkel
+            joint_names = ik_res.solution.joint_state.name
+            positions = ik_res.solution.joint_state.position
+            
+            # Sicherstellen, dass die Reihenfolge joint1...joint6 ist
+            target_joints = [0.0] * 6
+            for i in range(1, 7):
+                j_name = f'joint{i}'
+                if j_name in joint_names:
+                    idx = joint_names.index(j_name)
+                    target_joints[i-1] = positions[idx]
+                else:
+                    raise Exception(f"Gelenk {j_name} nicht in IK Loesung gefunden!")
+                    
+            # 5. Führe Gelenkbewegung aus
+            self._go_to_joints(target_joints, log_msg="Execute MoveTo Pose via IK...")
             
             self.get_logger().info("MoveTo Ziel erfolgreich erreicht!")
             response.ret = 0
             response.message = "Success"
+            
         except Exception as e:
             self.get_logger().error(f"Error in MoveTo: {e}")
             response.ret = -1
