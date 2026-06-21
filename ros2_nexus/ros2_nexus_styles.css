@@ -27,6 +27,10 @@
       /* Violett          — System CMD         */
       --c-kill: #f87171;
       /* Rot              — Kill / Danger      */
+      --c-server: #818cf8;
+      /* Indigo           — Server Launch      */
+      --c-client: #d946ef;
+      /* Fuchsia          — Client Launch      */
 
       --glow-a: 0 0 18px rgba(56, 189, 248, .25);
       --glow-o: 0 0 18px rgba(249, 115, 22, .3);
@@ -575,6 +579,14 @@
       --card-accent: linear-gradient(90deg, var(--c-pub) 0%, rgba(16, 185, 129, 0) 35%);
     }
 
+    .action-card[data-type="server"] {
+      --card-accent: linear-gradient(90deg, var(--c-server) 0%, rgba(129, 140, 248, 0) 35%);
+    }
+
+    .action-card[data-type="client"] {
+      --card-accent: linear-gradient(90deg, var(--c-client) 0%, rgba(217, 70, 239, 0) 35%);
+    }
+
     .action-btn {
       flex: 1;
       padding: 8px 12px;
@@ -662,6 +674,18 @@
       background: rgba(16, 185, 129, .12);
       color: var(--c-pub);
       border-color: rgba(16, 185, 129, .25)
+    }
+
+    .badge-server {
+      background: rgba(129, 140, 248, .12);
+      color: var(--c-server);
+      border-color: rgba(129, 140, 248, .3)
+    }
+
+    .badge-client {
+      background: rgba(217, 70, 239, .12);
+      color: var(--c-client);
+      border-color: rgba(217, 70, 239, .3)
     }
 
     /* CMD line — full width, always fully visible */
