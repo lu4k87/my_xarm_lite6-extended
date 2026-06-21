@@ -184,6 +184,9 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 **VR-Controller Steuerung** (in Bearbeitung...): <br>
 * Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
 
+**Robot Control UI:** <br>
+* Umfassendes webbasiertes Dashboard mit virtuellem 2D-Analog-Joystick, absoluten 6-DoF-Gelenk-Slidern und Live-Telemetrie zur Remote-Teleoperation.
+
 ### <a id="subchapter-4-2"></a> 4.2 Sensorik & Assistenz (Perception)
 **Computer Vision:** <br> 
 * **[VERALTET]** Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* über PiCameras. Die Objekterkennung erfolgt vollständig in 3D durch die ZED-Kamera.

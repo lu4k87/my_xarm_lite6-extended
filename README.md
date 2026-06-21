@@ -181,6 +181,9 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 **VR Controller Control** (in progress...): <br>
 * Immersive, spatial teleoperation through precise 6DoF tracking (Six Degrees of Freedom) and haptic feedback using Virtual Reality controllers.
 
+**Robot Control UI:** <br>
+* Comprehensive web-based dashboard featuring a virtual 2D analog joystick, 6-DoF absolute joint sliders, and live telemetry for remote teleoperation.
+
 ### <a id="subchapter-4-2"></a> 4.2 Perception & Assistance
 **Computer Vision:** <br> 
 * **[DEPRECATED]** Spatial 2D object detection and localization using *YOLO* via PiCameras. The ZED Mini camera natively handles this in 3D.
