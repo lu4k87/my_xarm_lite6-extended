@@ -760,6 +760,7 @@ Hier läuft die gesamte rechenintensive Infrastruktur. Das Gamepad wird hier **n
 
 #### Remote-Rechner / Operator-Station
 Hier laufen **ausschließlich** die Gamepad-Eingaben und die grafische Nutzeroberfläche.
+- *Visual Sync:* Da ROS 2 DDS die `joint_states` und `tf` (Koordinaten) des Roboters kontinuierlich im Netzwerk überträgt, siehst du die 3D-Bewegungen absolut synchron und in Echtzeit in RViz2 auf **beiden** Rechnern gleichzeitig.
 1. **Gamepad-Treiber:** Das Gamepad anschließen und den Node starten:
    ```bash
    ros2 run joy joy_node

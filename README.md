@@ -782,6 +782,7 @@ The host PC handles all computationally heavy infrastructure. The gamepad is **n
 
 #### Remote Machine / Operator Station
 This machine **exclusively** runs the gamepad inputs and the graphical user interface.
+- *Visual Sync:* Because ROS 2 DDS continuously broadcasts the robot's `joint_states` and `tf` data, you will see the exact same real-time 3D movements in RViz2 on **both** the Server and the Client simultaneously.
 1. **Gamepad Driver:** Connect your gamepad and run the node:
    ```bash
    ros2 run joy joy_node
