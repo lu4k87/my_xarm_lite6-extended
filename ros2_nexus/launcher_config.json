@@ -338,7 +338,7 @@
           "type": "node"
         },
         {
-          "cmd": "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html) & wait",
+          "cmd": "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
           "label": "Webserver Port 8081 - Robot Control Web UI",
           "type": "node"
         },
@@ -361,7 +361,7 @@
           "type": "sys"
         },
         {
-          "cmd": "google-chrome --app=http://localhost:8081/index.html || chromium-browser --app=http://localhost:8081/index.html || xdg-open http://localhost:8081/index.html",
+          "cmd": "google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html",
           "label": "Robot Control Web UI öffnen",
           "mode": "bg",
           "type": "sys"
