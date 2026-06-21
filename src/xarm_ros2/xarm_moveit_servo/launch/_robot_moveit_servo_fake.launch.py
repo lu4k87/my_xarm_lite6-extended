@@ -66,8 +66,6 @@ def launch_setup(context, *args, **kwargs):
     # 2: xbox360 wireless
     # 3: spacemouse wireless
     joystick_type = LaunchConfiguration('joystick_type', default=1)
-    launch_joy = LaunchConfiguration('launch_joy', default=True)
-    launch_checker = LaunchConfiguration('launch_checker', default=True)
     ros_namespace = LaunchConfiguration('ros_namespace', default='').perform(context)
 
     moveit_config_package_name = 'xarm_moveit_config'
@@ -226,7 +224,6 @@ def launch_setup(context, *args, **kwargs):
                 servo_params,
                 robot_description_parameters,
             ],
-            # extra_arguments=[{'use_intra_process_comms': True}],
         ),
         ComposableNode(
             package='xarm_moveit_servo',
@@ -241,23 +238,21 @@ def launch_setup(context, *args, **kwargs):
                     'joy_topic': '/joy_check'
                 },
             ],
-            # extra_arguments=[{'use_intra_process_comms': True}],
-        )
+        ),
     ]
 
-    if launch_joy.perform(context) in ('True', 'true'):
+    run_checker = LaunchConfiguration('joystick_and_checker', default='true').perform(context).lower() in ['true', '1', 't', 'y', 'yes']
+    if run_checker:
         composable_nodes.append(
             ComposableNode(
                 package='joy',
                 plugin='joy::Joy',
                 name='joy_node',
-                parameters=[
-                    # {'autorepeat_rate': 50.0},
-                ],
-                # extra_arguments=[{'use_intra_process_comms': True}],
+                parameters=[],
             )
         )
 
+    # Launch as much as possible in components
     container = ComposableNodeContainer(
         name='xarm_moveit_servo_container',
         namespace='/',
@@ -272,6 +267,7 @@ def launch_setup(context, *args, **kwargs):
         executable='checker',
         name='collision_checker',
         output='screen',
+        condition=launch.conditions.IfCondition(LaunchConfiguration('joystick_and_checker', default='true'))
     )
 
     set_pose_moveit_node = Node(
@@ -281,7 +277,7 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
-    nodes_to_launch = [
+    return [
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=traj_controller_node,
@@ -292,13 +288,9 @@ def launch_setup(context, *args, **kwargs):
         joint_state_broadcaster,
         ros2_control_launch,
         traj_controller_node,
+        checker_node,
         set_pose_moveit_node,
     ] + controller_nodes
-
-    if launch_checker.perform(context) in ('True', 'true'):
-        nodes_to_launch.append(checker_node)
-
-    return nodes_to_launch
 
 
 def generate_launch_description():

@@ -713,7 +713,7 @@ This section describes the step-by-step process to launch both the hardware and 
 2. **Connect the Controller:** Turn on the Xbox One Elite Series 2 Controller and ensure it is connected to the host PC via Bluetooth or USB.
 
 ### <a id="subchapter-8-2"></a> 8.2 Step 2: Launch the System (ROS 2 Nexus)
-Normally in robotics, multiple terminals must be opened to execute a multitude of long `ros2 run` or `ros2 launch` commands in parallel to start the individual nodes. The **ROS 2 Nexus** WebApp was built precisely to solve this problem: Instead of memorizing complex CLI commands, all required nodes and launch files can be conveniently started with a single click directly from the browser. The Nexus `runServerSetup` and `runClientSetup` sequences have been highly optimized: Base nodes and the MoveIt Servo now boot with a 1-second interval, while the ROS Bridge and Web UI boot last. This structured startup order strictly prevents WebSocket crashes and startup race conditions.
+Normally in robotics, multiple terminals must be opened to execute a multitude of long `ros2 run` or `ros2 launch` commands in parallel to start the individual nodes. The **ROS 2 Nexus** WebApp was built precisely to solve this problem: Instead of memorizing complex CLI commands, all required nodes and launch files can be conveniently started with a single click directly from the browser. The Nexus `runDevSetup` sequence has been highly optimized: Base nodes and the MoveIt Servo now boot with a 1-second interval, while the ROS Bridge and Web UI boot last. This structured startup order strictly prevents WebSocket crashes and startup race conditions.
 
 **Launch via Terminal:**
 ```bash
@@ -775,21 +775,33 @@ source ~/dev_ws/install/setup.bash
 #### Host PC (The Brain)
 The host PC handles all computationally heavy infrastructure. The gamepad is **not** connected here.
 - Open the **ROS 2 Nexus Web Dashboard** (`./ros2_nexus_web_start.sh`).
-- Under "AUTOMATED SYSTEM BRINGUP", click the **▶ RUN SERVER (FAKE)** or **▶ RUN SERVER (REAL)** action button.
-  *(This button automatically passes `launch_joy:=false launch_checker:=false` to the launch files so the server does not launch unnecessary gamepad processes).*
-- *Optional:* Launch additional nodes (ZED, YOLO, Whisper) via the GUI.
+- Click the **▶ RUN SERVER (FAKE)** or **▶ RUN SERVER (REAL)** action button.
+- *Technical background:* The server nodes are launched with the `joystick_and_checker:=false` argument. This ensures that the Gamepad driver (`joy_node`) and the local `checker` node are not launched on the Server, keeping the network free of duplicate nodes and allowing the Operator Station to handle them.
+- Start the **MoveGroup Server (FAKE / REAL)** (handles OMPL planning).
+- *Optional:* Launch Vision modules (ZED, YOLO) or AI modules (Whisper) via their respective buttons in the GUI.
 
 #### Remote Machine / Operator Station
 This machine **exclusively** runs the gamepad inputs and the graphical user interface.
-- Since the setup is automated, you can simply open **ROS 2 Nexus** on the remote machine as well (at `http://<Host-IP>:5000` or locally via `./ros2_nexus_web_start.sh`).
-- Under "OPERATOR CLIENT BRINGUP", click the **▶ RUN CLIENT (Remote)** action button.
-
-Alternatively, you can run the commands manually:
-1. **Gamepad Driver:** `ros2 run joy joy_node` *(Reads local inputs and broadcasts raw data over `/joy`).*
-2. **Collision Guard:** `ros2 run collision_check checker` *(Calculates safety limits locally and publishes the safe signal to `/joy_check`).*
-3. **ROS Bridge Server:** `ros2 run rosbridge_server rosbridge_websocket` *(Port 9090).*
-4. **Robot Control Web UI:** `cd ~/dev_ws/src/robot_control_web_ui && python3 -m http.server 8081` *(The UI connects seamlessly through the local WebSocket).*
-5. **RViz2:** `rviz2 -d ~/dev_ws/src/xarm_ros2/xarm_moveit_servo/rviz/servo.rviz` *(Connects via DDS to the host and renders 3D locally with hardware acceleration).*
+1. **Gamepad Driver:** Connect your gamepad and run the node:
+   ```bash
+   ros2 run joy joy_node
+   ```
+   *(Reads local inputs and broadcasts raw data over `/joy` into the DDS network).*
+2. **Collision Guard (Checker Node):**
+   ```bash
+   ros2 run collision_check checker
+   ```
+   *(Subscribes to `/joy`, calculates safety limits locally via TF, and publishes the safe signal to `/joy_check` for the Host PC).*
+3. **ROS Bridge Server (For Web UI):**
+   ```bash
+   ros2 run rosbridge_server rosbridge_websocket
+   ```
+   *(Bridges the ROS network locally to WebSocket port 9090).*
+4. **Robot Control Web UI:**
+   ```bash
+   cd ~/dev_ws/src/robot_control_web_ui && python3 -m http.server 8081
+   ```
+   *(Open `http://localhost:8081` in your browser. The UI connects seamlessly through the local WebSocket).*
 
 ---
 
