@@ -120,6 +120,13 @@ def _open_terminal(script: str, title: str):
 def index():
     return send_from_directory(BASE_DIR, "ros2_nexus_web.html")
 
+@app.route("/ros2_nexus_styles.css")
+def styles():
+    return send_from_directory(BASE_DIR, "ros2_nexus_styles.css")
+
+@app.route("/ros2_nexus_script.js")
+def script():
+    return send_from_directory(BASE_DIR, "ros2_nexus_script.js")
 
 @app.route("/icon")
 def icon():

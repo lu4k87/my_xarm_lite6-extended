@@ -855,6 +855,8 @@ dev_ws/
 │ ├── launcher_config.json # Konfigurationsdatei für Nexus-Buttons
 │ ├── ros2_nexus_web.py # Nexus Web Backend — ROS 2 Nexus Web UI
 │ ├── ros2_nexus_web.html # Frontend-HTML für Nexus
+│ ├── ros2_nexus_styles.css # Frontend-CSS für Nexus
+│ ├── ros2_nexus_script.js # Frontend-Logik für Nexus
 │ ├── ros2_nexus_web_start.sh # Auto-Start-Skript
 │ ├── ROS2_Nexus.desktop # Ubuntu Anwendungsverknüpfung
 │ ├── lite6.sh # Hardware-Bringup-Skript
