@@ -11,6 +11,7 @@ import yaml
 from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import OpaqueFunction, IncludeLaunchDescription, RegisterEventHandler
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
@@ -265,7 +266,7 @@ def launch_setup(context, *args, **kwargs):
         executable='checker',
         name='collision_checker',
         output='screen',
-        condition=launch.conditions.IfCondition(LaunchConfiguration('joystick_and_checker', default='true'))
+        condition=IfCondition(LaunchConfiguration('joystick_and_checker', default='true'))
     )
 
     set_pose_moveit_node = Node(
