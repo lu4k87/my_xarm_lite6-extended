@@ -691,7 +691,7 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 2. **Controller verbinden:** Schalte den Xbox One Elite Series 2 Controller ein und prüfe die Verbindung (Bluetooth oder USB) mit dem Host-PC.
 
 ### <a id="subchapter-8-2"></a> 8.2 Schritt 2: System starten (ROS 2 Nexus)
-Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- oder `ros2 launch`-Befehle in mehreren Terminals parallel ausgeführt werden, um die einzelnen Nodes zu starten. Genau um dieses Problem zu lösen, wurde die **ROS 2 Nexus** WebApp entwickelt: Anstatt komplexe CLI-Befehle auswendig zu lernen, lassen sich alle benötigten Nodes und Launch-Files bequem per Klick direkt aus dem Browser heraus starten. Die Nexus `runDevSetup` Sequenz startet die Backend-Nodes und MoveIt nun mit einer Sekunde Verzögerung dazwischen, während die ROS Bridge und Web UI als Letztes laden. Dies beugt WebSocket-Abbrüchen vor.
+Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- oder `ros2 launch`-Befehle in mehreren Terminals parallel ausgeführt werden, um die einzelnen Nodes zu starten. Genau um dieses Problem zu lösen, wurde die **ROS 2 Nexus** WebApp entwickelt: Anstatt komplexe CLI-Befehle auswendig zu lernen, lassen sich alle benötigten Nodes und Launch-Files bequem per Klick direkt aus dem Browser heraus starten. Die UI ist dabei übersichtlich in zwei Hauptbereiche unterteilt: **Automated System Bringup** (für die lokale Entwicklung an einem PC) und **Remote Control System Bringup** (für verteilte Server/Client-Ausführung). Die Hintergrund-Startsequenzen wurden stark optimiert: Die Backend-Nodes und MoveIt starten nun mit einer Sekunde Verzögerung dazwischen, während die ROS Bridge und Web UI als Letztes laden. Dies beugt WebSocket-Abbrüchen vor.
 
 **Start über Terminal:**
 ```bash
@@ -761,22 +761,13 @@ Hier läuft die gesamte rechenintensive Infrastruktur. Das Gamepad wird hier **n
 #### Remote-Rechner / Operator-Station
 Hier laufen **ausschließlich** die Gamepad-Eingaben und die grafische Nutzeroberfläche.
 - *Visual Sync:* Da ROS 2 DDS die `joint_states` und `tf` (Koordinaten) des Roboters kontinuierlich im Netzwerk überträgt, siehst du die 3D-Bewegungen absolut synchron und in Echtzeit in RViz2 auf **beiden** Rechnern gleichzeitig.
-1. **Gamepad-Treiber:** Das Gamepad anschließen und den Node starten:
+1. **Nexus WebApp auf dem Client PC starten:**
    ```bash
-   ros2 run joy joy_node
+   cd ~/dev_ws
+   python3 ros2_nexus/ros2_nexus_web.py
    ```
-   *(Liest lokale Eingaben und funkt rohe Daten auf `/joy` in das DDS-Netzwerk).*
-2. **Kollisionswächter (Checker Node):**
-   ```bash
-   ros2 run collision_check checker
-   ```
-   *(Lauscht auf `/joy`, berechnet lokal via TF die Sicherheitsparameter und publiziert das bereinigte Signal auf `/joy_check` für den Host).*
-3. **ROS Bridge Server (Für die UI):**
-   ```bash
-   ros2 run rosbridge_server rosbridge_websocket
-   ```
-   *(Leitet das ROS-Netzwerk lokal auf WebSocket-Port 9090 um).*
-4. **Robot Control Web UI:**
+2. **Client Setup ausführen:** Öffne die Nexus WebApp im Browser, scrolle zur Sektion **Remote Control System Bringup** und klicke auf den Button **[RUN CLIENT]**. Dies startet automatisch den Gamepad-Treiber, den Kollisionswächter und die ROS-Bridge im Hintergrund.
+3. **Robot Control Web UI:**
    ```bash
    cd ~/dev_ws/src/robot_control_web_ui && python3 -m http.server 8081
    ```
