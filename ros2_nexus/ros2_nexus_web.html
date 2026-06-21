@@ -795,63 +795,7 @@
       <span class="logo-badge">WEB</span>
     </a>
 
-    <div style="display: flex; align-items: center;">
-      <div class="info-tooltip-container" style="margin-left: 0; display: flex; gap: 8px;">
-        <button onclick="runDevSetup('fake')"
-          style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.4); padding: 8px 16px; border-radius: 8px; font-weight: 700; font-family: 'Outfit'; outline: none; cursor: pointer; transition: all 0.2s; text-align: center;"
-          onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'"
-          onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'">
-          ▶ RUN DEV Setup (FAKE)
-        </button>
-        <button onclick="runDevSetup('real')"
-          style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.4); padding: 8px 16px; border-radius: 8px; font-weight: 700; font-family: 'Outfit'; outline: none; cursor: pointer; transition: all 0.2s; text-align: center;"
-          onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'"
-          onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'">
-          ▶ RUN DEV Setup (REAL)
-        </button>
 
-        <div class="info-tooltip-content">
-           <h3><i class="fa-solid fa-network-wired"></i> Was startet das DEV Setup? (FAKE / REAL)</h3>
-           <ul style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 1-2: MoveIt Core</span><br>
-                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                - <b>servo_node</b> (<i>MoveIt Servo C++</i>)<br>
-                - <b>move_group</b> (<i>MoveIt 2 Planung</i>)
-                </span>
-             </li>
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 3-6: Assistenz- & Steuerungs-Nodes</span><br>
-                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                - <b>scene_objects_node</b> (<i>Tisch & Hindernisse</i>)<br>
-                - <b>robot_motion_handler_movegroup</b> (<i>Trajektorien</i>)<br>
-                - <b>scan_trajectory_node</b> (<i>C++ Scan</i>)<br>
-                - <b>servo_status_overlay</b> (<i>RViz HUD</i>)
-                </span>
-             </li>
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 7: 3D Vision Bringup</span><br>
-                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                <b>Launch:</b> <i>zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</i>
-                </span>
-             </li>
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 8-9: Voice Control & AI</span><br>
-                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                - <b>whisper_server</b> (<i>OpenAI Whisper Engine</i>)<br>
-                - <b>voice_command_listener</b> (<i>Grasp Object Voice Trigger</i>)
-                </span>
-             </li>
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 10-12: Web UI & Tuning</span><br>
-                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                - <b>rosbridge_websocket</b> (<i>ROS 2 Web Bridge</i>)<br>
-                - <b>pointcloud_tf_tuner</b> (<i>Collision Tuning UI</i>)<br>
-                - <b>Robot Control Web UI</b> (<i>Standalone App</i>)
-                </span>
-             </li>
-           </ul>
-           <div style="color: var(--orange); font-size: 11px; background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.2);">
-             <i class="fa-solid fa-triangle-exclamation"></i> <b>Unterschied:</b> Im FAKE-Modus wird ein simulierter Arm geladen. Im REAL-Modus verbindet sich der Hardware-Treiber via TCP/IP mit dem echten xArm Lite 6.
-           </div>
-        </div>
-      </div>
-    </div>
 
     <nav class="tab-nav" id="tab-nav">
       <button class="tab-btn active" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
@@ -1183,6 +1127,76 @@
 
         colHtml[sec.col] += html;
       });
+
+      if (tabId === 'nodes') {
+        colHtml[0] += `
+        <div class="section" style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); overflow: visible;">
+          <div class="section-title" style="color: var(--red);"><i class="fa-solid fa-power-off section-icon"></i>AUTOMATED SYSTEM BRINGUP<span class="title-line"></span></div>
+          <div class="info-tooltip-container" style="display: block; width: 100%; margin: 0; position: relative;">
+            <div class="actions-grid" style="grid-template-columns: 1fr;">
+              <div class="action-card" onclick="runDevSetup('fake')" style="cursor: pointer; border-color: rgba(239, 68, 68, 0.2);" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.4)'">
+                <div class="action-btn" style="pointer-events: none;">
+                  <div class="btn-top">
+                    <span class="badge badge-launch" style="background: rgba(239, 68, 68, 0.2); color: var(--red); border-color: rgba(239, 68, 68, 0.5);"><i class="fa-solid fa-rocket"></i>LAUNCH SEQUENCE</span>
+                    <span class="label">RUN DEV Setup (FAKE)</span>
+                  </div>
+                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Startet die simulierte Roboter-Umgebung (MoveIt Fake) in 12 Terminals</span></div>
+                </div>
+              </div>
+              <div class="action-card" onclick="runDevSetup('real')" style="cursor: pointer; border-color: rgba(239, 68, 68, 0.2);" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.4)'">
+                <div class="action-btn" style="pointer-events: none;">
+                  <div class="btn-top">
+                    <span class="badge badge-launch" style="background: rgba(239, 68, 68, 0.2); color: var(--red); border-color: rgba(239, 68, 68, 0.5);"><i class="fa-solid fa-rocket"></i>LAUNCH SEQUENCE</span>
+                    <span class="label">RUN DEV Setup (REAL)</span>
+                  </div>
+                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Verbindet mit dem physischen xArm Lite 6 (IP: 192.168.1.175) in 12 Terminals</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="info-tooltip-content" style="bottom: 100%; left: 0; transform: translateY(-10px); width: 420px; z-index: 10000; cursor: default; text-align: left;">
+               <h3><i class="fa-solid fa-network-wired"></i> Was startet das DEV Setup? (FAKE / REAL)</h3>
+               <ul style="max-height: 500px; overflow-y: auto; padding-right: 10px; text-align: left;">
+                 <li style="margin-bottom: 12px;"><span class="highlight">Terminal 1-2: MoveIt Core</span><br>
+                    <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                    - <b>servo_node</b> (<i>MoveIt Servo C++</i>)<br>
+                    - <b>move_group</b> (<i>MoveIt 2 Planung</i>)
+                    </span>
+                 </li>
+                 <li style="margin-bottom: 12px;"><span class="highlight">Terminal 3-6: Assistenz- & Steuerungs-Nodes</span><br>
+                    <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                    - <b>scene_objects_node</b> (<i>Tisch & Hindernisse</i>)<br>
+                    - <b>robot_motion_handler_movegroup</b> (<i>Trajektorien</i>)<br>
+                    - <b>scan_trajectory_node</b> (<i>C++ Scan</i>)<br>
+                    - <b>servo_status_overlay</b> (<i>RViz HUD</i>)
+                    </span>
+                 </li>
+                 <li style="margin-bottom: 12px;"><span class="highlight">Terminal 7: 3D Vision Bringup</span><br>
+                    <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                    <b>Launch:</b> <i>zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</i>
+                    </span>
+                 </li>
+                 <li style="margin-bottom: 12px;"><span class="highlight">Terminal 8-9: Voice Control & AI</span><br>
+                    <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                    - <b>whisper_server</b> (<i>OpenAI Whisper Engine</i>)<br>
+                    - <b>voice_command_listener</b> (<i>Grasp Object Voice Trigger</i>)
+                    </span>
+                 </li>
+                 <li style="margin-bottom: 12px;"><span class="highlight">Terminal 10-12: Web UI & Tuning</span><br>
+                    <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                    - <b>rosbridge_websocket</b> (<i>ROS 2 Web Bridge</i>)<br>
+                    - <b>pointcloud_tf_tuner</b> (<i>Collision Tuning UI</i>)<br>
+                    - <b>Robot Control Web UI</b> (<i>Standalone App</i>)
+                    </span>
+                 </li>
+               </ul>
+               <div style="color: var(--orange); font-size: 11px; background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.2); text-align: left;">
+                 <i class="fa-solid fa-triangle-exclamation"></i> <b>Unterschied:</b> Im FAKE-Modus wird ein simulierter Arm geladen. Im REAL-Modus verbindet sich der Hardware-Treiber via TCP/IP mit dem echten xArm Lite 6.
+               </div>
+            </div>
+          </div>
+        </div>`;
+      }
+
       document.getElementById('main-content').innerHTML = colHtml[0] + '</div>' + colHtml[1] + '</div>' + colHtml[2] + '</div>';
 
       document.querySelectorAll('.action-btn').forEach(btn => {

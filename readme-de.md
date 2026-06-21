@@ -40,10 +40,11 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
    - [8.2 Schritt 2: System starten (ROS 2 Nexus)](#subchapter-8-2)
    - [8.3 Schritt 3: Module über die GUI aktivieren](#subchapter-8-3)
    - [8.4 Netzwerk- & Port-Architektur](#subchapter-8-4)
-   - [8.5 DDS Multicast Storm Prevention (Kritisch)](#subchapter-8-5)
-   - [8.6 Launcher-Konfiguration (`launcher_config.json`)](#subchapter-8-6)
-   - [8.7 DDS Multicast Storm & Loopback Discovery (Kritisch)](#subchapter-8-7)
-   - [8.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#subchapter-8-8)
+   - [8.5 Verteilte Steuerung (Remote / Operator-Station)](#subchapter-8-5)
+   - [8.6 DDS Multicast Storm Prevention (Kritisch)](#subchapter-8-6)
+   - [8.7 Launcher-Konfiguration (`launcher_config.json`)](#subchapter-8-7)
+   - [8.8 DDS Multicast Storm & Loopback Discovery (Kritisch)](#subchapter-8-8)
+   - [8.9 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#subchapter-8-9)
 9. [🗂️ Repository-Struktur](#chapter-9)
 
 ---
@@ -735,17 +736,63 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 
 > **Warum diese strikte Trennung?** Die Ports 8080 und 9090 dienen grundverschiedenen Zwecken. Port 8080 (HTTP) fungiert als Standard-Webserver, um die Oberfläche auszuliefern. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich Live-Telemetrie streamt und keine Webseiten bereitstellen kann. Port 5000 (Flask) verarbeitet die Logik des Nexus Web Backends völlig unabhängig von ROS.
 
-### <a id="subchapter-8-5"></a> 8.5 DDS Multicast Storm Prevention (Kritisch)
+### <a id="subchapter-8-5"></a> 8.5 Verteilte Steuerung (Remote / Operator-Station)
+
+Wenn das System über das Netzwerk von einer Operator-Station aus gesteuert werden soll (z. B. von einem Remote-Rechner mit Gamepad), kann die ROS 2 Architektur dank DDS nahtlos aufgeteilt werden. Das verteilt die CPU-Last und minimiert Netzwerklatenzen bei der Kollisionsprüfung.
+
+#### Vorbereitung (Auf BEIDEN Rechnern)
+Der ROS 2 DDS-Traffic muss zwingend für das Netzwerk freigegeben werden. Ist in der `~/.bashrc` standardmäßig der Wert `ROS_LOCALHOST_ONLY=1` gesetzt, werden sich Host und Client **niemals** finden.
+In **jedem** verwendeten Terminal muss vorab folgendes ausgeführt werden:
+```bash
+export ROS_DOMAIN_ID=66
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export ROS_LOCALHOST_ONLY=0
+source ~/dev_ws/install/setup.bash
+```
+
+#### Host-PC (Das Gehirn)
+Hier läuft die gesamte rechenintensive Infrastruktur. Das Gamepad wird hier **nicht** angeschlossen.
+- Öffne das **ROS 2 Nexus Web Dashboard** (`./ros2_nexus_web_start.sh`).
+- Starte den Button **▶ RUN DEV Setup (FAKE)** (startet u. a. MoveIt Servo, RViz2 und den `xarm_joystick_input`).
+- Starte den **MoveGroup Server (FAKE)** (übernimmt die OMPL-Planung).
+- *Optional:* Starte Vision-Module (ZED, YOLO) oder KI-Module (Whisper) über die entsprechenden Launcher in der GUI.
+
+#### Remote-Rechner / Operator-Station
+Hier laufen **ausschließlich** die Gamepad-Eingaben und die grafische Nutzeroberfläche.
+1. **Gamepad-Treiber:** Das Gamepad anschließen und den Node starten:
+   ```bash
+   ros2 run joy joy_node
+   ```
+   *(Liest lokale Eingaben und funkt rohe Daten auf `/joy` in das DDS-Netzwerk).*
+2. **Kollisionswächter (Checker Node):**
+   ```bash
+   ros2 run collision_check checker
+   ```
+   *(Lauscht auf `/joy`, berechnet lokal via TF die Sicherheitsparameter und publiziert das bereinigte Signal auf `/joy_check` für den Host).*
+3. **ROS Bridge Server (Für die UI):**
+   ```bash
+   ros2 run rosbridge_server rosbridge_websocket
+   ```
+   *(Leitet das ROS-Netzwerk lokal auf WebSocket-Port 9090 um).*
+4. **Robot Control Web UI:**
+   ```bash
+   cd ~/dev_ws/src/robot_control_web_ui && python3 -m http.server 8081
+   ```
+   *(Unter `http://localhost:8081` öffnen. Die UI verbindet sich so verlustfrei über den lokalen WebSocket).*
+
+---
+
+### <a id="subchapter-8-6"></a> 8.6 DDS Multicast Storm Prevention (Kritisch)
 > [!CAUTION]
 > **Internet-Abbrüche:** Standardmäßig verwenden ROS 2 DDS-Implementierungen "UDP Multicast", wodurch alle Daten in das gesamte lokale Netzwerk (LAN/WLAN) gefunkt werden. Wenn die ZED-Kamera (hochauflösende Bilder) und YOLO (dichte 3D-Punktwolken) gestartet werden, überflutet dies das Netzwerk mit Gigabit-Mengen an UDP-Paketen. **Das führt in den meisten Fällen dazu, dass der Router abstürzt oder die Internetverbindung des PCs sofort getrennt wird.**
 > 
-> Um das zu verhindern und die Systemleistung extrem zu steigern, **muss** der ROS 2 Datenverkehr strikt auf den eigenen PC (Localhost) beschränkt werden:
+> Um das zu verhindern und die Systemleistung extrem zu steigern (sofern man **nicht** die verteilte Remote-Steuerung aus 8.5 nutzt!), **muss** der ROS 2 Datenverkehr strikt auf den eigenen PC (Localhost) beschränkt werden:
 > ```bash
 > echo "export ROS_LOCALHOST_ONLY=1" >> ~/.bashrc
 > source ~/.bashrc
 > ```
 
-### <a id="subchapter-8-6"></a> 8.6 Launcher-Konfiguration (`launcher_config.json`)
+### <a id="subchapter-8-7"></a> 8.7 Launcher-Konfiguration (`launcher_config.json`)
 
 Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar.
 
@@ -754,7 +801,7 @@ Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind voll
 **Manuelle Konfiguration:** Das gesamte UI-Layout und alle Befehle werden persistent in einer externen Konfigurationsdatei unter `ros2_nexus/launcher_config.json` gespeichert. Um eigene Skripte, Debugging-Tools oder ROS 2 Nodes manuell zur Launcher-UI hinzuzufügen, muss lediglich diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch, sodass manuelle Änderungen nach einem simplen Neuladen der Seite im Browser sofort aktiv werden, ohne dass das Nexus Web Backend neugestartet werden muss.
 
 
-### <a id="subchapter-8-7"></a> 8.7 DDS Multicast Storm & Loopback Discovery (Kritisch)
+### <a id="subchapter-8-8"></a> 8.8 DDS Multicast Storm & Loopback Discovery (Kritisch)
 > [!CAUTION]
 > **Netzwerk-Überlastung & Participant-Fehler:** Standardmäßig verwendet ROS 2 "UDP Multicast", wodurch alle Daten in das gesamte lokale Netzwerk (LAN/WLAN) gefunkt werden. Das Starten der ZED-Kamera und YOLO überflutet das Netzwerk mit Gigabit-Mengen an Daten, was oft zum sofortigen Absturz des Routers oder der Internetverbindung führt.
 > 
@@ -787,7 +834,7 @@ sudo systemctl enable lo-multicast.service
 sudo systemctl start lo-multicast.service
 ```
 
-### <a id="subchapter-8-8"></a> 8.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
+### <a id="subchapter-8-9"></a> 8.9 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
 > [!TIP]
 > **Ruckelnde Pointclouds in RViz:** ROS 2 (insbesondere CycloneDDS) versendet große Datenmengen wie Pointclouds (ZED Kamera) über viele kleine UDP-Pakete. Der Standard-Netzwerkpuffer des Linux-Kernels ist mit ca. 200 KB viel zu klein für diese Datenmengen. Wenn der Puffer überläuft, verwirft das Betriebssystem Pakete ("Receive Buffer Errors"), was zu extremen Lags in RViz führt.
 
