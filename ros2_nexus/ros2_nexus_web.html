@@ -1017,15 +1017,15 @@
 
     pollInterval = setInterval(pollLogs, 1000);
 
-    // ─── DEV SETUP ────────────────────────────────────────────────────────────────
-    async function runDevSetup(mode) {
-      let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true";
+    // ─── SERVER SETUP ────────────────────────────────────────────────────────────────
+    async function runServerSetup(mode) {
+      let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true launch_joy:=false launch_checker:=false";
       let servoTitle = "MoveIt Servo (Fake)";
       let moveGroupCmd = "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true";
       let moveGroupTitle = "MoveIt MoveGroup (Standalone/Fake)";
 
       if (mode === "real") {
-        servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=True report_type:=dev";
+        servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=True report_type:=dev launch_joy:=false launch_checker:=false";
         servoTitle = "MoveIt Servo (Real)";
         moveGroupCmd = "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true robot_ip:=192.168.1.175";
         moveGroupTitle = "MoveIt MoveGroup (Standalone/Real)";
@@ -1041,12 +1041,10 @@
         { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
         { cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", title: "Whisper Bringup (Voice AI)" },
         { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" },
-        { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
-        { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" },
-        { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" }
+        { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" }
       ];
 
-      showToast('🚀 DEV Setup gestartet... (12 Terminals)');
+      showToast('🚀 SERVER Bringup gestartet... (10 Terminals)');
 
       for (const a of actions) {
         try {
@@ -1056,6 +1054,31 @@
             body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
           });
           // Delay so terminals open sequentially and nodes have time to initialize
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (e) {
+          console.error("Failed to start command:", a.cmd, e);
+        }
+      }
+    }
+
+    async function runClientSetup() {
+      const actions = [
+        { cmd: "ros2 run joy joy_node", title: "Gamepad Joy Node" },
+        { cmd: "ros2 run collision_check checker", title: "Collision Check (Checker)" },
+        { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
+        { cmd: "rviz2 -d ~/dev_ws/src/xarm_ros2/xarm_moveit_servo/rviz/servo.rviz", title: "RViz2 (Client)" },
+        { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" }
+      ];
+
+      showToast('🚀 CLIENT Bringup gestartet... (5 Terminals)');
+
+      for (const a of actions) {
+        try {
+          await fetch('/api/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
+          });
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (e) {
           console.error("Failed to start command:", a.cmd, e);
@@ -1134,27 +1157,44 @@
           <div class="section-title" style="color: var(--red);"><i class="fa-solid fa-power-off section-icon"></i>AUTOMATED SYSTEM BRINGUP<span class="title-line"></span></div>
           <div class="info-tooltip-container" style="display: block; width: 100%; margin: 0; position: relative;">
             <div class="actions-grid" style="grid-template-columns: 1fr;">
-              <div class="action-card" onclick="runDevSetup('fake')" style="cursor: pointer; border-color: rgba(239, 68, 68, 0.2);" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.4)'">
+              <div class="action-card" onclick="runServerSetup('fake')" style="cursor: pointer; border-color: rgba(239, 68, 68, 0.2);" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.4)'">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
-                    <span class="badge badge-launch" style="background: rgba(239, 68, 68, 0.2); color: var(--red); border-color: rgba(239, 68, 68, 0.5);"><i class="fa-solid fa-rocket"></i>LAUNCH SEQUENCE</span>
-                    <span class="label">RUN DEV Setup (FAKE)</span>
+                    <span class="badge badge-launch" style="background: rgba(239, 68, 68, 0.2); color: var(--red); border-color: rgba(239, 68, 68, 0.5);"><i class="fa-solid fa-server"></i>SERVER SYSTEM</span>
+                    <span class="label">▶ RUN SERVER (FAKE)</span>
                   </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Startet die simulierte Roboter-Umgebung (MoveIt Fake) in 12 Terminals</span></div>
+                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Startet MoveIt & Vision auf dem Host PC (Fake Arm) - ohne Gamepad Nodes</span></div>
                 </div>
               </div>
-              <div class="action-card" onclick="runDevSetup('real')" style="cursor: pointer; border-color: rgba(239, 68, 68, 0.2);" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.4)'">
+              <div class="action-card" onclick="runServerSetup('real')" style="cursor: pointer; border-color: rgba(239, 68, 68, 0.2);" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.4)'">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
-                    <span class="badge badge-launch" style="background: rgba(239, 68, 68, 0.2); color: var(--red); border-color: rgba(239, 68, 68, 0.5);"><i class="fa-solid fa-rocket"></i>LAUNCH SEQUENCE</span>
-                    <span class="label">RUN DEV Setup (REAL)</span>
+                    <span class="badge badge-launch" style="background: rgba(239, 68, 68, 0.2); color: var(--red); border-color: rgba(239, 68, 68, 0.5);"><i class="fa-solid fa-server"></i>SERVER SYSTEM</span>
+                    <span class="label">▶ RUN SERVER (REAL)</span>
                   </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Verbindet mit dem physischen xArm Lite 6 (IP: 192.168.1.175) in 12 Terminals</span></div>
+                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Verbindet mit xArm Lite 6 (192.168.1.175) auf dem Host PC</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section" style="border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.05); overflow: visible; margin-top: 16px;">
+          <div class="section-title" style="color: var(--blue);"><i class="fa-solid fa-laptop section-icon"></i>OPERATOR CLIENT BRINGUP<span class="title-line"></span></div>
+          <div class="info-tooltip-container" style="display: block; width: 100%; margin: 0; position: relative;">
+            <div class="actions-grid" style="grid-template-columns: 1fr;">
+              <div class="action-card" onclick="runClientSetup()" style="cursor: pointer; border-color: rgba(59, 130, 246, 0.2);" onmouseover="this.style.background='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.4)'">
+                <div class="action-btn" style="pointer-events: none;">
+                  <div class="btn-top">
+                    <span class="badge badge-launch" style="background: rgba(59, 130, 246, 0.2); color: var(--blue); border-color: rgba(59, 130, 246, 0.5);"><i class="fa-solid fa-gamepad"></i>CLIENT UI</span>
+                    <span class="label">▶ RUN CLIENT (Remote)</span>
+                  </div>
+                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Startet Gamepad-Treiber, Checker, Web-UI Bridge und RViz auf dem Remote Rechner</span></div>
                 </div>
               </div>
             </div>
             <div class="info-tooltip-content" style="bottom: 100%; left: 0; transform: translateY(-10px); width: 420px; z-index: 10000; cursor: default; text-align: left;">
-               <h3><i class="fa-solid fa-network-wired"></i> Was startet das DEV Setup? (FAKE / REAL)</h3>
+               <h3><i class="fa-solid fa-server"></i> Was startet das SERVER System? (FAKE / REAL)</h3>
                <ul style="max-height: 500px; overflow-y: auto; padding-right: 10px; text-align: left;">
                  <li style="margin-bottom: 12px;"><span class="highlight">Terminal 1-2: MoveIt Core</span><br>
                     <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
@@ -1181,17 +1221,54 @@
                     - <b>voice_command_listener</b> (<i>Grasp Object Voice Trigger</i>)
                     </span>
                  </li>
-                 <li style="margin-bottom: 12px;"><span class="highlight">Terminal 10-12: Web UI & Tuning</span><br>
+                 <li style="margin-bottom: 12px;"><span class="highlight">Terminal 10: Pointcloud TF Tuner</span><br>
                     <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                    - <b>rosbridge_websocket</b> (<i>ROS 2 Web Bridge</i>)<br>
                     - <b>pointcloud_tf_tuner</b> (<i>Collision Tuning UI</i>)<br>
-                    - <b>Robot Control Web UI</b> (<i>Standalone App</i>)
                     </span>
                  </li>
                </ul>
                <div style="color: var(--orange); font-size: 11px; background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.2); text-align: left;">
                  <i class="fa-solid fa-triangle-exclamation"></i> <b>Unterschied:</b> Im FAKE-Modus wird ein simulierter Arm geladen. Im REAL-Modus verbindet sich der Hardware-Treiber via TCP/IP mit dem echten xArm Lite 6.
                </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section" style="border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.05); overflow: visible; margin-top: 16px;">
+          <div class="section-title" style="color: var(--blue);"><i class="fa-solid fa-laptop section-icon"></i>OPERATOR CLIENT BRINGUP<span class="title-line"></span></div>
+          <div class="info-tooltip-container" style="display: block; width: 100%; margin: 0; position: relative;">
+            <div class="actions-grid" style="grid-template-columns: 1fr;">
+              <div class="action-card" onclick="runClientSetup()" style="cursor: pointer; border-color: rgba(59, 130, 246, 0.2);" onmouseover="this.style.background='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.4)'">
+                <div class="action-btn" style="pointer-events: none;">
+                  <div class="btn-top">
+                    <span class="badge badge-launch" style="background: rgba(59, 130, 246, 0.2); color: var(--blue); border-color: rgba(59, 130, 246, 0.5);"><i class="fa-solid fa-gamepad"></i>CLIENT UI</span>
+                    <span class="label">▶ RUN CLIENT (Remote)</span>
+                  </div>
+                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Startet Gamepad-Treiber, Checker, Web-UI Bridge und RViz auf dem Remote Rechner</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="info-tooltip-content" style="bottom: 100%; left: 0; transform: translateY(-10px); width: 420px; z-index: 10000; cursor: default; text-align: left; background: rgba(15, 23, 42, 0.95); border-color: rgba(59, 130, 246, 0.4);">
+               <h3 style="color: var(--blue); border-bottom-color: rgba(59, 130, 246, 0.2);"><i class="fa-solid fa-laptop"></i> Was startet der Operator Client?</h3>
+               <ul style="max-height: 500px; overflow-y: auto; padding-right: 10px; text-align: left;">
+                 <li style="margin-bottom: 12px;"><span class="highlight" style="color: #60a5fa; background: rgba(59, 130, 246, 0.1);">Terminal 1-2: Gamepad & Sicherheit</span><br>
+                    <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                    - <b>joy_node</b> (<i>Gamepad Input lesen</i>)<br>
+                    - <b>collision_checker</b> (<i>Lokale TF Sicherheits-Berechnung</i>)
+                    </span>
+                 </li>
+                 <li style="margin-bottom: 12px;"><span class="highlight" style="color: #60a5fa; background: rgba(59, 130, 246, 0.1);">Terminal 3-4: Web Bridge & UI</span><br>
+                    <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                    - <b>rosbridge_websocket</b> (<i>ROS 2 Web Bridge, Port 9090</i>)<br>
+                    - <b>Robot Control Web UI</b> (<i>Standalone App, Port 8081</i>)
+                    </span>
+                 </li>
+                 <li style="margin-bottom: 12px;"><span class="highlight" style="color: #60a5fa; background: rgba(59, 130, 246, 0.1);">Terminal 5: RViz2 (Client)</span><br>
+                    <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                    - <b>rviz2</b> (<i>Verbindet sich über DDS mit dem Server, rendert 3D lokal!</i>)
+                    </span>
+                 </li>
+               </ul>
             </div>
           </div>
         </div>`;

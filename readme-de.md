@@ -691,7 +691,7 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 2. **Controller verbinden:** Schalte den Xbox One Elite Series 2 Controller ein und prüfe die Verbindung (Bluetooth oder USB) mit dem Host-PC.
 
 ### <a id="subchapter-8-2"></a> 8.2 Schritt 2: System starten (ROS 2 Nexus)
-Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- oder `ros2 launch`-Befehle in mehreren Terminals parallel ausgeführt werden, um die einzelnen Nodes zu starten. Genau um dieses Problem zu lösen, wurde die **ROS 2 Nexus** WebApp entwickelt: Anstatt komplexe CLI-Befehle auswendig zu lernen, lassen sich alle benötigten Nodes und Launch-Files bequem per Klick direkt aus dem Browser heraus starten. Die Nexus `runDevSetup` Sequenz startet die Backend-Nodes und MoveIt nun mit einer Sekunde Verzögerung dazwischen, während die ROS Bridge und Web UI als Letztes laden. Dies beugt WebSocket-Abbrüchen vor.
+Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- oder `ros2 launch`-Befehle in mehreren Terminals parallel ausgeführt werden, um die einzelnen Nodes zu starten. Genau um dieses Problem zu lösen, wurde die **ROS 2 Nexus** WebApp entwickelt: Anstatt komplexe CLI-Befehle auswendig zu lernen, lassen sich alle benötigten Nodes und Launch-Files bequem per Klick direkt aus dem Browser heraus starten. Die Nexus `runServerSetup` und `runClientSetup` Sequenzen starten die Backend-Nodes und MoveIt nun mit einer Sekunde Verzögerung dazwischen, während die ROS Bridge und Web UI als Letztes laden. Dies beugt WebSocket-Abbrüchen vor.
 
 **Start über Terminal:**
 ```bash
@@ -753,32 +753,21 @@ source ~/dev_ws/install/setup.bash
 #### Host-PC (Das Gehirn)
 Hier läuft die gesamte rechenintensive Infrastruktur. Das Gamepad wird hier **nicht** angeschlossen.
 - Öffne das **ROS 2 Nexus Web Dashboard** (`./ros2_nexus_web_start.sh`).
-- Starte den Button **▶ RUN DEV Setup (FAKE)** (startet u. a. MoveIt Servo, RViz2 und den `xarm_joystick_input`).
-- Starte den **MoveGroup Server (FAKE)** (übernimmt die OMPL-Planung).
-- *Optional:* Starte Vision-Module (ZED, YOLO) oder KI-Module (Whisper) über die entsprechenden Launcher in der GUI.
+- Klicke unter "AUTOMATED SYSTEM BRINGUP" auf **▶ RUN SERVER (FAKE)** oder **▶ RUN SERVER (REAL)**.
+  *(Dieser Button übergibt automatisch `launch_joy:=false launch_checker:=false` an die Launch-Files, damit der Server nicht unnötig Gamepad-Prozesse startet).*
+- *Optional:* Starte weitere Nodes (ZED, YOLO, Whisper) über die GUI.
 
 #### Remote-Rechner / Operator-Station
 Hier laufen **ausschließlich** die Gamepad-Eingaben und die grafische Nutzeroberfläche.
-1. **Gamepad-Treiber:** Das Gamepad anschließen und den Node starten:
-   ```bash
-   ros2 run joy joy_node
-   ```
-   *(Liest lokale Eingaben und funkt rohe Daten auf `/joy` in das DDS-Netzwerk).*
-2. **Kollisionswächter (Checker Node):**
-   ```bash
-   ros2 run collision_check checker
-   ```
-   *(Lauscht auf `/joy`, berechnet lokal via TF die Sicherheitsparameter und publiziert das bereinigte Signal auf `/joy_check` für den Host).*
-3. **ROS Bridge Server (Für die UI):**
-   ```bash
-   ros2 run rosbridge_server rosbridge_websocket
-   ```
-   *(Leitet das ROS-Netzwerk lokal auf WebSocket-Port 9090 um).*
-4. **Robot Control Web UI:**
-   ```bash
-   cd ~/dev_ws/src/robot_control_web_ui && python3 -m http.server 8081
-   ```
-   *(Unter `http://localhost:8081` öffnen. Die UI verbindet sich so verlustfrei über den lokalen WebSocket).*
+- Da das Setup automatisiert ist, kannst du auch auf dem Remote-Rechner einfach **ROS 2 Nexus** öffnen (unter `http://<IP-des-Host>:5000` oder lokal via `./ros2_nexus_web_start.sh`).
+- Klicke unter "OPERATOR CLIENT BRINGUP" auf **▶ RUN CLIENT (Remote)**.
+
+Alternativ kannst du die Befehle manuell ausführen:
+1. **Gamepad-Treiber:** `ros2 run joy joy_node` *(Liest lokale Eingaben und funkt rohe Daten auf `/joy`).*
+2. **Kollisionswächter:** `ros2 run collision_check checker` *(Berechnet lokal Sicherheitsparameter und publiziert auf `/joy_check`).*
+3. **ROS Bridge Server:** `ros2 run rosbridge_server rosbridge_websocket` *(Port 9090).*
+4. **Robot Control Web UI:** `cd ~/dev_ws/src/robot_control_web_ui && python3 -m http.server 8081` *(Die UI verbindet sich so verlustfrei über den lokalen WebSocket).*
+5. **RViz2:** `rviz2 -d ~/dev_ws/src/xarm_ros2/xarm_moveit_servo/rviz/servo.rviz` *(Verbindet sich über DDS mit dem Host und rendert lokal mit 3D-Beschleunigung).*
 
 ---
 
