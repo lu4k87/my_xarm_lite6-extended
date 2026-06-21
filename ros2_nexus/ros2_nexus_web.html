@@ -813,51 +813,36 @@
         <div class="info-tooltip-content">
            <h3><i class="fa-solid fa-network-wired"></i> Was startet das DEV Setup? (FAKE / REAL)</h3>
            <ul style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 1-2: Web-Interface & ROS Bridge</span><br>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 1-2: MoveIt Core</span><br>
                 <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                - <b>rosbridge_websocket</b> (<i>rosbridge_websocket_launch.xml</i>)<br>
-                - <b>Robot Control Web UI</b> (<i>http.server Port 8081</i>)
+                - <b>servo_node</b> (<i>MoveIt Servo C++</i>)<br>
+                - <b>move_group</b> (<i>MoveIt 2 Planung</i>)
                 </span>
              </li>
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 3: MoveIt Servo Base</span><br>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 3-6: Assistenz- & Steuerungs-Nodes</span><br>
                 <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                <b>Launch:</b> <i>_robot_moveit_servo_fake.launch.py</i> (bzw. <i>realmove</i>) startet:<br>
-                - <b>controller_manager</b> (<i>ros2_control_node</i>)<br>
-                - <b>servo_node</b> (<i>MoveIt Servo C++ Komponente</i>)<br>
-                - <b>xarm_joystick_input</b> (<i>Gamepad C++ Treiber</i>)<br>
-                - <b>collision_checker</b> (<i>checker.py</i>)<br>
-                - <b>rviz2</b> (<i>Visualisierung</i>)
+                - <b>scene_objects_node</b> (<i>Tisch & Hindernisse</i>)<br>
+                - <b>robot_motion_handler_movegroup</b> (<i>Trajektorien</i>)<br>
+                - <b>scan_trajectory_node</b> (<i>C++ Scan</i>)<br>
+                - <b>servo_status_overlay</b> (<i>RViz HUD</i>)
                 </span>
              </li>
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 4: Motion Planning</span><br>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 7: 3D Vision Bringup</span><br>
                 <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                <b>Launch:</b> <i>standalone_move_group.launch.py</i> startet:<br>
-                - <b>move_group</b> (<i>MoveIt 2 Planungs-Server</i>)
+                <b>Launch:</b> <i>zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</i>
                 </span>
              </li>
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 5-8: Assistenz- & Steuerungs-Nodes</span><br>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 8-9: Voice Control & AI</span><br>
                 <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                - <b>scene_objects_node</b> (<i>rviz_marker_static_scene_objects.launch.py</i>)<br>
-                - <b>robot_motion_handler_movegroup</b> (<i>robot_motion_handler_movegroup.py</i>)<br>
-                - <b>scan_trajectory_node</b> (<i>C++ Scan Generator</i>)<br>
-                - <b>servo_status_overlay</b> (<i>rviz_overlay.py HUD</i>)
-                </span>
-             </li>
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 9-10: 3D Vision & Grasping Pipeline</span><br>
-                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                <b>Launch:</b> <i>zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</i> startet:<br>
-                - <b>zed_wrapper_node</b> / <b>fake_camera</b> (<i>Kamera-Treiber</i>)<br>
-                - <b>tf_camera_to_robot</b> (<i>tf_camera_to_robot.py</i>)<br>
-                - <b>yolov8_3d_node</b> (<i>yolov8_3d_node.py</i>)<br>
-                - <b>yolo_planned_grasp_executor</b> (<i>yolo_planned_grasp_executor.py</i>)<br>
-                - <b>pointcloud_tf_tuner</b> (<i>Collision Tuning</i>)
-                </span>
-             </li>
-             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 11-12: Voice Control & AI</span><br>
-                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
-                <b>Launch:</b> <i>Whisper Bringup & Listener</i> starten:<br>
                 - <b>whisper_server</b> (<i>OpenAI Whisper Engine</i>)<br>
                 - <b>voice_command_listener</b> (<i>Grasp Object Voice Trigger</i>)
+                </span>
+             </li>
+             <li style="margin-bottom: 12px;"><span class="highlight">Terminal 10-12: Web UI & Tuning</span><br>
+                <span style="color: var(--mut); font-size: 11px; line-height: 1.4; display: inline-block; margin-top: 4px;">
+                - <b>rosbridge_websocket</b> (<i>ROS 2 Web Bridge</i>)<br>
+                - <b>pointcloud_tf_tuner</b> (<i>Collision Tuning UI</i>)<br>
+                - <b>Robot Control Web UI</b> (<i>Standalone App</i>)
                 </span>
              </li>
            </ul>
@@ -1110,10 +1095,10 @@
         { cmd: "ros2 run xarm_moveit_servo scan_trajectory_node", title: "Scan Trajectory Node" },
         { cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning" },
         { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
-        { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" },
         { cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True", title: "Whisper Bringup (Voice AI)" },
         { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" },
         { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
+        { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" },
         { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" }
       ];
 

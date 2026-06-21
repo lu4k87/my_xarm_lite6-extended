@@ -724,3 +724,38 @@ servoStatusSub.subscribe((msg) => {
   currentServoStatus = msg.data;
   updateMoveItBadge();
 });
+
+function startListening() {
+  const btn = document.getElementById("btn-start-listening");
+  const textSpan = document.getElementById("btn-listen-text");
+  const icon = document.getElementById("btn-listen-icon");
+  const resultSpan = document.getElementById("voice-recognized-cmd");
+
+  if (!btn || !textSpan || !icon) return;
+
+  // Set listening state
+  btn.classList.add("btn-listening");
+  textSpan.innerText = "Listening...";
+  icon.classList.remove("fa-ear-listen");
+  icon.classList.add("fa-microphone-lines", "fa-beat-fade");
+  
+  if (resultSpan) {
+    resultSpan.innerText = "Listening for command...";
+    resultSpan.style.color = "var(--purple)";
+  }
+
+  // Set timeout for 5 seconds
+  setTimeout(() => {
+    // Reset state
+    btn.classList.remove("btn-listening");
+    textSpan.innerText = "Start Listening";
+    icon.classList.add("fa-ear-listen");
+    icon.classList.remove("fa-microphone-lines", "fa-beat-fade");
+    
+    if (resultSpan && resultSpan.innerText === "Listening for command...") {
+      resultSpan.innerText = "-- Timeout --";
+      resultSpan.style.color = "var(--mut)";
+    }
+  }, 5000);
+}
+
