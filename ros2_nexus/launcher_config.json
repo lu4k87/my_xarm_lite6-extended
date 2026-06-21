@@ -87,6 +87,14 @@
   ],
   "nodes": [
     {
+      "actions": [],
+      "col": 0,
+      "icon": "fa-solid fa-power-off",
+      "is_bringup_section": true,
+      "style": "border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); overflow: visible;",
+      "title": "AUTOMATED SYSTEM BRINGUP"
+    },
+    {
       "actions": [
         {
           "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
@@ -145,31 +153,12 @@
       "title": "Roboter Aktionen & Sequenzen"
     },
     {
-      "actions": [
-        {
-          "cmd": "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py",
-          "label": "RViz Marker Launch",
-          "type": "launch"
-        },
-        {
-          "cmd": "ros2 run rviz_pose_control set_pose_moveit",
-          "label": "Set Pose MoveIt Node",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run xarm_moveit_servo scan_trajectory_node",
-          "label": "Scan Trajectory Node",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
-          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
-          "type": "node"
-        }
-      ],
+      "actions": [],
       "col": 1,
-      "icon": "fa-solid fa-chart-network",
-      "title": "Visualization (Rviz2)"
+      "icon": "fa-solid fa-network-wired",
+      "is_remote_bringup_section": true,
+      "style": "border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.05); overflow: visible;",
+      "title": "Remote Control System Bringup"
     },
     {
       "actions": [
@@ -251,6 +240,33 @@
       "icon": "fa-solid fa-camera",
       "style": "break-before: column;",
       "title": "Cameras, Sensors"
+    },
+    {
+      "actions": [
+        {
+          "cmd": "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py",
+          "label": "RViz Marker Launch",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 run rviz_pose_control set_pose_moveit",
+          "label": "Set Pose MoveIt Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run xarm_moveit_servo scan_trajectory_node",
+          "label": "Scan Trajectory Node",
+          "type": "node"
+        },
+        {
+          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
+          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
+          "type": "node"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-chart-network",
+      "title": "Visualization (Rviz2)"
     }
   ],
   "system": [
