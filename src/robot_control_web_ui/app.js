@@ -553,6 +553,8 @@ const hardwareJoySub = new ROSLIB.Topic({
   messageType: 'sensor_msgs/msg/Joy'
 });
 
+let lastHardwareXButton = 0;
+
 hardwareJoySub.subscribe(function(msg) {
   if (!msg.axes || msg.axes.length < 2) return;
   
@@ -565,6 +567,18 @@ hardwareJoySub.subscribe(function(msg) {
     if(joyLabelBottom) joyLabelBottom.classList.toggle('joy-active', nx < -threshold);
     if(joyLabelLeft) joyLabelLeft.classList.toggle('joy-active', ny > threshold);
     if(joyLabelRight) joyLabelRight.classList.toggle('joy-active', ny < -threshold);
+  }
+
+  // Handle Gamepad Buttons
+  if (msg.buttons && msg.buttons.length > 2) {
+    const currentXButton = msg.buttons[2]; // standard mapping: 2 is the 'X' button
+    if (currentXButton === 1 && lastHardwareXButton === 0) {
+      // Rising edge detected on X button
+      if (typeof startListening === 'function') {
+        startListening();
+      }
+    }
+    lastHardwareXButton = currentXButton;
   }
 });
 
