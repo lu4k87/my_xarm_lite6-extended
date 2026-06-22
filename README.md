@@ -27,6 +27,7 @@ This repository is a continuously evolving research and evaluation platform for 
    - [🟢 5.2 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)](#subchapter-5-2)
    - [🗣️ 5.3 Feature: Multimodal Interaction (Voice & Gaze Control)](#subchapter-5-3)
    - [🖥️ 5.4 Feature: Graphical Control & Visual Feedback](#subchapter-5-4)
+   - [🌌 5.5 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)](#subchapter-5-5)
 
 6. [🎮 Gamepad Control — Deep Dive](#chapter-6)
    - [6.1 Pipeline Architecture](#subchapter-6-1)
@@ -388,7 +389,18 @@ To provide a clear understanding of the architecture, the software modules are c
 - 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status`, `/zed/bboxes_3d`, `/ui/voice_feedback`, `/ui/robot_control/current_speed`, `/ui/grasp_status` (via `rosbridge`).
 - 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/servo_server/delta_joint_cmds`, `/ui/robot_control/set_speed_index`, `/ui/grasp_object_cmd`, `/whisper/inference` (via `rosbridge`).
 
+### 🌌 <a id="subchapter-5-5"></a> 5.5 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)
+*The physical and virtual workspaces are seamlessly synchronized using NVIDIA Isaac Sim as a passive, high-fidelity digital twin.*
 
+#### `start_isaac_sim.sh` <kbd>LAUNCHER SCRIPT</kbd>
+
+> **Purpose & Task:** Integrates a locally built NVIDIA Isaac Sim environment directly into the ROS 2 Nexus bringup sequence. Instead of actively computing physics or conflicting with hardware controllers, Isaac Sim runs in **Shadow Mode**. It subscribes to the `/joint_states` topic and maps the physical (or fake) robot movements onto an extremely high-fidelity USD asset in real-time.
+- **Workflow:** 
+  1. The user launches `RUN DEV Setup (FAKE)` or `(REAL)` via the Nexus Dashboard.
+  2. The user clicks `Start Isaac Sim (Lite6 Modul)` under the Isaac Sim category.
+  3. The custom script spawns the local `isaac-sim.sh` binary with `--allow-root` and automatically opens the pre-configured Action Graph scene (`lite6_isaac_ros2.usd`).
+- **OmniGraph Architecture:** The scene uses a minimal footprint Action Graph consisting of an `On Playback Tick` node firing into a `ROS2 Subscribe Joint State` node (listening to `/joint_states`), which pipes directly into the `Articulation Controller` driving the robot asset.
+- **`COLCON_IGNORE` Integration:** Because Isaac Sim contains thousands of non-ROS python scripts within its `_build` cache, a `.colconignore` (or `COLCON_IGNORE`) file is placed inside the `isaacsim` directory to prevent `colcon build` from fatally crashing the ROS 2 workspace compilation.
 
 ---
 
