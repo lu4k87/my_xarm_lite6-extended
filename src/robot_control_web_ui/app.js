@@ -721,19 +721,8 @@ voiceFeedbackSub.subscribe((msg) => {
     }, 2000);
   }
   
-  if (msg.data.startsWith('Grasp: ')) {
-    const objName = msg.data.split('Grasp: ')[1];
-    const graspInput = document.getElementById('inp-grasp-obj');
-    if (graspInput) {
-      graspInput.value = objName;
-      graspInput.style.boxShadow = "0 0 15px var(--green)";
-      graspInput.style.borderColor = "var(--green)";
-      setTimeout(() => {
-        graspInput.style.boxShadow = "none";
-        graspInput.style.borderColor = "";
-      }, 2000);
-    }
-  }
+  // The voice command directly executes via the backend.
+  // We no longer overwrite the Manual Grasp Target input field to avoid confusion.
 
   // Voice Command: "Move to Pose" → triggers moveToPose() with current input values
   if (msg.data === 'MoveTo: pose') {
@@ -845,10 +834,16 @@ function startListening() {
     }
   });
 
-  // Safety timeout (falls der Server nicht antwortet)
+  // Cancel the action forcefully after 5 seconds to guarantee it stops listening
+  const enforceTimeout = setTimeout(() => {
+    logMsg('System', '5s elapsed, stopping Whisper recording...', 'info');
+    goal.cancel();
+  }, 5000);
+
+  // Safety timeout in case the action server hangs and doesn't return a result even after cancellation
   const safetyTimeout = setTimeout(() => {
     resetListeningUI(btn, textSpan, icon, resultSpan, "-- Server Timeout --");
-    logMsg('System', 'Whisper Action Server did not respond within 8s.', 'err');
+    logMsg('System', 'Whisper Action Server did not respond to cancel within 8s.', 'err');
   }, 8000);
 
   // Create publisher to send the final text to the voice command listener
@@ -859,6 +854,7 @@ function startListening() {
   });
 
   goal.on('result', (result) => {
+    clearTimeout(enforceTimeout);
     clearTimeout(safetyTimeout);
     
     // Extract the final text from the action result (transcriptions is an array of strings)
@@ -885,11 +881,16 @@ function startListening() {
   });
 
   goal.on('status', (status) => {
-    // status.status: 1=ACTIVE, 2=PREEMPTED, 3=SUCCEEDED, 4=ABORTED, 5=REJECTED
-    if (status.status === 4 || status.status === 5) {
+    if (status.status === 2 || status.status === 4 || status.status === 5) {
+      clearTimeout(enforceTimeout);
       clearTimeout(safetyTimeout);
-      resetListeningUI(btn, textSpan, icon, resultSpan, "-- Error --");
-      logMsg('System', 'Whisper goal was aborted/rejected.', 'err');
+      if (status.status === 2) {
+        logMsg('System', 'Whisper goal preempted after 5s.', 'info');
+        // Do not reset UI here; wait for the result callback to show the transcription!
+      } else {
+        resetListeningUI(btn, textSpan, icon, resultSpan, "-- Error --");
+        logMsg('System', 'Whisper goal was aborted/rejected.', 'err');
+      }
     }
   });
 
