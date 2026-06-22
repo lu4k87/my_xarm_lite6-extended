@@ -135,23 +135,7 @@
       "icon": "fa-solid fa-robot",
       "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
     },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 run move_to_coordinator move_to_coordinator",
-          "label": "Move To Coordinator",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 launch motion_sequence motion_sequence_launch.py",
-          "label": "Motion Sequence Launch",
-          "type": "launch"
-        }
-      ],
-      "col": 0,
-      "icon": "fa-solid fa-route",
-      "title": "Roboter Aktionen & Sequenzen"
-    },
+
     {
       "actions": [],
       "col": 1,
@@ -230,11 +214,7 @@
           "label": "ZED TF Live Tuner",
           "type": "node"
         },
-        {
-          "cmd": "ros2 run yolo_object_detector yolo_homography_node",
-          "label": "YOLO Homographie",
-          "type": "node"
-        },
+
         {
           "cmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
           "label": "YOLO Grasp Executor (Backup)",

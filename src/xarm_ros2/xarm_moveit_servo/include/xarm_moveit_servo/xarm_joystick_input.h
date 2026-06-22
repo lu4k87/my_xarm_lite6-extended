@@ -125,8 +125,6 @@ private:
     rclcpp::Client<xarm_msgs::srv::Call>::SharedPtr _close_gripper_client_;
     rclcpp::Client<xarm_msgs::srv::Call>::SharedPtr _stop_gripper_client_; // NEU
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr execute_sequence_y_client_;
-    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr execute_sequence_b_client_;
-    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr execute_sequence_x_client_;
 
     // ***************************************************************
     // 3. ROS 2 Action Client Variablen (Whisper)

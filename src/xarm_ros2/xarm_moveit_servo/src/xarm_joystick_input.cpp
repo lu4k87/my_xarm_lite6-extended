@@ -97,10 +97,7 @@ namespace xarm_moveit_servo
         _get_position_client_ = this->create_client<xarm_msgs::srv::GetFloat32List>("/ufactory/get_position");
         execute_sequence_y_client_ = this->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
         execute_sequence_y_client_->wait_for_service(std::chrono::seconds(1));
-        execute_sequence_b_client_ = this->create_client<std_srvs::srv::Trigger>("/execute_motion_sequence_B");
-        execute_sequence_b_client_->wait_for_service(std::chrono::seconds(1));
-        execute_sequence_x_client_ = this->create_client<std_srvs::srv::Trigger>("/execute_motion_sequence_X");
-        execute_sequence_x_client_->wait_for_service(std::chrono::seconds(1));
+
 
         this->whisper_action_client_ = rclcpp_action::create_client<Inference>(this, "/whisper/inference");
         if (!this->whisper_action_client_->wait_for_action_server(std::chrono::seconds(5))) {

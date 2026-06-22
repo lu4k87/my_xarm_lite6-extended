@@ -27,8 +27,7 @@ This repository is a continuously evolving research and evaluation platform for 
    - [🟢 5.2 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)](#subchapter-5-2)
    - [🗣️ 5.3 Feature: Multimodal Interaction (Voice & Gaze Control)](#subchapter-5-3)
    - [🖥️ 5.4 Feature: Graphical Control & Visual Feedback](#subchapter-5-4)
-   - [🤖 5.5 Feature: Complex Trajectories & Task Coordination](#subchapter-5-5)
-   - [⚠️ 5.6 Deprecated Modules](#subchapter-5-6)
+
 6. [🎮 Gamepad Control — Deep Dive](#chapter-6)
    - [6.1 Pipeline Architecture](#subchapter-6-1)
    - [6.2 `checker.py` — Collision Guard (Python Node)](#subchapter-6-2)
@@ -389,26 +388,7 @@ To provide a clear understanding of the architecture, the software modules are c
 - 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status`, `/zed/bboxes_3d`, `/ui/voice_feedback`, `/ui/robot_control/current_speed`, `/ui/grasp_status` (via `rosbridge`).
 - 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/servo_server/delta_joint_cmds`, `/ui/robot_control/set_speed_index`, `/ui/grasp_object_cmd`, `/whisper/inference` (via `rosbridge`).
 
-### 🤖 <a id="subchapter-5-5"></a> 5.5 Feature: Complex Trajectories & Task Coordination
-*Nodes that orchestrate specific, higher-level movement sequences.*
 
-#### `motion_sequence.py` <kbd>NODE</kbd>
-
-> **Purpose & Task:** State management between MoveIt Servo and Hardware. Pauses the fluid Servo jogging (gamepad), interrupts the xArm hardware controller, executes a static movement, and seamlessly reactivates Servo afterward.
-- 🛠️ **Services:** `/execute_motion_to_pose` (Server). Also calls hardware-specific UFactory services (`set_mode`, `set_state`).
-
-#### `move_to_coordinator.py` <kbd>NODE</kbd>
-
-> **Purpose & Task:** Orchestrates look-at commands and passes parameters to other motion nodes. *(Note: While it still subscribes to `/voice_cmd`, the voice pipeline now triggers the grasp executor directly. This node remains as a legacy API for orchestrating color-based coordinate movements).*
-- 📥 **Subscribes:** `/voice_cmd` (`std_msgs/String`), `/objects/.../world_poses` (`geometry_msgs/PoseArray`).
-
-### ⚠️ <a id="subchapter-5-6"></a> 5.6 Deprecated Modules
-*Historical modules that have been replaced by newer systems (e.g., ZED Mini).*
-
-#### `yolo_object_detector` <kbd>SCRIPT / NODE</kbd>
-
-> **Purpose & Task:** *[Deprecated]* The old 2D-based object detection using Raspberry Pi cameras. Transformed YOLO bounding boxes via `cv2.findHomography` and flat ArUco markers into rigid 3D space (Z=90 mm). Fully replaced by the `my_3d_vision_bringup` (3D Vision System).
-- 📤 **Publishes:** `/objects/<color>_<shape>/world_poses` (`geometry_msgs/PoseArray`).
 
 ---
 

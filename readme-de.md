@@ -27,8 +27,7 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
    - [🟢 5.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)](#subchapter-5-2)
    - [🗣️ 5.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)](#subchapter-5-3)
    - [🖥️ 5.4 Funktion: Grafische Steuerung & Visuelles Feedback](#subchapter-5-4)
-   - [🤖 5.5 Funktion: Komplexe Trajektorien & Task-Koordination](#subchapter-5-5)
-   - [⚠️ 5.6 Veraltete / Deprecated Module](#subchapter-5-6)
+
 6. [🎮 Gamepad-Steuerung — Technische Tiefenanalyse](#chapter-6)
    - [6.1 Pipeline-Architektur](#subchapter-6-1)
    - [6.2 `checker.py` — Kollisionswächter (Python Node)](#subchapter-6-2)
@@ -391,26 +390,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 - 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status`, `/zed/bboxes_3d`, `/ui/voice_feedback`, `/ui/robot_control/current_speed`, `/ui/grasp_status` (via `rosbridge`).
 - 📤 **Publishes:** `/servo_server/delta_twist_cmds`, `/servo_server/delta_joint_cmds`, `/ui/robot_control/set_speed_index`, `/ui/grasp_object_cmd`, `/whisper/inference` (via `rosbridge`).
 
-### 🤖 <a id="subchapter-5-5"></a> 5.5 Funktion: Komplexe Trajektorien & Task-Koordination
-*Nodes, die spezifische, übergeordnete Bewegungsabläufe orchestrieren.*
 
-#### `motion_sequence.py` <kbd>NODE</kbd>
-
-> **Zweck & Aufgabe:** Zustandsverwaltung zwischen MoveIt Servo und Hardware. Pausiert das flüssige Servo-Jogging (Gamepad), unterbricht den xArm Hardware-Controller, führt eine statische Fahrt aus und aktiviert danach Servo wieder nahtlos zurück.
-- 🛠️ **Services:** `/execute_motion_to_pose` (Server). Ruft zudem Hardware-Spezifische UFactory Services ab (`set_mode`, `set_state`).
-
-#### `move_to_coordinator.py` <kbd>NODE</kbd>
-
-> **Zweck & Aufgabe:** Orchestriert Look-At-Befehle und übergibt Parameter an andere Motion-Nodes. *(Hinweis: Obwohl der Node noch auf `/voice_cmd` lauscht, ruft die neue Sprachsteuerung nun direkt den Grasp-Executor auf. Dieser Node verbleibt als Legacy-API für die Orchestrierung farbbasierter Koordinatenfahrten).*
-- 📥 **Subscribes:** `/voice_cmd` (`std_msgs/String`), `/objects/.../world_poses` (`geometry_msgs/PoseArray`).
-
-### ⚠️ <a id="subchapter-5-6"></a> 5.6 Veraltete / Deprecated Module
-*Historische Module, die durch neuere Systeme (z.B. ZED Mini) abgelöst wurden.*
-
-#### `yolo_object_detector` <kbd>SKRIPT / NODE</kbd>
-
-> **Zweck & Aufgabe:** *[Veraltet]* Die alte 2D-basierte Objekterkennung über Raspberry Pi Kameras. Transformierte YOLO Bounding Boxes mittels `cv2.findHomography` und flachen ArUco-Markern in den starren 3D-Raum (Z=90 mm). Vollständig durch das `my_3d_vision_bringup` (3D Vision System) ersetzt.
-- 📤 **Publishes:** `/objects/<color>_<shape>/world_poses` (`geometry_msgs/PoseArray`).
 
 ---
 
