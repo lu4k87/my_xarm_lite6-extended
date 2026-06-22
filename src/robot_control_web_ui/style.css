@@ -405,6 +405,17 @@ header {
 .joy-label.left { right: calc(50% + 85px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
 .joy-label.right { left: calc(50% + 85px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
 
+.joy-active {
+  animation: joy-pulse 0.8s ease-in-out infinite;
+  z-index: 200;
+  text-shadow: 0 0 10px currentColor;
+}
+
+@keyframes joy-pulse {
+  0%, 100% { scale: 1; opacity: 0.6; }
+  50% { scale: 1.6; opacity: 0.95; }
+}
+
 
 .z-rot-controls {
   display: flex;

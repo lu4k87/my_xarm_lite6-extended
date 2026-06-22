@@ -541,6 +541,11 @@ function stopJointJog() {
 // ── Analog Joystick Implementation ──────────────────────────────────────
 const zone = document.getElementById('joystick-zone');
 const stick = document.getElementById('joystick-stick');
+const joyLabelTop = document.querySelector('.joy-label.top');
+const joyLabelBottom = document.querySelector('.joy-label.bottom');
+const joyLabelLeft = document.querySelector('.joy-label.left');
+const joyLabelRight = document.querySelector('.joy-label.right');
+
 let joyActive = false;
 const maxRadius = 50;
 let joyCenterX = 0, joyCenterY = 0;
@@ -582,12 +587,25 @@ function moveJoy(e) {
   
   const nx = -(dy / maxRadius);
   const ny = -(dx / maxRadius);
+  
+  const threshold = 0.2;
+  if(joyLabelTop) joyLabelTop.classList.toggle('joy-active', nx > threshold);
+  if(joyLabelBottom) joyLabelBottom.classList.toggle('joy-active', nx < -threshold);
+  if(joyLabelLeft) joyLabelLeft.classList.toggle('joy-active', ny > threshold);
+  if(joyLabelRight) joyLabelRight.classList.toggle('joy-active', ny < -threshold);
+  
   startJog(nx, ny, 0, 0, 0, 0);
 }
 
 function endJoy() {
   joyActive = false;
   stick.style.transform = `translate(0px, 0px)`;
+  
+  if(joyLabelTop) joyLabelTop.classList.remove('joy-active');
+  if(joyLabelBottom) joyLabelBottom.classList.remove('joy-active');
+  if(joyLabelLeft) joyLabelLeft.classList.remove('joy-active');
+  if(joyLabelRight) joyLabelRight.classList.remove('joy-active');
+  
   stopJog();
   document.removeEventListener('mousemove', moveJoy);
   document.removeEventListener('mouseup', endJoy);
