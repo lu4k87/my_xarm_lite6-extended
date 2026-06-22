@@ -546,6 +546,28 @@ const joyLabelBottom = document.querySelector('.joy-label.bottom');
 const joyLabelLeft = document.querySelector('.joy-label.left');
 const joyLabelRight = document.querySelector('.joy-label.right');
 
+// Subscribe to hardware gamepad
+const hardwareJoySub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/joy',
+  messageType: 'sensor_msgs/msg/Joy'
+});
+
+hardwareJoySub.subscribe(function(msg) {
+  if (!msg.axes || msg.axes.length < 2) return;
+  
+  const nx = msg.axes[1]; // Left Stick Y
+  const ny = msg.axes[0]; // Left Stick X
+  const threshold = 0.2;
+  
+  if (!joyActive) {
+    if(joyLabelTop) joyLabelTop.classList.toggle('joy-active', nx > threshold);
+    if(joyLabelBottom) joyLabelBottom.classList.toggle('joy-active', nx < -threshold);
+    if(joyLabelLeft) joyLabelLeft.classList.toggle('joy-active', ny > threshold);
+    if(joyLabelRight) joyLabelRight.classList.toggle('joy-active', ny < -threshold);
+  }
+});
+
 let joyActive = false;
 const maxRadius = 50;
 let joyCenterX = 0, joyCenterY = 0;
