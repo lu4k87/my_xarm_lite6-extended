@@ -572,7 +572,7 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 > export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 > export PATH=/usr/local/cuda-12.1/bin${PATH:+:${PATH}}
 > export LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-> export ROS_LOCALHOST_ONLY=1
+> export ROS_LOCALHOST_ONLY=0 # Set to 0 for distributed network, 1 for local only
 > ```
 > 
 > **2. Display Server: X11 vs. Wayland (RViz2 Performance)**
