@@ -324,12 +324,12 @@ To provide a clear understanding of the architecture, the software modules are c
  * 🎯 **Purpose & Task:** The native 2D control panel written in C++ for RViz. It is structured into a modern dark-theme UI with 4 distinct GroupBoxes (Cartesian Jog, Cartesian Absolute, Joint Absolute, Utilities). Provides D-Pad buttons, **6-DoF Joint Control Sliders**, the **"Grasp Object"** input field, and a **Color-Coded Live Console Log**. Employs a thread-safe `Qt::QueuedConnection` Signal/Slot architecture to pipe asynchronous ROS 2 node status messages directly into the UI without freezing.
  * 🟠 📥 **Subscribes:** `/ui/grasp_status` (`std_msgs/String`), `/joint_states` (`sensor_msgs/JointState`), `/ui/robot_control/current_speed` (`std_msgs/Float32`).
  * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`), `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`), `/ui/robot_control/set_speed_index` (`std_msgs/Int32`).
- * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint`, `/ui/execute_scan_trajectory` (Clients).
+ * 🔄 **Services:** `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint` (Clients).
 * **`robot_motion_handler_movegroup.py` [NODE]**
  * 🎯 **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Execute to Pose" and "Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The joint movements perfectly respect the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution.
  * 🟠 📥 **Subscribes:** `/ui/robot_control/current_speed` (`std_msgs/Float64`). Scales the velocity of the Joint movements synchronously with the UI.
  * 🟢 📤 **Publishes:** `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`).
- * 🔄 **Services:** Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint` and `/ui/execute_scan_trajectory` as Server. Uses `/compute_ik` (MoveIt IK) as a Client to resolve Cartesian targets. Has a TF2 listener for real-time TCP coordinates.
+ * 🔄 **Services:** Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, and `/ui/execute_move_joint` as Server. Uses `/compute_ik` (MoveIt IK) as a Client to resolve Cartesian targets. Has a TF2 listener for real-time TCP coordinates.
 * **`rviz_overlay.py` & `servo_status_overlay.py` [NODES]**
  * 🎯 **Purpose & Task:** Project color-coded warning messages (e.g., "COLLISION!") and live axis coordinates directly into the video stream of the RViz viewport.
  * 🟠 📥 **Subscribes:** `/servo_server/status` (`std_msgs/Int8`), `/ui/collision_msg` (`std_msgs/String`), `/ui/robot_control/current_frame` (`std_msgs/String`). Listens for critical warning flags and frame updates.
@@ -747,7 +747,7 @@ Once the ROS 2 Nexus interface is open in the browser:
 1. Navigate through the available tabs (e.g., `Nodes / Launch`, `Sensors`, `Hardware`, `Web`).
 2. Click the corresponding buttons to launch the required modules (for instance, the ZED camera driver is located under the **Sensors** tab).
 3. The terminal output of each launched node will stream directly back to the web interface in real-time.
-4. **Dynamic Tooltips:** Hover over any action button to instantly view an exhaustive, auto-generated list of all underlying source files (e.g., `.cpp`, `.py`, `.launch.py`) and ROS 2 arguments executed by that button. This provides immediate architectural introspection for complex launch sequences.
+4. **Dynamic Tooltips:** Hover over any action button to instantly view an exhaustive, auto-generated list of all underlying source files (e.g., `.cpp`, `.py`, `.launch.py`) and ROS 2 arguments executed by that button. Nodes spawned by parent launch files are visually indented to reflect the true execution hierarchy. This provides immediate architectural introspection for complex launch sequences.
 
 <p align="center">
  <img src="_imgs/ros2_nexus_web.png" width="90%" alt="ROS 2 Nexus — Web Edition">
