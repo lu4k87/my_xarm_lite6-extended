@@ -797,14 +797,37 @@ function startListening() {
     logMsg('System', 'Whisper Action Server did not respond within 8s.', 'err');
   }, 8000);
 
-  goal.on('result', (result) => {
-    clearTimeout(safetyTimeout);
-    resetListeningUI(btn, textSpan, icon, resultSpan, null);
-    logMsg('System', 'Whisper recording completed.', 'info');
+  // Create publisher to send the final text to the voice command listener
+  const whisperInferencePub = new ROSLIB.Topic({
+    ros: ros,
+    name: '/whisper/inference',
+    messageType: 'std_msgs/String'
   });
 
-  goal.on('feedback', (feedback) => {
-    // Feedback from Whisper (optional)
+  goal.on('result', (result) => {
+    clearTimeout(safetyTimeout);
+    
+    // Extract the final text from the action result (transcriptions is an array of strings)
+    let finalText = "";
+    if (result && result.transcriptions && result.transcriptions.length > 0) {
+      finalText = result.transcriptions.join(" ").trim();
+    }
+    
+    if (finalText) {
+      logMsg('VOICE', `🗣️ Transcription: "${finalText}"`, 'info');
+      // Publish the text so the voice_command_listener.py can parse it
+      whisperInferencePub.publish(new ROSLIB.Message({ data: finalText }));
+      resetListeningUI(btn, textSpan, icon, resultSpan, `"${finalText}"`);
+    } else {
+      resetListeningUI(btn, textSpan, icon, resultSpan, "-- No speech detected --");
+      logMsg('System', 'Whisper recording completed (empty transcript).', 'info');
+    }
+  });
+
+  goal.on('feedback', (fb) => {
+    if (fb && fb.transcription && resultSpan) {
+      resultSpan.innerText = fb.transcription;
+    }
   });
 
   goal.on('status', (status) => {
