@@ -39,6 +39,7 @@ install(PROGRAMS
   scripts/yolo_planned_grasp_executor.py 
   scripts/grasp_action_bridge.py 
   scripts/pointcloud_tf_tuner.py
+  scripts/eef_scan_path_executor.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

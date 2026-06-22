@@ -193,6 +193,8 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 * **[VERALTET]** Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* über PiCameras. Die Objekterkennung erfolgt vollständig in 3D durch die ZED-Kamera.
 **Stereo Vision:** <br>
 * Integration echter 3D-Tiefendaten durch eine *ZED Mini (Stereolabs)* Kamera.
+* Die Kamera kann wahlweise **stationär** (auf einem Stativ) oder **am Endeffektor (EEF)** montiert genutzt werden.
+* **Octomap 3D-Kartierung:** Im EEF-Modus kann der Roboter einen programmierten Scan-Pfad abfahren, um automatisch eine voxelbasierte 3D-Umgebungskarte (Octomap) zu generieren.
 **VLA & Video Action Models (Geplant):** <br>
 * KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
@@ -311,9 +313,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
  * 🎯 **Zweck & Aufgabe:** Lokale Speech-to-Text KI. Führt Whisper AI kontinuierlich auf dem Mikrofon-Stream aus und publiziert gesprochene Wörter als Text.
  * 🟢 📤 **Publishes:** `/whisper/text` (`std_msgs/String`).
 * **`voice_command_listener.py` [NODE]**
- * 🎯 **Zweck & Aufgabe:** Analysiert den Rohtext über Regex-Muster, filtert Füllwörter heraus und extrahiert definierte Handlungs-Intents (z.B. "Greife Apfel").
+ * 🎯 **Zweck & Aufgabe:** Analysiert den Rohtext über Regex-Muster, filtert Füllwörter heraus und extrahiert definierte Handlungs-Intents (z.B. "Greife Apfel", "Fahr zur Pose").
  * 🟠 📥 **Subscribes:** `/whisper/transcript_stream` (`std_msgs/String`).
- * 🟢 📤 **Publishes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Publiziert an die Action-Bridge, um den YOLO Grasp Executor zu triggern, und sendet UI-Feedback an das Dashboard.
+ * 🟢 📤 **Publishes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Publiziert an die Action-Bridge, um den YOLO Grasp Executor zu triggern, oder triggert direkt absolute Koordinatenfahrten ("MoveTo: pose") via Dashboard-UI-Feedback.
 * **`gaze_ui_node.py` [SKRIPT / UI]**
  * 🎯 **Zweck & Aufgabe:** Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 0,5 Sek. Fixationsdauer) und sendet direkte Bewegungs- und Greiferbefehle.
  * 🟢 📤 **Publishes:** `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`). Steuert direkt die kartesische Geschwindigkeit des Roboterarms und nutzt UFactory Services zur Bedienung des Greifers.
@@ -347,7 +349,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
  * **Erweiterte Telemetrie:** Live-Status-Badges für Netzwerkports (UI, WS, Nexus), Gamepad-Verbindung (USB) und automatische Hardware-Modus-Erkennung (Fake Arm vs. Real Arm IP, stabil dargestellt über globale `rosapi` Endpunkte).
  * **MoveIt Servo Monitoring:** Dynamische UI-Indikatoren (Grün/Orange/Rot) mit Puls-Animationen, die MoveIt-Kollisions- und Wait-States in Echtzeit spiegeln.
  * **Virtuelle Teleoperation:** Integrierter 2D-Analogstick für kartesisches Jogging sowie 6-DoF absolute Gelenkwinkel-Slider und Geschwindigkeitsstufen. Die Geschwindigkeitsskalierung für kartesisches Jogging wurde mit dem physischen Gamepad harmonisiert. Die Geschwindigkeitsstufen nutzen nun ein optimiertes Limit von `0.1` bis `0.5` m/s, was für flüssige Bewegungen ohne Ruckeln selbst bei 100% Geschwindigkeit sorgt.
- * **Interaktives UI & Layout-Optimierung:** Die Benutzeroberfläche ist logisch strukturiert (Cartesian Jogging oben, Telemetrie darunter) und passt sich lückenlos an den Inhalt an. Sie beinhaltet dynamische, interaktive Elemente wie den Whisper AI "Start Listening"-Button, der beim Auslösen visuell reagiert und 5 Sekunden lang pulsiert.
+ * **Interaktives UI & Layout-Optimierung:** Die Benutzeroberfläche ist logisch strukturiert (Cartesian Jogging oben, Telemetrie darunter) und passt sich lückenlos an den Inhalt an. Sie beinhaltet dynamische, interaktive Elemente wie den Whisper AI "Start Listening"-Button, der nun vollständig ins Backend integriert ist und beim Auslösen über einen Action Client eine 5-sekündige Echtzeit-Sprachaufnahme startet.
  * **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
  * **Farbkodiertes Konsolen-Log:** Ein live scrollbares Konsolen-Log mit detailliertem Feedback für alle Bewegungsbefehle — inklusive Koordinatenanzeige (`X`, `Y`, `Z`) bei MoveTo-Befehlen und expliziten Erfolgs- (✓) / Fehler- (❌) Statusanzeigen mit Fehlercodes.
  * 🟠 📥 **Subscribes:** `/joint_states`, `/ui/eef_position`, `/servo_server/status`, `/zed/bboxes_3d`, `/ui/voice_feedback`, `/ui/robot_control/current_speed`, `/ui/grasp_status` (via `rosbridge`).
@@ -657,6 +659,7 @@ Die ZED Mini Kamera erfordert das offizielle ZED SDK und eine passende CUDA-Vers
 3. **ROS Abhängigkeiten**: Installiere das benötigte Point-Cloud-Transport-Paket:
  ```bash
  sudo apt install ros-humble-point-cloud-transport
+ sudo apt install ros-humble-octomap-server
  ```
 4. **ZED SDK Source Code [KRITISCH]**: Der ROS 2 Wrapper Quellcode muss exakt zur installierten SDK-Version passen, um Kompilierungsfehler zu vermeiden. In diesem Repository ist der korrekte Quellcode (`humble-v4.1.4`) bereits fest integriert. Du musst **keine** weiteren ZED-Repositories manuell clonen oder auschecken!
 5. **Wrapper kompilieren**: 

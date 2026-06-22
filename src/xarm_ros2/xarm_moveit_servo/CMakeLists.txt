@@ -77,15 +77,15 @@ add_executable(xarm_keyboard_input
 )
 ament_target_dependencies(xarm_keyboard_input ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-add_executable(scan_trajectory_node
-  src/scan_trajectory_node.cpp
-)
-ament_target_dependencies(scan_trajectory_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+# scan_trajectory_node: Quelldatei nicht vorhanden (auskommentiert)
+# add_executable(scan_trajectory_node
+#   src/scan_trajectory_node.cpp
+# )
+# ament_target_dependencies(scan_trajectory_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 install(TARGETS
   xarm_joystick_input
   xarm_keyboard_input
-  scan_trajectory_node
   EXPORT export_${PROJECT_NAME}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib

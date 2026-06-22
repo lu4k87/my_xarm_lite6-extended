@@ -364,6 +364,25 @@ function setFrame(frame) {
   logMsg('UI', `Control Frame set to ${frame}`);
 }
 
+function startOctomapScan() {
+  logMsg('UI', `➤ Starting Octomap Scan Path...`);
+  const scanClient = new ROSLIB.Service({
+    ros: ros,
+    name: '/ui/start_octomap_scan',
+    serviceType: 'std_srvs/Trigger'
+  });
+  
+  scanClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
+    if (result.success) {
+      logMsg('System', 'Octomap Scan completed successfully.', 'info');
+    } else {
+      logMsg('System', 'Octomap Scan failed: ' + result.message, 'err');
+    }
+  }, (error) => {
+    logMsg('System', 'Failed to call Octomap Scan service: ' + error, 'err');
+  });
+}
+
 function setGripper(state) {
   logMsg('UI', `➤ Gripper Command: ${state.toUpperCase()}`);
   
@@ -661,6 +680,12 @@ voiceFeedbackSub.subscribe((msg) => {
       }, 2000);
     }
   }
+
+  // Voice Command: "Move to Pose" → triggers moveToPose() with current input values
+  if (msg.data === 'MoveTo: pose') {
+    logMsg('VOICE', '🗣️ Voice → Triggering Absolute Pose Move...', 'info');
+    moveToPose();
+  }
 });
 
 // ── Gamepad API Status ──────────────────────────────────────────────────
@@ -733,30 +758,78 @@ function startListening() {
 
   if (!btn || !textSpan || !icon) return;
 
-  // Set listening state
+  // Prevent double-clicks while already listening
+  if (btn.classList.contains("btn-listening")) {
+    logMsg('UI', 'Already listening... please wait.', 'warn');
+    return;
+  }
+
+  // Set listening state (UI)
   btn.classList.add("btn-listening");
   textSpan.innerText = "Listening...";
   icon.classList.remove("fa-ear-listen");
   icon.classList.add("fa-microphone-lines", "fa-beat-fade");
   
   if (resultSpan) {
-    resultSpan.innerText = "Listening for command...";
+    resultSpan.innerText = "🎤 Listening for command...";
     resultSpan.style.color = "var(--purple)";
   }
 
-  // Set timeout for 5 seconds
-  setTimeout(() => {
-    // Reset state
-    btn.classList.remove("btn-listening");
-    textSpan.innerText = "Start Listening";
+  logMsg('UI', '➤ Whisper: Sending inference goal (5s recording)...');
+
+  // Call Whisper Action Server (/whisper/inference)
+  const whisperActionClient = new ROSLIB.ActionClient({
+    ros: ros,
+    serverName: '/whisper/inference',
+    actionName: 'whisper_idl/action/Inference'
+  });
+
+  const goal = new ROSLIB.Goal({
+    actionClient: whisperActionClient,
+    goalMessage: {
+      max_duration: { sec: 5, nanosec: 0 }
+    }
+  });
+
+  // Safety timeout (falls der Server nicht antwortet)
+  const safetyTimeout = setTimeout(() => {
+    resetListeningUI(btn, textSpan, icon, resultSpan, "-- Server Timeout --");
+    logMsg('System', 'Whisper Action Server did not respond within 8s.', 'err');
+  }, 8000);
+
+  goal.on('result', (result) => {
+    clearTimeout(safetyTimeout);
+    resetListeningUI(btn, textSpan, icon, resultSpan, null);
+    logMsg('System', 'Whisper recording completed.', 'info');
+  });
+
+  goal.on('feedback', (feedback) => {
+    // Feedback from Whisper (optional)
+  });
+
+  goal.on('status', (status) => {
+    // status.status: 1=ACTIVE, 2=PREEMPTED, 3=SUCCEEDED, 4=ABORTED, 5=REJECTED
+    if (status.status === 4 || status.status === 5) {
+      clearTimeout(safetyTimeout);
+      resetListeningUI(btn, textSpan, icon, resultSpan, "-- Error --");
+      logMsg('System', 'Whisper goal was aborted/rejected.', 'err');
+    }
+  });
+
+  goal.send();
+}
+
+function resetListeningUI(btn, textSpan, icon, resultSpan, errorText) {
+  if (btn) btn.classList.remove("btn-listening");
+  if (textSpan) textSpan.innerText = "Start Listening";
+  if (icon) {
     icon.classList.add("fa-ear-listen");
     icon.classList.remove("fa-microphone-lines", "fa-beat-fade");
-    
-    if (resultSpan && resultSpan.innerText === "Listening for command...") {
-      resultSpan.innerText = "-- Timeout --";
-      resultSpan.style.color = "var(--mut)";
-    }
-  }, 5000);
+  }
+  if (errorText && resultSpan) {
+    resultSpan.innerText = errorText;
+    resultSpan.style.color = "var(--mut)";
+  }
 }
 
 // ── Drag & Drop Layout (SortableJS) ──────────────────────────────────────

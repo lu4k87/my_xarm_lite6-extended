@@ -127,6 +127,12 @@
             <button class="btn frame-btn" style="flex: 1;" id="btn-frame-tcp" onclick="setFrame('link_tcp')">TCP Frame</button>
           </div>
           
+          <div class="scan-controls" style="margin-top: 15px; text-align: center;">
+            <button id="btn-start-scan" class="btn btn-primary" style="width: 100%;" onclick="startOctomapScan()">
+              <i class="fa-solid fa-map"></i> Start Octomap Scan
+            </button>
+          </div>
+          
           <div class="speed-control">
             <label><i class="fa-solid fa-gauge"></i> Speed Level: <span id="speed-val">2</span></label>
             <input type="range" id="speed-slider" min="0" max="4" value="2" oninput="updateSpeed(this.value)">

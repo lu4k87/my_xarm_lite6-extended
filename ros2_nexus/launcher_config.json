@@ -206,6 +206,11 @@
           "type": "launch"
         },
         {
+          "cmd": "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
+          "label": "3D Vision Bringup (EEF Mounted, Octomap)",
+          "type": "launch"
+        },
+        {
           "cmd": "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
           "label": "Pointcloud Optimizer",
           "type": "node"

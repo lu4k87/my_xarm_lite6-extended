@@ -113,9 +113,14 @@ class VoiceCommandListener(Node):
         self.last_trigger_ts = 0.0                          
         
         # Regex-Pattern fuer die Befehlserkennung (Deutsch & Englisch)
+        # 1. Grasp Commands
         trigger_words = r"greife|greif|bewege dich zu|geh zu|gehe zu|grab|grasp|move to|pick|pick up|catch"
         # Match trigger word, optional colon, and up to 3 following words as object name
         self.cmd_pattern = re.compile(rf"\b(?:{trigger_words})\s*:?\s*([a-z0-9]+(?:\s+[a-z0-9]+){{0,2}})", re.IGNORECASE)
+        
+        # 2. Move to Absolute Pose Commands
+        pose_trigger = r"fahr zur pose|fahre zur pose|move to pose|go to pose|zur pose fahren|bewege dich zur absoluten position|absolute position"
+        self.pose_pattern = re.compile(rf"\b(?:{pose_trigger})\b", re.IGNORECASE)
         
         self._last_cmd_text = ""
 
@@ -173,6 +178,13 @@ class VoiceCommandListener(Node):
 
         norm = normalize(text_raw)
         
+        # Pruefen auf "Move to Pose" Befehl (hat Prioritaet)
+        if self.pose_pattern.search(norm):
+            self.emit_pose_command(text_raw)
+            self.last_trigger_ts = now
+            self.word_buffer.clear()
+            return
+        
         # Suchen nach dem Grasp Befehl im Text
         matches = list(self.cmd_pattern.finditer(norm))
         if matches:
@@ -205,6 +217,22 @@ class VoiceCommandListener(Node):
         self._last_cmd_text = cmd_feedback
 
         # 3. Feedback-String auf /ui/voice_feedback publishen (fuer Web UI)
+        try:
+            feedback_msg = StringMsg()
+            feedback_msg.data = cmd_feedback
+            self.feedback_pub.publish(feedback_msg)
+        except Exception as e:
+            self.get_logger().error(f"Error publishing voice feedback: {e}")
+
+    def emit_pose_command(self, original: str):
+        """Sendet den 'MoveTo: pose' Befehl an die Web UI."""
+        print(CLEAR_SCREEN, end='')
+        print(f"\u2705 Sprachbefehl erkannt: Move to Absolute Pose")
+        self.get_logger().debug(f'(Originales Transkript: \"{original}\")')
+
+        cmd_feedback = "MoveTo: pose"
+        self._last_cmd_text = cmd_feedback
+
         try:
             feedback_msg = StringMsg()
             feedback_msg.data = cmd_feedback
