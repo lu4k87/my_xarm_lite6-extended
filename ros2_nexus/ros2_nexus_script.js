@@ -326,11 +326,20 @@
                    <li><span style="color: var(--c-launch);">lite6_moveit_servo_fake.launch.py</span> (MoveIt Servo)
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
                        <li><span style="color: var(--accent);">servo_node.cpp</span> (MoveIt Servo)</li>
+                       <li><span style="color: var(--accent);">fake_components.cpp</span> (Mock Hardware)</li>
                      </ul>
                    </li>
                    <li><span style="color: var(--accent);">checker.py</span> (Collision Checker)</li>
-                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)</li>
-                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)</li>
+                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li>
+                     </ul>
+                   </li>
+                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> (Statische RViz Marker)</li>
+                     </ul>
+                   </li>
                    <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
                    <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
                    <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)
@@ -382,8 +391,16 @@
                      </ul>
                    </li>
                    <li><span style="color: var(--accent);">checker.py</span> (Collision Checker)</li>
-                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)</li>
-                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)</li>
+                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li>
+                     </ul>
+                   </li>
+                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> (Statische RViz Marker)</li>
+                     </ul>
+                   </li>
                    <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
                    <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
                    <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)
@@ -444,10 +461,19 @@
                    <li><span style="color: var(--c-launch);">lite6_moveit_servo_fake.launch.py</span> (MoveIt Servo)
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
                        <li><span style="color: var(--accent);">servo_node.cpp</span> (MoveIt Servo)</li>
+                       <li><span style="color: var(--accent);">fake_components.cpp</span> (Mock Hardware)</li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)</li>
-                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)</li>
+                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li>
+                     </ul>
+                   </li>
+                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> (Statische RViz Marker)</li>
+                     </ul>
+                   </li>
                    <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
                    <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
                    <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)
@@ -493,8 +519,16 @@
                        <li><span style="color: var(--accent);">ufactory_driver.cpp</span> (Real Hardware Driver)</li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)</li>
-                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)</li>
+                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li>
+                     </ul>
+                   </li>
+                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> (Statische RViz Marker)</li>
+                     </ul>
+                   </li>
                    <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
                    <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
                    <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)
