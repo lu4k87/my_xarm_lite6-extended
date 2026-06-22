@@ -759,3 +759,65 @@ function startListening() {
   }, 5000);
 }
 
+// ── Drag & Drop Layout (SortableJS) ──────────────────────────────────────
+function initDragAndDrop() {
+  const colLeft = document.getElementById('col-left');
+  const colRight = document.getElementById('col-right');
+  if (!colLeft || !colRight || typeof Sortable === 'undefined') return;
+
+  const layoutKey = 'robot_control_layout';
+
+  // 1. Load saved layout if available
+  try {
+    const saved = localStorage.getItem(layoutKey);
+    if (saved) {
+      const layout = JSON.parse(saved);
+      // Restore left column
+      if (layout.left && Array.isArray(layout.left)) {
+        layout.left.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) colLeft.appendChild(el);
+        });
+      }
+      // Restore right column
+      if (layout.right && Array.isArray(layout.right)) {
+        layout.right.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) colRight.appendChild(el);
+        });
+      }
+    }
+  } catch(e) {
+    console.warn('Failed to load layout from localStorage:', e);
+  }
+
+  // 2. Save function
+  function saveLayout() {
+    const layout = {
+      left: Array.from(colLeft.querySelectorAll('.glass-panel')).map(el => el.id).filter(id => id),
+      right: Array.from(colRight.querySelectorAll('.glass-panel')).map(el => el.id).filter(id => id)
+    };
+    localStorage.setItem(layoutKey, JSON.stringify(layout));
+    logMsg('UI', '✓ Layout saved automatically', 'success');
+  }
+
+  // 3. Initialize Sortable
+  const sortableOpts = {
+    group: 'panels',
+    animation: 200,
+    handle: 'h2', // Only drag by the header
+    ghostClass: 'sortable-ghost',
+    onEnd: saveLayout
+  };
+
+  new Sortable(colLeft, sortableOpts);
+  new Sortable(colRight, sortableOpts);
+}
+
+// Call init once DOM is definitely ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDragAndDrop);
+} else {
+  initDragAndDrop();
+}
+

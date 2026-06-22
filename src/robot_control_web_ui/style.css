@@ -70,8 +70,10 @@ body {
 
 header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--brd);
@@ -80,13 +82,15 @@ header {
 .header-title {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
 }
 
 .header-title h1 {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  text-align: center;
 }
 
 .header-title i {
@@ -96,6 +100,8 @@ header {
 .header-status {
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
@@ -216,6 +222,11 @@ header {
   gap: 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
+  cursor: grab;
+}
+
+.glass-panel h2:active {
+  cursor: grabbing;
 }
 
 .glass-panel h2 i {
@@ -636,5 +647,12 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .btn-listening {
   animation: pulse-glow-purple 1s infinite !important;
   pointer-events: none;
+}
+
+/* Sortable JS Drag Styles */
+.sortable-ghost {
+  opacity: 0.4;
+  border: 2px dashed var(--accent) !important;
+  background: rgba(56, 189, 248, 0.05) !important;
 }
 

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <script src="roslib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -55,6 +56,19 @@
         <div class="status-divider"></div>
 
         <div class="status-group">
+          <div class="status-pill">
+            <div class="dot glow-blue"></div>
+            <span>ROS_DOMAIN_ID: <span style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">66</span></span>
+          </div>
+          <div class="status-pill">
+            <div class="dot glow-blue"></div>
+            <span>RMW: <span style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">rmw_cyclonedds_cpp</span></span>
+          </div>
+        </div>
+
+        <div class="status-divider"></div>
+
+        <div class="status-group">
           <div class="status-pill mode-badge" id="mode-pill">
             <div id="mode-dot" class="dot glow-blue"></div>
             <span id="mode-status">Mode: Wait</span>
@@ -65,9 +79,9 @@
 
     <main class="grid-layout">
 
-      <div class="col-left">
+      <div class="col-left" id="col-left">
         
-        <section class="glass-panel joystick-section">
+        <section id="panel-jogging" class="glass-panel joystick-section">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
             <div class="status-pill" style="margin-bottom: 15px;">
@@ -120,7 +134,7 @@
 
         </section>
 
-        <section class="glass-panel">
+        <section id="panel-telemetry" class="glass-panel">
           <h2><i class="fa-solid fa-satellite-dish"></i> Telemetry Live</h2>
           <div class="telemetry-grid">
             <div class="telem-box" style="flex-direction: row; gap: 8px; justify-content: center; align-items: baseline;">
@@ -163,9 +177,9 @@
 
       </div>
 
-      <div class="col-right">
+      <div class="col-right" id="col-right">
         
-        <section class="glass-panel">
+        <section id="panel-moveto" class="glass-panel">
           <h2><i class="fa-solid fa-location-crosshairs"></i> Absolute Pose (MoveTo)</h2>
           <div class="input-grid">
             <div class="input-group"><label><span style="color: var(--rviz-x);">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
@@ -181,7 +195,7 @@
           </div>
         </section>
 
-        <section class="glass-panel">
+        <section id="panel-yolo" class="glass-panel">
           <h2><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO 3D)</h2>
           <div id="yolo-container" class="yolo-container">
             <div class="yolo-empty">Waiting for /zed/bboxes_3d...</div>
@@ -194,7 +208,7 @@
           </div>
         </section>
 
-        <section class="glass-panel">
+        <section id="panel-whisper" class="glass-panel">
           <h2><i class="fa-solid fa-microphone"></i> Speech Control (Whisper AI)</h2>
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
             <button id="btn-start-listening" class="btn btn-purple" style="flex: 1; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="startListening()">
@@ -207,7 +221,7 @@
           </div>
         </section>
 
-        <section class="glass-panel console-section">
+        <section id="panel-console" class="glass-panel console-section">
           <h2><i class="fa-solid fa-terminal"></i> Log Output</h2>
           <div id="log-window"></div>
         </section>

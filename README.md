@@ -183,6 +183,7 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 
 **Robot Control UI:** <br>
 * Comprehensive web-based dashboard featuring a virtual 2D analog joystick, 6-DoF absolute joint sliders, and live telemetry for remote teleoperation.
+* Fully customizable layout with drag-and-drop capability for all panels. The layout is persistent and saved directly in the browser.
 
 ### <a id="subchapter-4-2"></a> 4.2 Perception & Assistance
 **Computer Vision:** <br> 
