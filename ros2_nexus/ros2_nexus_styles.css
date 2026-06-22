@@ -30,6 +30,7 @@
       --c-server: #818cf8;
       /* Indigo           — Server Launch      */
       --c-client: #d946ef;
+      --c-dev: #f0b429; /* Gold - Dev Launch */
       /* Fuchsia          — Client Launch      */
 
       --glow-a: 0 0 18px rgba(56, 189, 248, .25);
@@ -583,6 +584,10 @@
       --card-accent: linear-gradient(90deg, var(--c-server) 0%, rgba(129, 140, 248, 0) 35%);
     }
 
+    .action-card[data-type="dev"] {
+      --card-accent: linear-gradient(90deg, var(--c-dev) 0%, rgba(240, 180, 41, 0) 35%);
+    }
+
     .action-card[data-type="client"] {
       --card-accent: linear-gradient(90deg, var(--c-client) 0%, rgba(217, 70, 239, 0) 35%);
     }
@@ -680,6 +685,12 @@
       background: rgba(129, 140, 248, .12);
       color: var(--c-server);
       border-color: rgba(129, 140, 248, .3)
+    }
+
+    .badge-dev {
+      background: rgba(240, 180, 41, .12);
+      color: var(--c-dev);
+      border-color: rgba(240, 180, 41, .3)
     }
 
     .badge-client {

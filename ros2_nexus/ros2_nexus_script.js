@@ -307,15 +307,15 @@
           <div class="section-title" style="color: var(--red);"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span></div>
           <div class="actions-grid" style="grid-template-columns: 1fr;">
             <div class="card-wrapper">
-              <div class="action-card" data-type="launch" onclick="runDevSetup('fake')" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="runDevSetup('fake')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
-                    <span class="badge badge-launch"><i class="fa-solid fa-rocket"></i>LAUNCH SEQUENCE</span>
+                    <span class="badge badge-dev"><i class="fa-solid fa-rocket"></i>DEV SEQUENCE</span>
                     <span class="label">RUN DEV Setup (FAKE)</span>
                   </div>
                   <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Startet die simulierte Roboter-Umgebung in Terminals</span></div>
                 </div>
-                <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-left: 1px solid var(--brd); color: var(--red); font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
+                <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-left: 1px solid var(--brd); color: var(--c-dev); font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
                   <i class="fa-solid fa-rocket"></i>
                 </div>
               </div>
@@ -368,15 +368,15 @@
               </div>
             </div>
             <div class="card-wrapper">
-              <div class="action-card" data-type="launch" onclick="runDevSetup('real')" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="runDevSetup('real')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
-                    <span class="badge badge-launch"><i class="fa-solid fa-rocket"></i>LAUNCH SEQUENCE</span>
+                    <span class="badge badge-dev"><i class="fa-solid fa-rocket"></i>DEV SEQUENCE</span>
                     <span class="label">RUN DEV Setup (REAL)</span>
                   </div>
                   <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Verbindet mit dem physischen xArm Lite 6 (IP: 192.168.1.175)</span></div>
                 </div>
-                <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-left: 1px solid var(--brd); color: var(--red); font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
+                <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-left: 1px solid var(--brd); color: var(--c-dev); font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
                   <i class="fa-solid fa-rocket"></i>
                 </div>
               </div>
