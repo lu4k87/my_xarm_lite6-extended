@@ -123,6 +123,8 @@ class VoiceCommandListener(Node):
         self.pose_pattern = re.compile(rf"\b(?:{pose_trigger})\b", re.IGNORECASE)
         
         self._last_cmd_text = ""
+        self._last_transcript = ""
+        self._search_start_idx = 0
 
         # ---- Subscriptions ----
         if HAS_WHISPER_IDL:
@@ -160,8 +162,7 @@ class VoiceCommandListener(Node):
                     w = w.strip()
                     if w and not (w.startswith("[") and w.endswith("]")):
                         clean_words.append(w)
-            self.word_buffer.extend(clean_words)
-            text = reconstruct_text_from_words(list(self.word_buffer))
+            text = " ".join(clean_words)
             if text:
                 self.handle_text(text)
 
@@ -173,31 +174,42 @@ class VoiceCommandListener(Node):
     # Kernlogik: Textverarbeitung und Matching
     # -------------------------------------------------------------------------
     def handle_text(self, text_raw: str):
-        now = time.time()
-        if (now - self.last_trigger_ts) < self.cooldown_sec: return
-
         norm = normalize(text_raw)
+        if not norm: return
+
+        # Falls der neue Text nicht mit dem alten beginnt (z.B. Transcript wurde geleert oder es ist ein neuer Aufruf)
+        if not norm.startswith(self._last_transcript):
+            self._search_start_idx = 0
+            
+        self._last_transcript = norm
+        search_text = norm[self._search_start_idx:]
+        
+        if not search_text.strip(): return
+        
+        now = time.time()
         
         # Pruefen auf "Move to Pose" Befehl (hat Prioritaet)
-        if self.pose_pattern.search(norm):
-            self.emit_pose_command(text_raw)
-            self.last_trigger_ts = now
+        match_pose = self.pose_pattern.search(search_text)
+        if match_pose:
+            if (now - self.last_trigger_ts) >= self.cooldown_sec:
+                self.emit_pose_command(text_raw)
+                self.last_trigger_ts = now
+            self._search_start_idx += match_pose.end()
             self.word_buffer.clear()
             return
         
         # Suchen nach dem Grasp Befehl im Text
-        matches = list(self.cmd_pattern.finditer(norm))
+        matches = list(self.cmd_pattern.finditer(search_text))
         if matches:
-            # Letzter Treffer im Text wird ausgefuehrt
             last_match = matches[-1]
             obj_name = last_match.group(1).strip()
             
-            # Falls nur kurze Fuellwoerter erkannt wurden, ueberspringen
-            if len(obj_name) < 2: return
-            
-            self.emit_command(obj_name, text_raw)
-            self.last_trigger_ts = now
-            self.word_buffer.clear()
+            if len(obj_name) >= 2:
+                if (now - self.last_trigger_ts) >= self.cooldown_sec:
+                    self.emit_command(obj_name, text_raw)
+                    self.last_trigger_ts = now
+                self._search_start_idx += last_match.end()
+                self.word_buffer.clear()
 
     # -------------------------------------------------------------------------
     # Output: Befehl senden und UI informieren
