@@ -169,6 +169,7 @@ class VoiceCommandListener(Node):
         goal_msg = Inference.Goal()
         goal_msg.max_duration.sec = 15
         self.ui_status_pub.publish(StringMsg(data="Listening..."))
+        self._action_start_time = self.get_clock().now()
         send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
         send_goal_future.add_done_callback(self.goal_response_callback)
 
@@ -257,6 +258,19 @@ class VoiceCommandListener(Node):
     # Kernlogik: Textverarbeitung und Matching
     # -------------------------------------------------------------------------
     def handle_text(self, text_raw: str, is_intermediate: bool = False) -> bool:
+        # --- FIX FOR STALE AUDIO BUFFER REMNANTS ---
+        # Whisper's background audio ring buffer contains 30s of history.
+        # If the user speaks "faster" in Goal A, the buffer retains the audio.
+        # When Goal B starts, Whisper immediately infers the buffer and outputs "faster" again.
+        # Since it physically takes >1.0s to record and infer a new word, any command matched
+        # within the first 1.0s of the action is GUARANTEED to be from the old buffer!
+        if hasattr(self, '_action_start_time'):
+            now_time = self.get_clock().now()
+            action_duration = (now_time.nanoseconds - self._action_start_time.nanoseconds) / 1e9
+            if action_duration < 1.0:
+                self.get_logger().info(f'Ignoring early transcription at t={action_duration:.2f}s (stale audio buffer remnant)')
+                return False
+                
         norm = normalize(text_raw)
         if not norm: return False
 
