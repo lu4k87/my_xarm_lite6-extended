@@ -101,11 +101,8 @@ class VoiceCommandListener(Node):
         # Startmeldung im Terminal
         print(CLEAR_SCREEN + HIDE_CURSOR, end='')
         print("✅ Voice Command Listener ist bereit.")
-        print("   Warte auf Sprachbefehle (z.B. 'Greife [Objekt]', 'Move to Pose', 'Initial Pose')...")
+        print("   Warte auf Sprachbefehle ('Move to Absolute Pose', 'Move to Initial Pose')...")
 
-        # ---- Publisher Setup ----
-        qos_cmd = QoSProfile(depth=1, history=HistoryPolicy.KEEP_LAST, reliability=ReliabilityPolicy.RELIABLE, durability=DurabilityPolicy.TRANSIENT_LOCAL)
-        self.cmd_pub = self.create_publisher(StringMsg, "/ui/grasp_object_cmd", qos_cmd)
 
         # <<< Publisher fuer UI-Feedback >>>
         self.feedback_pub = self.create_publisher(StringMsg, UI_VOICE_FEEDBACK_TOPIC, 10)
@@ -114,19 +111,13 @@ class VoiceCommandListener(Node):
         self.word_buffer = deque(maxlen=50)                     
         self.last_trigger_ts = 0.0                          
         
-        # Regex-Pattern fuer die Befehlserkennung (Deutsch & Englisch)
-        # 1. Grasp Commands
-        trigger_words = r"greife|grasp|move to|go to"
-        # Match trigger word, optional colon, and up to 3 following words as object name
-        self.cmd_pattern = re.compile(rf"\b(?:{trigger_words})\s*:?\s*([a-z0-9]+(?:\s+[a-z0-9]+){{0,2}})", re.IGNORECASE)
+        # Regex-Pattern fuer die Befehlserkennung (Ausschliesslich Englisch)
         
-        # 2. Move to Absolute Pose Commands
-        pose_trigger = r"move to pose|move to absolute pose|move to absolute position|fahre zur absolute position|absolute position"
-        self.pose_pattern = re.compile(rf"\b(?:{pose_trigger})\b", re.IGNORECASE)
+        # 1. Move to Absolute Pose Commands
+        self.pose_pattern = re.compile(r"\bmove to absolute p[oa]use\b", re.IGNORECASE)
         
-        # 3. Move to Initial Pose Commands
-        initial_pose_trigger = r"move to initial pose|move to initial position|fahre zur initial position|initial position|initial pose"
-        self.initial_pose_pattern = re.compile(rf"\b(?:{initial_pose_trigger})\b", re.IGNORECASE)
+        # 2. Move to Initial Pose Commands
+        self.initial_pose_pattern = re.compile(r"\bmove to initial p[oa]use\b", re.IGNORECASE)
         
         self._last_cmd_text = ""
 
@@ -255,19 +246,6 @@ class VoiceCommandListener(Node):
             self.word_buffer.clear()
             return
             
-        # Suchen nach dem Grasp Befehl im Text
-        matches = list(self.cmd_pattern.finditer(search_text))
-        if matches:
-            last_match = matches[-1]
-            obj_name = last_match.group(1).strip()
-            
-            if len(obj_name) >= 2:
-                if (now - self.last_trigger_ts) >= self.cooldown_sec:
-                    self.emit_command(obj_name, text_raw)
-                    self.last_trigger_ts = now
-                self.word_buffer.clear()
-                return
-
         # Fallback: Kein Befehl erkannt
         print(f"❌ Sprachbefehl NICHT erkannt: '{text_raw}'")
         self.get_logger().warning(f"Unrecognized command: '{text_raw}' (normalized: '{search_text}')")
@@ -276,28 +254,6 @@ class VoiceCommandListener(Node):
     # -------------------------------------------------------------------------
     # Output: Befehl senden und UI informieren
     # -------------------------------------------------------------------------
-    def emit_command(self, obj_name: str, original: str):
-        # 1. Im Terminal ausgeben
-        print(CLEAR_SCREEN, end='')
-        print(f"✅ Sprachbefehl erkannt: Grasp '{obj_name}'")
-        self.get_logger().debug(f'(Originales Transkript: "{original}")')
-
-        # 2. Kommando auf /ui/grasp_object_cmd publishen (Triggert den YOLO Grasp Executor)
-        cmd_msg = StringMsg()
-        cmd_msg.data = obj_name
-        self.cmd_pub.publish(cmd_msg)
-        
-        cmd_feedback = f"Grasp: {obj_name}"
-        self._last_cmd_text = cmd_feedback
-
-        # 3. Feedback-String auf /ui/voice_feedback publishen (fuer Web UI)
-        try:
-            feedback_msg = StringMsg()
-            feedback_msg.data = cmd_feedback
-            self.feedback_pub.publish(feedback_msg)
-        except Exception as e:
-            self.get_logger().error(f"Error publishing voice feedback: {e}")
-
     def emit_pose_command(self, original: str):
         """Sendet den 'MoveTo: pose' Befehl an die Web UI."""
         print(CLEAR_SCREEN, end='')
