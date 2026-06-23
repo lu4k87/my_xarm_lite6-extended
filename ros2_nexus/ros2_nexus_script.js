@@ -264,17 +264,17 @@
 
     const CMD_DETAILS = {
       // ── Launch Files ────────────────────────────────────────────────────────
-      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">lite6_moveit_servo_fake.launch.py</span> (Main)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">servo_node.cpp</span> (MoveIt Servo)</li><li><span style="color: var(--accent);">fake_components.cpp</span> (Mock Hardware)</li></ul></li></ul>`,
-      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">lite6_moveit_servo_realmove.launch.py</span> (Main)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">servo_node.cpp</span> (MoveIt Servo)</li><li><span style="color: var(--accent);">ufactory_driver.cpp</span> (Real Hardware Driver)</li></ul></li></ul>`,
-      "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (Main)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li></ul></li></ul>`,
-      "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (Main)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li></ul></li></ul>`,
-      "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera Driver)</li><li><span style="color: var(--accent);">static_transform_publisher</span> (TF: link_base → zed_camera_link)</li><li><span style="color: var(--accent);">zed_stand_publisher.py</span> (3D Stativ Marker)</li><li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (PointCloud ROI Filter)</li><li><span style="color: var(--accent);">yolo_moveit_collision.py</span> (YOLO → MoveIt Collision)</li><li><span style="color: var(--accent);">zed_yolo_3d_bbox.py</span> (YOLO 3D BBox)</li><li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (Grasp Executor)</li><li><span style="color: var(--accent);">grasp_action_bridge.py</span> (Action Bridge)</li></ul></li></ul>`,
-      "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">zed_cam_eef_rviz_octomap_yolo.launch.py</span> (Vision Bringup)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera Driver)</li><li><span style="color: var(--accent);">static_transform_publisher</span> (TF: link_tcp → zed_camera_link)</li><li><span style="color: var(--accent);">octomap_server_node</span> (Octomap 3D Voxelkarte)</li><li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (PointCloud ROI Filter)</li><li><span style="color: var(--accent);">yolo_moveit_collision.py</span> (YOLO → MoveIt Collision)</li><li><span style="color: var(--accent);">zed_yolo_3d_bbox.py</span> (YOLO 3D BBox)</li><li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (Grasp Executor)</li><li><span style="color: var(--accent);">grasp_action_bridge.py</span> (Action Bridge)</li></ul></li></ul>`,
-      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">bringup.launch.py</span> (Main)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li><li><span style="color: var(--accent);">inference.cpp</span> (Whisper CPU Engine)</li></ul></li></ul>`,
-      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">bringup.launch.py</span> (Main)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li><li><span style="color: var(--accent);">inference.cpp</span> (Whisper C++ Engine)</li></ul></li></ul>`,
-      "ros2 launch motion_sequence motion_sequence_launch.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">motion_sequence_launch.py</span> (Main)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">motion_sequence.py</span> (Sequencer)</li></ul></li></ul>`,
-      "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (Main)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> (Statische RViz Marker)</li></ul></li></ul>`,
-      "ros2 launch rosbridge_server rosbridge_websocket_launch.xml": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">rosbridge_websocket_launch.xml</span> (Main)<ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">rosbridge_websocket.py</span> (WebSocket Server Port 9090)</li><li><span style="color: var(--accent);">rosapi_node.py</span> (ROS API Service)</li></ul></li></ul>`,
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">lite6_moveit_servo_fake.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">servo_node.cpp</span> <span style="float: right; opacity: 0.7;">(MoveIt Servo)</span></li><li><span style="color: var(--accent);">fake_components.cpp</span> <span style="float: right; opacity: 0.7;">(Mock Hardware)</span></li></ul></li></ul>`,
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">lite6_moveit_servo_realmove.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">servo_node.cpp</span> <span style="float: right; opacity: 0.7;">(MoveIt Servo)</span></li><li><span style="color: var(--accent);">ufactory_driver.cpp</span> <span style="float: right; opacity: 0.7;">(Real Hardware Driver)</span></li></ul></li></ul>`,
+      "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">move_group</span> <span style="float: right; opacity: 0.7;">(MoveIt Planning Server)</span></li></ul></li></ul>`,
+      "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">move_group</span> <span style="float: right; opacity: 0.7;">(MoveIt Planning Server)</span></li></ul></li></ul>`,
+      "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> <span style="float: right; opacity: 0.7;">(Vision Bringup)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">zed_wrapper.cpp</span> <span style="float: right; opacity: 0.7;">(ZED Camera Driver)</span></li><li><span style="color: var(--accent);">static_transform_publisher</span> <span style="float: right; opacity: 0.7;">(TF: link_base → zed_camera_link)</span></li><li><span style="color: var(--accent);">zed_stand_publisher.py</span> <span style="float: right; opacity: 0.7;">(3D Stativ Marker)</span></li><li><span style="color: var(--accent);">pointcloud_optimizer.py</span> <span style="float: right; opacity: 0.7;">(PointCloud ROI Filter)</span></li><li><span style="color: var(--accent);">yolo_moveit_collision.py</span> <span style="float: right; opacity: 0.7;">(YOLO → MoveIt Collision)</span></li><li><span style="color: var(--accent);">zed_yolo_3d_bbox.py</span> <span style="float: right; opacity: 0.7;">(YOLO 3D BBox)</span></li><li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> <span style="float: right; opacity: 0.7;">(Grasp Executor)</span></li><li><span style="color: var(--accent);">grasp_action_bridge.py</span> <span style="float: right; opacity: 0.7;">(Action Bridge)</span></li></ul></li></ul>`,
+      "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">zed_cam_eef_rviz_octomap_yolo.launch.py</span> <span style="float: right; opacity: 0.7;">(Vision Bringup)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">zed_wrapper.cpp</span> <span style="float: right; opacity: 0.7;">(ZED Camera Driver)</span></li><li><span style="color: var(--accent);">static_transform_publisher</span> <span style="float: right; opacity: 0.7;">(TF: link_tcp → zed_camera_link)</span></li><li><span style="color: var(--accent);">octomap_server_node</span> <span style="float: right; opacity: 0.7;">(Octomap 3D Voxelkarte)</span></li><li><span style="color: var(--accent);">pointcloud_optimizer.py</span> <span style="float: right; opacity: 0.7;">(PointCloud ROI Filter)</span></li><li><span style="color: var(--accent);">yolo_moveit_collision.py</span> <span style="float: right; opacity: 0.7;">(YOLO → MoveIt Collision)</span></li><li><span style="color: var(--accent);">zed_yolo_3d_bbox.py</span> <span style="float: right; opacity: 0.7;">(YOLO 3D BBox)</span></li><li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> <span style="float: right; opacity: 0.7;">(Grasp Executor)</span></li><li><span style="color: var(--accent);">grasp_action_bridge.py</span> <span style="float: right; opacity: 0.7;">(Action Bridge)</span></li></ul></li></ul>`,
+      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">bringup.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">audio_listener.py</span> <span style="float: right; opacity: 0.7;">(Mic Stream)</span></li><li><span style="color: var(--accent);">inference.cpp</span> <span style="float: right; opacity: 0.7;">(Whisper CPU Engine)</span></li></ul></li></ul>`,
+      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">bringup.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">audio_listener.py</span> <span style="float: right; opacity: 0.7;">(Mic Stream)</span></li><li><span style="color: var(--accent);">inference.cpp</span> <span style="float: right; opacity: 0.7;">(Whisper C++ Engine)</span></li></ul></li></ul>`,
+      "ros2 launch motion_sequence motion_sequence_launch.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">motion_sequence_launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">motion_sequence.py</span> <span style="float: right; opacity: 0.7;">(Sequencer)</span></li></ul></li></ul>`,
+      "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> <span style="float: right; opacity: 0.7;">(Statische RViz Marker)</span></li></ul></li></ul>`,
+      "ros2 launch rosbridge_server rosbridge_websocket_launch.xml": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span style="color: var(--c-launch);">rosbridge_websocket_launch.xml</span> <span style="float: right; opacity: 0.7;">(Main)</span><ul style="padding-left: 16px; margin: 2px 0 0 0;"><li><span style="color: var(--accent);">rosbridge_websocket.py</span> <span style="float: right; opacity: 0.7;">(WebSocket Server Port 9090)</span></li><li><span style="color: var(--accent);">rosapi_node.py</span> <span style="float: right; opacity: 0.7;">(ROS API Service)</span></li></ul></li></ul>`,
       // ── Node Commands ───────────────────────────────────────────────────────
       "ros2 run collision_check checker": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Package:</b> <span style="color: var(--accent);">collision_check</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Executable:</b> <span style="color: var(--accent);">checker</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Source File:</b> <span style="color: var(--accent);">checker.py</span></div>`,
       "ros2 run voice_command_listener listener": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Package:</b> <span style="color: var(--accent);">voice_command_listener</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Executable:</b> <span style="color: var(--accent);">listener</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Source File:</b> <span style="color: var(--accent);">voice_command_listener.py</span></div>`,
@@ -322,63 +322,51 @@
                 <div class="card-tooltip-title"><i class="fa-solid fa-rocket"></i> RUN DEV Setup (FAKE)</div>
                 <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
                 <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                   <li><span style="color: var(--accent);">lite6_moveit_servo_fake.launch.py</span> (MoveIt Servo)</li>
-                   <li><span style="color: var(--accent);">servo_node.cpp</span> (MoveIt Servo)</li>
-                   <li><span style="color: var(--accent);">checker.py</span> (Collision Checker)</li>
-                   <li><span style="color: var(--accent);">standalone_move_group.launch.py</span> (MoveGroup)</li>
-                   <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)</li>
-                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">scan_trajectory_node.cpp</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
-                   <li><span style="color: var(--accent);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)</li>
-                   <li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera)</li>
-                   <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
-                   <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
-                   <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
-                   <li><span style="color: var(--accent);">bringup.launch.py</span> (Whisper Bringup)</li>
-                   <li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li>
-                   <li><span style="color: var(--accent);">inference.cpp</span> (Whisper Core)</li>
-                   <li><span style="color: var(--accent);">voice_command_listener.py</span> (Voice Controller)</li>
-                   <li><span style="color: var(--accent);">rosbridge_websocket.py</span> (ROS Bridge)</li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>
-                   <li><span style="color: var(--accent);">robot_control_web_ui</span> (Web Server)</li>
-</ul>
-                   </li>
-                   <li><span style="color: var(--accent);">checker.py</span> (Collision Checker)</li>
-                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)
+                   <li><span style="color: var(--c-launch);">lite6_moveit_servo_fake.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li>
+                       <li><span style="color: var(--accent);">servo_node.cpp</span> <span style="float: right; opacity: 0.7;">(MoveIt Servo)</span></li>
+                       <li><span style="color: var(--accent);">fake_components.cpp</span> <span style="float: right; opacity: 0.7;">(Mock Hardware)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)
+                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> (Statische RViz Marker)</li>
+                       <li><span style="color: var(--accent);">move_group</span> <span style="float: right; opacity: 0.7;">(MoveIt Planning Server)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
-                   <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)
+                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera)</li>
-                       <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
-                       <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
-                       <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
+                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> <span style="float: right; opacity: 0.7;">(Static Markers)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">bringup.launch.py</span> (Whisper Bringup)
+                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup</span> <span style="float: right; opacity: 0.7;">(Motion Handler)</span></li>
+                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> <span style="float: right; opacity: 0.7;">(RViz Overlay)</span></li>
+                   <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> <span style="float: right; opacity: 0.7;">(Vision Bringup)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li>
-                       <li><span style="color: var(--accent);">inference.cpp</span> (Whisper Core)</li>
+                       <li><span style="color: var(--accent);">zed_wrapper.cpp</span> <span style="float: right; opacity: 0.7;">(ZED Camera)</span></li>
+                       <li><span style="color: var(--accent);">static_transform_publisher</span> <span style="float: right; opacity: 0.7;">(TF)</span></li>
+                       <li><span style="color: var(--accent);">zed_stand_publisher.py</span> <span style="float: right; opacity: 0.7;">(Stativ Marker)</span></li>
+                       <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> <span style="float: right; opacity: 0.7;">(PointCloud Filter)</span></li>
+                       <li><span style="color: var(--accent);">yolo_moveit_collision.py</span> <span style="float: right; opacity: 0.7;">(YOLO Collision)</span></li>
+                       <li><span style="color: var(--accent);">zed_yolo_3d_bbox.py</span> <span style="float: right; opacity: 0.7;">(YOLO BBox)</span></li>
+                       <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> <span style="float: right; opacity: 0.7;">(Grasp Executor)</span></li>
+                       <li><span style="color: var(--accent);">grasp_action_bridge.py</span> <span style="float: right; opacity: 0.7;">(Action Bridge)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">voice_command_listener.py</span> (Voice Controller)</li>
-                   <li><span style="color: var(--c-launch);">rosbridge_websocket_launch.xml</span> (ROS Bridge)
+                   <li><span style="color: var(--c-launch);">bringup.launch.py</span> <span style="float: right; opacity: 0.7;">(Whisper Bringup)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">rosbridge_websocket.py</span> (WebSocket Server)</li>
+                       <li><span style="color: var(--accent);">audio_listener.py</span> <span style="float: right; opacity: 0.7;">(Mic Stream)</span></li>
+                       <li><span style="color: var(--accent);">inference.cpp</span> <span style="float: right; opacity: 0.7;">(Whisper Engine)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>
-                   <li><span style="color: var(--accent);">robot_control_web_ui</span> (Web Server)</li>
+                   <li><span style="color: var(--accent);">voice_command_listener.py</span> <span style="float: right; opacity: 0.7;">(Voice Controller)</span></li>
+                   <li><span style="color: var(--c-launch);">rosbridge_websocket_launch.xml</span> <span style="float: right; opacity: 0.7;">(ROS Bridge)</span>
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">rosbridge_websocket.py</span> <span style="float: right; opacity: 0.7;">(WebSocket Server)</span></li>
+                       <li><span style="color: var(--accent);">rosapi_node.py</span> <span style="float: right; opacity: 0.7;">(ROS API)</span></li>
+                     </ul>
+                   </li>
+                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
+                   <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
                 </ul>
               </div>
             </div>
@@ -399,63 +387,51 @@
                 <div class="card-tooltip-title"><i class="fa-solid fa-rocket"></i> RUN DEV Setup (REAL)</div>
                 <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
                 <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                   <li><span style="color: var(--accent);">lite6_moveit_servo_realmove.launch.py</span> (MoveIt Servo)</li>
-                   <li><span style="color: var(--accent);">servo_node.cpp</span> (MoveIt Servo)</li>
-                   <li><span style="color: var(--accent);">checker.py</span> (Collision Checker)</li>
-                   <li><span style="color: var(--accent);">standalone_move_group.launch.py</span> (MoveGroup)</li>
-                   <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)</li>
-                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">scan_trajectory_node.cpp</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
-                   <li><span style="color: var(--accent);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)</li>
-                   <li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera)</li>
-                   <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
-                   <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
-                   <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
-                   <li><span style="color: var(--accent);">bringup.launch.py</span> (Whisper Bringup)</li>
-                   <li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li>
-                   <li><span style="color: var(--accent);">inference.cpp</span> (Whisper Core)</li>
-                   <li><span style="color: var(--accent);">voice_command_listener.py</span> (Voice Controller)</li>
-                   <li><span style="color: var(--accent);">rosbridge_websocket.py</span> (ROS Bridge)</li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>
-                   <li><span style="color: var(--accent);">robot_control_web_ui</span> (Web Server)</li>
-</ul>
-                   </li>
-                   <li><span style="color: var(--accent);">checker.py</span> (Collision Checker)</li>
-                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)
+                   <li><span style="color: var(--c-launch);">lite6_moveit_servo_realmove.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li>
+                       <li><span style="color: var(--accent);">servo_node.cpp</span> <span style="float: right; opacity: 0.7;">(MoveIt Servo)</span></li>
+                       <li><span style="color: var(--accent);">ufactory_driver.cpp</span> <span style="float: right; opacity: 0.7;">(Real Hardware)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)
+                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> (Statische RViz Marker)</li>
+                       <li><span style="color: var(--accent);">move_group</span> <span style="float: right; opacity: 0.7;">(MoveIt Planning Server)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
-                   <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)
+                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera)</li>
-                       <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
-                       <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
-                       <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
+                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> <span style="float: right; opacity: 0.7;">(Static Markers)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">bringup.launch.py</span> (Whisper Bringup)
+                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup</span> <span style="float: right; opacity: 0.7;">(Motion Handler)</span></li>
+                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> <span style="float: right; opacity: 0.7;">(RViz Overlay)</span></li>
+                   <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> <span style="float: right; opacity: 0.7;">(Vision Bringup)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li>
-                       <li><span style="color: var(--accent);">inference.cpp</span> (Whisper Core)</li>
+                       <li><span style="color: var(--accent);">zed_wrapper.cpp</span> <span style="float: right; opacity: 0.7;">(ZED Camera)</span></li>
+                       <li><span style="color: var(--accent);">static_transform_publisher</span> <span style="float: right; opacity: 0.7;">(TF)</span></li>
+                       <li><span style="color: var(--accent);">zed_stand_publisher.py</span> <span style="float: right; opacity: 0.7;">(Stativ Marker)</span></li>
+                       <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> <span style="float: right; opacity: 0.7;">(PointCloud Filter)</span></li>
+                       <li><span style="color: var(--accent);">yolo_moveit_collision.py</span> <span style="float: right; opacity: 0.7;">(YOLO Collision)</span></li>
+                       <li><span style="color: var(--accent);">zed_yolo_3d_bbox.py</span> <span style="float: right; opacity: 0.7;">(YOLO BBox)</span></li>
+                       <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> <span style="float: right; opacity: 0.7;">(Grasp Executor)</span></li>
+                       <li><span style="color: var(--accent);">grasp_action_bridge.py</span> <span style="float: right; opacity: 0.7;">(Action Bridge)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">voice_command_listener.py</span> (Voice Controller)</li>
-                   <li><span style="color: var(--c-launch);">rosbridge_websocket_launch.xml</span> (ROS Bridge)
+                   <li><span style="color: var(--c-launch);">bringup.launch.py</span> <span style="float: right; opacity: 0.7;">(Whisper Bringup)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">rosbridge_websocket.py</span> (WebSocket Server)</li>
+                       <li><span style="color: var(--accent);">audio_listener.py</span> <span style="float: right; opacity: 0.7;">(Mic Stream)</span></li>
+                       <li><span style="color: var(--accent);">inference.cpp</span> <span style="float: right; opacity: 0.7;">(Whisper Engine)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>
-                   <li><span style="color: var(--accent);">robot_control_web_ui</span> (Web Server)</li>
+                   <li><span style="color: var(--accent);">voice_command_listener.py</span> <span style="float: right; opacity: 0.7;">(Voice Controller)</span></li>
+                   <li><span style="color: var(--c-launch);">rosbridge_websocket_launch.xml</span> <span style="float: right; opacity: 0.7;">(ROS Bridge)</span>
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">rosbridge_websocket.py</span> <span style="float: right; opacity: 0.7;">(WebSocket Server)</span></li>
+                       <li><span style="color: var(--accent);">rosapi_node.py</span> <span style="float: right; opacity: 0.7;">(ROS API)</span></li>
+                     </ul>
+                   </li>
+                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
+                   <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
                 </ul>
               </div>
             </div>
@@ -489,49 +465,37 @@
                 <div class="card-tooltip-title"><i class="fa-solid fa-server"></i> RUN SERVER (FAKE)</div>
                 <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
                 <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                   <li><span style="color: var(--accent);">lite6_moveit_servo_fake.launch.py</span> (MoveIt Servo)</li>
-                   <li><span style="color: var(--accent);">servo_node.cpp</span> (MoveIt Servo)</li>
-                   <li><span style="color: var(--accent);">standalone_move_group.launch.py</span> (MoveGroup)</li>
-                   <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)</li>
-                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">scan_trajectory_node.cpp</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
-                   <li><span style="color: var(--accent);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)</li>
-                   <li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera)</li>
-                   <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
-                   <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
-                   <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>
-</ul>
-                   </li>
-                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)
+                   <li><span style="color: var(--c-launch);">lite6_moveit_servo_fake.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li>
+                       <li><span style="color: var(--accent);">servo_node.cpp</span> <span style="float: right; opacity: 0.7;">(MoveIt Servo)</span></li>
+                       <li><span style="color: var(--accent);">fake_components.cpp</span> <span style="float: right; opacity: 0.7;">(Mock Hardware)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)
+                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> (Statische RViz Marker)</li>
+                       <li><span style="color: var(--accent);">move_group</span> <span style="float: right; opacity: 0.7;">(MoveIt Planning Server)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
-                   <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)
+                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera)</li>
-                       <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
-                       <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
-                       <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
+                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> <span style="float: right; opacity: 0.7;">(Static Markers)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">bringup.launch.py</span> (Whisper Bringup)
+                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup</span> <span style="float: right; opacity: 0.7;">(Motion Handler)</span></li>
+                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> <span style="float: right; opacity: 0.7;">(RViz Overlay)</span></li>
+                   <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> <span style="float: right; opacity: 0.7;">(Vision Bringup)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li>
-                       <li><span style="color: var(--accent);">inference.cpp</span> (Whisper Core)</li>
+                       <li><span style="color: var(--accent);">zed_wrapper.cpp</span> <span style="float: right; opacity: 0.7;">(ZED Camera)</span></li>
+                       <li><span style="color: var(--accent);">static_transform_publisher</span> <span style="float: right; opacity: 0.7;">(TF)</span></li>
+                       <li><span style="color: var(--accent);">zed_stand_publisher.py</span> <span style="float: right; opacity: 0.7;">(Stativ Marker)</span></li>
+                       <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> <span style="float: right; opacity: 0.7;">(PointCloud Filter)</span></li>
+                       <li><span style="color: var(--accent);">yolo_moveit_collision.py</span> <span style="float: right; opacity: 0.7;">(YOLO Collision)</span></li>
+                       <li><span style="color: var(--accent);">zed_yolo_3d_bbox.py</span> <span style="float: right; opacity: 0.7;">(YOLO BBox)</span></li>
+                       <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> <span style="float: right; opacity: 0.7;">(Grasp Executor)</span></li>
+                       <li><span style="color: var(--accent);">grasp_action_bridge.py</span> <span style="float: right; opacity: 0.7;">(Action Bridge)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">voice_command_listener.py</span> (Voice Controller)</li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>
+                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                 </ul>
               </div>
             </div>
@@ -553,49 +517,37 @@
                 <div class="card-tooltip-title"><i class="fa-solid fa-server"></i> RUN SERVER (REAL)</div>
                 <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
                 <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                   <li><span style="color: var(--accent);">lite6_moveit_servo_realmove.launch.py</span> (MoveIt Servo)</li>
-                   <li><span style="color: var(--accent);">servo_node.cpp</span> (MoveIt Servo)</li>
-                   <li><span style="color: var(--accent);">standalone_move_group.launch.py</span> (MoveGroup)</li>
-                   <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)</li>
-                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">scan_trajectory_node.cpp</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
-                   <li><span style="color: var(--accent);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)</li>
-                   <li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera)</li>
-                   <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
-                   <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
-                   <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>
-</ul>
-                   </li>
-                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> (MoveGroup)
+                   <li><span style="color: var(--c-launch);">lite6_moveit_servo_realmove.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">move_group</span> (MoveIt Planning Server)</li>
+                       <li><span style="color: var(--accent);">servo_node.cpp</span> <span style="float: right; opacity: 0.7;">(MoveIt Servo)</span></li>
+                       <li><span style="color: var(--accent);">ufactory_driver.cpp</span> <span style="float: right; opacity: 0.7;">(Real Hardware)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> (RViz Marker)
+                   <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> (Statische RViz Marker)</li>
+                       <li><span style="color: var(--accent);">move_group</span> <span style="float: right; opacity: 0.7;">(MoveIt Planning Server)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup.py</span> (Motion Handler)</li>
-                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> (RViz Overlay)</li>
-                   <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> (Vision Bringup)
+                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> <span style="float: right; opacity: 0.7;">(Main)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">zed_wrapper.cpp</span> (ZED Camera)</li>
-                       <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
-                       <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
-                       <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
+                       <li><span style="color: var(--accent);">rviz_marker_static_scene_objects.py</span> <span style="float: right; opacity: 0.7;">(Static Markers)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-launch);">bringup.launch.py</span> (Whisper Bringup)
+                   <li><span style="color: var(--accent);">robot_motion_handler_movegroup</span> <span style="float: right; opacity: 0.7;">(Motion Handler)</span></li>
+                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> <span style="float: right; opacity: 0.7;">(RViz Overlay)</span></li>
+                   <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> <span style="float: right; opacity: 0.7;">(Vision Bringup)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li>
-                       <li><span style="color: var(--accent);">inference.cpp</span> (Whisper Core)</li>
+                       <li><span style="color: var(--accent);">zed_wrapper.cpp</span> <span style="float: right; opacity: 0.7;">(ZED Camera)</span></li>
+                       <li><span style="color: var(--accent);">static_transform_publisher</span> <span style="float: right; opacity: 0.7;">(TF)</span></li>
+                       <li><span style="color: var(--accent);">zed_stand_publisher.py</span> <span style="float: right; opacity: 0.7;">(Stativ Marker)</span></li>
+                       <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> <span style="float: right; opacity: 0.7;">(PointCloud Filter)</span></li>
+                       <li><span style="color: var(--accent);">yolo_moveit_collision.py</span> <span style="float: right; opacity: 0.7;">(YOLO Collision)</span></li>
+                       <li><span style="color: var(--accent);">zed_yolo_3d_bbox.py</span> <span style="float: right; opacity: 0.7;">(YOLO BBox)</span></li>
+                       <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> <span style="float: right; opacity: 0.7;">(Grasp Executor)</span></li>
+                       <li><span style="color: var(--accent);">grasp_action_bridge.py</span> <span style="float: right; opacity: 0.7;">(Action Bridge)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">voice_command_listener.py</span> (Voice Controller)</li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>
+                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                 </ul>
               </div>
             </div>
@@ -617,24 +569,24 @@
                 <div class="card-tooltip-title"><i class="fa-solid fa-desktop"></i> RUN CLIENT (Operator Station)</div>
                 <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
                 <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                   <li><span style="color: var(--accent);">joy_node.cpp</span> (Gamepad Driver)</li>
-                   <li><span style="color: var(--accent);">checker.py</span> (Collision Checker)</li>
-                   <li><span style="color: var(--accent);">rosbridge_websocket.py</span> (ROS Bridge)</li>
-                   <li><span style="color: var(--accent);">rosapi_node.py</span> (ROS API)</li>
-                   <li><span style="color: var(--accent);">servo.rviz</span> (RViz2 Operator View)</li>
-                   <li><span style="color: var(--accent);">robot_control_web_ui</span> (Web Server)</li>
-</ul>
-                   </li>
-                   <li><span style="color: var(--accent);">servo.rviz</span> (RViz2 Operator View)</li>
-                   <li><span style="color: var(--c-launch);">bringup.launch.py</span> (Whisper Bringup)
+                   <li><span style="color: var(--accent);">joy_node.cpp</span> <span style="float: right; opacity: 0.7;">(Gamepad Driver)</span></li>
+                   <li><span style="color: var(--accent);">checker.py</span> <span style="float: right; opacity: 0.7;">(Collision Checker)</span></li>
+                   <li><span style="color: var(--c-launch);">rosbridge_websocket_launch.xml</span> <span style="float: right; opacity: 0.7;">(ROS Bridge)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
-                       <li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li>
-                       <li><span style="color: var(--accent);">inference.cpp</span> (Whisper Core)</li>
+                       <li><span style="color: var(--accent);">rosbridge_websocket.py</span> <span style="float: right; opacity: 0.7;">(WebSocket Server)</span></li>
+                       <li><span style="color: var(--accent);">rosapi_node.py</span> <span style="float: right; opacity: 0.7;">(ROS API)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">voice_command_listener.py</span> (Voice Controller)</li>
-                   <li><span style="color: var(--accent);">robot_control_web_ui</span> (Web Server)</li>
-</ul>
+                   <li><span style="color: var(--accent);">servo.rviz</span> <span style="float: right; opacity: 0.7;">(RViz2 Operator View)</span></li>
+                   <li><span style="color: var(--c-launch);">bringup.launch.py</span> <span style="float: right; opacity: 0.7;">(Whisper Bringup CPU)</span>
+                     <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
+                       <li><span style="color: var(--accent);">audio_listener.py</span> <span style="float: right; opacity: 0.7;">(Mic Stream)</span></li>
+                       <li><span style="color: var(--accent);">inference.cpp</span> <span style="float: right; opacity: 0.7;">(Whisper Engine CPU)</span></li>
+                     </ul>
+                   </li>
+                   <li><span style="color: var(--accent);">voice_command_listener.py</span> <span style="float: right; opacity: 0.7;">(Voice Controller)</span></li>
+                   <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
+                </ul>
               </div>
             </div>
           </div>
