@@ -3,26 +3,15 @@ whisper:
     ros__parameters:
       model_name: "tiny"         # Nutzt tiny für flüssige CPU-Ausführung auf PC 2
       wparams:
-        language: "de"           # Sprache auf Deutsch für deutsche Kommandos
+        language: "en"           # Sprache auf Englisch für englische Kommandos
         task: "transcribe"
         # Wichtig: Biasing auf Deine aktuellen Befehle
         initial_prompt: |
           You will hear voice commands. Valid triggers:
           - "Move to Pose"
           - "Move to Absolute Pose"
-          - "Move to Absolute Position"
-          - "Fahre zur Absolute Position"
-          - "Absolute Position"
           - "Move to Initial Pose"
-          - "Move to Initial Position"
-          - "Fahre zur Initial Position"
-          - "Initial Position"
-          - "Initial Pose"
-          - "Greife"
-          - "Grasp"
-          - "Move to"
-          - "Go to"
-
+          - "Move to Pause"
         # Für stabile, deterministische Erkennung (niedrige Latenz)
         temperature: 0.0
         beam_size: 1

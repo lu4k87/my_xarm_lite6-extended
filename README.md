@@ -334,9 +334,12 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
-> **Purpose & Task:** Analyzes the discrete single-shot raw text using regex patterns to extract defined exact action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose").
+> **Purpose & Task:** Analyzes the discrete single-shot raw text using regex patterns to extract defined exact action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose").
 - 📥 **Subscribes:** `/ui/voice_command_text` (`std_msgs/String`). Listens strictly to the explicit Web UI Action Server results to prevent execution loops from continuous Whisper streams.
 - 📤 **Publishes:** `/ui/voice_feedback` (`std_msgs/String`). Directly triggers coordinate movements ("MoveTo: pose", "MoveTo: initial") via the dashboard UI feedback.
+
+> [!TIP]
+> The `whisper_server` is explicitly configured to use `language: "en"` along with a targeted `initial_prompt` inside `whisper.yaml` to guarantee high transcription accuracy for the English commands, rejecting non-english noise.
 
 #### `gaze_ui_node.py` <kbd>SCRIPT / UI</kbd>
 

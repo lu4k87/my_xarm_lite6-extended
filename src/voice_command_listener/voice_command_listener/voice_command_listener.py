@@ -114,10 +114,10 @@ class VoiceCommandListener(Node):
         # Regex-Pattern fuer die Befehlserkennung (Ausschliesslich Englisch)
         
         # 1. Move to Absolute Pose Commands
-        self.pose_pattern = re.compile(r"\bmove to absolute p[oa]use\b", re.IGNORECASE)
+        self.pose_pattern = re.compile(r"\bmove to (?:absolute )?(?:pose|pause|power)\b", re.IGNORECASE)
         
         # 2. Move to Initial Pose Commands
-        self.initial_pose_pattern = re.compile(r"\bmove to initial p[oa]use\b", re.IGNORECASE)
+        self.initial_pose_pattern = re.compile(r"\b(?:move to )?initial (?:pose|pause|power)\b", re.IGNORECASE)
         
         self._last_cmd_text = ""
 
