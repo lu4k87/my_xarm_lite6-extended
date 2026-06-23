@@ -92,7 +92,7 @@ class VoiceCommandListener(Node):
         super().__init__("voice_command_listener")
 
         # ---- Parameter Initialisierung ----
-        self.declare_parameter("cooldown_sec", 5.0)
+        self.declare_parameter("cooldown_sec", 3.0)
         self.declare_parameter("whisper_topic", "/whisper/transcript_stream")
         
         self.cooldown_sec = float(self.get_parameter("cooldown_sec").value)
@@ -102,7 +102,6 @@ class VoiceCommandListener(Node):
         print(CLEAR_SCREEN + HIDE_CURSOR, end='')
         print("✅ Voice Command Listener ist bereit.")
         print("   Warte auf Sprachbefehle ('Move to Absolute Pose', 'Move to Initial Pose')...")
-
 
         # <<< Publisher fuer UI-Feedback >>>
         self.feedback_pub = self.create_publisher(StringMsg, UI_VOICE_FEEDBACK_TOPIC, 10)
@@ -125,12 +124,21 @@ class VoiceCommandListener(Node):
         
         self._last_cmd_text = ""
 
-        # ---- Subscriptions ----
-        # Nur auf Text-Kommandos aus dem Web UI (Action Server Result) hoeren,
-        # um Endlosschleifen durch continuous streams zu vermeiden.
-        self.create_subscription(StringMsg, "/ui/voice_command_text", self.on_transcript_string, 10)
+        # ---- Robust State Machine ----
+        # Tracks whether we are currently in a cancellation sequence
+        self._is_canceling = False
+        # Tracks whether a command was EXECUTED (not just matched) for the current goal
+        self._command_executed_for_current_goal = False
+        # The last feedback text we processed — to ignore duplicate feedback packets
+        self._last_processed_feedback_text = ""
+        # The last command that was EXECUTED and when — to detect residual audio
+        self._last_executed_cmd = ""
+        self._last_executed_cmd_ts = 0.0
+        # Active goal handle
+        self.goal_handle = None
 
-        # Trigger for Whisper Action
+        # ---- Subscriptions ----
+        # Trigger for Whisper Action (from Web UI button)
         self.create_subscription(StringMsg, "/ui/voice_listen_trigger", self.on_trigger_whisper, 10)
         self.ui_status_pub = self.create_publisher(StringMsg, "/ui/voice_status", 10)
         
@@ -155,9 +163,12 @@ class VoiceCommandListener(Node):
         if not self._action_client.wait_for_server(timeout_sec=1.0):
             self.ui_status_pub.publish(StringMsg(data="Error: Whisper Server offline"))
             return
-            
+        
+        # Reset ALL state for the new goal
         self._is_canceling = False
-        self._command_triggered_for_current_goal = False
+        self._command_executed_for_current_goal = False
+        self._last_processed_feedback_text = ""
+        self.goal_handle = None
         
         goal_msg = Inference.Goal()
         goal_msg.max_duration.sec = 5
@@ -177,40 +188,127 @@ class VoiceCommandListener(Node):
         self._get_result_future.add_done_callback(self.get_result_callback)
 
     def feedback_callback(self, feedback_msg):
-        if getattr(self, '_is_canceling', False):
+        # ── Guard 1: Already canceling → ignore all further feedback
+        if self._is_canceling:
             return
-            
+        
         feedback = feedback_msg.feedback
         text = feedback.transcription
-        if text:
-            # We process the intermediate text
-            if self.handle_text(text, is_intermediate=True):
+        if not text or not text.strip():
+            return
+        
+        text = text.strip()
+        
+        # ── Guard 2: Identical text as last feedback → skip (dedup)
+        #    The C++ server sends feedback every 250ms with the SAME cumulative text.
+        if text == self._last_processed_feedback_text:
+            return
+        self._last_processed_feedback_text = text
+        
+        # ── Guard 3: Residual audio detection
+        #    If the recognized text matches what we JUST executed in a previous goal,
+        #    it's the microphone buffer residue — not a new spoken command.
+        cmd = self._identify_command(text)
+        if cmd:
+            time_since_last_exec = time.time() - self._last_executed_cmd_ts
+            if cmd == self._last_executed_cmd and time_since_last_exec < 5.0:
+                self.get_logger().warn(
+                    f'Residual audio suppressed: "{cmd}" was executed {time_since_last_exec:.1f}s ago')
+                # Cancel goal to reset UI, but do NOT execute
                 self._is_canceling = True
-                self._command_triggered_for_current_goal = True
-                
-                # If a command was successfully matched, we can cancel the goal early!
-                if hasattr(self, 'goal_handle') and self.goal_handle is not None:
-                    self.get_logger().info('Command recognized early! Cancelling Whisper recording goal...')
-                    self.ui_status_pub.publish(StringMsg(data=f"Transcription: {text.strip()}"))
+                self._command_executed_for_current_goal = False
+                if self.goal_handle is not None:
+                    self.ui_status_pub.publish(StringMsg(data=f"Transcription: {text}"))
                     self.goal_handle.cancel_goal_async()
+                return
+            
+            # ── Execute the command
+            self._execute_command(cmd, text)
+            self._is_canceling = True
+            self._command_executed_for_current_goal = True
+            
+            if self.goal_handle is not None:
+                self.get_logger().info(f'Command "{cmd}" recognized early! Cancelling recording...')
+                self.ui_status_pub.publish(StringMsg(data=f"Transcription: {text}"))
+                self.goal_handle.cancel_goal_async()
 
     def get_result_callback(self, future):
-        result = future.result().result
+        # If we already executed a command via feedback, just reset and return
+        if self._command_executed_for_current_goal:
+            return
         
-        if getattr(self, '_command_triggered_for_current_goal', False):
-            return # We already executed and published a command for this recording.
-            
+        # If we suppressed residual audio, also return (UI was already reset)
+        if self._is_canceling:
+            return
+        
+        result = future.result().result
         if result and result.transcriptions and len(result.transcriptions) > 0:
             final_text = " ".join(result.transcriptions).strip()
             if final_text:
                 self.get_logger().info(f'Transcription: {final_text}')
                 self.ui_status_pub.publish(StringMsg(data=f'Transcription: {final_text}'))
-                # Verarbeite den Text direkt hier!
-                self.handle_text(final_text)
+                
+                # Try to execute a command from the final result
+                cmd = self._identify_command(final_text)
+                if cmd:
+                    # Check residual audio even for final results
+                    time_since_last_exec = time.time() - self._last_executed_cmd_ts
+                    if cmd == self._last_executed_cmd and time_since_last_exec < 5.0:
+                        self.get_logger().warn(f'Residual audio in final result suppressed: "{cmd}"')
+                    else:
+                        self._execute_command(cmd, final_text)
+                else:
+                    print(f"❌ Sprachbefehl NICHT erkannt: '{final_text}'")
+                    self.get_logger().warning(f"Unrecognized command: '{final_text}'")
             else:
                 self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
         else:
             self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
+
+    # -------------------------------------------------------------------------
+    # Command Identification (pure logic, no side effects)
+    # -------------------------------------------------------------------------
+    def _identify_command(self, text_raw: str) -> str:
+        """Returns the command string if a pattern matches, or empty string."""
+        norm = normalize(text_raw)
+        if not norm or not norm.strip():
+            return ""
+        
+        if self.pose_pattern.search(norm):
+            return "MoveTo: pose"
+        if self.initial_pose_pattern.search(norm):
+            return "MoveTo: initial"
+        if self.faster_pattern.search(norm):
+            return "Speed: faster"
+        if self.slower_pattern.search(norm):
+            return "Speed: slower"
+        return ""
+
+    # -------------------------------------------------------------------------
+    # Command Execution (side effects: publishes to /ui/voice_feedback)
+    # -------------------------------------------------------------------------
+    def _execute_command(self, cmd: str, original: str):
+        """Executes a command exactly once and records it for dedup."""
+        now = time.time()
+        
+        # Global cooldown — prevents any double-fire regardless of source
+        if (now - self.last_trigger_ts) < self.cooldown_sec:
+            self.get_logger().warn(f'Cooldown active: "{cmd}" suppressed ({self.cooldown_sec - (now - self.last_trigger_ts):.1f}s remaining)')
+            return
+        
+        self.last_trigger_ts = now
+        self._last_executed_cmd = cmd
+        self._last_executed_cmd_ts = now
+        self._last_cmd_text = cmd
+        
+        print(CLEAR_SCREEN, end='')
+        print(f"✅ Sprachbefehl erkannt: {cmd}")
+        self.get_logger().info(f'Executing voice command: "{cmd}" (raw: "{original}")')
+        
+        try:
+            self.feedback_pub.publish(StringMsg(data=cmd))
+        except Exception as e:
+            self.get_logger().error(f"Error publishing voice feedback: {e}")
 
     # -------------------------------------------------------------------------
     # Service Callback
@@ -219,144 +317,6 @@ class VoiceCommandListener(Node):
         resp.success = True
         resp.message = self._last_cmd_text or ""
         return resp
-
-    # -------------------------------------------------------------------------
-    # Input Callbacks (Datenempfang)
-    # -------------------------------------------------------------------------
-    def on_transcript_msg(self, msg):
-        for field in ("text", "transcript", "full", "full_text"):
-            if hasattr(msg, field):
-                val = getattr(msg, field)
-                if isinstance(val, str) and val:
-                    self.handle_text(val)
-                    return
-        words = getattr(msg, "words", [])
-        if words:
-            clean_words = []
-            for w in words:
-                if isinstance(w, str):
-                    w = w.strip()
-                    if w and not (w.startswith("[") and w.endswith("]")):
-                        clean_words.append(w)
-            text = " ".join(clean_words)
-            if text:
-                self.handle_text(text)
-
-    def on_transcript_string(self, msg: StringMsg):
-        if msg.data:
-            self.handle_text(msg.data)
-
-    # -------------------------------------------------------------------------
-    # Kernlogik: Textverarbeitung und Matching
-    # -------------------------------------------------------------------------
-    def handle_text(self, text_raw: str, is_intermediate: bool = False) -> bool:
-        norm = normalize(text_raw)
-        if not norm: return False
-
-        search_text = norm
-        
-        if not search_text.strip(): return False
-        
-        now = time.time()
-        
-        # Pruefen auf "Move to Pose" Befehl (hat Prioritaet)
-        match_pose = self.pose_pattern.search(search_text)
-        if match_pose:
-            if (now - self.last_trigger_ts) >= self.cooldown_sec:
-                self.emit_pose_command(text_raw)
-                self.last_trigger_ts = now
-            self.word_buffer.clear()
-            return True
-        
-        # Pruefen auf "Move to Initial Pose" Befehl
-        match_initial = self.initial_pose_pattern.search(search_text)
-        if match_initial:
-            if (now - self.last_trigger_ts) >= self.cooldown_sec:
-                self.emit_initial_pose_command(text_raw)
-                self.last_trigger_ts = now
-            self.word_buffer.clear()
-            return True
-            
-        # Pruefen auf "Faster" Befehl
-        match_faster = self.faster_pattern.search(search_text)
-        if match_faster:
-            if (now - self.last_trigger_ts) >= self.cooldown_sec:
-                self.emit_speed_command("faster", text_raw)
-                self.last_trigger_ts = now
-            else:
-                self.get_logger().warn(f'Cooldown: "faster" suppressed (residual audio buffer, {self.cooldown_sec - (now - self.last_trigger_ts):.1f}s remaining)')
-            self.word_buffer.clear()
-            return True
-            
-        # Pruefen auf "Slower" Befehl
-        match_slower = self.slower_pattern.search(search_text)
-        if match_slower:
-            if (now - self.last_trigger_ts) >= self.cooldown_sec:
-                self.emit_speed_command("slower", text_raw)
-                self.last_trigger_ts = now
-            else:
-                self.get_logger().warn(f'Cooldown: "slower" suppressed (residual audio buffer, {self.cooldown_sec - (now - self.last_trigger_ts):.1f}s remaining)')
-            self.word_buffer.clear()
-            return True
-            
-        # Fallback: Kein Befehl erkannt
-        if not is_intermediate:
-            print(f"❌ Sprachbefehl NICHT erkannt: '{text_raw}'")
-            self.get_logger().warning(f"Unrecognized command: '{text_raw}' (normalized: '{search_text}')")
-            self.word_buffer.clear()
-            
-        return False
-
-    # -------------------------------------------------------------------------
-    # Output: Befehl senden und UI informieren
-    # -------------------------------------------------------------------------
-    def emit_pose_command(self, original: str):
-        """Sendet den 'MoveTo: pose' Befehl an die Web UI."""
-        print(CLEAR_SCREEN, end='')
-        print(f"\u2705 Sprachbefehl erkannt: Move to Absolute Pose")
-        self.get_logger().debug(f'(Originales Transkript: \"{original}\")')
-
-        cmd_feedback = "MoveTo: pose"
-        self._last_cmd_text = cmd_feedback
-
-        try:
-            feedback_msg = StringMsg()
-            feedback_msg.data = cmd_feedback
-            self.feedback_pub.publish(feedback_msg)
-        except Exception as e:
-            self.get_logger().error(f"Error publishing voice feedback: {e}")
-
-    def emit_initial_pose_command(self, original: str):
-        """Sendet den 'MoveTo: initial' Befehl an die Web UI."""
-        print(CLEAR_SCREEN, end='')
-        print(f"\u2705 Sprachbefehl erkannt: Move to Initial Pose")
-        self.get_logger().debug(f'(Originales Transkript: \"{original}\")')
-
-        cmd_feedback = "MoveTo: initial"
-        self._last_cmd_text = cmd_feedback
-
-        try:
-            feedback_msg = StringMsg()
-            feedback_msg.data = cmd_feedback
-            self.feedback_pub.publish(feedback_msg)
-        except Exception as e:
-            self.get_logger().error(f"Error publishing voice feedback: {e}")
-
-    def emit_speed_command(self, direction: str, original: str):
-        """Sendet den 'Speed: faster' oder 'Speed: slower' Befehl an die Web UI."""
-        print(CLEAR_SCREEN, end='')
-        print(f"\u2705 Sprachbefehl erkannt: Speed {direction.capitalize()}")
-        self.get_logger().debug(f'(Originales Transkript: \"{original}\")')
-
-        cmd_feedback = f"Speed: {direction}"
-        self._last_cmd_text = cmd_feedback
-
-        try:
-            feedback_msg = StringMsg()
-            feedback_msg.data = cmd_feedback
-            self.feedback_pub.publish(feedback_msg)
-        except Exception as e:
-            self.get_logger().error(f"Error publishing voice feedback: {e}")
 
 # -------------------------------------------------------------------------
 # Main Funktion
