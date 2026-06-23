@@ -155,6 +155,9 @@ class VoiceCommandListener(Node):
             self.ui_status_pub.publish(StringMsg(data="Error: Whisper Server offline"))
             return
             
+        self._is_canceling = False
+        self._command_triggered_for_current_goal = False
+        
         goal_msg = Inference.Goal()
         goal_msg.max_duration.sec = 5
         self.ui_status_pub.publish(StringMsg(data="Listening..."))
@@ -173,11 +176,17 @@ class VoiceCommandListener(Node):
         self._get_result_future.add_done_callback(self.get_result_callback)
 
     def feedback_callback(self, feedback_msg):
+        if getattr(self, '_is_canceling', False):
+            return
+            
         feedback = feedback_msg.feedback
         text = feedback.transcription
         if text:
             # We process the intermediate text
             if self.handle_text(text, is_intermediate=True):
+                self._is_canceling = True
+                self._command_triggered_for_current_goal = True
+                
                 # If a command was successfully matched, we can cancel the goal early!
                 if hasattr(self, 'goal_handle') and self.goal_handle is not None:
                     self.get_logger().info('Command recognized early! Cancelling Whisper recording goal...')
@@ -185,7 +194,12 @@ class VoiceCommandListener(Node):
                     self.goal_handle.cancel_goal_async()
 
     def get_result_callback(self, future):
+        self._is_canceling = False # Reset flag
         result = future.result().result
+        
+        if getattr(self, '_command_triggered_for_current_goal', False):
+            return # We already executed and published a command for this recording.
+            
         if result and result.transcriptions and len(result.transcriptions) > 0:
             final_text = " ".join(result.transcriptions).strip()
             if final_text:
