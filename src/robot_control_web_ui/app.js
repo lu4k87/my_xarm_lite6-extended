@@ -822,6 +822,25 @@ servoStatusSub.subscribe((msg) => {
 });
 
 let stopTimeout = null;
+let isHoldingPTT = false;
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("btn-start-listening");
+  if (btn) {
+    btn.addEventListener("pointerdown", (e) => {
+      btn.setPointerCapture(e.pointerId);
+      startListening();
+    });
+    btn.addEventListener("pointerup", (e) => {
+      btn.releasePointerCapture(e.pointerId);
+      stopListening();
+    });
+    btn.addEventListener("pointercancel", (e) => {
+      btn.releasePointerCapture(e.pointerId);
+      stopListening();
+    });
+  }
+});
 
 function startListening() {
   const btn = document.getElementById("btn-start-listening");
@@ -838,10 +857,10 @@ function startListening() {
   }
 
   // Prevent double-clicks while already listening
-  if (btn.classList.contains("btn-listening")) {
-    logMsg('UI', 'Already listening... please wait.', 'warn');
+  if (isHoldingPTT) {
     return;
   }
+  isHoldingPTT = true;
 
   // Set listening state (UI)
   btn.classList.add("btn-listening");
@@ -903,8 +922,6 @@ function startListening() {
     resetListeningUI(btn, textSpan, icon, resultSpan, "-- Timeout --");
     logMsg('System', 'Whisper Python Listener did not respond within 30s.', 'err');
   }, 30000);
-
-  window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'listen' }));
 }
 
 function resetListeningUI(btn, textSpan, icon, resultSpan, errorText) {
@@ -922,8 +939,11 @@ function resetListeningUI(btn, textSpan, icon, resultSpan, errorText) {
 
 // Stop Listening (Push-to-Talk)
 function stopListening() {
+  if (!isHoldingPTT) return;
+  isHoldingPTT = false;
+
   const btn = document.getElementById("btn-start-listening");
-  if (!btn || !btn.classList.contains("btn-listening")) return;
+  if (!btn) return;
 
   logMsg('UI', '➤ Whisper: Stop listening (Push-to-Talk released) - waiting for final processing...');
 
@@ -941,7 +961,7 @@ function stopListening() {
 
   // Give Whisper C++ backend 1.2s to finish inference on the last audio buffer
   stopTimeout = setTimeout(() => {
-    if (window.whisperTriggerPub && btn.classList.contains("btn-listening")) {
+    if (window.whisperTriggerPub) {
       window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'stop' }));
     }
   }, 1200);

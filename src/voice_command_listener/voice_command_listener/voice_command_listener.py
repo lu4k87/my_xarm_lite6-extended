@@ -165,6 +165,7 @@ class VoiceCommandListener(Node):
             
         self._is_canceling = False
         self._command_triggered_for_current_goal = False
+        self._ignored_stale_text = ""
         
         goal_msg = Inference.Goal()
         goal_msg.max_duration.sec = 15
@@ -261,14 +262,21 @@ class VoiceCommandListener(Node):
         # Whisper's background audio ring buffer contains 30s of history.
         # If the user speaks "faster" in Goal A, the buffer retains the audio.
         # When Goal B starts, Whisper immediately infers the buffer and outputs "faster" again.
-        # Since it physically takes >1.0s to record and infer a new word, any command matched
-        # within the first 1.0s of the action is GUARANTEED to be from the old buffer!
         if hasattr(self, '_action_start_time'):
             now_time = self.get_clock().now()
             action_duration = (now_time.nanoseconds - self._action_start_time.nanoseconds) / 1e9
+            
+            # 1. Ignore early transcriptions (stale buffer inferred immediately)
             if action_duration < 1.0:
                 self.get_logger().info(f'Ignoring early transcription at t={action_duration:.2f}s (stale audio buffer remnant)')
+                self._ignored_stale_text = text_raw.strip().lower()
                 return False
+                
+            # 2. If the final result exactly matches the stale text we ignored earlier, drop it!
+            if not is_intermediate and hasattr(self, '_ignored_stale_text'):
+                if text_raw.strip().lower() == self._ignored_stale_text and self._ignored_stale_text != "":
+                    self.get_logger().info(f'Ignoring final transcription because it exactly matches the stale buffer remnant.')
+                    return False
                 
         norm = normalize(text_raw)
         if not norm: return False
