@@ -336,9 +336,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
-> **Zweck & Aufgabe:** Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert exakt die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose" zu erkennen).
+> **Zweck & Aufgabe:** Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert exakt die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose" zu erkennen).
 - 📥 **Subscribes:** `/ui/voice_command_text` (`std_msgs/String`). Hört strikt nur auf die expliziten Ergebnisse des Web-UI Action Servers, um Ausführungs-Endlosschleifen durch kontinuierliche Whisper-Streams zu unterbinden.
-- 📤 **Publishes:** `/ui/voice_feedback` (`std_msgs/String`). Triggert direkt Koordinatenfahrten ("MoveTo: pose", "MoveTo: initial") via Dashboard-UI-Feedback.
+- 📤 **Publishes:** `/ui/voice_feedback` (`std_msgs/String`). Triggert direkt Koordinatenfahrten ("MoveTo: pose", "MoveTo: initial") oder passt die Geschwindigkeit an ("Speed: faster", "Speed: slower") via Dashboard-UI-Feedback.
 
 > [!TIP]
 > Der `whisper_server` ist in der `whisper.yaml` explizit auf `language: "en"` gestellt und nutzt einen gezielten `initial_prompt`, um eine hohe Erkennungsgenauigkeit für die englischen Befehle zu garantieren und Rauschen auszufiltern.

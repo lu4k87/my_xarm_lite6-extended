@@ -114,10 +114,14 @@ class VoiceCommandListener(Node):
         # Regex-Pattern fuer die Befehlserkennung (Ausschliesslich Englisch)
         
         # 1. Move to Absolute Pose Commands
-        self.pose_pattern = re.compile(r"\bmove to (?:absolute )?(?:pose|pause|power)\b", re.IGNORECASE)
+        self.pose_pattern = re.compile(r"\bmove to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE)
         
         # 2. Move to Initial Pose Commands
-        self.initial_pose_pattern = re.compile(r"\b(?:move to )?initial (?:pose|pause|power)\b", re.IGNORECASE)
+        self.initial_pose_pattern = re.compile(r"\b(?:move to )?initial (?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE)
+        
+        # 3. Faster / Slower Speed Commands
+        self.faster_pattern = re.compile(r"\b(?:go |move )?faster\b", re.IGNORECASE)
+        self.slower_pattern = re.compile(r"\b(?:go |move )?slower\b", re.IGNORECASE)
         
         self._last_cmd_text = ""
 
@@ -246,6 +250,24 @@ class VoiceCommandListener(Node):
             self.word_buffer.clear()
             return
             
+        # Pruefen auf "Faster" Befehl
+        match_faster = self.faster_pattern.search(search_text)
+        if match_faster:
+            if (now - self.last_trigger_ts) >= self.cooldown_sec:
+                self.emit_speed_command("faster", text_raw)
+                self.last_trigger_ts = now
+            self.word_buffer.clear()
+            return
+            
+        # Pruefen auf "Slower" Befehl
+        match_slower = self.slower_pattern.search(search_text)
+        if match_slower:
+            if (now - self.last_trigger_ts) >= self.cooldown_sec:
+                self.emit_speed_command("slower", text_raw)
+                self.last_trigger_ts = now
+            self.word_buffer.clear()
+            return
+            
         # Fallback: Kein Befehl erkannt
         print(f"❌ Sprachbefehl NICHT erkannt: '{text_raw}'")
         self.get_logger().warning(f"Unrecognized command: '{text_raw}' (normalized: '{search_text}')")
@@ -277,6 +299,22 @@ class VoiceCommandListener(Node):
         self.get_logger().debug(f'(Originales Transkript: \"{original}\")')
 
         cmd_feedback = "MoveTo: initial"
+        self._last_cmd_text = cmd_feedback
+
+        try:
+            feedback_msg = StringMsg()
+            feedback_msg.data = cmd_feedback
+            self.feedback_pub.publish(feedback_msg)
+        except Exception as e:
+            self.get_logger().error(f"Error publishing voice feedback: {e}")
+
+    def emit_speed_command(self, direction: str, original: str):
+        """Sendet den 'Speed: faster' oder 'Speed: slower' Befehl an die Web UI."""
+        print(CLEAR_SCREEN, end='')
+        print(f"\u2705 Sprachbefehl erkannt: Speed {direction.capitalize()}")
+        self.get_logger().debug(f'(Originales Transkript: \"{original}\")')
+
+        cmd_feedback = f"Speed: {direction}"
         self._last_cmd_text = cmd_feedback
 
         try:

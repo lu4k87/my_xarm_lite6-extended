@@ -1,20 +1,15 @@
 whisper:
   inference:
     ros__parameters:
-      model_name: "tiny"      # Zurueck auf tiny, um Timeout/Performance-Probleme auszuschliessen
+      model_name: "base.en"      # Etwas größeres Modell für deutlich bessere Worterkennung
       wparams:
         language: "en"           # Sprache auf Englisch für englische Kommandos
         task: "transcribe"
-        # Wichtig: Biasing auf Deine aktuellen Befehle als Transkript-Kontext
-        initial_prompt: |
-          You will hear voice commands. Valid triggers:
-          - "Move to Pose"
-          - "Move to Absolute Pose"
-          - "Move to Initial Pose"
-          - "Move to Pause"
+        # Wichtig: Biasing auf Deine aktuellen Befehle als zusammenhängender Satz (funktioniert bei Whisper am besten)
+        initial_prompt: "Move to Pose. Move to Absolute Pose. Move to Initial Pose. Faster. Slower."
         # Für stabile, deterministische Erkennung (niedrige Latenz)
         temperature: 0.0
-        beam_size: 1             # Zurueck auf 1 (Greedy Decoding)
+        beam_size: 2             # Beam Size leicht erhöhen, um phonetische Alternativen besser abzuwägen
         best_of: 1
         no_timestamps: true
         condition_on_previous_text: false   # vermeidet “Hängenbleiben” im Kontext

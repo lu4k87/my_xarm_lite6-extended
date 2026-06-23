@@ -726,14 +726,36 @@ voiceFeedbackSub.subscribe((msg) => {
 
   // Voice Command: "Move to Pose" → triggers moveToPose() with current input values
   if (msg.data === 'MoveTo: pose') {
-    logMsg('VOICE', '🗣️ Voice → Triggering Absolute Pose Move...', 'info');
+    logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Triggering:</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: var(--mut);">→</span> <span style="color: var(--green);">Absolute Pose Move...</span>', 'info');
     moveToPose();
   }
 
   // Voice Command: "Move to Initial Pose" → triggers setInitialPose()
   if (msg.data === 'MoveTo: initial') {
-    logMsg('VOICE', '🗣️ Voice → Triggering Initial Pose Move...', 'info');
+    logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Triggering:</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: var(--mut);">→</span> <span style="color: var(--green);">Initial Pose Move...</span>', 'info');
     setInitialPose();
+  }
+
+  // Voice Command: "Faster" → Increases Speed Factor
+  if (msg.data === 'Speed: faster') {
+    logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Speed:</span> <span style="color: var(--green);">Faster</span>', 'info');
+    let currentIndex = Math.round((speedScale - 0.1) / 0.1);
+    if (currentIndex < 4) {
+      updateSpeed(currentIndex + 1);
+    } else {
+      logMsg('System', 'Speed is already at maximum (100%).', 'warn');
+    }
+  }
+
+  // Voice Command: "Slower" → Decreases Speed Factor
+  if (msg.data === 'Speed: slower') {
+    logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Speed:</span> <span style="color: var(--rviz-x);">Slower</span>', 'info');
+    let currentIndex = Math.round((speedScale - 0.1) / 0.1);
+    if (currentIndex > 0) {
+      updateSpeed(currentIndex - 1);
+    } else {
+      logMsg('System', 'Speed is already at minimum (20%).', 'warn');
+    }
   }
 });
 
