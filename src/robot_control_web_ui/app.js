@@ -821,14 +821,16 @@ function startListening() {
   logMsg('UI', '➤ Whisper: Sending inference goal (5s recording)...');
 
   // Call Whisper Action Server (/whisper/inference)
-  const whisperActionClient = new ROSLIB.ActionClient({
-    ros: ros,
-    serverName: '/whisper/inference',
-    actionName: 'whisper_idl/action/Inference'
-  });
+  if (!window.whisperActionClient) {
+    window.whisperActionClient = new ROSLIB.ActionClient({
+      ros: ros,
+      serverName: '/whisper/inference',
+      actionName: 'whisper_idl/action/Inference'
+    });
+  }
 
   const goal = new ROSLIB.Goal({
-    actionClient: whisperActionClient,
+    actionClient: window.whisperActionClient,
     goalMessage: {
       max_duration: { sec: 5, nanosec: 0 }
     }
@@ -847,11 +849,13 @@ function startListening() {
   }, 15000);
 
   // Create publisher to send the final text to the voice command listener
-  const whisperInferencePub = new ROSLIB.Topic({
-    ros: ros,
-    name: '/whisper/inference',
-    messageType: 'std_msgs/String'
-  });
+  if (!window.whisperInferencePub) {
+    window.whisperInferencePub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/ui/voice_command_text',
+      messageType: 'std_msgs/String'
+    });
+  }
 
   goal.on('result', (result) => {
     clearTimeout(enforceTimeout);
@@ -866,7 +870,7 @@ function startListening() {
     if (finalText) {
       logMsg('VOICE', `🗣️ Transcription: "${finalText}"`, 'info');
       // Publish the text so the voice_command_listener.py can parse it
-      whisperInferencePub.publish(new ROSLIB.Message({ data: finalText }));
+      window.whisperInferencePub.publish(new ROSLIB.Message({ data: finalText }));
       resetListeningUI(btn, textSpan, icon, resultSpan, `"${finalText}"`);
     } else {
       resetListeningUI(btn, textSpan, icon, resultSpan, "-- No speech detected --");

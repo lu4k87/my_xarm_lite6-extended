@@ -337,7 +337,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
 > **Zweck & Aufgabe:** Analysiert den Rohtext über Regex-Muster und Delta-Processing (um Endlosschleifen zu verhindern), filtert Füllwörter heraus und extrahiert definierte Handlungs-Intents (z.B. "Greife Apfel", "Fahr zur Pose").
-- 📥 **Subscribes:** `/whisper/transcript_stream` (`std_msgs/String`), `/whisper/inference` (`std_msgs/String`).
+- 📥 **Subscribes:** `/ui/voice_command_text` (`std_msgs/String`). Hört strikt nur auf die expliziten Ergebnisse des Web-UI Action Servers, um Ausführungs-Endlosschleifen durch kontinuierliche Whisper-Streams zu unterbinden.
 - 📤 **Publishes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Publiziert an die Action-Bridge, um den YOLO Grasp Executor zu triggern, oder triggert direkt absolute Koordinatenfahrten ("MoveTo: pose") via Dashboard-UI-Feedback.
 
 #### `gaze_ui_node.py` <kbd>SKRIPT / UI</kbd>

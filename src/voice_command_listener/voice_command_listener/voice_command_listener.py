@@ -127,11 +127,9 @@ class VoiceCommandListener(Node):
         self._search_start_idx = 0
 
         # ---- Subscriptions ----
-        if HAS_WHISPER_IDL:
-            self.create_subscription(AudioTranscript, self.whisper_topic, self.on_transcript_msg, 10)
-        self.create_subscription(StringMsg, self.whisper_topic, self.on_transcript_string, 10)
-        self.create_subscription(StringMsg, "/whisper/transcript_manager/transcript", self.on_transcript_string, 10)
-        self.create_subscription(StringMsg, "/whisper/inference", self.on_transcript_string, 10)
+        # Nur auf Text-Kommandos aus dem Web UI (Action Server Result) hoeren,
+        # um Endlosschleifen durch continuous streams zu vermeiden.
+        self.create_subscription(StringMsg, "/ui/voice_command_text", self.on_transcript_string, 10)
 
         # ---- Services ----
         self.create_service(Trigger, "/voice_cmd/last", self._on_last_command)
