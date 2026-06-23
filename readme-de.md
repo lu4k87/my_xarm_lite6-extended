@@ -337,7 +337,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
 > **Zweck & Aufgabe:** Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert exakt die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose" zu erkennen).
-- 📥 **Subscribes:** `/ui/voice_command_text` (`std_msgs/String`). Hört strikt nur auf die expliziten Ergebnisse des Web-UI Action Servers, um Ausführungs-Endlosschleifen durch kontinuierliche Whisper-Streams zu unterbinden.
+- 📥 **Subscribes/Action Client:** Fungiert als Action Client für `/whisper/inference`. Anstatt auf das Ende der 5-sekündigen Aufnahme zu warten, wertet der Node nun kontinuierlich das Echtzeit-`feedback` Topic aus.
+- ⚡ **Early Cancellation:** Sobald ein gültiger Sprachbefehl im Feedback erkannt wird, wird die Aktion sofort getriggert und die laufende Audioaufnahme vorzeitig abgebrochen (`cancel_goal_async()`). Dies sorgt für verzögerungsfreie Ausführung mit geringster Latenz.
 - 📤 **Publishes:** `/ui/voice_feedback` (`std_msgs/String`). Triggert direkt Koordinatenfahrten ("MoveTo: pose", "MoveTo: initial") oder passt die Geschwindigkeit an ("Speed: faster", "Speed: slower") via Dashboard-UI-Feedback.
 
 > [!TIP]

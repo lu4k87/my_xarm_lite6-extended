@@ -335,7 +335,8 @@ To provide a clear understanding of the architecture, the software modules are c
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
 > **Purpose & Task:** Analyzes the discrete single-shot raw text using regex patterns to extract defined exact action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose").
-- 📥 **Subscribes:** `/ui/voice_command_text` (`std_msgs/String`). Listens strictly to the explicit Web UI Action Server results to prevent execution loops from continuous Whisper streams.
+- 📥 **Subscribes/Action Client:** Acts as an Action Client for `/whisper/inference`. Instead of waiting for the full 5-second recording to finish, it actively analyzes the continuous real-time `feedback` topic.
+- ⚡ **Early Cancellation:** If a valid voice command is identified within the intermediate feedback, the listener instantly triggers the action and sends an early cancel command to the Action Server (`cancel_goal_async()`). This enables near-instant, low-latency execution without waiting for the timeout.
 - 📤 **Publishes:** `/ui/voice_feedback` (`std_msgs/String`). Directly triggers coordinate movements ("MoveTo: pose", "MoveTo: initial") or adjusts the robot jogging speed ("Speed: faster", "Speed: slower") via the dashboard UI feedback.
 
 > [!TIP]
