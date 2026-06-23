@@ -150,6 +150,7 @@ class VoiceCommandListener(Node):
         
         if command == 'stop':
             self.get_logger().info('UI requested stop (Push-to-Talk released)')
+            self._stop_requested = True
             if hasattr(self, 'goal_handle') and self.goal_handle is not None:
                 self.goal_handle.cancel_goal_async()
             return
@@ -166,6 +167,8 @@ class VoiceCommandListener(Node):
         self._is_canceling = False
         self._command_triggered_for_current_goal = False
         self._ignored_stale_text = ""
+        self.goal_handle = None
+        self._stop_requested = False
         
         goal_msg = Inference.Goal()
         goal_msg.max_duration.sec = 15
@@ -182,6 +185,12 @@ class VoiceCommandListener(Node):
             
         self.goal_handle = goal_handle
         self.get_logger().info('Whisper goal accepted, waiting for result...')
+        
+        # If stop was requested while we were waiting for acceptance, cancel immediately!
+        if getattr(self, '_stop_requested', False):
+            self.get_logger().info('Stop was requested during goal setup. Canceling immediately.')
+            self.goal_handle.cancel_goal_async()
+
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
 
