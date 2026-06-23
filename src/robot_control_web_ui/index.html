@@ -217,7 +217,7 @@
         <section id="panel-whisper" class="glass-panel">
           <h2><i class="fa-solid fa-microphone"></i> Speech Control (Whisper AI)</h2>
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
-            <button id="btn-start-listening" class="btn btn-purple" style="flex: 1; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="startListening()">
+            <button id="btn-start-listening" class="btn btn-purple" style="flex: 1; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;" onmousedown="startListening()" onmouseup="stopListening()" onmouseleave="stopListening()" ontouchstart="startListening(); event.preventDefault();" ontouchend="stopListening(); event.preventDefault();">
               <i class="fa-solid fa-ear-listen" id="btn-listen-icon"></i> <span id="btn-listen-text">Start Listening</span>
             </button>
             <div style="flex: 2; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--txt); display: flex; align-items: center; justify-content: space-between;">

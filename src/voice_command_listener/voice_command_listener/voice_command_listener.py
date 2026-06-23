@@ -146,6 +146,14 @@ class VoiceCommandListener(Node):
     # Whisper Action Client Integration
     # -------------------------------------------------------------------------
     def on_trigger_whisper(self, msg):
+        command = msg.data.lower() if msg.data else 'start'
+        
+        if command == 'stop':
+            self.get_logger().info('UI requested stop (Push-to-Talk released)')
+            if hasattr(self, 'goal_handle') and self.goal_handle is not None:
+                self.goal_handle.cancel_goal_async()
+            return
+
         self.get_logger().info('Voice listen triggered by UI')
         if not HAS_WHISPER_IDL:
             self.ui_status_pub.publish(StringMsg(data="Error: whisper_idl missing"))
@@ -159,7 +167,7 @@ class VoiceCommandListener(Node):
         self._command_triggered_for_current_goal = False
         
         goal_msg = Inference.Goal()
-        goal_msg.max_duration.sec = 5
+        goal_msg.max_duration.sec = 15
         self.ui_status_pub.publish(StringMsg(data="Listening..."))
         send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
         send_goal_future.add_done_callback(self.goal_response_callback)

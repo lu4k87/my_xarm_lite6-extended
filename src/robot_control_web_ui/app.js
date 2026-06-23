@@ -859,6 +859,8 @@ function startListening() {
     });
   }
   
+  window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'start' }));
+  
   if (!window.whisperStatusSub) {
     window.whisperStatusSub = new ROSLIB.Topic({
       ros: ros,
@@ -907,6 +909,30 @@ function resetListeningUI(btn, textSpan, icon, resultSpan, errorText) {
   if (errorText && resultSpan) {
     resultSpan.innerText = errorText;
     resultSpan.style.color = "var(--mut)";
+  }
+}
+
+// Stop Listening (Push-to-Talk)
+function stopListening() {
+  const btn = document.getElementById("btn-start-listening");
+  if (!btn || !btn.classList.contains("btn-listening")) return;
+
+  logMsg('UI', '➤ Whisper: Stop listening (Push-to-Talk released)');
+
+  if (window.whisperTriggerPub) {
+    window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'stop' }));
+  }
+  
+  // Update UI to show processing state, don't reset completely until result arrives
+  const textSpan = document.getElementById("btn-listen-text");
+  const resultSpan = document.getElementById("voice-recognized-cmd");
+  
+  if (textSpan) textSpan.innerText = "Processing...";
+  if (resultSpan) resultSpan.innerText = "⏳ Processing audio...";
+  
+  const icon = document.getElementById("btn-listen-icon");
+  if (icon) {
+    icon.classList.remove("fa-beat-fade");
   }
 }
 
