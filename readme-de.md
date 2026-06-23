@@ -629,6 +629,9 @@ Die absolute Grundvoraussetzung für diesen Workspace ist das offizielle UFactor
 # Build Tools & Audio (Zwingend für PyAudio & Whisper-Mikrofon)
 sudo apt update && sudo apt install -y python3-pip python3-pyaudio portaudio19-dev
 
+# Whisper Base.en Modell Download (Zwingend für Sprachsteuerung)
+mkdir -p ~/.cache/whisper.cpp && wget --show-progress -O ~/.cache/whisper.cpp/ggml-base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+
 # MoveIt 2 & Servo
 sudo apt install ros-humble-moveit ros-humble-moveit-servo
 
