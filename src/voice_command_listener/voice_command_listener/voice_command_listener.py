@@ -15,12 +15,14 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPo
 # Falls nicht vorhanden, wird auf Standard-Strings zurueckgegriffen.
 try:
     from whisper_idl.msg import AudioTranscript
+    from whisper_idl.action import Inference
     HAS_WHISPER_IDL = True
 except Exception:
     HAS_WHISPER_IDL = False
 
 from std_msgs.msg import String as StringMsg
 from std_srvs.srv import Trigger
+from rclpy.action import ActionClient
 
 # ============================================================================
 # MODIFIED BY: [Kaul,Marius], [22.12.2025]
@@ -133,8 +135,60 @@ class VoiceCommandListener(Node):
         # um Endlosschleifen durch continuous streams zu vermeiden.
         self.create_subscription(StringMsg, "/ui/voice_command_text", self.on_transcript_string, 10)
 
+        # Trigger for Whisper Action
+        self.create_subscription(StringMsg, "/ui/voice_listen_trigger", self.on_trigger_whisper, 10)
+        self.ui_status_pub = self.create_publisher(StringMsg, "/ui/voice_status", 10)
+        
+        if HAS_WHISPER_IDL:
+            self._action_client = ActionClient(self, Inference, '/whisper/inference')
+        else:
+            self.get_logger().error("whisper_idl not found! Whisper Actions will not work.")
+
         # ---- Services ----
         self.create_service(Trigger, "/voice_cmd/last", self._on_last_command)
+
+    # -------------------------------------------------------------------------
+    # Whisper Action Client Integration
+    # -------------------------------------------------------------------------
+    def on_trigger_whisper(self, msg):
+        self.get_logger().info('Voice listen triggered by UI')
+        if not HAS_WHISPER_IDL:
+            self.ui_status_pub.publish(StringMsg(data="Error: whisper_idl missing"))
+            return
+            
+        if not self._action_client.wait_for_server(timeout_sec=1.0):
+            self.ui_status_pub.publish(StringMsg(data="Error: Whisper Server offline"))
+            return
+            
+        goal_msg = Inference.Goal()
+        goal_msg.max_duration.sec = 5
+        self.ui_status_pub.publish(StringMsg(data="Listening..."))
+        send_goal_future = self._action_client.send_goal_async(goal_msg)
+        send_goal_future.add_done_callback(self.goal_response_callback)
+
+    def goal_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.ui_status_pub.publish(StringMsg(data="Error: Goal rejected"))
+            return
+            
+        self.get_logger().info('Whisper goal accepted, waiting for result...')
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+
+    def get_result_callback(self, future):
+        result = future.result().result
+        if result and result.transcriptions and len(result.transcriptions) > 0:
+            final_text = " ".join(result.transcriptions).strip()
+            if final_text:
+                self.get_logger().info(f'Transcription: {final_text}')
+                self.ui_status_pub.publish(StringMsg(data=f'Transcription: {final_text}'))
+                # Verarbeite den Text direkt hier!
+                self.handle_text(final_text)
+            else:
+                self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
+        else:
+            self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
 
     # -------------------------------------------------------------------------
     # Service Callback

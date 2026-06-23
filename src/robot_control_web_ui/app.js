@@ -826,85 +826,53 @@ function startListening() {
 
   logMsg('UI', '➤ Whisper: Sending inference goal (5s recording)...');
 
-  // Call Whisper Action Server (/whisper/inference)
-  if (!window.whisperActionClient) {
-    window.whisperActionClient = new ROSLIB.ActionClient({
+  logMsg('UI', '➤ Whisper: Triggering Python Listener...');
+
+  // Bypass rosbridge Action Client bugs by triggering the Python listener directly
+  if (!window.whisperTriggerPub) {
+    window.whisperTriggerPub = new ROSLIB.Topic({
       ros: ros,
-      serverName: '/whisper/inference',
-      actionName: 'whisper_idl/action/Inference'
-    });
-  }
-
-  const goal = new ROSLIB.Goal({
-    actionClient: window.whisperActionClient,
-    goalMessage: {
-      max_duration: { sec: 5, nanosec: 0 }
-    }
-  });
-
-  // Let the action server natively timeout after max_duration (5s) instead of cancelling via rosbridge, 
-  // because rosbridge Action cancellation is buggy in ROS 2.
-  const enforceTimeout = setTimeout(() => {
-    logMsg('System', '5s elapsed, waiting for Whisper processing...', 'info');
-  }, 5000);
-
-  // Safety timeout in case the action server hangs or runs on a slow CPU
-  const safetyTimeout = setTimeout(() => {
-    resetListeningUI(btn, textSpan, icon, resultSpan, "-- Server Timeout --");
-    logMsg('System', 'Whisper Action Server did not respond within 30s.', 'err');
-  }, 30000);
-
-  // Create publisher to send the final text to the voice command listener
-  if (!window.whisperInferencePub) {
-    window.whisperInferencePub = new ROSLIB.Topic({
-      ros: ros,
-      name: '/ui/voice_command_text',
+      name: '/ui/voice_listen_trigger',
       messageType: 'std_msgs/String'
     });
   }
-
-  goal.on('result', (result) => {
-    clearTimeout(enforceTimeout);
-    clearTimeout(safetyTimeout);
-    
-    // Extract the final text from the action result (transcriptions is an array of strings)
-    let finalText = "";
-    if (result && result.transcriptions && result.transcriptions.length > 0) {
-      finalText = result.transcriptions.join(" ").trim();
-    }
-    
-    if (finalText) {
-      logMsg('VOICE', `🗣️ Transcription: "${finalText}"`, 'info');
-      // Publish the text so the voice_command_listener.py can parse it
-      window.whisperInferencePub.publish(new ROSLIB.Message({ data: finalText }));
-      resetListeningUI(btn, textSpan, icon, resultSpan, `"${finalText}"`);
-    } else {
-      resetListeningUI(btn, textSpan, icon, resultSpan, "-- No speech detected --");
-      logMsg('System', 'Whisper recording completed (empty transcript).', 'info');
-    }
-  });
-
-  goal.on('feedback', (fb) => {
-    if (fb && fb.transcription && resultSpan) {
-      resultSpan.innerText = fb.transcription;
-    }
-  });
-
-  goal.on('status', (status) => {
-    if (status.status === 2 || status.status === 4 || status.status === 5) {
-      clearTimeout(enforceTimeout);
-      clearTimeout(safetyTimeout);
-      if (status.status === 2) {
-        logMsg('System', 'Whisper goal preempted after 5s.', 'info');
-        // Do not reset UI here; wait for the result callback to show the transcription!
+  
+  if (!window.whisperStatusSub) {
+    window.whisperStatusSub = new ROSLIB.Topic({
+      ros: ros,
+      name: '/ui/voice_status',
+      messageType: 'std_msgs/String'
+    });
+    window.whisperStatusSub.subscribe((msg) => {
+      // Extract transcription if present
+      if (msg.data.startsWith("Transcription:")) {
+        const text = msg.data.replace("Transcription:", "").trim();
+        resetListeningUI(btn, textSpan, icon, resultSpan, `"${text}"`);
+        logMsg('VOICE', `🗣️ Transcription: "${text}"`, 'info');
+        clearTimeout(window.enforceTimeout);
+        clearTimeout(window.safetyTimeout);
+      } else if (msg.data.startsWith("Error:") || msg.data.includes("No speech")) {
+        resetListeningUI(btn, textSpan, icon, resultSpan, msg.data);
+        logMsg('System', `Whisper: ${msg.data}`, 'err');
+        clearTimeout(window.enforceTimeout);
+        clearTimeout(window.safetyTimeout);
       } else {
-        resetListeningUI(btn, textSpan, icon, resultSpan, "-- Error --");
-        logMsg('System', 'Whisper goal was aborted/rejected.', 'err');
+        resultSpan.innerText = msg.data;
       }
-    }
-  });
+    });
+  }
 
-  goal.send();
+  // Fallback timeouts if Python listener fails
+  window.enforceTimeout = setTimeout(() => {
+    logMsg('System', '5s elapsed, waiting for Whisper processing...', 'info');
+  }, 5000);
+
+  window.safetyTimeout = setTimeout(() => {
+    resetListeningUI(btn, textSpan, icon, resultSpan, "-- Timeout --");
+    logMsg('System', 'Whisper Python Listener did not respond within 30s.', 'err');
+  }, 30000);
+
+  window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'listen' }));
 }
 
 function resetListeningUI(btn, textSpan, icon, resultSpan, errorText) {
