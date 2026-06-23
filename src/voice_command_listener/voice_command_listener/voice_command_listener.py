@@ -99,7 +99,7 @@ class VoiceCommandListener(Node):
         # Startmeldung im Terminal
         print(CLEAR_SCREEN + HIDE_CURSOR, end='')
         print("✅ Voice Command Listener ist bereit.")
-        print("   Warte auf Sprachbefehle (z.B. 'Greife apfel', 'Grasp cup')...")
+        print("   Warte auf Sprachbefehle (z.B. 'Greife [Objekt]', 'Move to Pose', 'Initial Pose')...")
 
         # ---- Publisher Setup ----
         qos_cmd = QoSProfile(depth=1, history=HistoryPolicy.KEEP_LAST, reliability=ReliabilityPolicy.RELIABLE, durability=DurabilityPolicy.TRANSIENT_LOCAL)
@@ -212,6 +212,12 @@ class VoiceCommandListener(Node):
                     self.emit_command(obj_name, text_raw)
                     self.last_trigger_ts = now
                 self.word_buffer.clear()
+                return
+
+        # Fallback: Kein Befehl erkannt
+        print(f"❌ Sprachbefehl NICHT erkannt: '{text_raw}'")
+        self.get_logger().warning(f"Unrecognized command: '{text_raw}' (normalized: '{search_text}')")
+        self.word_buffer.clear()
 
     # -------------------------------------------------------------------------
     # Output: Befehl senden und UI informieren
