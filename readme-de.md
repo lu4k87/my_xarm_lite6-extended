@@ -336,9 +336,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
-> **Zweck & Aufgabe:** Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert exakt die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose" zu erkennen).
-- 📥 **Subscribes/Action Client:** Fungiert als Action Client für `/whisper/inference`. Anstatt auf das Ende der 5-sekündigen Aufnahme zu warten, wertet der Node nun kontinuierlich das Echtzeit-`feedback` Topic aus.
+> **Zweck & Aufgabe:** Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose"). Implementiert eine robuste **3-Stufen-Deduplikations-Zustandsmaschine**, die eine exakt einmalige Befehlsausführung garantiert.
+- 📥 **Action Client:** `/whisper/inference` (`whisper_idl/Inference`). Anstatt auf das Ende der 5-sekündigen Aufnahme zu warten, wertet der Node kontinuierlich das Echtzeit-`feedback` Topic aus (250ms Intervall vom C++ Action Server).
 - ⚡ **Early Cancellation:** Sobald ein gültiger Sprachbefehl im Feedback erkannt wird, wird die Aktion sofort getriggert und die laufende Audioaufnahme vorzeitig abgebrochen (`cancel_goal_async()`). Dies sorgt für verzögerungsfreie Ausführung mit geringster Latenz.
+- 🛡️ **3-Stufen-Deduplikation:** **(1)** Feedback-Text-Dedup — ignoriert identische aufeinanderfolgende Feedback-Pakete. **(2)** Residual-Audio-Erkennung — merkt sich den zuletzt ausgeführten Befehl und unterdrückt eine Wiedererkennung desselben Befehls innerhalb von 5s über separate Goals hinweg (verhindert, dass Mikrofon-Puffer-Reste Fehlauslösungen verursachen). **(3)** Globaler Cooldown (3s) — letzte Sicherung gegen jegliches Doppelfeuern.
+- 🔒 **Singleton-Lock:** Nutzt einen `fcntl`-File-Lock (`/tmp/voice_command_listener.lock`), um zu verhindern, dass mehrere Node-Instanzen gleichzeitig laufen und Befehle doppelt ausführen.
 - 📤 **Publishes:** `/ui/voice_feedback` (`std_msgs/String`). Triggert direkt Koordinatenfahrten ("MoveTo: pose", "MoveTo: initial") oder passt die Geschwindigkeit an ("Speed: faster", "Speed: slower") via Dashboard-UI-Feedback.
 
 > [!TIP]
