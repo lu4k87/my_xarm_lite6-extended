@@ -1,7 +1,7 @@
 whisper:
   inference:
     ros__parameters:
-      model_name: "base"         # oder small/medium/large-v3, je nach GPU
+      model_name: "tiny"         # Nutzt tiny für flüssige CPU-Ausführung auf PC 2
       wparams:
         language: "de"           # Sprache auf Deutsch für deutsche Kommandos
         task: "transcribe"
