@@ -148,17 +148,6 @@ class VoiceCommandListener(Node):
     def on_trigger_whisper(self, msg):
         self.get_logger().info('Voice listen triggered by UI')
         
-        # ── Goal-Level Cooldown ──
-        # Reject new triggers if we just executed a command recently.
-        # This prevents the audio buffer residue from being re-recognized
-        # when the user clicks "Start Listening" again too quickly.
-        time_since_last = time.time() - self.last_trigger_ts
-        if time_since_last < self.cooldown_sec:
-            remaining = self.cooldown_sec - time_since_last
-            self.get_logger().warn(f'Trigger rejected: cooldown active ({remaining:.1f}s remaining)')
-            self.ui_status_pub.publish(StringMsg(data=f"Cooldown: {remaining:.0f}s remaining"))
-            return
-        
         if not HAS_WHISPER_IDL:
             self.ui_status_pub.publish(StringMsg(data="Error: whisper_idl missing"))
             return
@@ -294,6 +283,8 @@ class VoiceCommandListener(Node):
             if (now - self.last_trigger_ts) >= self.cooldown_sec:
                 self.emit_speed_command("faster", text_raw)
                 self.last_trigger_ts = now
+            else:
+                self.get_logger().warn(f'Cooldown: "faster" suppressed (residual audio buffer, {self.cooldown_sec - (now - self.last_trigger_ts):.1f}s remaining)')
             self.word_buffer.clear()
             return True
             
@@ -303,6 +294,8 @@ class VoiceCommandListener(Node):
             if (now - self.last_trigger_ts) >= self.cooldown_sec:
                 self.emit_speed_command("slower", text_raw)
                 self.last_trigger_ts = now
+            else:
+                self.get_logger().warn(f'Cooldown: "slower" suppressed (residual audio buffer, {self.cooldown_sec - (now - self.last_trigger_ts):.1f}s remaining)')
             self.word_buffer.clear()
             return True
             
