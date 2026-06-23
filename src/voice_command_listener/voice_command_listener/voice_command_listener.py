@@ -357,6 +357,20 @@ class VoiceCommandListener(Node):
 # Main Funktion
 # -------------------------------------------------------------------------
 def main():
+    import os
+    import fcntl
+    import sys
+    
+    LOCK_FILE = '/tmp/voice_command_listener.lock'
+    lock_fd = os.open(LOCK_FILE, os.O_CREAT | os.O_RDWR)
+    try:
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print("\n\033[91m❌ KRITISCHER FEHLER: voice_command_listener laeuft bereits!\033[0m")
+        print("Mehrere Instanzen dieses Nodes wuerden Sprachbefehle doppelt ausfuehren.")
+        print("Beende diesen redundanten Start-Versuch. Bitte schliesse das alte Terminal!\n")
+        sys.exit(1)
+
     rclpy.init()
     node = VoiceCommandListener()
     try:
