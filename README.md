@@ -334,7 +334,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
-> **Purpose & Task:** Analyzes the raw text using regex patterns and delta-processing (to prevent endless command loops), filters out filler words, and extracts defined action intents (e.g., "Grasp cup", "Move to pose").
+> **Purpose & Task:** Analyzes the discrete single-shot raw text using regex patterns, filters out filler words, and extracts defined action intents (e.g., "Grasp cup", "Move to pose").
 - 📥 **Subscribes:** `/ui/voice_command_text` (`std_msgs/String`). Listens strictly to the explicit Web UI Action Server results to prevent execution loops from continuous Whisper streams.
 - 📤 **Publishes:** `/ui/grasp_object_cmd` (`std_msgs/String`), `/ui/voice_feedback` (`std_msgs/String`). Publishes to the Action-Bridge to trigger the YOLO Grasp Executor, or directly triggers absolute coordinate movements ("MoveTo: pose") via the dashboard UI feedback.
 
