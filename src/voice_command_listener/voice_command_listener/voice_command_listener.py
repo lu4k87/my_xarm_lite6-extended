@@ -114,13 +114,17 @@ class VoiceCommandListener(Node):
         
         # Regex-Pattern fuer die Befehlserkennung (Deutsch & Englisch)
         # 1. Grasp Commands
-        trigger_words = r"greife|greif|bewege dich zu|geh zu|gehe zu|grab|grasp|move to|pick|pick up|catch"
+        trigger_words = r"greife|grasp|move to|go to"
         # Match trigger word, optional colon, and up to 3 following words as object name
         self.cmd_pattern = re.compile(rf"\b(?:{trigger_words})\s*:?\s*([a-z0-9]+(?:\s+[a-z0-9]+){{0,2}})", re.IGNORECASE)
         
         # 2. Move to Absolute Pose Commands
-        pose_trigger = r"fahr zur pose|fahre zur pose|move to pose|go to pose|zur pose fahren|bewege dich zur absoluten position|absolute position"
+        pose_trigger = r"move to pose|move to absolute pose|move to absolute position|fahre zur absolute position|absolute position"
         self.pose_pattern = re.compile(rf"\b(?:{pose_trigger})\b", re.IGNORECASE)
+        
+        # 3. Move to Initial Pose Commands
+        initial_pose_trigger = r"move to initial pose|move to initial position|fahre zur initial position|initial position|initial pose"
+        self.initial_pose_pattern = re.compile(rf"\b(?:{initial_pose_trigger})\b", re.IGNORECASE)
         
         self._last_cmd_text = ""
 
@@ -188,6 +192,15 @@ class VoiceCommandListener(Node):
             self.word_buffer.clear()
             return
         
+        # Pruefen auf "Move to Initial Pose" Befehl
+        match_initial = self.initial_pose_pattern.search(search_text)
+        if match_initial:
+            if (now - self.last_trigger_ts) >= self.cooldown_sec:
+                self.emit_initial_pose_command(text_raw)
+                self.last_trigger_ts = now
+            self.word_buffer.clear()
+            return
+            
         # Suchen nach dem Grasp Befehl im Text
         matches = list(self.cmd_pattern.finditer(search_text))
         if matches:
@@ -232,6 +245,22 @@ class VoiceCommandListener(Node):
         self.get_logger().debug(f'(Originales Transkript: \"{original}\")')
 
         cmd_feedback = "MoveTo: pose"
+        self._last_cmd_text = cmd_feedback
+
+        try:
+            feedback_msg = StringMsg()
+            feedback_msg.data = cmd_feedback
+            self.feedback_pub.publish(feedback_msg)
+        except Exception as e:
+            self.get_logger().error(f"Error publishing voice feedback: {e}")
+
+    def emit_initial_pose_command(self, original: str):
+        """Sendet den 'MoveTo: initial' Befehl an die Web UI."""
+        print(CLEAR_SCREEN, end='')
+        print(f"\u2705 Sprachbefehl erkannt: Move to Initial Pose")
+        self.get_logger().debug(f'(Originales Transkript: \"{original}\")')
+
+        cmd_feedback = "MoveTo: initial"
         self._last_cmd_text = cmd_feedback
 
         try:

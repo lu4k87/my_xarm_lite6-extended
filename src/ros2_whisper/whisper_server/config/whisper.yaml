@@ -3,15 +3,25 @@ whisper:
     ros__parameters:
       model_name: "base"         # oder small/medium/large-v3, je nach GPU
       wparams:
-        language: "en"           # Deine drei Kommandos sind Englisch
+        language: "de"           # Sprache auf Deutsch für deutsche Kommandos
         task: "transcribe"
-        # Wichtig: Biasing auf Deine drei Sätze
+        # Wichtig: Biasing auf Deine aktuellen Befehle
         initial_prompt: |
-          You will hear short voice commands for a robot. The only valid commands are:
-          - "move to green"
-          - "move to red"
-          - "move to blue"
-          Output exactly the spoken command, nothing else.
+          You will hear voice commands. Valid triggers:
+          - "Move to Pose"
+          - "Move to Absolute Pose"
+          - "Move to Absolute Position"
+          - "Fahre zur Absolute Position"
+          - "Absolute Position"
+          - "Move to Initial Pose"
+          - "Move to Initial Position"
+          - "Fahre zur Initial Position"
+          - "Initial Position"
+          - "Initial Pose"
+          - "Greife"
+          - "Grasp"
+          - "Move to"
+          - "Go to"
 
         # Für stabile, deterministische Erkennung (niedrige Latenz)
         temperature: 0.0

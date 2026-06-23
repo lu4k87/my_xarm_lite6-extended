@@ -729,6 +729,12 @@ voiceFeedbackSub.subscribe((msg) => {
     logMsg('VOICE', '🗣️ Voice → Triggering Absolute Pose Move...', 'info');
     moveToPose();
   }
+
+  // Voice Command: "Move to Initial Pose" → triggers setInitialPose()
+  if (msg.data === 'MoveTo: initial') {
+    logMsg('VOICE', '🗣️ Voice → Triggering Initial Pose Move...', 'info');
+    setInitialPose();
+  }
 });
 
 // ── Gamepad API Status ──────────────────────────────────────────────────
