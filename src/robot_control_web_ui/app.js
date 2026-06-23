@@ -1,7 +1,7 @@
 // ── Globals & States (Strikt oben deklariert!) ──────────────────────────
 let ros;
 let currentFrame = 'link_base';
-let speedScale = 0.5;
+let speedScale = 0.3;
 let lastSpeedIndex = -1;
 
 let jogActive = false;
@@ -167,11 +167,11 @@ const speedSub = new ROSLIB.Topic({
 speedSub.subscribe((msg) => {
   speedScale = msg.data;
   let index = 2;
-  if (Math.abs(speedScale - 0.25) < 0.01) index = 0;
-  else if (Math.abs(speedScale - 0.5) < 0.01) index = 1;
-  else if (Math.abs(speedScale - 1.0) < 0.01) index = 2;
-  else if (Math.abs(speedScale - 1.5) < 0.01) index = 3;
-  else if (Math.abs(speedScale - 2.0) < 0.01) index = 4;
+  if (Math.abs(speedScale - 0.1) < 0.01) index = 0;
+  else if (Math.abs(speedScale - 0.2) < 0.01) index = 1;
+  else if (Math.abs(speedScale - 0.3) < 0.01) index = 2;
+  else if (Math.abs(speedScale - 0.4) < 0.01) index = 3;
+  else if (Math.abs(speedScale - 0.5) < 0.01) index = 4;
   
   const slider = document.getElementById('speed-slider');
   if (slider) {
@@ -181,7 +181,7 @@ speedSub.subscribe((msg) => {
     slider.style.backgroundSize = (index / 4 * 100) + '% 100%';
   }
   
-  const percentages = ["12.5%", "25%", "50%", "75%", "100%"];
+  const percentages = ["20%", "40%", "60%", "80%", "100%"];
   const displayLevel = index + 1;
   const speedValElement = document.getElementById('speed-val');
   if (speedValElement) {
@@ -834,17 +834,17 @@ function startListening() {
     }
   });
 
-  // Cancel the action forcefully after 5 seconds to guarantee it stops listening
+  // Let the action server natively timeout after max_duration (5s) instead of cancelling via rosbridge, 
+  // because rosbridge Action cancellation is buggy in ROS 2.
   const enforceTimeout = setTimeout(() => {
-    logMsg('System', '5s elapsed, stopping Whisper recording...', 'info');
-    goal.cancel();
+    logMsg('System', '5s elapsed, waiting for Whisper processing...', 'info');
   }, 5000);
 
-  // Safety timeout in case the action server hangs and doesn't return a result even after cancellation
+  // Safety timeout in case the action server hangs
   const safetyTimeout = setTimeout(() => {
     resetListeningUI(btn, textSpan, icon, resultSpan, "-- Server Timeout --");
-    logMsg('System', 'Whisper Action Server did not respond to cancel within 8s.', 'err');
-  }, 8000);
+    logMsg('System', 'Whisper Action Server did not respond within 15s.', 'err');
+  }, 15000);
 
   // Create publisher to send the final text to the voice command listener
   const whisperInferencePub = new ROSLIB.Topic({

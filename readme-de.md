@@ -912,8 +912,6 @@ dev_ws/
 │ ├── gaze_control/ # 👁️ Python: PyQt5 Gaze-Control-UI
 │ ├── motion_sequence/ # 🦾 Python: Kartesische Bewegungs-State-Machine
 │ │ └── motion_sequence/motion_sequence.py
-│ ├── move_to_coordinator/ # 🧠 Python: Shared-Control-Gehirn
-│ │ └── move_to_coordinator/move_to_coordinator.py
 │ ├── my_3d_vision_bringup/ # 🌟 [VISION SYSTEM] Kamera Bringup, TF, 3D BBox & Perception
 │ │ ├── launch/zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py # Zentraler All-In-One Launcher (ZED, TF, YOLO, Greif-Executor)
 │ │ └── scripts/
@@ -942,10 +940,7 @@ dev_ws/
 │ ├── xarm_ros2/ # 🤖 Offizielle xArm ROS 2 Pakete (Submodul)
 │ │ └── xarm_moveit_servo/src/
 │ │ └── xarm_joystick_input.cpp # ⚙️ C++: Gamepad → Servo Bridge
-│ ├── yolo_object_detector/ # ⚠️ [VERALTET] Python: 2D YOLO + ArUco Erkennung
 │ ├── zed-ros2-wrapper/ # 📷 ZED-Kamera-Treiber (Submodul)
 │ └── zed-ros2-examples/ # 📷 ZED-Beispiele (Submodul)
 └── README.md / readme-de.md # Dokumentation (EN / DE)
 ```
-
----
