@@ -92,7 +92,7 @@ class VoiceCommandListener(Node):
         super().__init__("voice_command_listener")
 
         # ---- Parameter Initialisierung ----
-        self.declare_parameter("cooldown_sec", 1.0)
+        self.declare_parameter("cooldown_sec", 3.0)
         self.declare_parameter("whisper_topic", "/whisper/transcript_stream")
         
         self.cooldown_sec = float(self.get_parameter("cooldown_sec").value)
@@ -194,7 +194,6 @@ class VoiceCommandListener(Node):
                     self.goal_handle.cancel_goal_async()
 
     def get_result_callback(self, future):
-        self._is_canceling = False # Reset flag
         result = future.result().result
         
         if getattr(self, '_command_triggered_for_current_goal', False):
