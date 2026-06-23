@@ -146,15 +146,6 @@ class VoiceCommandListener(Node):
     # Whisper Action Client Integration
     # -------------------------------------------------------------------------
     def on_trigger_whisper(self, msg):
-        command = msg.data.lower() if msg.data else 'start'
-        
-        if command == 'stop':
-            self.get_logger().info('UI requested stop (Push-to-Talk released)')
-            self._stop_requested = True
-            if hasattr(self, 'goal_handle') and self.goal_handle is not None:
-                self.goal_handle.cancel_goal_async()
-            return
-
         self.get_logger().info('Voice listen triggered by UI')
         if not HAS_WHISPER_IDL:
             self.ui_status_pub.publish(StringMsg(data="Error: whisper_idl missing"))
@@ -166,14 +157,10 @@ class VoiceCommandListener(Node):
             
         self._is_canceling = False
         self._command_triggered_for_current_goal = False
-        self._ignored_stale_text = ""
-        self.goal_handle = None
-        self._stop_requested = False
         
         goal_msg = Inference.Goal()
-        goal_msg.max_duration.sec = 15
+        goal_msg.max_duration.sec = 5
         self.ui_status_pub.publish(StringMsg(data="Listening..."))
-        self._action_start_time = self.get_clock().now()
         send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
         send_goal_future.add_done_callback(self.goal_response_callback)
 
@@ -185,12 +172,6 @@ class VoiceCommandListener(Node):
             
         self.goal_handle = goal_handle
         self.get_logger().info('Whisper goal accepted, waiting for result...')
-        
-        # If stop was requested while we were waiting for acceptance, cancel immediately!
-        if getattr(self, '_stop_requested', False):
-            self.get_logger().info('Stop was requested during goal setup. Canceling immediately.')
-            self.goal_handle.cancel_goal_async()
-
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
 
@@ -206,26 +187,27 @@ class VoiceCommandListener(Node):
                 self._is_canceling = True
                 self._command_triggered_for_current_goal = True
                 
-                # With Push-To-Talk, we do NOT cancel the goal early! 
-                # The user controls the goal duration by holding/releasing the button.
-                # We just publish the recognized command to the UI.
-                # Do NOT publish "Transcription:" here because it causes app.js to reset the UI button!
-                self.get_logger().info(f'Command recognized in intermediate feedback: {text.strip()}')
+                # If a command was successfully matched, we can cancel the goal early!
+                if hasattr(self, 'goal_handle') and self.goal_handle is not None:
+                    self.get_logger().info('Command recognized early! Cancelling Whisper recording goal...')
+                    self.ui_status_pub.publish(StringMsg(data=f"Transcription: {text.strip()}"))
+                    self.goal_handle.cancel_goal_async()
 
     def get_result_callback(self, future):
         result = future.result().result
         
-        final_text = ""
+        if getattr(self, '_command_triggered_for_current_goal', False):
+            return # We already executed and published a command for this recording.
+            
         if result and result.transcriptions and len(result.transcriptions) > 0:
             final_text = " ".join(result.transcriptions).strip()
-            
-        if final_text:
-            self.get_logger().info(f'Transcription: {final_text}')
-            self.ui_status_pub.publish(StringMsg(data=f'Transcription: {final_text}'))
-            
-            # Verarbeite den Text nur, wenn er nicht schon während des Feedbacks verarbeitet wurde
-            if not getattr(self, '_command_triggered_for_current_goal', False):
+            if final_text:
+                self.get_logger().info(f'Transcription: {final_text}')
+                self.ui_status_pub.publish(StringMsg(data=f'Transcription: {final_text}'))
+                # Verarbeite den Text direkt hier!
                 self.handle_text(final_text)
+            else:
+                self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
         else:
             self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
 
@@ -267,26 +249,6 @@ class VoiceCommandListener(Node):
     # Kernlogik: Textverarbeitung und Matching
     # -------------------------------------------------------------------------
     def handle_text(self, text_raw: str, is_intermediate: bool = False) -> bool:
-        # --- FIX FOR STALE AUDIO BUFFER REMNANTS ---
-        # Whisper's background audio ring buffer contains 30s of history.
-        # If the user speaks "faster" in Goal A, the buffer retains the audio.
-        # When Goal B starts, Whisper immediately infers the buffer and outputs "faster" again.
-        if hasattr(self, '_action_start_time'):
-            now_time = self.get_clock().now()
-            action_duration = (now_time.nanoseconds - self._action_start_time.nanoseconds) / 1e9
-            
-            # 1. Ignore early transcriptions (stale buffer inferred immediately)
-            if action_duration < 1.0:
-                self.get_logger().info(f'Ignoring early transcription at t={action_duration:.2f}s (stale audio buffer remnant)')
-                self._ignored_stale_text = text_raw.strip().lower()
-                return False
-                
-            # 2. If the final result exactly matches the stale text we ignored earlier, drop it!
-            if not is_intermediate and hasattr(self, '_ignored_stale_text'):
-                if text_raw.strip().lower() == self._ignored_stale_text and self._ignored_stale_text != "":
-                    self.get_logger().info(f'Ignoring final transcription because it exactly matches the stale buffer remnant.')
-                    return False
-                
         norm = normalize(text_raw)
         if not norm: return False
 

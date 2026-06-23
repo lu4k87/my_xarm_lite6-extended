@@ -821,8 +821,6 @@ servoStatusSub.subscribe((msg) => {
   updateMoveItBadge();
 });
 
-let stopTimeout = null;
-
 function startListening() {
   const btn = document.getElementById("btn-start-listening");
   const textSpan = document.getElementById("btn-listen-text");
@@ -830,23 +828,6 @@ function startListening() {
   const resultSpan = document.getElementById("voice-recognized-cmd");
 
   if (!btn || !textSpan || !icon) return;
-
-  // Clear any pending stop if the user quickly presses again
-  if (stopTimeout) {
-    clearTimeout(stopTimeout);
-    stopTimeout = null;
-    
-    // Forcefully stop the previous goal so the server accepts the new one
-    if (window.whisperTriggerPub) {
-      window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'stop' }));
-    }
-    
-    // Delay the new start slightly so the backend can process the cancellation
-    setTimeout(() => {
-      startListening();
-    }, 200);
-    return;
-  }
 
   // Prevent double-clicks while already listening
   if (btn.classList.contains("btn-listening")) {
@@ -877,8 +858,6 @@ function startListening() {
       messageType: 'std_msgs/String'
     });
   }
-  
-  window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'start' }));
   
   if (!window.whisperStatusSub) {
     window.whisperStatusSub = new ROSLIB.Topic({
@@ -929,29 +908,6 @@ function resetListeningUI(btn, textSpan, icon, resultSpan, errorText) {
     resultSpan.innerText = errorText;
     resultSpan.style.color = "var(--mut)";
   }
-}
-
-// Stop Listening (Push-to-Talk)
-function stopListening() {
-  const btn = document.getElementById("btn-start-listening");
-  if (!btn || !btn.classList.contains("btn-listening")) return;
-
-  logMsg('UI', '➤ Whisper: Stop listening (Push-to-Talk released)');
-
-  const textSpan = document.getElementById("btn-listen-text");
-  const resultSpan = document.getElementById("voice-recognized-cmd");
-  const icon = document.getElementById("btn-listen-icon");
-
-  // Instantly reset the UI to allow immediate re-clicking
-  resetListeningUI(btn, textSpan, icon, resultSpan, "⏳ Processing audio...");
-
-  // Give Whisper C++ backend 1.2s to finish inference on the last audio buffer
-  // before we forcefully abort the action server goal.
-  stopTimeout = setTimeout(() => {
-    if (window.whisperTriggerPub) {
-      window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'stop' }));
-    }
-  }, 1200);
 }
 
 // ── Drag & Drop Layout (SortableJS) ──────────────────────────────────────

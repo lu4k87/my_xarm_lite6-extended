@@ -192,10 +192,7 @@ std::vector<Segment>
 
       // Add a non-empty, completed segment
       if ( segment_wip.words_.size() > 0 ) {
-        // Drop any segments that were spoken before the current inference goal started
-        if ( segment_wip.data_.start_ >= ros_time_to_chrono(inference_start_time_) ) {
-          segments.push_back(segment_wip);
-        }
+        segments.push_back(segment_wip);
       }
 
       // Set up for an new segment
@@ -259,10 +256,7 @@ std::vector<Segment>
 
   // Finish by adding completed segment
   if ( !segment_wip.words_.empty() ) {
-    // Drop any segments that were spoken before the current inference goal started
-    if ( segment_wip.data_.start_ >= ros_time_to_chrono(inference_start_time_) ) {
-      segments.push_back(segment_wip);
-    }
+    segments.push_back(segment_wip);
   }
 
   return segments;
