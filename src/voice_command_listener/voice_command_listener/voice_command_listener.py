@@ -196,27 +196,26 @@ class VoiceCommandListener(Node):
                 self._is_canceling = True
                 self._command_triggered_for_current_goal = True
                 
-                # If a command was successfully matched, we can cancel the goal early!
-                if hasattr(self, 'goal_handle') and self.goal_handle is not None:
-                    self.get_logger().info('Command recognized early! Cancelling Whisper recording goal...')
-                    self.ui_status_pub.publish(StringMsg(data=f"Transcription: {text.strip()}"))
-                    self.goal_handle.cancel_goal_async()
+                # With Push-To-Talk, we do NOT cancel the goal early! 
+                # The user controls the goal duration by holding/releasing the button.
+                # We just publish the recognized command to the UI.
+                # Do NOT publish "Transcription:" here because it causes app.js to reset the UI button!
+                self.get_logger().info(f'Command recognized in intermediate feedback: {text.strip()}')
 
     def get_result_callback(self, future):
         result = future.result().result
         
-        if getattr(self, '_command_triggered_for_current_goal', False):
-            return # We already executed and published a command for this recording.
-            
+        final_text = ""
         if result and result.transcriptions and len(result.transcriptions) > 0:
             final_text = " ".join(result.transcriptions).strip()
-            if final_text:
-                self.get_logger().info(f'Transcription: {final_text}')
-                self.ui_status_pub.publish(StringMsg(data=f'Transcription: {final_text}'))
-                # Verarbeite den Text direkt hier!
+            
+        if final_text:
+            self.get_logger().info(f'Transcription: {final_text}')
+            self.ui_status_pub.publish(StringMsg(data=f'Transcription: {final_text}'))
+            
+            # Verarbeite den Text nur, wenn er nicht schon während des Feedbacks verarbeitet wurde
+            if not getattr(self, '_command_triggered_for_current_goal', False):
                 self.handle_text(final_text)
-            else:
-                self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
         else:
             self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
 
