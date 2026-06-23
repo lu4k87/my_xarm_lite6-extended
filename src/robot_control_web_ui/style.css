@@ -564,7 +564,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .grasp-group { display: flex; gap: 8px; }
 .grasp-group input { flex: 1; }
 
-.console-section { display: flex; flex-direction: column; margin-top: auto; }
+.console-section { display: flex; flex-direction: column; }
 #log-window {
   background: rgba(0,0,0,0.5);
   border-radius: 8px;
