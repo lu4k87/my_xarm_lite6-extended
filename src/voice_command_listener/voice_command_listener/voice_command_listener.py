@@ -123,8 +123,6 @@ class VoiceCommandListener(Node):
         self.pose_pattern = re.compile(rf"\b(?:{pose_trigger})\b", re.IGNORECASE)
         
         self._last_cmd_text = ""
-        self._last_transcript = ""
-        self._search_start_idx = 0
 
         # ---- Subscriptions ----
         # Nur auf Text-Kommandos aus dem Web UI (Action Server Result) hoeren,
@@ -175,12 +173,7 @@ class VoiceCommandListener(Node):
         norm = normalize(text_raw)
         if not norm: return
 
-        # Falls der neue Text nicht mit dem alten beginnt (z.B. Transcript wurde geleert oder es ist ein neuer Aufruf)
-        if not norm.startswith(self._last_transcript):
-            self._search_start_idx = 0
-            
-        self._last_transcript = norm
-        search_text = norm[self._search_start_idx:]
+        search_text = norm
         
         if not search_text.strip(): return
         
@@ -192,7 +185,6 @@ class VoiceCommandListener(Node):
             if (now - self.last_trigger_ts) >= self.cooldown_sec:
                 self.emit_pose_command(text_raw)
                 self.last_trigger_ts = now
-            self._search_start_idx += match_pose.end()
             self.word_buffer.clear()
             return
         
@@ -206,7 +198,6 @@ class VoiceCommandListener(Node):
                 if (now - self.last_trigger_ts) >= self.cooldown_sec:
                     self.emit_command(obj_name, text_raw)
                     self.last_trigger_ts = now
-                self._search_start_idx += last_match.end()
                 self.word_buffer.clear()
 
     # -------------------------------------------------------------------------
