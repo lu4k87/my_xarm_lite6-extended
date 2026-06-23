@@ -158,7 +158,7 @@ class VoiceCommandListener(Node):
         goal_msg = Inference.Goal()
         goal_msg.max_duration.sec = 5
         self.ui_status_pub.publish(StringMsg(data="Listening..."))
-        send_goal_future = self._action_client.send_goal_async(goal_msg)
+        send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
         send_goal_future.add_done_callback(self.goal_response_callback)
 
     def goal_response_callback(self, future):
@@ -167,9 +167,22 @@ class VoiceCommandListener(Node):
             self.ui_status_pub.publish(StringMsg(data="Error: Goal rejected"))
             return
             
+        self.goal_handle = goal_handle
         self.get_logger().info('Whisper goal accepted, waiting for result...')
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
+
+    def feedback_callback(self, feedback_msg):
+        feedback = feedback_msg.feedback
+        text = feedback.transcription
+        if text:
+            # We process the intermediate text
+            if self.handle_text(text, is_intermediate=True):
+                # If a command was successfully matched, we can cancel the goal early!
+                if hasattr(self, 'goal_handle') and self.goal_handle is not None:
+                    self.get_logger().info('Command recognized early! Cancelling Whisper recording goal...')
+                    self.ui_status_pub.publish(StringMsg(data=f"Transcription: {text.strip()}"))
+                    self.goal_handle.cancel_goal_async()
 
     def get_result_callback(self, future):
         result = future.result().result
@@ -222,13 +235,13 @@ class VoiceCommandListener(Node):
     # -------------------------------------------------------------------------
     # Kernlogik: Textverarbeitung und Matching
     # -------------------------------------------------------------------------
-    def handle_text(self, text_raw: str):
+    def handle_text(self, text_raw: str, is_intermediate: bool = False) -> bool:
         norm = normalize(text_raw)
-        if not norm: return
+        if not norm: return False
 
         search_text = norm
         
-        if not search_text.strip(): return
+        if not search_text.strip(): return False
         
         now = time.time()
         
@@ -239,7 +252,7 @@ class VoiceCommandListener(Node):
                 self.emit_pose_command(text_raw)
                 self.last_trigger_ts = now
             self.word_buffer.clear()
-            return
+            return True
         
         # Pruefen auf "Move to Initial Pose" Befehl
         match_initial = self.initial_pose_pattern.search(search_text)
@@ -248,7 +261,7 @@ class VoiceCommandListener(Node):
                 self.emit_initial_pose_command(text_raw)
                 self.last_trigger_ts = now
             self.word_buffer.clear()
-            return
+            return True
             
         # Pruefen auf "Faster" Befehl
         match_faster = self.faster_pattern.search(search_text)
@@ -257,7 +270,7 @@ class VoiceCommandListener(Node):
                 self.emit_speed_command("faster", text_raw)
                 self.last_trigger_ts = now
             self.word_buffer.clear()
-            return
+            return True
             
         # Pruefen auf "Slower" Befehl
         match_slower = self.slower_pattern.search(search_text)
@@ -266,12 +279,15 @@ class VoiceCommandListener(Node):
                 self.emit_speed_command("slower", text_raw)
                 self.last_trigger_ts = now
             self.word_buffer.clear()
-            return
+            return True
             
         # Fallback: Kein Befehl erkannt
-        print(f"❌ Sprachbefehl NICHT erkannt: '{text_raw}'")
-        self.get_logger().warning(f"Unrecognized command: '{text_raw}' (normalized: '{search_text}')")
-        self.word_buffer.clear()
+        if not is_intermediate:
+            print(f"❌ Sprachbefehl NICHT erkannt: '{text_raw}'")
+            self.get_logger().warning(f"Unrecognized command: '{text_raw}' (normalized: '{search_text}')")
+            self.word_buffer.clear()
+            
+        return False
 
     # -------------------------------------------------------------------------
     # Output: Befehl senden und UI informieren
