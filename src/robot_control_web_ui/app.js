@@ -848,11 +848,11 @@ function startListening() {
     logMsg('System', '5s elapsed, waiting for Whisper processing...', 'info');
   }, 5000);
 
-  // Safety timeout in case the action server hangs
+  // Safety timeout in case the action server hangs or runs on a slow CPU
   const safetyTimeout = setTimeout(() => {
     resetListeningUI(btn, textSpan, icon, resultSpan, "-- Server Timeout --");
-    logMsg('System', 'Whisper Action Server did not respond within 15s.', 'err');
-  }, 15000);
+    logMsg('System', 'Whisper Action Server did not respond within 30s.', 'err');
+  }, 30000);
 
   // Create publisher to send the final text to the voice command listener
   if (!window.whisperInferencePub) {
