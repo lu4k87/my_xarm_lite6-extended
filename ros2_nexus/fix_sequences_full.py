@@ -1,6 +1,6 @@
 import re
 
-with open('/home/mk/dev_ws/ros2_nexus/ros2_nexus_script.js', 'r') as f:
+with open('/home/mk1/dev_ws/ros2_nexus/ros2_nexus_script.js', 'r') as f:
     content = f.read()
 
 # Generate the full list for DEV FAKE (has checker and web UI and joy? No, DEV has Web UI)
@@ -58,10 +58,6 @@ fake_server_list = """                   <li><span style="color: var(--accent);"
                    <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
                    <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
                    <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
-                   <li><span style="color: var(--accent);">bringup.launch.py</span> (Whisper Bringup)</li>
-                   <li><span style="color: var(--accent);">audio_listener.py</span> (Mic Stream)</li>
-                   <li><span style="color: var(--accent);">inference.cpp</span> (Whisper Core)</li>
-                   <li><span style="color: var(--accent);">voice_command_listener.py</span> (Voice Controller)</li>
                    <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>"""
 
 real_server_list = fake_server_list.replace("lite6_moveit_servo_fake.launch.py", "lite6_moveit_servo_realmove.launch.py")
@@ -86,5 +82,5 @@ content = replace_ul('RUN SERVER \\(FAKE\\)', fake_server_list, content)
 content = replace_ul('RUN SERVER \\(REAL\\)', real_server_list, content)
 content = replace_ul('RUN CLIENT \\(Operator Station\\)', client_list, content)
 
-with open('/home/mk/dev_ws/ros2_nexus/ros2_nexus_script.js', 'w') as f:
+with open('/home/mk1/dev_ws/ros2_nexus/ros2_nexus_script.js', 'w') as f:
     f.write(content)
