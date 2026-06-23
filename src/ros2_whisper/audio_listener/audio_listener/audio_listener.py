@@ -18,6 +18,7 @@ class AudioListenerNode(Node):
                 ("channels", 1),
                 ("frames_per_buffer", 1000),
                 ("rate", 16000),
+                ("device_index", -1),
             ],
         )
 
@@ -28,15 +29,39 @@ class AudioListenerNode(Node):
             self.get_parameter("frames_per_buffer").get_parameter_value().integer_value
         )
         self.rate_ = self.get_parameter("rate").get_parameter_value().integer_value
+        self.device_index_ = self.get_parameter("device_index").get_parameter_value().integer_value
 
         self.pyaudio_ = pyaudio.PyAudio()
-        self.stream_ = self.pyaudio_.open(
-            channels=self.channels_,
-            format=pyaudio.paInt16,
-            input=True,
-            frames_per_buffer=self.frames_per_buffer_,
-            rate=self.rate_,
-        )
+
+        # Liste alle verfuegbaren Mikrofone auf
+        info = self.pyaudio_.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        self.get_logger().info("=== Verfuegbare PyAudio Input-Geraete ===")
+        for i in range(0, numdevices):
+            if (self.pyaudio_.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                name = self.pyaudio_.get_device_info_by_host_api_device_index(0, i).get('name')
+                self.get_logger().info(f"Input Device ID {i} - {name}")
+        self.get_logger().info("=========================================")
+
+        stream_kwargs = {
+            "channels": self.channels_,
+            "format": pyaudio.paInt16,
+            "input": True,
+            "frames_per_buffer": self.frames_per_buffer_,
+            "rate": self.rate_
+        }
+        
+        if self.device_index_ >= 0:
+            self.get_logger().info(f"Benutze EXPLIZIT Device Index: {self.device_index_}")
+            stream_kwargs["input_device_index"] = self.device_index_
+        else:
+            self.get_logger().info("Benutze DEFAULT Device (Gefahr: koennte das falsche Mikrofon sein!)")
+
+        try:
+            self.stream_ = self.pyaudio_.open(**stream_kwargs)
+        except Exception as e:
+            self.get_logger().error(f"Fehler beim Oeffnen des Mikrofons: {e}")
+            raise e
 
         self.audio_publisher_ = self.create_publisher(
             Int16MultiArray, "~/audio", qos_profile=qos_profile_sensor_data

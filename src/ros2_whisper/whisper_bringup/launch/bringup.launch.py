@@ -17,8 +17,26 @@ def generate_launch_description() -> LaunchDescription:
     )
     active = LaunchConfiguration('active')
 
+    use_gpu_arg = DeclareLaunchArgument(
+        'use_gpu',
+        default_value="true",
+        description='Use GPU for Whisper inference'
+    )
+    use_gpu = LaunchConfiguration('use_gpu')
+
+    device_index_arg = DeclareLaunchArgument(
+        'device_index',
+        default_value="-1",
+        description='PyAudio Device Index (-1 for default)'
+    )
+    device_index = LaunchConfiguration('device_index')
 
     ld = LaunchDescription()
+
+    # ARGUMENTS MUST GO FIRST!
+    ld.add_action(active_arg)
+    ld.add_action(device_index_arg)
+    ld.add_action(use_gpu_arg)
 
     # launch audio listener
     ld.add_action(
@@ -26,6 +44,7 @@ def generate_launch_description() -> LaunchDescription:
             package="audio_listener",
             executable="audio_listener",
             output="screen",
+            parameters=[{'device_index': device_index}]
         )
     )
 
@@ -54,7 +73,7 @@ def generate_launch_description() -> LaunchDescription:
                     name='inference',
                     namespace="whisper",
                     # parameters=[whisper_config, {'active': False}],
-                    parameters=[whisper_config, {'active': active}],
+                    parameters=[whisper_config, {'active': active, 'cparams.use_gpu': use_gpu}],
                     # parameters=[whisper_config, {'active': PythonExpression(['"', active, '" == "true"'])}],
                     remappings=[("audio", "/audio_listener/audio")],
                 ),
@@ -67,6 +86,5 @@ def generate_launch_description() -> LaunchDescription:
                 ),
             ],
         )
-    ld.add_action(active_arg) # ARGUMENT MUST GO FIRST!
     ld.add_action(container)
     return ld

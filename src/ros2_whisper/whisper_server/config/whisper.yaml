@@ -1,11 +1,11 @@
 whisper:
   inference:
     ros__parameters:
-      model_name: "tiny"         # Nutzt tiny für flüssige CPU-Ausführung auf PC 2
+      model_name: "tiny"      # Zurueck auf tiny, um Timeout/Performance-Probleme auszuschliessen
       wparams:
         language: "en"           # Sprache auf Englisch für englische Kommandos
         task: "transcribe"
-        # Wichtig: Biasing auf Deine aktuellen Befehle
+        # Wichtig: Biasing auf Deine aktuellen Befehle als Transkript-Kontext
         initial_prompt: |
           You will hear voice commands. Valid triggers:
           - "Move to Pose"
@@ -14,12 +14,12 @@ whisper:
           - "Move to Pause"
         # Für stabile, deterministische Erkennung (niedrige Latenz)
         temperature: 0.0
-        beam_size: 1
+        beam_size: 1             # Zurueck auf 1 (Greedy Decoding)
         best_of: 1
         no_timestamps: true
         condition_on_previous_text: false   # vermeidet “Hängenbleiben” im Kontext
         vad_filter: true                    # Falls Dein Server diese Option unterstützt
-        # (Optional – je nach Whisper-Server verfügbar)
+        # VAD-Feineinstellungen (vorerst wieder deaktiviert)
         # vad_parameters:
         #   min_silence_duration_ms: 250
         #   speech_pad_ms: 100

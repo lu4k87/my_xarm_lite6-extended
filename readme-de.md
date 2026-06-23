@@ -627,7 +627,7 @@ Die absolute Grundvoraussetzung für diesen Workspace ist das offizielle UFactor
 
 ```bash
 # Build Tools & Audio (Zwingend für PyAudio & Whisper-Mikrofon)
-sudo apt install python3-pip portaudio19-dev
+sudo apt update && sudo apt install -y python3-pip python3-pyaudio portaudio19-dev
 
 # MoveIt 2 & Servo
 sudo apt install ros-humble-moveit ros-humble-moveit-servo

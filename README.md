@@ -644,7 +644,7 @@ The absolute core prerequisite for this workspace is the official UFactory ROS 2
 
 ```bash
 # Build Tools & Audio (Required for PyAudio & Whisper microphone)
-sudo apt install python3-pip portaudio19-dev
+sudo apt update && sudo apt install -y python3-pip python3-pyaudio portaudio19-dev
 
 # MoveIt 2 & Servo
 sudo apt install ros-humble-moveit ros-humble-moveit-servo

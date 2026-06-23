@@ -16,6 +16,9 @@ class TFTunerGUI(QWidget):
         self.node = node
         self.initUI()
         
+        # State tracking for logging
+        self.last_log_values = None
+
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.publish_tf)
         self.timer.start(50) # 20 Hz
@@ -149,6 +152,13 @@ class TFTunerGUI(QWidget):
         pitch_rad = math.radians(pitch_deg)
         yaw_rad = math.radians(yaw_deg)
 
+        current_values = (x_val, z_val, roll_deg, pitch_deg, yaw_deg)
+        if current_values != self.last_log_values:
+            self.node.get_logger().info(
+                f"[TF Tuner] X: {x_val:.3f}m | Z: {z_val:.3f}m | Roll: {roll_deg:.1f}° | Pitch: {pitch_deg:.1f}° | Yaw: {yaw_deg:.1f}°"
+            )
+            self.last_log_values = current_values
+
         t = TransformStamped()
         t.header.stamp = self.node.get_clock().now().to_msg()
         t.header.frame_id = 'link_base'
@@ -177,6 +187,9 @@ class TFTunerNode(Node):
     def __init__(self):
         super().__init__('tf_tuner_node')
         self.tf_broadcaster = TransformBroadcaster(self)
+        self.get_logger().info("=========================================================")
+        self.get_logger().info("🚀 ZED Camera TF Tuner erfolgreich gestartet!")
+        self.get_logger().info("=========================================================")
 
 def main(args=None):
     rclpy.init(args=args)

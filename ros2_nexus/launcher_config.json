@@ -175,7 +175,7 @@
           "type": "node"
         },
         {
-          "cmd": "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False",
+          "cmd": "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False",
           "label": "Whisper Bringup",
           "type": "launch"
         },
