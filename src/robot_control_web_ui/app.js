@@ -821,6 +821,8 @@ servoStatusSub.subscribe((msg) => {
   updateMoveItBadge();
 });
 
+let stopTimeout = null;
+
 function startListening() {
   const btn = document.getElementById("btn-start-listening");
   const textSpan = document.getElementById("btn-listen-text");
@@ -828,6 +830,12 @@ function startListening() {
   const resultSpan = document.getElementById("voice-recognized-cmd");
 
   if (!btn || !textSpan || !icon) return;
+
+  // Clear any pending stop if the user quickly presses again
+  if (stopTimeout) {
+    clearTimeout(stopTimeout);
+    stopTimeout = null;
+  }
 
   // Prevent double-clicks while already listening
   if (btn.classList.contains("btn-listening")) {
@@ -917,12 +925,8 @@ function stopListening() {
   const btn = document.getElementById("btn-start-listening");
   if (!btn || !btn.classList.contains("btn-listening")) return;
 
-  logMsg('UI', '➤ Whisper: Stop listening (Push-to-Talk released)');
+  logMsg('UI', '➤ Whisper: Stop listening (Push-to-Talk released) - waiting for final processing...');
 
-  if (window.whisperTriggerPub) {
-    window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'stop' }));
-  }
-  
   // Update UI to show processing state, don't reset completely until result arrives
   const textSpan = document.getElementById("btn-listen-text");
   const resultSpan = document.getElementById("voice-recognized-cmd");
@@ -934,6 +938,13 @@ function stopListening() {
   if (icon) {
     icon.classList.remove("fa-beat-fade");
   }
+
+  // Give Whisper C++ backend 1.2s to finish inference on the last audio buffer
+  stopTimeout = setTimeout(() => {
+    if (window.whisperTriggerPub && btn.classList.contains("btn-listening")) {
+      window.whisperTriggerPub.publish(new ROSLIB.Message({ data: 'stop' }));
+    }
+  }, 1200);
 }
 
 // ── Drag & Drop Layout (SortableJS) ──────────────────────────────────────
