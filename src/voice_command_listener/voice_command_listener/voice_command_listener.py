@@ -111,31 +111,27 @@ class VoiceCommandListener(Node):
         self.last_trigger_ts = 0.0                          
         
         # Regex-Pattern fuer die Befehlserkennung (Ausschliesslich Englisch)
-        
-        # 1. Move to Absolute Pose Commands
-        self.pose_pattern = re.compile(r"\bmove to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE)
-        
-        # 2. Move to Initial Pose Commands
-        self.initial_pose_pattern = re.compile(r"\b(?:move to )?initial (?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE)
-        
-        # 3. Faster / Slower Speed Commands
-        self.faster_pattern = re.compile(r"\b(?:go |move )?faster\b", re.IGNORECASE)
-        self.slower_pattern = re.compile(r"\b(?:go |move )?slower\b", re.IGNORECASE)
+        self.patterns = {
+            "MoveToAbsolutePose": re.compile(r"\bmove to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
+            "MoveToInitialPose": re.compile(r"\b(?:move to )?initial (?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
+            "SpeedFaster": re.compile(r"\b(?:go |move )?faster\b", re.IGNORECASE),
+            "SpeedSlower": re.compile(r"\b(?:go |move )?slower\b", re.IGNORECASE)
+        }
         
         self._last_cmd_text = ""
 
         # ---- Robust State Machine ----
-        # Tracks whether we are currently in a cancellation sequence
         self._is_canceling = False
-        # Tracks whether a command was EXECUTED (not just matched) for the current goal
         self._command_executed_for_current_goal = False
-        # The last feedback text we processed — to ignore duplicate feedback packets
         self._last_processed_feedback_text = ""
-        # The last command that was EXECUTED and when — to detect residual audio
         self._last_executed_cmd = ""
         self._last_executed_cmd_ts = 0.0
-        # Active goal handle
+        self._goal_start_ts = 0.0
+        self._suppressed_end_pos = -1
+        self._goal_generation = 0
         self.goal_handle = None
+        self._get_result_future = None
+        self._queue_new_goal = False
 
         # ---- Subscriptions ----
         # Trigger for Whisper Action (from Web UI button)
@@ -163,20 +159,44 @@ class VoiceCommandListener(Node):
         if not self._action_client.wait_for_server(timeout_sec=1.0):
             self.ui_status_pub.publish(StringMsg(data="Error: Whisper Server offline"))
             return
-        
+            
+        # If a goal is active, cancel it and queue the new one to prevent C++ Action Server segfaults
+        if self._get_result_future is not None and not self._get_result_future.done():
+            self.get_logger().info('Active goal found. Canceling and queuing new goal...')
+            self._queue_new_goal = True
+            if self.goal_handle is not None:
+                self.goal_handle.cancel_goal_async()
+            return
+            
+        self._start_new_goal()
+
+    def _start_new_goal(self):
         # Reset ALL state for the new goal
         self._is_canceling = False
         self._command_executed_for_current_goal = False
         self._last_processed_feedback_text = ""
+        self._goal_start_ts = time.time()
+        self._suppressed_end_pos = -1
         self.goal_handle = None
+        
+        import functools
+        self._goal_generation += 1
+        current_gen = self._goal_generation
         
         goal_msg = Inference.Goal()
         goal_msg.max_duration.sec = 5
         self.ui_status_pub.publish(StringMsg(data="Listening..."))
-        send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
-        send_goal_future.add_done_callback(self.goal_response_callback)
+        
+        send_goal_future = self._action_client.send_goal_async(
+            goal_msg, 
+            feedback_callback=functools.partial(self.feedback_callback, gen=current_gen)
+        )
+        send_goal_future.add_done_callback(functools.partial(self.goal_response_callback, gen=current_gen))
 
-    def goal_response_callback(self, future):
+    def goal_response_callback(self, future, gen):
+        if gen != self._goal_generation:
+            return
+            
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.ui_status_pub.publish(StringMsg(data="Error: Goal rejected"))
@@ -185,9 +205,12 @@ class VoiceCommandListener(Node):
         self.goal_handle = goal_handle
         self.get_logger().info('Whisper goal accepted, waiting for result...')
         self._get_result_future = goal_handle.get_result_async()
-        self._get_result_future.add_done_callback(self.get_result_callback)
+        self._get_result_future.add_done_callback(functools.partial(self.get_result_callback, gen=gen))
 
-    def feedback_callback(self, feedback_msg):
+    def feedback_callback(self, feedback_msg, gen):
+        if gen != self._goal_generation:
+            return
+            
         # ── Guard 1: Already canceling → ignore all further feedback
         if self._is_canceling:
             return
@@ -205,34 +228,28 @@ class VoiceCommandListener(Node):
             return
         self._last_processed_feedback_text = text
         
-        # ── Guard 3: Residual audio detection
-        #    If the recognized text matches what we JUST executed in a previous goal,
-        #    it's the microphone buffer residue — not a new spoken command.
-        cmd = self._identify_command(text)
+        # ── Guard 3: Execute the LATEST recognized command
+        cmd, match_end_pos = self._find_latest_command(text)
         if cmd:
-            time_since_last_exec = time.time() - self._last_executed_cmd_ts
-            if cmd == self._last_executed_cmd and time_since_last_exec < 5.0:
-                self.get_logger().warn(
-                    f'Residual audio suppressed: "{cmd}" was executed {time_since_last_exec:.1f}s ago')
-                # Cancel goal to reset UI, but do NOT execute
-                self._is_canceling = True
-                self._command_executed_for_current_goal = False
-                if self.goal_handle is not None:
-                    self.ui_status_pub.publish(StringMsg(data=f"Transcription: {text}"))
-                    self.goal_handle.cancel_goal_async()
-                return
+            # If this match was already suppressed (or is part of it), ignore it
+            # The C++ transcript_manager now clears its queue on goal start, 
+            # so any command arriving here is genuinely from the current recording session!
             
             # ── Execute the command
             self._execute_command(cmd, text)
             self._is_canceling = True
             self._command_executed_for_current_goal = True
             
+            # Reset UI and cancel to end recording
+            self.ui_status_pub.publish(StringMsg(data=f"Transcription: {text}"))
             if self.goal_handle is not None:
                 self.get_logger().info(f'Command "{cmd}" recognized early! Cancelling recording...')
-                self.ui_status_pub.publish(StringMsg(data=f"Transcription: {text}"))
                 self.goal_handle.cancel_goal_async()
 
-    def get_result_callback(self, future):
+    def get_result_callback(self, future, gen):
+        if gen != self._goal_generation:
+            return
+            
         # If we already executed a command via feedback, just reset and return
         if self._command_executed_for_current_goal:
             return
@@ -248,41 +265,39 @@ class VoiceCommandListener(Node):
                 self.get_logger().info(f'Transcription: {final_text}')
                 self.ui_status_pub.publish(StringMsg(data=f'Transcription: {final_text}'))
                 
-                # Try to execute a command from the final result
-                cmd = self._identify_command(final_text)
+                # Check for late command in final transcript
+                cmd, match_end_pos = self._find_latest_command(final_text)
                 if cmd:
-                    # Check residual audio even for final results
-                    time_since_last_exec = time.time() - self._last_executed_cmd_ts
-                    if cmd == self._last_executed_cmd and time_since_last_exec < 5.0:
-                        self.get_logger().warn(f'Residual audio in final result suppressed: "{cmd}"')
-                    else:
-                        self._execute_command(cmd, final_text)
-                else:
-                    print(f"❌ Sprachbefehl NICHT erkannt: '{final_text}'")
-                    self.get_logger().warning(f"Unrecognized command: '{final_text}'")
+                    self._execute_command(cmd, final_text)
             else:
                 self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
         else:
-            self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
+            self.ui_status_pub.publish(StringMsg(data="Error: Inference failed"))
+            
+        self._check_queue()
+
+    def _check_queue(self):
+        if self._queue_new_goal:
+            self._queue_new_goal = False
+            self.get_logger().info('Starting queued goal...')
+            self._start_new_goal()
 
     # -------------------------------------------------------------------------
     # Command Identification (pure logic, no side effects)
     # -------------------------------------------------------------------------
-    def _identify_command(self, text_raw: str) -> str:
-        """Returns the command string if a pattern matches, or empty string."""
-        norm = normalize(text_raw)
-        if not norm or not norm.strip():
-            return ""
+    def _find_latest_command(self, text):
+        best_cmd = None
+        best_pos = -1
         
-        if self.pose_pattern.search(norm):
-            return "MoveTo: pose"
-        if self.initial_pose_pattern.search(norm):
-            return "MoveTo: initial"
-        if self.faster_pattern.search(norm):
-            return "Speed: faster"
-        if self.slower_pattern.search(norm):
-            return "Speed: slower"
-        return ""
+        for cmd_name, pattern in self.patterns.items():
+            matches = list(pattern.finditer(text))
+            if matches:
+                last_match = matches[-1]
+                if last_match.end() > best_pos:
+                    best_pos = last_match.end()
+                    best_cmd = cmd_name
+                    
+        return best_cmd, best_pos
 
     # -------------------------------------------------------------------------
     # Command Execution (side effects: publishes to /ui/voice_feedback)

@@ -47,6 +47,9 @@ class RobotMotionHandlerMovegroup(Node):
             10
         )
         
+        from std_msgs.msg import String
+        self.ui_log_pub = self.create_publisher(String, '/ui/motion_status', 10)
+        
         from moveit_msgs.srv import GetPositionIK
         self.ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
         
@@ -76,7 +79,7 @@ class RobotMotionHandlerMovegroup(Node):
             self.execute_scan_path_cb,
             callback_group=self.cb_group
         )
-        self.get_logger().info('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/execute_scan_path, /ui/execute_move_joint) ready.')
+        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/execute_scan_path, /ui/execute_move_joint) ready.', 'success')
         self.is_executing = False
         
         from std_msgs.msg import Float32
@@ -92,17 +95,35 @@ class RobotMotionHandlerMovegroup(Node):
         # Start initial pose automatically once MoveIt Servo is ready
         self.startup_timer = self.create_timer(1.0, self._check_servo_ready, callback_group=self.cb_group)
         
+    def ui_log(self, msg, level='info'):
+        from std_msgs.msg import String
+        if level == 'info':
+            self.get_logger().info(msg)
+            self.ui_log_pub.publish(String(data=f"INFO: {msg}"))
+        elif level == 'warn':
+            self.get_logger().warn(msg)
+            self.ui_log_pub.publish(String(data=f"WARN: {msg}"))
+        elif level == 'error':
+            self.get_logger().error(msg)
+            self.ui_log_pub.publish(String(data=f"ERR: {msg}"))
+        elif level == 'success':
+            self.get_logger().info(msg)
+            self.ui_log_pub.publish(String(data=f"SUCCESS: {msg}"))
+        elif level == 'action':
+            self.get_logger().info(msg)
+            self.ui_log_pub.publish(String(data=f"ACTION: {msg}"))
+
     def speed_cb(self, msg):
         self.current_speed_scale = msg.data
 
     def _check_servo_ready(self):
         if self.servo_start_client.service_is_ready() and self.servo_stop_client.service_is_ready():
             self.startup_timer.cancel()
-            self.get_logger().info('MoveIt Servo fully loaded. Auto-triggering initial pose in 1s...')
+            self.ui_log('MoveIt Servo fully loaded. Auto-triggering initial pose in 1s...', 'success')
             import time
             time.sleep(1.0) # Give TF a moment to stabilize
             # Startup: Just move to initial pose directly
-            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Fahre auf Startpose...")
+            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
 
     def execute_initial_pose_cb(self, request, response):
         if self.is_executing:
@@ -142,22 +163,22 @@ class RobotMotionHandlerMovegroup(Node):
                 move_req = DummyRequest()
                 move_res = DummyResponse()
                 
-                self.get_logger().info('Phase 1: Fahre zunaechst 15cm nach oben (Retract)...')
+                self.ui_log('Phase 1: Retracting 15cm upwards...', 'action')
                 self.is_executing = False
                 self.execute_move_to_pose_cb(move_req, move_res)
                 self.is_executing = True
                 
             except Exception as e:
-                self.get_logger().warn(f'Retract Phase fehlgeschlagen oder uebersprungen: {e}')
+                self.ui_log(f'Retract Phase failed or skipped: {e}', 'warn')
                 self.is_executing = True
 
             # --- PHASE 2: MOVE TO INITIAL POSE ---
-            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Fahre auf Startpose...")
+            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
                 
             response.success = True
             response.message = "Initial Pose reached."
         except Exception as e:
-            self.get_logger().error(f"Error: {e}")
+            self.ui_log(f"Error: {e}", 'error')
             response.success = False
             response.message = str(e)
         finally:
@@ -165,13 +186,13 @@ class RobotMotionHandlerMovegroup(Node):
             
         return response
 
-    def _go_to_joints(self, target_joints, log_msg="Fahre zu Zielpose..."):
+    def _go_to_joints(self, target_joints, log_msg="Moving to target pose..."):
         # 1. Stop MoveIt Servo
         if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
             from std_srvs.srv import Trigger
             req = Trigger.Request()
             self.servo_stop_client.call_async(req)
-            self.get_logger().info('MoveIt Servo pausiert für direkte Gelenk-Fahrt.')
+            self.ui_log('MoveIt Servo paused for direct joint motion.', 'info')
             import time
             time.sleep(0.5) 
             
@@ -190,7 +211,7 @@ class RobotMotionHandlerMovegroup(Node):
         
         msg.points.append(point)
         self.publisher_.publish(msg)
-        self.get_logger().info(f'Trajektorie gesendet. {log_msg}')
+        self.ui_log(f'Trajectory sent. {log_msg}', 'action')
         
         # Warte auf die Ausfuehrung der Bewegung
         time.sleep(duration_sec + 0.5)
@@ -199,7 +220,7 @@ class RobotMotionHandlerMovegroup(Node):
         if self.servo_start_client.wait_for_service(timeout_sec=1.0):
             req = Trigger.Request()
             self.servo_start_client.call_async(req)
-            self.get_logger().info('MoveIt Servo wieder gestartet.')
+            self.ui_log('MoveIt Servo resumed.', 'info')
             time.sleep(0.5)
 
     def execute_move_joint_cb(self, request, response):
@@ -238,7 +259,7 @@ class RobotMotionHandlerMovegroup(Node):
             
             msg.points.append(point)
             self.publisher_.publish(msg)
-            self.get_logger().info('Trajektorie gesendet. Fahre zu Joint Pose...')
+            self.ui_log('Trajectory sent. Moving to Joint Pose...', 'action')
             
             # Warte auf die Ausfuehrung der Bewegung
             time.sleep(duration_sec + 0.5)
@@ -247,12 +268,13 @@ class RobotMotionHandlerMovegroup(Node):
             if self.servo_start_client.wait_for_service(timeout_sec=1.0):
                 req = Trigger.Request()
                 self.servo_start_client.call_async(req)
+                self.ui_log('MoveIt Servo resumed.', 'info')
                 time.sleep(0.5)
                 
             response.ret = 0
             response.message = "Joint Pose reached."
         except Exception as e:
-            self.get_logger().error(f"Error: {e}")
+            self.ui_log(f"Error: {e}", 'error')
             response.ret = -1
             response.message = str(e)
         finally:
@@ -320,13 +342,13 @@ class RobotMotionHandlerMovegroup(Node):
         # Scan-Radius um das Objekt in Meter
         scan_radius = 0.250 
         
-        self.get_logger().info(f'Generiere 3D Scan Pfad (Radius: {scan_radius}m)...')
+        self.ui_log(f'Generating 3D Scan Path (Radius: {scan_radius}m)...', 'info')
         waypoints = self.generate_spherical_waypoints(
             obj_center_x, obj_center_y, obj_center_z, scan_radius, 
             num_latitudes=3, num_longitudes=6
         )
         
-        self.get_logger().info(f'{len(waypoints)} Wegpunkte generiert. Starte Scanvorgang.')
+        self.ui_log(f'{len(waypoints)} waypoints generated. Starting scan.', 'success')
         
         # Fake-Request Objekt fuer den Aufruf der bestehenden Move-Methode
         class DummyRequest:
@@ -337,7 +359,7 @@ class RobotMotionHandlerMovegroup(Node):
         
         try:
             for i, wp in enumerate(waypoints):
-                self.get_logger().info(f'Fahre Wegpunkt {i+1}/{len(waypoints)} an...')
+                self.ui_log(f'Moving to waypoint {i+1}/{len(waypoints)}...', 'info')
                 
                 # Die Move-Methode erwartet Millimeter fuer XYZ
                 move_req.pose[0] = wp[0] * 1000.0
@@ -356,7 +378,7 @@ class RobotMotionHandlerMovegroup(Node):
             response.success = True
             response.message = "Scan path completed."
         except Exception as e:
-            self.get_logger().error(f"Fehler beim Scan-Pfad: {e}")
+            self.ui_log(f"Error during scan path: {e}", 'error')
             response.success = False
             response.message = str(e)
             
@@ -383,7 +405,7 @@ class RobotMotionHandlerMovegroup(Node):
             target_p = request.pose[4]
             target_yaw = request.pose[5]
             
-            self.get_logger().info(f"MoveTo gestartet (IK-Modus): X={target_x:.3f}, Y={target_y:.3f}, Z={target_z:.3f}")
+            self.ui_log(f"MoveTo started (IK mode): X={target_x:.3f}, Y={target_y:.3f}, Z={target_z:.3f}", 'action')
             
             # 1. Konvertiere Euler zu Quaternion
             target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
@@ -437,14 +459,14 @@ class RobotMotionHandlerMovegroup(Node):
                     raise Exception(f"Gelenk {j_name} nicht in IK Loesung gefunden!")
                     
             # 5. Führe Gelenkbewegung aus
-            self._go_to_joints(target_joints, log_msg="Execute MoveTo Pose via IK...")
+            self._go_to_joints(target_joints, log_msg="Executing MoveTo Pose via IK...")
             
-            self.get_logger().info("MoveTo Ziel erfolgreich erreicht!")
+            self.ui_log("MoveTo target successfully reached!", 'success')
             response.ret = 0
             response.message = "Success"
             
         except Exception as e:
-            self.get_logger().error(f"Error in MoveTo: {e}")
+            self.ui_log(f"Error in MoveTo: {e}", 'error')
             response.ret = -1
             response.message = str(e)
         finally:

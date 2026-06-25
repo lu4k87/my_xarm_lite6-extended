@@ -152,6 +152,22 @@ const logSub = new ROSLIB.Topic({
 });
 logSub.subscribe((msg) => logMsg('ROS', msg.data, 'info'));
 
+const motionStatusSub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/ui/motion_status',
+  messageType: 'std_msgs/String'
+});
+motionStatusSub.subscribe((msg) => {
+  let text = msg.data;
+  let type = 'info';
+  if (text.startsWith("INFO:")) { type = 'info'; text = text.substring(5).trim(); }
+  else if (text.startsWith("WARN:")) { type = 'warn'; text = text.substring(5).trim(); }
+  else if (text.startsWith("ERR:")) { type = 'err'; text = text.substring(4).trim(); }
+  else if (text.startsWith("SUCCESS:")) { type = 'success'; text = text.substring(8).trim(); }
+  else if (text.startsWith("ACTION:")) { type = 'action'; text = text.substring(7).trim(); }
+  logMsg('Motion', text, type);
+});
+
 const speedIndexPub = new ROSLIB.Topic({
   ros: ros,
   name: '/ui/robot_control/set_speed_index',
@@ -340,7 +356,7 @@ function logMsg(source, text, type='info') {
   else if (text.includes('➤')) autoType = 'action';
   else if (text.includes('⚠')) autoType = 'warn';
 
-  const srcColors = { 'ROS': 'log-src-ros', 'UI': 'log-src-ui', 'System': 'log-src-sys' };
+  const srcColors = { 'ROS': 'log-src-ros', 'UI': 'log-src-ui', 'System': 'log-src-sys', 'Motion': 'log-src-motion' };
   const srcClass = srcColors[source] || 'log-src-sys';
 
   div.innerHTML = `<span class="log-time">[${timeStr}]</span><span class="log-src ${srcClass}">[${source}]</span> <span class="log-${autoType}">${text}</span>`;
@@ -835,6 +851,10 @@ function startListening() {
     return;
   }
 
+  // Clear old timeouts
+  clearTimeout(window.enforceTimeout);
+  clearTimeout(window.safetyTimeout);
+
   // Set listening state (UI)
   btn.classList.add("btn-listening");
   textSpan.innerText = "Listening...";
@@ -846,11 +866,8 @@ function startListening() {
     resultSpan.style.color = "var(--purple)";
   }
 
-  logMsg('UI', '➤ Whisper: Sending inference goal (5s recording)...');
-
   logMsg('UI', '➤ Whisper: Triggering Python Listener...');
 
-  // Bypass rosbridge Action Client bugs by triggering the Python listener directly
   if (!window.whisperTriggerPub) {
     window.whisperTriggerPub = new ROSLIB.Topic({
       ros: ros,
@@ -859,6 +876,7 @@ function startListening() {
     });
   }
   
+  // Subscribe exactly once
   if (!window.whisperStatusSub) {
     window.whisperStatusSub = new ROSLIB.Topic({
       ros: ros,
@@ -866,15 +884,19 @@ function startListening() {
       messageType: 'std_msgs/String'
     });
     window.whisperStatusSub.subscribe((msg) => {
-      // Extract transcription if present
+      const b = document.getElementById("btn-start-listening");
+      const t = document.getElementById("btn-listen-text");
+      const ic = document.getElementById("btn-listen-icon");
+      const rs = document.getElementById("voice-recognized-cmd");
+
       if (msg.data.startsWith("Transcription:")) {
         const text = msg.data.replace("Transcription:", "").trim();
-        resetListeningUI(btn, textSpan, icon, resultSpan, `"${text}"`);
+        resetListeningUI(b, t, ic, rs, `"${text}"`);
         logMsg('VOICE', `🗣️ Transcription: "${text}"`, 'info');
         clearTimeout(window.enforceTimeout);
         clearTimeout(window.safetyTimeout);
       } else if (msg.data.startsWith("Error:") || msg.data.includes("No speech")) {
-        resetListeningUI(btn, textSpan, icon, resultSpan, msg.data);
+        resetListeningUI(b, t, ic, rs, msg.data);
         logMsg('System', `Whisper: ${msg.data}`, 'err');
         clearTimeout(window.enforceTimeout);
         clearTimeout(window.safetyTimeout);
@@ -890,7 +912,11 @@ function startListening() {
   }, 5000);
 
   window.safetyTimeout = setTimeout(() => {
-    resetListeningUI(btn, textSpan, icon, resultSpan, "-- Timeout --");
+    const b = document.getElementById("btn-start-listening");
+    const t = document.getElementById("btn-listen-text");
+    const ic = document.getElementById("btn-listen-icon");
+    const rs = document.getElementById("voice-recognized-cmd");
+    resetListeningUI(b, t, ic, rs, "-- Timeout --");
     logMsg('System', 'Whisper Python Listener did not respond within 30s.', 'err');
   }, 30000);
 

@@ -70,6 +70,8 @@ void TranscriptManager::on_inference_accepted_(
   inference_start_time_ = now();
   auto batch_idx = 0;
   transcript_->clear();
+  // Clear the incoming queue to remove residual tokens from before the goal started
+  incoming_queue_->clear();
   size_t last_stale_seg = transcript_->get_stale_segment();
 
   // Helper lambda function

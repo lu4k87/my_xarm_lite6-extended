@@ -898,58 +898,58 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 
 ```
 dev_ws/
-├── ros2_nexus/ # Launcher-Skripte & App-Integration
-│ ├── launcher_config.json # Konfigurationsdatei für Nexus-Buttons
-│ ├── ros2_nexus_web.py # Nexus Web Backend — ROS 2 Nexus Web UI
-│ ├── ros2_nexus_web.html # Frontend-HTML für Nexus
-│ ├── ros2_nexus_styles.css # Frontend-CSS für Nexus
-│ ├── ros2_nexus_script.js # Frontend-Logik für Nexus
-│ ├── ros2_nexus_web_start.sh # Auto-Start-Skript
-│ ├── ROS2_Nexus.desktop # Ubuntu Anwendungsverknüpfung
-│ ├── lite6.sh # Hardware-Bringup-Skript
-│ └── start.sh # Vollständiges System-Launch-Skript
-├── _imgs/ # Dokumentationsbilder
+├── ros2_nexus/                                                            # Launcher-Skripte & App-Integration
+│ ├── launcher_config.json                                                 # Konfigurationsdatei für Nexus-Buttons
+│ ├── ros2_nexus_web.py                                                    # Nexus Web Backend — ROS 2 Nexus Web UI
+│ ├── ros2_nexus_web.html                                                  # Frontend-HTML für Nexus
+│ ├── ros2_nexus_styles.css                                                # Frontend-CSS für Nexus
+│ ├── ros2_nexus_script.js                                                 # Frontend-Logik für Nexus
+│ ├── ros2_nexus_web_start.sh                                              # Auto-Start-Skript
+│ ├── ROS2_Nexus.desktop                                                   # Ubuntu Anwendungsverknüpfung
+│ ├── lite6.sh                                                             # Hardware-Bringup-Skript
+│ └── start.sh                                                             # Vollständiges System-Launch-Skript
+├── _imgs/                                                                 # Dokumentationsbilder
 │ ├── robotsystem.jpg
 │ ├── ros2_nexus_web.png
 │ ├── dashboard_nodes.png
 │ ├── gaze_control_interface.png
-│ └── gamepad_layout.png # Xbox Controller Button-Belegung
+│ └── gamepad_layout.png                                                   # Xbox Controller Button-Belegung
 ├── src/
-│ ├── collision_check/ # 🛡️ Python: Prädiktiver Kollisionsschutz
+│ ├── collision_check/                                                     # 🛡️ Python: Prädiktiver Kollisionsschutz
 │ │ └── collision_check/checker.py
-│ ├── robot_motion_handler_movegroup/ # 🤖 Python: Setzt Fake-Arm Startpose
-│ ├── gaze_control/ # 👁️ Python: PyQt5 Gaze-Control-UI
-│ ├── motion_sequence/ # 🦾 Python: Kartesische Bewegungs-State-Machine
+│ ├── robot_motion_handler_movegroup/                                      # 🤖 Python: Setzt Fake-Arm Startpose
+│ ├── gaze_control/                                                        # 👁️ Python: PyQt5 Gaze-Control-UI
+│ ├── motion_sequence/                                                     # 🦾 Python: Kartesische Bewegungs-State-Machine
 │ │ └── motion_sequence/motion_sequence.py
-│ ├── my_3d_vision_bringup/ # 🌟 [VISION SYSTEM] Kamera Bringup, TF, 3D BBox & Perception
-│ │ ├── launch/zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py # Zentraler All-In-One Launcher (ZED, TF, YOLO, Greif-Executor)
+│ ├── my_3d_vision_bringup/                                                # 🌟 [VISION SYSTEM] Kamera Bringup, TF, 3D BBox & Perception
+│ │ ├── launch/zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py     # Zentraler All-In-One Launcher (ZED, TF, YOLO, Greif-Executor)
 │ │ └── scripts/
-│ │ ├── pointcloud_optimizer.py # 3D Tiefenrauschen reduzieren & filtern
-│ │ ├── yolo_moveit_collision.py # MoveIt Kollisionsobjekte & dynamisches Ignorieren
-│ │ ├── zed_stand_publisher.py # 3D-Stativ Mesh Publisher
-│ │ ├── zed_yolo_3d_bbox.py # 3D Objekterkennung & Bounding-Boxen
-│ │ ├── yolo_planned_grasp_executor.py # 3-Phasen Greiflogik & Planner Fallback
-│ │ └── grasp_action_bridge.py # Übersetzer für RViz Grasp Action
-│ ├── ros2_whisper/ # 🎙️ Whisper AI Speech-to-Text
-│ ├── rviz_servo_status_overlay/ # 🖥️ Python: RViz2 2D Text Overlays
+│ │ ├── pointcloud_optimizer.py                                            # 3D Tiefenrauschen reduzieren & filtern
+│ │ ├── yolo_moveit_collision.py                                           # MoveIt Kollisionsobjekte & dynamisches Ignorieren
+│ │ ├── zed_stand_publisher.py                                             # 3D-Stativ Mesh Publisher
+│ │ ├── zed_yolo_3d_bbox.py                                                # 3D Objekterkennung & Bounding-Boxen
+│ │ ├── yolo_planned_grasp_executor.py                                     # 3-Phasen Greiflogik & Planner Fallback
+│ │ └── grasp_action_bridge.py                                             # Übersetzer für RViz Grasp Action
+│ ├── ros2_whisper/                                                        # 🎙️ Whisper AI Speech-to-Text
+│ ├── rviz_servo_status_overlay/                                           # 🖥️ Python: RViz2 2D Text Overlays
 │ │ └── rviz_servo_status_overlay/
-│ │ ├── rviz_servo_status_overlay.py # TCP & Frame Overlay
-│ │ └── servo_status_overlay.py # Servo Warn-Overlay
-│ ├── rviz_robot_control_panel/ # 🖥️ C++: RViz2 2D Control Panel Plugin
+│ │ ├── rviz_servo_status_overlay.py                                       # TCP & Frame Overlay
+│ │ └── servo_status_overlay.py                                            # Servo Warn-Overlay
+│ ├── rviz_robot_control_panel/                                            # 🖥️ C++: RViz2 2D Control Panel Plugin
 │ │ └── src/rviz_robot_control_panel.cpp
-│ ├── rviz_marker_static_scene_objects/ # 📍 Python: RViz2 Marker-Publisher
-│ ├── voice_command_listener/ # 🗣️ Python: Intent-Parser & Filter
-│ ├── dashboard_monitoring/ # 📊 Python/JS: Workspace Analyzer & Dashboard
-│ │ ├── workspace_analyzer.py # Haupt-ROS 2-Node (Pub/Sub & Topologie)
-│ │ ├── workspace_parser.py # Statische Code-Analyse (Regex)
-│ │ ├── system_utils.py # Umgebungsvariablen-Parsing
-│ │ ├── dashboard_index.html # Haupt-UI des Dashboards
-│ │ ├── dashboard_script_*.js # 8 modulare Frontend-Logik-Skripte
-│ │ └── dashboard_style.css # UI Styling
-│ ├── xarm_ros2/ # 🤖 Offizielle xArm ROS 2 Pakete (Submodul)
+│ ├── rviz_marker_static_scene_objects/                                    # 📍 Python: RViz2 Marker-Publisher
+│ ├── voice_command_listener/                                              # 🗣️ Python: Intent-Parser & Filter
+│ ├── dashboard_monitoring/                                                # 📊 Python/JS: Workspace Analyzer & Dashboard
+│ │ ├── workspace_analyzer.py                                              # Haupt-ROS 2-Node (Pub/Sub & Topologie)
+│ │ ├── workspace_parser.py                                                # Statische Code-Analyse (Regex)
+│ │ ├── system_utils.py                                                    # Umgebungsvariablen-Parsing
+│ │ ├── dashboard_index.html                                               # Haupt-UI des Dashboards
+│ │ ├── dashboard_script_*.js                                              # 8 modulare Frontend-Logik-Skripte
+│ │ └── dashboard_style.css                                                # UI Styling
+│ ├── xarm_ros2/                                                           # 🤖 Offizielle xArm ROS 2 Pakete (Submodul)
 │ │ └── xarm_moveit_servo/src/
-│ │ └── xarm_joystick_input.cpp # ⚙️ C++: Gamepad → Servo Bridge
-│ ├── zed-ros2-wrapper/ # 📷 ZED-Kamera-Treiber (Submodul)
-│ └── zed-ros2-examples/ # 📷 ZED-Beispiele (Submodul)
-└── README.md / readme-de.md # Dokumentation (EN / DE)
+│ │ └── xarm_joystick_input.cpp                                            # ⚙️ C++: Gamepad → Servo Bridge
+│ ├── zed-ros2-wrapper/                                                    # 📷 ZED-Kamera-Treiber (Submodul)
+│ └── zed-ros2-examples/                                                   # 📷 ZED-Beispiele (Submodul)
+└── README.md / readme-de.md                                               # Dokumentation (EN / DE)
 ```
