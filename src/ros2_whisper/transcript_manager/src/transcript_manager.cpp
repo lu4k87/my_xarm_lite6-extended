@@ -2,7 +2,7 @@
 
 namespace whisper {
 TranscriptManager::TranscriptManager(const rclcpp::NodeOptions& options)
-    : Node("transcript_manager", options) {
+    : Node("transcript_manager", options), inference_start_time_(now()) {
 
   // Declare merge algorithm parameter
   declare_parameter("allowed_lcs_gaps", 4);
@@ -37,6 +37,12 @@ TranscriptManager::TranscriptManager(const rclcpp::NodeOptions& options)
 }
 
 void TranscriptManager::on_whisper_tokens_(const WhisperTokens::SharedPtr msg) {
+  // Drop messages that arrive immediately after action start to prevent processing stale queue messages
+  if (now() - inference_start_time_ < rclcpp::Duration::from_seconds(0.5)) {
+    RCLCPP_WARN(get_logger(), "Dropping early tokens to avoid race condition.");
+    return;
+  }
+
   print_msg_(msg);
   const auto &words_and_segments = deserialize_msg_(msg);
   print_new_words_(words_and_segments);
@@ -69,7 +75,10 @@ void TranscriptManager::on_inference_accepted_(
   auto result = std::make_shared<Inference::Result>();
   inference_start_time_ = now();
   auto batch_idx = 0;
-  transcript_->clear();
+  {
+    std::lock_guard<std::mutex> lock(transcript_mutex_);
+    transcript_->clear();
+  }
   // Clear the incoming queue to remove residual tokens from before the goal started
   incoming_queue_->clear();
   size_t last_stale_seg = transcript_->get_stale_segment();
@@ -78,6 +87,7 @@ void TranscriptManager::on_inference_accepted_(
   auto fill_result = [this, &result](const std::string& info_msg, const size_t last_stale_seg) {
     result->info = info_msg;
     RCLCPP_INFO(get_logger(), result->info.c_str());
+    std::lock_guard<std::mutex> lock(transcript_mutex_);
     for (auto it = transcript_->segments_begin() + last_stale_seg;
                               it != transcript_->segments_end(); ++it) {
       result->transcriptions.push_back(it->get_words());
@@ -98,24 +108,27 @@ void TranscriptManager::on_inference_accepted_(
     }
 
     // Check for changes on the stale segment marker
-    size_t new_stale_segment = transcript_->get_stale_segment();
-    if ( last_stale_seg != new_stale_segment ) {
-      // Add fialized transcription to result
-      for (auto it = transcript_->segments_begin() + last_stale_seg;
-                                it < transcript_->segments_begin() + new_stale_segment; ++it) {
-        result->transcriptions.push_back(it->get_words());
+    {
+      std::lock_guard<std::mutex> lock(transcript_mutex_);
+      size_t new_stale_segment = transcript_->get_stale_segment();
+      if ( last_stale_seg != new_stale_segment ) {
+        // Add fialized transcription to result
+        for (auto it = transcript_->segments_begin() + last_stale_seg;
+                                  it < transcript_->segments_begin() + new_stale_segment; ++it) {
+          result->transcriptions.push_back(it->get_words());
+        }
+        last_stale_seg = new_stale_segment;
       }
-      last_stale_seg = new_stale_segment;
-    }
 
-    // Give feedback of active transcription
-    std::string active_transcript;
-    for (auto it = transcript_->segments_begin() + last_stale_seg;
-                              it != transcript_->segments_end(); ++it) {
-      active_transcript += it->get_words();
-    }
+      // Give feedback of active transcription
+      std::string active_transcript;
+      for (auto it = transcript_->segments_begin() + last_stale_seg;
+                                it != transcript_->segments_end(); ++it) {
+        active_transcript += it->get_words();
+      }
 
-    feedback->transcription = active_transcript;
+      feedback->transcription = active_transcript;
+    }
     feedback->batch_idx = batch_idx;
     goal_handle->publish_feedback(feedback);
     ++batch_idx;
@@ -134,6 +147,7 @@ bool TranscriptManager::clear_queue_() {
   while ( !incoming_queue_->empty() ) {
     one_merged = true;
     const auto words_and_segments = incoming_queue_->dequeue();
+    std::lock_guard<std::mutex> lock(transcript_mutex_);
     transcript_->merge_one(words_and_segments);
   }
 
@@ -143,6 +157,7 @@ bool TranscriptManager::clear_queue_() {
     serialize_transcript_(message);
     transcript_pub_->publish(message);
 
+    std::lock_guard<std::mutex> lock(transcript_mutex_);
     RCLCPP_DEBUG(get_logger(), "Current Transcript:   \n%s\n", 
                                     transcript_->get_print_str().c_str());
   }
@@ -150,6 +165,7 @@ bool TranscriptManager::clear_queue_() {
 }
 
 void TranscriptManager::serialize_transcript_(AudioTranscript &msg) {
+  std::lock_guard<std::mutex> lock(transcript_mutex_);
   size_t stale_counter = 0;
   size_t segment_count = 0;
   size_t stale_segment_id = transcript_->get_stale_segment();

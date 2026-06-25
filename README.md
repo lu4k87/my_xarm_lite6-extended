@@ -329,7 +329,8 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `ros2_whisper` <kbd>NODE</kbd>
 
-> **Purpose & Task:** Local Speech-to-Text AI. Runs Whisper AI continuously on the microphone stream and publishes spoken words as text.
+> **Purpose & Task:** Local Speech-to-Text AI. Runs Whisper AI continuously on the microphone stream and publishes spoken words as text. 
+> - **Performance & Thread-Safety:** The underlying C++ Action Server (`TranscriptManager`) has been heavily fortified with a strict `std::mutex` locking mechanism to entirely eliminate parallel data-race crashes during high-frequency token generation. Additionally, the `Inference` node features a hardened buffer clearing strategy (`audio_ring_->clear()`) which physicaly purges stale audio residuals from the microphone Ring Buffer the exact millisecond the user activates the UI button, mathematically guaranteeing zero "ghost commands" from previous speech.
 - 📤 **Publishes:** `/whisper/text` (`std_msgs/String`).
 
 #### `voice_command_listener.py` <kbd>NODE</kbd>

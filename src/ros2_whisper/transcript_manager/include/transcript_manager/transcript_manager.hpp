@@ -65,7 +65,9 @@ protected:
 private:
   // Data
   std::unique_ptr<ThreadSafeRing<std::vector<Segment>>> incoming_queue_;
-  std::unique_ptr<Transcript> transcript_;
+  std::shared_ptr<Transcript> transcript_;
+  std::mutex transcript_mutex_;
+  void publish_transcript_();
 
   // Helper functions for deseralizing the message
   bool is_special_token(const std::vector<std::string> &tokens, const int idx);

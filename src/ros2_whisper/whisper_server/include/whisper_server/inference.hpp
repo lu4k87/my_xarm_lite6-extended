@@ -12,6 +12,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "std_msgs/msg/int16_multi_array.hpp"
+#include "std_msgs/msg/string.hpp"
 
 #include "whisper_util/audio_buffers.hpp"
 #include "whisper_util/model_manager.hpp"
@@ -38,6 +39,9 @@ protected:
   rclcpp::Subscription<std_msgs::msg::Int16MultiArray>::SharedPtr audio_sub_;
   void on_audio_(const std_msgs::msg::Int16MultiArray::SharedPtr msg);
 
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr trigger_sub_;
+  void on_trigger_(const std_msgs::msg::String::SharedPtr msg);
+
   // publsiher
   void timer_callback();
   rclcpp::TimerBase::SharedPtr timer_;
@@ -61,6 +65,7 @@ private:
 
   // Control if whisper is running
   bool active_;
+  std::atomic<bool> clear_flag_{false};
 
   // Helper/debug functions
   void on_audio_debug_print_(const std_msgs::msg::Int16MultiArray::SharedPtr msg);

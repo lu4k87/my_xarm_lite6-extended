@@ -13,6 +13,10 @@ Inference::Inference(const rclcpp::NodeOptions& options)
       "audio", rclcpp::SensorDataQoS(), 
       std::bind(&Inference::on_audio_, this, std::placeholders::_1), sub_options);
 
+  trigger_sub_ = create_subscription<std_msgs::msg::String>(
+      "/ui/voice_listen_trigger", 10, 
+      std::bind(&Inference::on_trigger_, this, std::placeholders::_1), sub_options);
+
   // parameter callback handle
   on_parameter_set_handle_ = add_on_set_parameters_callback(
       std::bind(&Inference::on_parameter_set_, this, std::placeholders::_1));
@@ -129,6 +133,14 @@ void Inference::on_audio_(const std_msgs::msg::Int16MultiArray::SharedPtr msg) {
   audio_ring_->enqueue(msg->data);
 }
 
+void Inference::on_trigger_(const std_msgs::msg::String::SharedPtr msg) {
+  if (msg->data == "listen") {
+    audio_ring_->clear();
+    clear_flag_ = true;
+    RCLCPP_INFO(get_logger(), "Audio buffer cleared by UI trigger.");
+  }
+}
+
 void Inference::inference_(const std::vector<float> &audio, 
                                   whisper_idl::msg::WhisperTokens &result) {
   auto inference_start_time = now();
@@ -149,10 +161,17 @@ whisper_idl::msg::WhisperTokens Inference::create_message_() {
 
 bool Inference::run_inference_(whisper_idl::msg::WhisperTokens &result) {
   if ( whisper_mutex_.try_lock() ) {
+    clear_flag_ = false;
     const auto& [data, timestamp] = audio_ring_->peak();
     result.stamp = chrono_to_ros_msg(timestamp);
 
     inference_(data, result);
+
+    if (clear_flag_) {
+      RCLCPP_WARN(get_logger(), "Inference dropped because buffer was cleared.");
+      whisper_mutex_.unlock();
+      return false;
+    }
 
     // Print warning if inference takes too long for audio size
     auto duration = std::chrono::milliseconds(result.inference_duration);

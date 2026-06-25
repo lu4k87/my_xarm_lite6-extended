@@ -216,10 +216,13 @@ class VoiceCommandListener(Node):
         
         feedback = feedback_msg.feedback
         text = feedback.transcription
-        if not text or not text.strip():
+        if not text:
             return
-        
-        text = text.strip()
+            
+        # Strip Whisper bracket tags like [BLANK_AUDIO]
+        text = re.sub(r'\[.*?\]', '', text).strip()
+        if not text:
+            return
         
         # ── Guard 2: Identical text as last feedback → skip (dedup)
         #    The C++ server sends feedback every 250ms with the SAME cumulative text.
@@ -259,7 +262,10 @@ class VoiceCommandListener(Node):
         
         result = future.result().result
         if result and result.transcriptions and len(result.transcriptions) > 0:
-            final_text = " ".join(result.transcriptions).strip()
+            final_text = " ".join(result.transcriptions)
+            # Remove Whisper bracket tags like [BLANK_AUDIO]
+            final_text = re.sub(r'\[.*?\]', '', final_text).strip()
+            
             if final_text:
                 self.get_logger().info(f'Transcription: {final_text}')
                 self.ui_status_pub.publish(StringMsg(data=f'Transcription: {final_text}'))
@@ -271,7 +277,7 @@ class VoiceCommandListener(Node):
             else:
                 self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
         else:
-            self.ui_status_pub.publish(StringMsg(data="Error: Inference failed"))
+            self.ui_status_pub.publish(StringMsg(data="-- No speech detected --"))
             
         self._check_queue()
 
