@@ -798,6 +798,37 @@ window.addEventListener("gamepaddisconnected", (e) => {
   }
 });
 
+// ── Global Button Debounce (Anti-Double-Click) ──────────────────────────
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  
+  // Allow continuous jogging buttons to be pressed rapidly or held
+  if (btn.classList.contains('btn-z') || btn.classList.contains('btn-rot')) return;
+  
+  // If already clicked, block it
+  if (btn.dataset.clicked) {
+    e.stopPropagation();
+    e.preventDefault();
+    return;
+  }
+  
+  // Mark as clicked and visually disable
+  btn.dataset.clicked = "true";
+  const oldPointerEvents = btn.style.pointerEvents;
+  const oldOpacity = btn.style.opacity;
+  
+  btn.style.pointerEvents = 'none';
+  btn.style.opacity = '0.6';
+  
+  // Re-enable after 1.5 seconds
+  setTimeout(() => {
+    delete btn.dataset.clicked;
+    btn.style.pointerEvents = oldPointerEvents;
+    btn.style.opacity = oldOpacity;
+  }, 1500);
+}, true);
+
 // ── MoveIt Servo Status ─────────────────────────────────────────────────
 const servoStatusSub = new ROSLIB.Topic({
   ros: ros,

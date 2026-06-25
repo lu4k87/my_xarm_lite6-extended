@@ -146,7 +146,6 @@
         { cmd: servoCmd, title: servoTitle },
         { cmd: moveGroupCmd, title: moveGroupTitle },
         { cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch" },
-        { cmd: "ros2 run robot_motion_handler_movegroup robot_motion_handler_movegroup", title: "Robot Motion Handler MoveGroup Node" },
         { cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning" },
         { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
         { cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True", title: "Whisper Bringup (Voice AI)" },
@@ -190,7 +189,6 @@
         { cmd: servoCmd, title: servoTitle },
         { cmd: moveGroupCmd, title: moveGroupTitle },
         { cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch" },
-        { cmd: "ros2 run robot_motion_handler_movegroup robot_motion_handler_movegroup", title: "Robot Motion Handler MoveGroup Node" },
         { cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning" },
         { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
         { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" }

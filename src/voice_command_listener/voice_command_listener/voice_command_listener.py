@@ -5,6 +5,7 @@ import re
 import time
 import unicodedata
 from collections import deque
+import functools
 
 import rclpy
 from rclpy.node import Node
@@ -112,10 +113,10 @@ class VoiceCommandListener(Node):
         
         # Regex-Pattern fuer die Befehlserkennung (Ausschliesslich Englisch)
         self.patterns = {
-            "MoveToAbsolutePose": re.compile(r"\bmove to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
-            "MoveToInitialPose": re.compile(r"\b(?:move to )?initial (?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
-            "SpeedFaster": re.compile(r"\b(?:go |move )?faster\b", re.IGNORECASE),
-            "SpeedSlower": re.compile(r"\b(?:go |move )?slower\b", re.IGNORECASE)
+            "MoveTo: pose": re.compile(r"\bmove to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
+            "MoveTo: initial": re.compile(r"\b(?:move to )?initial (?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
+            "Speed: faster": re.compile(r"\b(?:go |move )?faster\b", re.IGNORECASE),
+            "Speed: slower": re.compile(r"\b(?:go |move )?slower\b", re.IGNORECASE)
         }
         
         self._last_cmd_text = ""
@@ -178,8 +179,6 @@ class VoiceCommandListener(Node):
         self._goal_start_ts = time.time()
         self._suppressed_end_pos = -1
         self.goal_handle = None
-        
-        import functools
         self._goal_generation += 1
         current_gen = self._goal_generation
         

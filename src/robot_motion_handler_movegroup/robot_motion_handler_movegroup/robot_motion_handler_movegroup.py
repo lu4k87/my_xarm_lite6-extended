@@ -164,13 +164,10 @@ class RobotMotionHandlerMovegroup(Node):
                 move_res = DummyResponse()
                 
                 self.ui_log('Phase 1: Retracting 15cm upwards...', 'action')
-                self.is_executing = False
-                self.execute_move_to_pose_cb(move_req, move_res)
-                self.is_executing = True
+                self._execute_move_to_pose_core(move_req, move_res)
                 
             except Exception as e:
                 self.ui_log(f'Retract Phase failed or skipped: {e}', 'warn')
-                self.is_executing = True
 
             # --- PHASE 2: MOVE TO INITIAL POSE ---
             self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
@@ -350,6 +347,8 @@ class RobotMotionHandlerMovegroup(Node):
         
         self.ui_log(f'{len(waypoints)} waypoints generated. Starting scan.', 'success')
         
+        self.is_executing = True
+        
         # Fake-Request Objekt fuer den Aufruf der bestehenden Move-Methode
         class DummyRequest:
             pose = [0.0] * 6
@@ -370,7 +369,7 @@ class RobotMotionHandlerMovegroup(Node):
                 move_req.pose[5] = wp[5] # Yaw
                 
                 # Nutze die Logik zum Anfahren (blockiert bis Ziel erreicht)
-                self.execute_move_to_pose_cb(move_req, move_res)
+                self._execute_move_to_pose_core(move_req, move_res)
                 
                 # Kurze Pause an jedem Wegpunkt
                 time.sleep(1.0) 
@@ -381,6 +380,8 @@ class RobotMotionHandlerMovegroup(Node):
             self.ui_log(f"Error during scan path: {e}", 'error')
             response.success = False
             response.message = str(e)
+        finally:
+            self.is_executing = False
             
         return response
 
@@ -391,6 +392,12 @@ class RobotMotionHandlerMovegroup(Node):
             return response
             
         self.is_executing = True
+        try:
+            return self._execute_move_to_pose_core(request, response)
+        finally:
+            self.is_executing = False
+            
+    def _execute_move_to_pose_core(self, request, response):
         try:
             from moveit_msgs.srv import GetPositionIK
             from geometry_msgs.msg import PoseStamped
@@ -469,8 +476,6 @@ class RobotMotionHandlerMovegroup(Node):
             self.ui_log(f"Error in MoveTo: {e}", 'error')
             response.ret = -1
             response.message = str(e)
-        finally:
-            self.is_executing = False
             
         return response
 

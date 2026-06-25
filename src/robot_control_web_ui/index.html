@@ -214,6 +214,13 @@
           </div>
         </section>
 
+        <section id="panel-camera" class="glass-panel" style="resize: both; overflow: hidden; min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+          <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream</h2>
+          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+            <img id="cam-stream" src="http://192.168.0.124/html/cam_pic.php?time=0&pDelay=40000" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="Camera Stream">
+          </div>
+        </section>
+
         <section id="panel-whisper" class="glass-panel">
           <h2><i class="fa-solid fa-microphone"></i> Speech Control (Whisper AI)</h2>
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
@@ -238,5 +245,18 @@
   </div>
 
   <script src="app.js"></script>
+  
+  <script>
+    // ── Live Camera Update Loop ──
+    const camImg = document.getElementById('cam-stream');
+    if (camImg) {
+      function updateCam() {
+        camImg.src = `http://192.168.0.124/html/cam_pic.php?time=${new Date().getTime()}&pDelay=40000`;
+      }
+      camImg.onload = updateCam;
+      camImg.onerror = () => setTimeout(updateCam, 1000);
+      updateCam(); // start the loop
+    }
+  </script>
 </body>
 </html>

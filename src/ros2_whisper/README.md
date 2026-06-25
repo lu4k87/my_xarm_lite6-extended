@@ -16,6 +16,10 @@ git clone https://github.com/ros-ai/ros2_whisper.git && cd .. && \
 colcon build --symlink-install --cmake-args -DGGML_CUDA=On --no-warn-unused-cli
 ```
 
+## Audio Input Configuration
+The `audio_listener` node is configured to automatically detect and select the system's default `pulse` (PulseAudio/PipeWire) microphone device. 
+You no longer need to manually set ALSA hardware indexes. Simply ensure your desired microphone is set as the default recording device in your operating system settings.
+
 ## Demos
 Configure `whisper` parameters in [whisper.yaml](whisper_server/config/whisper.yaml).
 
