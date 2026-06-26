@@ -393,9 +393,9 @@ class RobotMotionHandlerMovegroup(Node):
             
         return waypoints
 
-    def generate_object_cross_trajectory(self, objects, cross_size=0.06, height=0.14):
+    def generate_object_cross_trajectory(self, objects, cross_size=0.10, height=0.11):
         """
-        Generiert eine kontinuierliche Kreuz-Trajektorie (+/- 3cm) ueber eine Liste von Objekt-Zentren.
+        Generiert eine kontinuierliche Kreuz-Trajektorie (+/- 5cm) ueber eine Liste von Objekt-Zentren.
         """
         waypoints = []
         half_size = cross_size / 2.0
