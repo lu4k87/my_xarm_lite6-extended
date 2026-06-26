@@ -862,15 +862,6 @@
       setTimeout(() => t.classList.remove('show'), 2800);
     }
 
-    async function killAllProcesses() {
-      if (!confirm("Wirklich ALLE Nexus Web Backend-Prozesse beenden? (Das Dashboard muss danach per Terminal neu gestartet werden)")) return;
-      try {
-        await fetch('/api/kill_all', { method: 'POST' });
-        document.getElementById('offline-overlay').style.display = 'flex';
-      } catch (err) {
-        document.getElementById('offline-overlay').style.display = 'flex';
-      }
-    }
 
     async function killAllROS2() {
       if (!confirm("Wirklich ALLE ROS2 Prozesse UND die dazugehörigen Terminals beenden?")) return;
