@@ -127,11 +127,7 @@
             <button class="btn frame-btn" style="flex: 1;" id="btn-frame-tcp" onclick="setFrame('link_tcp')">TCP Frame</button>
           </div>
           
-          <div class="scan-controls" style="margin-top: 15px; text-align: center;">
-            <button id="btn-start-scan" class="btn btn-primary" style="width: 100%;" onclick="startOctomapScan()">
-              <i class="fa-solid fa-map"></i> Start Octomap Scan
-            </button>
-          </div>
+
           
           <div class="speed-control">
             <label><i class="fa-solid fa-gauge"></i> Speed Level: <span id="speed-val">3/5 (60%)</span></label>
@@ -195,9 +191,12 @@
             <div class="input-group"><label>Pitch [rad] (<span style="color: var(--rviz-y);">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
             <div class="input-group"><label>Yaw [rad] (<span style="color: var(--rviz-z);">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
           </div>
-          <div style="display: flex; gap: 12px; margin-top: 12px;">
-            <button class="btn btn-primary" style="flex: 2;" onclick="moveToPose()">Execute Move To Pose</button>
-            <button class="btn btn-rot" style="flex: 1;" onclick="setInitialPose()">Initial Pose</button>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; justify-content: space-between;">
+            <button class="btn btn-primary" style="padding: 8px 14px; font-size: 12px;" onclick="moveToPose()">Move To: Absolute Pose</button>
+            <button class="btn btn-rot" style="padding: 8px 14px; font-size: 12px;" onclick="setInitialPose()">Move To: Initial Pose</button>
+            <button id="btn-start-scan" class="btn btn-primary" style="padding: 8px 14px; font-size: 12px;" onclick="startOctomapScan()">
+              <i class="fa-solid fa-map"></i> Start Octomap Scan
+            </button>
           </div>
         </section>
 

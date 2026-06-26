@@ -10,7 +10,7 @@ from tf2_ros import TransformException
 # GLOBALE KONSTANTEN
 # =========================================================
 OBJECT_LINE_Z = -0.002       # Höhe der Hohlkörper-Unterkante (unterhalb des Grids bei Z=0)
-LINE_THICKNESS = 0.002
+LINE_THICKNESS = 0.001
 
 # Frames und interaktive Schwellenwerte
 EEF_FRAME = 'link_eef'      
@@ -19,9 +19,9 @@ POSITION_TOLERANCE = 0.01   # 10 mm Trigger-Radius für Farbumschlag
 
 # Zielpositionen für die Hohlkörper (jetzt über TF Tuner gesteuert, mit statischem Fallback)
 CONFIG = {
-    "TARGET_BLUE_CUBE": {"tf_frame": "target_blue_cube", "default_pos": (0.174, 0.082), "default_yaw": 0.0, "dims": (0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
-    "TARGET_RED_RECTANGLE": {"tf_frame": "target_red_rectangle", "default_pos": (0.219, -0.083), "default_yaw": -math.pi/4.0, "dims": (0.03, 0.06), "color": [1.0, 0.0, 0.0], "type": Marker.CUBE, "id": 2}, 
-    "TARGET_GREEN_CYLINDER": {"tf_frame": "target_green_cylinder", "default_pos": (0.274, 0.018), "default_yaw": 0.0, "dims": (0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
+    "TARGET_BLUE_CUBE": {"tf_frame": "target_blue_cube", "default_pos": (0.174, 0.082), "default_yaw": 0.0, "dims": (0.03, 0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
+    "TARGET_RED_RECTANGLE": {"tf_frame": "target_red_rectangle", "default_pos": (0.219, -0.083), "default_yaw": -math.pi/4.0, "dims": (0.06, 0.03, 0.03), "color": [1.0, 0.0, 0.0], "type": Marker.CUBE, "id": 2}, 
+    "TARGET_GREEN_CYLINDER": {"tf_frame": "target_green_cylinder", "default_pos": (0.274, 0.018), "default_yaw": 0.0, "dims": (0.03, 0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
 }
 
 # Statische Szene (aus der URDF extrahiert)
@@ -81,14 +81,48 @@ class DynamicSceneMarkerPublisher(Node):
         marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
         return marker
 
-    def calculate_box_lines(self, dim_x, dim_y):
+    def calculate_3d_box_lines(self, dim_x, dim_y, dim_z):
         points = []
         hx, hy = dim_x / 2.0, dim_y / 2.0
-        corners = [(hx, hy), (hx, -hy), (-hx, -hy), (-hx, hy)]
+        
+        # Bottom corners
+        cb = [(hx, hy, 0.0), (hx, -hy, 0.0), (-hx, -hy, 0.0), (-hx, hy, 0.0)]
+        # Top corners
+        ct = [(hx, hy, dim_z), (hx, -hy, dim_z), (-hx, -hy, dim_z), (-hx, hy, dim_z)]
+        
         for i in range(4):
-            p1, p2 = corners[i], corners[(i + 1) % 4]
-            points.append(Point(x=p1[0], y=p1[1], z=0.0))
-            points.append(Point(x=p2[0], y=p2[1], z=0.0))
+            # Bottom edges
+            p1, p2 = cb[i], cb[(i + 1) % 4]
+            points.append(Point(x=p1[0], y=p1[1], z=p1[2]))
+            points.append(Point(x=p2[0], y=p2[1], z=p2[2]))
+            # Top edges
+            p1, p2 = ct[i], ct[(i + 1) % 4]
+            points.append(Point(x=p1[0], y=p1[1], z=p1[2]))
+            points.append(Point(x=p2[0], y=p2[1], z=p2[2]))
+            # Vertical edges
+            p1, p2 = cb[i], ct[i]
+            points.append(Point(x=p1[0], y=p1[1], z=p1[2]))
+            points.append(Point(x=p2[0], y=p2[1], z=p2[2]))
+            
+        return points
+
+    def calculate_3d_cylinder_lines(self, radius, height, num_segments=20):
+        points = []
+        # Bottom circle
+        for i in range(num_segments):
+            a1, a2 = 2*math.pi*i/num_segments, 2*math.pi*(i+1)/num_segments
+            points.append(Point(x=radius*math.cos(a1), y=radius*math.sin(a1), z=0.0))
+            points.append(Point(x=radius*math.cos(a2), y=radius*math.sin(a2), z=0.0))
+        # Top circle
+        for i in range(num_segments):
+            a1, a2 = 2*math.pi*i/num_segments, 2*math.pi*(i+1)/num_segments
+            points.append(Point(x=radius*math.cos(a1), y=radius*math.sin(a1), z=height))
+            points.append(Point(x=radius*math.cos(a2), y=radius*math.sin(a2), z=height))
+        # Vertical edges
+        for i in range(4):
+            a = 2*math.pi*i/4
+            points.append(Point(x=radius*math.cos(a), y=radius*math.sin(a), z=0.0))
+            points.append(Point(x=radius*math.cos(a), y=radius*math.sin(a), z=height))
         return points
 
     def calculate_cylinder_lines(self, radius, num_segments=20):
@@ -138,16 +172,31 @@ class DynamicSceneMarkerPublisher(Node):
             rot_q = Quaternion(x=0.0, y=0.0, z=math.sin(yaw/2.0), w=math.cos(yaw/2.0))
 
             if config["type"] == Marker.CUBE:
-                pts = self.calculate_box_lines(config["dims"][0], config["dims"][1])
+                pts = self.calculate_3d_box_lines(config["dims"][0], config["dims"][1], config["dims"][2])
                 m = self.create_marker(obj_id, Marker.LINE_LIST, (x, y, z), 
-                                      (LINE_THICKNESS, 0.0, 0.0), color_rgb+[1.0], 
+                                      (LINE_THICKNESS, 0.0, 0.0), color_rgb+[0.3], 
                                       rot_q, namespace="hollow_objects", points=pts, frame_id=TARGET_FRAME)
+                
+                # Solid face marker
+                z_solid = z + (config["dims"][2] / 2.0)
+                m_solid = self.create_marker(obj_id + 100, Marker.CUBE, (x, y, z_solid), 
+                                            config["dims"], color_rgb+[0.2], 
+                                            rot_q, namespace="solid_objects", frame_id=TARGET_FRAME)
+                                            
             elif config["type"] == Marker.CYLINDER:
-                pts = self.calculate_cylinder_lines(config["dims"][0]/2.0)
+                pts = self.calculate_3d_cylinder_lines(config["dims"][0]/2.0, config["dims"][2])
                 m = self.create_marker(obj_id, Marker.LINE_LIST, (x, y, z), 
-                                      (LINE_THICKNESS, 0.0, 0.0), color_rgb+[1.0], 
+                                      (LINE_THICKNESS, 0.0, 0.0), color_rgb+[0.3], 
                                       rot_q, namespace="hollow_objects", points=pts, frame_id=TARGET_FRAME)
+                
+                # Solid face marker
+                z_solid = z + (config["dims"][2] / 2.0)
+                m_solid = self.create_marker(obj_id + 100, Marker.CYLINDER, (x, y, z_solid), 
+                                            config["dims"], color_rgb+[0.2], 
+                                            rot_q, namespace="solid_objects", frame_id=TARGET_FRAME)
+                
             marker_array.markers.append(m)
+            marker_array.markers.append(m_solid)
 
         # 2. Statische Szene (Flächen, Ständer, Blöcke) zeichnen
         for scene_obj in SCENE_MARKERS:

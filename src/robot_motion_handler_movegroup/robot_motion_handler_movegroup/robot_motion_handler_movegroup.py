@@ -326,14 +326,23 @@ class RobotMotionHandlerMovegroup(Node):
     def generate_wave_trajectory(self, min_x=0.250, max_x=0.450, min_y=-0.250, max_y=0.250, base_z=0.300, z_amplitude=0.080):
         """
         Generiert Wegpunkte für eine Sinuswelle ueber das Workspace.
-        Um Singularitaeten zu vermeiden (z.B. Wrist-Singularity), halten wir die Ausrichtung streng nach unten (Roll=pi).
-        Wir iterieren ueber X, und schwingen Y und Z.
+        Der EEF wird dynamisch geneigt, um kontinuierlich auf das Zentrum 
+        des abgefahrenen Bereichs zu "schauen".
         """
         waypoints = []
         num_x_steps = 10  # Schritte entlang der X-Achse
         points_per_sweep = 15 # Dichte der Punkte entlang Y
         
         sweep_direction = 1
+        
+        # Focal point auf dem Tisch (Zentrum des Suchbereichs)
+        cx = (min_x + max_x) / 2.0
+        cy = (min_y + max_y) / 2.0
+        cz = 0.0
+        
+        # Faktoren zur Dämpfung und Begrenzung der Neigung
+        tilt_factor = 0.7
+        max_tilt = math.radians(30)
         
         for i in range(num_x_steps):
             x = min_x + (max_x - min_x) * (i / max(1, (num_x_steps - 1)))
@@ -348,11 +357,23 @@ class RobotMotionHandlerMovegroup(Node):
                 phase = (j / (points_per_sweep - 1)) * 2 * math.pi
                 z = base_z + math.sin(phase) * z_amplitude
                 
-                # Roll=Pi, Pitch=0, Yaw=0 (greifer zeigt strikt nach unten)
-                # Um kleine Singularitaeten an den Randbereichen zu vermeiden,
-                # koennten wir Pitch/Yaw leicht neigen, aber starr nach unten ist meist am sichersten.
-                roll = math.pi
-                pitch = 0.0
+                # Vektor vom EEF zum Focal Point berechnen
+                dx = cx - x
+                dy = cy - y
+                dz = cz - z # ist negativ, da cz (0) < z (ca. 0.3)
+                
+                # Roll Tilt (Neigung um X-Achse, zielt auf Y-Abweichung)
+                roll_tilt = math.atan2(dy, -dz) * tilt_factor
+                roll_tilt = max(-max_tilt, min(max_tilt, roll_tilt))
+                
+                # Pitch Tilt (Neigung um Y-Achse, zielt auf X-Abweichung)
+                pitch_tilt = math.atan2(-dx, -dz) * tilt_factor
+                pitch_tilt = max(-max_tilt, min(max_tilt, pitch_tilt))
+                
+                # Zuweisen der Winkel 
+                # (Yaw bleibt 0, um unnötigen Twist des gesamten Arms zu vermeiden)
+                roll = math.pi + roll_tilt
+                pitch = pitch_tilt
                 yaw = 0.0
                 
                 waypoints.append([x, y, z, roll, pitch, yaw])

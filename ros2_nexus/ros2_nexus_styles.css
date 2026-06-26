@@ -29,9 +29,9 @@
       /* Rot              — Kill / Danger      */
       --c-server: #818cf8;
       /* Indigo           — Server Launch      */
-      --c-client: #d946ef;
+      --c-client: #a855f7;
       --c-dev: #f0b429; /* Gold - Dev Launch */
-      /* Fuchsia          — Client Launch      */
+      /* Purple           — Client Launch      */
 
       --glow-a: 0 0 18px rgba(56, 189, 248, .25);
       --glow-o: 0 0 18px rgba(249, 115, 22, .3);
@@ -589,7 +589,7 @@
     }
 
     .action-card[data-type="client"] {
-      --card-accent: linear-gradient(90deg, var(--c-client) 0%, rgba(217, 70, 239, 0) 35%);
+      --card-accent: linear-gradient(90deg, var(--c-client) 0%, rgba(168, 85, 247, 0) 35%);
     }
 
     .action-btn {
@@ -694,9 +694,9 @@
     }
 
     .badge-client {
-      background: rgba(217, 70, 239, .12);
+      background: rgba(168, 85, 247, .12);
       color: var(--c-client);
-      border-color: rgba(217, 70, 239, .3)
+      border-color: rgba(168, 85, 247, .3)
     }
 
     /* CMD line — full width, always fully visible */
