@@ -59,7 +59,7 @@ body {
 }
 
 .app-container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 20px;
   width: 100%;
@@ -192,12 +192,12 @@ header {
 
 .grid-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 24px;
   flex: 1;
 }
 
-.col-left, .col-right {
+.col-left, .col-middle, .col-right {
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -211,6 +211,8 @@ header {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  resize: both;
+  overflow: auto;
 }
 
 .glass-panel h2 {

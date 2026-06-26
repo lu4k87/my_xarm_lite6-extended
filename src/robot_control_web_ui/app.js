@@ -970,10 +970,11 @@ function resetListeningUI(btn, textSpan, icon, resultSpan, errorText) {
 // ── Drag & Drop Layout (SortableJS) ──────────────────────────────────────
 function initDragAndDrop() {
   const colLeft = document.getElementById('col-left');
+  const colMiddle = document.getElementById('col-middle');
   const colRight = document.getElementById('col-right');
-  if (!colLeft || !colRight || typeof Sortable === 'undefined') return;
+  if (!colLeft || !colMiddle || !colRight || typeof Sortable === 'undefined') return;
 
-  const layoutKey = 'robot_control_layout';
+  const layoutKey = 'robot_control_layout_v2';
 
   // 1. Load saved layout if available
   try {
@@ -985,6 +986,13 @@ function initDragAndDrop() {
         layout.left.forEach(id => {
           const el = document.getElementById(id);
           if (el) colLeft.appendChild(el);
+        });
+      }
+      // Restore middle column
+      if (layout.middle && Array.isArray(layout.middle)) {
+        layout.middle.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) colMiddle.appendChild(el);
         });
       }
       // Restore right column
@@ -1003,6 +1011,7 @@ function initDragAndDrop() {
   function saveLayout() {
     const layout = {
       left: Array.from(colLeft.querySelectorAll('.glass-panel')).map(el => el.id).filter(id => id),
+      middle: Array.from(colMiddle.querySelectorAll('.glass-panel')).map(el => el.id).filter(id => id),
       right: Array.from(colRight.querySelectorAll('.glass-panel')).map(el => el.id).filter(id => id)
     };
     localStorage.setItem(layoutKey, JSON.stringify(layout));
@@ -1019,6 +1028,7 @@ function initDragAndDrop() {
   };
 
   new Sortable(colLeft, sortableOpts);
+  new Sortable(colMiddle, sortableOpts);
   new Sortable(colRight, sortableOpts);
 }
 
