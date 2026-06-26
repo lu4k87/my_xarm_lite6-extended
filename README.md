@@ -359,7 +359,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `rviz_marker_static_scene_objects.py` <kbd>NODE</kbd>
 
-> **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges).
+> **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
 - 📤 **Publishes:**
   - `/scene_markers_array` (`visualization_msgs/MarkerArray`)
 

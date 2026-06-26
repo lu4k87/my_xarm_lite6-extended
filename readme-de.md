@@ -360,7 +360,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 #### `rviz_marker_static_scene_objects.py` <kbd>NODE</kbd>
 
-> **Zweck & Aufgabe:** Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuelle Tischkanten).
+> **Zweck & Aufgabe:** Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuelle Tischkanten). Verwendet den Zeitstempel `0`, um ein Flackern ("Flickering") aufgrund von asynchronen TF-Bäumen zu verhindern.
 - 📤 **Publishes:**
   - `/scene_markers_array` (`visualization_msgs/MarkerArray`)
 

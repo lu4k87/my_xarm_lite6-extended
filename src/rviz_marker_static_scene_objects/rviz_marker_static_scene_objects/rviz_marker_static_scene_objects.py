@@ -65,7 +65,10 @@ class DynamicSceneMarkerPublisher(Node):
     def create_marker(self, id, marker_type, position, scale, color, orientation=None, namespace="dynamic_overlays", points=None, frame_id=TARGET_FRAME):
         marker = Marker()
         marker.header.frame_id = frame_id
-        marker.header.stamp = self.get_clock().now().to_msg()
+        # Setze den Zeitstempel absichtlich auf 0 (Time().to_msg()), damit RViz IMMER die 
+        # neueste verfügbare TF nimmt und die Marker nicht ausblendet ("flickering"), 
+        # wenn der TF-Baum minimal asynchron zur Systemzeit ist.
+        marker.header.stamp = rclpy.time.Time().to_msg()
         marker.ns = namespace 
         marker.id = id
         marker.type = marker_type
