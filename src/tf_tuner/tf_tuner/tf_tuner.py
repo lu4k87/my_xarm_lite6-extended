@@ -16,7 +16,7 @@ class TFTunerGUI(QWidget):
         self.node = node
         
         self.elements = {
-            'Pointcloud': {
+            'Zed M Camera': {
                 'frame_id': 'zed_camera_link',
                 'x': 650, 'y': 0, 'z': 390,
                 'roll': 0, 'pitch': 450, 'yaw': 1800
@@ -42,7 +42,7 @@ class TFTunerGUI(QWidget):
                 'roll': 0, 'pitch': 0, 'yaw': 0
             }
         }
-        self.current_selection = 'Pointcloud'
+        self.current_selection = 'Zed M Camera'
         
         self.initUI()
         
