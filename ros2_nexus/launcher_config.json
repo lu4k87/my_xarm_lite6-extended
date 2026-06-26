@@ -224,7 +224,7 @@
         },
         {
           "cmd": "ros2 run tf_tuner tf_tuner",
-          "label": "Tuner: Pointcloud & 3D Elements",
+          "label": "Transform Tuner (tf_tuner)",
           "type": "node"
         },
         {
