@@ -29,6 +29,7 @@
 
 
     <nav class="tab-nav" id="tab-nav">
+      <button class="tab-btn" onclick="location.reload()" title="Reload ROS2 Nexus" style="padding: 0 15px;"><i class="fa-solid fa-arrows-rotate"></i></button>
       <button class="tab-btn active" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
       <button class="tab-btn" data-tab="topic_pubs"><i class="fa-solid fa-arrow-up-from-bracket"></i> Pub MSG on
         Topic</button>
@@ -58,8 +59,6 @@
     <button class="footer-btn"
       onclick="runCmd('nano ~/dev_ws/ros2_nexus/ros2_nexus_web.py','Code: ROS2 Nexus WebApp','interactive')"><i
         class="fa-solid fa-code"></i> Code: ROS2 Nexus WebApp</button>
-    <button class="footer-btn primary" onclick="location.reload()"><i class="fa-solid fa-arrows-rotate"></i>
-      Reload ROS2 Nexus</button>
   </footer>
 
   <div class="toast" id="toast"></div>
