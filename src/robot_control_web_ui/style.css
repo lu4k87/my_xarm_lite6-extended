@@ -652,14 +652,14 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   padding: 8px 0;
 }
 
-@keyframes pulse-glow-purple {
-  0% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.4); border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.2); }
-  50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.8); border-color: rgba(139, 92, 246, 1.0); background: rgba(139, 92, 246, 0.4); color: white;}
-  100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.4); border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.2); }
+@keyframes pulse-glow-blue {
+  0% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.4); border-color: rgba(56, 189, 248, 0.5); background: rgba(56, 189, 248, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.8); border-color: rgba(56, 189, 248, 1.0); background: rgba(56, 189, 248, 0.4); color: white;}
+  100% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.4); border-color: rgba(56, 189, 248, 0.5); background: rgba(56, 189, 248, 0.2); }
 }
 
 .btn-listening {
-  animation: pulse-glow-purple 1s infinite !important;
+  animation: pulse-glow-blue 1s infinite !important;
   pointer-events: none;
 }
 

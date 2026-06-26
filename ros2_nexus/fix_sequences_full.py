@@ -15,7 +15,7 @@ with open('/home/mk1/dev_ws/ros2_nexus/ros2_nexus_script.js', 'r') as f:
 # 8. whisper_bringup
 # 9. voice_command_listener
 # 10. rosbridge_server
-# 11. pointcloud_tf_tuner.py
+# 11. tf_tuner
 # 12. robot_control_web_ui (python HTTP server)
 # Note: DEV setup doesn't run checker.py either? Wait, yes it does!
 # Wait, let's look at `runDevSetup` actions:
@@ -41,7 +41,7 @@ fake_dev_list = """                   <li><span style="color: var(--accent);">li
                    <li><span style="color: var(--accent);">inference.cpp</span> (Whisper Core)</li>
                    <li><span style="color: var(--accent);">voice_command_listener.py</span> (Voice Controller)</li>
                    <li><span style="color: var(--accent);">rosbridge_websocket.py</span> (ROS Bridge)</li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>
+                   <li><span style="color: var(--accent);">tf_tuner</span> (TF Tuner)</li>
                    <li><span style="color: var(--accent);">robot_control_web_ui</span> (Web Server)</li>"""
 
 real_dev_list = fake_dev_list.replace("lite6_moveit_servo_fake.launch.py", "lite6_moveit_servo_realmove.launch.py")
@@ -58,7 +58,7 @@ fake_server_list = """                   <li><span style="color: var(--accent);"
                    <li><span style="color: var(--accent);">yolov8_node.py</span> (YOLO Detection)</li>
                    <li><span style="color: var(--accent);">yolo_planned_grasp_executor.py</span> (YOLO Grasp)</li>
                    <li><span style="color: var(--accent);">pointcloud_optimizer.py</span> (Pointcloud Filter)</li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> (TF Tuner)</li>"""
+                   <li><span style="color: var(--accent);">tf_tuner</span> (TF Tuner)</li>"""
 
 real_server_list = fake_server_list.replace("lite6_moveit_servo_fake.launch.py", "lite6_moveit_servo_realmove.launch.py")
 

@@ -6,7 +6,7 @@ whisper:
         language: "en"           # Sprache auf Englisch für englische Kommandos
         task: "transcribe"
         # Wichtig: Biasing auf Deine aktuellen Befehle als zusammenhängender Satz (funktioniert bei Whisper am besten)
-        initial_prompt: "Move to Pose. Move to Absolute Pose. Move to Initial Pose. Faster. Slower."
+        initial_prompt: "Move to Pose. Move to Absolute Pose. Move to Initial Pose. Faster. Slower. Scan path."
         # Für stabile, deterministische Erkennung (niedrige Latenz)
         temperature: 0.0
         beam_size: 2             # Beam Size leicht erhöhen, um phonetische Alternativen besser abzuwägen

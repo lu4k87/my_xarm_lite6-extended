@@ -151,7 +151,7 @@
         { cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True", title: "Whisper Bringup (Voice AI)" },
         { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" },
         { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
-        { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" },
+        { cmd: "ros2 run tf_tuner tf_tuner", title: "Tuner: Pointcloud & 3D Elements" },
         { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" }
       ];
 
@@ -191,7 +191,7 @@
         { cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch" },
         { cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning" },
         { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
-        { cmd: "ros2 run my_3d_vision_bringup pointcloud_tf_tuner.py", title: "Tuner: Pointcloud & Collision Check" }
+        { cmd: "ros2 run tf_tuner tf_tuner", title: "Tuner: Pointcloud & 3D Elements" }
       ];
 
       showToast(`🚀 SERVER Setup (${mode.toUpperCase()}) gestartet... (${actions.length} Terminals)`);
@@ -363,7 +363,7 @@
                        <li><span style="color: var(--accent);">rosapi_node.py</span> <span style="float: right; opacity: 0.7;">(ROS API)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
+                   <li><span style="color: var(--accent);">tf_tuner</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                    <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
                 </ul>
               </div>
@@ -428,7 +428,7 @@
                        <li><span style="color: var(--accent);">rosapi_node.py</span> <span style="float: right; opacity: 0.7;">(ROS API)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
+                   <li><span style="color: var(--accent);">tf_tuner</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                    <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
                 </ul>
               </div>
@@ -493,7 +493,7 @@
                        <li><span style="color: var(--accent);">grasp_action_bridge.py</span> <span style="float: right; opacity: 0.7;">(Action Bridge)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
+                   <li><span style="color: var(--accent);">tf_tuner</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                 </ul>
               </div>
             </div>
@@ -545,7 +545,7 @@
                        <li><span style="color: var(--accent);">grasp_action_bridge.py</span> <span style="float: right; opacity: 0.7;">(Action Bridge)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--accent);">pointcloud_tf_tuner.py</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
+                   <li><span style="color: var(--accent);">tf_tuner</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                 </ul>
               </div>
             </div>

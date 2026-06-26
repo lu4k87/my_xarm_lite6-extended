@@ -228,9 +228,13 @@
         <section id="panel-whisper" class="glass-panel">
           <h2><i class="fa-solid fa-microphone"></i> Speech Control (Whisper AI)</h2>
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
-            <button id="btn-start-listening" class="btn btn-purple" style="flex: 1; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="startListening()">
-              <i class="fa-solid fa-ear-listen" id="btn-listen-icon"></i> <span id="btn-listen-text">Start Listening</span>
-            </button>
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+              <button id="btn-start-listening" class="btn btn-primary" style="width: 50px; height: 50px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" onclick="startListening()">
+                <i class="fa-solid fa-microphone" id="btn-listen-icon" style="font-size: 20px;"></i>
+              </button>
+              <span id="btn-listen-text" style="color: var(--mut); font-weight: 500; font-size: 15px;">Start Listening</span>
+            </div>
+            
             <div style="flex: 2; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--txt); display: flex; align-items: center; justify-content: space-between;">
               <span style="color: var(--mut);">Recognized Command:</span>
               <span id="voice-recognized-cmd" style="color: var(--purple); font-weight: bold; text-align: right; transition: all 0.3s;">-- Waiting --</span>

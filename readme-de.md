@@ -280,10 +280,10 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 - 📤 **Publishes:**
   - `/zed_stand_marker` (`visualization_msgs/Marker`)
 
-#### `pointcloud_tf_tuner.py` <kbd>SKRIPT / UI</kbd>
+#### `tf_tuner` <kbd>NODE / UI</kbd>
 
-> **Zweck & Aufgabe:** Live-Tuner Interface (PyQt5) zur schnellen Justierung von Kamera-Offsets ohne Neustart.
-- 📤 **Publishes:** Aktualisiert dynamisch die TF-Broadcaster-Werte (`tf2_msgs/TFMessage` auf `/tf_static`).
+> **Zweck & Aufgabe:** Ein dediziertes ROS 2 Paket, das ein Live-Tuner Interface (PyQt5) bereitstellt, um dynamisch Kamera-Offsets (Punktwolke) sowie die Positionierung interaktiver 3D-Szenelemente (Würfel, Rechteck, Zylinder, Weiße Plane) in RViz ohne Neustart zu justieren.
+- 📤 **Publishes:** Aktualisiert dynamisch die TF-Broadcaster-Werte (`tf2_msgs/TFMessage` auf `/tf`).
 
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*

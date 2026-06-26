@@ -116,7 +116,8 @@ class VoiceCommandListener(Node):
             "MoveTo: pose": re.compile(r"\bmove to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
             "MoveTo: initial": re.compile(r"\b(?:move to )?initial (?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
             "Speed: faster": re.compile(r"\b(?:go |move )?faster\b", re.IGNORECASE),
-            "Speed: slower": re.compile(r"\b(?:go |move )?slower\b", re.IGNORECASE)
+            "Speed: slower": re.compile(r"\b(?:go |move )?slower\b", re.IGNORECASE),
+            "Scan: path": re.compile(r"\bscan path\b", re.IGNORECASE)
         }
         
         self._last_cmd_text = ""

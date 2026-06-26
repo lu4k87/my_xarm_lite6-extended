@@ -773,6 +773,12 @@ voiceFeedbackSub.subscribe((msg) => {
       logMsg('System', 'Speed is already at minimum (20%).', 'warn');
     }
   }
+
+  // Voice Command: "Scan: path" → triggers startOctomapScan()
+  if (msg.data === 'Scan: path') {
+    logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Triggering:</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: var(--mut);">→</span> <span style="color: var(--green);">Octomap Scan...</span>', 'info');
+    startOctomapScan();
+  }
 });
 
 // ── Gamepad API Status ──────────────────────────────────────────────────

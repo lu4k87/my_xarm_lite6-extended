@@ -17,11 +17,11 @@ EEF_FRAME = 'link_eef'
 TARGET_FRAME = 'link_base'  
 POSITION_TOLERANCE = 0.01   # 10 mm Trigger-Radius für Farbumschlag
 
-# Zielpositionen für die Hohlkörper
+# Zielpositionen für die Hohlkörper (jetzt über TF Tuner gesteuert, mit statischem Fallback)
 CONFIG = {
-    "TARGET_BLUE_CUBE": {"pos": (0.174, 0.082), "dims": (0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
-    "TARGET_RED_RECTANGLE": {"pos": (0.219, -0.083), "dims": (0.03, 0.06), "color": [1.0, 0.0, 0.0], "type": Marker.CUBE, "id": 2}, 
-    "TARGET_GREEN_CYLINDER": {"pos": (0.274, 0.018), "dims": (0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
+    "TARGET_BLUE_CUBE": {"tf_frame": "target_blue_cube", "default_pos": (0.174, 0.082), "default_yaw": 0.0, "dims": (0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
+    "TARGET_RED_RECTANGLE": {"tf_frame": "target_red_rectangle", "default_pos": (0.219, -0.083), "default_yaw": -math.pi/4.0, "dims": (0.03, 0.06), "color": [1.0, 0.0, 0.0], "type": Marker.CUBE, "id": 2}, 
+    "TARGET_GREEN_CYLINDER": {"tf_frame": "target_green_cylinder", "default_pos": (0.274, 0.018), "default_yaw": 0.0, "dims": (0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
 }
 
 # Statische Szene (aus der URDF extrahiert)
@@ -29,8 +29,8 @@ CONFIG = {
 SCENE_MARKERS = [
     # Arbeitsbereich als weiße Kreislinie (Radius 0.44)
     {"id": 10, "type": Marker.LINE_LIST, "radius": 0.44, "pos": (0.0, 0.0, -0.004), "dims": (0.001, 0.0, 0.0), "color": [1.0, 1.0, 1.0, 1.0]}, 
-    # Template Plane (Weiß)
-    {"id": 14, "type": Marker.CUBE, "pos": (0.22, 0.0, -0.003), "dims": (0.2, 0.3, 0.001), "color": [1.0, 1.0, 1.0, 1.0]}
+    # Template Plane (Weiß, gesteuert über TF Tuner, mit statischem Fallback)
+    {"id": 14, "type": Marker.CUBE, "tf_frame": "target_white_plane", "default_pos": (0.22, 0.0, -0.003), "default_yaw": 0.0, "dims": (0.2, 0.3, 0.001), "color": [1.0, 1.0, 1.0, 1.0]}
 ]
 
 # =========================================================
@@ -54,14 +54,17 @@ class DynamicSceneMarkerPublisher(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         
+        # State für Fallbacks
+        self.last_known_poses = {}
+        
         self.get_logger().info('Dynamischer Marker-Publisher erfolgreich aktiv.')
 
     # ---------------------------------------------------------
     # GEOMETRIE-BERECHNUNGEN (LINIENZÜGE)
     # ---------------------------------------------------------
-    def create_marker(self, id, marker_type, position, scale, color, orientation=None, namespace="dynamic_overlays", points=None):
+    def create_marker(self, id, marker_type, position, scale, color, orientation=None, namespace="dynamic_overlays", points=None, frame_id=TARGET_FRAME):
         marker = Marker()
-        marker.header.frame_id = TARGET_FRAME
+        marker.header.frame_id = frame_id
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = namespace 
         marker.id = id
@@ -98,48 +101,104 @@ class DynamicSceneMarkerPublisher(Node):
     # ---------------------------------------------------------
     def update_scene(self):
         marker_array = MarkerArray()
-        eef_pose = None
         
-        try:
-            transform = self.tf_buffer.lookup_transform(TARGET_FRAME, EEF_FRAME, rclpy.time.Time())
-            eef_pose = transform.transform.translation
-        except TransformException: 
-            pass 
-
-        # Orientierung für das schräge rote Rechteck (-45° um Z)
-        angle_rad = -math.pi / 4.0
-        rot_q = Quaternion(x=0.0, y=0.0, z=math.sin(angle_rad/2.0), w=math.cos(angle_rad/2.0))
-
         # 1. Interaktive Hohlkörper zeichnen
         for config in CONFIG.values():
-            x, y = config["pos"]
+            obj_id = config["id"]
+            tf_frame = config.get("tf_frame")
             color_rgb = config["color"]
+            
+            if obj_id not in self.last_known_poses:
+                self.last_known_poses[obj_id] = {
+                    'x': config["default_pos"][0],
+                    'y': config["default_pos"][1],
+                    'z': OBJECT_LINE_Z,
+                    'yaw': config["default_yaw"]
+                }
+            
+            if tf_frame:
+                try:
+                    t = self.tf_buffer.lookup_transform(TARGET_FRAME, tf_frame, rclpy.time.Time())
+                    self.last_known_poses[obj_id]['x'] = t.transform.translation.x
+                    self.last_known_poses[obj_id]['y'] = t.transform.translation.y
+                    self.last_known_poses[obj_id]['z'] = t.transform.translation.z + OBJECT_LINE_Z
+                    q = t.transform.rotation
+                    self.last_known_poses[obj_id]['yaw'] = math.atan2(2.0*(q.w*q.z + q.x*q.y), 1.0 - 2.0*(q.y*q.y + q.z*q.z))
+                except TransformException:
+                    pass
+
+            x = self.last_known_poses[obj_id]['x']
+            y = self.last_known_poses[obj_id]['y']
+            z = self.last_known_poses[obj_id]['z']
+            yaw = self.last_known_poses[obj_id]['yaw']
+
+            rot_q = Quaternion(x=0.0, y=0.0, z=math.sin(yaw/2.0), w=math.cos(yaw/2.0))
 
             if config["type"] == Marker.CUBE:
                 pts = self.calculate_box_lines(config["dims"][0], config["dims"][1])
-                m = self.create_marker(config["id"], Marker.LINE_LIST, (x, y, OBJECT_LINE_Z), 
+                m = self.create_marker(obj_id, Marker.LINE_LIST, (x, y, z), 
                                       (LINE_THICKNESS, 0.0, 0.0), color_rgb+[1.0], 
-                                      rot_q if config["id"]==2 else None, namespace="hollow_objects", points=pts)
+                                      rot_q, namespace="hollow_objects", points=pts, frame_id=TARGET_FRAME)
             elif config["type"] == Marker.CYLINDER:
                 pts = self.calculate_cylinder_lines(config["dims"][0]/2.0)
-                m = self.create_marker(config["id"], Marker.LINE_LIST, (x, y, OBJECT_LINE_Z), 
-                                      (LINE_THICKNESS, 0.0, 0.0), color_rgb+[1.0], None, namespace="hollow_objects", points=pts)
+                m = self.create_marker(obj_id, Marker.LINE_LIST, (x, y, z), 
+                                      (LINE_THICKNESS, 0.0, 0.0), color_rgb+[1.0], 
+                                      rot_q, namespace="hollow_objects", points=pts, frame_id=TARGET_FRAME)
             marker_array.markers.append(m)
 
         # 2. Statische Szene (Flächen, Ständer, Blöcke) zeichnen
         for scene_obj in SCENE_MARKERS:
+            obj_id = scene_obj["id"]
             pts = None
             if scene_obj.get("type") == Marker.LINE_LIST and "radius" in scene_obj:
                 pts = self.calculate_cylinder_lines(scene_obj["radius"], 60)
                 
+            tf_frame = scene_obj.get("tf_frame")
+            
+            if obj_id not in self.last_known_poses:
+                if tf_frame:
+                    self.last_known_poses[obj_id] = {
+                        'x': scene_obj["default_pos"][0],
+                        'y': scene_obj["default_pos"][1],
+                        'z': scene_obj["default_pos"][2],
+                        'yaw': scene_obj.get("default_yaw", 0.0)
+                    }
+                else:
+                    self.last_known_poses[obj_id] = {
+                        'x': scene_obj["pos"][0],
+                        'y': scene_obj["pos"][1],
+                        'z': scene_obj["pos"][2],
+                        'yaw': 0.0
+                    }
+            
+            if tf_frame:
+                try:
+                    t = self.tf_buffer.lookup_transform(TARGET_FRAME, tf_frame, rclpy.time.Time())
+                    self.last_known_poses[obj_id]['x'] = t.transform.translation.x
+                    self.last_known_poses[obj_id]['y'] = t.transform.translation.y
+                    self.last_known_poses[obj_id]['z'] = t.transform.translation.z
+                    q = t.transform.rotation
+                    self.last_known_poses[obj_id]['yaw'] = math.atan2(2.0*(q.w*q.z + q.x*q.y), 1.0 - 2.0*(q.y*q.y + q.z*q.z))
+                except TransformException:
+                    pass
+
+            x = self.last_known_poses[obj_id]['x']
+            y = self.last_known_poses[obj_id]['y']
+            z = self.last_known_poses[obj_id]['z']
+            yaw = self.last_known_poses[obj_id]['yaw']
+
+            rot_q = Quaternion(x=0.0, y=0.0, z=math.sin(yaw/2.0), w=math.cos(yaw/2.0))
+
             m_scene = self.create_marker(
-                scene_obj["id"], 
+                obj_id, 
                 scene_obj["type"], 
-                scene_obj["pos"], 
+                (x, y, z), 
                 scene_obj["dims"], 
                 scene_obj["color"], 
+                rot_q,
                 namespace="static_scene",
-                points=pts
+                points=pts,
+                frame_id=TARGET_FRAME
             )
             marker_array.markers.append(m_scene)
 
