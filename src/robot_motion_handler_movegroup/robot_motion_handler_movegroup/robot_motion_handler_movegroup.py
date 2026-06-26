@@ -75,11 +75,11 @@ class RobotMotionHandlerMovegroup(Node):
         )
         self.scan_srv = self.create_service(
             Trigger, 
-            '/ui/execute_scan_path', 
+            '/ui/start_octomap_scan', 
             self.execute_scan_path_cb,
             callback_group=self.cb_group
         )
-        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/execute_scan_path, /ui/execute_move_joint) ready.', 'success')
+        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/execute_move_joint) ready.', 'success')
         self.is_executing = False
         
         from std_msgs.msg import Float32
@@ -220,6 +220,50 @@ class RobotMotionHandlerMovegroup(Node):
             self.ui_log('MoveIt Servo resumed.', 'info')
             time.sleep(0.5)
 
+    def _go_to_joints_trajectory(self, target_joint_points, log_msg="Executing trajectory..."):
+        # 1. Stop MoveIt Servo
+        if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
+            from std_srvs.srv import Trigger
+            req = Trigger.Request()
+            self.servo_stop_client.call_async(req)
+            self.ui_log('MoveIt Servo paused for direct trajectory execution.', 'info')
+            import time
+            time.sleep(0.5) 
+            
+        # 2. Publish trajectory
+        msg = JointTrajectory()
+        msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+        
+        speed_multiplier = self.current_speed_scale / 0.5
+        
+        total_duration = 0.0
+        
+        for point_data in target_joint_points:
+            target_joints, duration_sec = point_data
+            
+            # Skaliere Dauer
+            scaled_duration = max(0.1, duration_sec / speed_multiplier)
+            total_duration += scaled_duration
+            
+            point = JointTrajectoryPoint()
+            point.positions = target_joints
+            point.velocities = [0.0] * 6
+            point.time_from_start = Duration(sec=int(total_duration), nanosec=int((total_duration - int(total_duration)) * 1e9))
+            msg.points.append(point)
+            
+        self.publisher_.publish(msg)
+        self.ui_log(f'Trajectory sent with {len(msg.points)} points. {log_msg}', 'action')
+        
+        # Warte auf die Ausfuehrung der Bewegung
+        time.sleep(total_duration + 0.5)
+        
+        # 3. Start MoveIt Servo again
+        if self.servo_start_client.wait_for_service(timeout_sec=1.0):
+            req = Trigger.Request()
+            self.servo_start_client.call_async(req)
+            self.ui_log('MoveIt Servo resumed.', 'info')
+            time.sleep(0.5)
+
     def execute_move_joint_cb(self, request, response):
         if self.is_executing:
             response.ret = -1
@@ -279,49 +323,42 @@ class RobotMotionHandlerMovegroup(Node):
             
         return response
 
-    def generate_spherical_waypoints(self, center_x, center_y, center_z, radius, num_latitudes=4, num_longitudes=8):
+    def generate_wave_trajectory(self, min_x=0.250, max_x=0.450, min_y=-0.250, max_y=0.250, base_z=0.300, z_amplitude=0.080):
         """
-        Generiert Wegpunkte auf einer Halbkugel.
-        Die Z-Achse des TCP zeigt auf den Mittelpunkt (center_x, center_y, center_z).
+        Generiert Wegpunkte für eine Sinuswelle ueber das Workspace.
+        Um Singularitaeten zu vermeiden (z.B. Wrist-Singularity), halten wir die Ausrichtung streng nach unten (Roll=pi).
+        Wir iterieren ueber X, und schwingen Y und Z.
         """
         waypoints = []
+        num_x_steps = 10  # Schritte entlang der X-Achse
+        points_per_sweep = 15 # Dichte der Punkte entlang Y
         
-        # lat (Theta): 0 (direkt ueber dem Objekt) bis pi/2 (auf Aequator-Hoehe)
-        # lon (Phi): 0 bis 2*pi (einmal um das Objekt herum)
-        for lat in np.linspace(0, math.pi / 2.5, num_latitudes): 
-            for lon in np.linspace(0, 2 * math.pi, num_longitudes, endpoint=False):
-                # 1. Position auf der Kugeloberflaeche berechnen
-                x = center_x + radius * math.sin(lat) * math.cos(lon)
-                y = center_y + radius * math.sin(lat) * math.sin(lon)
-                z = center_z + radius * math.cos(lat)
+        sweep_direction = 1
+        
+        for i in range(num_x_steps):
+            x = min_x + (max_x - min_x) * (i / max(1, (num_x_steps - 1)))
+            
+            y_range = np.linspace(min_y, max_y, points_per_sweep)
+            if sweep_direction == -1:
+                y_range = reversed(y_range)
                 
-                # 2. Look-At Vektor berechnen (Z-Achse des TCP)
-                forward = np.array([center_x - x, center_y - y, center_z - z])
-                forward = forward / np.linalg.norm(forward)
+            for j, y in enumerate(y_range):
+                # Sinus in Z auf Basis von Y
+                # Wenn Y von min_y nach max_y geht, durchlaufen wir z.B. 1 volle Sinusperiode
+                phase = (j / (points_per_sweep - 1)) * 2 * math.pi
+                z = base_z + math.sin(phase) * z_amplitude
                 
-                # Referenz-Up-Vektor der Welt (Z-Achse)
-                world_up = np.array([0, 0, 1])
+                # Roll=Pi, Pitch=0, Yaw=0 (greifer zeigt strikt nach unten)
+                # Um kleine Singularitaeten an den Randbereichen zu vermeiden,
+                # koennten wir Pitch/Yaw leicht neigen, aber starr nach unten ist meist am sichersten.
+                roll = math.pi
+                pitch = 0.0
+                yaw = 0.0
                 
-                # Singularitaet abfangen, wenn der Roboter exakt senkrecht ueber dem Objekt steht
-                if abs(np.dot(forward, world_up)) > 0.99:
-                    world_up = np.array([1, 0, 0])
+                waypoints.append([x, y, z, roll, pitch, yaw])
                 
-                # X- und Y-Achse des TCP berechnen (Kreuzprodukt)
-                right = np.cross(world_up, forward)
-                right = right / np.linalg.norm(right)
-                up = np.cross(forward, right)
-                up = up / np.linalg.norm(up)
-                
-                # Rotationsmatrix erstellen: Spalten sind die X, Y, Z Achsen des TCP
-                rot_matrix = np.column_stack((right, up, forward))
-                
-                # In Euler-Winkel konvertieren (Roll, Pitch, Yaw)
-                rot = R.from_matrix(rot_matrix)
-                euler = rot.as_euler('xyz', degrees=False)
-                
-                # Wegpunkt speichern: [x, y, z, roll, pitch, yaw] (in Meter und Radiant)
-                waypoints.append([x, y, z, euler[0], euler[1], euler[2]])
-                
+            sweep_direction *= -1
+            
         return waypoints
 
     def execute_scan_path_cb(self, request, response):
@@ -330,52 +367,94 @@ class RobotMotionHandlerMovegroup(Node):
             response.message = "System is already executing a move."
             return response
             
-        # Parameter fuer das zu scannende Objekt
-        # Fokuspunkt (x, y, z) im Roboter-Koordinatensystem in Meter
-        obj_center_x = 0.400 
-        obj_center_y = 0.000
-        obj_center_z = 0.050
+        self.ui_log('Generating 3D Wave Scan Path...', 'info')
+        # Parameter: X: 250 bis 380mm, Y: -150 bis 150mm, Z wippt zwischen 220mm und 280mm
+        waypoints = self.generate_wave_trajectory(min_x=0.250, max_x=0.380, min_y=-0.150, max_y=0.150, base_z=0.250, z_amplitude=0.050)
         
-        # Scan-Radius um das Objekt in Meter
-        scan_radius = 0.250 
-        
-        self.ui_log(f'Generating 3D Scan Path (Radius: {scan_radius}m)...', 'info')
-        waypoints = self.generate_spherical_waypoints(
-            obj_center_x, obj_center_y, obj_center_z, scan_radius, 
-            num_latitudes=3, num_longitudes=6
-        )
-        
-        self.ui_log(f'{len(waypoints)} waypoints generated. Starting scan.', 'success')
+        self.ui_log(f'{len(waypoints)} waypoints generated. Starting IK resolution.', 'success')
         
         self.is_executing = True
         
-        # Fake-Request Objekt fuer den Aufruf der bestehenden Move-Methode
-        class DummyRequest:
-            pose = [0.0] * 6
-
-        move_req = DummyRequest()
-        move_res = Trigger.Response() # Platzhalter, ret property wird genutzt
-        
         try:
+            from moveit_msgs.srv import GetPositionIK
+            from geometry_msgs.msg import PoseStamped
+            from scipy.spatial.transform import Rotation as R
+            from moveit_msgs.msg import RobotState
+            from sensor_msgs.msg import JointState
+            import time
+            
+            # Zuerst lesen wir den aktuellen Zustand aus, um den ersten Seed zu haben
+            # Wir verwenden einfach den ersten Punkt und loesen ihn ohne Seed (oder mit aktueller Roboterpose)
+            current_seed_joints = None
+            
+            trajectory_points = []
+            
             for i, wp in enumerate(waypoints):
-                self.ui_log(f'Moving to waypoint {i+1}/{len(waypoints)}...', 'info')
+                target_x, target_y, target_z, target_r, target_p, target_yaw = wp
                 
-                # Die Move-Methode erwartet Millimeter fuer XYZ
-                move_req.pose[0] = wp[0] * 1000.0
-                move_req.pose[1] = wp[1] * 1000.0
-                move_req.pose[2] = wp[2] * 1000.0
-                move_req.pose[3] = wp[3] # Roll
-                move_req.pose[4] = wp[4] # Pitch
-                move_req.pose[5] = wp[5] # Yaw
+                target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
+                q = target_rot.as_quat()
                 
-                # Nutze die Logik zum Anfahren (blockiert bis Ziel erreicht)
-                self._execute_move_to_pose_core(move_req, move_res)
+                ik_req = GetPositionIK.Request()
+                ik_req.ik_request.group_name = "lite6"
+                ik_req.ik_request.pose_stamped = PoseStamped()
+                ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
+                ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
+                ik_req.ik_request.pose_stamped.pose.position.y = float(target_y)
+                ik_req.ik_request.pose_stamped.pose.position.z = float(target_z)
+                ik_req.ik_request.pose_stamped.pose.orientation.x = float(q[0])
+                ik_req.ik_request.pose_stamped.pose.orientation.y = float(q[1])
+                ik_req.ik_request.pose_stamped.pose.orientation.z = float(q[2])
+                ik_req.ik_request.pose_stamped.pose.orientation.w = float(q[3])
+                ik_req.ik_request.timeout.sec = 1
                 
-                # Kurze Pause an jedem Wegpunkt
-                time.sleep(1.0) 
+                # Verwende den letzten Loesungsstand als Seed für den naechsten Punkt!
+                if current_seed_joints is not None:
+                    rs = RobotState()
+                    js = JointState()
+                    js.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+                    js.position = current_seed_joints
+                    rs.joint_state = js
+                    ik_req.ik_request.robot_state = rs
                 
+                if not self.ik_client.wait_for_service(timeout_sec=2.0):
+                    raise Exception("IK Service /compute_ik nicht verfuegbar!")
+                    
+                future = self.ik_client.call_async(ik_req)
+                
+                start_wait = time.time()
+                while not future.done():
+                    if time.time() - start_wait > 2.0:
+                        raise Exception("Timeout beim Warten auf IK-Antwort.")
+                    time.sleep(0.01)
+                    
+                ik_res = future.result()
+                
+                if ik_res.error_code.val != 1:
+                    raise Exception(f"IK Berechnung am Wegpunkt {i} fehlgeschlagen. Ziel ausser Reichweite oder Singularitaet.")
+                    
+                joint_names = ik_res.solution.joint_state.name
+                positions = ik_res.solution.joint_state.position
+                
+                target_joints = [0.0] * 6
+                for j in range(1, 7):
+                    j_name = f'joint{j}'
+                    idx = joint_names.index(j_name)
+                    target_joints[j-1] = positions[idx]
+                    
+                current_seed_joints = target_joints
+                
+                # Berechne die Dauer bis zu diesem Punkt
+                # Der erste Punkt kriegt 2 Sekunden zum Anfahren, alle anderen z.B. 0.4 Sekunden (Lawnmower-Stuecke)
+                duration = 2.0 if i == 0 else 0.4
+                trajectory_points.append((target_joints, duration))
+
+            self.ui_log('All IK points successfully resolved. Executing continuous wave trajectory...', 'success')
+            self._go_to_joints_trajectory(trajectory_points, "Executing continuous Octomap Wave Scan...")
+            
             response.success = True
             response.message = "Scan path completed."
+            
         except Exception as e:
             self.ui_log(f"Error during scan path: {e}", 'error')
             response.success = False

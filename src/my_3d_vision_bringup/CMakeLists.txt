@@ -38,7 +38,6 @@ install(PROGRAMS
   scripts/yolo_grasp_executor.py 
   scripts/yolo_planned_grasp_executor.py 
   scripts/grasp_action_bridge.py 
-  scripts/eef_scan_path_executor.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
