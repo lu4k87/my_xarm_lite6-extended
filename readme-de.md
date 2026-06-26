@@ -616,6 +616,7 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 > Ubuntu 22.04 nutzt standardmäßig Wayland. In Kombination mit NVIDIA-Karten und RViz2 führt Wayland oft zu katastrophalen Frameraten und stark stotternden 3D-Punktwolken. 
 > Prüfe dein System im Terminal: `echo $XDG_SESSION_TYPE`
 > Wenn die Ausgabe `wayland` lautet, logge dich aus (Logout), klicke unten rechts auf das Zahnrad-Symbol und wähle **Ubuntu on Xorg (X11)**, bevor du dich wieder einloggst.
+> **Um dies dauerhaft einzustellen:** Bearbeite `sudo nano /etc/gdm3/custom.conf`, entferne das `#` vor `WaylandEnable=false` im Bereich `[daemon]` und starte den PC neu.
 
 ### Basis-System (Grundvoraussetzung)
 

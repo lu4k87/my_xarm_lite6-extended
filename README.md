@@ -634,6 +634,7 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 > Ubuntu 22.04 defaults to the Wayland display server. In combination with NVIDIA GPUs and RViz2 (Ogre3D engine), this often leads to catastrophic framerates and heavily stuttering 3D point clouds. 
 > Check your system in the terminal: `echo $XDG_SESSION_TYPE`
 > If the output is `wayland`, log out of your Ubuntu session, click the gear icon in the bottom right corner, and select **Ubuntu on Xorg (X11)** before logging back in.
+> **To make this permanent:** Edit `sudo nano /etc/gdm3/custom.conf` and uncomment `WaylandEnable=false` under the `[daemon]` section, then reboot.
 
 ### Base System (Core Prerequisite)
 
