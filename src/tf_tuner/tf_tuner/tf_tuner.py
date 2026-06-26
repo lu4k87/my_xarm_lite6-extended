@@ -63,6 +63,50 @@ class TFTunerGUI(QWidget):
         self.combo_box.currentTextChanged.connect(self.on_selection_changed)
         layout.addWidget(self.combo_box)
 
+        # X Slider
+        x_layout = QHBoxLayout()
+        self.x_label = QLabel('X (Forward/Backward):')
+        self.x_slider = QSlider(Qt.Horizontal)
+        self.x_slider.setRange(-500, 1000) # -0.5m to 1.0m
+        self.x_slider.setValue(self.elements[self.current_selection]['x'])
+        
+        self.x_spin = QDoubleSpinBox()
+        self.x_spin.setRange(-0.5, 1.0)
+        self.x_spin.setDecimals(3)
+        self.x_spin.setSingleStep(0.01)
+        self.x_spin.setSuffix(" m")
+        self.x_spin.setValue(self.elements[self.current_selection]['x'] / 1000.0)
+        
+        self.x_slider.valueChanged.connect(lambda v: self.x_spin.setValue(v / 1000.0))
+        self.x_spin.valueChanged.connect(lambda v: self.x_slider.setValue(int(v * 1000.0)))
+        
+        x_layout.addWidget(self.x_label)
+        x_layout.addWidget(self.x_slider)
+        x_layout.addWidget(self.x_spin)
+        layout.addLayout(x_layout)
+        
+        # Y Slider
+        y_layout = QHBoxLayout()
+        self.y_label = QLabel('Y (Left/Right):')
+        self.y_slider = QSlider(Qt.Horizontal)
+        self.y_slider.setRange(-500, 500) # -0.5m to 0.5m
+        self.y_slider.setValue(self.elements[self.current_selection]['y'])
+        
+        self.y_spin = QDoubleSpinBox()
+        self.y_spin.setRange(-0.5, 0.5)
+        self.y_spin.setDecimals(3)
+        self.y_spin.setSingleStep(0.01)
+        self.y_spin.setSuffix(" m")
+        self.y_spin.setValue(self.elements[self.current_selection]['y'] / 1000.0)
+        
+        self.y_slider.valueChanged.connect(lambda v: self.y_spin.setValue(v / 1000.0))
+        self.y_spin.valueChanged.connect(lambda v: self.y_slider.setValue(int(v * 1000.0)))
+        
+        y_layout.addWidget(self.y_label)
+        y_layout.addWidget(self.y_slider)
+        y_layout.addWidget(self.y_spin)
+        layout.addLayout(y_layout)
+
         # Z Slider
         z_layout = QHBoxLayout()
         self.z_label = QLabel('Z (Height):')
@@ -151,50 +195,6 @@ class TFTunerGUI(QWidget):
         yaw_layout.addWidget(self.yaw_slider)
         yaw_layout.addWidget(self.yaw_spin)
         layout.addLayout(yaw_layout)
-        
-        # X Slider
-        x_layout = QHBoxLayout()
-        self.x_label = QLabel('X (Forward/Backward):')
-        self.x_slider = QSlider(Qt.Horizontal)
-        self.x_slider.setRange(-500, 1000) # -0.5m to 1.0m
-        self.x_slider.setValue(self.elements[self.current_selection]['x'])
-        
-        self.x_spin = QDoubleSpinBox()
-        self.x_spin.setRange(-0.5, 1.0)
-        self.x_spin.setDecimals(3)
-        self.x_spin.setSingleStep(0.01)
-        self.x_spin.setSuffix(" m")
-        self.x_spin.setValue(self.elements[self.current_selection]['x'] / 1000.0)
-        
-        self.x_slider.valueChanged.connect(lambda v: self.x_spin.setValue(v / 1000.0))
-        self.x_spin.valueChanged.connect(lambda v: self.x_slider.setValue(int(v * 1000.0)))
-        
-        x_layout.addWidget(self.x_label)
-        x_layout.addWidget(self.x_slider)
-        x_layout.addWidget(self.x_spin)
-        layout.addLayout(x_layout)
-        
-        # Y Slider
-        y_layout = QHBoxLayout()
-        self.y_label = QLabel('Y (Left/Right):')
-        self.y_slider = QSlider(Qt.Horizontal)
-        self.y_slider.setRange(-500, 500) # -0.5m to 0.5m
-        self.y_slider.setValue(self.elements[self.current_selection]['y'])
-        
-        self.y_spin = QDoubleSpinBox()
-        self.y_spin.setRange(-0.5, 0.5)
-        self.y_spin.setDecimals(3)
-        self.y_spin.setSingleStep(0.01)
-        self.y_spin.setSuffix(" m")
-        self.y_spin.setValue(self.elements[self.current_selection]['y'] / 1000.0)
-        
-        self.y_slider.valueChanged.connect(lambda v: self.y_spin.setValue(v / 1000.0))
-        self.y_spin.valueChanged.connect(lambda v: self.y_slider.setValue(int(v * 1000.0)))
-        
-        y_layout.addWidget(self.y_label)
-        y_layout.addWidget(self.y_slider)
-        y_layout.addWidget(self.y_spin)
-        layout.addLayout(y_layout)
 
         self.setLayout(layout)
         self.resize(550, 300)
