@@ -872,6 +872,24 @@
       }
     }
 
+    async function killAllROS2() {
+      if (!confirm("Wirklich ALLE ROS2 Prozesse UND die dazugehörigen Terminals beenden?")) return;
+      try {
+        await fetch('/api/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            command: "pkill -f 'ros2 run'; pkill -f 'ros2 launch'; pkill -f rviz2; pkill -f 'eval.*exec bash'", 
+            title: "Kill All ROS2", 
+            mode: "bg" 
+          })
+        });
+        showToast('✓ Alle ROS2 Prozesse und Terminals werden beendet');
+      } catch (err) {
+        showToast('✗ Fehler beim Beenden der Prozesse', true);
+      }
+    }
+
     // ─── STATUS ───────────────────────────────────────────────────────────────────
     async function checkStatus() {
       try {
