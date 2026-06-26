@@ -393,72 +393,66 @@ class RobotMotionHandlerMovegroup(Node):
             
         return waypoints
 
-    def generate_object_cross_trajectory(self, objects, cross_size=0.20, height=0.10):
+    def generate_object_cross_trajectory(self, objects, cross_size=0.06, height=0.14):
         """
-        Generiert eine Kreuz-Trajektorie (+/- 10cm) ueber eine Liste von Objekt-Zentren.
-        Der TCP zeigt immer exakt auf das jeweilige Objekt-Zentrum.
+        Generiert eine kontinuierliche Kreuz-Trajektorie (+/- 3cm) ueber eine Liste von Objekt-Zentren.
         """
         waypoints = []
-        points_per_line = 10
         half_size = cross_size / 2.0
         
-        # Faktoren zur Dämpfung und Begrenzung der Neigung
-        tilt_factor = 1.0 # Voller Look-At, da wir sehr nah sind
-        max_tilt = math.radians(25) # Etwas großzügigeres Limit
-        
-        for obj in objects:
-            obj_x, obj_y = obj
-            
-            # Linie 1: X-Sweep (Y konstant auf obj_y)
-            x_start = obj_x - half_size
-            x_end = obj_x + half_size
-            
-            for i in range(points_per_line):
-                x = x_start + (x_end - x_start) * (i / max(1, (points_per_line - 1)))
-                y = obj_y
+        def add_segment(p_start, p_end, steps, target_obj_x, target_obj_y, is_transition=False):
+            for i in range(steps):
+                f = i / max(1, (steps - 1)) if steps > 1 else 1.0
+                x = p_start[0] + (p_end[0] - p_start[0]) * f
+                y = p_start[1] + (p_end[1] - p_start[1]) * f
                 z = height
                 
                 # Look-At Logik
-                dx = obj_x - x
-                dy = obj_y - y
-                dz = 0.0 - z # Objekt auf Tischhoehe z=0
+                if is_transition:
+                    # Während der Transition einfach gerade nach unten schauen (verhindert Twisting)
+                    dx = 0.0
+                    dy = 0.0
+                else:
+                    # Exakt auf das Objekt-Zentrum schauen (keine Dämpfung!)
+                    dx = target_obj_x - x
+                    dy = target_obj_y - y
                 
-                roll_tilt = math.atan2(dy, -dz) * tilt_factor
-                roll_tilt = max(-max_tilt, min(max_tilt, roll_tilt))
-                pitch_tilt = math.atan2(-dx, -dz) * tilt_factor
-                pitch_tilt = max(-max_tilt, min(max_tilt, pitch_tilt))
-                
-                roll = math.pi + roll_tilt
-                pitch = pitch_tilt
-                yaw = 0.0
-                
-                waypoints.append([x, y, z, roll, pitch, yaw])
-                
-            # Linie 2: Y-Sweep (X konstant auf obj_x)
-            y_start = obj_y - half_size
-            y_end = obj_y + half_size
-            
-            for i in range(points_per_line):
-                x = obj_x
-                y = y_start + (y_end - y_start) * (i / max(1, (points_per_line - 1)))
-                z = height
-                
-                # Look-At Logik
-                dx = obj_x - x
-                dy = obj_y - y
                 dz = 0.0 - z
                 
-                roll_tilt = math.atan2(dy, -dz) * tilt_factor
-                roll_tilt = max(-max_tilt, min(max_tilt, roll_tilt))
-                pitch_tilt = math.atan2(-dx, -dz) * tilt_factor
-                pitch_tilt = max(-max_tilt, min(max_tilt, pitch_tilt))
+                # Exakte Trigonometrie für Look-At
+                roll_tilt = math.atan2(dy, -dz)
+                pitch_tilt = math.atan2(-dx, -dz)
                 
                 roll = math.pi + roll_tilt
                 pitch = pitch_tilt
                 yaw = 0.0
                 
                 waypoints.append([x, y, z, roll, pitch, yaw])
+
+        for idx, obj in enumerate(objects):
+            obj_x, obj_y = obj
+            
+            c = (obj_x, obj_y)
+            l = (obj_x - half_size, obj_y)
+            r = (obj_x + half_size, obj_y)
+            b = (obj_x, obj_y - half_size)
+            t = (obj_x, obj_y + half_size)
+            
+            # 1. Anflug zum Zentrum des aktuellen Objekts
+            if idx > 0:
+                prev_obj = objects[idx-1]
+                add_segment(prev_obj, c, 15, obj_x, obj_y, is_transition=True) # 15 Schritte Transition
+            else:
+                add_segment(c, c, 1, obj_x, obj_y, is_transition=True)
                 
+            # 2. Das Kreuz abfahren (kontinuierlich)
+            add_segment(c, l, 6, obj_x, obj_y) # Mitte nach Links
+            add_segment(l, r, 12, obj_x, obj_y) # Links nach Rechts (ueber Mitte)
+            add_segment(r, c, 6, obj_x, obj_y) # Rechts zurueck in Mitte
+            add_segment(c, b, 6, obj_x, obj_y) # Mitte nach Unten
+            add_segment(b, t, 12, obj_x, obj_y) # Unten nach Oben
+            add_segment(t, c, 6, obj_x, obj_y) # Oben zurueck in Mitte
+            
         return waypoints
 
     def execute_scan_path_cb(self, request, response):
@@ -574,14 +568,14 @@ class RobotMotionHandlerMovegroup(Node):
             
         self.ui_log('Generating Object-Targeted Cross Scan Path...', 'info')
         
-        # Zentren der Objekte (hardcoded fuer diesen Test, +/- 10cm Kreuz = 20cm total size)
+        # Zentren der Objekte
         objects = [
             (0.174, 0.082),   # Blue Cube
             (0.219, -0.083),  # Red Rectangle
             (0.274, 0.018)    # Green Cylinder
         ]
         
-        waypoints = self.generate_object_cross_trajectory(objects, cross_size=0.20, height=0.10)
+        waypoints = self.generate_object_cross_trajectory(objects)
         
         self.ui_log(f'{len(waypoints)} waypoints generated. Starting IK resolution.', 'success')
         
@@ -652,17 +646,14 @@ class RobotMotionHandlerMovegroup(Node):
                     
                 current_seed_joints = target_joints
                 
-                # Bei der Cross-Trajectory gibt es zwischen den Objekten weite Sprünge.
-                # Damit der Sprung flüssig klappt, setzen wir duration z.B. etwas hoeher.
-                # Für den allerersten Punkt: 2s. Für Objekt-Sprünge (jeder 20. Punkt): 1.5s
-                if i == 0:
-                    duration = 2.0
-                elif i % 20 == 0:
-                    duration = 1.5
-                else:
-                    duration = 0.3
-                    
+                # Da die Wegpunkte jetzt sehr dicht und kontinuierlich sind,
+                # geben wir jedem Punkt eine konstante kurze Dauer (weich und nicht zu schnell)
+                duration = 2.0 if i == 0 else 0.25
                 trajectory_points.append((target_joints, duration))
+
+            # Initial Pose am Ende anhaengen!
+            initial_pose_joints = [0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0]
+            trajectory_points.append((initial_pose_joints, 3.0))
 
             self.ui_log('All IK points successfully resolved. Executing Object Cross Scan...', 'success')
             self._go_to_joints_trajectory(trajectory_points, "Executing Object-Targeted Cross Scan...")
