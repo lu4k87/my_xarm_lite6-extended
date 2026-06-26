@@ -770,6 +770,8 @@ python3 ros2_nexus/ros2_nexus_web.py
 ```
 *Note: The Nexus Web App features an integrated, expandable Live Console Overlay. It tracks all launched nodes and their PIDs reliably in real-time. If the backend terminal is closed, the browser tab will automatically shut itself down.*
 
+**Kill All ROS 2 Processes:** The Nexus WebApp Navbar includes a dedicated "KILL ALL ROS2 Processes" button. It triggers an isolated bash script (`kill_ros2.sh`) to instantly and cleanly terminate all active ROS 2 nodes, launch files, RViz instances, and their associated terminal wrappers, regardless of the UI's state.
+
 **Quick Launch (auto-start Nexus Web Backend + open browser):**
 ```bash
 ./ros2_nexus/ros2_nexus_web_start.sh
@@ -1011,6 +1013,7 @@ dev_ws/
 │ ├── ros2_nexus_styles.css                                                # Frontend CSS for Nexus
 │ ├── ros2_nexus_script.js                                                 # Frontend Logic for Nexus
 │ ├── ros2_nexus_web_start.sh                                              # Auto-start script (Nexus Web Backend + browser)
+│ ├── kill_ros2.sh                                                         # Robust termination script for all ROS 2 processes
 │ ├── ROS2_Nexus.desktop                                                   # Ubuntu application shortcut
 │ ├── lite6.sh                                                             # Hardware bringup script
 │ └── start.sh                                                             # Full system launch script
