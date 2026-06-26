@@ -148,7 +148,6 @@
       "icon": "fa-solid fa-map-location-dot",
       "title": "MoveIt Planning (OMPL Server)"
     },
-
     {
       "actions": [],
       "col": 1,
@@ -303,7 +302,7 @@
           "type": "sys"
         }
       ],
-      "col": 1,
+      "col": 2,
       "icon": "fa-solid fa-hammer",
       "title": "Umgebung & Build"
     }

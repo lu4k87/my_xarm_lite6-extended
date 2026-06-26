@@ -79,7 +79,13 @@ class RobotMotionHandlerMovegroup(Node):
             self.execute_scan_path_cb,
             callback_group=self.cb_group
         )
-        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/execute_move_joint) ready.', 'success')
+        self.object_scan_srv = self.create_service(
+            Trigger, 
+            '/ui/start_object_scan', 
+            self.execute_object_scan_cb,
+            callback_group=self.cb_group
+        )
+        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint) ready.', 'success')
         self.is_executing = False
         
         from std_msgs.msg import Float32
@@ -238,7 +244,7 @@ class RobotMotionHandlerMovegroup(Node):
         
         total_duration = 0.0
         
-        for point_data in target_joint_points:
+        for idx, point_data in enumerate(target_joint_points):
             target_joints, duration_sec = point_data
             
             # Skaliere Dauer
@@ -247,7 +253,12 @@ class RobotMotionHandlerMovegroup(Node):
             
             point = JointTrajectoryPoint()
             point.positions = target_joints
-            point.velocities = [0.0] * 6
+            
+            # Setze velocity nur beim letzten Punkt auf 0 (Stop). 
+            # Dazwischen weglassen, damit der ROS2-Controller die Punkte weich interpoliert (Spline)
+            if idx == len(target_joint_points) - 1:
+                point.velocities = [0.0] * 6
+                
             point.time_from_start = Duration(sec=int(total_duration), nanosec=int((total_duration - int(total_duration)) * 1e9))
             msg.points.append(point)
             
@@ -340,9 +351,9 @@ class RobotMotionHandlerMovegroup(Node):
         cy = (min_y + max_y) / 2.0
         cz = 0.0
         
-        # Faktoren zur Dämpfung und Begrenzung der Neigung
-        tilt_factor = 0.7
-        max_tilt = math.radians(30)
+        # Faktoren zur Dämpfung und Begrenzung der Neigung (IK-Singularitaeten vermeiden!)
+        tilt_factor = 0.2
+        max_tilt = math.radians(8)
         
         for i in range(num_x_steps):
             x = min_x + (max_x - min_x) * (i / max(1, (num_x_steps - 1)))
@@ -382,6 +393,74 @@ class RobotMotionHandlerMovegroup(Node):
             
         return waypoints
 
+    def generate_object_cross_trajectory(self, objects, cross_size=0.20, height=0.10):
+        """
+        Generiert eine Kreuz-Trajektorie (+/- 10cm) ueber eine Liste von Objekt-Zentren.
+        Der TCP zeigt immer exakt auf das jeweilige Objekt-Zentrum.
+        """
+        waypoints = []
+        points_per_line = 10
+        half_size = cross_size / 2.0
+        
+        # Faktoren zur Dämpfung und Begrenzung der Neigung
+        tilt_factor = 1.0 # Voller Look-At, da wir sehr nah sind
+        max_tilt = math.radians(25) # Etwas großzügigeres Limit
+        
+        for obj in objects:
+            obj_x, obj_y = obj
+            
+            # Linie 1: X-Sweep (Y konstant auf obj_y)
+            x_start = obj_x - half_size
+            x_end = obj_x + half_size
+            
+            for i in range(points_per_line):
+                x = x_start + (x_end - x_start) * (i / max(1, (points_per_line - 1)))
+                y = obj_y
+                z = height
+                
+                # Look-At Logik
+                dx = obj_x - x
+                dy = obj_y - y
+                dz = 0.0 - z # Objekt auf Tischhoehe z=0
+                
+                roll_tilt = math.atan2(dy, -dz) * tilt_factor
+                roll_tilt = max(-max_tilt, min(max_tilt, roll_tilt))
+                pitch_tilt = math.atan2(-dx, -dz) * tilt_factor
+                pitch_tilt = max(-max_tilt, min(max_tilt, pitch_tilt))
+                
+                roll = math.pi + roll_tilt
+                pitch = pitch_tilt
+                yaw = 0.0
+                
+                waypoints.append([x, y, z, roll, pitch, yaw])
+                
+            # Linie 2: Y-Sweep (X konstant auf obj_x)
+            y_start = obj_y - half_size
+            y_end = obj_y + half_size
+            
+            for i in range(points_per_line):
+                x = obj_x
+                y = y_start + (y_end - y_start) * (i / max(1, (points_per_line - 1)))
+                z = height
+                
+                # Look-At Logik
+                dx = obj_x - x
+                dy = obj_y - y
+                dz = 0.0 - z
+                
+                roll_tilt = math.atan2(dy, -dz) * tilt_factor
+                roll_tilt = max(-max_tilt, min(max_tilt, roll_tilt))
+                pitch_tilt = math.atan2(-dx, -dz) * tilt_factor
+                pitch_tilt = max(-max_tilt, min(max_tilt, pitch_tilt))
+                
+                roll = math.pi + roll_tilt
+                pitch = pitch_tilt
+                yaw = 0.0
+                
+                waypoints.append([x, y, z, roll, pitch, yaw])
+                
+        return waypoints
+
     def execute_scan_path_cb(self, request, response):
         if self.is_executing:
             response.success = False
@@ -389,8 +468,10 @@ class RobotMotionHandlerMovegroup(Node):
             return response
             
         self.ui_log('Generating 3D Wave Scan Path...', 'info')
-        # Parameter: X: 250 bis 380mm, Y: -150 bis 150mm, Z wippt zwischen 220mm und 280mm
-        waypoints = self.generate_wave_trajectory(min_x=0.250, max_x=0.380, min_y=-0.150, max_y=0.150, base_z=0.250, z_amplitude=0.050)
+        # Parameter: X: 250 bis 360mm, Y: -150 bis 150mm, Z wippt zwischen 100mm und 200mm
+        # base_z von 250 auf 150 reduziert, damit die Kamera extrem nah (10-20cm) ueber die 
+        # Objekte (Cube, Cylinder etc.) fliegt, was eine perfekte Octomap/Punktewolke generiert.
+        waypoints = self.generate_wave_trajectory(min_x=0.250, max_x=0.360, min_y=-0.150, max_y=0.150, base_z=0.150, z_amplitude=0.050)
         
         self.ui_log(f'{len(waypoints)} waypoints generated. Starting IK resolution.', 'success')
         
@@ -472,6 +553,119 @@ class RobotMotionHandlerMovegroup(Node):
 
             self.ui_log('All IK points successfully resolved. Executing continuous wave trajectory...', 'success')
             self._go_to_joints_trajectory(trajectory_points, "Executing continuous Octomap Wave Scan...")
+            
+            response.success = True
+            response.message = "Scan path completed."
+            
+        except Exception as e:
+            self.ui_log(f"Error during scan path: {e}", 'error')
+            response.success = False
+            response.message = str(e)
+        finally:
+            self.is_executing = False
+            
+        return response
+
+    def execute_object_scan_cb(self, request, response):
+        if self.is_executing:
+            response.success = False
+            response.message = "System is already executing a move."
+            return response
+            
+        self.ui_log('Generating Object-Targeted Cross Scan Path...', 'info')
+        
+        # Zentren der Objekte (hardcoded fuer diesen Test, +/- 10cm Kreuz = 20cm total size)
+        objects = [
+            (0.174, 0.082),   # Blue Cube
+            (0.219, -0.083),  # Red Rectangle
+            (0.274, 0.018)    # Green Cylinder
+        ]
+        
+        waypoints = self.generate_object_cross_trajectory(objects, cross_size=0.20, height=0.10)
+        
+        self.ui_log(f'{len(waypoints)} waypoints generated. Starting IK resolution.', 'success')
+        
+        self.is_executing = True
+        
+        try:
+            from moveit_msgs.srv import GetPositionIK
+            from geometry_msgs.msg import PoseStamped
+            from scipy.spatial.transform import Rotation as R
+            from moveit_msgs.msg import RobotState
+            from sensor_msgs.msg import JointState
+            import time
+            
+            current_seed_joints = None
+            trajectory_points = []
+            
+            for i, wp in enumerate(waypoints):
+                target_x, target_y, target_z, target_r, target_p, target_yaw = wp
+                
+                target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
+                q = target_rot.as_quat()
+                
+                ik_req = GetPositionIK.Request()
+                ik_req.ik_request.group_name = "lite6"
+                ik_req.ik_request.pose_stamped = PoseStamped()
+                ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
+                ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
+                ik_req.ik_request.pose_stamped.pose.position.y = float(target_y)
+                ik_req.ik_request.pose_stamped.pose.position.z = float(target_z)
+                ik_req.ik_request.pose_stamped.pose.orientation.x = float(q[0])
+                ik_req.ik_request.pose_stamped.pose.orientation.y = float(q[1])
+                ik_req.ik_request.pose_stamped.pose.orientation.z = float(q[2])
+                ik_req.ik_request.pose_stamped.pose.orientation.w = float(q[3])
+                ik_req.ik_request.timeout.sec = 1
+                
+                if current_seed_joints is not None:
+                    rs = RobotState()
+                    js = JointState()
+                    js.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+                    js.position = current_seed_joints
+                    rs.joint_state = js
+                    ik_req.ik_request.robot_state = rs
+                
+                if not self.ik_client.wait_for_service(timeout_sec=2.0):
+                    raise Exception("IK Service /compute_ik nicht verfuegbar!")
+                    
+                future = self.ik_client.call_async(ik_req)
+                
+                start_wait = time.time()
+                while not future.done():
+                    if time.time() - start_wait > 2.0:
+                        raise Exception("Timeout beim Warten auf IK-Antwort.")
+                    time.sleep(0.01)
+                    
+                ik_res = future.result()
+                
+                if ik_res.error_code.val != 1:
+                    raise Exception(f"IK Berechnung am Wegpunkt {i} fehlgeschlagen. Ziel ausser Reichweite oder Singularitaet.")
+                    
+                joint_names = ik_res.solution.joint_state.name
+                positions = ik_res.solution.joint_state.position
+                
+                target_joints = [0.0] * 6
+                for j in range(1, 7):
+                    j_name = f'joint{j}'
+                    idx = joint_names.index(j_name)
+                    target_joints[j-1] = positions[idx]
+                    
+                current_seed_joints = target_joints
+                
+                # Bei der Cross-Trajectory gibt es zwischen den Objekten weite Sprünge.
+                # Damit der Sprung flüssig klappt, setzen wir duration z.B. etwas hoeher.
+                # Für den allerersten Punkt: 2s. Für Objekt-Sprünge (jeder 20. Punkt): 1.5s
+                if i == 0:
+                    duration = 2.0
+                elif i % 20 == 0:
+                    duration = 1.5
+                else:
+                    duration = 0.3
+                    
+                trajectory_points.append((target_joints, duration))
+
+            self.ui_log('All IK points successfully resolved. Executing Object Cross Scan...', 'success')
+            self._go_to_joints_trajectory(trajectory_points, "Executing Object-Targeted Cross Scan...")
             
             response.success = True
             response.message = "Scan path completed."

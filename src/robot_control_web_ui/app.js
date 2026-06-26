@@ -399,6 +399,25 @@ function startOctomapScan() {
   });
 }
 
+function startObjectScan() {
+  logMsg('UI', `➤ Starting Object Cross Scan...`);
+  const scanClient = new ROSLIB.Service({
+    ros: ros,
+    name: '/ui/start_object_scan',
+    serviceType: 'std_srvs/Trigger'
+  });
+  
+  scanClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
+    if (result.success) {
+      logMsg('System', 'Object Scan completed successfully.', 'info');
+    } else {
+      logMsg('System', 'Object Scan failed: ' + result.message, 'err');
+    }
+  }, (error) => {
+    logMsg('System', 'Failed to call Object Scan service: ' + error, 'err');
+  });
+}
+
 function setGripper(state) {
   logMsg('UI', `➤ Gripper Command: ${state.toUpperCase()}`);
   
