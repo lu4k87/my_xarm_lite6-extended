@@ -235,6 +235,16 @@ def api_kill_all():
     subprocess.Popen("sleep 1 && pkill -f 'ros2_nexus_web.py'", shell=True)
     return jsonify({"ok": True, "msg": "Alle Prozesse werden beendet."})
 
+@app.route("/api/kill_all_ros2", methods=["POST"])
+def api_kill_all_ros2():
+    try:
+        # Robustly kill all ROS2-related commands and terminal wrappers
+        cmd = "pkill -f 'ros2 run'; pkill -f 'ros2 launch'; pkill -f rviz2; pkill -f 'eval.*exec bash'"
+        subprocess.Popen(cmd, shell=True)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("NEXUS_PORT", 5000))
