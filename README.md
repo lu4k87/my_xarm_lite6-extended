@@ -339,13 +339,13 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `robot_motion_handler_movegroup.py` <kbd>NODE</kbd>
 
-> **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Execute to Pose" and "Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The joint movements perfectly respect the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution.
+> **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Execute to Pose" and "Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The joint movements perfectly respect the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution. **Octomap Wave Scan:** Also handles the `/ui/start_octomap_scan` service by mathematically generating a continuous, IK-resolved 3D sine-wave scan trajectory (Z-axis wobbling) over the workspace, ensuring no joint-flips occur by seeding the IK iteratively and executing it as a single, uninterrupted `JointTrajectory`.
 - 📥 **Subscribes:**
   - `/ui/robot_control/current_speed` (`std_msgs/Float64`)
   - Scales the velocity of the Joint movements synchronously with the UI.
 - 📤 **Publishes:**
   - `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`)
-- 🛠️ **Services:** Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, and `/ui/execute_move_joint` as Server. Uses `/compute_ik` (MoveIt IK) as a Client to resolve Cartesian targets. Has a TF2 listener for real-time TCP coordinates.
+- 🛠️ **Services:** Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_octomap_scan`, and `/ui/execute_move_joint` as Server. Uses `/compute_ik` (MoveIt IK) as a Client to resolve Cartesian targets. Has a TF2 listener for real-time TCP coordinates.
 
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
 

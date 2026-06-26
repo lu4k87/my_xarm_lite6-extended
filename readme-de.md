@@ -340,13 +340,13 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 #### `robot_motion_handler_movegroup.py` <kbd>NODE</kbd>
 
-> **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Sowohl die "Execute to Pose" als auch die "Initial Pose" Bewegungen (ausgelöst über Web UI oder RViz) nutzen nun einen robusten **IK-Solver (Inverse Kinematik)**. Dieser berechnet die perfekten Gelenkwinkel für absolute Koordinaten und führt diese als sichere, kollisionsfreie Kurvenfahrten (Joint-Trajectories) aus. Dadurch werden Self-Collisions und Singularitäten, die bei sturen kartesischen Geradeausfahrten quer durch den Raum entstehen, vollständig eliminiert. Die Gelenkbewegungen reagieren dynamisch auf die globale Geschwindigkeit (`speedScale`), was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt.
+> **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Sowohl die "Execute to Pose" als auch die "Initial Pose" Bewegungen (ausgelöst über Web UI oder RViz) nutzen nun einen robusten **IK-Solver (Inverse Kinematik)**. Dieser berechnet die perfekten Gelenkwinkel für absolute Koordinaten und führt diese als sichere, kollisionsfreie Kurvenfahrten (Joint-Trajectories) aus. Dadurch werden Self-Collisions und Singularitäten, die bei sturen kartesischen Geradeausfahrten quer durch den Raum entstehen, vollständig eliminiert. Die Gelenkbewegungen reagieren dynamisch auf die globale Geschwindigkeit (`speedScale`), was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt. **Octomap Wave Scan:** Verarbeitet zudem den `/ui/start_octomap_scan` Service, indem eine dichte 3D-Sinuswelle im kartesischen Raum berechnet wird, deren Wegpunkte iterativ per IK aufgelöst (mit dem vorherigen State als Seed zur Vermeidung von Joint-Flips) und dann als eine nahtlose, absolut flüssige Trajektorie ohne Unterbrechungen an den Roboter gesendet werden.
 - 📥 **Subscribes:**
   - `/ui/robot_control/current_speed` (`std_msgs/Float64`)
   - Skaliert die Geschwindigkeit der Joint-Bewegungen synchron zur UI.
 - 📤 **Publishes:**
   - `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`)
-- 🛠️ **Services:** Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose` und `/ui/execute_move_joint` als Server an. Nutzt `/compute_ik` (MoveIt IK) als Client, um kartesische Ziele aufzulösen. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
+- 🛠️ **Services:** Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_octomap_scan` und `/ui/execute_move_joint` als Server an. Nutzt `/compute_ik` (MoveIt IK) als Client, um kartesische Ziele aufzulösen. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
 
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
 
