@@ -294,9 +294,13 @@ To provide a clear understanding of the architecture, the software modules are c
 - 📤 **Publishes:**
   - `/whisper/text` (`std_msgs/String`)
 
+#### `audio_listener.py` <kbd>NODE</kbd>
+
+> **Purpose & Task:** Handles microphone input for the voice command system. Features an automatic, system-aware fallback logic that explicitly scans for and prioritizes the system-default `pulse` or `default` audio devices, guaranteeing reliable voice capture across different hardware environments.
+
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
-> **Purpose & Task:** Analyzes discrete single-shot raw text using regex patterns to extract defined action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose"). Implements a robust **3-layer deduplication state machine** to guarantee exactly-once command execution.
+> **Purpose & Task:** Analyzes discrete single-shot raw text using regex patterns to extract defined action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose"). Implements a robust **3-layer deduplication state machine** to guarantee exactly-once command execution.
 - 📥 **Action Client:**
   - `/whisper/inference` (`whisper_idl/Inference`)
   - Instead of waiting for the full 5-second recording to finish, it actively analyzes the continuous real-time `feedback` topic (250ms interval from the C++ Action Server).
@@ -305,7 +309,7 @@ To provide a clear understanding of the architecture, the software modules are c
 - 🔒 **Singleton Lock:** Uses an `fcntl` file lock (`/tmp/voice_command_listener.lock`) to prevent multiple node instances from running concurrently, which would cause duplicate command execution.
 - 📤 **Publishes:**
   - `/ui/voice_feedback` (`std_msgs/String`)
-  - Directly triggers coordinate movements ("MoveTo: pose", "MoveTo: initial") or adjusts the robot jogging speed ("Speed: faster", "Speed: slower") via the dashboard UI feedback.
+  - Directly triggers coordinate movements ("MoveTo: pose", "MoveTo: initial"), triggers scanning paths ("Scan: objects"), or adjusts the robot jogging speed ("Speed: faster", "Speed: slower") via the dashboard UI feedback.
 
 > [!TIP]
 > The `whisper_server` is explicitly configured to use `language: "en"` along with a targeted `initial_prompt` inside `whisper.yaml` to guarantee high transcription accuracy for the English commands, rejecting non-english noise.
@@ -339,13 +343,13 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `robot_motion_handler_movegroup.py` <kbd>NODE</kbd>
 
-> **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Move To: Absolute Pose" and "Move To: Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The joint movements perfectly respect the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution. **Octomap Wave Scan:** Also handles the `/ui/start_octomap_scan` service by mathematically generating a continuous, IK-resolved 3D sine-wave scan trajectory (Z-axis wobbling) over the workspace. Features an intelligent dynamic RPY calculation (focal point look-at) that smoothly tilts the camera (Pitch/Roll) towards the geometric center of the scene during the sweep, maximizing field-of-view and point cloud density. Yaw is kept locked at 0.0 to prevent IK singularities and wrist knots. Executed as a single, uninterrupted JointTrajectory with continuous iterative IK seeding. **Object Cross Scan:** Added the `/ui/start_object_scan` service which generates precise, individual 6cm cross-pattern flights directly over statically known objects (Cube, Rectangle, Cylinder) at extreme proximity (14cm above the table). The TCP utilizes an exact, undamped trigonometric focal-point look-at logic to perfectly aim at the object's center during the cross flight. To prevent IK singularities and wrist twists, the TCP points strictly straight down during the 15-step transitions between objects, and the entire sequence seamlessly finishes by safely returning to the Initial Pose.
+> **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Move To: Absolute Pose" and "Move To: Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The joint movements perfectly respect the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution. **Object Cross Scan:** Handles the `/ui/start_object_scan` service which generates precise, individual 6cm cross-pattern flights directly over statically known objects (Cube, Rectangle, Cylinder) at extreme proximity (14cm above the table). The TCP utilizes an exact, undamped trigonometric focal-point look-at logic to perfectly aim at the object's center during the cross flight. To prevent IK singularities and wrist twists, the TCP points strictly straight down during the 15-step transitions between objects, and the entire sequence seamlessly finishes by safely returning to the Initial Pose.
 - 📥 **Subscribes:**
   - `/ui/robot_control/current_speed` (`std_msgs/Float64`)
   - Scales the velocity of the Joint movements synchronously with the UI.
 - 📤 **Publishes:**
   - `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`)
-- 🛠️ **Services:** Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_octomap_scan`, and `/ui/execute_move_joint` as Server. Uses `/compute_ik` (MoveIt IK) as a Client to resolve Cartesian targets. Has a TF2 listener for real-time TCP coordinates.
+- 🛠️ **Services:** Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_object_scan`, and `/ui/execute_move_joint` as Server. Uses `/compute_ik` (MoveIt IK) as a Client to resolve Cartesian targets. Has a TF2 listener for real-time TCP coordinates.
 
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
 
@@ -968,7 +972,7 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 #### Stereo Vision
 > Integration of true 3D depth data using a *ZED Mini (Stereolabs)* camera.
 - The camera can be mounted either **stationary** (on a tripod) or **on the end-effector (EEF)**.
-- **Octomap 3D Mapping:** In EEF mode, the robot can execute a programmed scan path to automatically generate a voxel-based 3D environment map (Octomap).
+- **Object Cross Scan:** The robot can execute precise, individual cross-pattern flights directly over statically known objects to capture detailed point clouds from multiple angles.
 #### VLA & Video Action Models (Planned)
 > AI-assisted action planning through *Vision-Language-Action* models.
 

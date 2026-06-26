@@ -55,20 +55,20 @@ class AudioListenerNode(Node):
             self.get_logger().info(f"Benutze EXPLIZIT Device Index: {self.device_index_}")
             stream_kwargs["input_device_index"] = self.device_index_
         else:
-            # Versuche automatisch 'pulse' zu finden, was dem System-Standard entspricht
+            # Versuche automatisch 'pulse' oder 'default' zu finden, was dem System-Standard entspricht
             pulse_index = -1
-            info = self.pyaudio_.get_host_api_info_by_index(0)
-            numdevices = info.get('deviceCount')
-            for i in range(0, numdevices):
-                device_info = self.pyaudio_.get_device_info_by_host_api_device_index(0, i)
+            numdevices = self.pyaudio_.get_device_count()
+            for i in range(numdevices):
+                device_info = self.pyaudio_.get_device_info_by_index(i)
                 if device_info.get('maxInputChannels') > 0:
                     name = device_info.get('name').lower()
-                    if 'pulse' in name:
-                        pulse_index = i
-                        break
+                    if 'pulse' in name or 'default' in name:
+                        pulse_index = device_info['index']
+                        if 'pulse' in name:  # Priorisiere 'pulse'
+                            break
             
             if pulse_index >= 0:
-                self.get_logger().info(f"Automatische Auswahl: Benutze 'pulse' Device (Index {pulse_index}) als System-Standard!")
+                self.get_logger().info(f"Automatische Auswahl: Benutze 'pulse/default' Device (Global Index {pulse_index}) als System-Standard!")
                 stream_kwargs["input_device_index"] = pulse_index
             else:
                 self.get_logger().info("Benutze PyAudio DEFAULT Device (Gefahr: koennte das falsche Mikrofon sein!)")

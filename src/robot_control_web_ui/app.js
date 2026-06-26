@@ -380,25 +380,6 @@ function setFrame(frame) {
   logMsg('UI', `Control Frame set to ${frame}`);
 }
 
-function startOctomapScan() {
-  logMsg('UI', `➤ Starting Octomap Scan Path...`);
-  const scanClient = new ROSLIB.Service({
-    ros: ros,
-    name: '/ui/start_octomap_scan',
-    serviceType: 'std_srvs/Trigger'
-  });
-  
-  scanClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
-    if (result.success) {
-      logMsg('System', 'Octomap Scan completed successfully.', 'info');
-    } else {
-      logMsg('System', 'Octomap Scan failed: ' + result.message, 'err');
-    }
-  }, (error) => {
-    logMsg('System', 'Failed to call Octomap Scan service: ' + error, 'err');
-  });
-}
-
 function startObjectScan() {
   logMsg('UI', `➤ Starting Object Cross Scan...`);
   const scanClient = new ROSLIB.Service({
@@ -793,10 +774,10 @@ voiceFeedbackSub.subscribe((msg) => {
     }
   }
 
-  // Voice Command: "Scan: path" → triggers startOctomapScan()
-  if (msg.data === 'Scan: path') {
-    logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Triggering:</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: var(--mut);">→</span> <span style="color: var(--green);">Octomap Scan...</span>', 'info');
-    startOctomapScan();
+  // Voice Command: "Scan: objects" → triggers startObjectScan()
+  if (msg.data === 'Scan: objects') {
+    logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Triggering:</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: var(--mut);">→</span> <span style="color: var(--green);">Object Scan...</span>', 'info');
+    startObjectScan();
   }
 });
 

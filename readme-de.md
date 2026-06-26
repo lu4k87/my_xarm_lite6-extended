@@ -295,9 +295,13 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 - 📤 **Publishes:**
   - `/whisper/text` (`std_msgs/String`)
 
+#### `audio_listener.py` <kbd>NODE</kbd>
+
+> **Zweck & Aufgabe:** Verarbeitet Mikrofoneingaben für das Sprachsteuerungssystem. Beinhaltet eine automatische, systembewusste Fallback-Logik, die explizit nach den System-Standard-Audiogeräten `pulse` oder `default` sucht und diese priorisiert, um eine zuverlässige Sprachaufzeichnung über verschiedene Hardware-Umgebungen hinweg zu garantieren.
+
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
-> **Zweck & Aufgabe:** Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose"). Implementiert eine robuste **3-Stufen-Deduplikations-Zustandsmaschine**, die eine exakt einmalige Befehlsausführung garantiert.
+> **Zweck & Aufgabe:** Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose"). Implementiert eine robuste **3-Stufen-Deduplikations-Zustandsmaschine**, die eine exakt einmalige Befehlsausführung garantiert.
 - 📥 **Action Client:**
   - `/whisper/inference` (`whisper_idl/Inference`)
   - Anstatt auf das Ende der 5-sekündigen Aufnahme zu warten, wertet der Node kontinuierlich das Echtzeit-`feedback` Topic aus (250ms Intervall vom C++ Action Server).
@@ -306,7 +310,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 - 🔒 **Singleton-Lock:** Nutzt einen `fcntl`-File-Lock (`/tmp/voice_command_listener.lock`), um zu verhindern, dass mehrere Node-Instanzen gleichzeitig laufen und Befehle doppelt ausführen.
 - 📤 **Publishes:**
   - `/ui/voice_feedback` (`std_msgs/String`)
-  - Triggert direkt Koordinatenfahrten ("MoveTo: pose", "MoveTo: initial") oder passt die Geschwindigkeit an ("Speed: faster", "Speed: slower") via Dashboard-UI-Feedback.
+  - Triggert direkt Koordinatenfahrten ("MoveTo: pose", "MoveTo: initial"), löst Scan-Pfade aus ("Scan: objects"), oder passt die Geschwindigkeit an ("Speed: faster", "Speed: slower") via Dashboard-UI-Feedback.
 
 > [!TIP]
 > Der `whisper_server` ist in der `whisper.yaml` explizit auf `language: "en"` gestellt und nutzt einen gezielten `initial_prompt`, um eine hohe Erkennungsgenauigkeit für die englischen Befehle zu garantieren und Rauschen auszufiltern.
@@ -340,13 +344,13 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 #### `robot_motion_handler_movegroup.py` <kbd>NODE</kbd>
 
-> **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Sowohl die "Move To: Absolute Pose" als auch die "Move To: Initial Pose" Bewegungen (ausgelöst über Web UI oder RViz) nutzen nun einen robusten **IK-Solver (Inverse Kinematik)**. Dieser berechnet die perfekten Gelenkwinkel für absolute Koordinaten und führt diese als sichere, kollisionsfreie Kurvenfahrten (Joint-Trajectories) aus. Dadurch werden Self-Collisions und Singularitäten, die bei sturen kartesischen Geradeausfahrten quer durch den Raum entstehen, vollständig eliminiert. Die Gelenkbewegungen reagieren dynamisch auf die globale Geschwindigkeit (`speedScale`), was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt. **Octomap Wave Scan:** Verarbeitet zudem den `/ui/start_octomap_scan` Service, indem eine dichte 3D-Sinuswelle im kartesischen Raum berechnet wird. Nutzt eine intelligente **dynamische RPY-Berechnung**, die die Kamera (Pitch/Roll) während des Fluges kontinuierlich auf das Zentrum des Tisches fokussiert (Look-At). Dadurch wird das Sichtfeld für die 3D-Punktewolke maximiert, während Yaw zur Vermeidung von Singularitäten (Verdrehen des Handgelenks) auf 0.0 fixiert bleibt. Die Wegpunkte werden iterativ per IK aufgelöst (mit dem vorherigen State als Seed) und dann als eine nahtlose, absolut flüssige Trajektorie ohne Unterbrechungen an den Roboter gesendet. **Object Cross Scan:** Ergänzt durch den neuen `/ui/start_object_scan` Service, der gezielte, extrem nahe (14cm Höhe) und kompakte 6cm-Kreuzflüge direkt über statisch bekannten Objekten (Cube, Rectangle, Cylinder) generiert. Auch hier fokussiert der TCP ununterbrochen die Objektzentren (exakter trigonometrischer Look-At ohne Dämpfung), um lückenlos hochdetaillierte Punktewolken für jedes einzelne Objekt zu erstellen. Während des Überflugs von einem Objekt zum nächsten blickt der TCP starr senkrecht nach unten, um wilde Handgelenk-Verdrehungen zu vermeiden. Am Ende der gesamten Sequenz fährt der Arm elegant und sicher zurück auf die Initial Pose.
+> **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Sowohl die "Move To: Absolute Pose" als auch die "Move To: Initial Pose" Bewegungen (ausgelöst über Web UI oder RViz) nutzen nun einen robusten **IK-Solver (Inverse Kinematik)**. Dieser berechnet die perfekten Gelenkwinkel für absolute Koordinaten und führt diese als sichere, kollisionsfreie Kurvenfahrten (Joint-Trajectories). Dadurch werden Self-Collisions und Singularitäten, die bei sturen kartesischen Geradeausfahrten quer durch den Raum entstehen, vollständig eliminiert. Die Gelenkbewegungen reagieren dynamisch auf die globale Geschwindigkeit (`speedScale`), was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt. **Object Cross Scan:** Verarbeitet den `/ui/start_object_scan` Service, der gezielte, extrem nahe (14cm Höhe) und kompakte 6cm-Kreuzflüge direkt über statisch bekannten Objekten (Cube, Rectangle, Cylinder) generiert. Auch hier fokussiert der TCP ununterbrochen die Objektzentren (exakter trigonometrischer Look-At ohne Dämpfung), um lückenlos hochdetaillierte Punktewolken für jedes einzelne Objekt zu erstellen. Während des Überflugs von einem Objekt zum nächsten blickt der TCP starr senkrecht nach unten, um wilde Handgelenk-Verdrehungen zu vermeiden. Am Ende der gesamten Sequenz fährt der Arm elegant und sicher zurück auf die Initial Pose.
 - 📥 **Subscribes:**
   - `/ui/robot_control/current_speed` (`std_msgs/Float64`)
   - Skaliert die Geschwindigkeit der Joint-Bewegungen synchron zur UI.
 - 📤 **Publishes:**
   - `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`)
-- 🛠️ **Services:** Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_octomap_scan` und `/ui/execute_move_joint` als Server an. Nutzt `/compute_ik` (MoveIt IK) als Client, um kartesische Ziele aufzulösen. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
+- 🛠️ **Services:** Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_object_scan` und `/ui/execute_move_joint` als Server an. Nutzt `/compute_ik` (MoveIt IK) als Client, um kartesische Ziele aufzulösen. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
 
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
 
@@ -944,7 +948,7 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 #### Stereo Vision
 > Integration echter 3D-Tiefendaten durch eine *ZED Mini (Stereolabs)* Kamera.
 - Die Kamera kann wahlweise **stationär** (auf einem Stativ) oder **am Endeffektor (EEF)** montiert genutzt werden.
-- **Octomap 3D-Kartierung:** Im EEF-Modus kann der Roboter einen programmierten Scan-Pfad abfahren, um automatisch eine voxelbasierte 3D-Umgebungskarte (Octomap) zu generieren.
+- **Object Cross Scan:** Der Roboter kann präzise, individuelle Kreuzflüge direkt über statisch bekannten Objekten ausführen, um detaillierte Punktwolken aus verschiedenen Blickwinkeln aufzunehmen.
 #### VLA & Video Action Models (Geplant)
 > KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
