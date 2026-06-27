@@ -85,8 +85,15 @@ class RobotMotionHandlerMovegroup(Node):
             self.execute_object_scan_cb,
             callback_group=self.cb_group
         )
-        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint) ready.', 'success')
+        self.stop_srv = self.create_service(
+            Trigger, 
+            '/ui/emergency_stop', 
+            self.emergency_stop_cb,
+            callback_group=self.cb_group
+        )
+        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint, /ui/emergency_stop) ready.', 'success')
         self.is_executing = False
+        self.stop_requested = False
         
         from std_msgs.msg import Float32
         self.current_speed_scale = 0.5
@@ -138,6 +145,7 @@ class RobotMotionHandlerMovegroup(Node):
             return response
             
         self.is_executing = True
+        self.stop_requested = False
         
         try:
             # --- PHASE 1: RETRACT (Move up by 15cm) ---
@@ -217,7 +225,12 @@ class RobotMotionHandlerMovegroup(Node):
         self.ui_log(f'Trajectory sent. {log_msg}', 'action')
         
         # Warte auf die Ausfuehrung der Bewegung
-        time.sleep(duration_sec + 0.5)
+        start_wait = time.time()
+        while time.time() - start_wait < duration_sec + 0.5:
+            if self.stop_requested:
+                self.ui_log('Movement interrupted by EMERGENCY STOP!', 'error')
+                break
+            time.sleep(0.1)
         
         # 3. Start MoveIt Servo again
         if self.servo_start_client.wait_for_service(timeout_sec=1.0):
@@ -266,7 +279,12 @@ class RobotMotionHandlerMovegroup(Node):
         self.ui_log(f'Trajectory sent with {len(msg.points)} points. {log_msg}', 'action')
         
         # Warte auf die Ausfuehrung der Bewegung
-        time.sleep(total_duration + 0.5)
+        start_wait = time.time()
+        while time.time() - start_wait < total_duration + 0.5:
+            if self.stop_requested:
+                self.ui_log('Movement interrupted by EMERGENCY STOP!', 'error')
+                break
+            time.sleep(0.1)
         
         # 3. Start MoveIt Servo again
         if self.servo_start_client.wait_for_service(timeout_sec=1.0):
@@ -282,6 +300,7 @@ class RobotMotionHandlerMovegroup(Node):
             return response
             
         self.is_executing = True
+        self.stop_requested = False
         
         try:
             # 1. Stop MoveIt Servo
@@ -314,7 +333,12 @@ class RobotMotionHandlerMovegroup(Node):
             self.ui_log('Trajectory sent. Moving to Joint Pose...', 'action')
             
             # Warte auf die Ausfuehrung der Bewegung
-            time.sleep(duration_sec + 0.5)
+            start_wait = time.time()
+            while time.time() - start_wait < duration_sec + 0.5:
+                if self.stop_requested:
+                    self.ui_log('Movement interrupted by EMERGENCY STOP!', 'error')
+                    break
+                time.sleep(0.1)
             
             # 3. Start MoveIt Servo again
             if self.servo_start_client.wait_for_service(timeout_sec=1.0):
@@ -332,6 +356,22 @@ class RobotMotionHandlerMovegroup(Node):
         finally:
             self.is_executing = False
             
+        return response
+
+    def emergency_stop_cb(self, request, response):
+        self.stop_requested = True
+        self.ui_log('<span style="color: var(--rviz-x); font-weight: bold; font-size: 1.2em;">EMERGENCY STOP TRIGGERED!</span>', 'error')
+        
+        # Publish empty trajectory to stop joint trajectory controller immediately
+        msg = JointTrajectory()
+        msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+        
+        # Set a single point with current state but zero velocity (or just empty)
+        # Empty points array forces trajectory controller to preempt and hold position.
+        self.publisher_.publish(msg)
+        
+        response.success = True
+        response.message = "Emergency Stop Executed."
         return response
 
     def generate_wave_trajectory(self, min_x=0.250, max_x=0.450, min_y=-0.250, max_y=0.250, base_z=0.300, z_amplitude=0.080):
@@ -467,6 +507,7 @@ class RobotMotionHandlerMovegroup(Node):
         self.ui_log(f'{len(waypoints)} waypoints generated. Starting IK resolution.', 'success')
         
         self.is_executing = True
+        self.stop_requested = False
         
         try:
             from moveit_msgs.srv import GetPositionIK
@@ -564,6 +605,7 @@ class RobotMotionHandlerMovegroup(Node):
             return response
             
         self.is_executing = True
+        self.stop_requested = False
         
         try:
             from moveit_msgs.srv import GetPositionIK
@@ -583,6 +625,10 @@ class RobotMotionHandlerMovegroup(Node):
             prev_obj_pos = None
 
             for idx, (name, frame_id, default_pos, cvar) in enumerate(object_configs):
+                if self.stop_requested:
+                    self.ui_log('Scan Loop interrupted by EMERGENCY STOP!', 'error')
+                    break
+                    
                 name_html = f"<span style='color: {cvar}; font-weight: 700;'>{name}</span>"
                 self.ui_log(f'Fetching Live-Position for {name_html} via TF...', 'info')
                 try:
@@ -664,8 +710,9 @@ class RobotMotionHandlerMovegroup(Node):
                 prev_obj_pos = obj_pos
 
             # Am Ende zurueck zur Initial Pose
-            init_html = "<span style='color: var(--orange); font-weight: 700;'>Initial Pose</span>"
-            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], f"Returning to {init_html}...")
+            if not self.stop_requested:
+                init_html = "<span style='color: var(--orange); font-weight: 700;'>Initial Pose</span>"
+                self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], f"Returning to {init_html}...")
             
             response.success = True
             response.message = "Scan path completed."
@@ -686,6 +733,7 @@ class RobotMotionHandlerMovegroup(Node):
             return response
             
         self.is_executing = True
+        self.stop_requested = False
         try:
             return self._execute_move_to_pose_core(request, response)
         finally:

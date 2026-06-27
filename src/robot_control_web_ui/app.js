@@ -399,6 +399,24 @@ function startObjectScan() {
   });
 }
 
+function emergencyStop() {
+  logMsg('UI', `🚨 EMERGENCY STOP TRIGGERED!`, 'err');
+  const stopClient = new ROSLIB.Service({
+    ros: ros,
+    name: '/ui/emergency_stop',
+    serviceType: 'std_srvs/Trigger'
+  });
+  stopClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
+    if (result.success) {
+      logMsg('System', '✓ Motion stopped successfully.', 'success');
+    } else {
+      logMsg('System', 'Failed to stop motion: ' + result.message, 'err');
+    }
+  }, (error) => {
+    logMsg('System', 'Failed to call Emergency Stop service: ' + error, 'err');
+  });
+}
+
 function setGripper(state) {
   logMsg('UI', `➤ Gripper Command: ${state.toUpperCase()}`);
   
