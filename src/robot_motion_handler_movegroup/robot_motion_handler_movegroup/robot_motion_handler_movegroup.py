@@ -566,14 +566,27 @@ class RobotMotionHandlerMovegroup(Node):
             response.message = "System is already executing a move."
             return response
             
-        self.ui_log('Generating Object-Targeted Cross Scan Path...', 'info')
+        self.ui_log('Ermittle Live-Positionen der Objekte über TF...', 'info')
         
-        # Zentren der Objekte
-        objects = [
-            (0.174, 0.082),   # Blue Cube
-            (0.219, -0.083),  # Red Rectangle
-            (0.274, 0.018)    # Green Cylinder
+        objects = []
+        object_configs = [
+            ("Blue Cube", "target_blue_cube", (0.174, 0.082)),
+            ("Red Rectangle", "target_red_rectangle", (0.219, -0.083)),
+            ("Green Cylinder", "target_green_cylinder", (0.274, 0.018))
         ]
+        
+        for name, frame_id, default_pos in object_configs:
+            try:
+                t = self.tf_buffer.lookup_transform('link_base', frame_id, rclpy.time.Time())
+                x = t.transform.translation.x
+                y = t.transform.translation.y
+                self.ui_log(f'Live-Position {name}: X={x:.3f}, Y={y:.3f}', 'success')
+                objects.append((x, y))
+            except Exception as e:
+                self.ui_log(f'Live-Position für {name} nicht gefunden. Nutze Fallback: X={default_pos[0]:.3f}, Y={default_pos[1]:.3f}', 'warn')
+                objects.append(default_pos)
+                
+        self.ui_log('Generating Object-Targeted Cross Scan Path...', 'info')
         
         waypoints = self.generate_object_cross_trajectory(objects)
         
