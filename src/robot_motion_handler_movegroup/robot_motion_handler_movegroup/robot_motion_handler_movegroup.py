@@ -95,6 +95,16 @@ class RobotMotionHandlerMovegroup(Node):
         self.is_executing = False
         self.stop_requested = False
         
+        from sensor_msgs.msg import JointState
+        self.current_joint_state = None
+        self.joint_state_sub = self.create_subscription(
+            JointState,
+            '/joint_states',
+            self.joint_state_cb,
+            10,
+            callback_group=self.cb_group
+        )
+        
         from std_msgs.msg import Float32
         self.current_speed_scale = 0.5
         self.speed_sub = self.create_subscription(
@@ -358,17 +368,42 @@ class RobotMotionHandlerMovegroup(Node):
             
         return response
 
+    def joint_state_cb(self, msg):
+        self.current_joint_state = msg
+
     def emergency_stop_cb(self, request, response):
         self.stop_requested = True
         self.ui_log('<span style="color: var(--rviz-x); font-weight: bold; font-size: 1.2em;">EMERGENCY STOP TRIGGERED!</span>', 'error')
         
-        # Publish empty trajectory to stop joint trajectory controller immediately
-        msg = JointTrajectory()
-        msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-        
-        # Set a single point with current state but zero velocity (or just empty)
-        # Empty points array forces trajectory controller to preempt and hold position.
-        self.publisher_.publish(msg)
+        # Publish current joint state with zero velocity to stop controller immediately
+        if hasattr(self, 'current_joint_state') and self.current_joint_state:
+            msg = JointTrajectory()
+            msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+            
+            current_positions = [0.0]*6
+            for j in range(1, 7):
+                j_name = f'joint{j}'
+                if j_name in self.current_joint_state.name:
+                    idx = self.current_joint_state.name.index(j_name)
+                    current_positions[j-1] = self.current_joint_state.position[idx]
+
+            point = JointTrajectoryPoint()
+            point.positions = current_positions
+            point.velocities = [0.0] * 6
+            point.time_from_start = Duration(sec=0, nanosec=100000000) # 0.1s
+            msg.points.append(point)
+            
+            self.publisher_.publish(msg)
+            self.ui_log('Published STOP trajectory holding current position.', 'info')
+        else:
+            # Fallback if no joint states: try an empty point to force preempt
+            msg = JointTrajectory()
+            msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+            point = JointTrajectoryPoint()
+            point.time_from_start = Duration(sec=0, nanosec=100000000)
+            msg.points.append(point)
+            self.publisher_.publish(msg)
+            self.ui_log('Warning: No joint states. Published fallback STOP trajectory.', 'warn')
         
         response.success = True
         response.message = "Emergency Stop Executed."
