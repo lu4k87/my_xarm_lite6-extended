@@ -11,7 +11,7 @@ from moveit_msgs.srv import GetPositionIK
 import math
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
 def get_quaternion_from_euler(roll, pitch, yaw):
@@ -33,6 +33,8 @@ class RobotMotionHandlerMovegroup(Node):
         super().__init__('robot_motion_handler_movegroup')
         
         self.cb_group = ReentrantCallbackGroup()
+        self.stop_cb_group = MutuallyExclusiveCallbackGroup()
+        self.state_cb_group = MutuallyExclusiveCallbackGroup()
         
         import tf2_ros
         from geometry_msgs.msg import TwistStamped
@@ -89,7 +91,7 @@ class RobotMotionHandlerMovegroup(Node):
             Trigger, 
             '/ui/emergency_stop', 
             self.emergency_stop_cb,
-            callback_group=self.cb_group
+            callback_group=self.stop_cb_group
         )
         self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint, /ui/emergency_stop) ready.', 'success')
         self.is_executing = False
@@ -102,7 +104,7 @@ class RobotMotionHandlerMovegroup(Node):
             '/joint_states',
             self.joint_state_cb,
             10,
-            callback_group=self.cb_group
+            callback_group=self.state_cb_group
         )
         
         from std_msgs.msg import Float32
@@ -876,7 +878,7 @@ class RobotMotionHandlerMovegroup(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = RobotMotionHandlerMovegroup()
-    executor = MultiThreadedExecutor()
+    executor = MultiThreadedExecutor(num_threads=16)
     executor.add_node(node)
     try:
         executor.spin()
