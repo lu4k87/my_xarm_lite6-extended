@@ -98,6 +98,15 @@ class RobotMotionHandlerMovegroup(Node):
             self.emergency_stop_cb,
             callback_group=self.stop_cb_group
         )
+        
+        from std_msgs.msg import Empty
+        self.stop_sub = self.create_subscription(
+            Empty, 
+            '/ui/emergency_stop_topic', 
+            self.emergency_stop_topic_cb,
+            10,
+            callback_group=self.stop_cb_group
+        )
         self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint, /ui/emergency_stop) ready.', 'success')
         self.is_executing = False
         self.stop_requested = False
@@ -398,6 +407,11 @@ class RobotMotionHandlerMovegroup(Node):
 
     def joint_state_cb(self, msg):
         self.current_joint_state = msg
+
+    def emergency_stop_topic_cb(self, msg):
+        class DummyResponse:
+            pass
+        self.emergency_stop_cb(None, DummyResponse())
 
     def emergency_stop_cb(self, request, response):
         self.stop_requested = True

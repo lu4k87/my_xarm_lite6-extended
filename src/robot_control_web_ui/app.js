@@ -401,20 +401,16 @@ function startObjectScan() {
 
 function emergencyStop() {
   logMsg('UI', `🚨 EMERGENCY STOP TRIGGERED!`, 'err');
-  const stopClient = new ROSLIB.Service({
+  
+  // Use a topic instead of a service to bypass rosbridge blocking when a service is already running
+  const stopTopic = new ROSLIB.Topic({
     ros: ros,
-    name: '/ui/emergency_stop',
-    serviceType: 'std_srvs/Trigger'
+    name: '/ui/emergency_stop_topic',
+    messageType: 'std_msgs/Empty'
   });
-  stopClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
-    if (result.success) {
-      logMsg('System', '✓ Motion stopped successfully.', 'success');
-    } else {
-      logMsg('System', 'Failed to stop motion: ' + result.message, 'err');
-    }
-  }, (error) => {
-    logMsg('System', 'Failed to call Emergency Stop service: ' + error, 'err');
-  });
+  
+  stopTopic.publish(new ROSLIB.Message({}));
+  logMsg('System', 'STOP signal published via Topic (Bypassing Service Queue).', 'info');
 }
 
 function setGripper(state) {
