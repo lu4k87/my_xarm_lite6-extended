@@ -393,9 +393,9 @@ class RobotMotionHandlerMovegroup(Node):
             
         return waypoints
 
-    def generate_object_cross_trajectory(self, objects, cross_size=0.10, height=0.11):
+    def generate_single_object_trajectory(self, obj_pos, prev_obj_pos=None, cross_size=0.10, height=0.11):
         """
-        Generiert eine kontinuierliche Kreuz-Trajektorie (+/- 5cm) ueber eine Liste von Objekt-Zentren.
+        Generiert eine Trajektorie (Anflug + Kreuz) fuer ein einzelnes Objekt.
         """
         waypoints = []
         half_size = cross_size / 2.0
@@ -429,29 +429,26 @@ class RobotMotionHandlerMovegroup(Node):
                 
                 waypoints.append([x, y, z, roll, pitch, yaw])
 
-        for idx, obj in enumerate(objects):
-            obj_x, obj_y = obj
+        obj_x, obj_y = obj_pos
+        c = (obj_x, obj_y)
+        l = (obj_x - half_size, obj_y)
+        r = (obj_x + half_size, obj_y)
+        b = (obj_x, obj_y - half_size)
+        t = (obj_x, obj_y + half_size)
+        
+        # 1. Anflug zum Zentrum des aktuellen Objekts
+        if prev_obj_pos is not None:
+            add_segment(prev_obj_pos, c, 15, obj_x, obj_y, is_transition=True) # 15 Schritte Transition
+        else:
+            add_segment(c, c, 1, obj_x, obj_y, is_transition=True)
             
-            c = (obj_x, obj_y)
-            l = (obj_x - half_size, obj_y)
-            r = (obj_x + half_size, obj_y)
-            b = (obj_x, obj_y - half_size)
-            t = (obj_x, obj_y + half_size)
-            
-            # 1. Anflug zum Zentrum des aktuellen Objekts
-            if idx > 0:
-                prev_obj = objects[idx-1]
-                add_segment(prev_obj, c, 15, obj_x, obj_y, is_transition=True) # 15 Schritte Transition
-            else:
-                add_segment(c, c, 1, obj_x, obj_y, is_transition=True)
-                
-            # 2. Das Kreuz abfahren (kontinuierlich)
-            add_segment(c, l, 6, obj_x, obj_y) # Mitte nach Links
-            add_segment(l, r, 12, obj_x, obj_y) # Links nach Rechts (ueber Mitte)
-            add_segment(r, c, 6, obj_x, obj_y) # Rechts zurueck in Mitte
-            add_segment(c, b, 6, obj_x, obj_y) # Mitte nach Unten
-            add_segment(b, t, 12, obj_x, obj_y) # Unten nach Oben
-            add_segment(t, c, 6, obj_x, obj_y) # Oben zurueck in Mitte
+        # 2. Das Kreuz abfahren (kontinuierlich)
+        add_segment(c, l, 6, obj_x, obj_y) # Mitte nach Links
+        add_segment(l, r, 12, obj_x, obj_y) # Links nach Rechts (ueber Mitte)
+        add_segment(r, c, 6, obj_x, obj_y) # Rechts zurueck in Mitte
+        add_segment(c, b, 6, obj_x, obj_y) # Mitte nach Unten
+        add_segment(b, t, 12, obj_x, obj_y) # Unten nach Oben
+        add_segment(t, c, 6, obj_x, obj_y) # Oben zurueck in Mitte
             
         return waypoints
 
@@ -566,32 +563,6 @@ class RobotMotionHandlerMovegroup(Node):
             response.message = "System is already executing a move."
             return response
             
-        self.ui_log('Ermittle Live-Positionen der Objekte über TF...', 'info')
-        
-        objects = []
-        object_configs = [
-            ("Blue Cube", "target_blue_cube", (0.174, 0.082)),
-            ("Red Rectangle", "target_red_rectangle", (0.219, -0.083)),
-            ("Green Cylinder", "target_green_cylinder", (0.274, 0.018))
-        ]
-        
-        for name, frame_id, default_pos in object_configs:
-            try:
-                t = self.tf_buffer.lookup_transform('link_base', frame_id, rclpy.time.Time())
-                x = t.transform.translation.x
-                y = t.transform.translation.y
-                self.ui_log(f'Live-Position {name}: X={x:.3f}, Y={y:.3f}', 'success')
-                objects.append((x, y))
-            except Exception as e:
-                self.ui_log(f'Live-Position für {name} nicht gefunden. Nutze Fallback: X={default_pos[0]:.3f}, Y={default_pos[1]:.3f}', 'warn')
-                objects.append(default_pos)
-                
-        self.ui_log('Generating Object-Targeted Cross Scan Path...', 'info')
-        
-        waypoints = self.generate_object_cross_trajectory(objects)
-        
-        self.ui_log(f'{len(waypoints)} waypoints generated. Starting IK resolution.', 'success')
-        
         self.is_executing = True
         
         try:
@@ -602,74 +573,99 @@ class RobotMotionHandlerMovegroup(Node):
             from sensor_msgs.msg import JointState
             import time
             
-            current_seed_joints = None
-            trajectory_points = []
+            object_configs = [
+                ("Blue Cube", "target_blue_cube", (0.174, 0.082), "var(--rviz-z)"),
+                ("Red Rectangle", "target_red_rectangle", (0.219, -0.083), "var(--rviz-x)"),
+                ("Green Cylinder", "target_green_cylinder", (0.274, 0.018), "var(--rviz-y)")
+            ]
             
-            for i, wp in enumerate(waypoints):
-                target_x, target_y, target_z, target_r, target_p, target_yaw = wp
-                
-                target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
-                q = target_rot.as_quat()
-                
-                ik_req = GetPositionIK.Request()
-                ik_req.ik_request.group_name = "lite6"
-                ik_req.ik_request.pose_stamped = PoseStamped()
-                ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
-                ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
-                ik_req.ik_request.pose_stamped.pose.position.y = float(target_y)
-                ik_req.ik_request.pose_stamped.pose.position.z = float(target_z)
-                ik_req.ik_request.pose_stamped.pose.orientation.x = float(q[0])
-                ik_req.ik_request.pose_stamped.pose.orientation.y = float(q[1])
-                ik_req.ik_request.pose_stamped.pose.orientation.z = float(q[2])
-                ik_req.ik_request.pose_stamped.pose.orientation.w = float(q[3])
-                ik_req.ik_request.timeout.sec = 1
-                
-                if current_seed_joints is not None:
-                    rs = RobotState()
-                    js = JointState()
-                    js.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-                    js.position = current_seed_joints
-                    rs.joint_state = js
-                    ik_req.ik_request.robot_state = rs
-                
-                if not self.ik_client.wait_for_service(timeout_sec=2.0):
-                    raise Exception("IK Service /compute_ik nicht verfuegbar!")
-                    
-                future = self.ik_client.call_async(ik_req)
-                
-                start_wait = time.time()
-                while not future.done():
-                    if time.time() - start_wait > 2.0:
-                        raise Exception("Timeout beim Warten auf IK-Antwort.")
-                    time.sleep(0.01)
-                    
-                ik_res = future.result()
-                
-                if ik_res.error_code.val != 1:
-                    raise Exception(f"IK Berechnung am Wegpunkt {i} fehlgeschlagen. Ziel ausser Reichweite oder Singularitaet.")
-                    
-                joint_names = ik_res.solution.joint_state.name
-                positions = ik_res.solution.joint_state.position
-                
-                target_joints = [0.0] * 6
-                for j in range(1, 7):
-                    j_name = f'joint{j}'
-                    idx = joint_names.index(j_name)
-                    target_joints[j-1] = positions[idx]
-                    
-                current_seed_joints = target_joints
-                
-                # Da die Wegpunkte jetzt sehr dicht und kontinuierlich sind,
-                # geben wir jedem Punkt eine konstante kurze Dauer (weich und nicht zu schnell)
-                duration = 2.0 if i == 0 else 0.25
-                trajectory_points.append((target_joints, duration))
+            current_seed_joints = None
+            prev_obj_pos = None
 
-            # Initial Pose am Ende anhaengen!
-            initial_pose_joints = [0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0]
-            trajectory_points.append((initial_pose_joints, 3.0))
+            for idx, (name, frame_id, default_pos, cvar) in enumerate(object_configs):
+                name_html = f"<span style='color: {cvar}; font-weight: 700;'>{name}</span>"
+                self.ui_log(f'Fetching Live-Position for {name_html} via TF...', 'info')
+                try:
+                    t = self.tf_buffer.lookup_transform('link_base', frame_id, rclpy.time.Time())
+                    obj_x = t.transform.translation.x
+                    obj_y = t.transform.translation.y
+                    self.ui_log(f'Live-Position {name_html}: <span style="color: var(--rviz-x);">X={obj_x:.3f}</span>, <span style="color: var(--rviz-y);">Y={obj_y:.3f}</span>', 'success')
+                except Exception as e:
+                    self.ui_log(f'Live-Position for {name_html} not found. Using Fallback.', 'warn')
+                    obj_x = default_pos[0]
+                    obj_y = default_pos[1]
+                    
+                obj_pos = (obj_x, obj_y)
+                self.ui_log(f'Generating Cross Scan Path for {name_html}...', 'info')
+                
+                waypoints = self.generate_single_object_trajectory(obj_pos, prev_obj_pos)
+                
+                trajectory_points = []
+                for i, wp in enumerate(waypoints):
+                    target_x, target_y, target_z, target_r, target_p, target_yaw = wp
+                    
+                    target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
+                    q = target_rot.as_quat()
+                    
+                    ik_req = GetPositionIK.Request()
+                    ik_req.ik_request.group_name = "lite6"
+                    ik_req.ik_request.pose_stamped = PoseStamped()
+                    ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
+                    ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
+                    ik_req.ik_request.pose_stamped.pose.position.y = float(target_y)
+                    ik_req.ik_request.pose_stamped.pose.position.z = float(target_z)
+                    ik_req.ik_request.pose_stamped.pose.orientation.x = float(q[0])
+                    ik_req.ik_request.pose_stamped.pose.orientation.y = float(q[1])
+                    ik_req.ik_request.pose_stamped.pose.orientation.z = float(q[2])
+                    ik_req.ik_request.pose_stamped.pose.orientation.w = float(q[3])
+                    ik_req.ik_request.timeout.sec = 1
+                    
+                    if current_seed_joints is not None:
+                        rs = RobotState()
+                        js = JointState()
+                        js.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+                        js.position = current_seed_joints
+                        rs.joint_state = js
+                        ik_req.ik_request.robot_state = rs
+                    
+                    if not self.ik_client.wait_for_service(timeout_sec=2.0):
+                        raise Exception("IK Service /compute_ik nicht verfuegbar!")
+                        
+                    future = self.ik_client.call_async(ik_req)
+                    
+                    start_wait = time.time()
+                    while not future.done():
+                        if time.time() - start_wait > 2.0:
+                            raise Exception("Timeout beim Warten auf IK-Antwort.")
+                        time.sleep(0.01)
+                        
+                    ik_res = future.result()
+                    
+                    if ik_res.error_code.val != 1:
+                        raise Exception(f"IK Berechnung am Wegpunkt {i} fehlgeschlagen. Ziel ausser Reichweite oder Singularitaet.")
+                        
+                    joint_names = ik_res.solution.joint_state.name
+                    positions = ik_res.solution.joint_state.position
+                    
+                    target_joints = [0.0] * 6
+                    for j in range(1, 7):
+                        j_name = f'joint{j}'
+                        idx = joint_names.index(j_name)
+                        target_joints[j-1] = positions[idx]
+                        
+                    current_seed_joints = target_joints
+                    
+                    duration = 2.0 if i == 0 else 0.25
+                    trajectory_points.append((target_joints, duration))
 
-            self.ui_log('All IK points successfully resolved. Executing Object Cross Scan...', 'success')
-            self._go_to_joints_trajectory(trajectory_points, "Executing Object-Targeted Cross Scan...")
+                self.ui_log(f'Executing Scan for {name_html}...', 'action')
+                self._go_to_joints_trajectory(trajectory_points, f"Executing Cross Scan for {name_html}...")
+                
+                prev_obj_pos = obj_pos
+
+            # Am Ende zurueck zur Initial Pose
+            init_html = "<span style='color: var(--orange); font-weight: 700;'>Initial Pose</span>"
+            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], f"Returning to {init_html}...")
             
             response.success = True
             response.message = "Scan path completed."

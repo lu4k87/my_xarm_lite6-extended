@@ -390,7 +390,7 @@ function startObjectScan() {
   
   scanClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
     if (result.success) {
-      logMsg('System', 'Object Scan completed successfully.', 'info');
+      logMsg('System', '✓ Object Scan completed successfully.', 'success');
     } else {
       logMsg('System', 'Object Scan failed: ' + result.message, 'err');
     }
