@@ -231,6 +231,11 @@ class RobotMotionHandlerMovegroup(Node):
         point.time_from_start = Duration(sec=int(duration_sec), nanosec=int((duration_sec - int(duration_sec)) * 1e9))
         
         msg.points.append(point)
+        
+        if self.stop_requested:
+            self.ui_log('Execution aborted due to EMERGENCY STOP.', 'error')
+            return
+            
         self.publisher_.publish(msg)
         self.ui_log(f'Trajectory sent. {log_msg}', 'action')
         
@@ -284,6 +289,10 @@ class RobotMotionHandlerMovegroup(Node):
                 
             point.time_from_start = Duration(sec=int(total_duration), nanosec=int((total_duration - int(total_duration)) * 1e9))
             msg.points.append(point)
+            
+        if self.stop_requested:
+            self.ui_log('Execution aborted due to EMERGENCY STOP.', 'error')
+            return
             
         self.publisher_.publish(msg)
         self.ui_log(f'Trajectory sent with {len(msg.points)} points. {log_msg}', 'action')
@@ -539,6 +548,10 @@ class RobotMotionHandlerMovegroup(Node):
         # Objekte (Cube, Cylinder etc.) fliegt, was eine perfekte Octomap/Punktewolke generiert.
         waypoints = self.generate_wave_trajectory(min_x=0.250, max_x=0.360, min_y=-0.150, max_y=0.150, base_z=0.150, z_amplitude=0.050)
         
+        if self.stop_requested:
+            self.is_executing = False
+            return response
+            
         self.ui_log(f'{len(waypoints)} waypoints generated. Starting IK resolution.', 'success')
         
         self.is_executing = True
@@ -738,6 +751,10 @@ class RobotMotionHandlerMovegroup(Node):
                     
                     duration = 2.0 if i == 0 else 0.25
                     trajectory_points.append((target_joints, duration))
+
+                if self.stop_requested:
+                    self.ui_log('Scan Loop interrupted by EMERGENCY STOP before execution!', 'error')
+                    break
 
                 self.ui_log(f'Executing Scan for {name_html}...', 'action')
                 self._go_to_joints_trajectory(trajectory_points, f"Executing Cross Scan for {name_html}...")
