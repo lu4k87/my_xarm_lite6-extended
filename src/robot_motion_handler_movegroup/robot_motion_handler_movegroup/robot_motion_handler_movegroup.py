@@ -57,6 +57,11 @@ class RobotMotionHandlerMovegroup(Node):
         
         self.servo_stop_client = self.create_client(Trigger, '/servo_server/stop_servo', callback_group=self.cb_group)
         self.servo_start_client = self.create_client(Trigger, '/servo_server/start_servo', callback_group=self.cb_group)
+        
+        from xarm_msgs.srv import SetInt16
+        self.ufactory_state_client = self.create_client(SetInt16, '/ufactory/set_state', callback_group=self.stop_cb_group)
+        self.xarm_state_client = self.create_client(SetInt16, '/xarm/set_state', callback_group=self.stop_cb_group)
+        
         self.srv = self.create_service(
             Trigger, 
             '/ui/execute_initial_pose', 
@@ -150,12 +155,22 @@ class RobotMotionHandlerMovegroup(Node):
             # Startup: Just move to initial pose directly
             self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
 
+    def _reset_hardware_state(self):
+        from xarm_msgs.srv import SetInt16
+        req = SetInt16.Request()
+        req.data = 0
+        if self.ufactory_state_client.service_is_ready():
+            self.ufactory_state_client.call_async(req)
+        if self.xarm_state_client.service_is_ready():
+            self.xarm_state_client.call_async(req)
+
     def execute_initial_pose_cb(self, request, response):
         if self.is_executing:
             response.success = False
             response.message = "Already executing."
             return response
             
+        self._reset_hardware_state()
         self.is_executing = True
         self.stop_requested = False
         
@@ -221,6 +236,7 @@ class RobotMotionHandlerMovegroup(Node):
             
         # 2. Publish trajectory
         msg = JointTrajectory()
+        msg.header.stamp = self.get_clock().now().to_msg()
         msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
         
         point = JointTrajectoryPoint()
@@ -268,6 +284,7 @@ class RobotMotionHandlerMovegroup(Node):
             
         # 2. Publish trajectory
         msg = JointTrajectory()
+        msg.header.stamp = self.get_clock().now().to_msg()
         msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
         
         speed_multiplier = self.current_speed_scale / 0.5
@@ -386,9 +403,21 @@ class RobotMotionHandlerMovegroup(Node):
         self.stop_requested = True
         self.ui_log('<span style="color: var(--rviz-x); font-weight: bold; font-size: 1.2em;">EMERGENCY STOP TRIGGERED!</span>', 'error')
         
-        # Publish current joint state with zero velocity to stop controller immediately
+        # 1. HARDWARE STOP (Firmware level halt)
+        from xarm_msgs.srv import SetInt16
+        req = SetInt16.Request()
+        req.data = 4 # STOP State
+        if self.ufactory_state_client.service_is_ready():
+            self.ufactory_state_client.call_async(req)
+            self.ui_log('Hardware STOP signal sent (/ufactory).', 'success')
+        if self.xarm_state_client.service_is_ready():
+            self.xarm_state_client.call_async(req)
+            self.ui_log('Hardware STOP signal sent (/xarm).', 'success')
+            
+        # 2. Publish current joint state with zero velocity to stop controller immediately
         if hasattr(self, 'current_joint_state') and self.current_joint_state:
             msg = JointTrajectory()
+            msg.header.stamp = self.get_clock().now().to_msg()
             msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
             
             current_positions = [0.0]*6
@@ -409,6 +438,7 @@ class RobotMotionHandlerMovegroup(Node):
         else:
             # Fallback if no joint states: try an empty point to force preempt
             msg = JointTrajectory()
+            msg.header.stamp = self.get_clock().now().to_msg()
             msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
             point = JointTrajectoryPoint()
             point.time_from_start = Duration(sec=0, nanosec=100000000)
@@ -544,6 +574,8 @@ class RobotMotionHandlerMovegroup(Node):
             response.message = "System is already executing a move."
             return response
             
+        self._reset_hardware_state()
+        self.stop_requested = False
         self.ui_log('Generating 3D Wave Scan Path...', 'info')
         # Parameter: X: 250 bis 360mm, Y: -150 bis 150mm, Z wippt zwischen 100mm und 200mm
         # base_z von 250 auf 150 reduziert, damit die Kamera extrem nah (10-20cm) ueber die 
@@ -654,6 +686,7 @@ class RobotMotionHandlerMovegroup(Node):
             response.message = "System is already executing a move."
             return response
             
+        self._reset_hardware_state()
         self.is_executing = True
         self.stop_requested = False
         
@@ -786,6 +819,7 @@ class RobotMotionHandlerMovegroup(Node):
             response.message = "Already executing."
             return response
             
+        self._reset_hardware_state()
         self.is_executing = True
         self.stop_requested = False
         try:
