@@ -183,54 +183,57 @@ class RobotMotionHandlerMovegroup(Node):
         self.is_executing = True
         self.stop_requested = False
         
-        try:
-            # --- PHASE 1: RETRACT (Move up by 15cm) ---
+        def _task():
             try:
-                trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
-                cur_x = trans.transform.translation.x * 1000.0
-                cur_y = trans.transform.translation.y * 1000.0
-                cur_z = trans.transform.translation.z * 1000.0
-                
-                cur_q = [
-                    trans.transform.rotation.x,
-                    trans.transform.rotation.y,
-                    trans.transform.rotation.z,
-                    trans.transform.rotation.w
-                ]
-                from scipy.spatial.transform import Rotation as R
-                cur_rot = R.from_quat(cur_q)
-                cur_euler = cur_rot.as_euler('xyz', degrees=False)
-                
-                target_z = min(cur_z + 150.0, 500.0) 
-                
-                class DummyRequest:
-                    pose = [cur_x, cur_y, target_z, cur_euler[0], cur_euler[1], cur_euler[2]]
-                
-                class DummyResponse:
-                    ret = 0
-                    message = ""
-                
-                move_req = DummyRequest()
-                move_res = DummyResponse()
-                
-                self.ui_log('Phase 1: Retracting 15cm upwards...', 'action')
-                self._execute_move_to_pose_core(move_req, move_res)
-                
-            except Exception as e:
-                self.ui_log(f'Retract Phase failed or skipped: {e}', 'warn')
+                # --- PHASE 1: RETRACT (Move up by 15cm) ---
+                try:
+                    trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+                    cur_x = trans.transform.translation.x * 1000.0
+                    cur_y = trans.transform.translation.y * 1000.0
+                    cur_z = trans.transform.translation.z * 1000.0
+                    
+                    cur_q = [
+                        trans.transform.rotation.x,
+                        trans.transform.rotation.y,
+                        trans.transform.rotation.z,
+                        trans.transform.rotation.w
+                    ]
+                    from scipy.spatial.transform import Rotation as R
+                    cur_rot = R.from_quat(cur_q)
+                    cur_euler = cur_rot.as_euler('xyz', degrees=False)
+                    
+                    target_z = min(cur_z + 150.0, 500.0) 
+                    
+                    class DummyRequest:
+                        pose = [cur_x, cur_y, target_z, cur_euler[0], cur_euler[1], cur_euler[2]]
+                    
+                    class DummyResponse:
+                        ret = 0
+                        message = ""
+                    
+                    move_req = DummyRequest()
+                    move_res = DummyResponse()
+                    
+                    self.ui_log('Phase 1: Retracting 15cm upwards...', 'action')
+                    self._execute_move_to_pose_core(move_req, move_res)
+                    
+                except Exception as e:
+                    self.ui_log(f'Retract Phase failed or skipped: {e}', 'warn')
 
-            # --- PHASE 2: MOVE TO INITIAL POSE ---
-            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
-                
-            response.success = True
-            response.message = "Initial Pose reached."
-        except Exception as e:
-            self.ui_log(f"Error: {e}", 'error')
-            response.success = False
-            response.message = str(e)
-        finally:
-            self.is_executing = False
-            
+                # --- PHASE 2: MOVE TO INITIAL POSE ---
+                self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
+                    
+                self.ui_log("Initial Pose reached.", 'success')
+            except Exception as e:
+                self.ui_log(f"Error: {e}", 'error')
+            finally:
+                self.is_executing = False
+
+        import threading
+        threading.Thread(target=_task).start()
+        
+        response.success = True
+        response.message = "Initial Pose sequence started."
         return response
 
     def _go_to_joints(self, target_joints, log_msg="Moving to target pose..."):
@@ -349,60 +352,62 @@ class RobotMotionHandlerMovegroup(Node):
         self.is_executing = True
         self.stop_requested = False
         
-        try:
-            # 1. Stop MoveIt Servo
-            if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
-                req = Trigger.Request()
-                self.servo_stop_client.call_async(req)
-                time.sleep(0.5) 
+        def _task():
+            try:
+                # 1. Stop MoveIt Servo
+                if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
+                    req = Trigger.Request()
+                    self.servo_stop_client.call_async(req)
+                    time.sleep(0.5) 
+                    
+                # 2. Publish trajectory
+                msg = JointTrajectory()
+                msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
                 
-            # 2. Publish trajectory
-            msg = JointTrajectory()
-            msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-            
-            point = JointTrajectoryPoint()
-            # request.angles is a list of floats (radians)
-            if len(request.angles) >= 6:
-                point.positions = [float(request.angles[0]), float(request.angles[1]), float(request.angles[2]), 
-                                   float(request.angles[3]), float(request.angles[4]), float(request.angles[5])]
-            else:
-                raise Exception("Not enough joint angles provided")
+                point = JointTrajectoryPoint()
+                # request.angles is a list of floats (radians)
+                if len(request.angles) >= 6:
+                    point.positions = [float(request.angles[0]), float(request.angles[1]), float(request.angles[2]), 
+                                       float(request.angles[3]), float(request.angles[4]), float(request.angles[5])]
+                else:
+                    raise Exception("Not enough joint angles provided")
+                    
+                point.velocities = [0.0] * 6
+                # Duration based on speed scale
+                speed_multiplier = self.current_speed_scale / 0.5
+                duration_sec = max(1.0, 2.0 / speed_multiplier)
                 
-            point.velocities = [0.0] * 6
-            # Duration based on speed scale
-            speed_multiplier = self.current_speed_scale / 0.5
-            duration_sec = max(1.0, 2.0 / speed_multiplier)
-            
-            point.time_from_start = Duration(sec=int(duration_sec), nanosec=int((duration_sec - int(duration_sec)) * 1e9))
-            
-            msg.points.append(point)
-            self.publisher_.publish(msg)
-            self.ui_log('Trajectory sent. Moving to Joint Pose...', 'action')
-            
-            # Warte auf die Ausfuehrung der Bewegung
-            start_wait = time.time()
-            while time.time() - start_wait < duration_sec + 0.5:
-                if self.stop_requested:
-                    self.ui_log('Movement interrupted by EMERGENCY STOP!', 'error')
-                    break
-                time.sleep(0.1)
-            
-            # 3. Start MoveIt Servo again
-            if self.servo_start_client.wait_for_service(timeout_sec=1.0):
-                req = Trigger.Request()
-                self.servo_start_client.call_async(req)
-                self.ui_log('MoveIt Servo resumed.', 'info')
-                time.sleep(0.5)
+                point.time_from_start = Duration(sec=int(duration_sec), nanosec=int((duration_sec - int(duration_sec)) * 1e9))
                 
-            response.ret = 0
-            response.message = "Joint Pose reached."
-        except Exception as e:
-            self.ui_log(f"Error: {e}", 'error')
-            response.ret = -1
-            response.message = str(e)
-        finally:
-            self.is_executing = False
-            
+                msg.points.append(point)
+                self.publisher_.publish(msg)
+                self.ui_log('Trajectory sent. Moving to Joint Pose...', 'action')
+                
+                # Warte auf die Ausfuehrung der Bewegung
+                start_wait = time.time()
+                while time.time() - start_wait < duration_sec + 0.5:
+                    if self.stop_requested:
+                        self.ui_log('Movement interrupted by EMERGENCY STOP!', 'error')
+                        break
+                    time.sleep(0.1)
+                
+                # 3. Start MoveIt Servo again
+                if self.servo_start_client.wait_for_service(timeout_sec=1.0):
+                    req = Trigger.Request()
+                    self.servo_start_client.call_async(req)
+                    self.ui_log('MoveIt Servo resumed.', 'info')
+                    time.sleep(0.5)
+                    
+            except Exception as e:
+                self.ui_log(f"Error: {e}", 'error')
+            finally:
+                self.is_executing = False
+
+        import threading
+        threading.Thread(target=_task).start()
+        
+        response.ret = 0
+        response.message = "Joint Pose sequence started."
         return response
 
     def joint_state_cb(self, msg):
@@ -605,145 +610,21 @@ class RobotMotionHandlerMovegroup(Node):
         self.is_executing = True
         self.stop_requested = False
         
-        try:
-            from moveit_msgs.srv import GetPositionIK
-            from geometry_msgs.msg import PoseStamped
-            from scipy.spatial.transform import Rotation as R
-            from moveit_msgs.msg import RobotState
-            from sensor_msgs.msg import JointState
-            import time
-            
-            # Zuerst lesen wir den aktuellen Zustand aus, um den ersten Seed zu haben
-            # Wir verwenden einfach den ersten Punkt und loesen ihn ohne Seed (oder mit aktueller Roboterpose)
-            current_seed_joints = None
-            
-            trajectory_points = []
-            
-            for i, wp in enumerate(waypoints):
-                target_x, target_y, target_z, target_r, target_p, target_yaw = wp
+        def _task():
+            try:
+                from moveit_msgs.srv import GetPositionIK
+                from geometry_msgs.msg import PoseStamped
+                from scipy.spatial.transform import Rotation as R
+                from moveit_msgs.msg import RobotState
+                from sensor_msgs.msg import JointState
+                import time
                 
-                target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
-                q = target_rot.as_quat()
-                
-                ik_req = GetPositionIK.Request()
-                ik_req.ik_request.group_name = "lite6"
-                ik_req.ik_request.pose_stamped = PoseStamped()
-                ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
-                ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
-                ik_req.ik_request.pose_stamped.pose.position.y = float(target_y)
-                ik_req.ik_request.pose_stamped.pose.position.z = float(target_z)
-                ik_req.ik_request.pose_stamped.pose.orientation.x = float(q[0])
-                ik_req.ik_request.pose_stamped.pose.orientation.y = float(q[1])
-                ik_req.ik_request.pose_stamped.pose.orientation.z = float(q[2])
-                ik_req.ik_request.pose_stamped.pose.orientation.w = float(q[3])
-                ik_req.ik_request.timeout.sec = 1
-                
-                # Verwende den letzten Loesungsstand als Seed für den naechsten Punkt!
-                if current_seed_joints is not None:
-                    rs = RobotState()
-                    js = JointState()
-                    js.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-                    js.position = current_seed_joints
-                    rs.joint_state = js
-                    ik_req.ik_request.robot_state = rs
-                
-                if not self.ik_client.wait_for_service(timeout_sec=2.0):
-                    raise Exception("IK Service /compute_ik nicht verfuegbar!")
-                    
-                future = self.ik_client.call_async(ik_req)
-                
-                start_wait = time.time()
-                while not future.done():
-                    if time.time() - start_wait > 2.0:
-                        raise Exception("Timeout beim Warten auf IK-Antwort.")
-                    time.sleep(0.01)
-                    
-                ik_res = future.result()
-                
-                if ik_res.error_code.val != 1:
-                    raise Exception(f"IK Berechnung am Wegpunkt {i} fehlgeschlagen. Ziel ausser Reichweite oder Singularitaet.")
-                    
-                joint_names = ik_res.solution.joint_state.name
-                positions = ik_res.solution.joint_state.position
-                
-                target_joints = [0.0] * 6
-                for j in range(1, 7):
-                    j_name = f'joint{j}'
-                    idx = joint_names.index(j_name)
-                    target_joints[j-1] = positions[idx]
-                    
-                current_seed_joints = target_joints
-                
-                # Berechne die Dauer bis zu diesem Punkt
-                # Der erste Punkt kriegt 2 Sekunden zum Anfahren, alle anderen z.B. 0.4 Sekunden (Lawnmower-Stuecke)
-                duration = 2.0 if i == 0 else 0.4
-                trajectory_points.append((target_joints, duration))
-
-            self.ui_log('All IK points successfully resolved. Executing continuous wave trajectory...', 'success')
-            self._go_to_joints_trajectory(trajectory_points, "Executing continuous Octomap Wave Scan...")
-            
-            response.success = True
-            response.message = "Scan path completed."
-            
-        except Exception as e:
-            self.ui_log(f"Error during scan path: {e}", 'error')
-            response.success = False
-            response.message = str(e)
-        finally:
-            self.is_executing = False
-            
-        return response
-
-    def execute_object_scan_cb(self, request, response):
-        if self.is_executing:
-            response.success = False
-            response.message = "System is already executing a move."
-            return response
-            
-        self._reset_hardware_state()
-        self.is_executing = True
-        self.stop_requested = False
-        
-        try:
-            from moveit_msgs.srv import GetPositionIK
-            from geometry_msgs.msg import PoseStamped
-            from scipy.spatial.transform import Rotation as R
-            from moveit_msgs.msg import RobotState
-            from sensor_msgs.msg import JointState
-            import time
-            
-            object_configs = [
-                ("Blue Cube", "target_blue_cube", (0.174, 0.082), "var(--rviz-z)"),
-                ("Red Rectangle", "target_red_rectangle", (0.219, -0.083), "var(--rviz-x)"),
-                ("Green Cylinder", "target_green_cylinder", (0.274, 0.018), "var(--rviz-y)")
-            ]
-            
-            current_seed_joints = None
-            prev_obj_pos = None
-
-            for idx, (name, frame_id, default_pos, cvar) in enumerate(object_configs):
-                if self.stop_requested:
-                    self.ui_log('Scan Loop interrupted by EMERGENCY STOP!', 'error')
-                    break
-                    
-                name_html = f"<span style='color: {cvar}; font-weight: 700;'>{name}</span>"
-                self.ui_log(f'Fetching Live-Position for {name_html} via TF...', 'info')
-                try:
-                    t = self.tf_buffer.lookup_transform('link_base', frame_id, rclpy.time.Time())
-                    obj_x = t.transform.translation.x
-                    obj_y = t.transform.translation.y
-                    self.ui_log(f'Live-Position {name_html}: <span style="color: var(--rviz-x);">X={obj_x:.3f}</span>, <span style="color: var(--rviz-y);">Y={obj_y:.3f}</span>', 'success')
-                except Exception as e:
-                    self.ui_log(f'Live-Position for {name_html} not found. Using Fallback.', 'warn')
-                    obj_x = default_pos[0]
-                    obj_y = default_pos[1]
-                    
-                obj_pos = (obj_x, obj_y)
-                self.ui_log(f'Generating Cross Scan Path for {name_html}...', 'info')
-                
-                waypoints = self.generate_single_object_trajectory(obj_pos, prev_obj_pos)
+                # Zuerst lesen wir den aktuellen Zustand aus, um den ersten Seed zu haben
+                # Wir verwenden einfach den ersten Punkt und loesen ihn ohne Seed (oder mit aktueller Roboterpose)
+                current_seed_joints = None
                 
                 trajectory_points = []
+                
                 for i, wp in enumerate(waypoints):
                     target_x, target_y, target_z, target_r, target_p, target_yaw = wp
                     
@@ -763,6 +644,7 @@ class RobotMotionHandlerMovegroup(Node):
                     ik_req.ik_request.pose_stamped.pose.orientation.w = float(q[3])
                     ik_req.ik_request.timeout.sec = 1
                     
+                    # Verwende den letzten Loesungsstand als Seed für den naechsten Punkt!
                     if current_seed_joints is not None:
                         rs = RobotState()
                         js = JointState()
@@ -798,33 +680,158 @@ class RobotMotionHandlerMovegroup(Node):
                         
                     current_seed_joints = target_joints
                     
-                    duration = 2.0 if i == 0 else 0.25
+                    # Berechne die Dauer bis zu diesem Punkt
+                    # Der erste Punkt kriegt 2 Sekunden zum Anfahren, alle anderen z.B. 0.4 Sekunden (Lawnmower-Stuecke)
+                    duration = 2.0 if i == 0 else 0.4
                     trajectory_points.append((target_joints, duration))
 
-                if self.stop_requested:
-                    self.ui_log('Scan Loop interrupted by EMERGENCY STOP before execution!', 'error')
-                    break
-
-                self.ui_log(f'Executing Scan for {name_html}...', 'action')
-                self._go_to_joints_trajectory(trajectory_points, f"Executing Cross Scan for {name_html}...")
+                self.ui_log('All IK points successfully resolved. Executing continuous wave trajectory...', 'success')
+                self._go_to_joints_trajectory(trajectory_points, "Executing continuous Octomap Wave Scan...")
                 
-                prev_obj_pos = obj_pos
+            except Exception as e:
+                self.ui_log(f"Error during scan path: {e}", 'error')
+            finally:
+                self.is_executing = False
+                
+        import threading
+        threading.Thread(target=_task).start()
+        
+        response.success = True
+        response.message = "Scan path processing started."
+        return response
 
-            # Am Ende zurueck zur Initial Pose
-            if not self.stop_requested:
-                init_html = "<span style='color: var(--orange); font-weight: 700;'>Initial Pose</span>"
-                self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], f"Returning to {init_html}...")
-            
-            response.success = True
-            response.message = "Scan path completed."
-            
-        except Exception as e:
-            self.ui_log(f"Error during scan path: {e}", 'error')
+    def execute_object_scan_cb(self, request, response):
+        if self.is_executing:
             response.success = False
-            response.message = str(e)
-        finally:
-            self.is_executing = False
+            response.message = "System is already executing a move."
+            return response
             
+        self._reset_hardware_state()
+        self.is_executing = True
+        self.stop_requested = False
+        
+        def _task():
+            try:
+                from moveit_msgs.srv import GetPositionIK
+                from geometry_msgs.msg import PoseStamped
+                from scipy.spatial.transform import Rotation as R
+                from moveit_msgs.msg import RobotState
+                from sensor_msgs.msg import JointState
+                import time
+                
+                object_configs = [
+                    ("Blue Cube", "target_blue_cube", (0.174, 0.082), "var(--rviz-z)"),
+                    ("Red Rectangle", "target_red_rectangle", (0.219, -0.083), "var(--rviz-x)"),
+                    ("Green Cylinder", "target_green_cylinder", (0.274, 0.018), "var(--rviz-y)")
+                ]
+                
+                current_seed_joints = None
+                prev_obj_pos = None
+
+                for idx, (name, frame_id, default_pos, cvar) in enumerate(object_configs):
+                    if self.stop_requested:
+                        self.ui_log('Scan Loop interrupted by EMERGENCY STOP!', 'error')
+                        break
+                        
+                    name_html = f"<span style='color: {cvar}; font-weight: 700;'>{name}</span>"
+                    self.ui_log(f'Fetching Live-Position for {name_html} via TF...', 'info')
+                    try:
+                        t = self.tf_buffer.lookup_transform('link_base', frame_id, rclpy.time.Time())
+                        obj_x = t.transform.translation.x
+                        obj_y = t.transform.translation.y
+                        self.ui_log(f'Live-Position {name_html}: <span style="color: var(--rviz-x);">X={obj_x:.3f}</span>, <span style="color: var(--rviz-y);">Y={obj_y:.3f}</span>', 'success')
+                    except Exception as e:
+                        self.ui_log(f'Live-Position for {name_html} not found. Using Fallback.', 'warn')
+                        obj_x = default_pos[0]
+                        obj_y = default_pos[1]
+                        
+                    obj_pos = (obj_x, obj_y)
+                    self.ui_log(f'Generating Cross Scan Path for {name_html}...', 'info')
+                    
+                    waypoints = self.generate_single_object_trajectory(obj_pos, prev_obj_pos)
+                    
+                    trajectory_points = []
+                    for i, wp in enumerate(waypoints):
+                        target_x, target_y, target_z, target_r, target_p, target_yaw = wp
+                        
+                        target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
+                        q = target_rot.as_quat()
+                        
+                        ik_req = GetPositionIK.Request()
+                        ik_req.ik_request.group_name = "lite6"
+                        ik_req.ik_request.pose_stamped = PoseStamped()
+                        ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
+                        ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
+                        ik_req.ik_request.pose_stamped.pose.position.y = float(target_y)
+                        ik_req.ik_request.pose_stamped.pose.position.z = float(target_z)
+                        ik_req.ik_request.pose_stamped.pose.orientation.x = float(q[0])
+                        ik_req.ik_request.pose_stamped.pose.orientation.y = float(q[1])
+                        ik_req.ik_request.pose_stamped.pose.orientation.z = float(q[2])
+                        ik_req.ik_request.pose_stamped.pose.orientation.w = float(q[3])
+                        ik_req.ik_request.timeout.sec = 1
+                        
+                        if current_seed_joints is not None:
+                            rs = RobotState()
+                            js = JointState()
+                            js.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+                            js.position = current_seed_joints
+                            rs.joint_state = js
+                            ik_req.ik_request.robot_state = rs
+                        
+                        if not self.ik_client.wait_for_service(timeout_sec=2.0):
+                            raise Exception("IK Service /compute_ik nicht verfuegbar!")
+                            
+                        future = self.ik_client.call_async(ik_req)
+                        
+                        start_wait = time.time()
+                        while not future.done():
+                            if time.time() - start_wait > 2.0:
+                                raise Exception("Timeout beim Warten auf IK-Antwort.")
+                            time.sleep(0.01)
+                            
+                        ik_res = future.result()
+                        
+                        if ik_res.error_code.val != 1:
+                            raise Exception(f"IK Berechnung am Wegpunkt {i} fehlgeschlagen. Ziel ausser Reichweite oder Singularitaet.")
+                            
+                        joint_names = ik_res.solution.joint_state.name
+                        positions = ik_res.solution.joint_state.position
+                        
+                        target_joints = [0.0] * 6
+                        for j in range(1, 7):
+                            j_name = f'joint{j}'
+                            idx = joint_names.index(j_name)
+                            target_joints[j-1] = positions[idx]
+                            
+                        current_seed_joints = target_joints
+                        
+                        duration = 2.0 if i == 0 else 0.25
+                        trajectory_points.append((target_joints, duration))
+
+                    if self.stop_requested:
+                        self.ui_log('Scan Loop interrupted by EMERGENCY STOP before execution!', 'error')
+                        break
+
+                    self.ui_log(f'Executing Scan for {name_html}...', 'action')
+                    self._go_to_joints_trajectory(trajectory_points, f"Executing Cross Scan for {name_html}...")
+                    
+                    prev_obj_pos = obj_pos
+
+                # Am Ende zurueck zur Initial Pose
+                if not self.stop_requested:
+                    init_html = "<span style='color: var(--orange); font-weight: 700;'>Initial Pose</span>"
+                    self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], f"Returning to {init_html}...")
+                
+            except Exception as e:
+                self.ui_log(f"Error during scan path: {e}", 'error')
+            finally:
+                self.is_executing = False
+                
+        import threading
+        threading.Thread(target=_task).start()
+        
+        response.success = True
+        response.message = "Object Scan processing started."
         return response
 
     def execute_move_to_pose_cb(self, request, response):
@@ -836,12 +843,18 @@ class RobotMotionHandlerMovegroup(Node):
         self._reset_hardware_state()
         self.is_executing = True
         self.stop_requested = False
-        try:
-            return self._execute_move_to_pose_core(request, response)
-        finally:
-            self.is_executing = False
-            
-    def _execute_move_to_pose_core(self, request, response):
+        def _task():
+            try:
+                self._execute_move_to_pose_core(request, response)
+            finally:
+                self.is_executing = False
+                
+        import threading
+        threading.Thread(target=_task).start()
+        
+        response.ret = 0
+        response.message = "Move to pose started."
+        return response
         try:
             from moveit_msgs.srv import GetPositionIK
             from geometry_msgs.msg import PoseStamped
