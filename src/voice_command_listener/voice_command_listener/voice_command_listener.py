@@ -102,7 +102,7 @@ class VoiceCommandListener(Node):
         # Startmeldung im Terminal
         print(CLEAR_SCREEN + HIDE_CURSOR, end='')
         print("✅ Voice Command Listener ist bereit.")
-        print("   Warte auf Sprachbefehle ('Move to Absolute Pose', 'Move to Initial Pose')...")
+        print("   Warte auf Sprachbefehle ('Move to Absolute Pose' / 'Fahre zur absoluten Position', 'Move to Initial Pose' / 'Fahre zur Startposition')...")
 
         # <<< Publisher fuer UI-Feedback >>>
         self.feedback_pub = self.create_publisher(StringMsg, UI_VOICE_FEEDBACK_TOPIC, 10)
@@ -111,13 +111,13 @@ class VoiceCommandListener(Node):
         self.word_buffer = deque(maxlen=50)                     
         self.last_trigger_ts = 0.0                          
         
-        # Regex-Pattern fuer die Befehlserkennung (Ausschliesslich Englisch)
+        # Regex-Pattern fuer die Befehlserkennung (Englisch und Deutsch)
         self.patterns = {
-            "MoveTo: pose": re.compile(r"\bmove to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
-            "MoveTo: initial": re.compile(r"\b(?:move to )?initial (?:pose|pause|power|post|posts|pass|poza|posa)\b", re.IGNORECASE),
-            "Speed: faster": re.compile(r"\b(?:go |move )?faster\b", re.IGNORECASE),
-            "Speed: slower": re.compile(r"\b(?:go |move )?slower\b", re.IGNORECASE),
-            "Scan: objects": re.compile(r"\bscan object(s)?\b", re.IGNORECASE)
+            "MoveTo: pose": re.compile(r"\b(?:move to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa)|fahre zur absoluten position|gehe zur zielpose|absolute position anfahren)\b", re.IGNORECASE),
+            "MoveTo: initial": re.compile(r"\b(?:(?:move to )?initial (?:pose|pause|power|post|posts|pass|poza|posa)|fahre zur startposition|zur(?:ü|ue)ck zur ausgangsposition|grundstellung anfahren|zur(?:ü|ue)ck zum start)\b", re.IGNORECASE),
+            "Speed: faster": re.compile(r"\b(?:(?:go |move )?faster|fahre schneller|bewege dich schneller|erh(?:ö|oe)he die geschwindigkeit|schneller)\b", re.IGNORECASE),
+            "Speed: slower": re.compile(r"\b(?:(?:go |move )?slower|fahre langsamer|bewege dich langsamer|verringere die geschwindigkeit|langsamer)\b", re.IGNORECASE),
+            "Scan: objects": re.compile(r"\b(?:scan objects?|scanne objekte|starte objektscan|objekte erfassen|objektscan ausf(?:ü|ue)hren)\b", re.IGNORECASE)
         }
         
         self._last_cmd_text = ""

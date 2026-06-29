@@ -1,19 +1,19 @@
 whisper:
   inference:
     ros__parameters:
-      model_name: "base.en"      # Etwas größeres Modell für deutlich bessere Worterkennung
+      model_name: "base"         # Multilinguales Modell für Englisch und Deutsch
       wparams:
-        language: "en"           # Sprache auf Englisch für englische Kommandos
+        language: "auto"         # Automatische Spracherkennung (Englisch/Deutsch)
         task: "transcribe"
         # Wichtig: Biasing auf Deine aktuellen Befehle als zusammenhängender Satz (funktioniert bei Whisper am besten)
-        initial_prompt: "Move to Pose. Move to Absolute Pose. Move to Initial Pose. Faster. Slower. Scan path."
+        initial_prompt: "Move to Absolute Pose. Move to Initial Pose. Faster. Slower. Scan objects. Fahre zur absoluten Position. Fahre zur Startposition. Schneller. Langsamer. Scanne Objekte."
         # Für stabile, deterministische Erkennung (niedrige Latenz)
         temperature: 0.0
         beam_size: 2             # Beam Size leicht erhöhen, um phonetische Alternativen besser abzuwägen
         best_of: 1
         no_timestamps: true
         condition_on_previous_text: false   # vermeidet “Hängenbleiben” im Kontext
-        vad_filter: true                    # Falls Dein Server diese Option unterstützt
+        vad_filter: false                   # Deaktiviert, da es kurze Befehle oft abschneidet
         # VAD-Feineinstellungen (vorerst wieder deaktiviert)
         # vad_parameters:
         #   min_silence_duration_ms: 250
