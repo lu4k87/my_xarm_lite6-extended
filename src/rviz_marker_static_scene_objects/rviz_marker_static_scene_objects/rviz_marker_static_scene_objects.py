@@ -57,7 +57,24 @@ class DynamicSceneMarkerPublisher(Node):
         # State für Fallbacks
         self.last_known_poses = {}
         
+        from std_msgs.msg import Float32MultiArray
+        self.safe_x = 0.0
+        self.safe_y = 0.0
+        self.safe_radius = 0.20
+        self.safety_sub = self.create_subscription(
+            Float32MultiArray,
+            '/ui/safety_zone_params',
+            self.safety_cb,
+            10
+        )
+        
         self.get_logger().info('Dynamischer Marker-Publisher erfolgreich aktiv.')
+
+    def safety_cb(self, msg):
+        if len(msg.data) >= 3:
+            self.safe_x = msg.data[0]
+            self.safe_y = msg.data[1]
+            self.safe_radius = msg.data[2]
 
     # ---------------------------------------------------------
     # GEOMETRIE-BERECHNUNGEN (LINIENZÜGE)
@@ -253,6 +270,27 @@ class DynamicSceneMarkerPublisher(Node):
                 frame_id=TARGET_FRAME
             )
             marker_array.markers.append(m_scene)
+
+        # 3. Safety Zone Marker
+        m_safe = Marker()
+        m_safe.header.frame_id = TARGET_FRAME
+        m_safe.header.stamp = rclpy.time.Time().to_msg()
+        m_safe.ns = "safety_zone"
+        m_safe.id = 0
+        m_safe.type = Marker.CYLINDER
+        m_safe.action = Marker.ADD
+        m_safe.pose.position.x = self.safe_x
+        m_safe.pose.position.y = self.safe_y
+        m_safe.pose.position.z = 0.0
+        m_safe.pose.orientation = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+        m_safe.scale.x = self.safe_radius * 2.0
+        m_safe.scale.y = self.safe_radius * 2.0
+        m_safe.scale.z = 0.001
+        m_safe.color.r = 0.0
+        m_safe.color.g = 1.0
+        m_safe.color.b = 0.0
+        m_safe.color.a = 0.2
+        marker_array.markers.append(m_safe)
 
         # Komplettes Paket abschicken
         self.publisher_.publish(marker_array)

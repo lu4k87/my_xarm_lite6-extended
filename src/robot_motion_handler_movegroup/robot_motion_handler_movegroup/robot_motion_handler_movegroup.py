@@ -131,6 +131,18 @@ class RobotMotionHandlerMovegroup(Node):
             callback_group=self.cb_group
         )
         
+        from std_msgs.msg import Float32MultiArray
+        self.safe_x = 0.0
+        self.safe_y = 0.0
+        self.safe_radius = 0.20 # 20cm default
+        self.safety_sub = self.create_subscription(
+            Float32MultiArray,
+            '/ui/safety_zone_params',
+            self.safety_cb,
+            10,
+            callback_group=self.cb_group
+        )
+        
         # Start initial pose automatically once MoveIt Servo is ready
         self.startup_timer = self.create_timer(1.0, self._check_servo_ready, callback_group=self.cb_group)
         
@@ -154,6 +166,12 @@ class RobotMotionHandlerMovegroup(Node):
 
     def speed_cb(self, msg):
         self.current_speed_scale = msg.data
+
+    def safety_cb(self, msg):
+        if len(msg.data) >= 3:
+            self.safe_x = msg.data[0]
+            self.safe_y = msg.data[1]
+            self.safe_radius = msg.data[2]
 
     def _check_servo_ready(self):
         if self.servo_start_client.service_is_ready() and self.servo_stop_client.service_is_ready():
@@ -528,7 +546,7 @@ class RobotMotionHandlerMovegroup(Node):
             
         return waypoints
 
-    def generate_single_object_trajectory(self, obj_pos, prev_obj_pos=None, cross_size=0.10, height=0.11):
+    def generate_single_object_trajectory(self, obj_pos, prev_obj_pos=None, cross_size=0.10, height=0.15):
         """
         Generiert eine Trajektorie (Anflug + Kreuz) fuer ein einzelnes Objekt.
         """
@@ -540,6 +558,15 @@ class RobotMotionHandlerMovegroup(Node):
                 f = i / max(1, (steps - 1)) if steps > 1 else 1.0
                 x = p_start[0] + (p_end[0] - p_start[0]) * f
                 y = p_start[1] + (p_end[1] - p_start[1]) * f
+                
+                # Sicherheitsabstand zur anpassbaren Safety Zone (Kollisionsvermeidung)
+                r_base = math.hypot(x - self.safe_x, y - self.safe_y)
+                min_r = self.safe_radius
+                if r_base < min_r and r_base > 0.001:
+                    scale = min_r / r_base
+                    x = self.safe_x + (x - self.safe_x) * scale
+                    y = self.safe_y + (y - self.safe_y) * scale
+                    
                 z = height
                 
                 # Look-At Logik

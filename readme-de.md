@@ -282,8 +282,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 #### `tf_tuner` <kbd>NODE / UI</kbd>
 
-> **Zweck & Aufgabe:** Ein dediziertes ROS 2 Paket, das ein Live-Tuner Interface (PyQt5) bereitstellt, um dynamisch Kamera-Offsets (Punktwolke) sowie die Positionierung interaktiver 3D-Szenelemente (Würfel, Rechteck, Zylinder, Weiße Plane) in RViz ohne Neustart zu justieren.
-- 📤 **Publishes:** Aktualisiert dynamisch die TF-Broadcaster-Werte (`tf2_msgs/TFMessage` auf `/tf`).
+> **Zweck & Aufgabe:** Ein dediziertes ROS 2 Paket, das ein Live-Tuner Interface (PyQt5) bereitstellt, um dynamisch Kamera-Offsets (Punktwolke) sowie die Positionierung interaktiver 3D-Szenelemente (Würfel, Rechteck, Zylinder, Weiße Plane) und einer anpassbaren **Safety Zone** (mit einstellbarem Radius) in RViz ohne Neustart zu justieren.
+- 📤 **Publishes:** Aktualisiert dynamisch die TF-Broadcaster-Werte (`tf2_msgs/TFMessage` auf `/tf`) und publiziert Live-Safety-Parameter (`/ui/safety_zone_params`).
 
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
@@ -332,6 +332,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - `/ui/grasp_status` (`std_msgs/String`)
   - `/joint_states` (`sensor_msgs/JointState`)
   - `/ui/robot_control/current_speed` (`std_msgs/Float32`)
+  - `/ui/safety_zone_params` (Echtzeit-Anzeige der Safety-Zone-Grenzen)
 - 📤 **Publishes:**
   - `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`)
   - `/ui/grasp_object_cmd` (`std_msgs/String`)
@@ -344,9 +345,10 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 #### `robot_motion_handler_movegroup.py` <kbd>NODE</kbd>
 
-> **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Sowohl die "Move To: Absolute Pose" als auch die "Move To: Initial Pose" Bewegungen (ausgelöst über Web UI oder RViz) nutzen nun einen robusten **IK-Solver (Inverse Kinematik)**. Dieser berechnet die perfekten Gelenkwinkel für absolute Koordinaten und führt diese als sichere, kollisionsfreie Kurvenfahrten (Joint-Trajectories). Dadurch werden Self-Collisions und Singularitäten, die bei sturen kartesischen Geradeausfahrten quer durch den Raum entstehen, vollständig eliminiert. Die Gelenkbewegungen reagieren dynamisch auf die globale Geschwindigkeit (`speedScale`), was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt. **Object Cross Scan:** Verarbeitet den `/ui/start_object_scan` Service, der gezielte, extrem nahe (14cm Höhe) und kompakte 6cm-Kreuzflüge direkt über Objekten generiert. Die exakten Positionen der Objekte (Cube, Rectangle, Cylinder) werden dabei Just-in-Time (unmittelbar vor dem Anflug auf jedes einzelne Objekt) live über den TF-Baum ermittelt, mit einem Fallback auf statische Standardwerte. Auch hier fokussiert der TCP ununterbrochen die Objektzentren (exakter trigonometrischer Look-At ohne Dämpfung), um lückenlos hochdetaillierte Punktewolken für jedes einzelne Objekt zu erstellen. Während des Überflugs von einem Objekt zum nächsten blickt der TCP starr senkrecht nach unten, um wilde Handgelenk-Verdrehungen zu vermeiden. Am Ende der gesamten Sequenz fährt der Arm elegant und sicher zurück auf die Initial Pose.
+> **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Sowohl die "Move To: Absolute Pose" als auch die "Move To: Initial Pose" Bewegungen (ausgelöst über Web UI oder RViz) nutzen nun einen robusten **IK-Solver (Inverse Kinematik)**. Dieser berechnet die perfekten Gelenkwinkel für absolute Koordinaten und führt diese als sichere, kollisionsfreie Kurvenfahrten (Joint-Trajectories). Dadurch werden Self-Collisions und Singularitäten, die bei sturen kartesischen Geradeausfahrten quer durch den Raum entstehen, vollständig eliminiert. Die Gelenkbewegungen reagieren dynamisch auf die globale Geschwindigkeit (`speedScale`), was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt. **Object Cross Scan:** Verarbeitet den `/ui/start_object_scan` Service, der gezielte, extrem nahe (15cm Höhe) und kompakte 6cm-Kreuzflüge direkt über Objekten generiert. Die exakten Positionen der Objekte (Cube, Rectangle, Cylinder) werden dabei Just-in-Time (unmittelbar vor dem Anflug auf jedes einzelne Objekt) live über den TF-Baum ermittelt, mit einem Fallback auf statische Standardwerte. Auch hier fokussiert der TCP ununterbrochen die Objektzentren (exakter trigonometrischer Look-At ohne Dämpfung), um lückenlos hochdetaillierte Punktewolken für jedes einzelne Objekt zu erstellen. Während des Überflugs von einem Objekt zum nächsten blickt der TCP starr senkrecht nach unten, um wilde Handgelenk-Verdrehungen zu vermeiden. Am Ende der gesamten Sequenz fährt der Arm elegant und sicher zurück auf die Initial Pose. Zudem abonniert der Planer live die dynamische **Safety Zone**, stoppt den Arm sicher an der Grenze und neigt die Kamera automatisch weiter nach unten, um das Objekt weiterhin perfekt zu fokussiert zu halten, falls dieses zu nah am Roboterfuß liegt.
 - 📥 **Subscribes:**
   - `/ui/robot_control/current_speed` (`std_msgs/Float64`)
+  - `/ui/safety_zone_params` (Dynamische Hindernis-Integration)
   - Skaliert die Geschwindigkeit der Joint-Bewegungen synchron zur UI.
 - 📤 **Publishes:**
   - `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`)
@@ -364,7 +366,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 #### `rviz_marker_static_scene_objects.py` <kbd>NODE</kbd>
 
-> **Zweck & Aufgabe:** Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuelle Tischkanten). Verwendet den Zeitstempel `0`, um ein Flackern ("Flickering") aufgrund von asynchronen TF-Bäumen zu verhindern.
+> **Zweck & Aufgabe:** Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuelle Tischkanten, interaktive Ziel-Boxen und eine dynamische, transparente **Safety Zone**). Verwendet den Zeitstempel `0`, um ein Flackern ("Flickering") aufgrund von asynchronen TF-Bäumen zu verhindern.
 - 📤 **Publishes:**
   - `/scene_markers_array` (`visualization_msgs/MarkerArray`)
 

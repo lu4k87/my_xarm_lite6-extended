@@ -281,8 +281,8 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `tf_tuner` <kbd>NODE / UI</kbd>
 
-> **Purpose & Task:** A dedicated ROS 2 package providing a live tuner interface (PyQt5) to dynamically adjust the camera offsets (Pointcloud) as well as interactively position 3D scene elements (Cube, Rectangle, Cylinder, White Plane) in RViz without restarting nodes.
-- 📤 **Publishes:** Dynamically updates the TF broadcaster values (`tf2_msgs/TFMessage` on `/tf`).
+> **Purpose & Task:** A dedicated ROS 2 package providing a live tuner interface (PyQt5) to dynamically adjust the camera offsets (Pointcloud) as well as interactively position 3D scene elements (Cube, Rectangle, Cylinder, White Plane) and an adjustable **Safety Zone** (with tunable radius) in RViz without restarting nodes.
+- 📤 **Publishes:** Dynamically updates the TF broadcaster values (`tf2_msgs/TFMessage` on `/tf`) and publishes live safety parameters (`/ui/safety_zone_params`).
 
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Feature: Multimodal Interaction (Voice & Gaze Control)
 *These experimental modules allow for "hands-free" control of the system.*
@@ -343,7 +343,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `robot_motion_handler_movegroup.py` <kbd>NODE</kbd>
 
-> **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Move To: Absolute Pose" and "Move To: Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The joint movements perfectly respect the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution. **Object Cross Scan:** Handles the `/ui/start_object_scan` service which generates precise, individual 6cm cross-pattern flights directly over objects at extreme proximity (14cm above the table). The exact positions of the objects (Cube, Rectangle, Cylinder) are determined Just-in-Time (immediately before approaching each individual object) live via the TF tree, with a fallback to static default values. The TCP utilizes an exact, undamped trigonometric focal-point look-at logic to perfectly aim at the object's center during the cross flight. To prevent IK singularities and wrist twists, the TCP points strictly straight down during the 15-step transitions between objects, and the entire sequence seamlessly finishes by safely returning to the Initial Pose.
+> **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Move To: Absolute Pose" and "Move To: Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The joint movements perfectly respect the global `speedScale`, scaling dynamically from butter-smooth slow movements to lightning-fast execution. **Object Cross Scan:** Handles the `/ui/start_object_scan` service which generates precise, individual 6cm cross-pattern flights directly over objects at extreme proximity (15cm above the table). The exact positions of the objects (Cube, Rectangle, Cylinder) are determined Just-in-Time (immediately before approaching each individual object) live via the TF tree, with a fallback to static default values. The TCP utilizes an exact, undamped trigonometric focal-point look-at logic to perfectly aim at the object's center during the cross flight. To prevent IK singularities and wrist twists, the TCP points strictly straight down during the 15-step transitions between objects, and the entire sequence seamlessly finishes by safely returning to the Initial Pose. The planner also actively subscribes to the dynamic **Safety Zone**, halting the arm at the boundary while automatically tilting the camera to keep the target centered if an object is located too close to the robot's base.
 - 📥 **Subscribes:**
   - `/ui/robot_control/current_speed` (`std_msgs/Float64`)
   - Scales the velocity of the Joint movements synchronously with the UI.
@@ -363,7 +363,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `rviz_marker_static_scene_objects.py` <kbd>NODE</kbd>
 
-> **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
+> **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges, interactive target boxes, and a dynamic transparent **Safety Zone**). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
 - 📤 **Publishes:**
   - `/scene_markers_array` (`visualization_msgs/MarkerArray`)
 

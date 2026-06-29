@@ -40,6 +40,12 @@ class TFTunerGUI(QWidget):
                 'frame_id': 'target_white_plane',
                 'x': 220, 'y': 0, 'z': -3,
                 'roll': 0, 'pitch': 0, 'yaw': 0
+            },
+            'Safety Zone': {
+                'frame_id': 'target_safety_zone',
+                'x': 0, 'y': 0, 'z': 0,
+                'roll': 0, 'pitch': 0, 'yaw': 0,
+                'radius': 200
             }
         }
         self.current_selection = 'Zed M Camera'
@@ -196,8 +202,30 @@ class TFTunerGUI(QWidget):
         yaw_layout.addWidget(self.yaw_spin)
         layout.addLayout(yaw_layout)
 
+        # Radius Slider
+        radius_layout = QHBoxLayout()
+        self.radius_label = QLabel('Radius (nur Safety Zone):')
+        self.radius_slider = QSlider(Qt.Horizontal)
+        self.radius_slider.setRange(0, 1000) # 0 to 1.0m
+        self.radius_slider.setValue(self.elements[self.current_selection].get('radius', 0))
+        
+        self.radius_spin = QDoubleSpinBox()
+        self.radius_spin.setRange(0.0, 1.0)
+        self.radius_spin.setDecimals(3)
+        self.radius_spin.setSingleStep(0.01)
+        self.radius_spin.setSuffix(" m")
+        self.radius_spin.setValue(self.elements[self.current_selection].get('radius', 0) / 1000.0)
+        
+        self.radius_slider.valueChanged.connect(lambda v: self.radius_spin.setValue(v / 1000.0))
+        self.radius_spin.valueChanged.connect(lambda v: self.radius_slider.setValue(int(v * 1000.0)))
+        
+        radius_layout.addWidget(self.radius_label)
+        radius_layout.addWidget(self.radius_slider)
+        radius_layout.addWidget(self.radius_spin)
+        layout.addLayout(radius_layout)
+
         self.setLayout(layout)
-        self.resize(550, 300)
+        self.resize(550, 350)
 
     def on_selection_changed(self, text):
         # Save current state
@@ -207,6 +235,8 @@ class TFTunerGUI(QWidget):
         self.elements[self.current_selection]['roll'] = self.roll_slider.value()
         self.elements[self.current_selection]['pitch'] = self.pitch_slider.value()
         self.elements[self.current_selection]['yaw'] = self.yaw_slider.value()
+        if 'radius' in self.elements[self.current_selection]:
+            self.elements[self.current_selection]['radius'] = self.radius_slider.value()
         
         # Update selection
         self.current_selection = text
@@ -218,6 +248,7 @@ class TFTunerGUI(QWidget):
         self.roll_slider.blockSignals(True)
         self.pitch_slider.blockSignals(True)
         self.yaw_slider.blockSignals(True)
+        self.radius_slider.blockSignals(True)
         
         # Load new state
         self.x_slider.setValue(self.elements[text]['x'])
@@ -226,6 +257,7 @@ class TFTunerGUI(QWidget):
         self.roll_slider.setValue(self.elements[text]['roll'])
         self.pitch_slider.setValue(self.elements[text]['pitch'])
         self.yaw_slider.setValue(self.elements[text]['yaw'])
+        self.radius_slider.setValue(self.elements[text].get('radius', 0))
         
         # Unblock signals
         self.x_slider.blockSignals(False)
@@ -234,6 +266,7 @@ class TFTunerGUI(QWidget):
         self.roll_slider.blockSignals(False)
         self.pitch_slider.blockSignals(False)
         self.yaw_slider.blockSignals(False)
+        self.radius_slider.blockSignals(False)
         
         # Manually trigger updates for spinboxes
         self.x_spin.setValue(self.elements[text]['x'] / 1000.0)
@@ -242,6 +275,12 @@ class TFTunerGUI(QWidget):
         self.roll_spin.setValue(self.elements[text]['roll'] / 10.0)
         self.pitch_spin.setValue(self.elements[text]['pitch'] / 10.0)
         self.yaw_spin.setValue(self.elements[text]['yaw'] / 10.0)
+        self.radius_spin.setValue(self.elements[text].get('radius', 0) / 1000.0)
+        
+        # Hide/Disable Radius slider if not Safety Zone
+        is_safe = (text == 'Safety Zone')
+        self.radius_slider.setEnabled(is_safe)
+        self.radius_spin.setEnabled(is_safe)
         
         self.last_log_values = None # Force log update
 
@@ -253,6 +292,8 @@ class TFTunerGUI(QWidget):
         self.elements[self.current_selection]['roll'] = self.roll_slider.value()
         self.elements[self.current_selection]['pitch'] = self.pitch_slider.value()
         self.elements[self.current_selection]['yaw'] = self.yaw_slider.value()
+        if 'radius' in self.elements[self.current_selection]:
+            self.elements[self.current_selection]['radius'] = self.radius_slider.value()
 
         # Log only if current selection changed
         sel = self.elements[self.current_selection]
@@ -295,12 +336,23 @@ class TFTunerGUI(QWidget):
     
             transforms.append(t)
             
+            # If element is Safety Zone, publish array
+            if name == 'Safety Zone':
+                from std_msgs.msg import Float32MultiArray
+                
+                # Publish array
+                arr = Float32MultiArray()
+                arr.data = [data['x']/1000.0, data['y']/1000.0, data['radius']/1000.0]
+                self.node.params_pub.publish(arr)
+            
         self.node.tf_broadcaster.sendTransform(transforms)
 
 class TFTunerNode(Node):
     def __init__(self):
         super().__init__('tf_tuner_node')
         self.tf_broadcaster = TransformBroadcaster(self)
+        from std_msgs.msg import Float32MultiArray
+        self.params_pub = self.create_publisher(Float32MultiArray, '/ui/safety_zone_params', 10)
         self.get_logger().info("=========================================================")
         self.get_logger().info("🚀 ZED Camera & 3D Elements TF Tuner erfolgreich gestartet!")
         self.get_logger().info("=========================================================")
