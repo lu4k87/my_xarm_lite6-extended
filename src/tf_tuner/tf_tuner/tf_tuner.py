@@ -18,27 +18,27 @@ class TFTunerGUI(QWidget):
         self.elements = {
             'Zed M Camera': {
                 'frame_id': 'zed_camera_link',
-                'x': 500, 'y': 0, 'z': 120,
-                'roll': 0, 'pitch': 230, 'yaw': 1800
+                'x': 530, 'y': 0, 'z': 139,
+                'roll': 0, 'pitch': 350, 'yaw': 1800
             },
             'Blue Cube': {
                 'frame_id': 'target_blue_cube',
-                'x': 174, 'y': 82, 'z': 0,
+                'x': 250, 'y': 85, 'z': 0,
                 'roll': 0, 'pitch': 0, 'yaw': 0
             },
             'Red Rectangle': {
                 'frame_id': 'target_red_rectangle',
-                'x': 219, 'y': -83, 'z': 0,
-                'roll': 0, 'pitch': 0, 'yaw': -450
+                'x': 305, 'y': -80, 'z': 0,
+                'roll': 0, 'pitch': 0, 'yaw': 450
             },
             'Green Cylinder': {
                 'frame_id': 'target_green_cylinder',
-                'x': 274, 'y': 18, 'z': 0,
+                'x': 350, 'y': 25, 'z': 0,
                 'roll': 0, 'pitch': 0, 'yaw': 0
             },
             'White Plane': {
                 'frame_id': 'target_white_plane',
-                'x': 220, 'y': 0, 'z': -3,
+                'x': 305, 'y': 0, 'z': -3,
                 'roll': 0, 'pitch': 0, 'yaw': 0
             },
             'Safety Zone': {

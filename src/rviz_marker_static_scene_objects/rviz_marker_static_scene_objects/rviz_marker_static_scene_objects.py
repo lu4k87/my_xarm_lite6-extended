@@ -19,9 +19,9 @@ POSITION_TOLERANCE = 0.01   # 10 mm Trigger-Radius für Farbumschlag
 
 # Zielpositionen für die Hohlkörper (jetzt über TF Tuner gesteuert, mit statischem Fallback)
 CONFIG = {
-    "TARGET_BLUE_CUBE": {"tf_frame": "target_blue_cube", "default_pos": (0.174, 0.082), "default_yaw": 0.0, "dims": (0.03, 0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
-    "TARGET_RED_RECTANGLE": {"tf_frame": "target_red_rectangle", "default_pos": (0.219, -0.083), "default_yaw": -math.pi/4.0, "dims": (0.06, 0.03, 0.03), "color": [1.0, 0.0, 0.0], "type": Marker.CUBE, "id": 2}, 
-    "TARGET_GREEN_CYLINDER": {"tf_frame": "target_green_cylinder", "default_pos": (0.274, 0.018), "default_yaw": 0.0, "dims": (0.03, 0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
+    "TARGET_BLUE_CUBE": {"tf_frame": "target_blue_cube", "default_pos": (0.250, 0.085), "default_yaw": 0.0, "dims": (0.03, 0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
+    "TARGET_RED_RECTANGLE": {"tf_frame": "target_red_rectangle", "default_pos": (0.305, -0.080), "default_yaw": math.pi/4.0, "dims": (0.06, 0.03, 0.03), "color": [1.0, 0.0, 0.0], "type": Marker.CUBE, "id": 2}, 
+    "TARGET_GREEN_CYLINDER": {"tf_frame": "target_green_cylinder", "default_pos": (0.350, 0.025), "default_yaw": 0.0, "dims": (0.03, 0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
 }
 
 # Statische Szene (aus der URDF extrahiert)
@@ -30,7 +30,7 @@ SCENE_MARKERS = [
     # Arbeitsbereich als weiße Kreislinie (Radius 0.44)
     {"id": 10, "type": Marker.LINE_LIST, "radius": 0.44, "pos": (0.0, 0.0, -0.004), "dims": (0.001, 0.0, 0.0), "color": [1.0, 1.0, 1.0, 1.0]}, 
     # Template Plane (Weiß, gesteuert über TF Tuner, mit statischem Fallback)
-    {"id": 14, "type": Marker.CUBE, "tf_frame": "target_white_plane", "default_pos": (0.22, 0.0, -0.003), "default_yaw": 0.0, "dims": (0.2, 0.3, 0.001), "color": [1.0, 1.0, 1.0, 1.0]}
+    {"id": 14, "type": Marker.CUBE, "tf_frame": "target_white_plane", "default_pos": (0.305, 0.0, -0.003), "default_yaw": 0.0, "dims": (0.21, 0.3, 0.001), "color": [1.0, 1.0, 1.0, 1.0]}
 ]
 
 # =========================================================
