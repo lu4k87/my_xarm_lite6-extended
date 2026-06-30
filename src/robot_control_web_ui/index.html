@@ -227,6 +227,14 @@
           </div>
         </section>
 
+        <section id="panel-zed-camera" class="glass-panel" style="min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+          <h2 style="cursor: grab;"><i class="fa-solid fa-camera"></i> ZED M Live Stream</h2>
+          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+            <!-- Dynamic src applied via JS at the bottom of the page -->
+            <img id="zed-cam-stream" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="ZED M Camera Stream">
+          </div>
+        </section>
+
         <section id="panel-whisper" class="glass-panel">
           <h2><i class="fa-solid fa-microphone"></i> Speech Control (Whisper AI)</h2>
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
@@ -266,6 +274,20 @@
       camImg.onload = updateCam;
       camImg.onerror = () => setTimeout(updateCam, 1000);
       updateCam(); // start the loop
+    }
+    // ── ZED M Camera Stream ──
+    const zedImg = document.getElementById('zed-cam-stream');
+    if (zedImg) {
+      // Connect to web_video_server on the same host as the UI
+      const host = window.location.hostname || 'localhost';
+      zedImg.src = `http://${host}:8082/stream?topic=/zed/zed_node/rgb/image_rect_color`;
+      
+      // Auto-retry if connection fails or web_video_server restarts
+      zedImg.onerror = () => {
+        setTimeout(() => {
+          zedImg.src = `http://${host}:8082/stream?topic=/zed/zed_node/rgb/image_rect_color&_t=${new Date().getTime()}`;
+        }, 3000);
+      };
     }
   </script>
 </body>

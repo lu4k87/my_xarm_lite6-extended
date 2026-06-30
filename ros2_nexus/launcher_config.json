@@ -230,6 +230,11 @@
           "cmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
           "label": "YOLO Grasp Executor (Backup)",
           "type": "node"
+        },
+        {
+          "cmd": "ros2 run web_video_server web_video_server --ros-args -p port:=8082",
+          "label": "Web Video Server (Port 8082)",
+          "type": "node"
         }
       ],
       "col": 2,

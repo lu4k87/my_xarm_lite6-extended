@@ -152,7 +152,8 @@
         { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" },
         { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
         { cmd: "ros2 run tf_tuner tf_tuner", title: "Transform Tuner (tf_tuner)" },
-        { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" }
+        { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
+        { cmd: "ros2 run web_video_server web_video_server --ros-args -p port:=8082", title: "Web Video Server (Port 8082)" }
       ];
 
       showToast('🚀 DEV Setup gestartet... (12 Terminals)');
@@ -282,7 +283,8 @@
       "ros2 run xarm_moveit_servo xarm_keyboard_input": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Package:</b> <span style="color: var(--accent);">xarm_moveit_servo</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Executable:</b> <span style="color: var(--accent);">xarm_keyboard_input</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Source File:</b> <span style="color: var(--accent);">xarm_keyboard_input.cpp</span></div>`,
       "ros2 run rviz_servo_status_overlay servo_status_overlay": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Package:</b> <span style="color: var(--accent);">rviz_servo_status_overlay</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Executable:</b> <span style="color: var(--accent);">servo_status_overlay</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Source File:</b> <span style="color: var(--accent);">servo_status_overlay.py</span></div>`,
       "ros2 run yolo_object_detector yolo_homography_node": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Package:</b> <span style="color: var(--accent);">yolo_object_detector</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Executable:</b> <span style="color: var(--accent);">yolo_homography_node</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Source File:</b> <span style="color: var(--accent);">yolo_homography_node.py</span></div>`,
-      "ros2 run my_3d_vision_bringup yolo_grasp_executor.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Package:</b> <span style="color: var(--accent);">my_3d_vision_bringup</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Executable:</b> <span style="color: var(--accent);">yolo_grasp_executor.py</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Source File:</b> <span style="color: var(--accent);">yolo_grasp_executor.py</span></div>`
+      "ros2 run my_3d_vision_bringup yolo_grasp_executor.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Package:</b> <span style="color: var(--accent);">my_3d_vision_bringup</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Executable:</b> <span style="color: var(--accent);">yolo_grasp_executor.py</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Source File:</b> <span style="color: var(--accent);">yolo_grasp_executor.py</span></div>`,
+      "ros2 run web_video_server web_video_server --ros-args -p port:=8082": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Package:</b> <span style="color: var(--accent);">web_video_server</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Executable:</b> <span style="color: var(--accent);">web_video_server</span></div><div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Info:</b> <span style="color: var(--accent);">Serves ROS image topics to web browsers via HTTP on port 8082</span></div>`
     };
 
     // ─── RENDER ───────────────────────────────────────────────────────────────────
@@ -365,6 +367,7 @@
                    </li>
                    <li><span style="color: var(--accent);">tf_tuner</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                    <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
+                   <li><span style="color: var(--accent);">web_video_server</span> <span style="float: right; opacity: 0.7;">(ROS Video Stream :8082)</span></li>
                 </ul>
               </div>
             </div>
@@ -430,6 +433,7 @@
                    </li>
                    <li><span style="color: var(--accent);">tf_tuner</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                    <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
+                   <li><span style="color: var(--accent);">web_video_server</span> <span style="float: right; opacity: 0.7;">(ROS Video Stream :8082)</span></li>
                 </ul>
               </div>
             </div>
