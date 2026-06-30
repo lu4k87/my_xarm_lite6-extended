@@ -57,9 +57,8 @@ class ZedYolo3DNode(Node):
         
         # EMA Filtering state
         self.ema_states = {} # maps cls_id -> dict of {obj_id: {'state': np.array, 'last_seen': float}}
-        self.next_obj_id = {} # maps cls_id -> int
         # Declare parameters
-        self.declare_parameter('confidence_threshold', 0.5)
+        self.declare_parameter('confidence_threshold', 0.25)
         self.declare_parameter('ema_alpha', 0.2)
         self.declare_parameter('class_dimension_overrides', ['sports ball:0.0654', 'cup:0.08,0.08,0.095'])
         
@@ -199,8 +198,8 @@ class ZedYolo3DNode(Node):
                 # Robustly filter out table points (Z < 0.015) and robot base (cylinder with radius 12cm)
                 # also filter out points that are too high (Z > 0.4) to avoid grasping the camera stand or robot arm
                 dist_from_base = np.sqrt(pts_base[0, :]**2 + pts_base[1, :]**2)
-                valid_pts_filter = (pts_base[2, :] > 0.015) & (dist_from_base > 0.12) & (pts_base[2, :] < 0.4)
-                if np.sum(valid_pts_filter) < 10:
+                valid_pts_filter = (pts_base[2, :] > 0.010) & (dist_from_base > 0.12) & (pts_base[2, :] < 0.4)
+                if np.sum(valid_pts_filter) < 5:
                     continue # Not enough points belonging to the object
                 pts_base = pts_base[:, valid_pts_filter]
                 
@@ -307,10 +306,9 @@ class ZedYolo3DNode(Node):
             
             if cls_id not in self.ema_states:
                 self.ema_states[cls_id] = {}
-                self.next_obj_id[cls_id] = 1
                 
             # Bereinige alte states
-            expired_ids = [obj_id for obj_id, s in self.ema_states[cls_id].items() if (current_t - s['last_seen']) > 1.0]
+            expired_ids = [obj_id for obj_id, s in self.ema_states[cls_id].items() if (current_t - s['last_seen']) > 2.0]
             for obj_id in expired_ids:
                 del self.ema_states[cls_id][obj_id]
             
@@ -325,21 +323,25 @@ class ZedYolo3DNode(Node):
                     min_dist = dist
                     best_match_id = obj_id
             
-            if best_match_id != -1 and min_dist < 0.1: # Max 10cm Abstand für dasselbe Objekt
+            if best_match_id != -1 and min_dist < 0.3: # Max 30cm Abstand für dasselbe Objekt
                 self.ema_states[cls_id][best_match_id]['state'] = self.alpha * state + (1.0 - self.alpha) * self.ema_states[cls_id][best_match_id]['state']
                 self.ema_states[cls_id][best_match_id]['last_seen'] = current_t
                 center_x, center_y, center_z, scale_x, scale_y, scale_z = self.ema_states[cls_id][best_match_id]['state']
                 assigned_id = best_match_id
             else:
-                assigned_id = self.next_obj_id[cls_id]
+                # Finde die kleinste freie ID (beginnend bei 1)
+                existing_ids = self.ema_states[cls_id].keys()
+                assigned_id = 1
+                while assigned_id in existing_ids:
+                    assigned_id += 1
+                    
                 self.ema_states[cls_id][assigned_id] = {'state': state, 'last_seen': current_t}
-                self.next_obj_id[cls_id] += 1
                 
             color = self.colors[cls_id % 100]
             class_name = names[cls_id]
             
-            # Append numbering if there are multiple objects of the same class
-            if len(self.ema_states[cls_id]) > 1 or self.next_obj_id[cls_id] > 2:
+            # Index nur anhängen, wenn tatsächlich mehrere Objekte derselben Klasse *jetzt gerade* getrackt werden
+            if len(self.ema_states[cls_id]) > 1:
                 class_name = f"{class_name}_{assigned_id}"
             
             # --- Marker 1: The Bounding Box Edges (Line List) ---
