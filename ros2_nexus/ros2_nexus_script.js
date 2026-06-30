@@ -156,7 +156,7 @@
         { cmd: "ros2 run web_video_server web_video_server --ros-args -p port:=8082", title: "Web Video Server (Port 8082)" }
       ];
 
-      showToast('🚀 DEV Setup gestartet... (12 Terminals)');
+      showToast(`🚀 DEV Setup gestartet... (${actions.length} Terminals)`);
 
       for (const a of actions) {
         try {
