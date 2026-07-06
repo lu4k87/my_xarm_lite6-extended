@@ -190,7 +190,7 @@ class RobotMotionHandlerMovegroup(Node):
         if self.servo_start_client.service_is_ready() and self.servo_stop_client.service_is_ready():
             self.startup_timer.cancel()
             self.ui_log('MoveIt Servo fully loaded. Auto-triggering initial pose in 1s...', 'success')
-            import time
+            pass
             time.sleep(1.0) # Give TF a moment to stabilize
             # Startup: Just move to initial pose directly
             self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
@@ -229,7 +229,6 @@ class RobotMotionHandlerMovegroup(Node):
                         trans.transform.rotation.z,
                         trans.transform.rotation.w
                     ]
-                    from scipy.spatial.transform import Rotation as R
                     cur_rot = R.from_quat(cur_q)
                     cur_euler = cur_rot.as_euler('xyz', degrees=False)
                     
@@ -270,11 +269,9 @@ class RobotMotionHandlerMovegroup(Node):
     def _go_to_joints(self, target_joints, log_msg="Moving to target pose..."):
         # 1. Stop MoveIt Servo
         if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
-            from std_srvs.srv import Trigger
             req = Trigger.Request()
             self.servo_stop_client.call_async(req)
             self.ui_log('MoveIt Servo paused for direct joint motion.', 'info')
-            import time
             time.sleep(0.5) 
             
         # 2. Publish trajectory
@@ -324,11 +321,9 @@ class RobotMotionHandlerMovegroup(Node):
     def _go_to_joints_trajectory(self, target_joint_points, log_msg="Executing trajectory..."):
         # 1. Stop MoveIt Servo
         if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
-            from std_srvs.srv import Trigger
             req = Trigger.Request()
             self.servo_stop_client.call_async(req)
             self.ui_log('MoveIt Servo paused for direct trajectory execution.', 'info')
-            import time
             time.sleep(0.5) 
             
         # 2. Publish trajectory
@@ -728,7 +723,7 @@ class RobotMotionHandlerMovegroup(Node):
                 from scipy.spatial.transform import Rotation as R
                 from moveit_msgs.msg import RobotState
                 from sensor_msgs.msg import JointState
-                import time
+                pass
                 
                 # Zuerst lesen wir den aktuellen Zustand aus, um den ersten Seed zu haben
                 # Wir verwenden einfach den ersten Punkt und loesen ihn ohne Seed (oder mit aktueller Roboterpose)
@@ -831,7 +826,7 @@ class RobotMotionHandlerMovegroup(Node):
                 from scipy.spatial.transform import Rotation as R
                 from moveit_msgs.msg import RobotState
                 from sensor_msgs.msg import JointState
-                import time
+                pass
                 
                 object_configs = [
                     ("Blue Cube", "target_blue_cube", (0.300, 0.082), "var(--rviz-z)"),
@@ -1036,7 +1031,7 @@ class RobotMotionHandlerMovegroup(Node):
             future = self.ik_client.call_async(ik_req)
             
             # Warte auf IK Antwort
-            import time
+            pass
             start_wait = time.time()
             while not future.done():
                 if time.time() - start_wait > 2.0:
