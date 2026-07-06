@@ -227,7 +227,7 @@ function updateScanSpeed() {
     }
   }
   const speedNames = ["Slow", "Normal", "Fast"];
-  logMsg('UI', `Scan Speed set to: ${speedNames[val]}`);
+  logMsg('UI', `Action Speed set to: ${speedNames[val]}`);
   scanSpeedPub.publish(new ROSLIB.Message({ data: val }));
 }
 
@@ -787,7 +787,7 @@ voiceFeedbackSub.subscribe((msg) => {
     setInitialPose();
   }
 
-  // Voice Command: "Faster" → Increases Scan Speed
+  // Voice Command: "Faster" → Increases Action Speed
   if (msg.data === 'Speed: faster') {
     logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Speed:</span> <span style="color: var(--green);">Faster</span>', 'info');
     const radios = document.getElementsByName('scanSpeed');
@@ -799,7 +799,7 @@ voiceFeedbackSub.subscribe((msg) => {
     }
   }
 
-  // Voice Command: "Slower" → Decreases Scan Speed
+  // Voice Command: "Slower" → Decreases Action Speed
   if (msg.data === 'Speed: slower') {
     logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Speed:</span> <span style="color: var(--rviz-x);">Slower</span>', 'info');
     const radios = document.getElementsByName('scanSpeed');

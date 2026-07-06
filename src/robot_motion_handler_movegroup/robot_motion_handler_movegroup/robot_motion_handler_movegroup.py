@@ -286,8 +286,14 @@ class RobotMotionHandlerMovegroup(Node):
         point.positions = target_joints
         point.velocities = [0.0] * 6
         
-        # Skaliere Dauer anhand des globalen Speed Factors (0.5 = 1x Speed)
-        speed_multiplier = self.current_speed_scale / 0.5
+        # Skaliere Dauer anhand der Speed-Radiobuttons (0: Slow, 1: Normal, 2: Fast)
+        if self.current_scan_speed == 0:
+            speed_multiplier = 0.5
+        elif self.current_scan_speed == 2:
+            speed_multiplier = 2.0
+        else:
+            speed_multiplier = 1.0
+            
         duration_sec = max(1.0, 2.0 / speed_multiplier)
         point.time_from_start = Duration(sec=int(duration_sec), nanosec=int((duration_sec - int(duration_sec)) * 1e9))
         
@@ -330,8 +336,13 @@ class RobotMotionHandlerMovegroup(Node):
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
         
-        speed_multiplier = self.current_speed_scale / 0.5
-        
+        if self.current_scan_speed == 0:
+            speed_multiplier = 0.5
+        elif self.current_scan_speed == 2:
+            speed_multiplier = 2.0
+        else:
+            speed_multiplier = 1.0
+            
         total_duration = 0.0
         
         for idx, point_data in enumerate(target_joint_points):
@@ -405,7 +416,13 @@ class RobotMotionHandlerMovegroup(Node):
                     
                 point.velocities = [0.0] * 6
                 # Duration based on speed scale
-                speed_multiplier = self.current_speed_scale / 0.5
+                if self.current_scan_speed == 0:
+                    speed_multiplier = 0.5
+                elif self.current_scan_speed == 2:
+                    speed_multiplier = 2.0
+                else:
+                    speed_multiplier = 1.0
+                    
                 duration_sec = max(1.0, 2.0 / speed_multiplier)
                 
                 point.time_from_start = Duration(sec=int(duration_sec), nanosec=int((duration_sec - int(duration_sec)) * 1e9))
