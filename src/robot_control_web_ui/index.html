@@ -126,9 +126,6 @@
             <button class="btn frame-btn active btn-primary" style="flex: 1;" id="btn-frame-base" onclick="setFrame('link_base')">Base Frame</button>
             <button class="btn frame-btn" style="flex: 1;" id="btn-frame-tcp" onclick="setFrame('link_tcp')">TCP Frame</button>
           </div>
-          
-
-          
           <div class="speed-control">
             <label><i class="fa-solid fa-gauge"></i> Speed Level: <span id="speed-val">3/5 (60%)</span></label>
             <input type="range" id="speed-slider" min="0" max="4" value="2" oninput="updateSpeed(this.value)">
@@ -200,6 +197,12 @@
             <button id="btn-emergency-stop" class="btn" style="padding: 8px 14px; font-size: 12px; background: rgba(239, 68, 68, 0.2); color: var(--rviz-x); border-color: var(--rviz-x); font-weight: 700; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);" onclick="emergencyStop()">
               <i class="fa-solid fa-hand"></i> STOP
             </button>
+          </div>
+          <div style="width: 100%; display: flex; justify-content: center; gap: 15px; margin-top: 12px; color: var(--txt); font-size: 13px; font-weight: bold;">
+             <span style="color: var(--rviz-z);"><i class="fa-solid fa-gauge"></i> Scan Speed:</span>
+             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()"> Slow</label>
+             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()"> Normal</label>
+             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()"> Fast</label>
           </div>
         </section>
 

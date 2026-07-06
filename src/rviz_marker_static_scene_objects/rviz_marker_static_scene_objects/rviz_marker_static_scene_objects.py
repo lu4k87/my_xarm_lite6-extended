@@ -19,7 +19,7 @@ POSITION_TOLERANCE = 0.01   # 10 mm Trigger-Radius für Farbumschlag
 
 # Zielpositionen für die Hohlkörper (jetzt über TF Tuner gesteuert, mit statischem Fallback)
 CONFIG = {
-    "TARGET_BLUE_CUBE": {"tf_frame": "target_blue_cube", "default_pos": (0.250, 0.085), "default_yaw": 0.0, "dims": (0.03, 0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
+    "TARGET_BLUE_CUBE": {"tf_frame": "target_blue_cube", "default_pos": (0.300, 0.085), "default_yaw": 0.0, "dims": (0.03, 0.03, 0.03), "color": [0.0, 0.0, 1.0], "type": Marker.CUBE, "id": 1}, 
     "TARGET_RED_RECTANGLE": {"tf_frame": "target_red_rectangle", "default_pos": (0.305, -0.080), "default_yaw": math.pi/4.0, "dims": (0.06, 0.03, 0.03), "color": [1.0, 0.0, 0.0], "type": Marker.CUBE, "id": 2}, 
     "TARGET_GREEN_CYLINDER": {"tf_frame": "target_green_cylinder", "default_pos": (0.350, 0.025), "default_yaw": 0.0, "dims": (0.03, 0.03, 0.03), "color": [0.0, 1.0, 0.0], "type": Marker.CYLINDER, "id": 3}
 }

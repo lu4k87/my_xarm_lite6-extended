@@ -3,7 +3,6 @@ let ros;
 let currentFrame = 'link_base';
 let speedScale = 0.3;
 let lastSpeedIndex = -1;
-
 let jogActive = false;
 let jogTimer = null;
 let jogZeroCount = 0;
@@ -212,6 +211,26 @@ speedSub.subscribe((msg) => {
   }
 });
 
+const scanSpeedPub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/ui/scan_speed',
+  messageType: 'std_msgs/Int32'
+});
+
+function updateScanSpeed() {
+  const radios = document.getElementsByName('scanSpeed');
+  let val = 1;
+  for (let i = 0; i < radios.length; i++) {
+    if (radios[i].checked) {
+      val = parseInt(radios[i].value);
+      break;
+    }
+  }
+  const speedNames = ["Slow", "Normal", "Fast"];
+  logMsg('UI', `Scan Speed set to: ${speedNames[val]}`);
+  scanSpeedPub.publish(new ROSLIB.Message({ data: val }));
+}
+
 // ── YOLO 3D Objects ─────────────────────────────────────────────────────
 const yoloSub = new ROSLIB.Topic({
   ros: ros,
@@ -369,6 +388,8 @@ function updateSpeed(val) {
   const slider = document.getElementById('speed-slider');
   if (slider) slider.style.backgroundSize = (val / 4 * 100) + '% 100%';
 }
+
+
 
 function setFrame(frame) {
   currentFrame = frame;
@@ -766,25 +787,27 @@ voiceFeedbackSub.subscribe((msg) => {
     setInitialPose();
   }
 
-  // Voice Command: "Faster" → Increases Speed Factor
+  // Voice Command: "Faster" → Increases Scan Speed
   if (msg.data === 'Speed: faster') {
     logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Speed:</span> <span style="color: var(--green);">Faster</span>', 'info');
-    let currentIndex = Math.round((speedScale - 0.1) / 0.1);
-    if (currentIndex < 4) {
-      updateSpeed(currentIndex + 1);
-    } else {
-      logMsg('System', 'Speed is already at maximum (100%).', 'warn');
+    const radios = document.getElementsByName('scanSpeed');
+    let current = 1;
+    for(let i=0; i<radios.length; i++) if(radios[i].checked) current = parseInt(radios[i].value);
+    if(current < 2) {
+      radios[current+1].checked = true;
+      updateScanSpeed();
     }
   }
 
-  // Voice Command: "Slower" → Decreases Speed Factor
+  // Voice Command: "Slower" → Decreases Scan Speed
   if (msg.data === 'Speed: slower') {
     logMsg('VOICE', '🗣️ <span style="color: var(--accent);">Voice</span> <span style="color: var(--mut);">→</span> <span style="color: var(--orange);">Speed:</span> <span style="color: var(--rviz-x);">Slower</span>', 'info');
-    let currentIndex = Math.round((speedScale - 0.1) / 0.1);
-    if (currentIndex > 0) {
-      updateSpeed(currentIndex - 1);
-    } else {
-      logMsg('System', 'Speed is already at minimum (20%).', 'warn');
+    const radios = document.getElementsByName('scanSpeed');
+    let current = 1;
+    for(let i=0; i<radios.length; i++) if(radios[i].checked) current = parseInt(radios[i].value);
+    if(current > 0) {
+      radios[current-1].checked = true;
+      updateScanSpeed();
     }
   }
 

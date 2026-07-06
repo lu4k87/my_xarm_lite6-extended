@@ -120,13 +120,23 @@ class RobotMotionHandlerMovegroup(Node):
             10,
             callback_group=self.state_cb_group
         )
-        
         from std_msgs.msg import Float32
         self.current_speed_scale = 0.5
         self.speed_sub = self.create_subscription(
             Float32,
             '/ui/robot_control/current_speed',
             self.speed_cb,
+            10,
+            callback_group=self.cb_group
+        )
+        
+
+        from std_msgs.msg import Int32
+        self.current_scan_speed = 1 # 0: Slow, 1: Normal, 2: Fast
+        self.scan_speed_sub = self.create_subscription(
+            Int32,
+            '/ui/scan_speed',
+            self.scan_speed_cb,
             10,
             callback_group=self.cb_group
         )
@@ -163,6 +173,9 @@ class RobotMotionHandlerMovegroup(Node):
         elif level == 'action':
             self.get_logger().info(msg)
             self.ui_log_pub.publish(String(data=f"ACTION: {msg}"))
+
+    def scan_speed_cb(self, msg):
+        self.current_scan_speed = msg.data
 
     def speed_cb(self, msg):
         self.current_speed_scale = msg.data
@@ -546,72 +559,126 @@ class RobotMotionHandlerMovegroup(Node):
             
         return waypoints
 
-    def generate_single_object_trajectory(self, obj_pos, prev_obj_pos=None, cross_size=0.10, height=0.15):
+    def generate_single_object_trajectory(self, obj_pos, prev_obj_pos=None, cross_size=0.08, approach_height=0.20, scan_height=0.14):
         """
         Generiert eine Trajektorie (Anflug + Kreuz) fuer ein einzelnes Objekt.
+        Fährt einen echten Bogen (Kugeloberfläche) über das Objekt, wobei die Kamera
+        immer auf das Zentrum gerichtet bleibt (konstanter Radius).
         """
         waypoints = []
-        half_size = cross_size / 2.0
+        obj_x, obj_y = obj_pos
         
-        def add_segment(p_start, p_end, steps, target_obj_x, target_obj_y, is_transition=False):
+        half_size = cross_size / 2.0
+        # Maximaler Winkel für den Bogen
+        max_angle = math.atan2(half_size, scan_height)
+        R = scan_height
+        
+        def add_arc_segment(theta_x_start, theta_x_end, theta_y_start, theta_y_end, steps, yaw_angle=0.0):
+            for i in range(steps):
+                f = i / max(1, (steps - 1)) if steps > 1 else 1.0
+                tx = theta_x_start + (theta_x_end - theta_x_start) * f
+                ty = theta_y_start + (theta_y_end - theta_y_start) * f
+                
+                # Bogen-Koordinaten (Kugeloberfläche)
+                x = obj_x - R * math.sin(tx)
+                y = obj_y - R * math.sin(ty)
+                
+                active_theta = tx if abs(tx) > abs(ty) else ty
+                z = R * math.cos(active_theta)
+                
+                # Sicherheitsabstand zur anpassbaren Safety Zone
+                r_base = math.hypot(x - self.safe_x, y - self.safe_y)
+                if r_base < self.safe_radius and r_base > 0.001:
+                    scale = self.safe_radius / r_base
+                    x = self.safe_x + (x - self.safe_x) * scale
+                    y = self.safe_y + (y - self.safe_y) * scale
+                    
+                # Exakte Look-At Logik auf (obj_x, obj_y, 0)
+                dx = obj_x - x
+                dy = obj_y - y
+                dz = 0.0 - z
+                
+                # Kompensation der Z-Rotation (yaw), damit Roll/Pitch weiterhin korrekt berechnet werden
+                dx_eff = dx * math.cos(yaw_angle) + dy * math.sin(yaw_angle)
+                dy_eff = -dx * math.sin(yaw_angle) + dy * math.cos(yaw_angle)
+                
+                roll_tilt = math.atan2(dy_eff, -dz)
+                pitch_tilt = math.atan2(-dx_eff, -dz)
+                
+                roll = math.pi + roll_tilt
+                pitch = pitch_tilt
+                yaw = yaw_angle
+                
+                waypoints.append([x, y, z, roll, pitch, yaw])
+                
+        def add_linear_segment(p_start, p_end, steps, is_transition=False, yaw_start=0.0, yaw_end=0.0):
+            # p_start, p_end: (x, y, z)
             for i in range(steps):
                 f = i / max(1, (steps - 1)) if steps > 1 else 1.0
                 x = p_start[0] + (p_end[0] - p_start[0]) * f
                 y = p_start[1] + (p_end[1] - p_start[1]) * f
+                z = p_start[2] + (p_end[2] - p_start[2]) * f
                 
-                # Sicherheitsabstand zur anpassbaren Safety Zone (Kollisionsvermeidung)
+                # Sicherheitsabstand
                 r_base = math.hypot(x - self.safe_x, y - self.safe_y)
-                min_r = self.safe_radius
-                if r_base < min_r and r_base > 0.001:
-                    scale = min_r / r_base
+                if r_base < self.safe_radius and r_base > 0.001:
+                    scale = self.safe_radius / r_base
                     x = self.safe_x + (x - self.safe_x) * scale
                     y = self.safe_y + (y - self.safe_y) * scale
-                    
-                z = height
                 
-                # Look-At Logik
+                yaw = yaw_start + (yaw_end - yaw_start) * f
+                
                 if is_transition:
-                    # Während der Transition einfach gerade nach unten schauen (verhindert Twisting)
-                    dx = 0.0
-                    dy = 0.0
+                    roll = math.pi
+                    pitch = 0.0
                 else:
-                    # Exakt auf das Objekt-Zentrum schauen (keine Dämpfung!)
-                    dx = target_obj_x - x
-                    dy = target_obj_y - y
-                
-                dz = 0.0 - z
-                
-                # Exakte Trigonometrie für Look-At
-                roll_tilt = math.atan2(dy, -dz)
-                pitch_tilt = math.atan2(-dx, -dz)
-                
-                roll = math.pi + roll_tilt
-                pitch = pitch_tilt
-                yaw = 0.0
+                    dx = obj_x - x
+                    dy = obj_y - y
+                    dz = 0.0 - z
+                    
+                    dx_eff = dx * math.cos(yaw) + dy * math.sin(yaw)
+                    dy_eff = -dx * math.sin(yaw) + dy * math.cos(yaw)
+                    
+                    roll_tilt = math.atan2(dy_eff, -dz)
+                    pitch_tilt = math.atan2(-dx_eff, -dz)
+                    roll = math.pi + roll_tilt
+                    pitch = pitch_tilt
                 
                 waypoints.append([x, y, z, roll, pitch, yaw])
 
-        obj_x, obj_y = obj_pos
-        c = (obj_x, obj_y)
-        l = (obj_x - half_size, obj_y)
-        r = (obj_x + half_size, obj_y)
-        b = (obj_x, obj_y - half_size)
-        t = (obj_x, obj_y + half_size)
+        c_app = (obj_x, obj_y, approach_height)
+        c_scan = (obj_x, obj_y, scan_height)
         
-        # 1. Anflug zum Zentrum des aktuellen Objekts
+        # 1. Anflug zum Zentrum
         if prev_obj_pos is not None:
-            add_segment(prev_obj_pos, c, 15, obj_x, obj_y, is_transition=True) # 15 Schritte Transition
+            prev_app = (prev_obj_pos[0], prev_obj_pos[1], approach_height)
+            add_linear_segment(prev_app, c_app, 15, is_transition=True)
         else:
-            add_segment(c, c, 1, obj_x, obj_y, is_transition=True)
+            add_linear_segment(c_app, c_app, 1, is_transition=True)
             
-        # 2. Das Kreuz abfahren (kontinuierlich)
-        add_segment(c, l, 6, obj_x, obj_y) # Mitte nach Links
-        add_segment(l, r, 12, obj_x, obj_y) # Links nach Rechts (ueber Mitte)
-        add_segment(r, c, 6, obj_x, obj_y) # Rechts zurueck in Mitte
-        add_segment(c, b, 6, obj_x, obj_y) # Mitte nach Unten
-        add_segment(b, t, 12, obj_x, obj_y) # Unten nach Oben
-        add_segment(t, c, 6, obj_x, obj_y) # Oben zurueck in Mitte
-            
+        # 1.5 Nach unten fahren
+        add_linear_segment(c_app, c_scan, 5, is_transition=True)
+
+        # 2. Bogen abfahren (theta_x, theta_y)
+        # X-Bogen mit Yaw=0
+        add_arc_segment(0.0, max_angle, 0.0, 0.0, 6, yaw_angle=0.0) # Mitte nach X- (Zurück)
+        add_arc_segment(max_angle, -max_angle, 0.0, 0.0, 12, yaw_angle=0.0) # X- nach X+ (Vor, über Mitte)
+        add_arc_segment(-max_angle, 0.0, 0.0, 0.0, 6, yaw_angle=0.0) # X+ nach Mitte
+        
+        # 2.5 Rotation um Z-Achse um -90 Grad, damit Joint 5 den Y-Bogen übernehmen kann
+        add_linear_segment(c_scan, c_scan, 5, is_transition=True, yaw_start=0.0, yaw_end=-math.pi/2.0)
+        
+        # Y-Bogen mit Yaw=-90
+        add_arc_segment(0.0, 0.0, 0.0, max_angle, 6, yaw_angle=-math.pi/2.0) # Mitte nach Y- (Rechts)
+        add_arc_segment(0.0, 0.0, max_angle, -max_angle, 12, yaw_angle=-math.pi/2.0) # Y- nach Y+ (Links, über Mitte)
+        add_arc_segment(0.0, 0.0, -max_angle, 0.0, 6, yaw_angle=-math.pi/2.0) # Y+ nach Mitte
+
+        # 2.6 Rotation zurück auf Yaw=0
+        add_linear_segment(c_scan, c_scan, 5, is_transition=True, yaw_start=-math.pi/2.0, yaw_end=0.0)
+
+        # 3. Wieder nach oben fahren
+        add_linear_segment(c_scan, c_app, 5, is_transition=True)
+        
         return waypoints
 
     def execute_scan_path_cb(self, request, response):
@@ -681,20 +748,20 @@ class RobotMotionHandlerMovegroup(Node):
                         ik_req.ik_request.robot_state = rs
                     
                     if not self.ik_client.wait_for_service(timeout_sec=2.0):
-                        raise Exception("IK Service /compute_ik nicht verfuegbar!")
+                        raise Exception("IK Service /compute_ik not available!")
                         
                     future = self.ik_client.call_async(ik_req)
                     
                     start_wait = time.time()
                     while not future.done():
                         if time.time() - start_wait > 2.0:
-                            raise Exception("Timeout beim Warten auf IK-Antwort.")
+                            raise Exception("Timeout while waiting for IK response.")
                         time.sleep(0.01)
                         
                     ik_res = future.result()
                     
                     if ik_res.error_code.val != 1:
-                        raise Exception(f"IK Berechnung am Wegpunkt {i} fehlgeschlagen. Ziel ausser Reichweite oder Singularitaet.")
+                        raise Exception(f"IK calculation failed at waypoint {i}. Target out of reach or singularity.")
                         
                     joint_names = ik_res.solution.joint_state.name
                     positions = ik_res.solution.joint_state.position
@@ -707,9 +774,12 @@ class RobotMotionHandlerMovegroup(Node):
                         
                     current_seed_joints = target_joints
                     
-                    # Berechne die Dauer bis zu diesem Punkt
-                    # Der erste Punkt kriegt 2 Sekunden zum Anfahren, alle anderen z.B. 0.4 Sekunden (Lawnmower-Stuecke)
-                    duration = 2.0 if i == 0 else 0.4
+                    if self.current_scan_speed == 0:
+                        duration = 4.0 if i == 0 else 0.8
+                    elif self.current_scan_speed == 2:
+                        duration = 1.0 if i == 0 else 0.2
+                    else:
+                        duration = 2.0 if i == 0 else 0.4
                     trajectory_points.append((target_joints, duration))
 
                 self.ui_log('All IK points successfully resolved. Executing continuous wave trajectory...', 'success')
@@ -747,12 +817,20 @@ class RobotMotionHandlerMovegroup(Node):
                 import time
                 
                 object_configs = [
-                    ("Blue Cube", "target_blue_cube", (0.174, 0.082), "var(--rviz-z)"),
+                    ("Blue Cube", "target_blue_cube", (0.300, 0.082), "var(--rviz-z)"),
                     ("Red Rectangle", "target_red_rectangle", (0.219, -0.083), "var(--rviz-x)"),
                     ("Green Cylinder", "target_green_cylinder", (0.274, 0.018), "var(--rviz-y)")
                 ]
                 
                 current_seed_joints = None
+                if self.current_joint_state is not None:
+                    joint_names = self.current_joint_state.name
+                    positions = self.current_joint_state.position
+                    current_seed_joints = [0.0] * 6
+                    for j in range(1, 7):
+                        j_name = f'joint{j}'
+                        if j_name in joint_names:
+                            current_seed_joints[j-1] = positions[joint_names.index(j_name)]
                 prev_obj_pos = None
 
                 for idx, (name, frame_id, default_pos, cvar) in enumerate(object_configs):
@@ -806,20 +884,20 @@ class RobotMotionHandlerMovegroup(Node):
                             ik_req.ik_request.robot_state = rs
                         
                         if not self.ik_client.wait_for_service(timeout_sec=2.0):
-                            raise Exception("IK Service /compute_ik nicht verfuegbar!")
+                            raise Exception("IK Service /compute_ik not available!")
                             
                         future = self.ik_client.call_async(ik_req)
                         
                         start_wait = time.time()
                         while not future.done():
                             if time.time() - start_wait > 2.0:
-                                raise Exception("Timeout beim Warten auf IK-Antwort.")
+                                raise Exception("Timeout while waiting for IK response.")
                             time.sleep(0.01)
                             
                         ik_res = future.result()
                         
                         if ik_res.error_code.val != 1:
-                            raise Exception(f"IK Berechnung am Wegpunkt {i} fehlgeschlagen. Ziel ausser Reichweite oder Singularitaet.")
+                            raise Exception(f"IK calculation failed at waypoint {i}. Target out of reach or singularity.")
                             
                         joint_names = ik_res.solution.joint_state.name
                         positions = ik_res.solution.joint_state.position
@@ -828,11 +906,29 @@ class RobotMotionHandlerMovegroup(Node):
                         for j in range(1, 7):
                             j_name = f'joint{j}'
                             idx = joint_names.index(j_name)
-                            target_joints[j-1] = positions[idx]
+                            angle = positions[idx]
+                            
+                            # Unwrap joint angles to prevent 360 spins!
+                            if current_seed_joints is not None:
+                                prev_angle = current_seed_joints[j-1]
+                                diff = angle - prev_angle
+                                while diff > math.pi:
+                                    angle -= 2 * math.pi
+                                    diff -= 2 * math.pi
+                                while diff < -math.pi:
+                                    angle += 2 * math.pi
+                                    diff += 2 * math.pi
+                                    
+                            target_joints[j-1] = angle
                             
                         current_seed_joints = target_joints
                         
-                        duration = 2.0 if i == 0 else 0.25
+                        if self.current_scan_speed == 0:
+                            duration = 4.0 if i == 0 else 0.5
+                        elif self.current_scan_speed == 2:
+                            duration = 1.0 if i == 0 else 0.15
+                        else:
+                            duration = 2.0 if i == 0 else 0.25
                         trajectory_points.append((target_joints, duration))
 
                     if self.stop_requested:
@@ -918,7 +1014,7 @@ class RobotMotionHandlerMovegroup(Node):
             
             # 3. Call IK Service
             if not self.ik_client.wait_for_service(timeout_sec=2.0):
-                raise Exception("IK Service /compute_ik nicht verfuegbar!")
+                raise Exception("IK Service /compute_ik not available!")
                 
             future = self.ik_client.call_async(ik_req)
             
@@ -927,13 +1023,13 @@ class RobotMotionHandlerMovegroup(Node):
             start_wait = time.time()
             while not future.done():
                 if time.time() - start_wait > 2.0:
-                    raise Exception("Timeout beim Warten auf IK-Antwort.")
+                    raise Exception("Timeout while waiting for IK response.")
                 time.sleep(0.05)
                 
             ik_res = future.result()
             
             if ik_res.error_code.val != 1: # 1 == SUCCESS
-                raise Exception(f"IK Berechnung fehlgeschlagen (Error Code: {ik_res.error_code.val}). Ziel auerhalb der Reichweite oder in Kollision.")
+                raise Exception(f"IK calculation failed (Error Code: {ik_res.error_code.val}). Target out of reach or in collision.")
                 
             # 4. Extrahiere Gelenkwinkel
             joint_names = ik_res.solution.joint_state.name
@@ -947,7 +1043,7 @@ class RobotMotionHandlerMovegroup(Node):
                     idx = joint_names.index(j_name)
                     target_joints[i-1] = positions[idx]
                 else:
-                    raise Exception(f"Gelenk {j_name} nicht in IK Loesung gefunden!")
+                    raise Exception(f"Joint {j_name} not found in IK solution!")
                     
             # 5. Führe Gelenkbewegung aus
             self._go_to_joints(target_joints, log_msg="Executing MoveTo Pose via IK...")

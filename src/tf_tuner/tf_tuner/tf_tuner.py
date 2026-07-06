@@ -23,7 +23,7 @@ class TFTunerGUI(QWidget):
             },
             'Blue Cube': {
                 'frame_id': 'target_blue_cube',
-                'x': 250, 'y': 85, 'z': 0,
+                'x': 300, 'y': 85, 'z': 0,
                 'roll': 0, 'pitch': 0, 'yaw': 0
             },
             'Red Rectangle': {
