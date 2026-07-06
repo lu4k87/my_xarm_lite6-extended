@@ -990,6 +990,8 @@ class RobotMotionHandlerMovegroup(Node):
         response.ret = 0
         response.message = "Move to pose started."
         return response
+
+    def _execute_move_to_pose_core(self, request, response):
         try:
             from moveit_msgs.srv import GetPositionIK
             from geometry_msgs.msg import PoseStamped
