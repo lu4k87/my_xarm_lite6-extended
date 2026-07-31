@@ -3,6 +3,7 @@ import json
 import threading
 import time
 import os
+import pygame
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QLabel, QVBoxLayout
 from PyQt5.QtCore import QTimer, Qt, QPoint, QUrl
 from PyQt5.QtGui import QCursor
@@ -23,7 +24,18 @@ from xarm_msgs.srv import Call
 try:
     import av
     av.logging.set_level(av.logging.ERROR) 
+    
+    # Save the original plugin path to avoid cv2 conflicts with PyQt5
+    original_plugin_path = os.environ.get('QT_QPA_PLATFORM_PLUGIN_PATH')
+    
     import cv2
+    
+    # Restore the original plugin path
+    if original_plugin_path is not None:
+        os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = original_plugin_path
+    elif 'QT_QPA_PLATFORM_PLUGIN_PATH' in os.environ:
+        del os.environ['QT_QPA_PLATFORM_PLUGIN_PATH']
+        
     import numpy as np
 except ImportError:
     print("\n[FEHLER] Fehlende Pakete! Bitte installiere sie mit:")
@@ -129,6 +141,18 @@ class EyeControlUI(QWidget):
         self.last_debug_time = 0
         self.last_img_save_time = 0
         self.script_running = True 
+        
+        try:
+            pygame.mixer.init()
+            sound_path = "/home/mk1/dev_ws/src/gaze_control/gaze_control/ui_mouse_click.mp3"
+            if os.path.exists(sound_path):
+                self.click_sound = pygame.mixer.Sound(sound_path)
+            else:
+                print(f"[WARNUNG] Soundfile nicht gefunden: {sound_path}")
+                self.click_sound = None
+        except Exception as e:
+            print(f"[WARNUNG] Pygame Mixer konnte nicht initialisiert werden: {e}")
+            self.click_sound = None
         
         self.init_ui()
         self.init_eye_tracker()
@@ -615,6 +639,9 @@ class EyeControlUI(QWidget):
                 """)
 
     def execute_command(self, btn):
+        if hasattr(self, 'click_sound') and self.click_sound:
+            self.click_sound.play()
+
         if btn.property("is_toggle"):
             self.system_active = not self.system_active
             self.update_buttons_state()
