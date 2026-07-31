@@ -321,49 +321,46 @@ class EyeControlUI(QWidget):
         bw, bh = 150, 75
         gap = 10  # kleiner Abstand zwischen gepaarten Buttons
         
-        back_start = w // 2 - bw // 2
-        back_end = w // 2 + bw // 2
+        bottom_y = h - bh - 25 # Einheitlicher Abstand vom unteren Rand für alle unteren Buttons
         
-        # Position für UP, DOWN und Rotate-Buttons im linken freien Raum
-        left_space_center = back_start // 2
-        rot_w = 75
+        # SYSTEM (Gaze On/Off) ganz links
+        sys_x = 20
+        
+        # UP, DOWN, RotL, RotR Gruppe direkt rechts daneben mit kompaktem Abstand
         up_down_w = 100
-        uniform_gap = 90
+        rot_w = 75
+        uniform_gap = 20
         
-        # Gesamtbreite der linken Gruppe: UP + gap + DOWN + gap + RotL + gap + RotR
-        left_group_w = up_down_w + uniform_gap + up_down_w + uniform_gap + rot_w + uniform_gap + rot_w
-        left_start_x = left_space_center - left_group_w // 2
-        
-        up_x = left_start_x
+        up_x = sys_x + bw + uniform_gap * 2  # Startet sicher rechts vom SYSTEM Button
         down_x = up_x + up_down_w + uniform_gap
         rot_left_x = down_x + up_down_w + uniform_gap
         rot_right_x = rot_left_x + rot_w + uniform_gap
         
-        bottom_y = h - bh - 25 # Höherer Abstand vom unteren Bildschirmrand
-
-        # Position für Gripper-Buttons exakt mittig im rechten freien Raum
-        right_space_center = back_end + (w - back_end) // 2
+        # Gripper Buttons ganz rechts ausrichten
         gripper_w = bw * 2 + gap
-        gripper_start_x = right_space_center - gripper_w // 2
+        gripper_start_x = w - gripper_w - 20
+
+        margin_x = int(w * 0.28)
+        margin_y = h // 5
 
         positions = {
-            # Oben links: System
-            "SYSTEM":          (0, 0),
-            # Oben mitte: Forward
-            "Forward ⬆": (w // 2 - bw // 2, 0),
-            # Mitte links / rechts
-            "⬅ Left":    (0, h // 2 - bh // 2),
-            "Right ➡":   (w - bw, h // 2 - bh // 2),
-            # Unten links: UP, DOWN und Rotate Buttons
+            # Unten links in der Ecke: System (Gaze On/Off) - vertikal auf einer Linie mit dem Rest
+            "SYSTEM":          (sys_x, bottom_y),
+            # Oben mitte: Forward (mit Abstand)
+            "Forward ⬆": (w // 2 - bw // 2, margin_y),
+            # Mitte links / rechts (mit Abstand)
+            "⬅ Left":    (margin_x, h // 2 - bh // 2),
+            "Right ➡":   (w - bw - margin_x, h // 2 - bh // 2),
+            # Unten links: UP, DOWN und Rotate Buttons (ohne Überlappung)
             "UP ⇈":      (up_x, bottom_y),
             "DOWN ⇊":    (down_x, bottom_y),
             "⟲":  (rot_left_x, bottom_y),
             "⟳":  (rot_right_x, bottom_y),
-            # Gripper Buttons rechts von Back
+            # Gripper Buttons rechts
             "GRIPPER_ON":      (gripper_start_x, bottom_y),
             "GRIPPER_OFF":     (gripper_start_x + bw + gap, bottom_y),
-            # Unten mitte: Backward
-            "Back ⬇": (w // 2 - bw // 2, h - bh),
+            # Unten mitte: Backward (mit Abstand)
+            "Back ⬇": (w // 2 - bw // 2, h - bh - margin_y),
         }
         
         for name, (x, y) in positions.items():
@@ -381,7 +378,7 @@ class EyeControlUI(QWidget):
             gap = 10
             gripper_w = bw * 2 + gap
 
-            small_w = int(gripper_w * 1.5 * 1.5)
+            small_w = int(gripper_w * 1.8) # (vorher 1.2) * 1.5 vergrößert
             small_h = int(small_w * 9 / 16)
             
             margin_right = 20
