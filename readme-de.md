@@ -317,7 +317,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 #### `gaze_ui_node.py` <kbd>SKRIPT / UI</kbd>
 
-> **Zweck & Aufgabe:** Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 0,5 Sek. Fixationsdauer) und sendet direkte Bewegungs- und Greiferbefehle.
+> **Zweck & Aufgabe:** Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 0,5 Sek. Fixationsdauer) und sendet direkte Bewegungs- und Greiferbefehle. Beinhaltet eine **robuste Hitbox-Architektur** für das Eye-Tracking: Die visuellen Buttons bleiben unverändert, sind jedoch mit unsichtbaren, nicht überlappenden "Hitbox-Rahmen" hinterlegt, die die Gaze-Toleranz extrem vergrößern. Enthält zudem einen dedizierten **HOME ⌂** Button für das Anfahren der Initialpose.
 - 📤 **Publishes:**
   - `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`)
   - Steuert direkt die kartesische Geschwindigkeit des Roboterarms und nutzt UFactory Services zur Bedienung des Greifers.

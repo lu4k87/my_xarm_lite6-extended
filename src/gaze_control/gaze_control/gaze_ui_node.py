@@ -21,6 +21,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped
 from xarm_msgs.srv import VacuumGripperCtrl
 from std_msgs.msg import Float32MultiArray
+from std_srvs.srv import Trigger
 
 try:
     import av
@@ -58,7 +59,7 @@ class EyeRosNode(Node):
     def __init__(self):
         super().__init__('gaze_ui_ros2_node')
         self.twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
-        self.speed_scale = 0.50 
+        self.speed_scale = 0.25 
         
         self.current_z = 100.0  # Default safe value in mm
         self.eef_sub = self.create_subscription(Float32MultiArray, '/ui/eef_position', self.eef_callback, 10)
@@ -66,6 +67,13 @@ class EyeRosNode(Node):
         # Gripper clients
         self.set_vacuum_gripper_client = self.create_client(VacuumGripperCtrl, '/ufactory/set_vacuum_gripper')
         self.gripper_state = "OFF"
+        
+        self.initial_pose_client = self.create_client(Trigger, '/ui/execute_initial_pose')
+
+    def trigger_initial_pose(self):
+        req = Trigger.Request()
+        self.initial_pose_client.call_async(req)
+        return True
 
     def eef_callback(self, msg):
         if len(msg.data) >= 3:
@@ -224,14 +232,25 @@ class EyeControlUI(QWidget):
             ("GRIPPER_OFF", (0.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
             ("GRIPPER_ON", (0.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
             ("SYSTEM", (0.0, 0.0, 0.0, 0.0), "rgba(0,0,0,0)", True),
+            ("HOME ⌂", (0.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
             ("Back ⬇", (-1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
         ]
         
-        for text, vec, color, is_toggle in btns:
-            b = self.create_button(text, color, is_toggle)
+        for btn_text, vec, color, is_toggle in btns:
+            # Create hitbox frame FIRST so it renders behind the button
+            frame = QLabel(self.button_overlay)
+            if btn_text in ["⟲", "⟳"]:
+                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 60px;")
+            else:
+                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 5px;")
+            
+            b = self.create_button(btn_text, color, is_toggle)
             b.setParent(self.button_overlay)
             b.setProperty("vec", vec)
-            self.button_map[text] = b
+            b.hitbox_frame = frame
+            frame.linked_btn = b
+            
+            self.button_map[btn_text] = b
             self.buttons.append(b)
         
         self.cursor_dot = QLabel(self)
@@ -301,7 +320,7 @@ class EyeControlUI(QWidget):
             btn._arrow_label.hide()
             btn._text_label.setText(full_text)
             
-            if "UP" in full_text or "DOWN" in full_text:
+            if "UP" in full_text or "DOWN" in full_text or "HOME" in full_text:
                 fsize = 20
                 btn._text_label.setWordWrap(False)
             elif "DRIVING!" in full_text:
@@ -318,54 +337,70 @@ class EyeControlUI(QWidget):
         """Positioniert alle Buttons absolut basierend auf der Fenstergröße."""
         w = self.width()
         h = self.height()
-        bw, bh = 150, 75
-        gap = 10  # kleiner Abstand zwischen gepaarten Buttons
         
-        bottom_y = h - bh - 25 # Einheitlicher Abstand vom unteren Rand für alle unteren Buttons
+        # Center coordinates
+        bottom_cy = h - 60 
+        sys_cx = 95
+        home_cx = sys_cx + 175
         
-        # SYSTEM (Gaze On/Off) ganz links
-        sys_x = 20
+        group_gap = 120
+        start_cx = w // 2 - int(group_gap * 1.5)
         
-        # UP, DOWN, RotL, RotR Gruppe direkt rechts daneben mit kompaktem Abstand
-        up_down_w = 100
-        rot_w = 75
-        uniform_gap = 20
+        up_cx = start_cx
+        down_cx = up_cx + group_gap
+        rot_left_cx = down_cx + group_gap
+        rot_right_cx = rot_left_cx + group_gap
         
-        up_x = sys_x + bw + uniform_gap * 2  # Startet sicher rechts vom SYSTEM Button
-        down_x = up_x + up_down_w + uniform_gap
-        rot_left_x = down_x + up_down_w + uniform_gap
-        rot_right_x = rot_left_x + rot_w + uniform_gap
-        
-        # Gripper Buttons ganz rechts ausrichten
-        gripper_w = bw * 2 + gap
-        gripper_start_x = w - gripper_w - 20
+        gripper_off_cx = w - 95
+        gripper_on_cx = gripper_off_cx - 175
 
         margin_x = int(w * 0.28)
-        margin_y = h // 5
+        margin_y = h // 4
 
         positions = {
-            # Unten links in der Ecke: System (Gaze On/Off) - vertikal auf einer Linie mit dem Rest
-            "SYSTEM":          (sys_x, bottom_y),
-            # Oben mitte: Forward (mit Abstand)
-            "Forward ⬆": (w // 2 - bw // 2, margin_y),
-            # Mitte links / rechts (mit Abstand)
-            "⬅ Left":    (margin_x, h // 2 - bh // 2),
-            "Right ➡":   (w - bw - margin_x, h // 2 - bh // 2),
-            # Unten links: UP, DOWN und Rotate Buttons (ohne Überlappung)
-            "UP ⇈":      (up_x, bottom_y),
-            "DOWN ⇊":    (down_x, bottom_y),
-            "⟲":  (rot_left_x, bottom_y),
-            "⟳":  (rot_right_x, bottom_y),
-            # Gripper Buttons rechts
-            "GRIPPER_ON":      (gripper_start_x, bottom_y),
-            "GRIPPER_OFF":     (gripper_start_x + bw + gap, bottom_y),
-            # Unten mitte: Backward (mit Abstand)
-            "Back ⬇": (w // 2 - bw // 2, h - bh - margin_y),
+            "SYSTEM":          (sys_cx, bottom_cy),
+            "HOME ⌂":          (home_cx, bottom_cy),
+            "Forward ⬆":     (w // 2, margin_y),
+            "⬅ Left":        (margin_x, h // 2),
+            "Right ➡":       (w - margin_x, h // 2),
+            "UP ⇈":          (up_cx, bottom_cy),
+            "DOWN ⇊":        (down_cx, bottom_cy),
+            "⟲":             (rot_left_cx, bottom_cy),
+            "⟳":             (rot_right_cx, bottom_cy),
+            "GRIPPER_ON":      (gripper_on_cx, bottom_cy),
+            "GRIPPER_OFF":     (gripper_off_cx, bottom_cy),
+            "Back ⬇":        (w // 2, h - margin_y),
         }
         
-        for name, (x, y) in positions.items():
+        frame_sizes = {
+            "SYSTEM": (160, 200),
+            "HOME ⌂": (160, 200),
+            "GRIPPER_ON": (160, 200),
+            "GRIPPER_OFF": (160, 200),
+            "Forward ⬆": (280, 250),
+            "Back ⬇": (280, 200),
+            "⬅ Left": (250, 300),
+            "Right ➡": (250, 300),
+            "UP ⇈": (115, 120),
+            "DOWN ⇊": (115, 120),
+            "⟲": (120, 120),
+            "⟳": (120, 120),
+        }
+        
+        for name, (cx, cy) in positions.items():
             if name in self.button_map:
-                self.button_map[name].move(x, y)
+                b = self.button_map[name]
+                b.move(int(cx - b.width() / 2), int(cy - b.height() / 2))
+                if hasattr(b, 'hitbox_frame'):
+                    fw, fh = frame_sizes.get(name, (200, 200))
+                    b.hitbox_frame.setFixedSize(fw, fh)
+                    fx = int(cx - fw / 2)
+                    fy = int(cy - fh / 2)
+                    if fx < 0: fx = 0
+                    if fy < 0: fy = 0
+                    if fx + fw > w: fx = w - fw
+                    if fy + fh > h: fy = h - fh
+                    b.hitbox_frame.move(fx, fy)
 
     def resizeEvent(self, event):
         """Hält WebView und Button-Overlay synchron mit dem Fenster."""
@@ -564,6 +599,10 @@ class EyeControlUI(QWidget):
             self.cursor_dot.hide()
 
         hovered_widget = self.childAt(target_pos)
+        # Wenn der transparente Rahmen getroffen wird, navigiere zum eigentlichen Button
+        if hasattr(hovered_widget, 'linked_btn'):
+            hovered_widget = hovered_widget.linked_btn
+            
         # Wenn ein internes QLabel getroffen wird, zum übergeordneten QPushButton navigieren
         if isinstance(hovered_widget, QLabel) and isinstance(hovered_widget.parentWidget(), QPushButton):
             hovered_widget = hovered_widget.parentWidget()
@@ -770,13 +809,25 @@ class EyeControlUI(QWidget):
             """)
             self.cooldown_timer.start(1000)
             print(f"[ROS 2] -> VACUUM GRIPPER OFF ({new_state})")
+        elif cmd == "HOME ⌂":
+            self.ros_node.trigger_initial_pose()
+            self.in_cooldown = True
+            self.update_buttons_state()
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(52, 152, 219, 0.8); 
+                    color: white; 
+                    font-size: 22px; 
+                    font-weight: normal; 
+                    border-radius: 5px; 
+                    border: 1px solid rgba(255, 255, 255, 0.8);
+                }
+            """)
+            self.cooldown_timer.start(1000)
+            print("[ROS 2] -> HOME POSITION (INITIAL) TRIGGERED")
         else:
             self.is_driving = True
-            # For round buttons, avoid printing long text that overflows
-            if btn.property("is_round"):
-                self.set_button_text(btn, cmd)
-            else:
-                self.set_button_text(btn, "DRIVING!")
+            self.set_button_text(btn, cmd)
             self.pulse_opacity = 0.9
             self.pulse_direction = -1
             radius = "37px" if btn.property("is_round") else "5px"

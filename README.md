@@ -316,7 +316,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `gaze_ui_node.py` <kbd>SCRIPT / UI</kbd>
 
-> **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends direct movement and gripper commands.
+> **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends direct movement and gripper commands. Features a **Robust Gaze Target Architecture**: the visual buttons remain small and distinct, but are backed by dynamically scaled, non-overlapping, and invisible "Hitbox Frames" covering the entire UI. This significantly increases gaze acquisition tolerance without cluttering the interface. Includes a dedicated **HOME ⌂** button for instant initial pose execution.
 - 📤 **Publishes:**
   - `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`)
   - Directly controls the Cartesian velocity of the robot arm and uses UFactory services to operate the gripper.
