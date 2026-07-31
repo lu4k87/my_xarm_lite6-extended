@@ -23,9 +23,9 @@ class ZedYolo3DNode(Node):
     def __init__(self):
         super().__init__('zed_yolo_3d_bbox')
         
-        # Load the locally available YOLOv8l (Large) model
-        self.get_logger().info('Lade YOLOv8l (Large) Modell...')
-        self.model = YOLO('yolov8l.pt')
+        # Load the locally available custom YOLO model
+        self.get_logger().info('Lade my_yolo_model.pt Modell...')
+        self.model = YOLO('my_yolo_model.pt')
         self.get_logger().info('Modell erfolgreich geladen (nutzt GPU falls verfügbar).')
         
         self.bridge = CvBridge()
@@ -60,7 +60,13 @@ class ZedYolo3DNode(Node):
         # Declare parameters
         self.declare_parameter('confidence_threshold', 0.25)
         self.declare_parameter('ema_alpha', 0.2)
-        self.declare_parameter('class_dimension_overrides', ['sports ball:0.0654', 'cup:0.08,0.08,0.095'])
+        self.declare_parameter('class_dimension_overrides', [
+            'sports ball:0.0654', 
+            'cup:0.08,0.08,0.095',
+            'blue_cube:0.03,0.03,0.03',
+            'red_rectangle:0.06,0.03,0.03',
+            'green_cylinder:0.03,0.03,0.03'
+        ])
         
         # Rate Limiting
         self.last_inference_time = 0.0
