@@ -19,7 +19,8 @@ except ImportError:
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped
-from xarm_msgs.srv import Call
+from xarm_msgs.srv import VacuumGripperCtrl
+from std_msgs.msg import Float32MultiArray
 
 try:
     import av
@@ -59,28 +60,30 @@ class EyeRosNode(Node):
         self.twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
         self.speed_scale = 0.50 
         
+        self.current_z = 100.0  # Default safe value in mm
+        self.eef_sub = self.create_subscription(Float32MultiArray, '/ui/eef_position', self.eef_callback, 10)
+        
         # Gripper clients
-        self.open_gripper_client = self.create_client(Call, '/ufactory/open_lite6_gripper')
-        self.close_gripper_client = self.create_client(Call, '/ufactory/close_lite6_gripper')
-        self.stop_gripper_client = self.create_client(Call, '/ufactory/stop_lite6_gripper')
+        self.set_vacuum_gripper_client = self.create_client(VacuumGripperCtrl, '/ufactory/set_vacuum_gripper')
         self.gripper_state = "OFF"
 
-    def toggle_gripper(self):
-        req = Call.Request()
-        if self.gripper_state == "OPEN" or self.gripper_state == "OFF":
-            self.close_gripper_client.call_async(req)
-            self.gripper_state = "CLOSE"
-            return "CLOSE"
-        else: # state is "CLOSE"
-            self.open_gripper_client.call_async(req)
-            self.gripper_state = "OPEN"
-            return "OPEN"
+    def eef_callback(self, msg):
+        if len(msg.data) >= 3:
+            self.current_z = msg.data[2]
 
-    def stop_gripper(self):
-        req = Call.Request()
-        self.stop_gripper_client.call_async(req)
+    def turn_on_gripper(self):
+        req = VacuumGripperCtrl.Request()
+        req.on = True
+        self.set_vacuum_gripper_client.call_async(req)
+        self.gripper_state = "ON"
+        return self.gripper_state
+
+    def turn_off_gripper(self):
+        req = VacuumGripperCtrl.Request()
+        req.on = False
+        self.set_vacuum_gripper_client.call_async(req)
         self.gripper_state = "OFF"
-        return "OFF"
+        return self.gripper_state
 
     def publish_twist(self, vector):
         msg = TwistStamped()
@@ -88,7 +91,13 @@ class EyeRosNode(Node):
         msg.header.frame_id = "link_base" 
         msg.twist.linear.x = float(vector.get('x', 0.0)) * self.speed_scale
         msg.twist.linear.y = float(vector.get('y', 0.0)) * self.speed_scale
-        msg.twist.linear.z = float(vector.get('z', 0.0)) * self.speed_scale
+        
+        linear_z = float(vector.get('z', 0.0)) * self.speed_scale
+        if self.current_z <= 95.0 and linear_z < 0:
+            linear_z = 0.0
+            print(f"[SAFETY] Verhindere Bewegung unter Z=95.0! (Aktuell: {self.current_z:.1f}mm)")
+            
+        msg.twist.linear.z = linear_z
         msg.twist.angular.x = 0.0
         msg.twist.angular.y = 0.0
         msg.twist.angular.z = float(vector.get('rz', 0.0))
@@ -99,7 +108,7 @@ class EyeControlUI(QWidget):
         super().__init__()
         self.ros_node = ros_node 
         self.timer_interval = 40      
-        self.cooldown_time = 1500     
+        self.cooldown_time = 1000     
         self.current_target = None
         self.current_dwell_time = 0
         
@@ -144,7 +153,7 @@ class EyeControlUI(QWidget):
         
         try:
             pygame.mixer.init()
-            sound_path = "/home/mk1/dev_ws/src/gaze_control/gaze_control/ui_mouse_click.mp3"
+            sound_path = os.path.expanduser("~/dev_ws/src/gaze_control/gaze_control/ui_mouse_click.mp3")
             if os.path.exists(sound_path):
                 self.click_sound = pygame.mixer.Sound(sound_path)
             else:
@@ -173,6 +182,7 @@ class EyeControlUI(QWidget):
 
         # --- LIVESTREAM HINTERGRUND ---
         self.web_view = None
+        self.web_view_small = None
         if HAS_WEBENGINE:
             self.web_view = QWebEngineView(self)
             self.web_view.setUrl(QUrl("http://192.168.0.124/html/"))
@@ -182,7 +192,17 @@ class EyeControlUI(QWidget):
             self.web_view.setStyleSheet("background: black;")
             # Web-Seite nach dem Laden so anpassen, dass der Body den gesamten Bereich füllt
             self.web_view.loadFinished.connect(self._on_stream_loaded)
-            print("[STREAM] Livestream-Hintergrund wird geladen...")
+            
+            self.web_view_small = QWebEngineView(self)
+            self.web_view_small.setUrl(QUrl("http://192.168.0.123/html/"))
+            self.web_view_small.setFocusPolicy(Qt.NoFocus)
+            self.web_view_small.setAttribute(Qt.WA_TransparentForMouseEvents)
+            self.web_view_small.setAttribute(Qt.WA_TranslucentBackground)
+            self.web_view_small.page().setBackgroundColor(Qt.transparent)
+            self.web_view_small.setStyleSheet("background: transparent; border: 4px solid rgba(128, 128, 128, 0.6); border-radius: 15px;")
+            self.web_view_small.loadFinished.connect(self._on_stream_loaded)
+            
+            print("[STREAM] Livestreams werden geladen...")
         else:
             print("[STREAM] Kein WebEngine - Fallback auf Gradient-Hintergrund.")
 
@@ -194,17 +214,17 @@ class EyeControlUI(QWidget):
         self.buttons = []
         self.button_map = {}  # name -> button für Positionierung
         btns = [
-            ("⟲ ROTATE | Z+", (0.0, 0.0, 0.0, 1.0), "rgba(142, 68, 173, 0.4)", False),
-            ("⟳ ROTATE | Z-", (0.0, 0.0, 0.0, -1.0), "rgba(142, 68, 173, 0.4)", False),
-            ("⬆ FORWARD | X+", (1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
-            ("⇈ UP | Z+", (0.0, 0.0, 1.0, 0.0), "rgba(41, 128, 185, 0.4)", False),
-            ("⇊ DOWN | Z-", (0.0, 0.0, -1.0, 0.0), "rgba(41, 128, 185, 0.4)", False),
-            ("⬅ LEFT | Y+", (0.0, 1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
-            ("➡ RIGHT | Y-", (0.0, -1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
-            ("GRIPPER_OFF", (0.0, 0.0, 0.0, 0.0), "rgba(230, 126, 34, 0.5)", False),
-            ("GRIPPER_TOGGLE", (0.0, 0.0, 0.0, 0.0), "rgba(243, 156, 18, 0.5)", False),
+            ("⟲", (0.0, 0.0, 0.0, 1.0), "rgba(52, 73, 94, 0.4)", False),
+            ("⟳", (0.0, 0.0, 0.0, -1.0), "rgba(52, 73, 94, 0.4)", False),
+            ("Forward ⬆", (1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("UP ⇈", (0.0, 0.0, 1.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("DOWN ⇊", (0.0, 0.0, -1.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("⬅ Left", (0.0, 1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("Right ➡", (0.0, -1.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("GRIPPER_OFF", (0.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("GRIPPER_ON", (0.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
             ("SYSTEM", (0.0, 0.0, 0.0, 0.0), "rgba(0,0,0,0)", True),
-            ("⬇ BACKWARD | X-", (-1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
+            ("Back ⬇", (-1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
         ]
         
         for text, vec, color, is_toggle in btns:
@@ -216,7 +236,7 @@ class EyeControlUI(QWidget):
         
         self.cursor_dot = QLabel(self)
         self.cursor_dot.resize(60, 60)
-        self.cursor_dot.setStyleSheet("background-color: rgba(255, 0, 0, 0.8); border: 3px solid rgba(255, 255, 255, 0.9); border-radius: 30px;")
+        self.cursor_dot.setStyleSheet("background-color: rgba(255, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 30px;")
         self.cursor_dot.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.cursor_dot.hide()
 
@@ -224,10 +244,18 @@ class EyeControlUI(QWidget):
 
     def create_button(self, text, color, is_toggle):
         btn = QPushButton("")
-        btn.setFixedSize(150, 100)
+        if text in ["⟲", "⟳"]:
+            btn.setFixedSize(75, 75)
+            btn.setProperty("is_round", True)
+        elif text in ["UP ⇈", "DOWN ⇊"]:
+            btn.setFixedSize(100, 75)
+            btn.setProperty("is_round", False)
+        else:
+            btn.setFixedSize(150, 75)
+            btn.setProperty("is_round", False)
         btn.setProperty("default_text", text)
         btn.setProperty("default_color", color)
-        btn.setProperty("dwell_time", 1500) 
+        btn.setProperty("dwell_time", 1000) 
         btn.setProperty("is_toggle", is_toggle)
 
         layout = QVBoxLayout(btn)
@@ -253,50 +281,89 @@ class EyeControlUI(QWidget):
 
     def set_button_text(self, btn, full_text, text_color="rgba(255, 255, 255, 0.9)"):
         """Setzt Button-Text mit großem Pfeil-Symbol und kleinem Label."""
-        arrows = set("⟲⟳⬆⬇⬅➡⇈⇊")
+        arrows = set("⟲⟳⇈⇊")
         if full_text and full_text[0] in arrows:
             arrow_char = full_text[0]
             label_text = full_text[1:].strip()
             btn._arrow_label.setText(arrow_char)
             btn._arrow_label.setStyleSheet(
-                f"font-size: 60px; color: {text_color}; font-weight: bold; background: transparent;")
+                f"font-size: 40px; color: {text_color}; font-weight: normal; background: transparent;")
             btn._arrow_label.show()
             btn._text_label.setText(label_text)
+            if label_text == "":
+                btn._text_label.hide()
+            else:
+                btn._text_label.show()
             btn._text_label.setStyleSheet(
-                f"font-size: 11px; color: {text_color}; background: transparent;")
+                f"font-size: 14px; color: {text_color}; background: transparent;")
         else:
             btn._arrow_label.setText("")
             btn._arrow_label.hide()
             btn._text_label.setText(full_text)
+            
+            if "UP" in full_text or "DOWN" in full_text:
+                fsize = 20
+                btn._text_label.setWordWrap(False)
+            elif "DRIVING!" in full_text:
+                fsize = 18
+                btn._text_label.setWordWrap(False)
+            else:
+                fsize = 24
+                btn._text_label.setWordWrap(True)
+                
             btn._text_label.setStyleSheet(
-                f"font-size: 14px; color: {text_color}; font-weight: bold; background: transparent;")
+                f"font-size: {fsize}px; color: {text_color}; font-weight: normal; background: transparent;")
 
     def _position_buttons(self):
         """Positioniert alle Buttons absolut basierend auf der Fenstergröße."""
         w = self.width()
         h = self.height()
-        bw, bh = 150, 100
+        bw, bh = 150, 75
         gap = 10  # kleiner Abstand zwischen gepaarten Buttons
+        
+        back_start = w // 2 - bw // 2
+        back_end = w // 2 + bw // 2
+        
+        # Position für UP, DOWN und Rotate-Buttons im linken freien Raum
+        left_space_center = back_start // 2
+        rot_w = 75
+        up_down_w = 100
+        uniform_gap = 90
+        
+        # Gesamtbreite der linken Gruppe: UP + gap + DOWN + gap + RotL + gap + RotR
+        left_group_w = up_down_w + uniform_gap + up_down_w + uniform_gap + rot_w + uniform_gap + rot_w
+        left_start_x = left_space_center - left_group_w // 2
+        
+        up_x = left_start_x
+        down_x = up_x + up_down_w + uniform_gap
+        rot_left_x = down_x + up_down_w + uniform_gap
+        rot_right_x = rot_left_x + rot_w + uniform_gap
+        
+        bottom_y = h - bh - 25 # Höherer Abstand vom unteren Bildschirmrand
+
+        # Position für Gripper-Buttons exakt mittig im rechten freien Raum
+        right_space_center = back_end + (w - back_end) // 2
+        gripper_w = bw * 2 + gap
+        gripper_start_x = right_space_center - gripper_w // 2
 
         positions = {
-            # Oben links: Rotate Z+ und Z- eng nebeneinander
-            "⟲ ROTATE | Z+":  (0, 0),
-            "⟳ ROTATE | Z-":  (bw + gap, 0),
+            # Oben links: System
+            "SYSTEM":          (0, 0),
             # Oben mitte: Forward
-            "⬆ FORWARD | X+": (w // 2 - bw // 2, 0),
-            # Oben rechts: UP und DOWN eng nebeneinander
-            "⇈ UP | Z+":      (w - 2 * bw - gap, 0),
-            "⇊ DOWN | Z-":    (w - bw, 0),
+            "Forward ⬆": (w // 2 - bw // 2, 0),
             # Mitte links / rechts
-            "⬅ LEFT | Y+":    (0, h // 2 - bh // 2),
-            "➡ RIGHT | Y-":   (w - bw, h // 2 - bh // 2),
-            # Unten links: Gripper OFF dann Gripper Close
-            "GRIPPER_OFF":     (0, h - bh),
-            "GRIPPER_TOGGLE":  (bw + gap, h - bh),
-            # Unten rechts: Eye Control / System
-            "SYSTEM":          (w - bw, h - bh),
+            "⬅ Left":    (0, h // 2 - bh // 2),
+            "Right ➡":   (w - bw, h // 2 - bh // 2),
+            # Unten links: UP, DOWN und Rotate Buttons
+            "UP ⇈":      (up_x, bottom_y),
+            "DOWN ⇊":    (down_x, bottom_y),
+            "⟲":  (rot_left_x, bottom_y),
+            "⟳":  (rot_right_x, bottom_y),
+            # Gripper Buttons rechts von Back
+            "GRIPPER_ON":      (gripper_start_x, bottom_y),
+            "GRIPPER_OFF":     (gripper_start_x + bw + gap, bottom_y),
             # Unten mitte: Backward
-            "⬇ BACKWARD | X-": (w // 2 - bw // 2, h - bh),
+            "Back ⬇": (w // 2 - bw // 2, h - bh),
         }
         
         for name, (x, y) in positions.items():
@@ -308,49 +375,67 @@ class EyeControlUI(QWidget):
         super().resizeEvent(event)
         if self.web_view:
             self.web_view.setGeometry(0, 0, self.width(), self.height())
+            
+        if hasattr(self, 'web_view_small') and self.web_view_small:
+            bw, bh = 150, 75
+            gap = 10
+            gripper_w = bw * 2 + gap
+
+            small_w = int(gripper_w * 1.5 * 1.5)
+            small_h = int(small_w * 9 / 16)
+            
+            margin_right = 20
+            margin_top = 20
+            
+            small_x = self.width() - small_w - margin_right
+            small_y = margin_top
+
+            self.web_view_small.setGeometry(small_x, small_y, small_w, small_h)
+            self.web_view_small.raise_()
+            
         self.button_overlay.setGeometry(0, 0, self.width(), self.height())
         self.button_overlay.raise_()
         self._position_buttons()
 
     def _on_stream_loaded(self, ok):
         """Wird aufgerufen wenn die Stream-Seite geladen ist. Scrollbars entfernen und Video strecken."""
-        if ok and self.web_view:
-            js = """
+        sender = self.sender()
+        if ok and sender:
+            is_small = hasattr(self, 'web_view_small') and sender == self.web_view_small
+            b_rad = "11px" if is_small else "0px"
+            
+            js = f"""
             document.body.style.margin = '0';
             document.body.style.padding = '0';
             document.body.style.overflow = 'hidden';
-            document.body.style.background = 'black';
+            document.body.style.background = 'transparent';
 
             // RPi Cam Control Titelleiste und alle UI-Elemente ausblenden
             var allElements = document.querySelectorAll('div, nav, header, footer, table, form, select, input, button, a, span, p, h1, h2, h3, h4');
-            for (var i = 0; i < allElements.length; i++) {
+            for (var i = 0; i < allElements.length; i++) {{
                 var el = allElements[i];
                 if (!el.querySelector('video, img, canvas, object, embed') 
-                    && el.tagName !== 'VIDEO' && el.tagName !== 'IMG' && el.tagName !== 'CANVAS') {
+                    && el.tagName !== 'VIDEO' && el.tagName !== 'IMG' && el.tagName !== 'CANVAS') {{
                     el.style.display = 'none';
-                }
-            }
+                }}
+            }}
 
-            var videos = document.querySelectorAll('video');
-            for (var i = 0; i < videos.length; i++) {
-                videos[i].style.width = '100vw';
-                videos[i].style.height = '100vh';
-                videos[i].style.objectFit = 'cover';
-                videos[i].style.position = 'fixed';
-                videos[i].style.top = '0';
-                videos[i].style.left = '0';
-            }
-            var imgs = document.querySelectorAll('img');
-            for (var i = 0; i < imgs.length; i++) {
-                imgs[i].style.width = '100vw';
-                imgs[i].style.height = '100vh';
-                imgs[i].style.objectFit = 'cover';
-                imgs[i].style.position = 'fixed';
-                imgs[i].style.top = '0';
-                imgs[i].style.left = '0';
-            }
+            var applyStyles = function(elements) {{
+                for (var i = 0; i < elements.length; i++) {{
+                    elements[i].style.width = '100vw';
+                    elements[i].style.height = '100vh';
+                    elements[i].style.objectFit = 'cover';
+                    elements[i].style.position = 'fixed';
+                    elements[i].style.top = '0';
+                    elements[i].style.left = '0';
+                    elements[i].style.borderRadius = '{b_rad}';
+                }}
+            }};
+            
+            applyStyles(document.querySelectorAll('video'));
+            applyStyles(document.querySelectorAll('img'));
             """
-            self.web_view.page().runJavaScript(js)
+            sender.page().runJavaScript(js)
             print("[STREAM] Livestream-Seite erfolgreich geladen und angepasst.")
         else:
             print("[STREAM] Livestream-Seite konnte nicht geladen werden.")
@@ -522,19 +607,20 @@ class EyeControlUI(QWidget):
                                 self.set_button_text(hovered_widget, f"{base_text}\n{secs_left:.1f}s")
                             else:
                                 base_text = hovered_widget.property("default_text")
-                                if base_text == "GRIPPER_TOGGLE":
-                                    base_text = "GRIPPER OPEN" if self.ros_node.gripper_state == "CLOSE" else "GRIPPER CLOSE"
+                                if base_text == "GRIPPER_ON":
+                                    base_text = "Gripper ON"
                                 elif base_text == "GRIPPER_OFF":
-                                    base_text = "GRIPPER OFF"
+                                    base_text = "Gripper OFF"
                                 self.set_button_text(hovered_widget, f"{base_text}\n{secs_left:.1f}s")
                             
+                            radius = "37px" if hovered_widget.property("is_round") else "5px"
                             hovered_widget.setStyleSheet(f"""
                                 QPushButton {{
                                     background-color: rgba(241, 196, 15, 0.7); 
                                     color: white; 
                                     font-size: 22px; 
-                                    font-weight: bold; 
-                                    border-radius: 15px; 
+                                    font-weight: normal; 
+                                    border-radius: {radius}; 
                                     border: 2px solid rgba(241, 196, 15, 1.0);
                                 }}
                             """)
@@ -553,11 +639,12 @@ class EyeControlUI(QWidget):
 
             op = self.pulse_opacity
             border_op = min(1.0, op + 0.1)
+            radius = "37px" if self.current_target.property("is_round") else "5px"
             self.current_target.setStyleSheet(f"""
                 QPushButton {{
                     background-color: rgba(46, 204, 113, {op:.2f}); 
-                    border-radius: 15px; 
-                    border: 3px solid rgba(255, 255, 255, {border_op:.2f});
+                    border-radius: {radius}; 
+                    border: 1px solid rgba(255, 255, 255, {border_op:.2f});
                 }}
             """)
 
@@ -583,57 +670,52 @@ class EyeControlUI(QWidget):
         
         if btn.property("is_toggle"):
             if self.system_active:
-                self.set_button_text(btn, "Eye Control\nON")
+                self.set_button_text(btn, "Gaze On")
                 btn.setStyleSheet("""
                     QPushButton {
                         background-color: rgba(46, 204, 113, 0.4); 
-                        border-radius: 15px; 
+                        border-radius: 5px; 
                         border: 2px solid rgba(255, 255, 255, 0.15);
                     }
                 """)
             else:
-                self.set_button_text(btn, "Eye Control\nOFF")
+                self.set_button_text(btn, "Gaze Off")
                 btn.setStyleSheet("""
                     QPushButton {
                         background-color: rgba(192, 57, 43, 0.4); 
-                        border-radius: 15px; 
+                        border-radius: 5px; 
                         border: 2px solid rgba(255, 255, 255, 0.15);
                     }
                 """)
         else:
             text = btn.property("default_text")
-            is_off_btn = False
-            if text == "GRIPPER_TOGGLE":
-                text = "GRIPPER\nOPEN" if self.ros_node.gripper_state == "CLOSE" else "GRIPPER\nCLOSE"
+            
+            if text == "GRIPPER_ON":
+                text = "Gripper\nON"
+                color = "rgba(243, 156, 18, 0.6)" if self.ros_node.gripper_state == "ON" else "rgba(52, 73, 94, 0.4)"
             elif text == "GRIPPER_OFF":
-                if self.ros_node.gripper_state == "OFF":
-                    text = "GRIPPER\nOFF"
-                else:
-                    text = "GRIPPER\nON"
-                is_off_btn = True
+                text = "Gripper\nOFF"
+                color = "rgba(230, 126, 34, 0.6)" if self.ros_node.gripper_state == "OFF" else "rgba(52, 73, 94, 0.4)"
+            else:
+                color = btn.property("default_color")
 
             if not self.system_active:
                 self.set_button_text(btn, text, "rgba(255, 255, 255, 0.2)")
-                btn.setStyleSheet("""
-                    QPushButton {
+                radius = "37px" if btn.property("is_round") else "5px"
+                btn.setStyleSheet(f"""
+                    QPushButton {{
                         background-color: rgba(50, 50, 50, 0.2); 
-                        border-radius: 15px; 
+                        border-radius: {radius}; 
                         border: 2px solid rgba(255, 255, 255, 0.05);
-                    }
+                    }}
                 """)
             else:
-                color = btn.property("default_color")
-                if is_off_btn:
-                    if self.ros_node.gripper_state == "OFF":
-                        color = "rgba(100, 100, 100, 0.4)"
-                    else:
-                        color = "rgba(46, 204, 113, 0.4)"
-                    
                 self.set_button_text(btn, text)
+                radius = "37px" if btn.property("is_round") else "5px"
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: {color}; 
-                        border-radius: 15px; 
+                        border-radius: {radius}; 
                         border: 2px solid rgba(255, 255, 255, 0.15);
                     }}
                 """)
@@ -654,8 +736,8 @@ class EyeControlUI(QWidget):
         vec = btn.property("vec")
         self.active_vector = {"x": vec[0], "y": vec[1], "z": vec[2], "rz": vec[3] if len(vec) > 3 else 0.0}
         
-        if cmd == "GRIPPER_TOGGLE":
-            new_state = self.ros_node.toggle_gripper()
+        if cmd == "GRIPPER_ON":
+            new_state = self.ros_node.turn_on_gripper()
             self.in_cooldown = True
             
             self.update_buttons_state()
@@ -665,16 +747,16 @@ class EyeControlUI(QWidget):
                     background-color: rgba(243, 156, 18, 0.8); 
                     color: white; 
                     font-size: 22px; 
-                    font-weight: bold; 
-                    border-radius: 15px; 
-                    border: 4px solid rgba(255, 255, 255, 0.8);
+                    font-weight: normal; 
+                    border-radius: 5px; 
+                    border: 1px solid rgba(255, 255, 255, 0.8);
                 }
             """)
-            self.cooldown_timer.start(1500)
-            print(f"[ROS 2] -> GRIPPER TOGGLED: {new_state}")
+            self.cooldown_timer.start(1000)
+            print(f"[ROS 2] -> VACUUM GRIPPER ON ({new_state})")
             
         elif cmd == "GRIPPER_OFF":
-            new_state = self.ros_node.stop_gripper()
+            new_state = self.ros_node.turn_off_gripper()
             self.in_cooldown = True
             
             self.update_buttons_state()
@@ -684,24 +766,29 @@ class EyeControlUI(QWidget):
                     background-color: rgba(230, 126, 34, 0.8); 
                     color: white; 
                     font-size: 22px; 
-                    font-weight: bold; 
-                    border-radius: 15px; 
-                    border: 4px solid rgba(255, 255, 255, 0.8);
+                    font-weight: normal; 
+                    border-radius: 5px; 
+                    border: 1px solid rgba(255, 255, 255, 0.8);
                 }
             """)
-            self.cooldown_timer.start(1500)
-            print(f"[ROS 2] -> GRIPPER STOPPED ({new_state})")
+            self.cooldown_timer.start(1000)
+            print(f"[ROS 2] -> VACUUM GRIPPER OFF ({new_state})")
         else:
             self.is_driving = True
-            self.set_button_text(btn, "DRIVING!")
+            # For round buttons, avoid printing long text that overflows
+            if btn.property("is_round"):
+                self.set_button_text(btn, cmd)
+            else:
+                self.set_button_text(btn, "DRIVING!")
             self.pulse_opacity = 0.9
             self.pulse_direction = -1
-            btn.setStyleSheet("""
-                QPushButton {
+            radius = "37px" if btn.property("is_round") else "5px"
+            btn.setStyleSheet(f"""
+                QPushButton {{
                     background-color: rgba(46, 204, 113, 0.9); 
-                    border-radius: 15px; 
-                    border: 3px solid rgba(255, 255, 255, 0.9);
-                }
+                    border-radius: {radius}; 
+                    border: 1px solid rgba(255, 255, 255, 0.9);
+                }}
             """)
             self.pulse_timer.start(50) 
             self.servo_publish_timer.start(50) 

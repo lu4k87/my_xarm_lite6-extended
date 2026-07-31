@@ -983,6 +983,8 @@ Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, imm
 > In *OBS Studio* werden alle Komponenten gebündelt und dem Nutzer als zentrale GUI für die Roboter-Teleoperation bereitgestellt.*
 
 **Gaze Control User Interface**<br>
+- **Sicherheitsgrenze (Safety Boundary):** Beinhaltet ein hartcodiertes Limit, das Abwärtsbewegungen (Z < 0) blockiert, sobald der Roboter eine Höhe von Z=95.0mm erreicht, um den Arbeitsbereich vor Kollisionen zu schützen.
+- **Vakuumgreifer-Integration:** Volle Unterstützung für die Steuerung des xArm Lite 6 Vakuumgreifers über die UI mittels des `VacuumGripperCtrl` Services.
 
 ![Gaze Control UI](_imgs/gaze_control_interface.png)
 

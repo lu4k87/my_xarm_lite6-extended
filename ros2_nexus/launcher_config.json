@@ -110,7 +110,7 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_gripper:=true",
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true",
           "label": "Fake Move Launch",
           "type": "launch"
         }
@@ -122,7 +122,7 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
           "label": "Real Move Launch",
           "type": "launch"
         }
@@ -134,12 +134,12 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_gripper:=true",
+          "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_vacuum_gripper:=true",
           "label": "MoveGroup Server (FAKE)",
           "type": "launch"
         },
         {
-          "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_gripper:=true report_type:=dev",
+          "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
           "label": "MoveGroup Server (REAL)",
           "type": "launch"
         }
