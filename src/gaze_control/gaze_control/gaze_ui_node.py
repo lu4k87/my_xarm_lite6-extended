@@ -339,11 +339,11 @@ class EyeControlUI(QWidget):
         h = self.height()
         
         # Center coordinates
-        bottom_cy = h - 60 
-        sys_cx = 95
-        home_cx = sys_cx + 175
+        bottom_cy = h - 110 
+        sys_cx = 100
+        home_cx = sys_cx + 190
         
-        group_gap = 120
+        group_gap = 140
         start_cx = w // 2 - int(group_gap * 1.5)
         
         up_cx = start_cx
@@ -351,8 +351,8 @@ class EyeControlUI(QWidget):
         rot_left_cx = down_cx + group_gap
         rot_right_cx = rot_left_cx + group_gap
         
-        gripper_off_cx = w - 95
-        gripper_on_cx = gripper_off_cx - 175
+        gripper_off_cx = w - 100
+        gripper_on_cx = gripper_off_cx - 190
 
         margin_x = int(w * 0.28)
         margin_y = h // 4
