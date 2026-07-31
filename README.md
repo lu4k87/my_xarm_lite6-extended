@@ -629,8 +629,8 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 > source /opt/ros/humble/setup.bash
 > source ~/dev_ws/install/setup.bash
 > export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-> export PATH=/usr/local/cuda-12.1/bin${PATH:+:${PATH}}
-> export LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+> export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
+> export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 > export ROS_LOCALHOST_ONLY=0 # Set to 0 for distributed network, 1 for local only
 > ```
 > 
@@ -669,6 +669,9 @@ sudo apt install ros-humble-tf2-ros ros-humble-rviz2
 
 # RViz 2D Overlay Plugins
 sudo apt install ros-humble-rviz-2d-overlay-plugins ros-humble-rviz-2d-overlay-msgs
+
+# Web UI & Gaze Control Dependencies
+sudo apt install python3-pyqt5.qtwebengine python3-opencv python3-av
 ```
 
 ### Python Dependencies
@@ -699,7 +702,7 @@ pip install ultralytics==6.7.171 # YOLO 3D Object detection
 |--------|------|
 | UFactory xArm Lite 6 | 6-DOF robot arm |
 | Xbox One Elite Series 2 | Primary teleoperation controller |
-| NVIDIA RTX A5000 | Primary GPU for Computer Vision / CUDA 12.1 |
+| NVIDIA RTX A5000 | Primary GPU for Computer Vision / CUDA 13.3 |
 | 12th Gen Intel Core i9-12900K | Primary Workstation CPU |
 | Tobii Pro Glasses 3 | Eye-tracking input *(in progress)* |
 | Stereolabs ZED Mini | Stereo depth camera |
@@ -710,8 +713,8 @@ pip install ultralytics==6.7.171 # YOLO 3D Object detection
 
 The ZED Mini camera requires the official ZED SDK and a matching CUDA toolkit version. To ensure a clean installation on Ubuntu 22.04 with ROS 2 Humble without breaking existing NVIDIA drivers, follow this exact procedure:
 
-1. **Install CUDA 12.1 Toolkit**: We strongly recommend CUDA 12.1, as it is native and highly stable with the ZED SDK. Install only the toolkit, not the full driver package.
-2. **Install ZED SDK 8.1.2**: Download the ZED SDK 8.1.x for Ubuntu 22.04 (CUDA 12.1 variant) from Stereolabs and run the installer in silent mode.
+1. **Install CUDA 13 Toolkit**: We strongly recommend CUDA 13 (or 13.3), as it is required natively for the new ZED SDK. Install only the toolkit, not the full driver package.
+2. **Install ZED SDK**: Download the latest ZED SDK 4.x for Ubuntu 22.04 from Stereolabs and run the installer in silent mode.
  * *Important:* The installer sets up Python API packages as root. Fix the PIP permissions afterwards so `rosdep` can access them:
  ```bash
  sudo chmod -R a+rX /usr/local/lib/python3.10/dist-packages/
