@@ -93,9 +93,9 @@ class EyeRosNode(Node):
         msg.twist.linear.y = float(vector.get('y', 0.0)) * self.speed_scale
         
         linear_z = float(vector.get('z', 0.0)) * self.speed_scale
-        if self.current_z <= 95.0 and linear_z < 0:
+        if self.current_z <= 34.0 and linear_z < 0:
             linear_z = 0.0
-            print(f"[SAFETY] Verhindere Bewegung unter Z=95.0! (Aktuell: {self.current_z:.1f}mm)")
+            print(f"[SAFETY] Verhindere Bewegung unter Z=34.0! (Aktuell: {self.current_z:.1f}mm)")
             
         msg.twist.linear.z = linear_z
         msg.twist.angular.x = 0.0
