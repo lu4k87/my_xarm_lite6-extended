@@ -240,9 +240,9 @@ class EyeControlUI(QWidget):
             # Create hitbox frame FIRST so it renders behind the button
             frame = QLabel(self.button_overlay)
             if btn_text in ["⟲", "⟳"]:
-                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 60px;")
+                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 60px;")
             else:
-                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 5px;")
+                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 5px;")
             
             b = self.create_button(btn_text, color, is_toggle)
             b.setParent(self.button_overlay)
