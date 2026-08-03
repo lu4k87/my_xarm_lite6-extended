@@ -326,6 +326,12 @@ To provide a clear understanding of the architecture, the software modules are c
   - `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`)
   - Directly controls the Cartesian velocity of the robot arm and uses UFactory services to operate the gripper.
 
+#### `gaze_ui_node_tobii_4c.py` <kbd>SCRIPT / UI</kbd>
+
+> **Purpose & Task:** A lightweight alternative UI node optimized for the Tobii Eye Tracker 4C.
+> - Operates purely on a ROS 2 subscriber (`/tobii/gaze`, `geometry_msgs/Point`) without requiring heavy OpenCV/ArUco processing or RTSP streams.
+> - Preserves the exact same UI layout, dual-camera PiP streams, and Dwell-Time interaction logic as the Tobii Glasses version.
+
 ### 🖥️ <a id="subchapter-3-4"></a> 3.4 Feature: Graphical Control & Visual Feedback
 *Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
 
