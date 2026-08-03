@@ -316,7 +316,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 > [!TIP]
 > Der `whisper_server` ist in der `whisper.yaml` explizit auf `language: "en"` gestellt und nutzt einen gezielten `initial_prompt`, um eine hohe Erkennungsgenauigkeit für die englischen Befehle zu garantieren und Rauschen auszufiltern.
 
-#### `gaze_ui_node.py` <kbd>SKRIPT / UI</kbd>
+#### `gaze_ui_node_tobii_glasses.py` <kbd>SKRIPT / UI</kbd>
 
 > **Zweck & Aufgabe:** Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 0,5 Sek. Fixationsdauer) und sendet direkte Bewegungs- und Greiferbefehle. 
 > - **Visuelles Design & Livestreams:** Die UI nutzt ein immersives Dark-Theme (`#333333`) und integriert **zwei unabhängige Kamera-Livestreams** (Hauptfenster + Picture-in-Picture).
