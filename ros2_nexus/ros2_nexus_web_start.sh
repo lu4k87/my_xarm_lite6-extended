@@ -84,9 +84,9 @@ fi
 echo ""
 echo "🌐 Öffne Browser: $URL"
 if command -v google-chrome &> /dev/null; then
-    google-chrome --user-data-dir="$HOME/.ros2_nexus_profile" --class="ros2-nexus-web" --app="$URL" --start-maximized 2>/dev/null &
+    google-chrome --user-data-dir="$HOME/.ros2_nexus_profile" --class="ros2-nexus" --app="$URL" --start-maximized 2>/dev/null &
 elif command -v chromium-browser &> /dev/null; then
-    chromium-browser --user-data-dir="$HOME/.ros2_nexus_profile" --class="ros2-nexus-web" --app="$URL" --start-maximized 2>/dev/null &
+    chromium-browser --user-data-dir="$HOME/.ros2_nexus_profile" --class="ros2-nexus" --app="$URL" --start-maximized 2>/dev/null &
 else
     xdg-open "$URL" 2>/dev/null &
 fi
