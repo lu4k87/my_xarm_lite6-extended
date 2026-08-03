@@ -290,6 +290,7 @@ To provide a clear understanding of the architecture, the software modules are c
 #### `ros2_whisper` <kbd>NODE</kbd>
 
 > **Purpose & Task:** Local Speech-to-Text AI. Runs Whisper AI continuously on the microphone stream and publishes spoken words as text. 
+> - **GPU Acceleration & Optimization:** The inference pipeline is natively optimized for **GPU Acceleration (CUDA)** utilizing the dedicated `base.en` model. This guarantees zero-latency "High-Performance" execution of voice commands and prevents runtime timeouts.
 > - **Performance & Thread-Safety:** The underlying C++ Action Server (`TranscriptManager`) has been heavily fortified with a strict `std::mutex` locking mechanism to entirely eliminate parallel data-race crashes during high-frequency token generation. Additionally, the `Inference` node features a hardened buffer clearing strategy (`audio_ring_->clear()`) which physicaly purges stale audio residuals from the microphone Ring Buffer the exact millisecond the user activates the UI button, mathematically guaranteeing zero "ghost commands" from previous speech.
 - 📤 **Publishes:**
   - `/whisper/text` (`std_msgs/String`)
@@ -316,7 +317,11 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `gaze_ui_node.py` <kbd>SCRIPT / UI</kbd>
 
-> **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends direct movement and gripper commands. Features a **Robust Gaze Target Architecture**: the visual buttons remain small and distinct, but are backed by dynamically scaled, non-overlapping, and invisible "Hitbox Frames" covering the entire UI. This significantly increases gaze acquisition tolerance without cluttering the interface. Includes a dedicated **HOME ⌂** button for instant initial pose execution.
+> **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends direct movement and gripper commands.
+> - **Visual Design & Livestreams:** The UI utilizes an immersive dark theme (`#333333`) and integrates **two independent camera livestreams** (Main View + Picture-in-Picture).
+> - **Intelligent Error Fallback:** If cameras are unreachable, the UI proactively catches white Chromium connection error pages. The main window becomes seamlessly transparent, while the PiP window is filled with a dynamically injected HTML placeholder (`setHtml()`) in matching dark gray (`#444444`) to preserve the interface layout.
+> - **Robust Eye-Tracking:** Features a **Hitbox Architecture**: visual buttons remain small, but are backed by invisible "Hitbox Frames" that drastically increase gaze acquisition tolerance. Successful gaze interactions are confirmed via precise **acoustic feedback** (`ui_mouse_click.mp3` via Pygame).
+> - **Control:** Includes a dedicated **HOME ⌂** button for instant initial pose execution.
 - 📤 **Publishes:**
   - `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`)
   - Directly controls the Cartesian velocity of the robot arm and uses UFactory services to operate the gripper.

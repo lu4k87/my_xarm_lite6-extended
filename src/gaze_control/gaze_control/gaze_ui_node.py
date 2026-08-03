@@ -6,7 +6,7 @@ import os
 import pygame
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QLabel, QVBoxLayout
 from PyQt5.QtCore import QTimer, Qt, QPoint, QUrl
-from PyQt5.QtGui import QCursor
+from PyQt5.QtGui import QCursor, QColor
 
 try:
     from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings
@@ -181,9 +181,10 @@ class EyeControlUI(QWidget):
     def init_ui(self):
         self.setWindowTitle("ROS2 Nexus (God-Mode ArUco Mapping)")
         self.resize(1000, 600)
+        self.setAttribute(Qt.WA_StyledBackground, True)
         self.setStyleSheet("""
-            QWidget#main_window {
-                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 #1a1a1a, stop:1 #2c3e50);
+            #main_window {
+                background-color: #333333;
             }
         """)
         self.setObjectName("main_window")
@@ -197,7 +198,9 @@ class EyeControlUI(QWidget):
             # Scrollbars und Interaktion deaktivieren - nur Anzeige
             self.web_view.setFocusPolicy(Qt.NoFocus)
             self.web_view.setAttribute(Qt.WA_TransparentForMouseEvents)
-            self.web_view.setStyleSheet("background: black;")
+            self.web_view.setAttribute(Qt.WA_TranslucentBackground)
+            self.web_view.page().setBackgroundColor(Qt.transparent)
+            self.web_view.setStyleSheet("background: transparent;")
             # Web-Seite nach dem Laden so anpassen, dass der Body den gesamten Bereich füllt
             self.web_view.loadFinished.connect(self._on_stream_loaded)
             
@@ -206,13 +209,13 @@ class EyeControlUI(QWidget):
             self.web_view_small.setFocusPolicy(Qt.NoFocus)
             self.web_view_small.setAttribute(Qt.WA_TransparentForMouseEvents)
             self.web_view_small.setAttribute(Qt.WA_TranslucentBackground)
-            self.web_view_small.page().setBackgroundColor(Qt.transparent)
-            self.web_view_small.setStyleSheet("background: transparent; border: 4px solid rgba(128, 128, 128, 0.6); border-radius: 15px;")
+            self.web_view_small.page().setBackgroundColor(QColor("#444444"))
+            self.web_view_small.setStyleSheet("background-color: #444444; border: 4px solid rgba(128, 128, 128, 0.6); border-radius: 15px;")
             self.web_view_small.loadFinished.connect(self._on_stream_loaded)
             
             print("[STREAM] Livestreams werden geladen...")
         else:
-            print("[STREAM] Kein WebEngine - Fallback auf Gradient-Hintergrund.")
+            print("[STREAM] Kein WebEngine - Fallback auf dunkelgrauen Hintergrund.")
 
         # --- BUTTON OVERLAY ---
         self.button_overlay = QWidget(self)
@@ -470,7 +473,14 @@ class EyeControlUI(QWidget):
             sender.page().runJavaScript(js)
             print("[STREAM] Livestream-Seite erfolgreich geladen und angepasst.")
         else:
-            print("[STREAM] Livestream-Seite konnte nicht geladen werden.")
+            if sender:
+                is_small = hasattr(self, 'web_view_small') and sender == self.web_view_small
+                if not is_small:
+                    print("[STREAM] Haupt-Livestream konnte nicht geladen werden. Verstecke View.")
+                    sender.hide()
+                else:
+                    print("[STREAM] 2. Livestream konnte nicht geladen werden. Zeige Platzhalter.")
+                    sender.setHtml("<html><body style='background-color: #444444;'></body></html>")
 
     def init_eye_tracker(self):
         self.g3_ip = "192.168.75.51"
