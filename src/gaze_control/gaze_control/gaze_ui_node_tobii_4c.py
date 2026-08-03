@@ -52,6 +52,7 @@ class EyeRosNode(Node):
                 self.ui_instance.target_mapped_x = msg.x
                 self.ui_instance.target_mapped_y = msg.y
                 self.ui_instance.gaze_active = True
+                self.ui_instance.last_valid_time = time.time()
             else:
                 self.ui_instance.gaze_active = False
 
@@ -134,6 +135,7 @@ class EyeControlUI(QWidget):
         self.smoothed_x = -1.0
         self.smoothed_y = -1.0
         self.gaze_active = False
+        self.last_valid_time = 0.0
         
         self.last_debug_time = 0
         self.last_img_save_time = 0
@@ -474,14 +476,21 @@ class EyeControlUI(QWidget):
         if self.in_cooldown:
             return
 
-        if self.gaze_active and self.target_mapped_x != -1.0:
-            # Alpha-Glättung auf 0.20 reduziert für stabilere Filterung
-            alpha = 0.20 
-            if self.smoothed_x == -1.0: 
-                self.smoothed_x, self.smoothed_y = self.target_mapped_x, self.target_mapped_y
-            else:
-                self.smoothed_x = self.smoothed_x * (1-alpha) + self.target_mapped_x * alpha
-                self.smoothed_y = self.smoothed_y * (1-alpha) + self.target_mapped_y * alpha
+        current_time = time.time()
+        is_tracking = self.gaze_active and self.target_mapped_x != -1.0
+        
+        if is_tracking:
+            self.last_valid_time = current_time
+
+        if is_tracking or (current_time - self.last_valid_time < 3.0):
+            if is_tracking:
+                # Alpha-Glättung auf 0.20 reduziert für stabilere Filterung
+                alpha = 0.20 
+                if self.smoothed_x == -1.0: 
+                    self.smoothed_x, self.smoothed_y = self.target_mapped_x, self.target_mapped_y
+                else:
+                    self.smoothed_x = self.smoothed_x * (1-alpha) + self.target_mapped_x * alpha
+                    self.smoothed_y = self.smoothed_y * (1-alpha) + self.target_mapped_y * alpha
             
             lx = int(self.smoothed_x * self.width())
             ly = int(self.smoothed_y * self.height())
@@ -491,6 +500,14 @@ class EyeControlUI(QWidget):
             
             target_pos = QPoint(lx, ly)
             self.cursor_dot.move(lx - 30, ly - 30) 
+            
+            if not is_tracking:
+                # Tracking verloren -> grauer Punkt
+                self.cursor_dot.setStyleSheet("background-color: rgba(128, 128, 128, 0.5); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 30px;")
+            else:
+                # Tracking aktiv -> roter Punkt
+                self.cursor_dot.setStyleSheet("background-color: rgba(255, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 30px;")
+                
             self.cursor_dot.show()
             self.cursor_dot.raise_()
         else:

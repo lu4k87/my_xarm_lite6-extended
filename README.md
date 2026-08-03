@@ -723,6 +723,9 @@ pip install ultralytics==6.7.171 # YOLO 3D Object detection
 
 ### Tobii Eye Tracker 4C Setup (Linux)
 
+> [!WARNING]
+> **No Official Linux Driver:** Tobii officially discontinued full Linux support for their consumer trackers (including the 4C). There is no official Tobii Experience or Calibration App for Ubuntu. While the `libtobii_stream_engine.so` C-API works to extract raw gaze data, the lack of background display-mapping services results in a significantly smaller and more unstable tracking "sweet spot" compared to Windows.
+
 Since the Tobii 4C officially lacks full Linux support (and does not provide a calibration app for Linux), the system uses a community workaround (the Tobii Stream Engine) to intercept raw data via USB. It is absolutely mandatory to calibrate the tracker to your specific monitor beforehand.
 
 1. **One-Time Windows Calibration (Mandatory!):** 
