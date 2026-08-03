@@ -48,9 +48,12 @@ class EyeRosNode(Node):
 
     def tobii_callback(self, msg):
         if self.ui_instance is not None:
-            self.ui_instance.target_mapped_x = msg.x
-            self.ui_instance.target_mapped_y = msg.y
-            self.ui_instance.gaze_active = True
+            if msg.z == 1.0:
+                self.ui_instance.target_mapped_x = msg.x
+                self.ui_instance.target_mapped_y = msg.y
+                self.ui_instance.gaze_active = True
+            else:
+                self.ui_instance.gaze_active = False
 
     def eef_callback(self, msg):
         if len(msg.data) >= 3:
@@ -480,8 +483,8 @@ class EyeControlUI(QWidget):
                 self.smoothed_x = self.smoothed_x * (1-alpha) + self.target_mapped_x * alpha
                 self.smoothed_y = self.smoothed_y * (1-alpha) + self.target_mapped_y * alpha
             
-            lx = int(self.smoothed_x)
-            ly = int(self.smoothed_y)
+            lx = int(self.smoothed_x * self.width())
+            ly = int(self.smoothed_y * self.height())
             
             lx = max(0, min(self.width() - 60, lx))
             ly = max(0, min(self.height() - 60, ly))

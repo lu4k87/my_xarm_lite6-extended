@@ -700,9 +700,43 @@ pip install ultralytics==6.7.171 # YOLO 3D Objekterkennung
 | NVIDIA RTX A5000 | Primäre Grafikkarte für Computer Vision / CUDA 13.3 |
 | 12th Gen Intel Core i9-12900K | Primärer Workstation-Prozessor |
 | Tobii Pro Glasses 3 | Eye-Tracking *(in Bearbeitung)* |
+| Tobii Eye Tracker 4C | Monitor-basiertes Eye-Tracking |
 | Stereolabs ZED Mini | Stereo-Tiefenkamera |
 | Raspberry Pi Kamera (×2) | **[VERALTET]** 2D-Objekterkennung via YOLO |
 | Leap Motion Controller | Gesteneingabe *(geplant)* |
+
+### Tobii Eye Tracker 4C Setup (Linux)
+
+Da der Tobii 4C offiziell keine vollständige Linux-Unterstützung (oder Kalibrierungs-App) bietet, nutzt das System einen Community-Workaround (die Tobii Stream Engine), um Rohdaten über USB abzugreifen. Es ist zwingend erforderlich, den Tracker vorher einmalig passend zum Monitor zu kalibrieren.
+
+1. **Einmalige Windows-Kalibrierung (Zwingend!):** 
+   Der Tracker speichert sein Kalibrierungsprofil *intern auf der Hardware*. Er muss zwingend auf dem **selben physischen Monitor** kalibriert werden, der auch für Ubuntu genutzt wird.
+   - Stecke den Tracker (montiert am unteren Monitorrand, leicht nach oben aufs Gesicht geneigt) an einen Windows-PC oder Laptop, der mit *demselben* Monitor verbunden ist.
+   - Installiere unter Windows die offizielle "Tobii Eye Tracking" App und führe die Punkt-Kalibrierung durch.
+   - Das Profil wird nun dauerhaft auf dem Gerät gespeichert. Stecke ihn anschließend wieder an deinen Ubuntu-Rechner.
+
+2. **Linux-Installation (Ubuntu 22.04):**
+   - Lade den Community-Installer herunter:
+     ```bash
+     cd ~/Downloads
+     git clone https://github.com/Eitol/tobii_eye_tracker_linux_installer.git
+     cd tobii_eye_tracker_linux_installer
+     ```
+   - Installiere **nur** den USB-Service (versuche nicht, die alten Config-Pakete zu installieren, da diese inkompatible Abhängigkeiten wie `gconf2` auf Ubuntu 22.04 verlangen):
+     ```bash
+     sudo dpkg -i tobiiusbservice_l64U14_2.1.5-28fd4a.deb
+     ```
+   - Kopiere die Stream Engine Bibliothek manuell in das System, damit unser ROS 2 Node sie findet:
+     ```bash
+     mkdir -p lib
+     tar -xzvf stream_engine_linux_3.0.4.6031.tar.gz -C ./lib
+     sudo mkdir -p /usr/lib/tobii
+     sudo cp -pR ./lib/lib/x64/*.so /usr/lib/tobii/
+     sudo cp ./tobii.conf /etc/ld.so.conf.d/
+     sudo ldconfig
+     ```
+
+3. **Nutzung:** Der ROS 2 Node `ros2 run gaze_control tobii_publisher` kann nun gestartet werden. Achte darauf, im "Sweet-Spot" (50-95cm Abstand) vor dem Monitor zu sitzen, bis das Terminal konstantes Tracking (`Tracker Status: VALID`) ausgibt. Anschließend empfängt die Gaze-UI (`gaze_ui_tobii`) die Blickdaten flüssig.
 
 ### ZED SDK & Kamera Setup (ZED Mini)
 
