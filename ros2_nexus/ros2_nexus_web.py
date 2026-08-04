@@ -248,12 +248,4 @@ def api_kill_all_ros2():
 
 if __name__ == "__main__":
     port = int(os.environ.get("NEXUS_PORT", 5000))
-    print(f"\n{'═'*54}")
-    print(f"  🚀  ROS 2 Nexus  —  Web Edition")
-    print(f"{'═'*54}")
-    print(f"  Browser:    http://localhost:{port}")
-    print(f"  Workspace:  {WS_PATH}")
-    print(f"  Terminal:   gnome-terminal (Desktop)")
-    print(f"{'═'*54}\n")
-
     app.run(host="0.0.0.0", port=port, debug=False)
