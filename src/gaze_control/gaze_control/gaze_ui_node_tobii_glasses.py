@@ -383,12 +383,8 @@ class EyeControlUI(QWidget):
         home_cx = sys_cx + 260
         
         group_gap = 170
-        start_cx = w // 2 - int(group_gap * 1.5)
-        
-        up_cx = start_cx
-        down_cx = up_cx + group_gap
-        rot_left_cx = down_cx + group_gap
-        rot_right_cx = rot_left_cx + group_gap
+        rot_left_cx = w // 2 - int(group_gap * 0.5)
+        rot_right_cx = w // 2 + int(group_gap * 0.5)
         
         gripper_off_cx = w - 100
         gripper_on_cx = gripper_off_cx - 190
@@ -402,8 +398,8 @@ class EyeControlUI(QWidget):
             "Forward ⬆":     (w // 2, margin_y),
             "⬅ Left":        (margin_x, h // 2),
             "Right ➡":       (w - margin_x, h // 2),
-            "UP ⇈":          (up_cx, "BOTTOM"),
-            "DOWN ⇊":        (down_cx, "BOTTOM"),
+            "UP ⇈":          (w // 2 - 250, h - margin_y),
+            "DOWN ⇊":        (w // 2 + 250, h - margin_y),
             "⟲":             (rot_left_cx, "BOTTOM"),
             "⟳":             (rot_right_cx, "BOTTOM"),
             "GRIPPER_ON":      (gripper_on_cx, "BOTTOM"),
