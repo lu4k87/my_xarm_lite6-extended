@@ -59,7 +59,7 @@ class EyeRosNode(Node):
     def __init__(self):
         super().__init__('gaze_ui_ros2_node')
         self.twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
-        self.speed_scale = 0.25 
+        self.speed_scale = 0.10 
         
         self.current_z = 100.0  # Default safe value in mm
         self.eef_sub = self.create_subscription(Float32MultiArray, '/ui/eef_position', self.eef_callback, 10)
@@ -103,10 +103,10 @@ class EyeRosNode(Node):
         linear_z = float(vector.get('z', 0.0)) * self.speed_scale
         
         # --- SOFT-LANDING BREMSZONE ---
-        # Verhindert Latenz-Overshoot: Ab 40mm wird die Geschwindigkeit
-        # linear reduziert, bei 33.0mm ist sie exakt 0.
+        # Verhindert Latenz-Overshoot: Ab 40.0mm wird die Geschwindigkeit
+        # quadratisch reduziert, bei 33.0mm ist sie exakt 0.
         z_hard_stop = 33.0   # Absoluter Stopp (mm)
-        z_brake_start = 50.0 # Bremszone beginnt (mm)
+        z_brake_start = 40.0 # Bremszone beginnt (mm)
         
         if linear_z < 0:  # Nur bei Abwärtsbewegung
             if self.current_z <= z_hard_stop:
@@ -261,8 +261,8 @@ class EyeControlUI(QWidget):
         self.buttons = []
         self.button_map = {}  # name -> button für Positionierung
         btns = [
-            ("⟲", (0.0, 0.0, 0.0, 1.0), "rgba(52, 73, 94, 0.4)", False),
-            ("⟳", (0.0, 0.0, 0.0, -1.0), "rgba(52, 73, 94, 0.4)", False),
+            ("⟲", (0.0, 0.0, 0.0, 0.5), "rgba(52, 73, 94, 0.4)", False),
+            ("⟳", (0.0, 0.0, 0.0, -0.5), "rgba(52, 73, 94, 0.4)", False),
             ("Forward ⬆", (1.0, 0.0, 0.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
             ("UP ⇈", (0.0, 0.0, 1.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
             ("DOWN ⇊", (0.0, 0.0, -1.0, 0.0), "rgba(52, 73, 94, 0.4)", False),
@@ -397,17 +397,17 @@ class EyeControlUI(QWidget):
         margin_y = h // 4
 
         positions = {
-            "SYSTEM":          (sys_cx, bottom_cy),
-            "HOME ⌂":          (home_cx, bottom_cy),
+            "SYSTEM":          (sys_cx, "BOTTOM"),
+            "HOME ⌂":          (home_cx, "BOTTOM"),
             "Forward ⬆":     (w // 2, margin_y),
             "⬅ Left":        (margin_x, h // 2),
             "Right ➡":       (w - margin_x, h // 2),
-            "UP ⇈":          (up_cx, bottom_cy),
-            "DOWN ⇊":        (down_cx, bottom_cy),
-            "⟲":             (rot_left_cx, bottom_cy),
-            "⟳":             (rot_right_cx, bottom_cy),
-            "GRIPPER_ON":      (gripper_on_cx, bottom_cy),
-            "GRIPPER_OFF":     (gripper_off_cx, bottom_cy),
+            "UP ⇈":          (up_cx, "BOTTOM"),
+            "DOWN ⇊":        (down_cx, "BOTTOM"),
+            "⟲":             (rot_left_cx, "BOTTOM"),
+            "⟳":             (rot_right_cx, "BOTTOM"),
+            "GRIPPER_ON":      (gripper_on_cx, "BOTTOM"),
+            "GRIPPER_OFF":     (gripper_off_cx, "BOTTOM"),
             "Back ⬇":        (w // 2, h - margin_y),
         }
         
@@ -420,18 +420,23 @@ class EyeControlUI(QWidget):
             "Back ⬇": (280, 200),
             "⬅ Left": (250, 300),
             "Right ➡": (250, 300),
-            "UP ⇈": (115, 120),
-            "DOWN ⇊": (115, 120),
-            "⟲": (120, 120),
-            "⟳": (120, 120),
+            "UP ⇈": (150, 120),
+            "DOWN ⇊": (150, 120),
+            "⟲": (150, 120),
+            "⟳": (150, 120),
         }
         
         for name, (cx, cy) in positions.items():
             if name in self.button_map:
                 b = self.button_map[name]
+                fw, fh = frame_sizes.get(name, (200, 200))
+                
+                # Wenn es ein Bottom-Button ist, setze cy so, dass die Hitbox unten (h) abschließt
+                if cy == "BOTTOM":
+                    cy = h - fh / 2
+                    
                 b.move(int(cx - b.width() / 2), int(cy - b.height() / 2))
                 if hasattr(b, 'hitbox_frame'):
-                    fw, fh = frame_sizes.get(name, (200, 200))
                     b.hitbox_frame.setFixedSize(fw, fh)
                     fx = int(cx - fw / 2)
                     fy = int(cy - fh / 2)

@@ -1032,6 +1032,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 
 **Gaze Control User Interface**<br>
 - **Safety Boundary:** Includes a soft-landing brake zone starting at 40.0mm that quadratically reduces downward velocity (Z < 0), and a hard stop that completely blocks downward movement at Z=33.0mm, protecting the workspace from collision.
+- **Speed & Ergonomics:** Fine-tuned translation speed (0.10 m/s) and rotation speed (0.5 rad/s) for precise gaze-based Cartesian jogging. The UI buttons feature an optimized hitbox architecture with increased widths and perfect bottom-edge screen alignment to maximize eye-tracking reliability.
 - **Vacuum Gripper Integration:** Full support for toggling the xArm Lite 6 vacuum gripper via the UI, using the `VacuumGripperCtrl` service.
 
 ![Gaze Control UI](_imgs/gaze_control_interface.png)
