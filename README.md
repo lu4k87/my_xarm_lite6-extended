@@ -1031,7 +1031,7 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 > In *OBS Studio*, all components are consolidated and provided to the user as a central GUI for robot teleoperation.*
 
 **Gaze Control User Interface**<br>
-- **Safety Boundary:** Includes a hardcoded limit to prevent downward movement (Z < 0) when the robot reaches a height of Z=34.0mm, protecting the workspace from collision.
+- **Safety Boundary:** Includes a soft-landing brake zone starting at 40.0mm that quadratically reduces downward velocity (Z < 0), and a hard stop that completely blocks downward movement at Z=33.0mm, protecting the workspace from collision.
 - **Vacuum Gripper Integration:** Full support for toggling the xArm Lite 6 vacuum gripper via the UI, using the `VacuumGripperCtrl` service.
 
 ![Gaze Control UI](_imgs/gaze_control_interface.png)

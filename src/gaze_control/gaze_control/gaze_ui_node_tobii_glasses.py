@@ -103,9 +103,9 @@ class EyeRosNode(Node):
         linear_z = float(vector.get('z', 0.0)) * self.speed_scale
         
         # --- SOFT-LANDING BREMSZONE ---
-        # Verhindert Latenz-Overshoot: Ab 50mm wird die Geschwindigkeit
-        # linear reduziert, bei 43.0mm ist sie exakt 0.
-        z_hard_stop = 43.0   # Absoluter Stopp (mm)
+        # Verhindert Latenz-Overshoot: Ab 40mm wird die Geschwindigkeit
+        # linear reduziert, bei 33.0mm ist sie exakt 0.
+        z_hard_stop = 33.0   # Absoluter Stopp (mm)
         z_brake_start = 50.0 # Bremszone beginnt (mm)
         
         if linear_z < 0:  # Nur bei Abwärtsbewegung
@@ -113,8 +113,9 @@ class EyeRosNode(Node):
                 linear_z = 0.0
                 print(f"[SAFETY] HARD STOP bei Z={z_hard_stop}mm! (Aktuell: {self.current_z:.1f}mm)")
             elif self.current_z <= z_brake_start:
-                # Linearer Skalierungsfaktor: 1.0 bei z_brake_start → 0.0 bei z_hard_stop
-                scale = (self.current_z - z_hard_stop) / (z_brake_start - z_hard_stop)
+                # Quadratische Bremskurve: Fällt viel schneller ab als linear,
+                # dadurch fährt er in der Bremszone NOCH langsamer
+                scale = ((self.current_z - z_hard_stop) / (z_brake_start - z_hard_stop)) ** 2.0
                 linear_z *= scale
                 print(f"[SAFETY] Bremszone: Z={self.current_z:.1f}mm, Speed-Faktor: {scale:.0%}")
             
@@ -254,7 +255,7 @@ class EyeControlUI(QWidget):
             self.web_view_small.setAttribute(Qt.WA_TransparentForMouseEvents)
             self.web_view_small.setAttribute(Qt.WA_TranslucentBackground)
             self.web_view_small.page().setBackgroundColor(QColor("#444444"))
-            self.web_view_small.setStyleSheet("background-color: #444444; border: 4px solid rgba(128, 128, 128, 0.6); border-radius: 15px;")
+            self.web_view_small.setStyleSheet("background-color: #444444; border: 4px solid rgba(128, 128, 128, 0.6);")
             self.web_view_small.loadFinished.connect(self._on_stream_loaded)
 
         self.buttons = []
@@ -278,9 +279,9 @@ class EyeControlUI(QWidget):
             # Create hitbox frame FIRST so it renders behind the button
             frame = QLabel(self.button_overlay)
             if btn_text in ["⟲", "⟳"]:
-                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 60px;")
+                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 60px;")
             else:
-                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 5px;")
+                frame.setStyleSheet("background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px;")
             
             b = self.create_button(btn_text, color, is_toggle)
             b.setParent(self.button_overlay)
@@ -379,9 +380,9 @@ class EyeControlUI(QWidget):
         # Center coordinates
         bottom_cy = h - 110 
         sys_cx = 100
-        home_cx = sys_cx + 190
+        home_cx = sys_cx + 260
         
-        group_gap = 140
+        group_gap = 170
         start_cx = w // 2 - int(group_gap * 1.5)
         
         up_cx = start_cx
@@ -492,7 +493,7 @@ class EyeControlUI(QWidget):
         sender = self.sender()
         if ok and sender:
             is_small = hasattr(self, 'web_view_small') and sender == self.web_view_small
-            b_rad = "11px" if is_small else "0px"
+            b_rad = "0px"
             
             js = f"""
             document.body.style.margin = '0';
