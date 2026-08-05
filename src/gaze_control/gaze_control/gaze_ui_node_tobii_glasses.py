@@ -101,9 +101,22 @@ class EyeRosNode(Node):
         msg.twist.linear.y = float(vector.get('y', 0.0)) * self.speed_scale
         
         linear_z = float(vector.get('z', 0.0)) * self.speed_scale
-        if self.current_z <= 43.5 and linear_z < 0:
-            linear_z = 0.0
-            print(f"[SAFETY] Verhindere Bewegung unter Z=43.5! (Aktuell: {self.current_z:.1f}mm)")
+        
+        # --- SOFT-LANDING BREMSZONE ---
+        # Verhindert Latenz-Overshoot: Ab 50mm wird die Geschwindigkeit
+        # linear reduziert, bei 43.0mm ist sie exakt 0.
+        z_hard_stop = 43.0   # Absoluter Stopp (mm)
+        z_brake_start = 50.0 # Bremszone beginnt (mm)
+        
+        if linear_z < 0:  # Nur bei Abwärtsbewegung
+            if self.current_z <= z_hard_stop:
+                linear_z = 0.0
+                print(f"[SAFETY] HARD STOP bei Z={z_hard_stop}mm! (Aktuell: {self.current_z:.1f}mm)")
+            elif self.current_z <= z_brake_start:
+                # Linearer Skalierungsfaktor: 1.0 bei z_brake_start → 0.0 bei z_hard_stop
+                scale = (self.current_z - z_hard_stop) / (z_brake_start - z_hard_stop)
+                linear_z *= scale
+                print(f"[SAFETY] Bremszone: Z={self.current_z:.1f}mm, Speed-Faktor: {scale:.0%}")
             
         msg.twist.linear.z = linear_z
         msg.twist.angular.x = 0.0

@@ -244,13 +244,8 @@
       const actions = [
         { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev", title: "MoveIt Servo (Real)" },
         { cmd: "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175", title: "MoveIt MoveGroup (Standalone/Real)" },
-        { cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch" },
-        { cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning" },
-        { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
-        { cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True", title: "Whisper Bringup (Voice AI)" },
         { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" },
         { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
-        { cmd: "ros2 run tf_tuner tf_tuner", title: "Transform Tuner (tf_tuner)" },
         { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
         { cmd: "ros2 run web_video_server web_video_server --ros-args -p port:=8082", title: "Web Video Server (Port 8082)" },
         { cmd: "ros2 run gaze_control gaze_ui", title: "Gaze UI Node (Glasses 3 Pro)" }
@@ -642,7 +637,7 @@
                     <span class="badge badge-dev"><i class="fa-solid fa-bolt"></i>EXTRAS SEQUENCE</span>
                     <span class="label">RUN DEV + Gaze UI (REAL)</span>
                   </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">DEV Setup (Real) + Gaze UI Node (Glasses 3 Pro) — 12 Terminals</span></div>
+                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">DEV Setup (Real) + Gaze UI Node (Glasses 3 Pro) — 7 Terminals</span></div>
                 </div>
                 <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-left: 1px solid var(--brd); color: #a855f7; font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
                   <i class="fa-solid fa-bolt"></i>
@@ -650,17 +645,12 @@
               </div>
               <div class="card-tooltip">
                 <div class="card-tooltip-title"><i class="fa-solid fa-bolt"></i> RUN DEV + Gaze UI (REAL)</div>
-                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Startet alle DEV Setup (REAL) Terminals + Gaze UI:</b></div>
+                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Startet folgende Terminals:</b></div>
                 <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
                    <li><span style="color: var(--c-launch);">lite6_moveit_servo_realmove.launch.py</span> <span style="float: right; opacity: 0.7;">(MoveIt Servo Real)</span></li>
                    <li><span style="color: var(--c-launch);">standalone_move_group.launch.py</span> <span style="float: right; opacity: 0.7;">(MoveGroup Real)</span></li>
-                   <li><span style="color: var(--c-launch);">rviz_marker_static_scene_objects.launch.py</span> <span style="float: right; opacity: 0.7;">(RViz Markers)</span></li>
-                   <li><span style="color: var(--accent);">servo_status_overlay.py</span> <span style="float: right; opacity: 0.7;">(RViz Overlay)</span></li>
-                   <li><span style="color: var(--c-launch);">zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py</span> <span style="float: right; opacity: 0.7;">(Vision)</span></li>
-                   <li><span style="color: var(--c-launch);">bringup.launch.py</span> <span style="float: right; opacity: 0.7;">(Whisper AI)</span></li>
                    <li><span style="color: var(--accent);">voice_command_listener.py</span> <span style="float: right; opacity: 0.7;">(Voice Controller)</span></li>
                    <li><span style="color: var(--c-launch);">rosbridge_websocket_launch.xml</span> <span style="float: right; opacity: 0.7;">(ROS Bridge)</span></li>
-                   <li><span style="color: var(--accent);">tf_tuner</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                    <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
                    <li><span style="color: var(--accent);">web_video_server</span> <span style="float: right; opacity: 0.7;">(ROS Video Stream :8082)</span></li>
                    <li style="color: #a855f7; font-weight: bold;"><span style="color: #a855f7;">gaze_ui_node_tobii_glasses.py</span> <span style="float: right; opacity: 0.7;">(Gaze UI Glasses 3 Pro)</span></li>
