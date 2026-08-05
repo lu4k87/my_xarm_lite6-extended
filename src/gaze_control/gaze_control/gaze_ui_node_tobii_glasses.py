@@ -101,15 +101,25 @@ class EyeRosNode(Node):
         msg.twist.linear.y = float(vector.get('y', 0.0)) * self.speed_scale
         
         linear_z = float(vector.get('z', 0.0)) * self.speed_scale
-        if self.current_z <= 34.0 and linear_z < 0:
+        if self.current_z <= 43.5 and linear_z < 0:
             linear_z = 0.0
-            print(f"[SAFETY] Verhindere Bewegung unter Z=34.0! (Aktuell: {self.current_z:.1f}mm)")
+            print(f"[SAFETY] Verhindere Bewegung unter Z=43.5! (Aktuell: {self.current_z:.1f}mm)")
             
         msg.twist.linear.z = linear_z
         msg.twist.angular.x = 0.0
         msg.twist.angular.y = 0.0
         msg.twist.angular.z = float(vector.get('rz', 0.0))
         self.twist_pub.publish(msg)
+
+class SilentWebEnginePage(QWebEnginePage):
+    def javaScriptAlert(self, securityOrigin, msg):
+        print(f"[STREAM] Unterdrückter Javascript-Alert: {msg}")
+    
+    def javaScriptConfirm(self, securityOrigin, msg):
+        return True
+
+    def javaScriptPrompt(self, securityOrigin, msg, defaultValue):
+        return True, defaultValue
 
 class EyeControlUI(QWidget):
     def __init__(self, ros_node):
@@ -120,12 +130,12 @@ class EyeControlUI(QWidget):
         self.current_target = None
         self.current_dwell_time = 0
         
-        # --- EXAKTE OFFSET-BERECHNUNG FÜR WQHD (2560x1440) AUF 27 ZOLL ---
-        # 27 Zoll 16:9 = 59,77 cm Breite. 2560 / 59,77 = 42,83 Pixel/cm.
+        # --- EXAKTE OFFSET-BERECHNUNG FÜR FHD (1920x1080) AUF 27 ZOLL ---
+        # 27 Zoll 16:9 = 59,77 cm Breite. 1920 / 59,77 = 32,12 Pixel/cm.
         # Abstand vom Marker-Zentrum bis zum Display-Rand = 3 cm.
-        # 3 cm * 42,83 = ~129 Pixel.
-        self.offset_x = 129  
-        self.offset_y = 129  
+        # 3 cm * 32,12 = ~96 Pixel.
+        self.offset_x = 96  
+        self.offset_y = 96  
         
         # Master-Toggle für das gesamte System (Startet auf AUS für maximale Sicherheit)
         self.system_active = False
@@ -194,6 +204,7 @@ class EyeControlUI(QWidget):
         self.web_view_small = None
         if HAS_WEBENGINE:
             self.web_view = QWebEngineView(self)
+            self.web_view.setPage(SilentWebEnginePage(self.web_view))
             self.web_view.setUrl(QUrl("http://192.168.0.124/html/"))
             # Scrollbars und Interaktion deaktivieren - nur Anzeige
             self.web_view.setFocusPolicy(Qt.NoFocus)
@@ -204,7 +215,27 @@ class EyeControlUI(QWidget):
             # Web-Seite nach dem Laden so anpassen, dass der Body den gesamten Bereich füllt
             self.web_view.loadFinished.connect(self._on_stream_loaded)
             
-            self.web_view_small = QWebEngineView(self)
+            print("[STREAM] Livestreams werden geladen...")
+        else:
+            print("[STREAM] Kein WebEngine - Fallback auf dunkelgrauen Hintergrund.")
+            
+        # --- BUTTON OVERLAY (separates Top-Level-Fenster) ---
+        # QWebEngineView erzeugt ein natives X11-Fenster, das sich IMMER über
+        # normale QWidget-Kinder legt. Einzige Lösung: ein eigenständiges
+        # rahmenloses Top-Level-Fenster, das der Window-Manager korrekt über
+        # das native Chromium-Fenster compositen kann.
+        self.button_overlay = QWidget(None)  # KEIN Parent = Top-Level!
+        self.button_overlay.setWindowFlags(
+            Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint
+        )
+        self.button_overlay.setAttribute(Qt.WA_TranslucentBackground)
+        self.button_overlay.setStyleSheet("background: transparent;")
+        
+        # Kleiner Livestream jetzt als Kind des Overlays (damit er auch sichtbar bleibt)
+        self.web_view_small = None
+        if HAS_WEBENGINE:
+            self.web_view_small = QWebEngineView(self.button_overlay)
+            self.web_view_small.setPage(SilentWebEnginePage(self.web_view_small))
             self.web_view_small.setUrl(QUrl("http://192.168.0.123/html/"))
             self.web_view_small.setFocusPolicy(Qt.NoFocus)
             self.web_view_small.setAttribute(Qt.WA_TransparentForMouseEvents)
@@ -212,15 +243,6 @@ class EyeControlUI(QWidget):
             self.web_view_small.page().setBackgroundColor(QColor("#444444"))
             self.web_view_small.setStyleSheet("background-color: #444444; border: 4px solid rgba(128, 128, 128, 0.6); border-radius: 15px;")
             self.web_view_small.loadFinished.connect(self._on_stream_loaded)
-            
-            print("[STREAM] Livestreams werden geladen...")
-        else:
-            print("[STREAM] Kein WebEngine - Fallback auf dunkelgrauen Hintergrund.")
-
-        # --- BUTTON OVERLAY ---
-        self.button_overlay = QWidget(self)
-        self.button_overlay.setStyleSheet("background: transparent;")
-        self.button_overlay.setAttribute(Qt.WA_TranslucentBackground)
 
         self.buttons = []
         self.button_map = {}  # name -> button für Positionierung
@@ -256,7 +278,7 @@ class EyeControlUI(QWidget):
             self.button_map[btn_text] = b
             self.buttons.append(b)
         
-        self.cursor_dot = QLabel(self)
+        self.cursor_dot = QLabel(self.button_overlay)
         self.cursor_dot.resize(60, 60)
         self.cursor_dot.setStyleSheet("background-color: rgba(255, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 30px;")
         self.cursor_dot.setAttribute(Qt.WA_TransparentForMouseEvents)
@@ -405,18 +427,41 @@ class EyeControlUI(QWidget):
                     if fy + fh > h: fy = h - fh
                     b.hitbox_frame.move(fx, fy)
 
+    def _sync_overlay(self):
+        """Synchronisiert Position und Größe des Top-Level-Overlays mit dem Hauptfenster."""
+        if hasattr(self, 'button_overlay') and self.button_overlay:
+            pos = self.mapToGlobal(QPoint(0, 0))
+            self.button_overlay.setGeometry(pos.x(), pos.y(), self.width(), self.height())
+
+    def moveEvent(self, event):
+        super().moveEvent(event)
+        self._sync_overlay()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if hasattr(self, 'button_overlay'):
+            self.button_overlay.show()
+        self._sync_overlay()
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        if hasattr(self, 'button_overlay'):
+            self.button_overlay.hide()
+
     def resizeEvent(self, event):
         """Hält WebView und Button-Overlay synchron mit dem Fenster."""
         super().resizeEvent(event)
         if self.web_view:
             self.web_view.setGeometry(0, 0, self.width(), self.height())
             
+        self._sync_overlay()
+            
         if hasattr(self, 'web_view_small') and self.web_view_small:
             bw, bh = 150, 75
             gap = 10
             gripper_w = bw * 2 + gap
 
-            small_w = int(gripper_w * 1.8) # (vorher 1.2) * 1.5 vergrößert
+            small_w = int(gripper_w * 1.8)
             small_h = int(small_w * 9 / 16)
             
             margin_right = 20
@@ -426,10 +471,7 @@ class EyeControlUI(QWidget):
             small_y = margin_top
 
             self.web_view_small.setGeometry(small_x, small_y, small_w, small_h)
-            self.web_view_small.raise_()
             
-        self.button_overlay.setGeometry(0, 0, self.width(), self.height())
-        self.button_overlay.raise_()
         self._position_buttons()
 
     def _on_stream_loaded(self, ok):
@@ -608,7 +650,8 @@ class EyeControlUI(QWidget):
             target_pos = self.mapFromGlobal(QCursor.pos())
             self.cursor_dot.hide()
 
-        hovered_widget = self.childAt(target_pos)
+        # Buttons leben im Top-Level-Overlay: dort suchen
+        hovered_widget = self.button_overlay.childAt(target_pos)
         # Wenn der transparente Rahmen getroffen wird, navigiere zum eigentlichen Button
         if hasattr(hovered_widget, 'linked_btn'):
             hovered_widget = hovered_widget.linked_btn
@@ -861,6 +904,8 @@ class EyeControlUI(QWidget):
 
     def closeEvent(self, event):
         self.script_running = False
+        if hasattr(self, 'button_overlay') and self.button_overlay:
+            self.button_overlay.close()
         event.accept()
 
 def main(args=None):

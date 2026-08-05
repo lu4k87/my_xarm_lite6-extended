@@ -169,16 +169,6 @@
           "type": "node"
         },
         {
-          "cmd": "ros2 run gaze_control tobii_publisher",
-          "label": "Gaze Publisher (Tobii 4C)",
-          "type": "node"
-        },
-        {
-          "cmd": "ros2 run gaze_control gaze_ui_tobii",
-          "label": "Gaze UI Node (Tobii 4C)",
-          "type": "node"
-        },
-        {
           "cmd": "ros2 run gaze_control gaze_ui",
           "label": "Gaze UI Node (Glasses 3 Pro)",
           "type": "node"
