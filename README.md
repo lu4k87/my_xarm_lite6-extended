@@ -317,11 +317,14 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `gaze_ui_node_tobii_glasses.py` <kbd>SCRIPT / UI</kbd>
 
-> **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 0.5 sec fixation time) and sends direct movement and gripper commands.
-> - **Visual Design & Livestreams:** The UI utilizes an immersive dark theme (`#333333`) and integrates **two independent camera livestreams** (Main View + Picture-in-Picture).
+> **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 1 sec fixation time) and sends direct movement and gripper commands.
+> - **Homography Mapping:** Detects 4 ArUco markers on the screen corners via the scene camera. Uses `cv2.findHomography` to precisely project the 3D gaze vector (`gaze2d`) from the RTSP stream onto the 2D UI screen.
+> - **Subpixel Accuracy:** Applies `cv2.cornerSubPix` during ArUco marker detection to dramatically reduce camera jitter and stabilize the Homography matrix calculation.
+> - **Soft-Landing Brake Zone (Z-Axis):** Implements a dedicated safety logic when moving down. A quadratic brake zone starts at `Z = 40.0 mm` to slow down the arm, and a hard stop is enforced at `Z = 33.0 mm` to prevent any table collisions.
+> - **Visual Design & Livestreams:** The UI utilizes an immersive dark theme (`#333333`) and integrates **two independent camera livestreams** (Main View + Picture-in-Picture) via `QWebEngineView`.
 > - **Intelligent Error Fallback:** If cameras are unreachable, the UI proactively catches white Chromium connection error pages. The main window becomes seamlessly transparent, while the PiP window is filled with a dynamically injected HTML placeholder (`setHtml()`) in matching dark gray (`#444444`) to preserve the interface layout.
-> - **Robust Eye-Tracking:** Features a **Hitbox Architecture**: visual buttons remain small, but are backed by invisible "Hitbox Frames" that drastically increase gaze acquisition tolerance. Successful gaze interactions are confirmed via precise **acoustic feedback** (`ui_mouse_click.mp3` via Pygame).
-> - **Control:** Includes a dedicated **HOME ⌂** button for instant initial pose execution.
+> - **Robust Eye-Tracking:** Features a **Hitbox Architecture**: visual buttons remain small, but are backed by invisible "Hitbox Frames" that drastically increase gaze acquisition tolerance. Gaze targets are filtered using an Alpha-Smoothing algorithm (Alpha = 0.20) for stable cursor tracking. Successful gaze interactions are confirmed via precise **acoustic feedback** (`ui_mouse_click.mp3` via Pygame) and pulsing button animations.
+> - **Control:** Includes directional controls (Forward, Left, Right, Back, UP, DOWN, Rotate), Gripper toggles, and a dedicated **HOME ⌂** button for instant initial pose execution.
 - 📤 **Publishes:**
   - `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`)
   - Directly controls the Cartesian velocity of the robot arm and uses UFactory services to operate the gripper.
