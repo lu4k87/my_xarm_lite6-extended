@@ -27,14 +27,14 @@ This repository is a continuously evolving research and evaluation platform for 
 ## Table of Contents
 1. [📋 Project Overview](#chapter-1)
 2. [🔬 Architecture & Guiding Principles](#chapter-2)
-   - [2.1 Operating Modes: FAKE vs. REAL (Hardware Interfaces)](#subchapter-2-1)
-   - [2.2 The System Concept: An Integrated Development, Evaluation, and Validation Platform](#subchapter-2-2)
+   - [2.1 The System Concept: An Integrated Development, Evaluation, and Validation Platform](#subchapter-2-1)
 3. [⚙️ Core Features & ROS 2 Nodes](#chapter-3)
-   - [🎮 3.1 Feature: Gamepad Teleoperation & Hard Collision Protection](#subchapter-3-1)
-   - [🟢 3.2 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)](#subchapter-3-2)
-   - [🗣️ 3.3 Feature: Multimodal Interaction (Voice & Gaze Control)](#subchapter-3-3)
-   - [🖥️ 3.4 Feature: Graphical Control & Visual Feedback](#subchapter-3-4)
-   - [🌌 3.5 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)](#subchapter-3-5)
+   - [3.1 Operating Modes: FAKE vs. REAL (Hardware Interfaces)](#subchapter-3-1)
+   - [🎮 3.2 Feature: Gamepad Teleoperation & Hard Collision Protection](#subchapter-3-2)
+   - [🟢 3.3 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)](#subchapter-3-3)
+   - [🗣️ 3.4 Feature: Multimodal Interaction (Voice & Gaze Control)](#subchapter-3-4)
+   - [🖥️ 3.5 Feature: Graphical Control & Visual Feedback](#subchapter-3-5)
+   - [🌌 3.6 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)](#subchapter-3-6)
 
 4. [🎮 Gamepad Control — Deep Dive](#chapter-4)
    - [4.1 Pipeline Architecture](#subchapter-4-1)
@@ -188,22 +188,9 @@ graph TD
 
 ---
 
-### 🔌 <a id="subchapter-2-1"></a> 2.1 Operating Modes: FAKE vs. REAL (Hardware Interfaces)
-The platform strictly distinguishes between two operating modes for the robot arm. This distinction refers **exclusively to the `ros2_control` hardware interface** and is independent of sensors (like the camera or YOLO, which can run live in both modes):
-
-![Modus FAKE](https://img.shields.io/badge/Modus-FAKE_(Simulation)-blue?style=for-the-badge)<br>
-The robot runs via the `mock_components/GenericSystem` (or FakeSystem) hardware interface within `ros2_control`. There is no physical controller connection. Commands to the `/lite6_traj_controller` or `/servo_server` are purely virtually rendered in RViz2 by mirroring the joint states. Proprietary UFactory API calls (like Mode/State switches) intentionally lead nowhere in this mode or are bypassed in software.
-
-![Modus REAL](https://img.shields.io/badge/Modus-REAL_(Hardware)-red?style=for-the-badge)<br>
-The `ros2_control` framework integrates the real `xarm_api` hardware interface, which communicates directly via TCP/IP with the physical controller of the xArm Lite 6. In this mode, hardware limits, physical safety stops, and the exclusive switching of proprietary xArm hardware modes (e.g., Mode 0 for pose control vs. Mode 1 for Servo/jogging) take effect via the UFactory API.
-
-
-
-
-
 ---
 
-### 🧩 <a id="subchapter-2-2"></a> 2.2 The System Concept: An Integrated Development, Evaluation, and Validation Platform
+### 🧩 <a id="subchapter-2-1"></a> 2.1 The System Concept: An Integrated Development, Evaluation, and Validation Platform
 The core objective of the project is the realization of a modular, platform-based software architecture for multimodal teleoperation and AI-supported assistive robotics. The system acts as a central, software-side integration node (middleware level) that unifies heterogeneous subsystems into a consistent runtime environment. Through a distributed server-client network (multi-PC setup) and the software-side coupling to a real-time capable Digital Twin (NVIDIA Isaac Sim), the platform serves as both a flexible development environment and a standardized, replicable test environment. The project is explicitly designed as a closed loop of development and empirical validation:
 
 - **Sensors & Perception:** <br> Integration of depth cameras (e.g., object detection via YOLO, marker tracking) and tactile or physiological sensors for state estimation.
@@ -288,7 +275,18 @@ To provide a clear understanding of the architecture, the software modules are c
 
 ---
 
-### 🎮 <a id="subchapter-3-1"></a> 3.1 Feature: Gamepad Teleoperation & Hard Collision Protection
+### 🔌 <a id="subchapter-3-1"></a> 3.1 Operating Modes: FAKE vs. REAL (Hardware Interfaces)
+The platform strictly distinguishes between two operating modes for the robot arm. This distinction refers **exclusively to the `ros2_control` hardware interface** and is independent of sensors (like the camera or YOLO, which can run live in both modes):
+
+![Modus FAKE](https://img.shields.io/badge/Modus-FAKE_(Simulation)-blue?style=for-the-badge)<br>
+The robot runs via the `mock_components/GenericSystem` (or FakeSystem) hardware interface within `ros2_control`. There is no physical controller connection. Commands to the `/lite6_traj_controller` or `/servo_server` are purely virtually rendered in RViz2 by mirroring the joint states. Proprietary UFactory API calls (like Mode/State switches) intentionally lead nowhere in this mode or are bypassed in software.
+
+![Modus REAL](https://img.shields.io/badge/Modus-REAL_(Hardware)-red?style=for-the-badge)<br>
+The `ros2_control` framework integrates the real `xarm_api` hardware interface, which communicates directly via TCP/IP with the physical controller of the xArm Lite 6. In this mode, hardware limits, physical safety stops, and the exclusive switching of proprietary xArm hardware modes (e.g., Mode 0 for pose control vs. Mode 1 for Servo/jogging) take effect via the UFactory API.
+
+---
+
+### 🎮 <a id="subchapter-3-2"></a> 3.2 Feature: Gamepad Teleoperation & Hard Collision Protection
 *This subsystem manages the manual jogging of the robot via the Xbox controller and actively prevents the robot from colliding with the workspace surface due to operator error.*
 
 <br>
@@ -430,7 +428,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 ---
 
-### 🟢 <a id="subchapter-3-2"></a> 3.2 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)
+### 🟢 <a id="subchapter-3-3"></a> 3.3 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)
 *This subsystem is responsible for locating objects in 3D space, generating virtual obstacles, and navigating the robot precisely to the target.*
 
 <br>
@@ -679,7 +677,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 ---
 
-### 🗣️ <a id="subchapter-3-3"></a> 3.3 Feature: Multimodal Interaction (Voice & Gaze Control)
+### 🗣️ <a id="subchapter-3-4"></a> 3.4 Feature: Multimodal Interaction (Voice & Gaze Control)
 *These experimental modules allow for "hands-free" control of the system.*
 
 <br>
@@ -788,7 +786,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 ---
 
-### 🖥️ <a id="subchapter-3-4"></a> 3.4 Feature: Graphical Control & Visual Feedback
+### 🖥️ <a id="subchapter-3-5"></a> 3.5 Feature: Graphical Control & Visual Feedback
 *Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
 
 <br>
@@ -966,7 +964,7 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
 
 ---
 
-### 🌌 <a id="subchapter-3-5"></a> 3.5 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)
+### 🌌 <a id="subchapter-3-6"></a> 3.6 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *The physical and virtual workspaces are seamlessly synchronized using NVIDIA Isaac Sim as a passive, high-fidelity digital twin.*
 
 #### ![Bash Script](https://img.shields.io/badge/Bash_Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white) `start_isaac_sim.sh`

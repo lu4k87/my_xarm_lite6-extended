@@ -27,14 +27,14 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
 ## Inhaltsverzeichnis
 1. [📋 Projektübersicht](#chapter-1)
 2. [🔬 Architektur & Leitprinzipien](#chapter-2)
-   - [2.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)](#subchapter-2-1)
-   - [2.2 Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform](#subchapter-2-2)
+   - [2.1 Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform](#subchapter-2-1)
 3. [⚙️ Core Features & ROS 2 Nodes](#chapter-3)
-   - [🎮 3.1 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz](#subchapter-3-1)
-   - [🟢 3.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)](#subchapter-3-2)
-   - [🗣️ 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)](#subchapter-3-3)
-   - [🖥️ 3.4 Funktion: Grafische Steuerung & Visuelles Feedback](#subchapter-3-4)
-   - [🌌 3.5 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)](#subchapter-3-5)
+   - [3.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)](#subchapter-3-1)
+   - [🎮 3.2 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz](#subchapter-3-2)
+   - [🟢 3.3 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)](#subchapter-3-3)
+   - [🗣️ 3.4 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)](#subchapter-3-4)
+   - [🖥️ 3.5 Funktion: Grafische Steuerung & Visuelles Feedback](#subchapter-3-5)
+   - [🌌 3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)](#subchapter-3-6)
 
 4. [🎮 Gamepad-Steuerung — Technische Tiefenanalyse](#chapter-4)
    - [4.1 Pipeline-Architektur](#subchapter-4-1)
@@ -188,22 +188,9 @@ graph TD
 
 ---
 
-### <a id="subchapter-2-1"></a> 2.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)
-Die Plattform unterscheidet strikt zwischen zwei Betriebsmodi für den Roboterarm. Diese Unterscheidung bezieht sich **ausschließlich auf das `ros2_control` Hardware Interface** und ist unabhängig von der Sensorik (wie Kamera oder YOLO, welche in beiden Modi live laufen können):
-
-![Modus FAKE](https://img.shields.io/badge/Modus-FAKE_(Simulation)-blue?style=for-the-badge)<br>
-Der Roboter läuft über das `mock_components/GenericSystem` (bzw. FakeSystem) Hardware Interface innerhalb von `ros2_control`. Es gibt keine physische Controller-Verbindung. Befehle an den `/lite6_traj_controller` oder `/servo_server` werden rein virtuell in RViz2 gerendert, indem die Joint States gespiegelt werden. Proprietäre UFactory API-Calls (wie Mode/State-Switches) laufen in diesem Modus absichtlich ins Leere oder werden softwareseitig ge-bypassed.
-
-![Modus REAL](https://img.shields.io/badge/Modus-REAL_(Hardware)-red?style=for-the-badge)<br>
-Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein, welches via TCP/IP direkt mit dem physischen Controller des xArm Lite 6 kommuniziert. In diesem Modus greifen Hardware-Limits, physische Sicherheits-Stopps und die exklusive Umschaltung der proprietären xArm Hardware-Modi (z. B. Mode 0 für Pose-Steuerung vs. Mode 1 für Servo/Jogging) über die UFactory API.
-
-
-
-
-
 ---
 
-### <a id="subchapter-2-2"></a> 2.2 Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform
+### <a id="subchapter-2-1"></a> 2.1 Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform
 Das Kernziel des Projekts ist die Realisierung einer modularen, plattformbasierten Softwarearchitektur für die multimodale Teleoperation und KI-gestützte Assistenzrobotik. Das System fungiert als zentraler, softwareseitiger Integrationsknoten (Middleware-Ebene), der heterogene Teilsysteme in einer einheitlichen Laufzeitumgebung zusammenführt. Durch ein verteiltes Server-Client-Netzwerk (Multi-PC-Setup) und die softwareseitige Kopplung an einen echtzeitfähigen Digitalen Zwilling (NVIDIA Isaac Sim) dient die Plattform sowohl als flexible Entwicklungsumgebung als auch als standardisierte und replizierbare Testumgebung. Das Projekt ist explizit als geschlossener Kreislauf aus Entwicklung und empirischer Validierung konzipiert:
 
 - **Sensorik & Perzeption:** <br> Integration von Tiefenkameras (z. B. Objekterkennung via YOLO, Marker-Tracking) sowie taktilen oder physiologischen Sensoren zur Zustandserfassung.
@@ -288,7 +275,18 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 ---
 
-### 🎮 <a id="subchapter-3-1"></a> 3.1 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
+### <a id="subchapter-3-1"></a> 3.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)
+Die Plattform unterscheidet strikt zwischen zwei Betriebsmodi für den Roboterarm. Diese Unterscheidung bezieht sich **ausschließlich auf das `ros2_control` Hardware Interface** und ist unabhängig von der Sensorik (wie Kamera oder YOLO, welche in beiden Modi live laufen können):
+
+![Modus FAKE](https://img.shields.io/badge/Modus-FAKE_(Simulation)-blue?style=for-the-badge)<br>
+Der Roboter läuft über das `mock_components/GenericSystem` (bzw. FakeSystem) Hardware Interface innerhalb von `ros2_control`. Es gibt keine physische Controller-Verbindung. Befehle an den `/lite6_traj_controller` oder `/servo_server` werden rein virtuell in RViz2 gerendert, indem die Joint States gespiegelt werden. Proprietäre UFactory API-Calls (wie Mode/State-Switches) laufen in diesem Modus absichtlich ins Leere oder werden softwareseitig ge-bypassed.
+
+![Modus REAL](https://img.shields.io/badge/Modus-REAL_(Hardware)-red?style=for-the-badge)<br>
+Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein, welches via TCP/IP direkt mit dem physischen Controller des xArm Lite 6 kommuniziert. In diesem Modus greifen Hardware-Limits, physische Sicherheits-Stopps und die exklusive Umschaltung der proprietären xArm Hardware-Modi (z. B. Mode 0 für Pose-Steuerung vs. Mode 1 für Servo/Jogging) über die UFactory API.
+
+---
+
+### 🎮 <a id="subchapter-3-2"></a> 3.2 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
 *Dieses Subsystem steuert das manuelle Jogging des Roboters per Xbox-Controller und verhindert aktiv, dass der Roboter durch Bedienfehler mit der Arbeitsfläche kollidiert.*
 
 <br>
@@ -430,7 +428,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 ---
 
-### 🟢 <a id="subchapter-3-2"></a> 3.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
+### 🟢 <a id="subchapter-3-3"></a> 3.3 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
 
 <br>
@@ -701,7 +699,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 ---
 
-### 🗣️ <a id="subchapter-3-3"></a> 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
+### 🗣️ <a id="subchapter-3-4"></a> 3.4 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
 
 <br>
@@ -804,7 +802,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 ---
 
-### 🖥️ <a id="subchapter-3-4"></a> 3.4 Funktion: Grafische Steuerung & Visuelles Feedback
+### 🖥️ <a id="subchapter-3-5"></a> 3.5 Funktion: Grafische Steuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
 <br>
@@ -987,7 +985,7 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 
 ---
 
-### 🌌 <a id="subchapter-3-5"></a> 3.5 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
+### 🌌 <a id="subchapter-3-6"></a> 3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *Physischer und virtueller Arbeitsraum werden durch NVIDIA Isaac Sim als passiver, hochauflösender Digitaler Zwilling nahtlos synchronisiert.*
 
 #### ![Bash Script](https://img.shields.io/badge/Bash_Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white) `start_isaac_sim.sh`
