@@ -69,6 +69,8 @@ This repository is a continuously evolving research and evaluation platform for 
 
 ---
 
+<br>
+
 ## <a id="chapter-1"></a> 1. 📋 Project Overview
 
 <br>
@@ -116,6 +118,8 @@ A key core and innovative character of the project lies in the scientific analys
 
 
 ---
+
+<br>
 
 ## <a id="chapter-2"></a> 2. 🔬 Architecture & Guiding Principles
 
@@ -262,6 +266,8 @@ The software-side infrastructure is modularly encapsulated and fully integrated 
 
 
 ---
+
+<br>
 
 ## <a id="chapter-3"></a> 3. ⚙️ Core Features & ROS 2 Nodes
 
@@ -987,6 +993,8 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
 
 ---
 
+<br>
+
 ## <a id="chapter-4"></a> 4. 🎮 Gamepad Control — Deep Dive
 
 This section provides a full technical reference for the two-node gamepad pipeline that enables real-time, collision-safe teleoperation of the xArm Lite 6 using an Xbox One Elite Series 2 Controller.
@@ -1198,6 +1206,8 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 
 ---
 
+<br>
+
 ## <a id="chapter-5"></a> 5. 📦 Dependencies & Requirements
 
 <br>
@@ -1402,6 +1412,8 @@ source install/setup.bash
 
 
 ---
+
+<br>
 
 ## <a id="chapter-6"></a> 6. 🚀 Execution: How to Run the System
 
@@ -1614,6 +1626,8 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 
 ---
 
+<br>
+
 ## <a id="chapter-7"></a> 7. 📊 Monitoring: Dashboard & Workspace Analyzer
 
 Once the nodes are launched via ROS 2 Nexus, the live state of the system can be monitored using the **ROS2 Core Dashboard**. This is a web-based real-time UI, which fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface.
@@ -1659,6 +1673,8 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 
 
 ---
+
+<br>
 
 ## <a id="chapter-8"></a> 8. 🕹️ Multimodal Technologies & Interaction Concepts
 
@@ -1743,6 +1759,8 @@ In *OBS Studio*, all components are consolidated and provided to the user as a c
 
 ---
 
+<br>
+
 ## <a id="chapter-9"></a> 9. 🗂️ Repository Structure
 
 ```
@@ -1811,6 +1829,8 @@ dev_ws/
 
 
 ---
+
+<br>
 
 ## <a id="chapter-10"></a> 10. 🗄️ Archive / Deprecated Concepts
 

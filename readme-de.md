@@ -69,6 +69,8 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
 
 ---
 
+<br>
+
 ## <a id="chapter-1"></a> 1. 📋 Projektübersicht
 
 <br>
@@ -116,6 +118,8 @@ Ein wesentlicher Kern und Innovationscharakter des Projekts liegt in der wissens
 
 
 ---
+
+<br>
 
 ## <a id="chapter-2"></a> 2. 🔬 Architektur & Leitprinzipien
 
@@ -262,6 +266,8 @@ Die softwareseitige Infrastruktur ist modular gekapselt und vollständig in das 
 
 
 ---
+
+<br>
 
 ## <a id="chapter-3"></a> 3. ⚙️ Core Features & ROS 2 Nodes
 
@@ -1008,6 +1014,8 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 
 ---
 
+<br>
+
 ## <a id="chapter-4"></a> 4. 🎮 Gamepad-Steuerung — Technische Tiefenanalyse
 
 Dieser Abschnitt liefert eine vollständige technische Referenz für die zweistufige Gamepad-Pipeline, die eine kollisionssichere Echtzeit-Teleoperation des xArm Lite 6 mit dem Xbox One Elite Series 2 Controller ermöglicht.
@@ -1199,6 +1207,8 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 
 
 ---
+
+<br>
 
 ## <a id="chapter-5"></a> 5. 📦 Abhängigkeiten & Voraussetzungen
 
@@ -1399,6 +1409,8 @@ source install/setup.bash
 
 
 ---
+
+<br>
 
 ## <a id="chapter-6"></a> 6. 🚀 Ausführung: Systemstart
 
@@ -1611,6 +1623,8 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 
 ---
 
+<br>
+
 ## <a id="chapter-7"></a> 7. 📊 Monitoring: Dashboard & Workspace Analyzer
 
 Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustand des Systems über das **ROS2 Core Dashboard** überwachen. Dies ist eine webbasierte Echtzeit-UI, die statische Quellcode-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks zu einer einheitlichen Monitoring-Oberfläche zusammenführt.
@@ -1656,6 +1670,8 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 
 ---
+
+<br>
 
 ## <a id="chapter-8"></a> 8. 🕹️ Multimodale Technologien & Interaktionskonzepte
 
@@ -1740,6 +1756,8 @@ In *OBS Studio* werden alle Komponenten gebündelt und dem Nutzer als zentrale G
 
 ---
 
+<br>
+
 ## <a id="chapter-9"></a> 9. 🗂️ Repository-Struktur
 
 ```
@@ -1808,6 +1826,8 @@ dev_ws/
 
 
 ---
+
+<br>
 
 ## <a id="chapter-10"></a> 10. 🗄️ Archiv / Veraltete Konzepte
 
