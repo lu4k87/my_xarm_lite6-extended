@@ -280,6 +280,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 ---
 <br>
+
 ### <a id="subchapter-3-1"></a> 3.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)
 Die Plattform unterscheidet strikt zwischen zwei Betriebsmodi für den Roboterarm. Diese Unterscheidung bezieht sich **ausschließlich auf das `ros2_control` Hardware Interface** und ist unabhängig von der Sensorik (wie Kamera oder YOLO, welche in beiden Modi live laufen können):
 
@@ -691,6 +692,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 ---
 <br>
+
 ### 🗣️ <a id="subchapter-3-4"></a> 3.4 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
 
@@ -783,6 +785,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 ---
 
 <br>
+
 ### 🖥️ <a id="subchapter-3-5"></a> 3.5 Funktion: Grafische Steuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
@@ -956,6 +959,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 ---
 
 <br>
+
 ### 🌌 <a id="subchapter-3-6"></a> 3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *Physischer und virtueller Arbeitsraum werden durch NVIDIA Isaac Sim als passiver, hochauflösender Digitaler Zwilling nahtlos synchronisiert.*
 
@@ -1012,6 +1016,7 @@ flowchart LR
 
 ---
 <br>
+
 ### <a id="subchapter-4-2"></a> 4.2 `checker.py` — Kollisionswächter (Python Node)
 
 **Datei:** `src/collision_check/collision_check/checker.py`
@@ -1046,6 +1051,7 @@ if predicted_z < Z_LIMIT:
 
 ---
 <br>
+
 ### 4.2.2 Zwei-Stufen-Sicherheitsmodell
 
 ```
@@ -1352,6 +1358,7 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 
 ---
 <br>
+
 ### <a id="subchapter-6-1"></a> 6.1 Schritt 1: Hardware vorbereiten
 1. **Roboter einschalten:** Schalte den UFactory xArm Lite 6 an und stelle sicher, dass der Not-Aus-Schalter entriegelt ist.
 2. **Controller verbinden:** Schalte den Xbox One Elite Series 2 Controller ein und prüfe die Verbindung (Bluetooth oder USB) mit dem Host-PC.
@@ -1359,6 +1366,7 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 
 ---
 <br>
+
 ### <a id="subchapter-6-2"></a> 6.2 Schritt 2: System starten (ROS 2 Nexus)
 Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- oder `ros2 launch`-Befehle in mehreren Terminals parallel ausgeführt werden, um die einzelnen Nodes zu starten. Genau um dieses Problem zu lösen, wurde die **ROS 2 Nexus** WebApp entwickelt: Anstatt komplexe CLI-Befehle auswendig zu lernen, lassen sich alle benötigten Nodes und Launch-Files bequem per Klick direkt aus dem Browser heraus starten. Die UI ist dabei übersichtlich in zwei Hauptbereiche unterteilt: **Automated System Bringup** (für die lokale Entwicklung an einem PC) und **Remote Control System Bringup** (für verteilte Server/Client-Ausführung). Die Hintergrund-Startsequenzen wurden stark optimiert: Die Backend-Nodes und MoveIt starten nun mit einer Sekunde Verzögerung dazwischen, während die ROS Bridge und Web UI als Letztes laden. Dies beugt WebSocket-Abbrüchen vor.
 
@@ -1390,6 +1398,7 @@ Danach kann die App über das Suchfeld im Menü (nach **„ROS 2 Nexus"** suchen
 
 ---
 <br>
+
 ### <a id="subchapter-6-3"></a> 6.3 Schritt 3: Module über die GUI aktivieren
 Sobald sich ROS 2 Nexus im Browser geöffnet hat:
 1. Navigiere durch die verschiedenen Tabs der Oberfläche (z.B. `Nodes / Launch`, `Sensors`, `Hardware`, `Web`).
@@ -1403,6 +1412,7 @@ Sobald sich ROS 2 Nexus im Browser geöffnet hat:
 
 ---
 <br>
+
 ### <a id="subchapter-6-4"></a> 6.4 Netzwerk- & Port-Architektur
 
 Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nutzen, laufen im Hintergrund drei verschiedene Server auf drei separaten Ports:
@@ -1420,6 +1430,7 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 
 ---
 <br>
+
 ### <a id="subchapter-6-5"></a> 6.5 Verteilte Steuerung (Remote / Operator-Station)
 
 Wenn das System über das Netzwerk von einer Operator-Station aus gesteuert werden soll (z. B. von einem Remote-Rechner mit Gamepad), kann die ROS 2 Architektur dank DDS nahtlos aufgeteilt werden. Das verteilt die CPU-Last und minimiert Netzwerklatenzen bei der Kollisionsprüfung.
@@ -1477,6 +1488,7 @@ sudo systemctl start lo-multicast.service
 
 ---
 <br>
+
 ### <a id="subchapter-6-7"></a> 6.7 Launcher-Konfiguration (`launcher_config.json`)
 
 Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar.
