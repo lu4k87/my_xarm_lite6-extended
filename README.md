@@ -307,7 +307,9 @@ To provide a clear understanding of the architecture, the software modules are c
   | **`/joy_check`** | `sensor_msgs/Joy` |  |
   | **`/ui/collision_msg`** | `std_msgs/String` |  |
   | *-* | *-* | Forwards the (potentially zero-corrected) command to the `joystick_input` and reports hard stops to the UI. Gamepad rumble feedback is triggered directly via `pygame` (without a ROS topic). |
-  | *-* | *-* | ⚙️ **Parameters:** |
+<br>
+
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 
  * `look_ahead_time = 0.1` – Prediction horizon (seconds) for the velocity look-ahead.
  * `table_z_threshold = 0.0` – The hard table barrier on the Z-axis (World-Frame).
@@ -335,7 +337,9 @@ To provide a clear understanding of the architecture, the software modules are c
   |---|---|---|
   | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | Sends safe, collision-free joint trajectories to the arm. |
   | *-* | *-* | Sends the final joint angles to the robot. |
-  | *-* | *-* | ⚙️ **Parameters (`xarm_moveit_servo_config.yaml`):** |
+<br>
+
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`xarm_moveit_servo_config.yaml`)**
 
  * `collision_check_type: stop_distance` – Enables soft, velocity-dependent deceleration (pre-warning starts around 5cm) instead of a hard block at the boundary. A hard emergency stop engages at exactly 2cm (`min_allowable_collision_distance: 0.02`).
  * `collision_distance_safety_margin: 0.02` – Defines the 2 cm wide, invisible collision bubble around the robot.
@@ -358,7 +362,9 @@ To provide a clear understanding of the architecture, the software modules are c
   | **`/zed/zed_node/rgb/image_rect_color`** | `sensor_msgs/Image` | Publishes the color-corrected 2D RGB camera image. |
   | **`/zed/zed_node/depth/depth_registered`** | `sensor_msgs/Image` | Publishes the registered depth map. |
   | **`/zed/zed_node/point_cloud/cloud_registered`** | `sensor_msgs/PointCloud2` | Publishes the dense 3D point cloud. |
-  | *-* | *-* | ⚙️ **Parameters (`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`):** |
+<br>
+
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`)**
 
  * `depth_mode: ULTRA` – Forces the most dense 3D point cloud for clean edge calculation.
  * `auto_exposure: True` – Allows automatic brightness compensation for robust YOLO detection.
@@ -387,7 +393,9 @@ To provide a clear understanding of the architecture, the software modules are c
   |---|---|---|
   | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` |  |
   | *-* | *-* | Sends the finalized 3D boxes and markers to RViz for visualization and to downstream nodes. |
-  | *-* | *-* | ⚙️ **Parameters:** |
+<br>
+
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 
  * `class_dimension_overrides` – Hardcodes expected metric dimensions (x,y,z) for specific objects to ensure the bounding box perfectly encloses the physical volume, not just the visible point cloud surface.
  * `percentiles: [0.5, 99.5]` – Hard-clips extreme depth noise pixels ("flying pixels" at object edges) while preserving true boundaries.
@@ -451,7 +459,9 @@ To provide a clear understanding of the architecture, the software modules are c
   - **Phase 1 (Retract):** <br> Safely moves the arm strictly upwards from its current position to clear the table.
   - **Phase 2 (Hover):** <br> Translates horizontally to a safe height (15cm) exactly above the target object. Forces a strict top-down orientation and uses tight IK tolerances (5mm positional, 0.001 rad tilt) to guarantee millimeter-accurate vertical alignment.
   - **Phase 3 (Approach):** <br> Temporarily removes the target object from the MoveIt global collision scene via `/ui/ignore_collision_object` to allow the TCP to physically reach into the object's bounding box without triggering emergency stops, then moves down.
-- ⚙️ **Parameters:** Features tunable `velocity_scaling` (default: 0.2) and `acceleration_scaling` (default: 0.1) for extremely smooth, slow, and predictable robotic interactions during the grasp sequence.
+<br>
+
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) Features tunable `velocity_scaling` (default: 0.2) and `acceleration_scaling` (default: 0.1) for extremely smooth, slow, and predictable robotic interactions during the grasp sequence.
 
 <br>
 

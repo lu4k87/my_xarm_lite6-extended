@@ -308,8 +308,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   | **`/ui/collision_msg`** | `std_msgs/String` | Meldet harte Stopps an das UI-Log. |
 
 <br>
-
- * ⚙️ **Parameter:**
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
  
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
@@ -340,8 +339,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | Sendet validierte Gelenktrajektorien an den Roboter. |
 
 <br>
-
- * ⚙️ **Parameter (`xarm_moveit_servo_config.yaml`):**
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`xarm_moveit_servo_config.yaml`)**
 
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
@@ -368,8 +366,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   | **`/zed/zed_node/point_cloud/cloud_registered`** | `sensor_msgs/PointCloud2` | Publiziert die dichte 3D-Punktwolke. |
 
 <br>
-
- * ⚙️ **Parameter (`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`):**
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`)**
 
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
@@ -401,8 +398,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | Sendet die fertigen 3D-Boxen zur Visualisierung an RViz und Nodes. |
 
 <br>
-
- * ⚙️ **Parameter:**
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
@@ -468,8 +464,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - **Phase 2 (Hover):** <br> Bewegt sich horizontal auf der sicheren Z-Höhe (15cm) exakt über das Zielobjekt. Erzwingt dabei eine strikte Top-Down Orientierung (gerade nach unten) und nutzt sehr enge IK-Toleranzen (5mm Position, 0.001 rad Neigung) für millimetergenaue Ausrichtung.
   - **Phase 3 (Approach):** <br> Schaltet das anvisierte Objekt kurzzeitig über `/ui/ignore_collision_object` in der globalen MoveIt Kollisionsszene ab, damit der Greifer physisch in die Bounding Box eindringen kann, ohne einen Not-Aus auszulösen, und fährt dann nach unten.
 <br>
-
- * ⚙️ **Parameter:**
+![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
