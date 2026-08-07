@@ -864,28 +864,30 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 >   | **`/ui/execute_move_joint`** | Server | *Setzt Gelenkziele um.* |
 >   | **`/compute_ik`** | Client | *Nutzt MoveIt zur kinematischen Vorwärts-/Rückwärtsrechnung.* |
 >
+
+---
+
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
-
-**Zweck & Aufgabe:**<br>
-Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koordinaten als Overlay in den Video-Stream des RViz-Sichtfelds.
-
-
-![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-
-  | Topic / Interface | Msg Type | Beschreibung |
-  |---|---|---|
-  | **`/servo_server/status`** | `std_msgs/Int8` | *Färbt den RViz-Rand je nach Gefahrenstufe.* |
-  | **`/ui/collision_msg`** | `std_msgs/String` | *Zeigt detaillierte Kollisionswarnungen im Video-Feed an.* |
-  | **`/ui/robot_control/current_frame`** | `std_msgs/String` | *Blendet das aktive Koordinatensystem (World/TCP) ein.* |
-
-
-![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-
-  | Topic / Interface | Msg Type | Beschreibung |
-  |---|---|---|
-  | **`/rviz_2d_overlay_msgs/OverlayText`** |  | *Projiziert Warntexte als Overlay in RViz.* |
-
-<br>
+>
+> **Zweck & Aufgabe:**<br>
+> Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koordinaten als Overlay in den Video-Stream des RViz-Sichtfelds.
+>
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>   | Topic / Interface | Msg Type | Beschreibung |
+>   |---|---|---|
+>   | **`/servo_server/status`** | `std_msgs/Int8` | *Färbt den RViz-Rand je nach Gefahrenstufe.* |
+>   | **`/ui/collision_msg`** | `std_msgs/String` | *Zeigt detaillierte Kollisionswarnungen im Video-Feed an.* |
+>   | **`/ui/robot_control/current_frame`** | `std_msgs/String` | *Blendet das aktive Koordinatensystem (World/TCP) ein.* |
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>   | Topic / Interface | Msg Type | Beschreibung |
+>   |---|---|---|
+>   | **`/rviz_2d_overlay_msgs/OverlayText`** |  | *Projiziert Warntexte als Overlay in RViz.* |
+>
+> <br>
 
 ---
 

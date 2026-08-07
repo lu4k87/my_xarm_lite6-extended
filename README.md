@@ -843,28 +843,31 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 >   |---|---|---|
 >   | *-* | *-* | *Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_object_scan`, and `/ui/execute_move_joint` as Server. Uses `/compute_ik` (MoveIt IK) as a Client to resolve Cartesian targets. Has a TF2 listener for real-time TCP coordinates.* |
 >
+
+---
+
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
-
-**Purpose & Task:**<br>
-Project color-coded warning messages (e.g., "COLLISION!") and live axis coordinates directly into the video stream of the RViz viewport.
-
-
-![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-
-  | Topic / Interface | Msg Type | Beschreibung |
-  |---|---|---|
-  | **`/servo_server/status`** | `std_msgs/Int8` | *Tints the screen border red/orange based on danger level.* |
-  | **`/ui/collision_msg`** | `std_msgs/String` | *Displays detailed collision warnings inside the video feed.* |
-  | **`/ui/robot_control/current_frame`** | `std_msgs/String` | *Overlays the active control frame (World/TCP).* |
-
-
-![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-
-  | Topic / Interface | Msg Type | Beschreibung |
-  |---|---|---|
-  | **`/rviz_2d_overlay_msgs/OverlayText`** |  | *Projects warning texts as overlay widgets in RViz.* |
-
-<br>
+>
+> **Purpose & Task:**<br>
+> Project color-coded warning messages (e.g., "COLLISION!") and live axis coordinates directly into the video stream of the RViz viewport.
+>
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>   | Topic / Interface | Msg Type | Beschreibung |
+>   |---|---|---|
+>   | **`/servo_server/status`** | `std_msgs/Int8` | *Tints the screen border red/orange based on danger level.* |
+>   | **`/ui/collision_msg`** | `std_msgs/String` | *Displays detailed collision warnings inside the video feed.* |
+>   | **`/ui/robot_control/current_frame`** | `std_msgs/String` | *Overlays the active control frame (World/TCP).* |
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>   | Topic / Interface | Msg Type | Beschreibung |
+>   |---|---|---|
+>   | **`/rviz_2d_overlay_msgs/OverlayText`** |  | *Projects warning texts as overlay widgets in RViz.* |
+>
+> <br>
 
 ---
 
