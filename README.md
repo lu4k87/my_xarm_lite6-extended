@@ -628,7 +628,7 @@ The rumble is cleared as soon as the arm is moved to a safe height.
 
 This node receives the already-sanitized `/joy_check` signal and translates it into `geometry_msgs/TwistStamped` messages for the MoveIt Servo server — enabling smooth, real-time Cartesian velocity control.
 
-#### 4.7.1 Full Controller Button Mapping
+#### 4.3.1 Full Controller Button Mapping
 
 <details>
 <summary><b>🎮 Show Controller Mapping</b></summary>
@@ -661,7 +661,7 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 | 5 | `100%` | Maximum — full servo speed |
 
 </details>
-#### 4.7.2 Signal Flow & Exponential Smoothing
+#### 4.3.2 Signal Flow & Exponential Smoothing
 
 All continuous axes are passed through an **exponential low-pass filter** to prevent jerky, discontinuous movements from stick input noise:
 
@@ -687,7 +687,7 @@ Hardware Input
  └─ /servo_server/delta_twist_cmds (TwistStamped)
 ```
 
-#### 4.7.3 Whisper AI Integration (X Button)
+#### 4.3.3 Whisper AI Integration (X Button)
 
 The X button integrates **OpenAI Whisper** via a ROS 2 **Action Client** (`rclcpp_action`) — not a simple service. This enables non-blocking, cancellable, real-time speech recording:
 
@@ -704,7 +704,7 @@ Press X → async_send_goal (max_duration = 5s)
 
 Status feedback is published to `/ui/joy_button_presses` after every state transition, allowing the dashboard to display real-time microphone status.
 
-#### 4.7.4 Topics & Services Reference
+#### 4.3.4 Topics & Services Reference
 
 | Type | Name | Message Type | Description |
 |------|------|-------------|-------------|
@@ -1142,18 +1142,23 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 For cognitively relieving teleoperation, the user is provided with a central, immersive user interface that consolidates all system states.
 
 #### Telemetry & Status
+> [!NOTE]
 > Continuous display of real-time telemetry data from the robot arm.
  
 #### System Feedback & Intent Recognition
+> [!NOTE]
 > Direct visual and acoustic feedback for manual control inputs as well as successfully parsed voice commands.
  
 #### Preventive Collision Warnings
+> [!NOTE]
 > Dynamic warnings when software-based collision protection measures are triggered (e.g., falling below the Z-limit).
  
 #### Visual Monitoring & Object Detection
+> [!NOTE]
 > Seamless integration of video livestreams with live overlays of detected target objects (YOLO bounding boxes) as well as a synchronized 3D visualization (Digital Twin) of the work environment.
 
 #### Implementation via OBS Studio:
+> [!NOTE]
 > In *OBS Studio*, all components are consolidated and provided to the user as a central GUI for robot teleoperation.*
 
 **Gaze Control User Interface**<br>
@@ -1226,3 +1231,13 @@ dev_ws/
 │ └── zed-ros2-examples/                                                   # 📷 ZED examples (submodule)
 └── README.md / readme-de.md                                               # Documentation (EN / DE)
 
+
+
+---
+
+## <a id="chapter-10"></a> 10. 🗄️ Archive / Deprecated Concepts
+
+### ArUco Marker System [DEPRECATED]
+> *[Deprecated]* Markers placed in the robot's workspace serve as references for homography matrices.
+* *[Deprecated]* Derivation of 3D world coordinates for objects on the workspace surface (Z = 90 mm).
+- Precise projection of eye-tracking gaze coordinates onto the control **UI** to translate gaze into robot commands.

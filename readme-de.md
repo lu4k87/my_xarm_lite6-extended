@@ -635,7 +635,7 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 **Klasse:** `xarm_moveit_servo::JoyToServoPub` 
 **Registriert als:** ROS 2 Component (`RCLCPP_COMPONENTS_REGISTER_NODE`)
 
-#### 4.7.1 Vollständiges Controller Button-Mapping
+#### 4.3.1 Vollständiges Controller Button-Mapping
 
 <details>
 <summary><b>🎮 Controller-Belegung anzeigen</b></summary>
@@ -668,7 +668,7 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 | 5 | `100%` | Maximum — volle Servo-Geschwindigkeit |
 
 </details>
-#### 4.7.2 Signal-Fluss & Exponentielle Glättung
+#### 4.3.2 Signal-Fluss & Exponentielle Glättung
 
 ```
 // Jeder Callback-Zyklus:
@@ -685,7 +685,7 @@ Hardware-Eingabe
  └─ /servo_server/delta_twist_cmds (TwistStamped)
 ```
 
-#### 4.7.3 Whisper AI Integration (X-Button)
+#### 4.3.3 Whisper AI Integration (X-Button)
 
 ```
 X drücken → async_send_goal (max_duration = 5s)
@@ -698,7 +698,7 @@ X drücken → async_send_goal (max_duration = 5s)
 
 Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 
-#### 4.7.4 Topics & Services Referenz
+#### 4.3.4 Topics & Services Referenz
 
 | Typ | Name | Message-Typ | Beschreibung |
 |-----|------|------------|-------------|
@@ -1110,30 +1110,32 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 - Die Kamera kann wahlweise **stationär** (auf einem Stativ) oder **am Endeffektor (EEF)** montiert genutzt werden.
 - **Object Cross Scan:** Der Roboter kann präzise, individuelle Kreuzflüge direkt über Objekten ausführen (mit dynamischer Just-in-Time Live-Positionsbestimmung via TF), um detaillierte Punktwolken aus verschiedenen Blickwinkeln aufzunehmen.
 #### VLA & Video Action Models (Geplant)
+> [!NOTE]
 > KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
-### <a id="subchapter-8-3"></a> 8.3 Koordinatentransformation & Kalibrierung
-#### ArUco Marker System [VERALTET]
-> *[Veraltet]* Im Arbeitsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
-* *[Veraltet]* Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsfläche (Z = 90 mm).
-- Präzise Projektion von Eye-Tracking Blickkoordinaten auf die Steuerungs-**UI**, um den Blick in Roboterbefehle zu übersetzen.
+
 
 ### <a id="subchapter-8-4"></a> 8.4 User Interfaces (UI/GUI)
 Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, immersives User Interface zur Verfügung, das alle Systemzustände bündelt.
 
 #### Telemetrie & Status
+> [!NOTE]
 > Kontinuierliche Anzeige von Echtzeit-Telemetriedaten des Roboterarms.
  
 #### System Feedback & Intent Recognition
+> [!NOTE]
 > Direktes visuelles und akustisches Feedback für manuelle Steuereingaben sowie erfolgreich geparste Sprachbefehle.
  
 #### Präventive Kollisionswarnungen
+> [!NOTE]
 > Dynamische Warnungen beim Eingreifen softwareseitiger Kollisionsschutzmaßnahmen (z.B. Unterschreiten des Z-Limits).
  
 #### Visuelles Monitoring & Objekterkennung
+> [!NOTE]
 > Nahtlose Integration von Video-Livestreams mit Live-Overlays erkannter Zielobjekte (YOLO Bounding Boxes) sowie einer synchronisierten 3D-Visualisierung (Digitaler Zwilling) der Arbeitsumgebung.
 
 #### Umsetzung via OBS Studio:
+> [!NOTE]
 > In *OBS Studio* werden alle Komponenten gebündelt und dem Nutzer als zentrale GUI für die Roboter-Teleoperation bereitgestellt.*
 
 **Gaze Control User Interface**<br>
@@ -1205,3 +1207,13 @@ dev_ws/
 │ └── zed-ros2-examples/                                                   # 📷 ZED-Beispiele (Submodul)
 └── README.md / readme-de.md                                               # Dokumentation (EN / DE)
 ```
+
+
+---
+
+## <a id="chapter-10"></a> 10. 🗄️ Archiv / Veraltete Konzepte
+
+### ArUco Marker System [VERALTET]
+> *[Veraltet]* Im Arbeitsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
+* *[Veraltet]* Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsfläche (Z = 90 mm).
+- Präzise Projektion von Eye-Tracking Blickkoordinaten auf die Steuerungs-**UI**, um den Blick in Roboterbefehle zu übersetzen.
