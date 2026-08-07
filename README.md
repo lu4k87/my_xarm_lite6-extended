@@ -304,9 +304,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_joystick_input.cpp` &nbsp;&nbsp; <sub><i>[`/src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`](./src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -362,9 +359,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`) &nbsp;&nbsp; <sub><i>[`/src/collision_check/collision_check/checker.py`](./src/collision_check/collision_check/checker.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -400,9 +394,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_moveit_servo` &nbsp;&nbsp; <sub><i>[`/src/xarm_ros2/xarm_moveit_servo`](./src/xarm_ros2/xarm_moveit_servo)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -444,9 +435,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_wrapper` &nbsp;&nbsp; <sub><i>[`/src/zed-ros2-wrapper`](./src/zed-ros2-wrapper)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -472,9 +460,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_yolo_3d_bbox.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/zed_yolo_3d_bbox.py`](./src/my_3d_vision_bringup/scripts/zed_yolo_3d_bbox.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -509,9 +494,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py`](./src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -522,9 +504,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py`](./src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -547,9 +526,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 >
 
 ---
-
-<br>
-
 #### ![MoveIt 2](https://img.shields.io/badge/Integration-MoveIt_2-00529B?style=flat-square) `octomap_server`
 >
 >
@@ -576,9 +552,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py`](./src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -627,9 +600,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/grasp_action_bridge.py`](./src/my_3d_vision_bringup/scripts/grasp_action_bridge.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -651,9 +621,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 >
 
 ---
-
-<br>
-
 #### ![Python Script](https://img.shields.io/badge/Python_Script-3776AB?style=flat-square&logo=python&logoColor=white) `zed_stand_publisher.py`
 >
 >
@@ -672,9 +639,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `tf_tuner` &nbsp;&nbsp; <sub><i>[`/src/tf_tuner`](./src/tf_tuner)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -701,9 +665,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ros2_whisper` &nbsp;&nbsp; <sub><i>[`/src/ros2_whisper`](./src/ros2_whisper)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -723,9 +684,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `audio_listener.py` &nbsp;&nbsp; <sub><i>[`/src/ros2_whisper/audio_listener/audio_listener/audio_listener.py`](./src/ros2_whisper/audio_listener/audio_listener/audio_listener.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -736,9 +694,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `voice_command_listener.py` &nbsp;&nbsp; <sub><i>[`/src/voice_command_listener/voice_command_listener/voice_command_listener.py`](./src/voice_command_listener/voice_command_listener/voice_command_listener.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -770,9 +725,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses.py` &nbsp;&nbsp; <sub><i>[`/src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py`](./src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -808,9 +760,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>[`/src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp`](./src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -849,9 +798,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `robot_motion_handler_movegroup.py` &nbsp;&nbsp; <sub><i>[`/src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py`](./src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -903,9 +849,6 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_static_scene_objects.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects.py`](./src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects.py)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -923,9 +866,6 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
 <br>
 
 ---
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>[`/src/rosbridge_suite/rosbridge_server`](./src/rosbridge_suite/rosbridge_server)</i></sub>
 >
 > **Purpose & Task:**<br>
@@ -933,9 +873,6 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
 >
 
 ---
-
-<br>
-
 #### ![Web App](https://img.shields.io/badge/Web_App-E34F26?style=flat-square&logo=html5&logoColor=white) `robot_control_web_ui`
 >
 >
@@ -986,9 +923,6 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
 *The physical and virtual workspaces are seamlessly synchronized using NVIDIA Isaac Sim as a passive, high-fidelity digital twin.*
 
 ---
-
-<br>
-
 #### ![Bash Script](https://img.shields.io/badge/Bash_Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white) `start_isaac_sim.sh`
 >
 >
