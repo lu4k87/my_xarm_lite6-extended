@@ -291,10 +291,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🎮 <a id="subchapter-3-1"></a> 3.1 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
 *Dieses Subsystem steuert das manuelle Jogging des Roboters per Xbox-Controller und verhindert aktiv, dass der Roboter durch Bedienfehler mit der Arbeitsfläche kollidiert.*
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_joystick_input.cpp` &nbsp;&nbsp; <sub><i>`/src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`</i></sub>
 >
@@ -347,10 +346,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`) &nbsp;&nbsp; <sub><i>`/src/collision_check/collision_check/checker.py`</i></sub>
 >
@@ -384,10 +382,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_moveit_servo` &nbsp;&nbsp; <sub><i>`/src/xarm_ros2/xarm_moveit_servo`</i></sub>
 >
@@ -430,10 +427,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🟢 <a id="subchapter-3-2"></a> 3.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_wrapper` &nbsp;&nbsp; <sub><i>`/src/zed-ros2-wrapper`</i></sub>
 >
@@ -459,10 +455,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_yolo_3d_bbox.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/zed_yolo_3d_bbox.py`</i></sub>
 >
@@ -496,10 +491,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py`</i></sub>
 >
@@ -522,10 +516,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py`</i></sub>
 >
@@ -569,10 +562,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py`</i></sub>
 >
@@ -624,10 +616,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/grasp_action_bridge.py`</i></sub>
 >
@@ -663,10 +654,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `tf_tuner` &nbsp;&nbsp; <sub><i>`/src/tf_tuner`</i></sub>
 >
@@ -694,10 +684,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ros2_whisper` &nbsp;&nbsp; <sub><i>`/src/ros2_whisper`</i></sub>
 >
@@ -715,10 +704,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `audio_listener.py` &nbsp;&nbsp; <sub><i>`/src/ros2_whisper/audio_listener/audio_listener/audio_listener.py`</i></sub>
 >
@@ -727,10 +715,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `voice_command_listener.py` &nbsp;&nbsp; <sub><i>`/src/voice_command_listener/voice_command_listener/voice_command_listener.py`</i></sub>
 >
@@ -755,10 +742,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses.py` &nbsp;&nbsp; <sub><i>`/src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py`</i></sub>
 >
@@ -793,10 +779,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🖥️ <a id="subchapter-3-4"></a> 3.4 Funktion: Grafische Steuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>`/src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp`</i></sub>
 >
@@ -834,10 +819,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `robot_motion_handler_movegroup.py` &nbsp;&nbsp; <sub><i>`/src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py`</i></sub>
 >
@@ -891,10 +875,9 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
   |---|---|---|
   | **`/rviz_2d_overlay_msgs/OverlayText`** |  | *Projiziert Warntexte als Overlay in RViz.* |
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_static_scene_objects.py` &nbsp;&nbsp; <sub><i>`/src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects.py`</i></sub>
 >
@@ -910,10 +893,9 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 >
 >
 
-<br>
-<br>
-
 ---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>`/src/rosbridge_suite/rosbridge_server`</i></sub>
 >
