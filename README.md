@@ -230,6 +230,19 @@ To provide a clear understanding of the architecture, the software modules are c
 
 **Purpose & Task:** Translates the sanitized gamepad signals (analog sticks & triggers) into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies exponential smoothing and handles all button mappings.
 
+**🎮 Controller Mapping (Quick Reference):**
+| Input | Action | Details |
+| :--- | :--- | :--- |
+| **Left Stick** (↕️/↔️) | **Translate (X / Y)** | Moves the robot forward/backward (X) and left/right (Y) |
+| **LT / RT** (Triggers) | **Translate (Z)** | Moves the robot arm up (LT) and down (RT) |
+| **LB / RB** (Bumpers) | **Rotate (Yaw)** | Rotates the end effector around its vertical axis |
+| **D-Pad** (↕️) | **Speed Control** | Cycles through 5 speed levels |
+| **START / BACK** | **Reference Frame** | Toggles between base (`link_base`) and tool coordinates (`link_tcp`) |
+| **Button A** (🟢) | **Vacuum Gripper** | Toggles the vacuum on / off |
+| **Button B** (🔴) | **E-Stop (Gripper)** | Stops the vacuum gripper immediately |
+| **Button X** (🔵) | **Microphone (Voice)** | Starts/Stops recording for Whisper AI |
+| **Button Y** (🟡) | **Initial Pose** | Moves the robot to the safe home position |
+
 ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 
   | Topic / Interface | Msg Type | Beschreibung |
@@ -756,9 +769,6 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 
 #### 4.3.1 Full Controller Button Mapping
 
-<details>
-<summary><b>🎮 Show Controller Mapping</b></summary>
-
 | Input | Function | ROS Action | Technical Detail |
 |-------|----------|-----------|-----------------|
 | **Left Stick ↑↓** | Move X-axis (forward/back) | `TwistStamped.linear.x` | `axes[1] × speed_scale` |
@@ -786,7 +796,6 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 | 4 | `75%` | Fast — long-range traversal |
 | 5 | `100%` | Maximum — full servo speed |
 
-</details>
 #### 4.3.2 Signal Flow & Exponential Smoothing
 
 All continuous axes are passed through an **exponential low-pass filter** to prevent jerky, discontinuous movements from stick input noise:

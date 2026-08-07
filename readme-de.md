@@ -232,6 +232,19 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 **Zweck & Aufgabe:** Übersetzt die bereinigten Gamepad-Signale (Analog-Sticks & Trigger) in kartesische Geschwindigkeitsbefehle (`TwistStamped`) für MoveIt Servo. Wendet exponentielles Smoothing an und steuert alle Button-Mappings.
 
+**🎮 Controller-Belegung (Quick Reference):**
+| Eingabe | Aktion | Details |
+| :--- | :--- | :--- |
+| **Linker Stick** (↕️/↔️) | **Verfahren (X / Y)** | Bewegt den Roboter vor/zurück (X) und links/rechts (Y) |
+| **LT / RT** (Trigger) | **Heben/Senken (Z)** | Bewegt den Roboterarm auf/ab |
+| **LB / RB** (Bumper) | **Rotieren (Yaw)** | Dreht den Endeffektor um die eigene Achse |
+| **D-Pad** (↕️) | **Speed Control** | Schaltet 5 Geschwindigkeitsstufen durch |
+| **START / BACK** | **Referenzrahmen** | Wechselt zwischen Basis- (`link_base`) und Werkzeug-Koordinaten (`link_tcp`) |
+| **A-Taste** (🟢) | **Vakuumgreifer** | Schaltet das Vakuum an / aus |
+| **B-Taste** (🔴) | **Not-Aus (Greifer)** | Stoppt den Vakuumgreifer sofort |
+| **X-Taste** (🔵) | **Mikrofon (Voice)** | Startet/Stoppt die Aufnahme für Whisper AI |
+| **Y-Taste** (🟡) | **Initialpose** | Fährt den Roboter in die sichere Startposition |
+
 ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 
   | Topic / Interface | Msg Type | Beschreibung |
@@ -763,9 +776,6 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 
 #### 4.3.1 Vollständiges Controller Button-Mapping
 
-<details>
-<summary><b>🎮 Controller-Belegung anzeigen</b></summary>
-
 | Eingabe | Funktion | ROS-Aktion | Technisches Detail |
 |---------|---------|-----------|-------------------|
 | **Left Stick ↑↓** | X-Achse (vor/zurück) | `TwistStamped.linear.x` | `axes[1] × speed_scale` |
@@ -793,7 +803,6 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 | 4 | `75%` | Schnell — Weitstreckenfahrt |
 | 5 | `100%` | Maximum — volle Servo-Geschwindigkeit |
 
-</details>
 #### 4.3.2 Signal-Fluss & Exponentielle Glättung
 
 ```
