@@ -229,6 +229,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 *Dieses Subsystem steuert das manuelle Jogging des Roboters per Xbox-Controller und verhindert aktiv, dass der Roboter durch Bedienfehler mit der Arbeitsfläche kollidiert.*
 
 <br>
+<br>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_joystick_input.cpp` &nbsp;&nbsp; <sub><i>`/src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`</i></sub>
 
@@ -284,6 +289,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   | **`/servo_server/switch_command_type`** | Client | *Wechselt den Eingabemodus des Servo-Servers (z.B. Twist zu Joint).* |
 
 <br>
+<br>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`) &nbsp;&nbsp; <sub><i>`/src/collision_check/collision_check/checker.py`</i></sub>
 
@@ -319,6 +329,11 @@ Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Se
 | `table_z_threshold` | `0.0` | *Die harte Tischbarriere auf der Z-Achse (World-Frame).* |
 
 <br>
+<br>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_moveit_servo` &nbsp;&nbsp; <sub><i>`/src/xarm_ros2/xarm_moveit_servo`</i></sub>
 
@@ -351,8 +366,17 @@ Die Echtzeit-Bewegungs-Engine von MoveIt. Reagiert auf dynamische Hindernisse (Y
 | `collision_check_type` | `stop_distance` | *Sorgt für ein weiches, geschwindigkeitsabhängiges Abbremsen (Vorwarnung ab ca. 5cm) anstatt eines abrupten Stopps an der Grenze. Bei 2 cm Abstand greift der finale Not-Stopp (`min_allowable_collision_distance: 0.02`).* |
 | `collision_distance_safety_margin` | `0.02` | *Definiert die 2 cm breite, unsichtbare Kollisionsblase um den Roboter.* |
 
+<br>
+<br>
+<br>
+
 ### 🟢 <a id="subchapter-3-2"></a> 3.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
+
+<br>
+<br>
+
+---
 
 <br>
 
@@ -379,6 +403,11 @@ Der native Hardware-Treiber der Stereolabs ZED Mini Kamera.
 |---|---|---|
 | `depth_mode` | `ULTRA` | *Erzwingt die maximal dichte 3D-Punktwolke für saubere Kantenberechnung.* |
 | `auto_exposure` | `True` | *Erlaubt den automatischen Helligkeitsausgleich für robuste YOLO Erkennung.* |
+
+<br>
+<br>
+
+---
 
 <br>
 
@@ -416,11 +445,37 @@ Verarbeitet parallel den RGB- und Depth-Stream mit GPU-Beschleunigung und dem **
 | `ema_alpha` | `0.2` | *Glättungsfaktor (Exponential Moving Average), um Boxen-Jittering zwischen Frames sicher zu eliminieren.* |
 
 <br>
+<br>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py`</i></sub>
 
 **Zweck & Aufgabe:**<br>
 Läuft aktiv im Hintergrund während des 3D Vision Bringups. Fängt die rohe ZED-Punktwolke ab und transformiert das Koordinatensystem vom optischen Frame (`Z=vorwärts`) in den Standard-ROS-Frame (`X=vorwärts`), wobei RGB-Daten erhalten bleiben.
+
+<br>
+
+![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+
+  | Topic / Interface | Msg Type | Beschreibung |
+  |---|---|---|
+  | **`/zed/zed_node/point_cloud/cloud_registered`** | `sensor_msgs/PointCloud2` | *Empfängt die rohe Punktwolke direkt von der ZED-Kamera.* |
+
+<br>
+
+![Publishes](https://img.shields.io/badge/Publishes-success?style=flat-square)
+
+  | Topic / Interface | Msg Type | Beschreibung |
+  |---|---|---|
+  | **`/zed/zed_node/point_cloud/cloud_optimized`** | `sensor_msgs/PointCloud2` | *Publiziert die in den ROS-Standard-Frame transformierte Punktwolke.* |
+
+<br>
+<br>
+
+---
 
 <br>
 
@@ -466,6 +521,11 @@ Dynamische 3D-Umgebungskartierung. Generiert in Echtzeit eine voxelbasierte Koll
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
   | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Integriert die generierte OctoMap nativ in die Kollisionswelt.* |
+
+<br>
+<br>
+
+---
 
 <br>
 
@@ -522,6 +582,11 @@ Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("G
   | **`/ui/execute_move_to_pose`** | Client | *Nutzt MoveIt Servo als Fallback-Bewegung.* |
 
 <br>
+<br>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/grasp_action_bridge.py`</i></sub>
 
@@ -557,6 +622,13 @@ Generiert mathematisch exakt das 3D-Modell des Kamerastativs (Aluminiumprofil) u
   |---|---|---|
   | **`/zed_stand_marker`** | `visualization_msgs/Marker` | *Publiziert das visuelle 3D-Modell des Stativs.* |
 
+<br>
+<br>
+
+---
+
+<br>
+
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `tf_tuner` &nbsp;&nbsp; <sub><i>`/src/tf_tuner`</i></sub>
 
 **Zweck & Aufgabe:**<br>
@@ -571,8 +643,17 @@ Ein dediziertes ROS 2 Paket, das ein Live-Tuner Interface (PyQt5) bereitstellt, 
   | **`/tf`** | `tf2_msgs/TFMessage` | *Aktualisiert dynamisch die TF-Broadcaster-Werte für Objekte.* |
   | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Publiziert Parameter der Safety Zone.* |
 
+<br>
+<br>
+<br>
+
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
+
+<br>
+<br>
+
+---
 
 <br>
 
@@ -592,11 +673,21 @@ Lokale Speech-to-Text KI. Führt Whisper AI kontinuierlich auf dem Mikrofon-Stre
   | **`/whisper/text`** | `std_msgs/String` | *Publiziert das finale, erkannte Sprachtranskript.* |
 
 <br>
+<br>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `audio_listener.py` &nbsp;&nbsp; <sub><i>`/src/ros2_whisper/audio_listener/audio_listener/audio_listener.py`</i></sub>
 
 **Zweck & Aufgabe:**<br>
 Verarbeitet Mikrofoneingaben für das Sprachsteuerungssystem. Beinhaltet eine automatische, systembewusste Fallback-Logik, die explizit nach den System-Standard-Audiogeräten `pulse` oder `default` sucht und diese priorisiert, um eine zuverlässige Sprachaufzeichnung über verschiedene Hardware-Umgebungen hinweg zu garantieren.
+
+<br>
+<br>
+
+---
 
 <br>
 
@@ -623,6 +714,13 @@ Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster
 
 Der `whisper_server` ist in der `whisper.yaml` explizit auf `language: "en"` gestellt und nutzt einen gezielten `initial_prompt`, um eine hohe Erkennungsgenauigkeit für die englischen Befehle zu garantieren und Rauschen auszufiltern.
 
+<br>
+<br>
+
+---
+
+<br>
+
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses.py` &nbsp;&nbsp; <sub><i>`/src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py`</i></sub>
 
 **Zweck & Aufgabe:**<br>
@@ -644,8 +742,19 @@ Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (�
   |---|---|---|
   | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Steuert die kartesische Geschwindigkeit des Roboterarms via Eyetracking.* |
 
+<br>
+<br>
+<br>
+
 ### 🖥️ <a id="subchapter-3-4"></a> 3.4 Funktion: Grafische Steuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
+
+<br>
+<br>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>`/src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp`</i></sub>
 
@@ -683,6 +792,11 @@ Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Es ist modern in 
   | **`/ui/execute_initial_pose`** | Client | *Löst die Rückkehr in die Home-Position aus.* |
   | **`/ui/execute_move_to_pose`** | Client | *Befiehlt das Anfahren einer kartesischen Absolutpose.* |
   | **`/ui/execute_move_joint`** | Client | *Bewegt Gelenke auf Zielwinkel.* |
+
+<br>
+<br>
+
+---
 
 <br>
 
@@ -744,6 +858,11 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
   | **`/rviz_2d_overlay_msgs/OverlayText`** |  | *Projiziert Warntexte als Overlay in RViz.* |
 
 <br>
+<br>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_static_scene_objects.py` &nbsp;&nbsp; <sub><i>`/src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects.py`</i></sub>
 
@@ -757,6 +876,11 @@ Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuell
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
   | **`/scene_markers_array`** | `visualization_msgs/MarkerArray` | *Rendert virtuelle Marker (Safety-Zone, Tische) in RViz.* |
+
+<br>
+<br>
+
+---
 
 <br>
 
@@ -804,6 +928,10 @@ Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorp
   | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | *Sichert die geänderte Geschwindigkeit.* |
   | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggert Autonomie-Aktionen.* |
   | **`/whisper/inference`** | `whisper_idl/Inference` | *Startet Audio-Aufnahmen bei Klick auf das Mikrofon-Symbol.* |
+
+<br>
+<br>
+<br>
 
 ### 🌌 <a id="subchapter-3-5"></a> 3.5 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *Physischer und virtueller Arbeitsraum werden durch NVIDIA Isaac Sim als passiver, hochauflösender Digitaler Zwilling nahtlos synchronisiert.*
