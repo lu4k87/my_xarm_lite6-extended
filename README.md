@@ -200,7 +200,7 @@ The platform strictly distinguishes between two operating modes for the robot ar
 ### 🔓 Reproducible & Open Source
 To ensure scientific validity, the project is designed as an open-source architecture. Disclosing the complete codebase ensures the methodological transparency of all algorithms, configurations, and data flows. For the scientific community, this yields key added value:
 
-> - **Methodological Transparency:** Full visibility of all underlying algorithms, URDF models, and MoveIt configurations.
+- **Methodological Transparency:** <br> Full visibility of all underlying algorithms, URDF models, and MoveIt configurations.
 - **Exact Replication:** <br> Enabling straightforward secondary investigations by independent research groups under identical conditions.
 - **Statistical Verifiability:** <br> Traceability and validation of complex, recorded sensor data streams and control inputs.
 - **Standardized Benchmark:** <br> Establishing the platform as a reliable baseline for comparative studies in the field of assistive and inclusive robotics.
