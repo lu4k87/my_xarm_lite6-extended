@@ -166,7 +166,7 @@ To provide a clear understanding of the architecture, the software modules are c
 ### 🎮 <a id="subchapter-3-1"></a> 3.1 Feature: Gamepad Teleoperation & Hard Collision Protection
 *This subsystem manages the manual jogging of the robot via the Xbox controller and actively prevents the robot from colliding with the workspace surface due to operator error.*
 
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `xarm_joystick_input.cpp`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_joystick_input.cpp`
 
 > [!NOTE]
 > **Purpose & Task:** Translates the sanitized gamepad signals (analog sticks & triggers) into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies exponential smoothing and handles all button mappings.
@@ -184,7 +184,7 @@ To provide a clear understanding of the architecture, the software modules are c
   - **`/servo_server/start_servo`**
   - **`/servo_server/stop_servo`**
   - **`/servo_server/switch_command_type`** (Clients)
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `checker.py` (`collision_check`)
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`)
 
 > [!NOTE]
 > **Purpose & Task:** Acts as a guardian *before* the movement translation. Predictively computes the Z-coordinate (0.1 sec into the future). If the robot were to touch the table, the controller's downward command is hard-overridden and blocked. Triggers gamepad rumble feedback (vibration).
@@ -220,7 +220,7 @@ To provide a clear understanding of the architecture, the software modules are c
 ### 🟢 <a id="subchapter-3-2"></a> 3.2 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)
 *This subsystem is responsible for locating objects in 3D space, generating virtual obstacles, and navigating the robot precisely to the target.*
 
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `zed_wrapper`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_wrapper`
 
 > [!NOTE]
 > **Purpose & Task:** The native hardware driver for the Stereolabs ZED Mini Camera. 
@@ -234,7 +234,7 @@ To provide a clear understanding of the architecture, the software modules are c
  * `depth_mode: ULTRA` – Forces the most dense 3D point cloud for clean edge calculation.
  * `auto_exposure: True` – Allows automatic brightness compensation for robust YOLO detection.
 
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `zed_yolo_3d_bbox.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_yolo_3d_bbox.py`
 
 > [!NOTE]
 > **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise, and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker). Uses a **robust closest-surface projection** algorithm (filtering out the bottom 20% of points to avoid table noise) to perfectly center bounding boxes on the true physical volume of objects, regardless of camera angles. Features a **dictionary-based EMA tracking system** with persistent global IDs and a tight 10cm distance threshold to prevent ID-swapping and bounding box jitter. Multiple objects of the same class are permanently numbered for unambiguous targeting (e.g., `cup_1`, `cup_2`).
@@ -251,12 +251,12 @@ To provide a clear understanding of the architecture, the software modules are c
  * `percentiles: [0.5, 99.5]` – Hard-clips extreme depth noise pixels ("flying pixels" at object edges) while preserving true boundaries.
  * `ema_alpha: 0.2` – Smoothing factor (Exponential Moving Average) to safely eliminate box jittering between frames.
 
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `pointcloud_optimizer.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py`
 
 > [!NOTE]
 > **Purpose & Task:** Actively runs in the background during the 3D Vision Bringup. It intercepts the raw ZED point cloud and transforms the coordinate system from the optical frame (`Z=forward`) to the standard ROS frame (`X=forward`) while preserving RGB data.
 
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `yolo_moveit_collision.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py`
 
 > [!NOTE]
 > **Purpose & Task:** Seamlessly converts the detected 3D boxes into dynamic MoveIt `CollisionObject` messages. Instead of a solid block, it generates an **open-top cup shape** (5 ultra-thin 1mm walls). This allows the gripper to safely penetrate the bounding box from above for top-down grasps, while securely blocking lateral collisions.
@@ -277,7 +277,7 @@ To provide a clear understanding of the architecture, the software modules are c
   - **`/zed/zed_node/point_cloud/cloud_optimized`** (`sensor_msgs/PointCloud2`)
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
   - *Integrated natively into the MoveIt `/planning_scene`.*
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `yolo_planned_grasp_executor.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py`
 
 > [!NOTE]
 > **Purpose & Task:** The central control logic of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the YOLO coordinates, and coordinates a robust **3-Phase Collision-Free Grasping Sequence**:
@@ -298,7 +298,7 @@ To provide a clear understanding of the architecture, the software modules are c
   - **`/compute_ik`** (IK verification)
   - **`/move_action`** (MoveIt OMPL Planner)
   - **`/ui/execute_move_to_pose`** (Servo Fallback)
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `grasp_action_bridge.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py`
 
 > [!NOTE]
 > **Purpose & Task:** Acts as a translator node between the RViz Control Panel and the Action Server. Receives the simple target object string from the UI and converts it into a non-blocking ROS 2 Action Goal.
@@ -324,7 +324,7 @@ To provide a clear understanding of the architecture, the software modules are c
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Feature: Multimodal Interaction (Voice & Gaze Control)
 *These experimental modules allow for "hands-free" control of the system.*
 
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `ros2_whisper`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ros2_whisper`
 
 > [!NOTE]
 > **Purpose & Task:** Local Speech-to-Text AI. Runs Whisper AI continuously on the microphone stream and publishes spoken words as text. 
@@ -333,12 +333,12 @@ To provide a clear understanding of the architecture, the software modules are c
 
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
   - **`/whisper/text`** (`std_msgs/String`)
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `audio_listener.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `audio_listener.py`
 
 > [!NOTE]
 > **Purpose & Task:** Handles microphone input for the voice command system. Features an automatic, system-aware fallback logic that explicitly scans for and prioritizes the system-default `pulse` or `default` audio devices, guaranteeing reliable voice capture across different hardware environments.
 
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `voice_command_listener.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `voice_command_listener.py`
 
 > [!NOTE]
 > **Purpose & Task:** Analyzes discrete single-shot raw text using regex patterns to extract defined action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose"). Implements a robust **3-layer deduplication state machine** to guarantee exactly-once command execution.
@@ -392,7 +392,7 @@ To provide a clear understanding of the architecture, the software modules are c
   - **`/ui/execute_initial_pose`**
   - **`/ui/execute_move_to_pose`**
   - **`/ui/execute_move_joint`** (Clients)
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `robot_motion_handler_movegroup.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `robot_motion_handler_movegroup.py`
 
 > [!NOTE]
 > **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Move To: Absolute Pose" and "Move To: Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The execution speed of all these joint movements, as well as the scan paths, is now centrally controlled by the UI's **Action Speed Radio Buttons** (Slow, Normal, Fast), scaling dynamically from butter-smooth slow movements to lightning-fast execution. **Object Cross Scan:** Handles the `/ui/start_object_scan` service which generates precise spherical dome paths (arcs) over the objects. The exact positions of the objects (Cube, Rectangle, Cylinder) are determined live via the TF tree. To maintain a constant camera distance, the TCP traces a pure hemisphere trajectory over the object while using an exact trigonometric focal-point look-at logic to remain perfectly aimed at the object's center. To elegantly prevent wrist singularities (Joint 4 spinning) when sweeping along the Y-axis, the TCP executes a seamless **90-degree Yaw Rotation** before the sweep. This perfectly aligns the robot's natural pitch joint (Joint 5) with the lateral movement. Furthermore, the IK execution loop features an active **Joint Unwrapping Algorithm** that intercepts consecutive joint angle calculations and mathematically eliminates any >180-degree IK solution jumps, physically guaranteeing zero cable wind-up or sudden 360-degree wrist flips. The planner also actively subscribes to the dynamic **Safety Zone**, halting the arm at the boundary while automatically tilting the camera to keep the target centered if an object is located too close to the base.
@@ -416,14 +416,14 @@ To provide a clear understanding of the architecture, the software modules are c
   - *Listens for critical warning flags and frame updates.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
   - *Uses `rviz_2d_overlay_msgs/OverlayText`.*
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `rviz_marker_static_scene_objects.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_static_scene_objects.py`
 
 > [!NOTE]
 > **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges, interactive target boxes, and a dynamic transparent **Safety Zone**). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
 
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
   - **`/scene_markers_array`** (`visualization_msgs/MarkerArray`)
-#### ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square) `rosbridge_server`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server`
 
 > [!NOTE]
 > **Purpose & Task:** Standard WebSocket bridge on Port 9090, allowing the web-based dashboard to access the ROS network directly.
