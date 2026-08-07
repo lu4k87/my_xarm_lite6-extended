@@ -63,6 +63,10 @@ This repository is a continuously evolving research and evaluation platform for 
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-1"></a> 1. 📋 Project Overview
 
 <br>
@@ -102,6 +106,10 @@ A key core and innovative character of the project lies in the scientific analys
 - **Derivation of Action Recommendations:** <br> Formulation of standardized guidelines that serve companies as a strategic guide during the introduction of modern robot systems.
 - **Answering the Transformation Question:** <br> Concrete practical assistance on the core question: *“How can processes and workplaces be structured to measurably meet the human-centered requirements of Industry 5.0?”*
 - **Service Potential:** <br> The resulting frameworks and guidelines have the potential to be provided as a validated, monetizable consulting and service offering for industry, accompanying digital and demographic changes in production.
+
+<br>
+
+---
 
 <br>
 
@@ -172,6 +180,10 @@ graph TD
 
 <br>
 
+---
+
+<br>
+
 ### 🔌 <a id="subchapter-2-1"></a> 2.1 Operating Modes: FAKE vs. REAL (Hardware Interfaces)
 The platform strictly distinguishes between two operating modes for the robot arm. This distinction refers **exclusively to the `ros2_control` hardware interface** and is independent of sensors (like the camera or YOLO, which can run live in both modes):
 
@@ -180,6 +192,10 @@ The robot runs via the `mock_components/GenericSystem` (or FakeSystem) hardware 
 
 ![Modus REAL](https://img.shields.io/badge/Modus-REAL_(Hardware)-red?style=for-the-badge)<br>
 The `ros2_control` framework integrates the real `xarm_api` hardware interface, which communicates directly via TCP/IP with the physical controller of the xArm Lite 6. In this mode, hardware limits, physical safety stops, and the exclusive switching of proprietary xArm hardware modes (e.g., Mode 0 for pose control vs. Mode 1 for Servo/jogging) take effect via the UFactory API.
+
+<br>
+
+---
 
 <br>
 
@@ -250,9 +266,17 @@ The software-side infrastructure is modularly encapsulated and fully integrated 
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-3"></a> 3. ⚙️ Core Features & ROS 2 Nodes
 
 To provide a clear understanding of the architecture, the software modules are categorized by their functional **Features (Use-Cases)**. Each module is explicitly labeled as a ROS 2 Node, Script, or Plugin.
+
+<br>
+
+---
 
 <br>
 
@@ -382,6 +406,10 @@ To provide a clear understanding of the architecture, the software modules are c
 >  * `collision_distance_safety_margin: 0.02` – Defines the 2 cm wide, invisible collision bubble around the robot.
 >
 >
+
+<br>
+
+---
 
 <br>
 
@@ -609,6 +637,10 @@ To provide a clear understanding of the architecture, the software modules are c
 
 <br>
 
+---
+
+<br>
+
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Feature: Multimodal Interaction (Voice & Gaze Control)
 *These experimental modules allow for "hands-free" control of the system.*
 
@@ -699,6 +731,10 @@ To provide a clear understanding of the architecture, the software modules are c
 >   | *-* | *-* | *Directly controls the Cartesian velocity of the robot arm and uses UFactory services to operate the gripper.* |
 >
 >
+
+<br>
+
+---
 
 <br>
 
@@ -866,6 +902,10 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
 
 <br>
 
+---
+
+<br>
+
 ### 🌌 <a id="subchapter-3-5"></a> 3.5 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *The physical and virtual workspaces are seamlessly synchronized using NVIDIA Isaac Sim as a passive, high-fidelity digital twin.*
 
@@ -883,9 +923,17 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-4"></a> 4. 🎮 Gamepad Control — Deep Dive
 
 This section provides a full technical reference for the two-node gamepad pipeline that enables real-time, collision-safe teleoperation of the xArm Lite 6 using an Xbox One Elite Series 2 Controller.
+
+<br>
+
+---
 
 <br>
 
@@ -912,6 +960,10 @@ flowchart LR
  CPP --> SERVO
  CPP --> |"/ui/joy_button_presses\n/ui/robot_control/current_speed"| UI
 ```
+
+<br>
+
+---
 
 <br>
 
@@ -973,6 +1025,10 @@ The rumble is cleared as soon as the arm is moved to a safe height.
 | **Publisher** | `/ui/collision_msg` | `std_msgs/String` | *Collision warning / cleared message for UI* |
 | **Subscriber** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | *Receives current speed factor from the C++ node* |
 | **Service Client** | `/ufactory/get_position` | `xarm_msgs/GetFloat32List` | *Fetches real-time EEF pose from the hardware driver* |
+
+<br>
+
+---
 
 <br>
 
@@ -1073,6 +1129,10 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 | **Service Client** | `/ufactory/stop_lite6_gripper` | `xarm_msgs/Call` | *Stops / turns off gripper* |
 | **Service Client** | `/execute_motion_sequence_Y` | `std_srvs/Trigger` | *Triggers home position sequence* |
 | **Action Client** | `/whisper/inference` | `whisper_idl/Inference` | *Starts/cancels Whisper voice recording* |
+
+<br>
+
+---
 
 <br>
 
@@ -1275,15 +1335,27 @@ source install/setup.bash
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-6"></a> 6. 🚀 Execution: How to Run the System
 
 This section describes the step-by-step process to launch both the hardware and the software components. **ROS 2 Nexus** serves as the central web-based GUI to launch all nodes, sensors, and algorithms with a single click.
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-6-1"></a> 6.1 Step 1: Hardware Preparation
 1. **Turn on the Robot:** Power on the UFactory xArm Lite 6 and ensure the emergency stop is released.
 2. **Connect the Controller:** Turn on the Xbox One Elite Series 2 Controller and ensure it is connected to the host PC via Bluetooth or USB.
+
+<br>
+
+---
 
 <br>
 
@@ -1314,6 +1386,10 @@ Afterwards, you can launch the app directly by searching for **"ROS 2 Nexus"** i
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-6-3"></a> 6.3 Step 3: Start Nodes via GUI
 Once the ROS 2 Nexus interface is open in the browser:
 1. Navigate through the available tabs (e.g., `Nodes / Launch`, `Sensors`, `Hardware`, `Web`).
@@ -1324,6 +1400,10 @@ Once the ROS 2 Nexus interface is open in the browser:
 <p align="center">
  <img src="_imgs/ros2_nexus_web.png" width="90%" alt="ROS 2 Nexus — Web Edition">
 </p>
+
+<br>
+
+---
 
 <br>
 
@@ -1340,6 +1420,10 @@ To run the complete system with both web interfaces (Nexus and Dashboard), three
 | **`9090`** | **ROS Bridge** | WebSocket | *The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) and the Robot Control Web UI (Port 8081) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services.* |
 
 **Why strict port separation?** Ports 8080 and 9090 serve fundamentally different purposes and protocols. Port 8080 (HTTP) acts as a standard web server to deliver the static UI files (HTML/CSS) to the browser. Port 9090 (WebSocket via `rosbridge`) is a highly specialized data broker that exclusively streams live ROS telemetry and lacks the capability to serve web pages. Port 5000 (Flask) provides Nexus Web Backend business logic independent of ROS.
+
+<br>
+
+---
 
 <br>
 
@@ -1382,6 +1466,10 @@ This machine **exclusively** runs the gamepad inputs and the graphical user inte
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-6-6"></a> 6.6 DDS Multicast Storm Prevention & Loopback Discovery (Critical)
 > [!CAUTION]
 > **Internet Disconnects & Network Overload:** By default, ROS 2 DDS implementations use "UDP Multicast", which broadcasts all data to the entire local network (LAN/WLAN). When the ZED camera and YOLO are started, this floods the network with gigabits of UDP packets. **This usually causes the router to crash or the PC's internet connection to disconnect immediately.**
@@ -1419,6 +1507,10 @@ sudo systemctl start lo-multicast.service
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-6-7"></a> 6.7 Launcher Configuration (`launcher_config.json`)
 
 The buttons, categories, and commands in the ROS 2 Nexus web interface are fully customizable.
@@ -1426,6 +1518,10 @@ The buttons, categories, and commands in the ROS 2 Nexus web interface are fully
 **Interactive Drag & Drop:** The Nexus interface features a highly responsive, persistent 3-column drag & drop system. Individual action buttons can be freely arranged within their sections. Entire category sections can be seamlessly distributed across three vertical columns. Layout changes are immediately saved in the backend.
 
 **Manual Configuration:** The entire UI layout is stored persistently in `ros2_nexus/launcher_config.json`. To manually add custom scripts or nodes, edit this JSON file. The WebApp loads the configuration dynamically – reloading the browser page is enough.
+
+<br>
+
+---
 
 <br>
 
@@ -1448,9 +1544,17 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-7"></a> 7. 📊 Monitoring: Dashboard & Workspace Analyzer
 
 Once the nodes are launched via ROS 2 Nexus, the live state of the system can be monitored using the **ROS2 Core Dashboard**. This is a web-based real-time UI, which fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface.
+
+<br>
+
+---
 
 <br>
 
@@ -1461,10 +1565,18 @@ The Workspace Analyzer Backend is a ROS 2 node that performs execution-free, reg
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-7-2"></a> 7.2 Frontend (`dashboard_index.html`)
 Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The frontend logic has been strictly modularized into 8 specialized JavaScript files (e.g., `dashboard_script_nodes.js`, `dashboard_script_graph.js`, `dashboard_script_ros.js`) for maintainability. It visually matches statically analyzed nodes against the currently running nodes, displays real-time topic frequencies (Hz), and enables direct execution of system scripts from the browser in a clean, single-column reference view. The UI employs a modern Glassmorphism design aesthetic and performs recursive JSON parsing to cleanly format nested ROS message payloads. The sidebar provides at-a-glance status information including connection health, robot availability, and the active ROS 2 environment configuration.
 
 ![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
+
+<br>
+
+---
 
 <br>
 
@@ -1476,7 +1588,15 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-8"></a> 8. 🕹️ Multimodal Technologies & Interaction Concepts
+
+<br>
+
+---
 
 <br>
 
@@ -1502,6 +1622,10 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-8-2"></a> 8.2 Perception & Assistance
 #### Computer Vision
 > ![Deprecated](https://img.shields.io/badge/Status-Deprecated-red?style=flat-square) Spatial 2D object detection and localization using *YOLO* via PiCameras. The ZED Mini camera natively handles this in 3D.
@@ -1511,6 +1635,10 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 - **Object Cross Scan:** <br> The robot can execute precise, individual cross-pattern flights directly over objects (using dynamic Just-in-Time live position lookups via TF) to capture detailed point clouds from multiple angles.
 #### VLA & Video Action Models (Planned)
 > AI-assisted action planning through *Vision-Language-Action* models.
+
+<br>
+
+---
 
 <br>
 
@@ -1538,6 +1666,10 @@ In *OBS Studio*, all components are consolidated and provided to the user as a c
 - **Vacuum Gripper Integration:** <br> Full support for toggling the xArm Lite 6 vacuum gripper via the UI, using the `VacuumGripperCtrl` service.
 
 ![Gaze Control UI](_imgs/gaze_control_interface.png)
+
+<br>
+
+---
 
 <br>
 
@@ -1601,6 +1733,10 @@ dev_ws/
 │ ├── zed-ros2-wrapper/                                                    # 📷 ZED camera driver (submodule)
 │ └── zed-ros2-examples/                                                   # 📷 ZED examples (submodule)
 └── README.md / readme-de.md                                               # Documentation (EN / DE)
+
+<br>
+
+---
 
 <br>
 

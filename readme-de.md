@@ -63,6 +63,10 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-1"></a> 1. 📋 Projektübersicht
 
 <br>
@@ -102,6 +106,10 @@ Ein wesentlicher Kern und Innovationscharakter des Projekts liegt in der wissens
 - **Ableitung von Handlungsempfehlungen:** <br> Formulierung standardisierter Guidelines, die Unternehmen als strategischer Leitfaden bei der Einführung moderner Robotersysteme dienen.
 - **Beantwortung der Transformationsfrage:** <br> Konkrete Hilfestellungen für die Praxis auf die Kernfrage: *„Wie können Prozesse und Arbeitsplätze strukturiert werden, um den menschzentrierten Anforderungen der Industrie 5.0 messbar gerecht zu werden?“*
 - **Dienstleistungspotenzial:** <br> Die resultierenden Frameworks und Guidelines besitzen das Potenzial, als validierte, monetarisierbare Consulting- und Dienstleistung für die Industrie bereitgestellt zu werden, um den digitalen und demografischen Wandel in der Produktion zu begleiten.
+
+<br>
+
+---
 
 <br>
 
@@ -172,6 +180,10 @@ graph TD
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-2-1"></a> 2.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)
 Die Plattform unterscheidet strikt zwischen zwei Betriebsmodi für den Roboterarm. Diese Unterscheidung bezieht sich **ausschließlich auf das `ros2_control` Hardware Interface** und ist unabhängig von der Sensorik (wie Kamera oder YOLO, welche in beiden Modi live laufen können):
 
@@ -180,6 +192,10 @@ Der Roboter läuft über das `mock_components/GenericSystem` (bzw. FakeSystem) H
 
 ![Modus REAL](https://img.shields.io/badge/Modus-REAL_(Hardware)-red?style=for-the-badge)<br>
 Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein, welches via TCP/IP direkt mit dem physischen Controller des xArm Lite 6 kommuniziert. In diesem Modus greifen Hardware-Limits, physische Sicherheits-Stopps und die exklusive Umschaltung der proprietären xArm Hardware-Modi (z. B. Mode 0 für Pose-Steuerung vs. Mode 1 für Servo/Jogging) über die UFactory API.
+
+<br>
+
+---
 
 <br>
 
@@ -250,9 +266,17 @@ Die softwareseitige Infrastruktur ist modular gekapselt und vollständig in das 
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-3"></a> 3. ⚙️ Core Features & ROS 2 Nodes
 
 Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-Module nach ihren funktionalen **Features (Use-Cases)** gegliedert. Jedes Modul ist dabei explizit als ROS 2 Node, Skript oder Plugin gekennzeichnet.
+
+<br>
+
+---
 
 <br>
 
@@ -382,6 +406,10 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 > | `collision_distance_safety_margin` | `0.02` | *Definiert die 2 cm breite, unsichtbare Kollisionsblase um den Roboter.* |
 >
 >
+
+<br>
+
+---
 
 <br>
 
@@ -631,6 +659,10 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 <br>
 
+---
+
+<br>
+
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
 
@@ -715,6 +747,10 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >   | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Steuert die kartesische Geschwindigkeit des Roboterarms via Eyetracking.* |
 >
 >
+
+<br>
+
+---
 
 <br>
 
@@ -887,6 +923,10 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 
 <br>
 
+---
+
+<br>
+
 ### 🌌 <a id="subchapter-3-5"></a> 3.5 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *Physischer und virtueller Arbeitsraum werden durch NVIDIA Isaac Sim als passiver, hochauflösender Digitaler Zwilling nahtlos synchronisiert.*
 
@@ -904,9 +944,17 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-4"></a> 4. 🎮 Gamepad-Steuerung — Technische Tiefenanalyse
 
 Dieser Abschnitt liefert eine vollständige technische Referenz für die zweistufige Gamepad-Pipeline, die eine kollisionssichere Echtzeit-Teleoperation des xArm Lite 6 mit dem Xbox One Elite Series 2 Controller ermöglicht.
+
+<br>
+
+---
 
 <br>
 
@@ -933,6 +981,10 @@ flowchart LR
  CPP --> SERVO
  CPP --> |"/ui/joy_button_presses\n/ui/robot_control/current_speed"| UI
 ```
+
+<br>
+
+---
 
 <br>
 
@@ -990,6 +1042,10 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 | **Publisher** | `/ui/collision_msg` | `std_msgs/String` | *Kollisionswarnung für UI* |
 | **Subscriber** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | *Geschwindigkeitsfaktor vom C++ Node* |
 | **Service Client** | `/ufactory/get_position` | `xarm_msgs/GetFloat32List` | *Echtzeit-EEF-Pose* |
+
+<br>
+
+---
 
 <br>
 
@@ -1075,6 +1131,10 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 | **Service Client** | `/ufactory/stop_lite6_gripper` | `xarm_msgs/Call` | *Stoppt Greifer* |
 | **Service Client** | `/execute_motion_sequence_Y` | `std_srvs/Trigger` | *Initialpositions-Sequenz* |
 | **Action Client** | `/whisper/inference` | `whisper_idl/Inference` | *Whisper-Sprachaufnahme* |
+
+<br>
+
+---
 
 <br>
 
@@ -1272,15 +1332,27 @@ source install/setup.bash
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-6"></a> 6. 🚀 Ausführung: Systemstart
 
 Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Software. **ROS 2 Nexus** dient dabei als zentrale webbasierte Oberfläche, um alle Nodes, Sensoren und Algorithmen mit nur einem Klick hochzufahren.
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-6-1"></a> 6.1 Schritt 1: Hardware vorbereiten
 1. **Roboter einschalten:** Schalte den UFactory xArm Lite 6 an und stelle sicher, dass der Not-Aus-Schalter entriegelt ist.
 2. **Controller verbinden:** Schalte den Xbox One Elite Series 2 Controller ein und prüfe die Verbindung (Bluetooth oder USB) mit dem Host-PC.
+
+<br>
+
+---
 
 <br>
 
@@ -1311,6 +1383,10 @@ Danach kann die App über das Suchfeld im Menü (nach **„ROS 2 Nexus"** suchen
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-6-3"></a> 6.3 Schritt 3: Module über die GUI aktivieren
 Sobald sich ROS 2 Nexus im Browser geöffnet hat:
 1. Navigiere durch die verschiedenen Tabs der Oberfläche (z.B. `Nodes / Launch`, `Sensors`, `Hardware`, `Web`).
@@ -1321,6 +1397,10 @@ Sobald sich ROS 2 Nexus im Browser geöffnet hat:
 <p align="center">
  <img src="_imgs/ros2_nexus_web.png" width="90%" alt="ROS 2 Nexus — Web Edition">
 </p>
+
+<br>
+
+---
 
 <br>
 
@@ -1337,6 +1417,10 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 | **`9090`** | **ROS Bridge** | WebSocket | *Die Brücke zwischen ROS 2 und dem Browser. Erlaubt dem Dashboard (Port 8080) und der Robot Control Web UI (Port 8081), sich über `roslib.js` direkt mit dem ROS-Netzwerk zu verbinden, um Echtzeit-Telemetrie auszulesen und Services aufzurufen.* |
 
 > **Warum diese strikte Trennung?** Die Ports 8080 und 9090 dienen grundverschiedenen Zwecken. Port 8080 (HTTP) fungiert als Standard-Webserver, um die Oberfläche auszuliefern. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich Live-Telemetrie streamt und keine Webseiten bereitstellen kann. Port 5000 (Flask) verarbeitet die Logik des Nexus Web Backends völlig unabhängig von ROS.
+
+<br>
+
+---
 
 <br>
 
@@ -1379,6 +1463,10 @@ Hier laufen **ausschließlich** die Gamepad-Eingaben und die grafische Nutzerobe
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-6-6"></a> 6.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)
 > [!CAUTION]
 > **Internet-Abbrüche & Netzwerk-Überlastung:** Standardmäßig verwenden ROS 2 DDS-Implementierungen "UDP Multicast", wodurch alle Daten in das gesamte lokale Netzwerk (LAN/WLAN) gefunkt werden. Wenn die ZED-Kamera und YOLO gestartet werden, überflutet dies das Netzwerk mit Gigabit-Mengen an UDP-Paketen. **Das führt meist dazu, dass der Router abstürzt oder die Internetverbindung des PCs sofort getrennt wird.**
@@ -1416,6 +1504,10 @@ sudo systemctl start lo-multicast.service
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-6-7"></a> 6.7 Launcher-Konfiguration (`launcher_config.json`)
 
 Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar.
@@ -1423,6 +1515,10 @@ Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind voll
 **Interaktives Drag & Drop:** Das Nexus-Interface verfügt über ein hochgradig responsives, permanentes 3-Spalten-Drag-&-Drop-System. Einzelne Aktions-Buttons können innerhalb ihrer Sektionen frei angeordnet werden. Komplette Kategorie-Sektionen lassen sich nahtlos über drei vertikale Spalten verteilen. Layout-Änderungen werden sofort im Backend gespeichert.
 
 **Manuelle Konfiguration:** Das gesamte UI-Layout wird persistent in `ros2_nexus/launcher_config.json` gespeichert. Um eigene Skripte oder Nodes manuell hinzuzufügen, muss diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch – ein Neuladen der Seite im Browser reicht aus.
+
+<br>
+
+---
 
 <br>
 
@@ -1445,9 +1541,17 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-7"></a> 7. 📊 Monitoring: Dashboard & Workspace Analyzer
 
 Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustand des Systems über das **ROS2 Core Dashboard** überwachen. Dies ist eine webbasierte Echtzeit-UI, die statische Quellcode-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks zu einer einheitlichen Monitoring-Oberfläche zusammenführt.
+
+<br>
+
+---
 
 <br>
 
@@ -1458,10 +1562,18 @@ Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, r
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-7-2"></a> 7.2 Frontend (`dashboard_index.html`)
 Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Netzwerk. Die Frontend-Logik wurde für eine bessere Wartbarkeit strikt in 8 spezialisierte JavaScript-Module unterteilt (z.B. `dashboard_script_nodes.js`, `dashboard_script_graph.js`, `dashboard_script_ros.js`). Es gleicht statisch analysierte Nodes visuell mit den aktuell laufenden Nodes ab, zeigt Echtzeit-Topic-Frequenzen (Hz) an und ermöglicht die direkte Ausführung von System-Skripten aus der Browser-Oberfläche in einer übersichtlichen, einspaltigen Referenzansicht. Das UI nutzt eine moderne Glassmorphism-Designsprache und führt rekursives JSON-Parsing durch, um tief verschachtelte ROS-Nachrichtenstrukturen sauber formatiert darzustellen. Die Sidebar liefert auf einen Blick Statusinformationen wie Verbindungsgesundheit, Roboter-Verfügbarkeit und die aktive ROS 2 Umgebungskonfiguration.
 
 ![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
+
+<br>
+
+---
 
 <br>
 
@@ -1473,7 +1585,15 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 <br>
 
+---
+
+<br>
+
 ## <a id="chapter-8"></a> 8. 🕹️ Multimodale Technologien & Interaktionskonzepte
+
+<br>
+
+---
 
 <br>
 
@@ -1499,6 +1619,10 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 <br>
 
+---
+
+<br>
+
 ### <a id="subchapter-8-2"></a> 8.2 Sensorik & Assistenz (Perception)
 #### Computer Vision
 > ![Deprecated](https://img.shields.io/badge/Status-Deprecated-red?style=flat-square) Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* über PiCameras. Die Objekterkennung erfolgt vollständig in 3D durch die ZED-Kamera.
@@ -1508,6 +1632,10 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 - **Object Cross Scan:** <br> Der Roboter kann präzise, individuelle Kreuzflüge direkt über Objekten ausführen (mit dynamischer Just-in-Time Live-Positionsbestimmung via TF), um detaillierte Punktwolken aus verschiedenen Blickwinkeln aufzunehmen.
 #### VLA & Video Action Models (Geplant)
 KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
+
+<br>
+
+---
 
 <br>
 
@@ -1535,6 +1663,10 @@ In *OBS Studio* werden alle Komponenten gebündelt und dem Nutzer als zentrale G
 - **Vakuumgreifer-Integration:** <br> Volle Unterstützung für die Steuerung des xArm Lite 6 Vakuumgreifers über die UI mittels des `VacuumGripperCtrl` Services.
 
 ![Gaze Control UI](_imgs/gaze_control_interface.png)
+
+<br>
+
+---
 
 <br>
 
@@ -1598,6 +1730,10 @@ dev_ws/
 │ └── zed-ros2-examples/                                                   # 📷 ZED-Beispiele (Submodul)
 └── README.md / readme-de.md                                               # Dokumentation (EN / DE)
 ```
+
+<br>
+
+---
 
 <br>
 
