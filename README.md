@@ -39,10 +39,9 @@ This repository is a continuously evolving research and evaluation platform for 
    - [6.3 Step 3: Start Nodes via GUI](#subchapter-6-3)
    - [6.4 Network & Port Architecture](#subchapter-6-4)
    - [6.5 Distributed Control (Remote / Operator Station)](#subchapter-6-5)
-   - [6.6 DDS Multicast Storm Prevention (Critical)](#subchapter-6-6)
+   - [6.6 DDS Multicast Storm Prevention & Loopback Discovery (Critical)](#subchapter-6-6)
    - [6.7 Launcher Configuration (`launcher_config.json`)](#subchapter-6-7)
-   - [6.8 DDS Multicast Storm & Loopback Discovery (Critical)](#subchapter-6-8)
-   - [6.9 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#subchapter-6-9)
+   - [6.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#subchapter-6-8)
 7. [📊 Monitoring: Dashboard & Workspace Analyzer](#chapter-7)
    - [7.1 Workspace Analyzer Backend (`workspace_analyzer.py`)](#subchapter-7-1)
    - [7.2 Frontend (`dashboard_index.html`)](#subchapter-7-2)
@@ -92,6 +91,68 @@ This repository is a continuously evolving research and evaluation platform for 
 > - **Service Potential:** The resulting frameworks and guidelines have the potential to be provided as a validated, monetizable consulting and service offering for industry, accompanying digital and demographic changes in production.
 
 ## <a id="chapter-2"></a> 2. 🔬 Architecture & Guiding Principles
+
+### 🗺️ System Architecture & Data Flow
+The following diagram illustrates the modular design and the asynchronous data flow between sensory input, UI elements, and the control components:
+
+```mermaid
+graph TD
+    %% Styling
+    classDef input fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    classDef vision fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef core fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef hardware fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+
+    %% Inputs
+    subgraph Input Modalities
+        G[🎮 Gamepad]:::input
+        V[🗣️ Voice / Whisper AI]:::input
+        E[👁️ Eye Tracking / Tobii]:::input
+        W[💻 Web UI / Dashboard]:::input
+    end
+
+    %% Vision
+    subgraph Perception & Vision
+        Z[📷 ZED Camera]:::vision
+        Y[📦 YOLO 3D BBox]:::vision
+        O[🗺️ Octomap Server]:::vision
+        Z -->|RGB + Depth| Y
+        Z -->|Point Cloud| O
+    end
+
+    %% Processing
+    subgraph Core Processing
+        C[🛡️ Collision Checker]:::core
+        J[⚙️ Joystick Input]:::core
+        YG[🤖 Grasp Executor]:::core
+        
+        G -->|/joy| C
+        C -->|/joy_check| J
+        Y -->|/zed/bboxes_3d| YG
+        E -->|/servo_server/delta_twist_cmds| S[🏃 MoveIt Servo]:::core
+    end
+
+    %% Execution
+    subgraph Planning & Hardware
+        S
+        M[🗺️ MoveIt Planner]:::core
+        R[🦾 xArm Lite 6]:::hardware
+        
+        J -->|Twist Commands| S
+        YG -->|Action Goals| M
+        O -->|/planning_scene| M
+        O -.->|Collision Check| S
+        
+        S -->|Joint Trajectory| R
+        M -->|Joint Trajectory| R
+    end
+
+    %% Web UI Connections
+    V -->|Voice Intent| W
+    W -.->|rosbridge| S
+    W -.->|rosbridge| M
+```
+
 
 ### 🔌 <a id="subchapter-2-1"></a> 2.1 Operating Modes: FAKE vs. REAL (Hardware Interfaces)
 The platform strictly distinguishes between two operating modes for the robot arm. This distinction refers **exclusively to the `ros2_control` hardware interface** and is independent of sensors (like the camera or YOLO, which can run live in both modes):

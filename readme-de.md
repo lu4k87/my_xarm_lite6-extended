@@ -39,10 +39,9 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
    - [6.3 Schritt 3: Module über die GUI aktivieren](#subchapter-6-3)
    - [6.4 Netzwerk- & Port-Architektur](#subchapter-6-4)
    - [6.5 Verteilte Steuerung (Remote / Operator-Station)](#subchapter-6-5)
-   - [6.6 DDS Multicast Storm Prevention (Kritisch)](#subchapter-6-6)
+   - [6.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)](#subchapter-6-6)
    - [6.7 Launcher-Konfiguration (`launcher_config.json`)](#subchapter-6-7)
-   - [6.8 DDS Multicast Storm & Loopback Discovery (Kritisch)](#subchapter-6-8)
-   - [6.9 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#subchapter-6-9)
+   - [6.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#subchapter-6-8)
 7. [📊 Monitoring: Dashboard & Workspace Analyzer](#chapter-7)
    - [7.1 Workspace Analyzer Backend (`workspace_analyzer.py`)](#subchapter-7-1)
    - [7.2 Frontend (`dashboard_index.html`)](#subchapter-7-2)
@@ -94,6 +93,68 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
 ---
 
 ## <a id="chapter-2"></a> 2. 🔬 Architektur & Leitprinzipien
+
+### 🗺️ Systemarchitektur & Datenfluss
+Das folgende Diagramm veranschaulicht den modularen Aufbau und den asynchronen Datenfluss zwischen Sensorik, UI-Eingaben und den Steuerungskomponenten:
+
+```mermaid
+graph TD
+    %% Styling
+    classDef input fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    classDef vision fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef core fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef hardware fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+
+    %% Inputs
+    subgraph Eingabemodalitäten
+        G[🎮 Gamepad]:::input
+        V[🗣️ Voice / Whisper AI]:::input
+        E[👁️ Eye Tracking / Tobii]:::input
+        W[💻 Web UI / Dashboard]:::input
+    end
+
+    %% Vision
+    subgraph Perzeption & Vision
+        Z[📷 ZED Camera]:::vision
+        Y[📦 YOLO 3D BBox]:::vision
+        O[🗺️ Octomap Server]:::vision
+        Z -->|RGB + Depth| Y
+        Z -->|Point Cloud| O
+    end
+
+    %% Processing
+    subgraph Core Processing
+        C[🛡️ Collision Checker]:::core
+        J[⚙️ Joystick Input]:::core
+        YG[🤖 Grasp Executor]:::core
+        
+        G -->|/joy| C
+        C -->|/joy_check| J
+        Y -->|/zed/bboxes_3d| YG
+        E -->|/servo_server/delta_twist_cmds| S[🏃 MoveIt Servo]:::core
+    end
+
+    %% Execution
+    subgraph Planung & Hardware
+        S
+        M[🗺️ MoveIt Planner]:::core
+        R[🦾 xArm Lite 6]:::hardware
+        
+        J -->|Twist Commands| S
+        YG -->|Action Goals| M
+        O -->|/planning_scene| M
+        O -.->|Collision Check| S
+        
+        S -->|Joint Trajectory| R
+        M -->|Joint Trajectory| R
+    end
+
+    %% Web UI Connections
+    V -->|Voice Intent| W
+    W -.->|rosbridge| S
+    W -.->|rosbridge| M
+```
+
 
 ### <a id="subchapter-2-1"></a> 2.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)
 Die Plattform unterscheidet strikt zwischen zwei Betriebsmodi für den Roboterarm. Diese Unterscheidung bezieht sich **ausschließlich auf das `ros2_control` Hardware Interface** und ist unabhängig von der Sensorik (wie Kamera oder YOLO, welche in beiden Modi live laufen können):
@@ -197,8 +258,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - **`/joy_check`** (`sensor_msgs/Joy`) — *Leitet den auf Kollisionen geprüften Controller-Befehl weiter.*
   - **`/ui/collision_msg`** (`std_msgs/String`) — *Meldet harte Stopps an das UI-Log.*
  * ⚙️ **Parameter:**
- * `look_ahead_time = 0.1` – Prädiktionshorizont (Sekunden) für die Geschwindigkeits-Vorausschau.
- * `table_z_threshold = 0.0` – Die harte Tischbarriere auf der Z-Achse (World-Frame).
+ 
+| Parameter | Standardwert | Beschreibung |
+|---|---|---|
+| `look_ahead_time` | `0.1` | Prädiktionshorizont (Sekunden) für die Geschwindigkeits-Vorausschau. |
+| `table_z_threshold` | `0.0` | Die harte Tischbarriere auf der Z-Achse (World-Frame). |
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_moveit_servo`
 
@@ -209,10 +273,13 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - **`/servo_server/delta_twist_cmds`** (`geometry_msgs/TwistStamped`) — *Liest die kartesischen Geschwindigkeitsbefehle.*
   - **`/planning_scene`** (`moveit_msgs/PlanningScene`) — *Liest die aktuelle 3D-Kollisionsszene zur Hindernisvermeidung ein.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/lite6_traj_controller/joint_trajectory`** (`trajectory_msgs/JointTrajectory`) — *Sendet validierte Gelenktrajektorien.* — *Sendet die fertigen Gelenkwinkel an den Roboter.*
+  - **`/lite6_traj_controller/joint_trajectory`** (`trajectory_msgs/JointTrajectory`) — *Sendet validierte Gelenktrajektorien an den Roboter.*
  * ⚙️ **Parameter (`xarm_moveit_servo_config.yaml`):**
- * `collision_check_type: stop_distance` – Sorgt für ein weiches, geschwindigkeitsabhängiges Abbremsen (Vorwarnung ab ca. 5cm) anstatt eines abrupten Stopps an der Grenze. Bei 2 cm Abstand greift der finale Not-Stopp (`min_allowable_collision_distance: 0.02`).
- * `collision_distance_safety_margin: 0.02` – Definiert die 2 cm breite, unsichtbare Kollisionsblase um den Roboter.
+
+| Parameter | Standardwert | Beschreibung |
+|---|---|---|
+| `collision_check_type` | `stop_distance` | Sorgt für ein weiches, geschwindigkeitsabhängiges Abbremsen (Vorwarnung ab ca. 5cm) anstatt eines abrupten Stopps an der Grenze. Bei 2 cm Abstand greift der finale Not-Stopp (`min_allowable_collision_distance: 0.02`). |
+| `collision_distance_safety_margin` | `0.02` | Definiert die 2 cm breite, unsichtbare Kollisionsblase um den Roboter. |
 
 ### 🟢 <a id="subchapter-3-2"></a> 3.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
@@ -227,8 +294,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - **`/zed/zed_node/depth/depth_registered`** (`sensor_msgs/Image`) — *Publiziert die registrierte Tiefenkarte (Depth-Map).*
   - **`/zed/zed_node/point_cloud/cloud_registered`** (`sensor_msgs/PointCloud2`) — *Publiziert die dichte 3D-Punktwolke.*
  * ⚙️ **Parameter (`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`):**
- * `depth_mode: ULTRA` – Erzwingt die maximal dichte 3D-Punktwolke für saubere Kantenberechnung.
- * `auto_exposure: True` – Erlaubt den automatischen Helligkeitsausgleich für robuste YOLO Erkennung.
+
+| Parameter | Standardwert | Beschreibung |
+|---|---|---|
+| `depth_mode` | `ULTRA` | Erzwingt die maximal dichte 3D-Punktwolke für saubere Kantenberechnung. |
+| `auto_exposure` | `True` | Erlaubt den automatischen Helligkeitsausgleich für robuste YOLO Erkennung. |
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_yolo_3d_bbox.py`
 
@@ -242,9 +312,12 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
   - **`/zed/bboxes_3d`** (`visualization_msgs/MarkerArray`) — *Sendet die fertigen 3D-Boxen zur Visualisierung an RViz und Nodes.*
  * ⚙️ **Parameter:**
- * `class_dimension_overrides` – Hinterlegt feste metrische Dimensionen (x,y,z) für spezifische Objekte, um sicherzustellen, dass die Box das echte physikalische Volumen umschließt und nicht nur die für die Kamera sichtbare Oberfläche.
- * `percentiles: [0.5, 99.5]` – Schneidet extreme Tiefen-Rausch-Pixel ("Flying Pixels" an Objektkanten) hart ab, während echte Kanten erhalten bleiben.
- * `ema_alpha: 0.2` – Glättungsfaktor (Exponential Moving Average), um Boxen-Jittering zwischen Frames sicher zu eliminieren.
+
+| Parameter | Standardwert | Beschreibung |
+|---|---|---|
+| `class_dimension_overrides` | *Benutzerdefiniert* | Hinterlegt feste metrische Dimensionen (x,y,z) für spezifische Objekte, um sicherzustellen, dass die Box das echte physikalische Volumen umschließt. |
+| `percentiles` | `[0.5, 99.5]` | Schneidet extreme Tiefen-Rausch-Pixel ("Flying Pixels" an Objektkanten) hart ab, während echte Kanten erhalten bleiben. |
+| `ema_alpha` | `0.2` | Glättungsfaktor (Exponential Moving Average), um Boxen-Jittering zwischen Frames sicher zu eliminieren. |
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py`
 
@@ -277,7 +350,12 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - **Phase 1 (Retract):** Fährt den Arm von seiner aktuellen Position exakt nach oben, um eine sichere Überflughöhe zu erreichen.
   - **Phase 2 (Hover):** Bewegt sich horizontal auf der sicheren Z-Höhe (15cm) exakt über das Zielobjekt. Erzwingt dabei eine strikte Top-Down Orientierung (gerade nach unten) und nutzt sehr enge IK-Toleranzen (5mm Position, 0.001 rad Neigung) für millimetergenaue Ausrichtung.
   - **Phase 3 (Approach):** Schaltet das anvisierte Objekt kurzzeitig über `/ui/ignore_collision_object` in der globalen MoveIt Kollisionsszene ab, damit der Greifer physisch in die Bounding Box eindringen kann, ohne einen Not-Aus auszulösen, und fährt dann nach unten.
- * ⚙️ **Parameter:** Bietet einstellbare Parameter für `velocity_scaling` (Standard: 0.2) und `acceleration_scaling` (Standard: 0.1) für extrem weiche, langsame und vorhersehbare Roboterbewegungen während der Greifsequenz.
+ * ⚙️ **Parameter:**
+
+| Parameter | Standardwert | Beschreibung |
+|---|---|---|
+| `velocity_scaling` | `0.2` | Skaliert die Geschwindigkeit für extrem weiche und vorhersehbare Roboterbewegungen während der Greifsequenz. |
+| `acceleration_scaling` | `0.1` | Skaliert die Beschleunigung für extrem weiche und vorhersehbare Roboterbewegungen während der Greifsequenz. |
 
 - ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
   - **`/zed/bboxes_3d`** (`visualization_msgs/MarkerArray`) — *Liest die Objektkoordinaten als Ziel für den Greifpfad.*
@@ -916,31 +994,19 @@ Hier laufen **ausschließlich** die Gamepad-Eingaben und die grafische Nutzerobe
 
 ---
 
-### <a id="subchapter-6-6"></a> 6.6 DDS Multicast Storm Prevention (Kritisch)
+### <a id="subchapter-6-6"></a> 6.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)
 > [!CAUTION]
-> **Internet-Abbrüche:** Standardmäßig verwenden ROS 2 DDS-Implementierungen "UDP Multicast", wodurch alle Daten in das gesamte lokale Netzwerk (LAN/WLAN) gefunkt werden. Wenn die ZED-Kamera (hochauflösende Bilder) und YOLO (dichte 3D-Punktwolken) gestartet werden, überflutet dies das Netzwerk mit Gigabit-Mengen an UDP-Paketen. **Das führt in den meisten Fällen dazu, dass der Router abstürzt oder die Internetverbindung des PCs sofort getrennt wird.**
+> **Internet-Abbrüche & Netzwerk-Überlastung:** Standardmäßig verwenden ROS 2 DDS-Implementierungen "UDP Multicast", wodurch alle Daten in das gesamte lokale Netzwerk (LAN/WLAN) gefunkt werden. Wenn die ZED-Kamera und YOLO gestartet werden, überflutet dies das Netzwerk mit Gigabit-Mengen an UDP-Paketen. **Das führt meist dazu, dass der Router abstürzt oder die Internetverbindung des PCs sofort getrennt wird.**
 > 
-> Um das zu verhindern und die Systemleistung extrem zu steigern (sofern man **nicht** die verteilte Remote-Steuerung aus 6.5 nutzt!), **muss** der ROS 2 Datenverkehr strikt auf den eigenen PC (Localhost) beschränkt werden:
+> Um das zu verhindern und die Systemleistung zu steigern (sofern man **nicht** die Remote-Steuerung aus 6.5 nutzt!), **muss** der ROS 2 Datenverkehr auf den eigenen PC (Localhost) beschränkt werden:
 > ```bash
 > echo "export ROS_LOCALHOST_ONLY=1" >> ~/.bashrc
 > source ~/.bashrc
 > ```
-
-### <a id="subchapter-6-7"></a> 6.7 Launcher-Konfiguration (`launcher_config.json`)
-
-Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar.
-
-**Interaktives Drag & Drop:** Das Nexus-Interface verfügt über ein hochgradig responsives, permanentes 3-Spalten-Drag-&-Drop-System. Einzelne Aktions-Buttons können innerhalb ihrer Sektionen frei angeordnet werden. Komplette Kategorie-Sektionen (gegriffen am Titel) lassen sich nahtlos über drei vertikale Spalten verteilen. Alle im Browser vorgenommenen Layout-Änderungen werden sofort und dauerhaft im Backend gespeichert.
-
-**Manuelle Konfiguration:** Das gesamte UI-Layout und alle Befehle werden persistent in einer externen Konfigurationsdatei unter `ros2_nexus/launcher_config.json` gespeichert. Um eigene Skripte, Debugging-Tools oder ROS 2 Nodes manuell zur Launcher-UI hinzuzufügen, muss lediglich diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch, sodass manuelle Änderungen nach einem simplen Neuladen der Seite im Browser sofort aktiv werden, ohne dass das Nexus Web Backend neugestartet werden muss.
-
-### <a id="subchapter-6-8"></a> 6.8 DDS Multicast Storm & Loopback Discovery (Kritisch)
-> [!CAUTION]
-> **Netzwerk-Überlastung & Participant-Fehler:** Standardmäßig verwendet ROS 2 "UDP Multicast", wodurch alle Daten in das gesamte lokale Netzwerk (LAN/WLAN) gefunkt werden. Das Starten der ZED-Kamera und YOLO überflutet das Netzwerk mit Gigabit-Mengen an Daten, was oft zum sofortigen Absturz des Routers oder der Internetverbindung führt.
 > 
-> Das Setzen von `export ROS_LOCALHOST_ONLY=1` in der `.bashrc` löst dieses Problem, indem es den Traffic sicher auf das interne Loopback-Interface (`lo`) zwingt. **Allerdings deaktiviert Ubuntu nach jedem Neustart standardmäßig die Multicast-Fähigkeit auf diesem internen Interface**. Das führt dazu, dass CycloneDDS mit dem Fehler `Failed to find a free participant index` abstürzt, da die Nodes sich intern nicht mehr finden können und als "Zombies" im Arbeitsspeicher hängenbleiben.
+> **Loopback Discovery Fehler:** Das Setzen von `ROS_LOCALHOST_ONLY=1` zwingt den Traffic auf das interne Loopback-Interface (`lo`). **Allerdings deaktiviert Ubuntu nach jedem Neustart standardmäßig die Multicast-Fähigkeit auf diesem Interface**. Das führt dazu, dass CycloneDDS mit `Failed to find a free participant index` abstürzt, da sich Nodes intern nicht finden.
 
-Um dieses Problem dauerhaft zu beheben, muss ein Systemd-Dienst eingerichtet werden, der Multicast auf dem `lo`-Interface bei jedem Systemstart automatisch aktiviert:
+Um dieses Problem dauerhaft zu beheben, richte folgenden Systemd-Dienst ein, der Multicast auf dem `lo`-Interface beim Booten aktiviert:
 
 ```bash
 # 1. Die Datei sauber anlegen
@@ -957,17 +1023,21 @@ ExecStart=/sbin/ip link set lo multicast on
 WantedBy=multi-user.target
 EOF'
 
-# 2. Dem System sagen, dass die Datei jetzt existiert
+# 2. Systemd neuladen, Dienst aktivieren und sofort starten
 sudo systemctl daemon-reload
-
-# 7. Den Dienst aktivieren (Autostart beim Booten)
 sudo systemctl enable lo-multicast.service
-
-# 8. Den Dienst jetzt direkt einmal starten (ohne Neustart)
 sudo systemctl start lo-multicast.service
 ```
 
-### <a id="subchapter-6-9"></a> 6.9 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
+### <a id="subchapter-6-7"></a> 6.7 Launcher-Konfiguration (`launcher_config.json`)
+
+Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar.
+
+**Interaktives Drag & Drop:** Das Nexus-Interface verfügt über ein hochgradig responsives, permanentes 3-Spalten-Drag-&-Drop-System. Einzelne Aktions-Buttons können innerhalb ihrer Sektionen frei angeordnet werden. Komplette Kategorie-Sektionen lassen sich nahtlos über drei vertikale Spalten verteilen. Layout-Änderungen werden sofort im Backend gespeichert.
+
+**Manuelle Konfiguration:** Das gesamte UI-Layout wird persistent in `ros2_nexus/launcher_config.json` gespeichert. Um eigene Skripte oder Nodes manuell hinzuzufügen, muss diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch – ein Neuladen der Seite im Browser reicht aus.
+
+### <a id="subchapter-6-8"></a> 6.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
 > [!TIP]
 > **Ruckelnde Pointclouds in RViz:** ROS 2 (insbesondere CycloneDDS) versendet große Datenmengen wie Pointclouds (ZED Kamera) über viele kleine UDP-Pakete. Der Standard-Netzwerkpuffer des Linux-Kernels ist mit ca. 200 KB viel zu klein für diese Datenmengen. Wenn der Puffer überläuft, verwirft das Betriebssystem Pakete ("Receive Buffer Errors"), was zu extremen Lags in RViz führt.
 
