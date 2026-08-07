@@ -167,11 +167,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🎮 <a id="subchapter-3-1"></a> 3.1 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
 *Dieses Subsystem steuert das manuelle Jogging des Roboters per Xbox-Controller und verhindert aktiv, dass der Roboter durch Bedienfehler mit der Arbeitsfläche kollidiert.*
 
-#### `xarm_joystick_input.cpp` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `xarm_joystick_input.cpp` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Übersetzt die bereinigten Gamepad-Signale (Analog-Sticks & Trigger) in kartesische Geschwindigkeitsbefehle (`TwistStamped`) für MoveIt Servo. Wendet exponentielles Smoothing an und steuert alle Button-Mappings.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/joy_check` (`sensor_msgs/Joy`)
   - Liest die vom Wächter-Node bereinigten Controller-Inputs.
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) :
@@ -179,16 +179,16 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - `/ui/eef_position` (`std_msgs/Float32MultiArray`)
   - Sendet Motorströme an den Servo Server und publiziert mit 10 Hz die Live-Pose für die Web-UI.
 - ![TF2](https://img.shields.io/badge/TF2-yellow?style=flat-square) : Hört auf die aktuelle TCP-Position (`link_base` -> `link_tcp`).
-- ![Services](https://img.shields.io/badge/Services-orange?style=flat-square) :
+- ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square) :
   - `/servo_server/start_servo`
   - `/servo_server/stop_servo`
   - `/servo_server/switch_command_type` (Clients)
 
-#### `checker.py` (`collision_check`) ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `checker.py` (`collision_check`) ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Sek. in die Zukunft) die Z-Koordinate. Würde der Roboter den Tisch berühren, wird der Abwärtsbefehl des Controllers hart überschrieben und blockiert. Löst das Rumble-Feedback (Vibration) des Gamepads aus.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/joy` (`sensor_msgs/Joy`)
   - `/servo_server/status` (`std_msgs/Int8`)
   - `/ui/eef_position` (`std_msgs/Float32MultiArray`)
@@ -205,7 +205,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Die Echtzeit-Bewegungs-Engine von MoveIt. Reagiert auf dynamische Hindernisse (YOLO-Boxen) über einen `threshold_distance` Parameter und stoppt den Arm, bevor er mit Objekten kollidiert.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`)
   - `/planning_scene` (`moveit_msgs/PlanningScene`)
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) :
@@ -218,7 +218,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🟢 <a id="subchapter-3-2"></a> 3.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
 
-#### `zed_wrapper` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `zed_wrapper` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Der native Hardware-Treiber der Stereolabs ZED Mini Kamera. 
@@ -231,11 +231,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
  * `depth_mode: ULTRA` – Erzwingt die maximal dichte 3D-Punktwolke für saubere Kantenberechnung.
  * `auto_exposure: True` – Erlaubt den automatischen Helligkeitsausgleich für robuste YOLO Erkennung.
 
-#### `zed_yolo_3d_bbox.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `zed_yolo_3d_bbox.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Verarbeitet parallel den RGB- und Depth-Stream mit GPU-Beschleunigung und dem **YOLOv8 Large** Modell. Isoliert Objekte, filtert Tiefenrauschen und berechnet millimetergenaue, auf die Tischebene geerdete 3D-Bounding-Boxen (inklusive Greifpunkt-Marker). Nutzt einen **robusten Oberflächen-Projektionsalgorithmus** (filtert die unteren 20% der Punkte heraus, um Tisch-Rauschen zu ignorieren), um die Bounding-Boxen exakt auf das tatsächliche physikalische Volumen der Objekte zu zentrieren, unabhängig vom Kamerawinkel. Nutzt ein **Dictionary-basiertes EMA-Tracking-System** mit persistenten, globalen IDs und einem engen 10cm-Distanz-Threshold, um ID-Swapping und Boxen-Jittering zwischen nah beieinander stehenden Objekten zu verhindern. Erkennt das System mehrere Objekte derselben Klasse, werden diese zur eindeutigen Identifikation dauerhaft durchnummeriert (z.B. `cup_1`, `cup_2`).
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`)
   - `/zed/zed_node/depth/depth_registered` (`sensor_msgs/Image`)
   - `/zed/zed_node/rgb/camera_info` (`sensor_msgs/CameraInfo`)
@@ -247,16 +247,16 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
  * `percentiles: [0.5, 99.5]` – Schneidet extreme Tiefen-Rausch-Pixel ("Flying Pixels" an Objektkanten) hart ab, während echte Kanten erhalten bleiben.
  * `ema_alpha: 0.2` – Glättungsfaktor (Exponential Moving Average), um Boxen-Jittering zwischen Frames sicher zu eliminieren.
 
-#### `pointcloud_optimizer.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `pointcloud_optimizer.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Läuft aktiv im Hintergrund während des 3D Vision Bringups. Fängt die rohe ZED-Punktwolke ab und transformiert das Koordinatensystem vom optischen Frame (`Z=vorwärts`) in den Standard-ROS-Frame (`X=vorwärts`), wobei RGB-Daten erhalten bleiben.
 
-#### `yolo_moveit_collision.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `yolo_moveit_collision.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten um. Statt eines massiven Blocks wird eine **nach oben offene Becher-Form** (5 hauchdünne Wände à 1 mm) in den Planungsraum eingefügt. Dies erlaubt dem Greifer ein ungehindertes Eintauchen von oben (für Top-Down-Grasps), blockiert aber seitliche Kollisionen sicher.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`)
   - Liest die Bounding Boxen aus.
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) :
@@ -268,11 +268,11 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 > [!NOTE]
 > **Zweck & Aufgabe:** Dynamische 3D-Umgebungskartierung. Generiert in Echtzeit eine voxelbasierte Kollisionskarte (OctoMap) direkt aus der ZED-Punktwolke. Dadurch kann MoveIt arbiträre, nicht von YOLO erkannte Hindernisse (z. B. menschliche Hände, Werkzeuge) bei der Bahnplanung und im Servo-Betrieb sicher umfahren.
  * 🛠️ **Aktivierung:** Im Basis-Repository (`src/xarm_ros2/xarm_moveit_config/launch/_robot_moveit_common.launch.py`) wird die OctoMap über das Dictionary `sensor_manager_parameters` (mit Parametern wie `octomap_resolution: 0.03` und `ros.point_cloud_topic`) konfiguriert und dem `move_group_node` übergeben.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/zed/zed_node/point_cloud/cloud_optimized` (`sensor_msgs/PointCloud2`)
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) : Nativ integriert in die MoveIt `/planning_scene`.
 
-#### `yolo_planned_grasp_executor.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `yolo_planned_grasp_executor.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("Grasp Object") aus, holt sich die YOLO-Koordinaten und orchestriert eine robuste **Kollisionsfreie 3-Phasen Greif-Sequenz**:
@@ -280,25 +280,25 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - **Phase 2 (Hover):** Bewegt sich horizontal auf der sicheren Z-Höhe (15cm) exakt über das Zielobjekt. Erzwingt dabei eine strikte Top-Down Orientierung (gerade nach unten) und nutzt sehr enge IK-Toleranzen (5mm Position, 0.001 rad Neigung) für millimetergenaue Ausrichtung.
   - **Phase 3 (Approach):** Schaltet das anvisierte Objekt kurzzeitig über `/ui/ignore_collision_object` in der globalen MoveIt Kollisionsszene ab, damit der Greifer physisch in die Bounding Box eindringen kann, ohne einen Not-Aus auszulösen, und fährt dann nach unten.
  * ⚙️ **Parameter:** Bietet einstellbare Parameter für `velocity_scaling` (Standard: 0.2) und `acceleration_scaling` (Standard: 0.1) für extrem weiche, langsame und vorhersehbare Roboterbewegungen während der Greifsequenz.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`)
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) :
   - `/ui/grasp_status` (`std_msgs/String`)
   - für das RViz Console-Log, `/ui/ignore_collision_object` (`std_msgs/String`), `/planning_scene` (`moveit_msgs/PlanningScene`).
-- ![Action Server](https://img.shields.io/badge/Action_Server-purple?style=flat-square) :
+- ![Action Server](https://img.shields.io/badge/Action_Server-008080?style=flat-square) :
   - `/ui/grasp_object` (`my_3d_vision_msgs/action/GraspObject`)
-- ![Services](https://img.shields.io/badge/Services-orange?style=flat-square) :
+- ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square) :
   - `/compute_ik` (IK Verifizierung)
   - `/move_action` (MoveIt OMPL Planer)
   - `/ui/execute_move_to_pose` (Servo Fallback)
 
-#### `grasp_action_bridge.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `grasp_action_bridge.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Übersetzer-Node zwischen dem RViz Control Panel und dem Action Server. Nimmt den simplen String des Zielobjekts aus dem UI entgegen und wandelt ihn in ein blockierungsfreies ROS 2 Action Goal um.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/ui/grasp_object_cmd` (`std_msgs/String`)
-- ![Action Client](https://img.shields.io/badge/Action_Client-purple?style=flat-square) :
+- ![Action Client](https://img.shields.io/badge/Action_Client-00BCD4?style=flat-square) :
   - `/ui/grasp_object` (`my_3d_vision_msgs/action/GraspObject`)
 
 #### `zed_stand_publisher.py` ![Python Script](https://img.shields.io/badge/Python_Script-3776AB?style=flat-square&logo=python&logoColor=white)
@@ -317,7 +317,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
 
-#### `ros2_whisper` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `ros2_whisper` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Lokale Speech-to-Text KI. Führt Whisper AI kontinuierlich auf dem Mikrofon-Stream aus und publiziert gesprochene Wörter als Text.
@@ -326,16 +326,16 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) :
   - `/whisper/text` (`std_msgs/String`)
 
-#### `audio_listener.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `audio_listener.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Verarbeitet Mikrofoneingaben für das Sprachsteuerungssystem. Beinhaltet eine automatische, systembewusste Fallback-Logik, die explizit nach den System-Standard-Audiogeräten `pulse` oder `default` sucht und diese priorisiert, um eine zuverlässige Sprachaufzeichnung über verschiedene Hardware-Umgebungen hinweg zu garantieren.
 
-#### `voice_command_listener.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `voice_command_listener.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose"). Implementiert eine robuste **3-Stufen-Deduplikations-Zustandsmaschine**, die eine exakt einmalige Befehlsausführung garantiert.
-- ![Action Client](https://img.shields.io/badge/Action_Client-purple?style=flat-square) :
+- ![Action Client](https://img.shields.io/badge/Action_Client-00BCD4?style=flat-square) :
   - `/whisper/inference` (`whisper_idl/Inference`)
   - Anstatt auf das Ende der 5-sekündigen Aufnahme zu warten, wertet der Node kontinuierlich das Echtzeit-`feedback` Topic aus (250ms Intervall vom C++ Action Server).
 - ⚡ **Early Cancellation:** Sobald ein gültiger Sprachbefehl im Feedback erkannt wird, wird die Aktion sofort getriggert und die laufende Audioaufnahme vorzeitig abgebrochen (`cancel_goal_async()`). Dies sorgt für verzögerungsfreie Ausführung mit geringster Latenz.
@@ -373,7 +373,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Es ist modern in einem Dark-Theme gestaltet und in 4 GroupBoxes unterteilt (Cartesian Jog, Cartesian Absolute, Joint Absolute, Utilities). Bietet D-Pad Tasten, **6-DoF Joint Control Slider**, das **"Grasp Object"** Eingabefeld und ein **farbkodiertes Live-Konsolen-Log**. Nutzt eine threadsichere `Qt::QueuedConnection` Signal/Slot Architektur, um asynchrone ROS 2 Statusmeldungen direkt in das UI zu streamen, ohne die Oberfläche einzufrieren.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/ui/grasp_status` (`std_msgs/String`)
   - `/joint_states` (`sensor_msgs/JointState`)
   - `/ui/robot_control/current_speed` (`std_msgs/Float32`)
@@ -383,42 +383,42 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - `/ui/grasp_object_cmd` (`std_msgs/String`)
   - `/ui/robot_control/current_frame` (`std_msgs/String`)
   - `/ui/robot_control/set_speed_index` (`std_msgs/Int32`)
-- ![Services](https://img.shields.io/badge/Services-orange?style=flat-square) :
+- ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square) :
   - `/ui/execute_initial_pose`
   - `/ui/execute_move_to_pose`
   - `/ui/execute_move_joint` (Clients)
 
-#### `robot_motion_handler_movegroup.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `robot_motion_handler_movegroup.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Sowohl die "Move To: Absolute Pose" als auch die "Move To: Initial Pose" Bewegungen (ausgelöst über Web UI oder RViz) nutzen nun einen robusten **IK-Solver (Inverse Kinematik)**. Dieser berechnet die perfekten Gelenkwinkel für absolute Koordinaten und führt diese als sichere, kollisionsfreie Kurvenfahrten (Joint-Trajectories). Dadurch werden Self-Collisions und Singularitäten, die bei sturen kartesischen Geradeausfahrten quer durch den Raum entstehen, vollständig eliminiert. Die Ausführungsgeschwindigkeit all dieser Gelenkbewegungen sowie der Scan-Pfade wird nun zentral über die **Action Speed Radiobuttons** (Slow, Normal, Fast) in der UI gesteuert, was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt. **Object Cross Scan:** Verarbeitet den `/ui/start_object_scan` Service, der gezielte, halbkugelförmige Scan-Bögen (Kugeloberfläche) über die Objekte abfährt. Die exakten Positionen der Objekte (Cube, Rectangle, Cylinder) werden live über den TF-Baum ermittelt. Um den Kameraabstand exakt konstant zu halten, wandert der TCP in einem sanften Bogen über das Objekt und nutzt einen exakten trigonometrischen Look-At (Fokus-Punkt), um das Objekt ununterbrochen zentriert anzuvisieren. Um mechanische Handgelenks-Singularitäten (ein unkontrolliertes Rotieren von Joint 4) beim Abfahren der Y-Achse elegant zu vermeiden, führt der TCP vorher eine präzise **90-Grad-Drehung (Yaw)** um seine eigene Achse aus. Das richtet Joint 5 (das Pitch-Gelenk) perfekt aus, um die seitliche Neigung natürlich zu übernehmen. Des Weiteren verfügt die IK-Ausführungsschleife nun über einen aktiven **Joint Unwrapping Algorithmus**, der Sprünge in der IK-Lösung mathematisch abfängt und >180° Rotationen unterbindet, wodurch das Aufwickeln von Kabeln oder plötzliche 360-Grad-Flips des Handgelenks physisch ausgeschlossen werden. Zudem abonniert der Planer live die dynamische **Safety Zone**, stoppt den Arm sicher an der Grenze und neigt die Kamera automatisch weiter nach unten, um das Objekt weiterhin perfekt fokussiert zu halten, falls dieses zu nah am Roboterfuß liegt.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/ui/robot_control/current_speed` (`std_msgs/Float64`)
   - `/ui/safety_zone_params` (Dynamische Hindernis-Integration)
   - Skaliert die Geschwindigkeit der Joint-Bewegungen synchron zur UI.
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) :
   - `/lite6_traj_controller/joint_trajectory` (`trajectory_msgs/JointTrajectory`)
-- ![Services](https://img.shields.io/badge/Services-orange?style=flat-square) : Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_object_scan` und `/ui/execute_move_joint` als Server an. Nutzt `/compute_ik` (MoveIt IK) als Client, um kartesische Ziele aufzulösen. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
+- ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square) : Bietet `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_object_scan` und `/ui/execute_move_joint` als Server an. Nutzt `/compute_ik` (MoveIt IK) als Client, um kartesische Ziele aufzulösen. Besitzt einen TF2-Listener für Echtzeit TCP-Koordinaten.
 
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koordinaten als Overlay in den Video-Stream des RViz-Sichtfelds.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/servo_server/status` (`std_msgs/Int8`)
   - `/ui/collision_msg` (`std_msgs/String`)
   - `/ui/robot_control/current_frame` (`std_msgs/String`)
   - Hören auf kritische Warn-Flags und Frame-Updates.
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) : Nutzt `rviz_2d_overlay_msgs/OverlayText`.
 
-#### `rviz_marker_static_scene_objects.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `rviz_marker_static_scene_objects.py` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuelle Tischkanten, interaktive Ziel-Boxen und eine dynamische, transparente **Safety Zone**). Verwendet den Zeitstempel `0`, um ein Flackern ("Flickering") aufgrund von asynchronen TF-Bäumen zu verhindern.
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) :
   - `/scene_markers_array` (`visualization_msgs/MarkerArray`)
 
-#### `rosbridge_server` ![ROS Node](https://img.shields.io/badge/ROS_Node-34a853?style=flat-square)
+#### `rosbridge_server` ![ROS Node](https://img.shields.io/badge/ROS_Node-blue?style=flat-square)
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Standard-WebSocket-Brücke auf Port 9090, die dem webbasierten Dashboard erlaubt, direkt auf das ROS-Netzwerk zuzugreifen.
@@ -436,7 +436,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
   - **Interaktives UI & Layout-Optimierung:** Die Benutzeroberfläche ist logisch strukturiert (Cartesian Jogging oben, Telemetrie darunter) und passt sich lückenlos an den Inhalt an. Sie beinhaltet dynamische, interaktive Elemente wie den Whisper AI "Start Listening"-Button, der nun vollständig ins Backend integriert ist und beim Auslösen über einen Action Client eine 5-sekündige Echtzeit-Sprachaufnahme startet. Das finale erkannte Transkript wird zur direkten Ausführung an das ROS-Backend übermittelt, was externe Whisper-Testskripte vollständig überflüssig macht.
   - **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
   - **Farbkodiertes Konsolen-Log:** Ein live scrollbares Konsolen-Log mit detailliertem Feedback für alle Bewegungsbefehle — inklusive Koordinatenanzeige (`X`, `Y`, `Z`) bei MoveTo-Befehlen und expliziten Erfolgs- (✓) / Fehler- (❌) Statusanzeigen mit Fehlercodes.
-- ![Subscribes](https://img.shields.io/badge/Subscribes-blue?style=flat-square) :
+- ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square) :
   - `/joint_states`
   - `/ui/eef_position`
   - `/servo_server/status`
