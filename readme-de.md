@@ -291,6 +291,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🎮 <a id="subchapter-3-1"></a> 3.1 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
 *Dieses Subsystem steuert das manuelle Jogging des Roboters per Xbox-Controller und verhindert aktiv, dass der Roboter durch Bedienfehler mit der Arbeitsfläche kollidiert.*
 
+<br>
+
 ---
 
 <br>
@@ -346,6 +348,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -381,6 +385,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 > | `table_z_threshold` | `0.0` | *Die harte Tischbarriere auf der Z-Achse (World-Frame).* |
 >
 >
+
+<br>
 
 ---
 
@@ -427,6 +433,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🟢 <a id="subchapter-3-2"></a> 3.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
 
+<br>
+
 ---
 
 <br>
@@ -454,6 +462,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 > | `auto_exposure` | `True` | *Erlaubt den automatischen Helligkeitsausgleich für robuste YOLO Erkennung.* |
 >
 >
+
+<br>
 
 ---
 
@@ -491,6 +501,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -515,6 +527,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >   | **`/zed/zed_node/point_cloud/cloud_optimized`** | `sensor_msgs/PointCloud2` | *Publiziert die in den ROS-Standard-Frame transformierte Punktwolke.* |
 >
 >
+
+<br>
 
 ---
 
@@ -561,6 +575,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >   | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Integriert die generierte OctoMap nativ in die Kollisionswelt.* |
 >
 >
+
+<br>
 
 ---
 
@@ -616,6 +632,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -654,6 +672,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -684,6 +704,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
 
+<br>
+
 ---
 
 <br>
@@ -704,6 +726,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -714,6 +738,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 > Verarbeitet Mikrofoneingaben für das Sprachsteuerungssystem. Beinhaltet eine automatische, systembewusste Fallback-Logik, die explizit nach den System-Standard-Audiogeräten `pulse` oder `default` sucht und diese priorisiert, um eine zuverlässige Sprachaufzeichnung über verschiedene Hardware-Umgebungen hinweg zu garantieren.
 >
 >
+
+<br>
 
 ---
 
@@ -741,6 +767,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 > Der `whisper_server` ist in der `whisper.yaml` explizit auf `language: "en"` gestellt und nutzt einen gezielten `initial_prompt`, um eine hohe Erkennungsgenauigkeit für die englischen Befehle zu garantieren und Rauschen auszufiltern.
 >
 >
+
+<br>
 
 ---
 
@@ -778,6 +806,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
 ### 🖥️ <a id="subchapter-3-4"></a> 3.4 Funktion: Grafische Steuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
+
+<br>
 
 ---
 
@@ -818,6 +848,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 >   | **`/ui/execute_move_joint`** | Client | *Bewegt Gelenke auf Zielwinkel.* |
 >
 >
+
+<br>
 
 ---
 
@@ -875,6 +907,8 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
   |---|---|---|
   | **`/rviz_2d_overlay_msgs/OverlayText`** |  | *Projiziert Warntexte als Overlay in RViz.* |
 
+<br>
+
 ---
 
 <br>
@@ -892,6 +926,8 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 >   | **`/scene_markers_array`** | `visualization_msgs/MarkerArray` | *Rendert virtuelle Marker (Safety-Zone, Tische) in RViz.* |
 >
 >
+
+<br>
 
 ---
 

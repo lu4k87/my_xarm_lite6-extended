@@ -291,6 +291,8 @@ To provide a clear understanding of the architecture, the software modules are c
 ### 🎮 <a id="subchapter-3-1"></a> 3.1 Feature: Gamepad Teleoperation & Hard Collision Protection
 *This subsystem manages the manual jogging of the robot via the Xbox controller and actively prevents the robot from colliding with the workspace surface due to operator error.*
 
+<br>
+
 ---
 
 <br>
@@ -347,6 +349,8 @@ To provide a clear understanding of the architecture, the software modules are c
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -382,6 +386,8 @@ To provide a clear understanding of the architecture, the software modules are c
 >  * `table_z_threshold = 0.0` – The hard table barrier on the Z-axis (World-Frame).
 >
 >
+
+<br>
 
 ---
 
@@ -427,6 +433,8 @@ To provide a clear understanding of the architecture, the software modules are c
 ### 🟢 <a id="subchapter-3-2"></a> 3.2 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)
 *This subsystem is responsible for locating objects in 3D space, generating virtual obstacles, and navigating the robot precisely to the target.*
 
+<br>
+
 ---
 
 <br>
@@ -452,6 +460,8 @@ To provide a clear understanding of the architecture, the software modules are c
 >  * `auto_exposure: True` – Allows automatic brightness compensation for robust YOLO detection.
 >
 >
+
+<br>
 
 ---
 
@@ -488,6 +498,8 @@ To provide a clear understanding of the architecture, the software modules are c
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -498,6 +510,8 @@ To provide a clear understanding of the architecture, the software modules are c
 > Actively runs in the background during the 3D Vision Bringup. It intercepts the raw ZED point cloud and transforms the coordinate system from the optical frame (`Z=forward`) to the standard ROS frame (`X=forward`) while preserving RGB data.
 >
 >
+
+<br>
 
 ---
 
@@ -545,6 +559,8 @@ To provide a clear understanding of the architecture, the software modules are c
 >   | *-* | *-* | *Integrated natively into the MoveIt `/planning_scene`.* |
 >
 >
+
+<br>
 
 ---
 
@@ -595,6 +611,8 @@ To provide a clear understanding of the architecture, the software modules are c
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -633,6 +651,8 @@ To provide a clear understanding of the architecture, the software modules are c
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -662,6 +682,8 @@ To provide a clear understanding of the architecture, the software modules are c
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Feature: Multimodal Interaction (Voice & Gaze Control)
 *These experimental modules allow for "hands-free" control of the system.*
 
+<br>
+
 ---
 
 <br>
@@ -682,6 +704,8 @@ To provide a clear understanding of the architecture, the software modules are c
 >
 >
 
+<br>
+
 ---
 
 <br>
@@ -692,6 +716,8 @@ To provide a clear understanding of the architecture, the software modules are c
 > Handles microphone input for the voice command system. Features an automatic, system-aware fallback logic that explicitly scans for and prioritizes the system-default `pulse` or `default` audio devices, guaranteeing reliable voice capture across different hardware environments.
 >
 >
+
+<br>
 
 ---
 
@@ -724,6 +750,8 @@ To provide a clear understanding of the architecture, the software modules are c
 > The `whisper_server` is explicitly configured to use `language: "en"` along with a targeted `initial_prompt` inside `whisper.yaml` to guarantee high transcription accuracy for the English commands, rejecting non-english noise.
 >
 >
+
+<br>
 
 ---
 
@@ -763,6 +791,8 @@ To provide a clear understanding of the architecture, the software modules are c
 ### 🖥️ <a id="subchapter-3-4"></a> 3.4 Feature: Graphical Control & Visual Feedback
 *Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
 
+<br>
+
 ---
 
 <br>
@@ -801,6 +831,8 @@ To provide a clear understanding of the architecture, the software modules are c
 >   | **`/ui/execute_move_joint`** | Client | *Commands specific joint angles execution.* |
 >
 >
+
+<br>
 
 ---
 
@@ -854,6 +886,8 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
   |---|---|---|
   | **`/rviz_2d_overlay_msgs/OverlayText`** |  | *Projects warning texts as overlay widgets in RViz.* |
 
+<br>
+
 ---
 
 <br>
@@ -871,6 +905,8 @@ Project color-coded warning messages (e.g., "COLLISION!") and live axis coordina
 >   | **`/scene_markers_array`** | `visualization_msgs/MarkerArray` | *Renders virtual markers (safety-zone, tables) in RViz.* |
 >
 >
+
+<br>
 
 ---
 
