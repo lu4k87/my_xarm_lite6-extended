@@ -766,7 +766,7 @@ pip install ultralytics==6.7.171 # YOLO 3D Object detection
 | Xbox One Elite Series 2 | Primary teleoperation controller |
 | NVIDIA RTX A5000 | Primary GPU for Computer Vision / CUDA 13.3 |
 | 12th Gen Intel Core i9-12900K | Primary Workstation CPU |
-| Tobii Pro Glasses 3 | Eye-tracking input ![In Progress](https://img.shields.io/badge/Status-In_Progress-yellow?style=flat-square) |
+| Tobii Pro Glasses 3 | Eye-tracking input ![Active](https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square) |
 
 | Stereolabs ZED Mini | Stereo depth camera |
 | Raspberry Pi Camera (×2) | ![Deprecated](https://img.shields.io/badge/Status-Deprecated-red?style=flat-square) 2D object detection via YOLO |
