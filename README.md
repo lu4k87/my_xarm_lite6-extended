@@ -1,5 +1,13 @@
 # xArm ROS 2 Extended Workspace (ROS2 Humble) **[MASTER VERSION]**
 
+<p align="center">
+  <img src="https://img.shields.io/badge/ROS_2-Humble-34a853?style=for-the-badge&logo=ros" alt="ROS 2 Humble">
+  <img src="https://img.shields.io/badge/Ubuntu-22.04-E95420?style=for-the-badge&logo=ubuntu" alt="Ubuntu 22.04">
+  <img src="https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python" alt="Python 3.10">
+  <img src="https://img.shields.io/badge/MoveIt-2-00529B?style=for-the-badge" alt="MoveIt 2">
+</p>
+
+
 This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
 > [!IMPORTANT]
 > **Core Prerequisite:** This repository is an *extension workspace*. It is built entirely on top of the official [xarm_ros2 repository (Branch: humble)](https://github.com/xArm-Developer/xarm_ros2/tree/humble) from UFactory. The official repository, its structure, and all of its system dependencies form the mandatory foundational baseline for this software!
@@ -150,6 +158,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `xarm_joystick_input.cpp` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Translates the sanitized gamepad signals (analog sticks & triggers) into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies exponential smoothing and handles all button mappings.
 - 📥 **Subscribes:**
   - `/joy_check` (`sensor_msgs/Joy`)
@@ -166,6 +175,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `checker.py` (`collision_check`) <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Acts as a guardian *before* the movement translation. Predictively computes the Z-coordinate (0.1 sec into the future). If the robot were to touch the table, the controller's downward command is hard-overridden and blocked. Triggers gamepad rumble feedback (vibration).
 - 📥 **Subscribes:**
   - `/joy` (`sensor_msgs/Joy`)
@@ -182,6 +192,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `xarm_moveit_servo` <kbd>CONFIGURATION / NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** The real-time motion engine from MoveIt. Reacts to dynamic obstacles (YOLO boxes) via a `threshold_distance` parameter and halts the arm before it collides with objects.
 - 📥 **Subscribes:**
   - `/servo_server/delta_twist_cmds` (`geometry_msgs/TwistStamped`)
@@ -198,6 +209,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `zed_wrapper` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** The native hardware driver for the Stereolabs ZED Mini Camera. 
 - 📤 **Publishes:**
   - `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`)
@@ -210,6 +222,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `zed_yolo_3d_bbox.py` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise, and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker). Uses a **robust closest-surface projection** algorithm (filtering out the bottom 20% of points to avoid table noise) to perfectly center bounding boxes on the true physical volume of objects, regardless of camera angles. Features a **dictionary-based EMA tracking system** with persistent global IDs and a tight 10cm distance threshold to prevent ID-swapping and bounding box jitter. Multiple objects of the same class are permanently numbered for unambiguous targeting (e.g., `cup_1`, `cup_2`).
 - 📥 **Subscribes:**
   - `/zed/zed_node/rgb/image_rect_color` (`sensor_msgs/Image`)
@@ -225,10 +238,12 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `pointcloud_optimizer.py` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Actively runs in the background during the 3D Vision Bringup. It intercepts the raw ZED point cloud and transforms the coordinate system from the optical frame (`Z=forward`) to the standard ROS frame (`X=forward`) while preserving RGB data.
 
 #### `yolo_moveit_collision.py` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Seamlessly converts the detected 3D boxes into dynamic MoveIt `CollisionObject` messages. Instead of a solid block, it generates an **open-top cup shape** (5 ultra-thin 1mm walls). This allows the gripper to safely penetrate the bounding box from above for top-down grasps, while securely blocking lateral collisions.
 - 📥 **Subscribes:**
   - `/zed/bboxes_3d` (`visualization_msgs/MarkerArray`)
@@ -239,6 +254,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `octomap_server` <kbd>Integration via MoveIt 2</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Dynamic 3D environment mapping. Generates a real-time voxel-based collision map (OctoMap) directly from the ZED point cloud, enabling MoveIt to avoid arbitrary, unrecognized obstacles (e.g., human hands, tools) during trajectory planning and servoing.
  * 🛠️ **Activation:** In the base repository (`src/xarm_ros2/xarm_moveit_config/launch/_robot_moveit_common.launch.py`), the OctoMap is configured via the `sensor_manager_parameters` dictionary (setting parameters like `octomap_resolution: 0.03` and `ros.point_cloud_topic`) and injected directly into the `move_group_node`.
 - 📥 **Subscribes:**
@@ -247,6 +263,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `yolo_planned_grasp_executor.py` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** The central control logic of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the YOLO coordinates, and coordinates a robust **3-Phase Collision-Free Grasping Sequence**:
   - **Phase 1 (Retract):** Safely moves the arm strictly upwards from its current position to clear the table.
   - **Phase 2 (Hover):** Translates horizontally to a safe height (15cm) exactly above the target object. Forces a strict top-down orientation and uses tight IK tolerances (5mm positional, 0.001 rad tilt) to guarantee millimeter-accurate vertical alignment.
@@ -267,6 +284,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `grasp_action_bridge.py` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Acts as a translator node between the RViz Control Panel and the Action Server. Receives the simple target object string from the UI and converts it into a non-blocking ROS 2 Action Goal.
 - 📥 **Subscribes:**
   - `/ui/grasp_object_cmd` (`std_msgs/String`)
@@ -275,12 +293,14 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `zed_stand_publisher.py` <kbd>SCRIPT</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Mathematically generates the exact 3D mesh model of the camera tripod (aluminum profile) and publishes it statically in RViz.
 - 📤 **Publishes:**
   - `/zed_stand_marker` (`visualization_msgs/Marker`)
 
 #### `tf_tuner` <kbd>NODE / UI</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** A dedicated ROS 2 package providing a live tuner interface (PyQt5) to dynamically adjust the camera offsets (Pointcloud) as well as interactively position 3D scene elements (Cube, Rectangle, Cylinder, White Plane) and an adjustable **Safety Zone** (with tunable radius) in RViz without restarting nodes.
 - 📤 **Publishes:** Dynamically updates the TF broadcaster values (`tf2_msgs/TFMessage` on `/tf`) and publishes live safety parameters (`/ui/safety_zone_params`).
 
@@ -289,6 +309,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `ros2_whisper` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Local Speech-to-Text AI. Runs Whisper AI continuously on the microphone stream and publishes spoken words as text. 
 > - **GPU Acceleration & Optimization:** The inference pipeline is natively optimized for **GPU Acceleration (CUDA)** utilizing the dedicated `base.en` model. This guarantees zero-latency "High-Performance" execution of voice commands and prevents runtime timeouts.
 > - **Performance & Thread-Safety:** The underlying C++ Action Server (`TranscriptManager`) has been heavily fortified with a strict `std::mutex` locking mechanism to entirely eliminate parallel data-race crashes during high-frequency token generation. Additionally, the `Inference` node features a hardened buffer clearing strategy (`audio_ring_->clear()`) which physicaly purges stale audio residuals from the microphone Ring Buffer the exact millisecond the user activates the UI button, mathematically guaranteeing zero "ghost commands" from previous speech.
@@ -297,10 +318,12 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `audio_listener.py` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Handles microphone input for the voice command system. Features an automatic, system-aware fallback logic that explicitly scans for and prioritizes the system-default `pulse` or `default` audio devices, guaranteeing reliable voice capture across different hardware environments.
 
 #### `voice_command_listener.py` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Analyzes discrete single-shot raw text using regex patterns to extract defined action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose"). Implements a robust **3-layer deduplication state machine** to guarantee exactly-once command execution.
 - 📥 **Action Client:**
   - `/whisper/inference` (`whisper_idl/Inference`)
@@ -317,6 +340,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `gaze_ui_node_tobii_glasses.py` <kbd>SCRIPT / UI</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 1 sec fixation time) and sends direct movement and gripper commands.
 > - **RTSP & Data Processing:** Connects to the Tobii glasses via the Real-Time Streaming Protocol (RTSP) at `rtsp://192.168.75.51:8554/live/all` to receive two streams simultaneously. The video stream is processed with OpenCV to detect the ArUco markers, while the data stream (JSON) provides the raw, normalized `gaze2d` coordinates in real-time. 
 > - **Homography Mapping:** Detects 4 ArUco markers on the screen corners via the scene camera. Uses `cv2.findHomography` to precisely project the 3D gaze vector (`gaze2d`) from the RTSP stream onto the 2D UI screen absolute pixels.
@@ -337,6 +361,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `rviz_robot_control_panel.cpp` <kbd>C++ GUI NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** The native 2D control panel written in C++ for RViz. It is structured into a modern dark-theme UI with 4 distinct GroupBoxes (Cartesian Jog, Cartesian Absolute, Joint Absolute, Utilities). Provides D-Pad buttons, **6-DoF Joint Control Sliders**, the **"Grasp Object"** input field, and a **Color-Coded Live Console Log**. Employs a thread-safe `Qt::QueuedConnection` Signal/Slot architecture to pipe asynchronous ROS 2 node status messages directly into the UI without freezing.
 - 📥 **Subscribes:**
   - `/ui/grasp_status` (`std_msgs/String`)
@@ -354,6 +379,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `robot_motion_handler_movegroup.py` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Executes the commands from the Control Panel invisibly in the background. Features an intelligent startup trigger and safe joint execution (pauses Servo, moves via Trajectory Controller, and resumes Servo). Both "Move To: Absolute Pose" and "Move To: Initial Pose" movements (triggered via Web UI or RViz) now utilize a robust **IK-Solver (Inverse Kinematics)** to calculate target joint angles for absolute coordinates and execute them as safe, collision-free joint-space trajectories. This completely eliminates self-collision halts and singularities that occur with straight-line Cartesian motions across the workspace. The execution speed of all these joint movements, as well as the scan paths, is now centrally controlled by the UI's **Action Speed Radio Buttons** (Slow, Normal, Fast), scaling dynamically from butter-smooth slow movements to lightning-fast execution. **Object Cross Scan:** Handles the `/ui/start_object_scan` service which generates precise spherical dome paths (arcs) over the objects. The exact positions of the objects (Cube, Rectangle, Cylinder) are determined live via the TF tree. To maintain a constant camera distance, the TCP traces a pure hemisphere trajectory over the object while using an exact trigonometric focal-point look-at logic to remain perfectly aimed at the object's center. To elegantly prevent wrist singularities (Joint 4 spinning) when sweeping along the Y-axis, the TCP executes a seamless **90-degree Yaw Rotation** before the sweep. This perfectly aligns the robot's natural pitch joint (Joint 5) with the lateral movement. Furthermore, the IK execution loop features an active **Joint Unwrapping Algorithm** that intercepts consecutive joint angle calculations and mathematically eliminates any >180-degree IK solution jumps, physically guaranteeing zero cable wind-up or sudden 360-degree wrist flips. The planner also actively subscribes to the dynamic **Safety Zone**, halting the arm at the boundary while automatically tilting the camera to keep the target centered if an object is located too close to the base.
 - 📥 **Subscribes:**
   - `/ui/robot_control/current_speed` (`std_msgs/Float64`)
@@ -364,6 +390,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Project color-coded warning messages (e.g., "COLLISION!") and live axis coordinates directly into the video stream of the RViz viewport.
 - 📥 **Subscribes:**
   - `/servo_server/status` (`std_msgs/Int8`)
@@ -374,16 +401,19 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `rviz_marker_static_scene_objects.py` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges, interactive target boxes, and a dynamic transparent **Safety Zone**). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
 - 📤 **Publishes:**
   - `/scene_markers_array` (`visualization_msgs/MarkerArray`)
 
 #### `rosbridge_server` <kbd>NODE</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Standard WebSocket bridge on Port 9090, allowing the web-based dashboard to access the ROS network directly.
 
 #### `robot_control_web_ui` <kbd>WEB APP</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** A native-feeling, standalone Chrome Web App designed with a modern Glassmorphism aesthetic. It acts as a comprehensive multimodal dashboard directly replicating the RViz control panel features for remote operation. Operates on **Port 8081**.
 > 💡 **Native Desktop Integration:** Both the *ROS 2 Nexus Web App* and the *Robot Control Web UI* now launch in dedicated, isolated Chrome `--app` profiles. They start perfectly maximized as standalone applications, completely detached from standard browser windows, and feature their own distinct taskbar icons for a seamless, native OS experience.
 - ✨ **Core Features:** 
@@ -413,6 +443,7 @@ To provide a clear understanding of the architecture, the software modules are c
 
 #### `start_isaac_sim.sh` <kbd>LAUNCHER SCRIPT</kbd>
 
+> [!NOTE]
 > **Purpose & Task:** Integrates a locally built NVIDIA Isaac Sim environment directly into the ROS 2 Nexus bringup sequence. Instead of actively computing physics or conflicting with hardware controllers, Isaac Sim runs in **Shadow Mode**. It subscribes to the `/joint_states` topic and maps the physical (or fake) robot movements onto an extremely high-fidelity USD asset in real-time.
 - **Workflow:** 
   1. The user launches `RUN DEV Setup (FAKE)` or `(REAL)` via the Nexus Dashboard.
@@ -524,6 +555,9 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 
 #### 4.7.1 Full Controller Button Mapping
 
+<details>
+<summary><b>🎮 Show Controller Mapping</b></summary>
+
 | Input | Function | ROS Action | Technical Detail |
 |-------|----------|-----------|-----------------|
 | **Left Stick ↑↓** | Move X-axis (forward/back) | `TwistStamped.linear.x` | `axes[1] × speed_scale` |
@@ -551,6 +585,7 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 | 4 | `75%` | Fast — long-range traversal |
 | 5 | `100%` | Maximum — full servo speed |
 
+</details>
 #### 4.7.2 Signal Flow & Exponential Smoothing
 
 All continuous axes are passed through an **exponential low-pass filter** to prevent jerky, discontinuous movements from stick input noise:
@@ -658,6 +693,8 @@ The absolute core prerequisite for this workspace is the official UFactory ROS 2
 - All official UFactory installation steps and drivers (e.g., xArm-C++-API) must be fully functional in the background.
 
 ### Core ROS 2 Packages
+<details>
+<summary><b>🛠️ Core ROS 2 Packages anzeigen</b></summary>
 
 ```bash
 # Build Tools & Audio (Required for PyAudio & Whisper microphone)
@@ -684,8 +721,11 @@ sudo apt install ros-humble-rviz-2d-overlay-plugins ros-humble-rviz-2d-overlay-m
 # Web UI & Gaze Control Dependencies
 sudo apt install python3-pyqt5.qtwebengine python3-opencv python3-av
 ```
+</details>
 
 ### Python Dependencies
+<details>
+<summary><b>🛠️ Python Dependencies anzeigen</b></summary>
 
 ```bash
 # Critical Core Dependencies
@@ -706,6 +746,7 @@ pip install PyQt5==3.15.6 # Python UI (Gaze-Control & Pointcloud Tuner)
 pip install opencv-python==8.9.0.80 # Computer Vision
 pip install ultralytics==6.7.171 # YOLO 3D Object detection
 ```
+</details>
 
 ### Hardware
 
@@ -768,6 +809,8 @@ The ZED Mini camera requires the official ZED SDK and a matching CUDA toolkit ve
  * The live Point Cloud (`PointCloud2`) and the camera axes will instantly and automatically appear in the already running RViz instance without any manual configuration.
 
 ### Setup & Build
+<details>
+<summary><b>🛠️ Setup & Build anzeigen</b></summary>
 
 ```bash
 # Clone and initialize
@@ -785,6 +828,7 @@ colcon build --symlink-install
 # Source the workspace
 source install/setup.bash
 ```
+</details>
 
 ---
 
