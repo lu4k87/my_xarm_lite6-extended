@@ -175,15 +175,14 @@ To provide a clear understanding of the architecture, the software modules are c
   - **`/joy_check`** (`sensor_msgs/Joy`)
   - *Reads the sanitized controller inputs from the guardian node.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/servo_server/delta_twist_cmds`** (`geometry_msgs/TwistStamped`)
-  - **`/ui/eef_position`** (`std_msgs/Float32MultiArray`)
-  - *Sends motor currents to the Servo Server and publishes the live 10 Hz pose for the Web UI.*
+  - **`/servo_server/delta_twist_cmds`** (`geometry_msgs/TwistStamped`) — *Sends Cartesian velocity commands (motor currents) to the Servo Server.*
+  - **`/ui/eef_position`** (`std_msgs/Float32MultiArray`) — *Publishes the live end-effector pose (X, Y, Z) at 10 Hz for the Web UI.*
 - ![TF2](https://img.shields.io/badge/TF2-yellow?style=flat-square)
   - *Listens to the current TCP position (`link_base` -> `link_tcp`).*
 - ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
-  - **`/servo_server/start_servo`**
-  - **`/servo_server/stop_servo`**
-  - **`/servo_server/switch_command_type`** (Clients)
+  - **`/servo_server/start_servo`** (Client) — *Starts the MoveIt Servo engine.*
+  - **`/servo_server/stop_servo`** (Client) — *Safely stops the MoveIt Servo engine.*
+  - **`/servo_server/switch_command_type`** (Client) — *Switches the input mode of the Servo Server (e.g., Twist to Joint Jog).*
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`)
 
 > [!NOTE]
@@ -208,10 +207,10 @@ To provide a clear understanding of the architecture, the software modules are c
 > **Purpose & Task:** The real-time motion engine from MoveIt. Reacts to dynamic obstacles (YOLO boxes) via a `threshold_distance` parameter and halts the arm before it collides with objects.
 
 - ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-  - **`/servo_server/delta_twist_cmds`** (`geometry_msgs/TwistStamped`)
-  - **`/planning_scene`** (`moveit_msgs/PlanningScene`)
+  - **`/servo_server/delta_twist_cmds`** (`geometry_msgs/TwistStamped`) — *Reads incoming Cartesian velocity commands.*
+  - **`/planning_scene`** (`moveit_msgs/PlanningScene`) — *Reads the current 3D scene for obstacle avoidance.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/lite6_traj_controller/joint_trajectory`** (`trajectory_msgs/JointTrajectory`)
+  - **`/lite6_traj_controller/joint_trajectory`** (`trajectory_msgs/JointTrajectory`) — *Sends safe, collision-free joint trajectories to the arm.*
   - *Sends the final joint angles to the robot.*
   - *⚙️ **Parameters (`xarm_moveit_servo_config.yaml`):***
  * `collision_check_type: stop_distance` – Enables soft, velocity-dependent deceleration (pre-warning starts around 5cm) instead of a hard block at the boundary. A hard emergency stop engages at exactly 2cm (`min_allowable_collision_distance: 0.02`).
@@ -226,10 +225,9 @@ To provide a clear understanding of the architecture, the software modules are c
 > **Purpose & Task:** The native hardware driver for the Stereolabs ZED Mini Camera. 
 
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/zed/zed_node/rgb/image_rect_color`** (`sensor_msgs/Image`)
-  - **`/zed/zed_node/depth/depth_registered`** (`sensor_msgs/Image`)
-  - **`/zed/zed_node/point_cloud/cloud_registered`** (`sensor_msgs/PointCloud2`)
-  - *Provides the sensory foundation for the entire system.*
+  - **`/zed/zed_node/rgb/image_rect_color`** (`sensor_msgs/Image`) — *Publishes the color-corrected 2D RGB camera image.*
+  - **`/zed/zed_node/depth/depth_registered`** (`sensor_msgs/Image`) — *Publishes the registered depth map.*
+  - **`/zed/zed_node/point_cloud/cloud_registered`** (`sensor_msgs/PointCloud2`) — *Publishes the dense 3D point cloud.*
   - *⚙️ **Parameters (`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`):***
  * `depth_mode: ULTRA` – Forces the most dense 3D point cloud for clean edge calculation.
  * `auto_exposure: True` – Allows automatic brightness compensation for robust YOLO detection.
@@ -240,9 +238,9 @@ To provide a clear understanding of the architecture, the software modules are c
 > **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise, and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker). Uses a **robust closest-surface projection** algorithm (filtering out the bottom 20% of points to avoid table noise) to perfectly center bounding boxes on the true physical volume of objects, regardless of camera angles. Features a **dictionary-based EMA tracking system** with persistent global IDs and a tight 10cm distance threshold to prevent ID-swapping and bounding box jitter. Multiple objects of the same class are permanently numbered for unambiguous targeting (e.g., `cup_1`, `cup_2`).
 
 - ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-  - **`/zed/zed_node/rgb/image_rect_color`** (`sensor_msgs/Image`)
-  - **`/zed/zed_node/depth/depth_registered`** (`sensor_msgs/Image`)
-  - **`/zed/zed_node/rgb/camera_info`** (`sensor_msgs/CameraInfo`)
+  - **`/zed/zed_node/rgb/image_rect_color`** (`sensor_msgs/Image`) — *Receives the RGB image for YOLO object detection.*
+  - **`/zed/zed_node/depth/depth_registered`** (`sensor_msgs/Image`) — *Uses depth values for 3D coordinate projection.*
+  - **`/zed/zed_node/rgb/camera_info`** (`sensor_msgs/CameraInfo`) — *Reads camera intrinsics to calculate exact spatial coordinates.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
   - **`/zed/bboxes_3d`** (`visualization_msgs/MarkerArray`)
   - *Sends the finalized 3D boxes and markers to RViz for visualization and to downstream nodes.*
@@ -262,8 +260,7 @@ To provide a clear understanding of the architecture, the software modules are c
 > **Purpose & Task:** Seamlessly converts the detected 3D boxes into dynamic MoveIt `CollisionObject` messages. Instead of a solid block, it generates an **open-top cup shape** (5 ultra-thin 1mm walls). This allows the gripper to safely penetrate the bounding box from above for top-down grasps, while securely blocking lateral collisions.
 
 - ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-  - **`/zed/bboxes_3d`** (`visualization_msgs/MarkerArray`)
-  - *Reads the bounding boxes.*
+  - **`/zed/bboxes_3d`** (`visualization_msgs/MarkerArray`) — *Reads the object coordinates as a target for the grasp path.* — *Reads the 3D bounding boxes detected by YOLO.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
   - **`/planning_scene`** (`moveit_msgs/PlanningScene`)
   - *Sends the `CollisionObjects` directly to the MoveIt Planning Scene to avoid collisions during grasping/driving.*
@@ -274,7 +271,7 @@ To provide a clear understanding of the architecture, the software modules are c
  * 🛠️ **Activation:** In the base repository (`src/xarm_ros2/xarm_moveit_config/launch/_robot_moveit_common.launch.py`), the OctoMap is configured via the `sensor_manager_parameters` dictionary (setting parameters like `octomap_resolution: 0.03` and `ros.point_cloud_topic`) and injected directly into the `move_group_node`.
 
 - ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-  - **`/zed/zed_node/point_cloud/cloud_optimized`** (`sensor_msgs/PointCloud2`)
+  - **`/zed/zed_node/point_cloud/cloud_optimized`** (`sensor_msgs/PointCloud2`) — *Reads the point cloud to generate a voxel-based map.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
   - *Integrated natively into the MoveIt `/planning_scene`.*
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py`
@@ -287,13 +284,13 @@ To provide a clear understanding of the architecture, the software modules are c
 - ⚙️ **Parameters:** Features tunable `velocity_scaling` (default: 0.2) and `acceleration_scaling` (default: 0.1) for extremely smooth, slow, and predictable robotic interactions during the grasp sequence.
 
 - ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-  - **`/zed/bboxes_3d`** (`visualization_msgs/MarkerArray`)
+  - **`/zed/bboxes_3d`** (`visualization_msgs/MarkerArray`) — *Reads the object coordinates as a target for the grasp path.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
   - **`/ui/grasp_status`** (`std_msgs/String`) for the RViz console
   - **`/ui/ignore_collision_object`** (`std_msgs/String`)
   - **`/planning_scene`** (`moveit_msgs/PlanningScene`)
 - ![Action Server](https://img.shields.io/badge/Action_Server-008080?style=flat-square)
-  - **`/ui/grasp_object`** (`my_3d_vision_msgs/action/GraspObject`)
+  - **`/ui/grasp_object`** (`my_3d_vision_msgs/action/GraspObject`) — *Non-blocking action endpoint to initiate the grasp sequence.*
 - ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
   - **`/compute_ik`** (IK verification)
   - **`/move_action`** (MoveIt OMPL Planner)
@@ -304,16 +301,16 @@ To provide a clear understanding of the architecture, the software modules are c
 > **Purpose & Task:** Acts as a translator node between the RViz Control Panel and the Action Server. Receives the simple target object string from the UI and converts it into a non-blocking ROS 2 Action Goal.
 
 - ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-  - **`/ui/grasp_object_cmd`** (`std_msgs/String`)
+  - **`/ui/grasp_object_cmd`** (`std_msgs/String`) — *Receives the string command (e.g., "cup_1") from the UI.*
 - ![Action Client](https://img.shields.io/badge/Action_Client-00BCD4?style=flat-square)
-  - **`/ui/grasp_object`** (`my_3d_vision_msgs/action/GraspObject`)
+  - **`/ui/grasp_object`** (`my_3d_vision_msgs/action/GraspObject`) — *Calls the Grasp Action Server.*
 #### ![Python Script](https://img.shields.io/badge/Python_Script-3776AB?style=flat-square&logo=python&logoColor=white) `zed_stand_publisher.py`
 
 > [!NOTE]
 > **Purpose & Task:** Mathematically generates the exact 3D mesh model of the camera tripod (aluminum profile) and publishes it statically in RViz.
 
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/zed_stand_marker`** (`visualization_msgs/Marker`)
+  - **`/zed_stand_marker`** (`visualization_msgs/Marker`) — *Publishes the static 3D model of the camera stand.*
 #### ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `tf_tuner`
 
 > [!NOTE]
@@ -332,7 +329,7 @@ To provide a clear understanding of the architecture, the software modules are c
 > - **Performance & Thread-Safety:** The underlying C++ Action Server (`TranscriptManager`) has been heavily fortified with a strict `std::mutex` locking mechanism to entirely eliminate parallel data-race crashes during high-frequency token generation. Additionally, the `Inference` node features a hardened buffer clearing strategy (`audio_ring_->clear()`) which physicaly purges stale audio residuals from the microphone Ring Buffer the exact millisecond the user activates the UI button, mathematically guaranteeing zero "ghost commands" from previous speech.
 
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/whisper/text`** (`std_msgs/String`)
+  - **`/whisper/text`** (`std_msgs/String`) — *Publishes the final, recognized speech transcript.*
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `audio_listener.py`
 
 > [!NOTE]
@@ -384,14 +381,14 @@ To provide a clear understanding of the architecture, the software modules are c
   - **`/joint_states`** (`sensor_msgs/JointState`)
   - **`/ui/robot_control/current_speed`** (`std_msgs/Float32`)
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/servo_server/delta_twist_cmds`** (`geometry_msgs/TwistStamped`)
-  - **`/ui/grasp_object_cmd`** (`std_msgs/String`)
-  - **`/ui/robot_control/current_frame`** (`std_msgs/String`)
-  - **`/ui/robot_control/set_speed_index`** (`std_msgs/Int32`)
+  - **`/servo_server/delta_twist_cmds`** (`geometry_msgs/TwistStamped`) — *Transmits manual jogging commands (D-Pad) to Servo.*
+  - **`/ui/grasp_object_cmd`** (`std_msgs/String`) — *Sends target object string for autonomous grasping.*
+  - **`/ui/robot_control/current_frame`** (`std_msgs/String`) — *Controls the active coordinate frame (World/TCP).*
+  - **`/ui/robot_control/set_speed_index`** (`std_msgs/Int32`) — *Adjusts the global speed scale factor.*
 - ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
-  - **`/ui/execute_initial_pose`**
-  - **`/ui/execute_move_to_pose`**
-  - **`/ui/execute_move_joint`** (Clients)
+  - **`/ui/execute_initial_pose`** (Client) — *Triggers the return to home position sequence.*
+  - **`/ui/execute_move_to_pose`** (Client) — *Commands the planner to reach a Cartesian absolute pose.*
+  - **`/ui/execute_move_joint`** (Client) — *Commands specific joint angles execution.*
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `robot_motion_handler_movegroup.py`
 
 > [!NOTE]
@@ -401,7 +398,7 @@ To provide a clear understanding of the architecture, the software modules are c
   - **`/ui/robot_control/current_speed`** (`std_msgs/Float64`)
   - *Scales the velocity of the Joint movements synchronously with the UI.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/lite6_traj_controller/joint_trajectory`** (`trajectory_msgs/JointTrajectory`)
+  - **`/lite6_traj_controller/joint_trajectory`** (`trajectory_msgs/JointTrajectory`) — *Sends safe, collision-free joint trajectories to the arm.*
 - ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
   - *Provides `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/start_object_scan`, and `/ui/execute_move_joint` as Server. Uses `/compute_ik` (MoveIt IK) as a Client to resolve Cartesian targets. Has a TF2 listener for real-time TCP coordinates.*
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
@@ -410,19 +407,18 @@ To provide a clear understanding of the architecture, the software modules are c
 > **Purpose & Task:** Project color-coded warning messages (e.g., "COLLISION!") and live axis coordinates directly into the video stream of the RViz viewport.
 
 - ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-  - **`/servo_server/status`** (`std_msgs/Int8`)
-  - **`/ui/collision_msg`** (`std_msgs/String`)
-  - **`/ui/robot_control/current_frame`** (`std_msgs/String`)
-  - *Listens for critical warning flags and frame updates.*
+  - **`/servo_server/status`** (`std_msgs/Int8`) — *Tints the screen border red/orange based on danger level.*
+  - **`/ui/collision_msg`** (`std_msgs/String`) — *Displays detailed collision warnings inside the video feed.*
+  - **`/ui/robot_control/current_frame`** (`std_msgs/String`) — *Overlays the active control frame (World/TCP).*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - *Uses `rviz_2d_overlay_msgs/OverlayText`.*
+  - **`/rviz_2d_overlay_msgs/OverlayText`** — *Projects warning texts as overlay widgets in RViz.*
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_static_scene_objects.py`
 
 > [!NOTE]
 > **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges, interactive target boxes, and a dynamic transparent **Safety Zone**). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
 
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/scene_markers_array`** (`visualization_msgs/MarkerArray`)
+  - **`/scene_markers_array`** (`visualization_msgs/MarkerArray`) — *Renders virtual markers (safety-zone, tables) in RViz.*
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server`
 
 > [!NOTE]
@@ -443,19 +439,19 @@ To provide a clear understanding of the architecture, the software modules are c
   - **Color-Coded Console Log:** A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
 
 - ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
-  - **`/joint_states`**
-  - **`/ui/eef_position`**
-  - **`/servo_server/status`**
-  - **`/zed/bboxes_3d`**
-  - **`/ui/voice_feedback`**
-  - **`/ui/robot_control/current_speed`**
-  - **`/ui/grasp_status`** (via `rosbridge`)
+  - **`/joint_states`** (`sensor_msgs/JointState`) — *Mirrors the physical joints synchronously in the browser UI.*
+  - **`/ui/eef_position`** (`std_msgs/Float32MultiArray`) — *Shows real-time XYZ coordinates in the web header.*
+  - **`/servo_server/status`** (`std_msgs/Int8`) — *Controls the green/red alert pulses in the Web UI.*
+  - **`/zed/bboxes_3d`** (`visualization_msgs/MarkerArray`) — *Populates the target dropdown menu with objects.*
+  - **`/ui/voice_feedback`** (`std_msgs/String`) — *Flashes voice-triggered actions directly in the Web Log.*
+  - **`/ui/robot_control/current_speed`** (`std_msgs/Float32`) — *Syncs UI speed sliders with the backend level.*
+  - **`/ui/grasp_status`** (`std_msgs/String`) — *Forwards grasp status strings to the web console.*
 - ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
-  - **`/servo_server/delta_twist_cmds`**
-  - **`/servo_server/delta_joint_cmds`**
-  - **`/ui/robot_control/set_speed_index`**
-  - **`/ui/grasp_object_cmd`**
-  - **`/whisper/inference`** (via `rosbridge`)
+  - **`/servo_server/delta_twist_cmds`** (`geometry_msgs/TwistStamped`) — *Forwards web gamepad stick signals to the backend.*
+  - **`/servo_server/delta_joint_cmds`** (`control_msgs/JointJog`) — *Commands precise joint jogs per click.*
+  - **`/ui/robot_control/set_speed_index`** (`std_msgs/Int32`) — *Saves the speed scale changed via web slider.*
+  - **`/ui/grasp_object_cmd`** (`std_msgs/String`) — *Triggers autonomy pipeline actions.*
+  - **`/whisper/inference`** (`whisper_idl/Inference`) — *Initiates audio recording when the mic icon is clicked.*
 ### 🌌 <a id="subchapter-3-5"></a> 3.5 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *The physical and virtual workspaces are seamlessly synchronized using NVIDIA Isaac Sim as a passive, high-fidelity digital twin.*
 
