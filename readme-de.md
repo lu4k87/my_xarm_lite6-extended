@@ -200,7 +200,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
  * `look_ahead_time = 0.1` – Prädiktionshorizont (Sekunden) für die Geschwindigkeits-Vorausschau.
  * `table_z_threshold = 0.0` – Die harte Tischbarriere auf der Z-Achse (World-Frame).
 
-#### ![Config Node](https://img.shields.io/badge/Config_Node-8A2BE2?style=flat-square) `xarm_moveit_servo`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_moveit_servo`
 
 > [!NOTE]
 > **Zweck & Aufgabe:** Die Echtzeit-Bewegungs-Engine von MoveIt. Reagiert auf dynamische Hindernisse (YOLO-Boxen) über einen `threshold_distance` Parameter und stoppt den Arm, bevor er mit Objekten kollidiert.

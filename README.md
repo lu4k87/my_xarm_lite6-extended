@@ -201,7 +201,7 @@ To provide a clear understanding of the architecture, the software modules are c
  * `look_ahead_time = 0.1` – Prediction horizon (seconds) for the velocity look-ahead.
  * `table_z_threshold = 0.0` – The hard table barrier on the Z-axis (World-Frame).
 
-#### ![Config Node](https://img.shields.io/badge/Config_Node-8A2BE2?style=flat-square) `xarm_moveit_servo`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_moveit_servo`
 
 > [!NOTE]
 > **Purpose & Task:** The real-time motion engine from MoveIt. Reacts to dynamic obstacles (YOLO boxes) via a `threshold_distance` parameter and halts the arm before it collides with objects.
