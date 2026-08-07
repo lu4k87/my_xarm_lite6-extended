@@ -2,8 +2,11 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/ROS_2-Humble-34a853?style=for-the-badge&logo=ros" alt="ROS 2 Humble">
+  &nbsp;&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/Ubuntu-22.04-E95420?style=for-the-badge&logo=ubuntu" alt="Ubuntu 22.04">
+  &nbsp;&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python" alt="Python 3.10">
+  &nbsp;&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/MoveIt-2-00529B?style=for-the-badge" alt="MoveIt 2">
 </p>
 
