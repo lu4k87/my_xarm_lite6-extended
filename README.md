@@ -49,9 +49,9 @@ This repository is a continuously evolving research and evaluation platform for 
 8. [🕹️ Multimodal Technologies & Interaction Concepts](#chapter-8)
    - [8.1 Robot Control Methods (Inputs)](#subchapter-8-1)
    - [8.2 Perception & Assistance](#subchapter-8-2)
-   - [8.3 Coordinate Transformation & Calibration](#subchapter-8-3)
    - [8.4 User Interfaces (UI/GUI)](#subchapter-8-4)
 9. [🗂️ Repository Structure](#chapter-9)
+10. [🗄️ Archive / Deprecated Concepts](#chapter-10)
 
 ---
 
@@ -1006,34 +1006,22 @@ This machine **exclusively** runs the gamepad inputs and the graphical user inte
 
 ---
 
-### <a id="subchapter-6-6"></a> 6.6 DDS Multicast Storm Prevention (Critical)
+### <a id="subchapter-6-6"></a> 6.6 DDS Multicast Storm Prevention & Loopback Discovery (Critical)
 > [!CAUTION]
-> **Internet Disconnection Issue:** By default, ROS 2 DDS implementations use UDP Multicast, broadcasting all data to the entire local network. Launching the ZED camera (high-res images) and YOLO (dense 3D PointClouds) will flood the network with gigabits of UDP packets, which typically **overloads the local WiFi router or drops the PC's internet connection instantly.**
+> **Internet Disconnects & Network Overload:** By default, ROS 2 DDS implementations use "UDP Multicast", which broadcasts all data to the entire local network (LAN/WLAN). When the ZED camera and YOLO are started, this floods the network with gigabits of UDP packets. **This usually causes the router to crash or the PC's internet connection to disconnect immediately.**
 > 
-> To prevent this and drastically improve system performance (assuming you are **not** using the distributed remote control setup from 6.5!), you **must** restrict ROS 2 network traffic to the local machine:
+> To prevent this and boost system performance (provided you are **not** using the remote control from 6.5!), the ROS 2 traffic **must** be strictly restricted to your own PC (Localhost):
 > ```bash
 > echo "export ROS_LOCALHOST_ONLY=1" >> ~/.bashrc
 > source ~/.bashrc
 > ```
-
-### <a id="subchapter-6-7"></a> 6.7 Launcher Configuration (`launcher_config.json`)
-
-The buttons, categories, and commands in the ROS 2 Nexus Web interface are highly customizable.
-
-**Interactive Drag & Drop:** The Nexus interface features a highly responsive, persistent 3-column Drag & Drop system. You can freely reorder individual action buttons within their sections, or grab entire category sections (by their title) and arrange them across three flexible vertical columns. Any layout changes you make directly in the browser are instantly and permanently saved to the backend configuration.
-
-**Manual Configuration:** The entire UI layout and commands are persistently stored in an external configuration file located at `ros2_nexus/launcher_config.json`. To manually add custom scripts, debugging tools, or ROS 2 nodes to the launcher UI, simply modify this JSON file. The web application dynamically fetches the configuration, so manual changes take effect upon the next page reload without requiring Nexus Web Backend restarts.
-
-### <a id="subchapter-6-8"></a> 6.8 DDS Multicast Storm & Loopback Discovery (Critical)
-> [!CAUTION]
-> **Network Flooding & Participant Errors:** By default, ROS 2 DDS implementations broadcast all data to the entire local network via UDP Multicast. Launching the ZED camera and YOLO will flood the network with gigabits of data, which typically overloads the local network or drops the PC's internet connection instantly.
 > 
-> While setting `export ROS_LOCALHOST_ONLY=1` in your `.bashrc` prevents this by routing traffic through the internal loopback (`lo`), **Ubuntu disables multicast on the loopback interface by default after every reboot**. This will cause CycloneDDS to crash with a `Failed to find a free participant index` error, as nodes cannot discover each other locally and become blocked "zombie" processes.
+> **Loopback Discovery Error:** Setting `ROS_LOCALHOST_ONLY=1` forces traffic onto the internal loopback interface (`lo`). **However, Ubuntu disables multicast on this interface by default after every reboot**. This causes CycloneDDS to crash with `Failed to find a free participant index` because nodes cannot discover each other internally.
 
-To permanently fix this, you must create a systemd service that automatically enables multicast on the `lo` interface at boot:
+To fix this permanently, set up a systemd service that automatically enables multicast on the `lo` interface on every boot:
 
 ```bash
-# 1. Create the systemd service file
+# 1. Create the file cleanly
 sudo bash -c 'cat > /etc/systemd/system/lo-multicast.service <<EOF
 [Unit]
 Description=Enable Multicast on Loopback interface for ROS 2
@@ -1047,17 +1035,21 @@ ExecStart=/sbin/ip link set lo multicast on
 WantedBy=multi-user.target
 EOF'
 
-# 2. Reload the systemd daemon
+# 2. Reload systemd, enable the service, and start it immediately
 sudo systemctl daemon-reload
-
-# 7. Enable the service to run at boot
 sudo systemctl enable lo-multicast.service
-
-# 8. Start the service immediately (no reboot required)
 sudo systemctl start lo-multicast.service
 ```
 
-### <a id="subchapter-6-9"></a> 6.9 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
+### <a id="subchapter-6-7"></a> 6.7 Launcher Configuration (`launcher_config.json`)
+
+The buttons, categories, and commands in the ROS 2 Nexus web interface are fully customizable.
+
+**Interactive Drag & Drop:** The Nexus interface features a highly responsive, persistent 3-column drag & drop system. Individual action buttons can be freely arranged within their sections. Entire category sections can be seamlessly distributed across three vertical columns. Layout changes are immediately saved in the backend.
+
+**Manual Configuration:** The entire UI layout is stored persistently in `ros2_nexus/launcher_config.json`. To manually add custom scripts or nodes, edit this JSON file. The WebApp loads the configuration dynamically – reloading the browser page is enough.
+
+### <a id="subchapter-6-8"></a> 6.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
 > [!TIP]
 > **Stuttering Pointclouds in RViz:** ROS 2 (especially CycloneDDS) transmits large payloads like Pointclouds (ZED Camera) by fragmenting them into many small UDP packets. The default Linux kernel network buffer size (~200 KB) is vastly insufficient for this. When the buffer overflows, the OS drops packets ("Receive Buffer Errors"), resulting in severe lag in RViz.
 
@@ -1131,12 +1123,6 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 - **Object Cross Scan:** The robot can execute precise, individual cross-pattern flights directly over objects (using dynamic Just-in-Time live position lookups via TF) to capture detailed point clouds from multiple angles.
 #### VLA & Video Action Models (Planned)
 > AI-assisted action planning through *Vision-Language-Action* models.
-
-### <a id="subchapter-8-3"></a> 8.3 Coordinate Transformation & Calibration
-#### ArUco Marker System [DEPRECATED]
-> *[Deprecated]* Markers placed in the robot's operating area serve as reference for homography matrices.
-* *[Deprecated]* Derivation of 3D world coordinates for objects on the work surface (Z = 90 mm).
-- Precise projection of eye-tracking gaze coordinates onto the control **UI** to translate gaze into robot commands.
 
 ### <a id="subchapter-8-4"></a> 8.4 User Interfaces (UI/GUI)
 For cognitively relieving teleoperation, the user is provided with a central, immersive user interface that consolidates all system states.

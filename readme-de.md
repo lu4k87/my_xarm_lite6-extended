@@ -49,9 +49,9 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
 8. [🕹️ Multimodale Technologien & Interaktionskonzepte](#chapter-8)
    - [8.1 Roboter-Steuerungsarten (Inputs)](#subchapter-8-1)
    - [8.2 Sensorik & Assistenz (Perception)](#subchapter-8-2)
-   - [8.3 Koordinatentransformation & Kalibrierung](#subchapter-8-3)
    - [8.4 User Interfaces (UI/GUI)](#subchapter-8-4)
 9. [🗂️ Repository-Struktur](#chapter-9)
+10. [🗄️ Archiv / Veraltete Konzepte](#chapter-10)
 
 ---
 
