@@ -125,6 +125,10 @@ Ein wesentlicher Kern und Innovationscharakter des Projekts liegt in der wissens
 
 <br>
 
+<br>
+
+---
+
 ### 🗺️ Systemarchitektur & Datenfluss
 Das folgende Diagramm veranschaulicht den modularen Aufbau und den asynchronen Datenfluss zwischen Sensorik, UI-Eingaben und den Steuerungskomponenten:
 
@@ -194,7 +198,7 @@ graph TD
 
 ---
 
-### <a id="subchapter-2-1"></a> 2.1 Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform
+2-1"></a> 2.1 Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform
 Das Kernziel des Projekts ist die Realisierung einer modularen, plattformbasierten Softwarearchitektur für die multimodale Teleoperation und KI-gestützte Assistenzrobotik. Das System fungiert als zentraler, softwareseitiger Integrationsknoten (Middleware-Ebene), der heterogene Teilsysteme in einer einheitlichen Laufzeitumgebung zusammenführt. Durch ein verteiltes Server-Client-Netzwerk (Multi-PC-Setup) und die softwareseitige Kopplung an einen echtzeitfähigen Digitalen Zwilling (NVIDIA Isaac Sim) dient die Plattform sowohl als flexible Entwicklungsumgebung als auch als standardisierte und replizierbare Testumgebung. Das Projekt ist explizit als geschlossener Kreislauf aus Entwicklung und empirischer Validierung konzipiert:
 
 - **Sensorik & Perzeption:** <br> Integration von Tiefenkameras (z. B. Objekterkennung via YOLO, Marker-Tracking) sowie taktilen oder physiologischen Sensoren zur Zustandserfassung.
@@ -273,11 +277,9 @@ Die softwareseitige Infrastruktur ist modular gekapselt und vollständig in das 
 
 Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-Module nach ihren funktionalen **Features (Use-Cases)** gegliedert. Jedes Modul ist dabei explizit als ROS 2 Node, Skript oder Plugin gekennzeichnet.
 
+<br>
 
-
-
-
-
+<br>
 
 ---
 
@@ -290,6 +292,10 @@ Der Roboter läuft über das `mock_components/GenericSystem` (bzw. FakeSystem) H
 ![Modus REAL](https://img.shields.io/badge/Modus-REAL_(Hardware)-red?style=for-the-badge)<br>
 Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein, welches via TCP/IP direkt mit dem physischen Controller des xArm Lite 6 kommuniziert. In diesem Modus greifen Hardware-Limits, physische Sicherheits-Stopps und die exklusive Umschaltung der proprietären xArm Hardware-Modi (z. B. Mode 0 für Pose-Steuerung vs. Mode 1 für Servo/Jogging) über die UFactory API.
 
+<br>
+
+<br>
+
 ---
 
 ### 🎮 <a id="subchapter-3-2"></a> 3.2 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
@@ -301,7 +307,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_joystick_input.cpp` &nbsp;&nbsp; <sub><i>`/src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_joystick_input.cpp` &nbsp;&nbsp; <sub><i>[`/src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`](./src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Übersetzt die bereinigten Gamepad-Signale (Analog-Sticks & Trigger) in kartesische Geschwindigkeitsbefehle (`TwistStamped`) für MoveIt Servo. Wendet exponentielles Smoothing an und steuert alle Button-Mappings.
@@ -358,7 +364,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`) &nbsp;&nbsp; <sub><i>`/src/collision_check/collision_check/checker.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`) &nbsp;&nbsp; <sub><i>[`/src/collision_check/collision_check/checker.py`](./src/collision_check/collision_check/checker.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Sek. in die Zukunft) die Z-Koordinate. Würde der Roboter den Tisch berühren, wird der Abwärtsbefehl des Controllers hart überschrieben und blockiert. Löst das Rumble-Feedback (Vibration) des Gamepads aus.
@@ -396,7 +402,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_moveit_servo` &nbsp;&nbsp; <sub><i>`/src/xarm_ros2/xarm_moveit_servo`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_moveit_servo` &nbsp;&nbsp; <sub><i>[`/src/xarm_ros2/xarm_moveit_servo`](./src/xarm_ros2/xarm_moveit_servo)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Die Echtzeit-Bewegungs-Engine von MoveIt. Reagiert auf dynamische Hindernisse (YOLO-Boxen) über einen `threshold_distance` Parameter und stoppt den Arm, bevor er mit Objekten kollidiert.
@@ -426,11 +432,9 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 >
 >
 
+<br>
 
-
-
-
-
+<br>
 
 ---
 
@@ -443,7 +447,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_wrapper` &nbsp;&nbsp; <sub><i>`/src/zed-ros2-wrapper`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_wrapper` &nbsp;&nbsp; <sub><i>[`/src/zed-ros2-wrapper`](./src/zed-ros2-wrapper)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Der native Hardware-Treiber der Stereolabs ZED Mini Kamera. 
@@ -473,7 +477,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_yolo_3d_bbox.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/zed_yolo_3d_bbox.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_yolo_3d_bbox.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/zed_yolo_3d_bbox.py`](./src/my_3d_vision_bringup/scripts/zed_yolo_3d_bbox.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Verarbeitet parallel den RGB- und Depth-Stream mit GPU-Beschleunigung und dem **YOLOv8 Large** Modell. Isoliert Objekte, filtert Tiefenrauschen und berechnet millimetergenaue, auf die Tischebene geerdete 3D-Bounding-Boxen (inklusive Greifpunkt-Marker). Nutzt einen **robusten Oberflächen-Projektionsalgorithmus** (filtert die unteren 20% der Punkte heraus, um Tisch-Rauschen zu ignorieren), um die Bounding-Boxen exakt auf das tatsächliche physikalische Volumen der Objekte zu zentrieren, unabhängig vom Kamerawinkel. Nutzt ein **Dictionary-basiertes EMA-Tracking-System** mit persistenten, globalen IDs und einem engen 10cm-Distanz-Threshold, um ID-Swapping und Boxen-Jittering zwischen nah beieinander stehenden Objekten zu verhindern. Erkennt das System mehrere Objekte derselben Klasse, werden diese zur eindeutigen Identifikation dauerhaft durchnummeriert (z.B. `cup_1`, `cup_2`).
@@ -511,7 +515,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py`](./src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Läuft aktiv im Hintergrund während des 3D Vision Bringups. Fängt die rohe ZED-Punktwolke ab und transformiert das Koordinatensystem vom optischen Frame (`Z=vorwärts`) in den Standard-ROS-Frame (`X=vorwärts`), wobei RGB-Daten erhalten bleiben.
@@ -538,7 +542,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py`](./src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten um. Statt eines massiven Blocks wird eine **nach oben offene Becher-Form** (5 hauchdünne Wände à 1 mm) in den Planungsraum eingefügt. Dies erlaubt dem Greifer ein ungehindertes Eintauchen von oben (für Top-Down-Grasps), blockiert aber seitliche Kollisionen sicher.
@@ -557,6 +561,11 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 >   |---|---|---|
 >   | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Injiziert virtuelle Objekte (Becher-Formen) in die Planungs-Szene.* |
 >
+
+---
+
+<br>
+
 #### ![MoveIt 2](https://img.shields.io/badge/Integration-MoveIt_2-00529B?style=flat-square) `octomap_server`
 >
 >
@@ -586,7 +595,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py`](./src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("Grasp Object") aus, holt sich die YOLO-Koordinaten und orchestriert eine robuste **Kollisionsfreie 3-Phasen Greif-Sequenz**:
@@ -642,7 +651,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py` &nbsp;&nbsp; <sub><i>`/src/my_3d_vision_bringup/scripts/grasp_action_bridge.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/grasp_action_bridge.py`](./src/my_3d_vision_bringup/scripts/grasp_action_bridge.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Übersetzer-Node zwischen dem RViz Control Panel und dem Action Server. Nimmt den simplen String des Zielobjekts aus dem UI entgegen und wandelt ihn in ein blockierungsfreies ROS 2 Action Goal um.
@@ -661,6 +670,11 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 >   |---|---|---|
 >   | **`/ui/grasp_object`** | `my_3d_vision_msgs/action/GraspObject` | *Ruft den Grasp Action Server auf.* |
 >
+
+---
+
+<br>
+
 #### ![Python Script](https://img.shields.io/badge/Python_Script-3776AB?style=flat-square&logo=python&logoColor=white) `zed_stand_publisher.py`
 >
 >
@@ -682,7 +696,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `tf_tuner` &nbsp;&nbsp; <sub><i>`/src/tf_tuner`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `tf_tuner` &nbsp;&nbsp; <sub><i>[`/src/tf_tuner`](./src/tf_tuner)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Ein dediziertes ROS 2 Paket, das ein Live-Tuner Interface (PyQt5) bereitstellt, um dynamisch Kamera-Offsets (Punktwolke) sowie die Positionierung interaktiver 3D-Szenelemente (Würfel, Rechteck, Zylinder, Weiße Plane) und einer anpassbaren **Safety Zone** (mit einstellbarem Radius) in RViz ohne Neustart zu justieren.
@@ -697,11 +711,9 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 >
 >
 
+<br>
 
-
-
-
-
+<br>
 
 ---
 
@@ -714,7 +726,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ros2_whisper` &nbsp;&nbsp; <sub><i>`/src/ros2_whisper`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ros2_whisper` &nbsp;&nbsp; <sub><i>[`/src/ros2_whisper`](./src/ros2_whisper)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Lokale Speech-to-Text KI. Führt Whisper AI kontinuierlich auf dem Mikrofon-Stream aus und publiziert gesprochene Wörter als Text.
@@ -736,7 +748,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `audio_listener.py` &nbsp;&nbsp; <sub><i>`/src/ros2_whisper/audio_listener/audio_listener/audio_listener.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `audio_listener.py` &nbsp;&nbsp; <sub><i>[`/src/ros2_whisper/audio_listener/audio_listener/audio_listener.py`](./src/ros2_whisper/audio_listener/audio_listener/audio_listener.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Verarbeitet Mikrofoneingaben für das Sprachsteuerungssystem. Beinhaltet eine automatische, systembewusste Fallback-Logik, die explizit nach den System-Standard-Audiogeräten `pulse` oder `default` sucht und diese priorisiert, um eine zuverlässige Sprachaufzeichnung über verschiedene Hardware-Umgebungen hinweg zu garantieren.
@@ -749,7 +761,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `voice_command_listener.py` &nbsp;&nbsp; <sub><i>`/src/voice_command_listener/voice_command_listener/voice_command_listener.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `voice_command_listener.py` &nbsp;&nbsp; <sub><i>[`/src/voice_command_listener/voice_command_listener/voice_command_listener.py`](./src/voice_command_listener/voice_command_listener/voice_command_listener.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose"). Implementiert eine robuste **3-Stufen-Deduplikations-Zustandsmaschine**, die eine exakt einmalige Befehlsausführung garantiert.
@@ -778,7 +790,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses.py` &nbsp;&nbsp; <sub><i>`/src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses.py` &nbsp;&nbsp; <sub><i>[`/src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py`](./src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 1 Sek. Fixationsdauer) und sendet direkte Bewegungs- und Greiferbefehle. 
@@ -800,11 +812,9 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 >
 >
 
+<br>
 
-
-
-
-
+<br>
 
 ---
 
@@ -817,7 +827,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>`/src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>[`/src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp`](./src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Es ist modern in einem Dark-Theme gestaltet und in 4 GroupBoxes unterteilt (Cartesian Jog, Cartesian Absolute, Joint Absolute, Utilities). Bietet D-Pad Tasten, **6-DoF Joint Control Slider**, das **"Grasp Object"** Eingabefeld und ein **farbkodiertes Live-Konsolen-Log**. Nutzt eine threadsichere `Qt::QueuedConnection` Signal/Slot Architektur, um asynchrone ROS 2 Statusmeldungen direkt in das UI zu streamen, ohne die Oberfläche einzufrieren.
@@ -859,7 +869,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `robot_motion_handler_movegroup.py` &nbsp;&nbsp; <sub><i>`/src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `robot_motion_handler_movegroup.py` &nbsp;&nbsp; <sub><i>[`/src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py`](./src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Sowohl die "Move To: Absolute Pose" als auch die "Move To: Initial Pose" Bewegungen (ausgelöst über Web UI oder RViz) nutzen nun einen robusten **IK-Solver (Inverse Kinematik)**. Dieser berechnet die perfekten Gelenkwinkel für absolute Koordinaten und führt diese als sichere, kollisionsfreie Kurvenfahrten (Joint-Trajectories). Dadurch werden Self-Collisions und Singularitäten, die bei sturen kartesischen Geradeausfahrten quer durch den Raum entstehen, vollständig eliminiert. Die Ausführungsgeschwindigkeit all dieser Gelenkbewegungen sowie der Scan-Pfade wird nun zentral über die **Action Speed Radiobuttons** (Slow, Normal, Fast) in der UI gesteuert, was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt. **Object Cross Scan:** Verarbeitet den `/ui/start_object_scan` Service, der gezielte, halbkugelförmige Scan-Bögen (Kugeloberfläche) über die Objekte abfährt. Die exakten Positionen der Objekte (Cube, Rectangle, Cylinder) werden live über den TF-Baum ermittelt. Um den Kameraabstand exakt konstant zu halten, wandert der TCP in einem sanften Bogen über das Objekt und nutzt einen exakten trigonometrischen Look-At (Fokus-Punkt), um das Objekt ununterbrochen zentriert anzuvisieren. Um mechanische Handgelenks-Singularitäten (ein unkontrolliertes Rotieren von Joint 4) beim Abfahren der Y-Achse elegant zu vermeiden, führt der TCP vorher eine präzise **90-Grad-Drehung (Yaw)** um seine eigene Achse aus. Das richtet Joint 5 (das Pitch-Gelenk) perfekt aus, um die seitliche Neigung natürlich zu übernehmen. Des Weiteren verfügt die IK-Ausführungsschleife nun über einen aktiven **Joint Unwrapping Algorithmus**, der Sprünge in der IK-Lösung mathematisch abfängt und >180° Rotationen unterbindet, wodurch das Aufwickeln von Kabeln oder plötzliche 360-Grad-Flips des Handgelenks physisch ausgeschlossen werden. Zudem abonniert der Planer live die dynamische **Safety Zone**, stoppt den Arm sicher an der Grenze und neigt die Kamera automatisch weiter nach unten, um das Objekt weiterhin perfekt fokussiert zu halten, falls dieses zu nah am Roboterfuß liegt.
@@ -917,7 +927,7 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_static_scene_objects.py` &nbsp;&nbsp; <sub><i>`/src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects.py`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_static_scene_objects.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects.py`](./src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects.py)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuelle Tischkanten, interaktive Ziel-Boxen und eine dynamische, transparente **Safety Zone**). Verwendet den Zeitstempel `0`, um ein Flackern ("Flickering") aufgrund von asynchronen TF-Bäumen zu verhindern.
@@ -937,17 +947,21 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>`/src/rosbridge_suite/rosbridge_server`</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>[`/src/rosbridge_suite/rosbridge_server`](./src/rosbridge_suite/rosbridge_server)</i></sub>
 >
 > **Zweck & Aufgabe:**<br>
 > Standard-WebSocket-Brücke auf Port 9090, die dem webbasierten Dashboard erlaubt, direkt auf das ROS-Netzwerk zuzugreifen.
 >
+
+---
+
+<br>
+
 #### ![Web App](https://img.shields.io/badge/Web_App-E34F26?style=flat-square&logo=html5&logoColor=white) `robot_control_web_ui`
 >
 >
 > **Zweck & Aufgabe:**<br>
 > Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorphism-Designsprache. Fungiert als multimodales Dashboard und spiegelt das RViz Control Panel für die Remote-Bedienung. Läuft auf **Port 8081**.
-> [!TIP]
 > **Native Desktop Integration:** Sowohl die *ROS 2 Nexus Web App* als auch die *Robot Control Web UI* starten nun in dedizierten, isolierten Chrome `--app` Profilen. Sie öffnen sich automatisch maximiert als eigenständige Anwendungen, völlig losgelöst von Standard-Browserfenstern, und verfügen über eigene, unverwechselbare Taskleisten-Icons für ein perfektes, natives Desktop-Erlebnis.
 > - ✨ **Core Features:** 
 >   - **Erweiterte Telemetrie:** <br> Live-Status-Badges für Netzwerkports (UI, WS, Nexus), Gamepad-Verbindung (USB) und automatische Hardware-Modus-Erkennung (Fake Arm vs. Real Arm IP, stabil dargestellt über globale `rosapi` Endpunkte).
@@ -983,16 +997,18 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 >
 >
 
+<br>
 
-
-
-
-
+<br>
 
 ---
 
 ### 🌌 <a id="subchapter-3-6"></a> 3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *Physischer und virtueller Arbeitsraum werden durch NVIDIA Isaac Sim als passiver, hochauflösender Digitaler Zwilling nahtlos synchronisiert.*
+
+---
+
+<br>
 
 #### ![Bash Script](https://img.shields.io/badge/Bash_Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white) `start_isaac_sim.sh`
 >
@@ -1020,9 +1036,9 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 
 Dieser Abschnitt liefert eine vollständige technische Referenz für die zweistufige Gamepad-Pipeline, die eine kollisionssichere Echtzeit-Teleoperation des xArm Lite 6 mit dem Xbox One Elite Series 2 Controller ermöglicht.
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1050,9 +1066,9 @@ flowchart LR
  CPP --> |"/ui/joy_button_presses\n/ui/robot_control/current_speed"| UI
 ```
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1084,7 +1100,15 @@ if predicted_z < Z_LIMIT:
 | `ACCELERATION_FACTOR` (α) | `0,9` | *Dämpfungsfaktor* |
 | `DOWN_TRIGGER_AXIS` | `5` (RT) | *Joy-Achsen-Index für Abwärts-Trigger* |
 
-#### 4.2.2 Zwei-Stufen-Sicherheitsmodell
+#
+
+<br>
+
+<br>
+
+---
+
+### 4.2.2 Zwei-Stufen-Sicherheitsmodell
 
 ```
 Z > 110 mm → Volle Geschwindigkeit, keine Einschränkungen
@@ -1092,32 +1116,7 @@ Z > 110 mm → Volle Geschwindigkeit, keine Einschränkungen
 Z ≤ 96,5 mm → 🛑 HARD STOP: Abwärtsachse genullt + Rumble
 ```
 
-#### 4.2.3 Haptisches Feedback via Pygame
-
-```python
-if self.joystick: self.joystick.rumble(0.8, 0.8, 1000) # Intensität L/R, Dauer ms
-```
-
-Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
-
-#### 4.2.4 Topics & Services Referenz
-
-| Typ | Name | Message-Typ | Beschreibung |
-|-----|------|------------|-------------|
-| **Subscriber** | `/joy` | `sensor_msgs/Joy` | *Rohes Gamepad-Signal* |
-| **Subscriber** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | *Liest Live-Z-Position für Kollisionsprüfung* |
-| **Publisher** | `/joy_check` | `sensor_msgs/Joy` | *Bereinigtes Ausgangssignal* |
-| **Publisher** | `/ui/collision_msg` | `std_msgs/String` | *Kollisionswarnung für UI* |
-| **Subscriber** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | *Geschwindigkeitsfaktor vom C++ Node* |
-| **Service Client** | `/ufactory/get_position` | `xarm_msgs/GetFloat32List` | *Echtzeit-EEF-Pose* |
-
-
-
-
-
----
-
-### <a id="subchapter-4-3"></a> 4.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)
+#4-3"></a> 4.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)
 
 **Datei:** `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp` 
 **Klasse:** `xarm_moveit_servo::JoyToServoPub` 
@@ -1416,9 +1415,9 @@ source install/setup.bash
 
 Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Software. **ROS 2 Nexus** dient dabei als zentrale webbasierte Oberfläche, um alle Nodes, Sensoren und Algorithmen mit nur einem Klick hochzufahren.
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1426,9 +1425,9 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 1. **Roboter einschalten:** Schalte den UFactory xArm Lite 6 an und stelle sicher, dass der Not-Aus-Schalter entriegelt ist.
 2. **Controller verbinden:** Schalte den Xbox One Elite Series 2 Controller ein und prüfe die Verbindung (Bluetooth oder USB) mit dem Host-PC.
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1457,9 +1456,9 @@ update-desktop-database ~/.local/share/applications/
 ```
 Danach kann die App über das Suchfeld im Menü (nach **„ROS 2 Nexus"** suchen) direkt gestartet werden.
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1474,9 +1473,9 @@ Sobald sich ROS 2 Nexus im Browser geöffnet hat:
  <img src="_imgs/ros2_nexus_web.png" width="90%" alt="ROS 2 Nexus — Web Edition">
 </p>
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1494,9 +1493,9 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 
 > **Warum diese strikte Trennung?** Die Ports 8080 und 9090 dienen grundverschiedenen Zwecken. Port 8080 (HTTP) fungiert als Standard-Webserver, um die Oberfläche auszuliefern. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich Live-Telemetrie streamt und keine Webseiten bereitstellen kann. Port 5000 (Flask) verarbeitet die Logik des Nexus Web Backends völlig unabhängig von ROS.
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1504,7 +1503,15 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 
 Wenn das System über das Netzwerk von einer Operator-Station aus gesteuert werden soll (z. B. von einem Remote-Rechner mit Gamepad), kann die ROS 2 Architektur dank DDS nahtlos aufgeteilt werden. Das verteilt die CPU-Last und minimiert Netzwerklatenzen bei der Kollisionsprüfung.
 
-#### Vorbereitung (Auf BEIDEN Rechnern)
+#
+
+<br>
+
+<br>
+
+---
+
+### Vorbereitung (Auf BEIDEN Rechnern)
 Der ROS 2 DDS-Traffic muss zwingend für das Netzwerk freigegeben werden. Ist in der `~/.bashrc` standardmäßig der Wert `ROS_LOCALHOST_ONLY=1` gesetzt, werden sich Host und Client **niemals** finden.
 In **jedem** verwendeten Terminal muss vorab folgendes ausgeführt werden:
 ```bash
@@ -1514,36 +1521,7 @@ export ROS_LOCALHOST_ONLY=0
 source ~/dev_ws/install/setup.bash
 ```
 
-#### Host-PC (Das Gehirn)
-Hier läuft die gesamte rechenintensive Infrastruktur. Das Gamepad wird hier **nicht** angeschlossen.
-- Öffne das **ROS 2 Nexus Web Dashboard** (`./ros2_nexus_web_start.sh`).
-- Starte den Button **▶ RUN SERVER (FAKE)** oder **▶ RUN SERVER (REAL)**.
-- *Technischer Hintergrund:* Die Server-Nodes werden mit dem Argument `joystick_and_checker:=false` gestartet. Das stellt sicher, dass der Gamepad-Treiber (`joy_node`) und der lokale `checker`-Node auf dem Server **nicht** gestartet werden. Das hält das Netzwerk frei von Duplikaten und überlässt der Operator-Station die exklusive Kontrolle.
-- Starte den **MoveGroup Server (FAKE / REAL)** (übernimmt die OMPL-Planung).
-- *Optional:* Starte Vision-Module (ZED, YOLO) oder KI-Module (Whisper) über die entsprechenden Launcher in der GUI.
-
-#### Remote-Rechner / Operator-Station
-Hier laufen **ausschließlich** die Gamepad-Eingaben und die grafische Nutzeroberfläche.
-- *Visual Sync:* Da ROS 2 DDS die `joint_states` und `tf` (Koordinaten) des Roboters kontinuierlich im Netzwerk überträgt, siehst du die 3D-Bewegungen absolut synchron und in Echtzeit in RViz2 auf **beiden** Rechnern gleichzeitig.
-1. **Nexus WebApp auf dem Client PC starten:**
-   ```bash
-   cd ~/dev_ws
-   python3 ros2_nexus/ros2_nexus_web.py
-   ```
-2. **Client Setup ausführen:** Öffne die Nexus WebApp im Browser, scrolle zur Sektion **Remote Control System Bringup** und klicke auf den Button **[RUN CLIENT]**. Dies startet automatisch den Gamepad-Treiber, den Kollisionswächter und die ROS-Bridge im Hintergrund.
-7. **Robot Control Web UI:**
-   ```bash
-   cd ~/dev_ws/src/robot_control_web_ui && python3 -m http.server 8081
-   ```
-   *(Unter `http://localhost:8081` öffnen. Die UI verbindet sich so verlustfrei über den lokalen WebSocket).*
-
-
-
-
-
----
-
-### <a id="subchapter-6-6"></a> 6.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)
+#6-6"></a> 6.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)
 > [!CAUTION]
 > **Internet-Abbrüche & Netzwerk-Überlastung:** Standardmäßig verwenden ROS 2 DDS-Implementierungen "UDP Multicast", wodurch alle Daten in das gesamte lokale Netzwerk (LAN/WLAN) gefunkt werden. Wenn die ZED-Kamera und YOLO gestartet werden, überflutet dies das Netzwerk mit Gigabit-Mengen an UDP-Paketen. **Das führt meist dazu, dass der Router abstürzt oder die Internetverbindung des PCs sofort getrennt wird.**
 >
@@ -1578,9 +1556,9 @@ sudo systemctl enable lo-multicast.service
 sudo systemctl start lo-multicast.service
 ```
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1592,9 +1570,9 @@ Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind voll
 
 **Manuelle Konfiguration:** Das gesamte UI-Layout wird persistent in `ros2_nexus/launcher_config.json` gespeichert. Um eigene Skripte oder Nodes manuell hinzuzufügen, muss diese JSON-Datei angepasst werden. Die WebApp lädt die Konfiguration dynamisch – ein Neuladen der Seite im Browser reicht aus.
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1629,9 +1607,9 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 
 Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustand des Systems über das **ROS2 Core Dashboard** überwachen. Dies ist eine webbasierte Echtzeit-UI, die statische Quellcode-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks zu einer einheitlichen Monitoring-Oberfläche zusammenführt.
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1640,9 +1618,9 @@ Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, r
 
 **Hinweis zu `workspace_analyzer.py`:** Dies ist **kein** Netzwerk-Server, sondern ein normaler ROS 2 Node. Das Dashboard greift über die ROS Bridge (Port 9090) auf dessen publizierte Topics zu.
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1651,9 +1629,9 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
 
+<br>
 
-
-
+<br>
 
 ---
 
@@ -1675,46 +1653,40 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ## <a id="chapter-8"></a> 8. 🕹️ Multimodale Technologien & Interaktionskonzepte
 
+<br>
 
-
-
+<br>
 
 ---
 
 ### <a id="subchapter-8-1"></a> 8.1 Roboter-Steuerungsarten (Inputs)
-#### Gamepad Teleoperation
-> Latenzarme, kontinuierliche Feinsteuerung per Xbox One Elite Series 2 Controller (inkl. haptischem Feedback - Vibration bei Kollisionsgefahr).
+#
 
-#### Sprachsteuerung
-> Lokale Sprachverarbeitung (Whisper AI) für semantische, intentionsbasierte Steuerung via Mikrofon.
+<br>
 
-#### Eye-Tracking (in Bearbeitung...)
-> Robotersteuerung und UI-Interaktion (Blickerfassung) über Tobii Pro Glasses 3.
-
-#### Gestensteuerung (in Bearbeitung...)
-> Berührungslose, intuitive Hand- und Fingererkennung zur direkten räumlichen Manipulation und Gestensteuerung über Leap Motion.
-
-#### VR-Controller Steuerung (in Bearbeitung...)
-> Immersive, räumliche Teleoperation durch präzises 6DoF-Tracking (Six Degrees of Freedom) und haptisches Feedback mittels Virtual Reality Controllern.
-
-#### Robot Control UI
-> Umfassendes webbasiertes Dashboard mit virtuellem 2D-Analog-Joystick, absoluten 6-DoF-Gelenk-Slidern und Live-Telemetrie zur Remote-Teleoperation.
-- Vollständig anpassbares Layout dank Drag-and-Drop Funktion für alle UI-Panels, inklusive lokalem Speichern (Persistenz) im Browser.
-
-
-
-
+<br>
 
 ---
 
-### <a id="subchapter-8-2"></a> 8.2 Sensorik & Assistenz (Perception)
+### Gamepad Teleoperation
+> Latenzarme, kontinuierliche Feinsteuerung per Xbox One Elite Series 2 Controller (inkl. haptischem Feedback - Vibration bei Kollisionsgefahr).
+
+#8-2"></a> 8.2 Sensorik & Assistenz (Perception)
 #### Computer Vision
 > ![Deprecated](https://img.shields.io/badge/Status-Deprecated-red?style=flat-square) Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* über PiCameras. Die Objekterkennung erfolgt vollständig in 3D durch die ZED-Kamera.
 #### Stereo Vision
 > Integration echter 3D-Tiefendaten durch eine *ZED Mini (Stereolabs)* Kamera.
 - Die Kamera kann wahlweise **stationär** (auf einem Stativ) oder **am Endeffektor (EEF)** montiert genutzt werden.
 - **Object Cross Scan:** <br> Der Roboter kann präzise, individuelle Kreuzflüge direkt über Objekten ausführen (mit dynamischer Just-in-Time Live-Positionsbestimmung via TF), um detaillierte Punktwolken aus verschiedenen Blickwinkeln aufzunehmen.
-#### VLA & Video Action Models (Geplant)
+#
+
+<br>
+
+<br>
+
+---
+
+### VLA & Video Action Models (Geplant)
 KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
 
@@ -1723,7 +1695,7 @@ KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
 ---
 
-### <a id="subchapter-8-4"></a> 8.4 User Interfaces (UI/GUI)
+8-4"></a> 8.4 User Interfaces (UI/GUI)
 Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, immersives User Interface zur Verfügung, das alle Systemzustände bündelt.
 
 #### Telemetrie & Status
