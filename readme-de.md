@@ -238,15 +238,15 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 **🎮 Controller-Belegung (Quick Reference):**
 | Eingabe | Aktion | Details |
 | :--- | :--- | :--- |
-| **Linker Stick** (↕️/↔️) | **Verfahren (X / Y)** | Bewegt den Roboter vor/zurück (X) und links/rechts (Y) |
-| **LT / RT** (Trigger) | **Heben/Senken (Z)** | Bewegt den Roboterarm auf/ab |
-| **LB / RB** (Bumper) | **Rotieren (Yaw)** | Dreht den Endeffektor um die eigene Achse |
-| **D-Pad** (↕️) | **Speed Control** | Schaltet 5 Geschwindigkeitsstufen durch |
-| **START / BACK** | **Referenzrahmen** | Wechselt zwischen Basis- (`link_base`) und Werkzeug-Koordinaten (`link_tcp`) |
-| **A-Taste** (🟢) | **Vakuumgreifer** | Schaltet das Vakuum an / aus |
-| **B-Taste** (🔴) | **Not-Aus (Greifer)** | Stoppt den Vakuumgreifer sofort |
-| **X-Taste** (🔵) | **Mikrofon (Voice)** | Startet/Stoppt die Aufnahme für Whisper AI |
-| **Y-Taste** (🟡) | **Initialpose** | Fährt den Roboter in die sichere Startposition |
+| **Linker Stick** (↕️/↔️) | **Verfahren (X / Y)** | *Bewegt den Roboter vor/zurück (X) und links/rechts (Y)* |
+| **LT / RT** (Trigger) | **Heben/Senken (Z)** | *Bewegt den Roboterarm auf/ab* |
+| **LB / RB** (Bumper) | **Rotieren (Yaw)** | *Dreht den Endeffektor um die eigene Achse* |
+| **D-Pad** (↕️) | **Speed Control** | *Schaltet 5 Geschwindigkeitsstufen durch* |
+| **START / BACK** | **Referenzrahmen** | *Wechselt zwischen Basis- (`link_base`) und Werkzeug-Koordinaten (`link_tcp`)* |
+| **A-Taste** (🟢) | **Vakuumgreifer** | *Schaltet das Vakuum an / aus* |
+| **B-Taste** (🔴) | **Not-Aus (Greifer)** | *Stoppt den Vakuumgreifer sofort* |
+| **X-Taste** (🔵) | **Mikrofon (Voice)** | *Startet/Stoppt die Aufnahme für Whisper AI* |
+| **Y-Taste** (🟡) | **Initialpose** | *Fährt den Roboter in die sichere Startposition* |
 
 <br>
 
@@ -254,7 +254,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/joy_check`** | `sensor_msgs/Joy` | Liest die vom Wächter-Node bereinigten Controller-Inputs. |
+  | **`/joy_check`** | `sensor_msgs/Joy` | *Liest die vom Wächter-Node bereinigten Controller-Inputs.* |
 
 <br>
 
@@ -262,8 +262,8 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | Sendet berechnete kartesische Geschwindigkeiten an den Servo Server. |
-  | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | Publiziert mit 10 Hz die Live-Pose (X, Y, Z) für das Web-UI. |
+  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Sendet berechnete kartesische Geschwindigkeiten an den Servo Server.* |
+  | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | *Publiziert mit 10 Hz die Live-Pose (X, Y, Z) für das Web-UI.* |
 
 <br>
 
@@ -271,7 +271,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | *-* | *-* | Hört auf die aktuelle TCP-Position (`link_base` -> `link_tcp`). |
+  | *-* | *-* | *Hört auf die aktuelle TCP-Position (`link_base` -> `link_tcp`).* |
 
 <br>
 
@@ -279,9 +279,9 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/servo_server/start_servo`** | Client | Startet die MoveIt Servo-Engine. |
-  | **`/servo_server/stop_servo`** | Client | Stoppt die MoveIt Servo-Engine sicher. |
-  | **`/servo_server/switch_command_type`** | Client | Wechselt den Eingabemodus des Servo-Servers (z.B. Twist zu Joint). |
+  | **`/servo_server/start_servo`** | Client | *Startet die MoveIt Servo-Engine.* |
+  | **`/servo_server/stop_servo`** | Client | *Stoppt die MoveIt Servo-Engine sicher.* |
+  | **`/servo_server/switch_command_type`** | Client | *Wechselt den Eingabemodus des Servo-Servers (z.B. Twist zu Joint).* |
 
 <br>
 
@@ -296,9 +296,9 @@ Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Se
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/joy`** | `sensor_msgs/Joy` | Liest den rohen, unbearbeiteten Gamepad-Input. |
-  | **`/servo_server/status`** | `std_msgs/Int8` | Überwacht Status-Codes des Servo-Servers. |
-  | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | Bezieht die aktuelle Z-Höhe für den prädiktiven Kollisions-Check. |
+  | **`/joy`** | `sensor_msgs/Joy` | *Liest den rohen, unbearbeiteten Gamepad-Input.* |
+  | **`/servo_server/status`** | `std_msgs/Int8` | *Überwacht Status-Codes des Servo-Servers.* |
+  | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | *Bezieht die aktuelle Z-Höhe für den prädiktiven Kollisions-Check.* |
 
 <br>
 
@@ -306,16 +306,16 @@ Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Se
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/joy_check`** | `sensor_msgs/Joy` | Leitet den auf Kollisionen geprüften Controller-Befehl weiter. |
-  | **`/ui/collision_msg`** | `std_msgs/String` | Meldet harte Stopps an das UI-Log. |
+  | **`/joy_check`** | `sensor_msgs/Joy` | *Leitet den auf Kollisionen geprüften Controller-Befehl weiter.* |
+  | **`/ui/collision_msg`** | `std_msgs/String` | *Meldet harte Stopps an das UI-Log.* |
 
 <br>
 ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
  
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
-| `look_ahead_time` | `0.1` | Prädiktionshorizont (Sekunden) für die Geschwindigkeits-Vorausschau. |
-| `table_z_threshold` | `0.0` | Die harte Tischbarriere auf der Z-Achse (World-Frame). |
+| `look_ahead_time` | `0.1` | *Prädiktionshorizont (Sekunden) für die Geschwindigkeits-Vorausschau.* |
+| `table_z_threshold` | `0.0` | *Die harte Tischbarriere auf der Z-Achse (World-Frame).* |
 
 <br>
 
@@ -330,8 +330,8 @@ Die Echtzeit-Bewegungs-Engine von MoveIt. Reagiert auf dynamische Hindernisse (Y
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | Liest die kartesischen Geschwindigkeitsbefehle. |
-  | **`/planning_scene`** | `moveit_msgs/PlanningScene` | Liest die aktuelle 3D-Kollisionsszene zur Hindernisvermeidung ein. |
+  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Liest die kartesischen Geschwindigkeitsbefehle.* |
+  | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Liest die aktuelle 3D-Kollisionsszene zur Hindernisvermeidung ein.* |
 
 <br>
 
@@ -339,15 +339,15 @@ Die Echtzeit-Bewegungs-Engine von MoveIt. Reagiert auf dynamische Hindernisse (Y
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | Sendet validierte Gelenktrajektorien an den Roboter. |
+  | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | *Sendet validierte Gelenktrajektorien an den Roboter.* |
 
 <br>
 ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`xarm_moveit_servo_config.yaml`)**
 
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
-| `collision_check_type` | `stop_distance` | Sorgt für ein weiches, geschwindigkeitsabhängiges Abbremsen (Vorwarnung ab ca. 5cm) anstatt eines abrupten Stopps an der Grenze. Bei 2 cm Abstand greift der finale Not-Stopp (`min_allowable_collision_distance: 0.02`). |
-| `collision_distance_safety_margin` | `0.02` | Definiert die 2 cm breite, unsichtbare Kollisionsblase um den Roboter. |
+| `collision_check_type` | `stop_distance` | *Sorgt für ein weiches, geschwindigkeitsabhängiges Abbremsen (Vorwarnung ab ca. 5cm) anstatt eines abrupten Stopps an der Grenze. Bei 2 cm Abstand greift der finale Not-Stopp (`min_allowable_collision_distance: 0.02`).* |
+| `collision_distance_safety_margin` | `0.02` | *Definiert die 2 cm breite, unsichtbare Kollisionsblase um den Roboter.* |
 
 ### 🟢 <a id="subchapter-3-2"></a> 3.2 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
@@ -365,17 +365,17 @@ Der native Hardware-Treiber der Stereolabs ZED Mini Kamera.
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/zed/zed_node/rgb/image_rect_color`** | `sensor_msgs/Image` | Publiziert das 2D-RGB-Kamerabild. |
-  | **`/zed/zed_node/depth/depth_registered`** | `sensor_msgs/Image` | Publiziert die registrierte Tiefenkarte (Depth-Map). |
-  | **`/zed/zed_node/point_cloud/cloud_registered`** | `sensor_msgs/PointCloud2` | Publiziert die dichte 3D-Punktwolke. |
+  | **`/zed/zed_node/rgb/image_rect_color`** | `sensor_msgs/Image` | *Publiziert das 2D-RGB-Kamerabild.* |
+  | **`/zed/zed_node/depth/depth_registered`** | `sensor_msgs/Image` | *Publiziert die registrierte Tiefenkarte (Depth-Map).* |
+  | **`/zed/zed_node/point_cloud/cloud_registered`** | `sensor_msgs/PointCloud2` | *Publiziert die dichte 3D-Punktwolke.* |
 
 <br>
 ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`)**
 
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
-| `depth_mode` | `ULTRA` | Erzwingt die maximal dichte 3D-Punktwolke für saubere Kantenberechnung. |
-| `auto_exposure` | `True` | Erlaubt den automatischen Helligkeitsausgleich für robuste YOLO Erkennung. |
+| `depth_mode` | `ULTRA` | *Erzwingt die maximal dichte 3D-Punktwolke für saubere Kantenberechnung.* |
+| `auto_exposure` | `True` | *Erlaubt den automatischen Helligkeitsausgleich für robuste YOLO Erkennung.* |
 
 <br>
 
@@ -390,9 +390,9 @@ Verarbeitet parallel den RGB- und Depth-Stream mit GPU-Beschleunigung und dem **
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/zed/zed_node/rgb/image_rect_color`** | `sensor_msgs/Image` | Bezieht das RGB-Bild für die YOLO-Erkennung. |
-  | **`/zed/zed_node/depth/depth_registered`** | `sensor_msgs/Image` | Nutzt die Tiefenwerte für die 3D-Projektion. |
-  | **`/zed/zed_node/rgb/camera_info`** | `sensor_msgs/CameraInfo` | Liest Kamera-Intrinsics zur exakten Koordinatenberechnung. |
+  | **`/zed/zed_node/rgb/image_rect_color`** | `sensor_msgs/Image` | *Bezieht das RGB-Bild für die YOLO-Erkennung.* |
+  | **`/zed/zed_node/depth/depth_registered`** | `sensor_msgs/Image` | *Nutzt die Tiefenwerte für die 3D-Projektion.* |
+  | **`/zed/zed_node/rgb/camera_info`** | `sensor_msgs/CameraInfo` | *Liest Kamera-Intrinsics zur exakten Koordinatenberechnung.* |
 
 <br>
 
@@ -400,16 +400,16 @@ Verarbeitet parallel den RGB- und Depth-Stream mit GPU-Beschleunigung und dem **
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | Sendet die fertigen 3D-Boxen zur Visualisierung an RViz und Nodes. |
+  | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Sendet die fertigen 3D-Boxen zur Visualisierung an RViz und Nodes.* |
 
 <br>
 ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
-| `class_dimension_overrides` | *Benutzerdefiniert* | Hinterlegt feste metrische Dimensionen (x,y,z) für spezifische Objekte, um sicherzustellen, dass die Box das echte physikalische Volumen umschließt. |
-| `percentiles` | `[0.5, 99.5]` | Schneidet extreme Tiefen-Rausch-Pixel ("Flying Pixels" an Objektkanten) hart ab, während echte Kanten erhalten bleiben. |
-| `ema_alpha` | `0.2` | Glättungsfaktor (Exponential Moving Average), um Boxen-Jittering zwischen Frames sicher zu eliminieren. |
+| `class_dimension_overrides` | *Benutzerdefiniert* | *Hinterlegt feste metrische Dimensionen (x,y,z) für spezifische Objekte, um sicherzustellen, dass die Box das echte physikalische Volumen umschließt.* |
+| `percentiles` | `[0.5, 99.5]` | *Schneidet extreme Tiefen-Rausch-Pixel ("Flying Pixels" an Objektkanten) hart ab, während echte Kanten erhalten bleiben.* |
+| `ema_alpha` | `0.2` | *Glättungsfaktor (Exponential Moving Average), um Boxen-Jittering zwischen Frames sicher zu eliminieren.* |
 
 <br>
 
@@ -431,7 +431,7 @@ Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Na
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | Liest die Objektkoordinaten als Ziel für den Greifpfad.* — *Liest die erkannten 3D-Bounding-Boxen aus. |
+  | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Liest die Objektkoordinaten als Ziel für den Greifpfad.* — *Liest die erkannten 3D-Bounding-Boxen aus.* |
 
 <br>
 
@@ -439,7 +439,7 @@ Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Na
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/planning_scene`** | `moveit_msgs/PlanningScene` | Injiziert virtuelle Objekte (Becher-Formen) in die Planungs-Szene. |
+  | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Injiziert virtuelle Objekte (Becher-Formen) in die Planungs-Szene.* |
 
 #### ![MoveIt 2](https://img.shields.io/badge/Integration-MoveIt_2-00529B?style=flat-square) `octomap_server`
 
@@ -453,7 +453,7 @@ Dynamische 3D-Umgebungskartierung. Generiert in Echtzeit eine voxelbasierte Koll
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/zed/zed_node/point_cloud/cloud_optimized`** | `sensor_msgs/PointCloud2` | Liest die Punktwolke zur Voxel-Generierung ein. |
+  | **`/zed/zed_node/point_cloud/cloud_optimized`** | `sensor_msgs/PointCloud2` | *Liest die Punktwolke zur Voxel-Generierung ein.* |
 
 <br>
 
@@ -461,7 +461,7 @@ Dynamische 3D-Umgebungskartierung. Generiert in Echtzeit eine voxelbasierte Koll
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/planning_scene`** | `moveit_msgs/PlanningScene` | Integriert die generierte OctoMap nativ in die Kollisionswelt. |
+  | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Integriert die generierte OctoMap nativ in die Kollisionswelt.* |
 
 <br>
 
@@ -477,8 +477,8 @@ Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("G
 
 | Parameter | Standardwert | Beschreibung |
 |---|---|---|
-| `velocity_scaling` | `0.2` | Skaliert die Geschwindigkeit für extrem weiche und vorhersehbare Roboterbewegungen während der Greifsequenz. |
-| `acceleration_scaling` | `0.1` | Skaliert die Beschleunigung für extrem weiche und vorhersehbare Roboterbewegungen während der Greifsequenz. |
+| `velocity_scaling` | `0.2` | *Skaliert die Geschwindigkeit für extrem weiche und vorhersehbare Roboterbewegungen während der Greifsequenz.* |
+| `acceleration_scaling` | `0.1` | *Skaliert die Beschleunigung für extrem weiche und vorhersehbare Roboterbewegungen während der Greifsequenz.* |
 
 <br>
 
@@ -486,7 +486,7 @@ Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("G
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | Liest die Objektkoordinaten als Ziel für den Greifpfad. |
+  | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Liest die Objektkoordinaten als Ziel für den Greifpfad.* |
 
 <br>
 
@@ -494,9 +494,9 @@ Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("G
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/ui/grasp_status`** | `std_msgs/String` | Sendet Fortschrittsmeldungen an das RViz Control Panel. |
-  | **`/ui/ignore_collision_object`** | `std_msgs/String` | Schaltet Objekte temporär kollisionsfrei. |
-  | **`/planning_scene`** | `moveit_msgs/PlanningScene` | Deaktiviert temporär Objekte in der MoveIt-Szene. |
+  | **`/ui/grasp_status`** | `std_msgs/String` | *Sendet Fortschrittsmeldungen an das RViz Control Panel.* |
+  | **`/ui/ignore_collision_object`** | `std_msgs/String` | *Schaltet Objekte temporär kollisionsfrei.* |
+  | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Deaktiviert temporär Objekte in der MoveIt-Szene.* |
 
 <br>
 
@@ -504,7 +504,7 @@ Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("G
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/ui/grasp_object`** | `my_3d_vision_msgs/action/GraspObject` | Action-Endpunkt zum Starten des Greif-Ablaufs. |
+  | **`/ui/grasp_object`** | `my_3d_vision_msgs/action/GraspObject` | *Action-Endpunkt zum Starten des Greif-Ablaufs.* |
 
 <br>
 
@@ -512,9 +512,9 @@ Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("G
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/compute_ik`** | Client | Prüft via MoveIt, ob die Zielpose mathematisch erreichbar ist. |
-  | **`/move_action`** | Client | Sendet den Trajektorienplan an MoveIt zur Ausführung. |
-  | **`/ui/execute_move_to_pose`** | Client | Nutzt MoveIt Servo als Fallback-Bewegung. |
+  | **`/compute_ik`** | Client | *Prüft via MoveIt, ob die Zielpose mathematisch erreichbar ist.* |
+  | **`/move_action`** | Client | *Sendet den Trajektorienplan an MoveIt zur Ausführung.* |
+  | **`/ui/execute_move_to_pose`** | Client | *Nutzt MoveIt Servo als Fallback-Bewegung.* |
 
 <br>
 
@@ -529,7 +529,7 @@ Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("G
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/ui/grasp_object_cmd`** | `std_msgs/String` | Empfängt den String-Befehl aus dem UI. |
+  | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Empfängt den String-Befehl aus dem UI.* |
 
 <br>
 
@@ -537,7 +537,7 @@ Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("G
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/ui/grasp_object`** | `my_3d_vision_msgs/action/GraspObject` | Ruft den Grasp Action Server auf. |
+  | **`/ui/grasp_object`** | `my_3d_vision_msgs/action/GraspObject` | *Ruft den Grasp Action Server auf.* |
 
 #### ![Python Script](https://img.shields.io/badge/Python_Script-3776AB?style=flat-square&logo=python&logoColor=white) `zed_stand_publisher.py`
 
@@ -550,7 +550,7 @@ Generiert mathematisch exakt das 3D-Modell des Kamerastativs (Aluminiumprofil) u
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/zed_stand_marker`** | `visualization_msgs/Marker` | Publiziert das visuelle 3D-Modell des Stativs. |
+  | **`/zed_stand_marker`** | `visualization_msgs/Marker` | *Publiziert das visuelle 3D-Modell des Stativs.* |
 
 #### ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `tf_tuner`
 
@@ -563,8 +563,8 @@ Ein dediziertes ROS 2 Paket, das ein Live-Tuner Interface (PyQt5) bereitstellt, 
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/tf`** | `tf2_msgs/TFMessage` | Aktualisiert dynamisch die TF-Broadcaster-Werte für Objekte. |
-  | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | Publiziert Parameter der Safety Zone. |
+  | **`/tf`** | `tf2_msgs/TFMessage` | *Aktualisiert dynamisch die TF-Broadcaster-Werte für Objekte.* |
+  | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Publiziert Parameter der Safety Zone.* |
 
 ### 🗣️ <a id="subchapter-3-3"></a> 3.3 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
@@ -584,7 +584,7 @@ Lokale Speech-to-Text KI. Führt Whisper AI kontinuierlich auf dem Mikrofon-Stre
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/whisper/text`** | `std_msgs/String` | Publiziert das finale, erkannte Sprachtranskript. |
+  | **`/whisper/text`** | `std_msgs/String` | *Publiziert das finale, erkannte Sprachtranskript.* |
 
 <br>
 
@@ -606,7 +606,7 @@ Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/whisper/inference`** | `whisper_idl/Inference` | Action Client mit intelligenter Early-Cancellation und 3-Stufen-Deduplikation. |
+  | **`/whisper/inference`** | `whisper_idl/Inference` | *Action Client mit intelligenter Early-Cancellation und 3-Stufen-Deduplikation.* |
 
 <br>
 
@@ -614,7 +614,7 @@ Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/ui/voice_feedback`** | `std_msgs/String` | Triggert Aktionen im Control-Panel per Voice-Command. |
+  | **`/ui/voice_feedback`** | `std_msgs/String` | *Triggert Aktionen im Control-Panel per Voice-Command.* |
 
 Der `whisper_server` ist in der `whisper.yaml` explizit auf `language: "en"` gestellt und nutzt einen gezielten `initial_prompt`, um eine hohe Erkennungsgenauigkeit für die englischen Befehle zu garantieren und Rauschen auszufiltern.
 
@@ -637,7 +637,7 @@ Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (�
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | Steuert die kartesische Geschwindigkeit des Roboterarms via Eyetracking. |
+  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Steuert die kartesische Geschwindigkeit des Roboterarms via Eyetracking.* |
 
 ### 🖥️ <a id="subchapter-3-4"></a> 3.4 Funktion: Grafische Steuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
@@ -653,10 +653,10 @@ Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Es ist modern in 
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/ui/grasp_status`** | `std_msgs/String` | Empfängt Live-Statusmeldungen der Autonomie-Pipeline für das Konsolen-Log. |
-  | **`/joint_states`** | `sensor_msgs/JointState` | Liest die aktuellen Gelenkwinkel zur Darstellung in den UI-Slidern. |
-  | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | Zeigt die aktive Speed-Index-Stufe an. |
-  | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | Liest die Safety-Zone zur visuellen Darstellung aus. |
+  | **`/ui/grasp_status`** | `std_msgs/String` | *Empfängt Live-Statusmeldungen der Autonomie-Pipeline für das Konsolen-Log.* |
+  | **`/joint_states`** | `sensor_msgs/JointState` | *Liest die aktuellen Gelenkwinkel zur Darstellung in den UI-Slidern.* |
+  | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Zeigt die aktive Speed-Index-Stufe an.* |
+  | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Liest die Safety-Zone zur visuellen Darstellung aus.* |
 
 <br>
 
@@ -664,10 +664,10 @@ Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Es ist modern in 
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | Übermittelt Jogging-Befehle (Analogstick/D-Pad) an Servo. |
-  | **`/ui/grasp_object_cmd`** | `std_msgs/String` | Sendet den Namen des Zielobjekts zum Greifen an die Bridge. |
-  | **`/ui/robot_control/current_frame`** | `std_msgs/String` | Steuert das aktive Koordinatensystem (World/TCP). |
-  | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | Passt die globale Geschwindigkeitsstufe an. |
+  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Übermittelt Jogging-Befehle (Analogstick/D-Pad) an Servo.* |
+  | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Sendet den Namen des Zielobjekts zum Greifen an die Bridge.* |
+  | **`/ui/robot_control/current_frame`** | `std_msgs/String` | *Steuert das aktive Koordinatensystem (World/TCP).* |
+  | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | *Passt die globale Geschwindigkeitsstufe an.* |
 
 <br>
 
@@ -675,9 +675,9 @@ Das in C++ geschriebene, native 2D-Steuerungs-Panel für RViz. Es ist modern in 
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/ui/execute_initial_pose`** | Client | Löst die Rückkehr in die Home-Position aus. |
-  | **`/ui/execute_move_to_pose`** | Client | Befiehlt das Anfahren einer kartesischen Absolutpose. |
-  | **`/ui/execute_move_joint`** | Client | Bewegt Gelenke auf Zielwinkel. |
+  | **`/ui/execute_initial_pose`** | Client | *Löst die Rückkehr in die Home-Position aus.* |
+  | **`/ui/execute_move_to_pose`** | Client | *Befiehlt das Anfahren einer kartesischen Absolutpose.* |
+  | **`/ui/execute_move_joint`** | Client | *Bewegt Gelenke auf Zielwinkel.* |
 
 <br>
 
@@ -692,8 +692,8 @@ Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet 
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/ui/robot_control/current_speed`** | `std_msgs/Float64` | Skaliert die Planungsgeschwindigkeit synchron zur UI. |
-  | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | Integriert dynamische Hindernisse in die Pfadplanung. |
+  | **`/ui/robot_control/current_speed`** | `std_msgs/Float64` | *Skaliert die Planungsgeschwindigkeit synchron zur UI.* |
+  | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Integriert dynamische Hindernisse in die Pfadplanung.* |
 
 <br>
 
@@ -701,7 +701,7 @@ Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet 
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | Sendet validierte Gelenktrajektorien. |
+  | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | *Sendet validierte Gelenktrajektorien.* |
 
 <br>
 
@@ -709,11 +709,11 @@ Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet 
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/ui/execute_initial_pose`** | Server | Führt die Planung der Home-Fahrt durch. |
-  | **`/ui/execute_move_to_pose`** | Server | Berechnet via MoveIt IK die Pose und fährt sie an. |
-  | **`/ui/start_object_scan`** | Server | Führt den 3D-Bogenscan aus. |
-  | **`/ui/execute_move_joint`** | Server | Setzt Gelenkziele um. |
-  | **`/compute_ik`** | Client | Nutzt MoveIt zur kinematischen Vorwärts-/Rückwärtsrechnung. |
+  | **`/ui/execute_initial_pose`** | Server | *Führt die Planung der Home-Fahrt durch.* |
+  | **`/ui/execute_move_to_pose`** | Server | *Berechnet via MoveIt IK die Pose und fährt sie an.* |
+  | **`/ui/start_object_scan`** | Server | *Führt den 3D-Bogenscan aus.* |
+  | **`/ui/execute_move_joint`** | Server | *Setzt Gelenkziele um.* |
+  | **`/compute_ik`** | Client | *Nutzt MoveIt zur kinematischen Vorwärts-/Rückwärtsrechnung.* |
 
 #### `rviz_overlay.py` & `servo_status_overlay.py` <kbd>NODES</kbd>
 
@@ -726,9 +726,9 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/servo_server/status`** | `std_msgs/Int8` | Färbt den RViz-Rand je nach Gefahrenstufe. |
-  | **`/ui/collision_msg`** | `std_msgs/String` | Zeigt detaillierte Kollisionswarnungen im Video-Feed an. |
-  | **`/ui/robot_control/current_frame`** | `std_msgs/String` | Blendet das aktive Koordinatensystem (World/TCP) ein. |
+  | **`/servo_server/status`** | `std_msgs/Int8` | *Färbt den RViz-Rand je nach Gefahrenstufe.* |
+  | **`/ui/collision_msg`** | `std_msgs/String` | *Zeigt detaillierte Kollisionswarnungen im Video-Feed an.* |
+  | **`/ui/robot_control/current_frame`** | `std_msgs/String` | *Blendet das aktive Koordinatensystem (World/TCP) ein.* |
 
 <br>
 
@@ -736,7 +736,7 @@ Projizieren farbkodierte Warnmeldungen (z.B. "COLLISION!") sowie Live-Achsen-Koo
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/rviz_2d_overlay_msgs/OverlayText`** |  | Projiziert Warntexte als Overlay in RViz. |
+  | **`/rviz_2d_overlay_msgs/OverlayText`** |  | *Projiziert Warntexte als Overlay in RViz.* |
 
 <br>
 
@@ -751,7 +751,7 @@ Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuell
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/scene_markers_array`** | `visualization_msgs/MarkerArray` | Rendert virtuelle Marker (Safety-Zone, Tische) in RViz. |
+  | **`/scene_markers_array`** | `visualization_msgs/MarkerArray` | *Rendert virtuelle Marker (Safety-Zone, Tische) in RViz.* |
 
 <br>
 
@@ -780,13 +780,13 @@ Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorp
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/joint_states`** | `sensor_msgs/JointState` | Spiegelt die physischen Gelenke synchron im Dashboard. |
-  | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | Zeigt die Echtzeit XYZ-Koordinaten im Web-Header an. |
-  | **`/servo_server/status`** | `std_msgs/Int8` | Steuert die farbigen Alarm-Pulsierungen der Web-UI. |
-  | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | Füllt das Dropdown-Menü für Ziele. |
-  | **`/ui/voice_feedback`** | `std_msgs/String` | Blendet per Voice ausgelöste Aktionen live im Web-Log ein. |
-  | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | Gleicht die UI-Speedslider mit dem Backend ab. |
-  | **`/ui/grasp_status`** | `std_msgs/String` | Leitet Grasp-Statusmeldungen an die Web-Konsole weiter. |
+  | **`/joint_states`** | `sensor_msgs/JointState` | *Spiegelt die physischen Gelenke synchron im Dashboard.* |
+  | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | *Zeigt die Echtzeit XYZ-Koordinaten im Web-Header an.* |
+  | **`/servo_server/status`** | `std_msgs/Int8` | *Steuert die farbigen Alarm-Pulsierungen der Web-UI.* |
+  | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Füllt das Dropdown-Menü für Ziele.* |
+  | **`/ui/voice_feedback`** | `std_msgs/String` | *Blendet per Voice ausgelöste Aktionen live im Web-Log ein.* |
+  | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Gleicht die UI-Speedslider mit dem Backend ab.* |
+  | **`/ui/grasp_status`** | `std_msgs/String` | *Leitet Grasp-Statusmeldungen an die Web-Konsole weiter.* |
 
 <br>
 
@@ -794,11 +794,11 @@ Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorp
 
   | Topic / Interface | Msg Type | Beschreibung |
   |---|---|---|
-  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | Leitet Analogstick-Signale vom Web-Gamepad ans Backend. |
-  | **`/servo_server/delta_joint_cmds`** | `control_msgs/JointJog` | Steuert feine Joint-Jogs per Klick. |
-  | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | Sichert die geänderte Geschwindigkeit. |
-  | **`/ui/grasp_object_cmd`** | `std_msgs/String` | Triggert Autonomie-Aktionen. |
-  | **`/whisper/inference`** | `whisper_idl/Inference` | Startet Audio-Aufnahmen bei Klick auf das Mikrofon-Symbol. |
+  | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Leitet Analogstick-Signale vom Web-Gamepad ans Backend.* |
+  | **`/servo_server/delta_joint_cmds`** | `control_msgs/JointJog` | *Steuert feine Joint-Jogs per Klick.* |
+  | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | *Sichert die geänderte Geschwindigkeit.* |
+  | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggert Autonomie-Aktionen.* |
+  | **`/whisper/inference`** | `whisper_idl/Inference` | *Startet Audio-Aufnahmen bei Klick auf das Mikrofon-Symbol.* |
 
 ### 🌌 <a id="subchapter-3-5"></a> 3.5 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *Physischer und virtueller Arbeitsraum werden durch NVIDIA Isaac Sim als passiver, hochauflösender Digitaler Zwilling nahtlos synchronisiert.*
@@ -865,13 +865,13 @@ if predicted_z < Z_LIMIT:
 
 | Parameter | Wert | Beschreibung |
 |---|---|---|
-| `Z_LIMIT` | `96,5 mm` | Absolutes Z-Limit |
-| `CAUTION_ZONE_START` | `110,0 mm` | Toleranzbereich — Geschw. auf 25% begrenzt |
-| `CAUTION_ZONE_SPEED` | `0,25` | Max. Faktor in der Vorsichtszone |
-| `MAX_LINEAR_VELOCITY_MM_S` | `75,0 mm/s` | Angenommene max. Lineargeschwindigkeit |
-| `LOOKAHEAD_TIME` | `0,1 s` | Vorhersagehorizont |
-| `ACCELERATION_FACTOR` (α) | `0,9` | Dämpfungsfaktor |
-| `DOWN_TRIGGER_AXIS` | `5` (RT) | Joy-Achsen-Index für Abwärts-Trigger |
+| `Z_LIMIT` | `96,5 mm` | *Absolutes Z-Limit* |
+| `CAUTION_ZONE_START` | `110,0 mm` | *Toleranzbereich — Geschw. auf 25% begrenzt* |
+| `CAUTION_ZONE_SPEED` | `0,25` | *Max. Faktor in der Vorsichtszone* |
+| `MAX_LINEAR_VELOCITY_MM_S` | `75,0 mm/s` | *Angenommene max. Lineargeschwindigkeit* |
+| `LOOKAHEAD_TIME` | `0,1 s` | *Vorhersagehorizont* |
+| `ACCELERATION_FACTOR` (α) | `0,9` | *Dämpfungsfaktor* |
+| `DOWN_TRIGGER_AXIS` | `5` (RT) | *Joy-Achsen-Index für Abwärts-Trigger* |
 
 #### 4.2.2 Zwei-Stufen-Sicherheitsmodell
 
@@ -893,12 +893,12 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 
 | Typ | Name | Message-Typ | Beschreibung |
 |-----|------|------------|-------------|
-| **Subscriber** | `/joy` | `sensor_msgs/Joy` | Rohes Gamepad-Signal |
-| **Subscriber** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | Liest Live-Z-Position für Kollisionsprüfung |
-| **Publisher** | `/joy_check` | `sensor_msgs/Joy` | Bereinigtes Ausgangssignal |
-| **Publisher** | `/ui/collision_msg` | `std_msgs/String` | Kollisionswarnung für UI |
-| **Subscriber** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | Geschwindigkeitsfaktor vom C++ Node |
-| **Service Client** | `/ufactory/get_position` | `xarm_msgs/GetFloat32List` | Echtzeit-EEF-Pose |
+| **Subscriber** | `/joy` | `sensor_msgs/Joy` | *Rohes Gamepad-Signal* |
+| **Subscriber** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | *Liest Live-Z-Position für Kollisionsprüfung* |
+| **Publisher** | `/joy_check` | `sensor_msgs/Joy` | *Bereinigtes Ausgangssignal* |
+| **Publisher** | `/ui/collision_msg` | `std_msgs/String` | *Kollisionswarnung für UI* |
+| **Subscriber** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | *Geschwindigkeitsfaktor vom C++ Node* |
+| **Service Client** | `/ufactory/get_position` | `xarm_msgs/GetFloat32List` | *Echtzeit-EEF-Pose* |
 
 ---
 
@@ -912,30 +912,30 @@ Das Rumble-Signal wird aufgehoben, sobald der Arm wieder sicher ist.
 
 | Eingabe | Funktion | ROS-Aktion | Technisches Detail |
 |---------|---------|-----------|-------------------|
-| **Left Stick ↑↓** | X-Achse (vor/zurück) | `TwistStamped.linear.x` | `axes[1] × speed_scale` |
-| **Left Stick ←→** | Y-Achse (links/rechts) | `TwistStamped.linear.y` | `axes[0] × speed_scale` |
-| **LT (Left Trigger)** | Z **aufwärts** (Z+) | `TwistStamped.linear.z` | `clamp(LT−RT, -1,1) × −speed_scale` → LT gedrückt: negativer zAchse-Wert × −scale = **positive Z** |
-| **RT (Right Trigger)** | Z **abwärts** (Z−) | `TwistStamped.linear.z` | `clamp(LT−RT, -1,1) × −speed_scale` → RT gedrückt: positiver zAchse-Wert × −scale = **negative Z** |
-| **LB (Left Bumper)** | Handgelenk CCW (Z-) | `TwistStamped.angular.z` | `buttons[LB] - buttons[RB]` |
-| **RB (Right Bumper)** | Handgelenk CW (Z+) | `TwistStamped.angular.z` | `buttons[LB] - buttons[RB]` |
-| **D-Pad ↑** | Geschwindigkeit hoch | Pub → `/ui/robot_control/current_speed` | 5 Stufen durchschalten |
-| **D-Pad ↓** | Geschwindigkeit runter | Pub → `/ui/robot_control/current_speed` | 5 Stufen durchschalten |
-| **Back (⊞)** | Rahmen → `link_base` | Pub → `/ui/joy_button_presses` | Weltkoordinaten-Modus |
-| **Start (≡)** | Rahmen → `link_tcp` | Pub → `/ui/joy_button_presses` | EEF-relativer Modus |
-| **A (grün)** | Greifer toggle | Service: `open/close_lite6_gripper` | Zustand in `vacuum_gripper_state_` |
-| **B (rot)** | Greifer stopp | Service: `/ufactory/stop_lite6_gripper` | Not-Aus |
-| **X (blau)** | Whisper AI toggle | Action: `/whisper/inference` (max 5 Sek.) | Toggle start/stopp |
-| **Y (gelb)** | Initialposition | Service: `/ui/execute_initial_pose` | `robot_motion_handler_movegroup` |
+| **Left Stick ↑↓** | X-Achse (vor/zurück) | `TwistStamped.linear.x` | *`axes[1] × speed_scale`* |
+| **Left Stick ←→** | Y-Achse (links/rechts) | `TwistStamped.linear.y` | *`axes[0] × speed_scale`* |
+| **LT (Left Trigger)** | Z **aufwärts** (Z+) | `TwistStamped.linear.z` | *`clamp(LT−RT, -1,1) × −speed_scale` → LT gedrückt: negativer zAchse-Wert × −scale = **positive Z*** |
+| **RT (Right Trigger)** | Z **abwärts** (Z−) | `TwistStamped.linear.z` | *`clamp(LT−RT, -1,1) × −speed_scale` → RT gedrückt: positiver zAchse-Wert × −scale = **negative Z*** |
+| **LB (Left Bumper)** | Handgelenk CCW (Z-) | `TwistStamped.angular.z` | *`buttons[LB] - buttons[RB]`* |
+| **RB (Right Bumper)** | Handgelenk CW (Z+) | `TwistStamped.angular.z` | *`buttons[LB] - buttons[RB]`* |
+| **D-Pad ↑** | Geschwindigkeit hoch | Pub → `/ui/robot_control/current_speed` | *5 Stufen durchschalten* |
+| **D-Pad ↓** | Geschwindigkeit runter | Pub → `/ui/robot_control/current_speed` | *5 Stufen durchschalten* |
+| **Back (⊞)** | Rahmen → `link_base` | Pub → `/ui/joy_button_presses` | *Weltkoordinaten-Modus* |
+| **Start (≡)** | Rahmen → `link_tcp` | Pub → `/ui/joy_button_presses` | *EEF-relativer Modus* |
+| **A (grün)** | Greifer toggle | Service: `open/close_lite6_gripper` | *Zustand in `vacuum_gripper_state_`* |
+| **B (rot)** | Greifer stopp | Service: `/ufactory/stop_lite6_gripper` | *Not-Aus* |
+| **X (blau)** | Whisper AI toggle | Action: `/whisper/inference` (max 5 Sek.) | *Toggle start/stopp* |
+| **Y (gelb)** | Initialposition | Service: `/ui/execute_initial_pose` | *`robot_motion_handler_movegroup`* |
 
 **Geschwindigkeitsstufen (D-Pad):**
 
 | Stufe | Faktor | Beschreibung |
 |-------|--------|-------------|
-| 1 | `12,5%` | Ultra-präzise — Feinpositionierung |
-| 2 | `25%` | Langsam — Zielanfahrt |
-| 3 | `50%` | Normal — Standard-Startstufe |
-| 4 | `75%` | Schnell — Weitstreckenfahrt |
-| 5 | `100%` | Maximum — volle Servo-Geschwindigkeit |
+| 1 | `12,5%` | *Ultra-präzise — Feinpositionierung* |
+| 2 | `25%` | *Langsam — Zielanfahrt* |
+| 3 | `50%` | *Normal — Standard-Startstufe* |
+| 4 | `75%` | *Schnell — Weitstreckenfahrt* |
+| 5 | `100%` | *Maximum — volle Servo-Geschwindigkeit* |
 
 #### 4.3.2 Signal-Fluss & Exponentielle Glättung
 
@@ -971,19 +971,19 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 
 | Typ | Name | Message-Typ | Beschreibung |
 |-----|------|------------|-------------|
-| **Subscriber** | `/joy_check` | `sensor_msgs/Joy` | Bereinigtes Signal von `checker.py` |
-| **Publisher** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | 10 Hz Live-Pose (x,y,z,r,p,y) für Telemetrie |
-| **Publisher** | `/servo_server/delta_twist_cmds` | `geometry_msgs/TwistStamped` | Kartesischer Geschwindigkeitsbefehl |
-| **Publisher** | `/servo_server/delta_joint_cmds` | `control_msgs/JointJog` | Gelenkraum-Befehl (Initialisierung) |
-| **Publisher** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | Geschwindigkeitsfaktor (Latched QoS) |
-| **Publisher** | `/ui/robot_control/current_frame` | `std_msgs/String` | Aktiver Referenzrahmen (`link_base` oder `link_tcp`) |
-| **Publisher** | `/ui/joy_button_presses` | `std_msgs/String` | Button-Feedback für Dashboard |
-| **Service Client** | `/servo_server/start_servo` | `std_srvs/Trigger` | Aktiviert MoveIt Servo |
-| **Service Client** | `/ufactory/open_lite6_gripper` | `xarm_msgs/Call` | Öffnet Greifer |
-| **Service Client** | `/ufactory/close_lite6_gripper` | `xarm_msgs/Call` | Schließt Greifer |
-| **Service Client** | `/ufactory/stop_lite6_gripper` | `xarm_msgs/Call` | Stoppt Greifer |
-| **Service Client** | `/execute_motion_sequence_Y` | `std_srvs/Trigger` | Initialpositions-Sequenz |
-| **Action Client** | `/whisper/inference` | `whisper_idl/Inference` | Whisper-Sprachaufnahme |
+| **Subscriber** | `/joy_check` | `sensor_msgs/Joy` | *Bereinigtes Signal von `checker.py`* |
+| **Publisher** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | *10 Hz Live-Pose (x,y,z,r,p,y) für Telemetrie* |
+| **Publisher** | `/servo_server/delta_twist_cmds` | `geometry_msgs/TwistStamped` | *Kartesischer Geschwindigkeitsbefehl* |
+| **Publisher** | `/servo_server/delta_joint_cmds` | `control_msgs/JointJog` | *Gelenkraum-Befehl (Initialisierung)* |
+| **Publisher** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | *Geschwindigkeitsfaktor (Latched QoS)* |
+| **Publisher** | `/ui/robot_control/current_frame` | `std_msgs/String` | *Aktiver Referenzrahmen (`link_base` oder `link_tcp`)* |
+| **Publisher** | `/ui/joy_button_presses` | `std_msgs/String` | *Button-Feedback für Dashboard* |
+| **Service Client** | `/servo_server/start_servo` | `std_srvs/Trigger` | *Aktiviert MoveIt Servo* |
+| **Service Client** | `/ufactory/open_lite6_gripper` | `xarm_msgs/Call` | *Öffnet Greifer* |
+| **Service Client** | `/ufactory/close_lite6_gripper` | `xarm_msgs/Call` | *Schließt Greifer* |
+| **Service Client** | `/ufactory/stop_lite6_gripper` | `xarm_msgs/Call` | *Stoppt Greifer* |
+| **Service Client** | `/execute_motion_sequence_Y` | `std_srvs/Trigger` | *Initialpositions-Sequenz* |
+| **Action Client** | `/whisper/inference` | `whisper_idl/Inference` | *Whisper-Sprachaufnahme* |
 
 ---
 
@@ -993,16 +993,16 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 
 | Komponente | Version / Details |
 |------------|-----------------|
-| **Betriebssystem** | Ubuntu 22.04.5 LTS (Jammy) |
-| **ROS 2** | Humble Hawksbill (LTS) |
-| **MoveIt 2** | v2.3.9 |
-| **Python** | v3.10.12 |
-| **OpenCV** | v4.9.0 |
-| **YOLO / Ultralytics**| v8.8.61 |
-| **ZED SDK** | v4.x (ZED M Firmware 1523) |
-| **Pygame** | v2.4.1 |
-| **Build-System** | `colcon` |
-| **Compiler** | GCC 11+ (C++17) |
+| **Betriebssystem** | *Ubuntu 22.04.5 LTS (Jammy)* |
+| **ROS 2** | *Humble Hawksbill (LTS)* |
+| **MoveIt 2** | *v2.3.9* |
+| **Python** | *v3.10.12* |
+| **OpenCV** | *v4.9.0* |
+| **YOLO / Ultralytics** | *v8.8.61* |
+| **ZED SDK** | *v4.x (ZED M Firmware 1523)* |
+| **Pygame** | *v2.4.1* |
+| **Build-System** | *`colcon`* |
+| **Compiler** | *GCC 11+ (C++17)* |
 
 ### ⚠️ Kritische Systemkonfigurationen (Troubleshooting)
 
@@ -1215,11 +1215,11 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 
 | Port | Service | Typ | Beschreibung |
 |------|---------|-----|--------------|
-| **`5000`** | **ROS 2 Nexus Web** | Nexus Web Backend | Stellt die grafische Nexus-Oberfläche bereit. Empfängt Klicks aus dem Browser, führt ROS-Shell-Befehle als Unterprozesse in `gnome-terminal` auf dem Host-PC aus. |
-| **`8080`** | **Dashboard Frontend** | HTTP Server | Hostet die statischen HTML/CSS/JS-Dateien für das ROS2 Core Dashboard. |
-| **`8081`** | **Robot Control Web UI** | HTTP Server | Hostet die eigenständige Chrome Web App für die Remote-Robotersteuerung (Glassmorphism-Dashboard mit Joystick, Joint-Slidern, YOLO-Grasp und Konsolen-Log). |
-| **`8082`** | **Web Video Server** | HTTP Server | Streamt ROS Bild-Topics (wie den ZED-Kamera-Stream) via HTTP an Webbrowser. |
-| **`9090`** | **ROS Bridge** | WebSocket | Die Brücke zwischen ROS 2 und dem Browser. Erlaubt dem Dashboard (Port 8080) und der Robot Control Web UI (Port 8081), sich über `roslib.js` direkt mit dem ROS-Netzwerk zu verbinden, um Echtzeit-Telemetrie auszulesen und Services aufzurufen. |
+| **`5000`** | **ROS 2 Nexus Web** | Nexus Web Backend | *Stellt die grafische Nexus-Oberfläche bereit. Empfängt Klicks aus dem Browser, führt ROS-Shell-Befehle als Unterprozesse in `gnome-terminal` auf dem Host-PC aus.* |
+| **`8080`** | **Dashboard Frontend** | HTTP Server | *Hostet die statischen HTML/CSS/JS-Dateien für das ROS2 Core Dashboard.* |
+| **`8081`** | **Robot Control Web UI** | HTTP Server | *Hostet die eigenständige Chrome Web App für die Remote-Robotersteuerung (Glassmorphism-Dashboard mit Joystick, Joint-Slidern, YOLO-Grasp und Konsolen-Log).* |
+| **`8082`** | **Web Video Server** | HTTP Server | *Streamt ROS Bild-Topics (wie den ZED-Kamera-Stream) via HTTP an Webbrowser.* |
+| **`9090`** | **ROS Bridge** | WebSocket | *Die Brücke zwischen ROS 2 und dem Browser. Erlaubt dem Dashboard (Port 8080) und der Robot Control Web UI (Port 8081), sich über `roslib.js` direkt mit dem ROS-Netzwerk zu verbinden, um Echtzeit-Telemetrie auszulesen und Services aufzurufen.* |
 
 > **Warum diese strikte Trennung?** Die Ports 8080 und 9090 dienen grundverschiedenen Zwecken. Port 8080 (HTTP) fungiert als Standard-Webserver, um die Oberfläche auszuliefern. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich Live-Telemetrie streamt und keine Webseiten bereitstellen kann. Port 5000 (Flask) verarbeitet die Logik des Nexus Web Backends völlig unabhängig von ROS.
 
