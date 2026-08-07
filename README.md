@@ -544,7 +544,7 @@ Mathematically generates the exact 3D mesh model of the camera tripod (aluminum 
   |---|---|---|
   | **`/zed_stand_marker`** | `visualization_msgs/Marker` | *Publishes the static 3D model of the camera stand.* |
 
-#### ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `tf_tuner`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `tf_tuner` &nbsp;&nbsp; <sub><i>`/src/tf_tuner`</i></sub>
 
 **Purpose & Task:**<br>
 A dedicated ROS 2 package providing a live tuner interface (PyQt5) to dynamically adjust the camera offsets (Pointcloud) as well as interactively position 3D scene elements (Cube, Rectangle, Cylinder, White Plane) and an adjustable **Safety Zone** (with tunable radius) in RViz without restarting nodes.
@@ -614,7 +614,7 @@ Analyzes discrete single-shot raw text using regex patterns to extract defined a
 
 The `whisper_server` is explicitly configured to use `language: "en"` along with a targeted `initial_prompt` inside `whisper.yaml` to guarantee high transcription accuracy for the English commands, rejecting non-english noise.
 
-#### ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses.py`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-41CD52?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses.py` &nbsp;&nbsp; <sub><i>`/src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py`</i></sub>
 
 **Purpose & Task:**<br>
 A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 1 sec fixation time) and sends direct movement and gripper commands.
@@ -639,7 +639,7 @@ A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP
 ### 🖥️ <a id="subchapter-3-4"></a> 3.4 Feature: Graphical Control & Visual Feedback
 *Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
 
-#### ![C++ GUI Node](https://img.shields.io/badge/C++_GUI_Node-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_robot_control_panel.cpp`
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>`/src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp`</i></sub>
 
 **Purpose & Task:**<br>
 The native 2D control panel written in C++ for RViz. It is structured into a modern dark-theme UI with 4 distinct GroupBoxes (Cartesian Jog, Cartesian Absolute, Joint Absolute, Utilities). Provides D-Pad buttons, **6-DoF Joint Control Sliders**, the **"Grasp Object"** input field, and a **Color-Coded Live Console Log**. Employs a thread-safe `Qt::QueuedConnection` Signal/Slot architecture to pipe asynchronous ROS 2 node status messages directly into the UI without freezing.
