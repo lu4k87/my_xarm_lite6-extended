@@ -69,16 +69,16 @@ The primary goal of this project is the development and implementation of a modu
 ### 💡 Motivation: Assistance, Inclusion, and Participation in the Context of Industry 5.0
 In practice, classical methods of teleoperation and robot control are highly error-prone and demand immense cognitive fine control and technical expertise from the operator. These high barriers exclude many people from direct usage. In the spirit of the Industry 5.0 guiding principles—which place the human, sustainability, and resilience at the center of industrial production—this project starts exactly here:
 
-- **Lowering Technical Barriers:** Reducing entry thresholds by shifting from low-level joint coordination toward intuitive high-level commands.
-- **Promoting Inclusion:** Creating technological conditions to enable productive and equal participation in the modern workplace, even for people with different physical or cognitive capabilities.
-- **Human-Machine Synergy:** Establishing the robot as an assistive tool that relieves the human instead of replacing them.
+- **Lowering Technical Barriers:** <br> Reducing entry thresholds by shifting from low-level joint coordination toward intuitive high-level commands.
+- **Promoting Inclusion:** <br> Creating technological conditions to enable productive and equal participation in the modern workplace, even for people with different physical or cognitive capabilities.
+- **Human-Machine Synergy:** <br> Establishing the robot as an assistive tool that relieves the human instead of replacing them.
 
 ### ⚙️ Operating Principle: Shared Control and the "Human-in-the-Loop" Paradigm
 The technological foundation of the platform is based on a dynamic *shared control* approach, where human and machine interact cooperatively. The user remains permanently integrated into the control loop as a supervisor (*Human-in-the-Loop*), but controls the system through a tiered, complementary interaction pattern:
 
-- **Intuitive High-Level Commands:** Initiating global actions or target specifications via natural modalities such as gaze control (eye tracking) or voice commands.
-- **Precise Low-Level Corrections:** Seamless, low-latency switching to manual input devices (e.g., gamepad/MoveIt Servo) for sensitive adjustments in the workspace.
-- **Context-Sensitive Assistance:** Autonomous path planning and collision-free trajectory calculation in the background to actively safeguard the operator during execution.
+- **Intuitive High-Level Commands:** <br> Initiating global actions or target specifications via natural modalities such as gaze control (eye tracking) or voice commands.
+- **Precise Low-Level Corrections:** <br> Seamless, low-latency switching to manual input devices (e.g., gamepad/MoveIt Servo) for sensitive adjustments in the workspace.
+- **Context-Sensitive Assistance:** <br> Autonomous path planning and collision-free trajectory calculation in the background to actively safeguard the operator during execution.
 
 ### 🏆 Objective: A Valid, Cost-Effective Proof-of-Concept
 The project presents itself as a fully functional, reproducible, and economically affordable Proof-of-Concept (PoC) for academic research landscapes and practice-oriented inclusion projects. The open architecture serves as a standardized evaluation platform on which novel assistive robotics systems can be developed, tested, and empirically validated under realistic conditions.
@@ -86,10 +86,10 @@ The project presents itself as a fully functional, reproducible, and economicall
 ### 📊 Evaluation Logic & Guidelines: From Research to Industrial Practice
 A key core and innovative character of the project lies in the scientific analysis of interaction quality. The system serves not only as a technical demonstrator, but as a tool to generate transferable knowledge:
 
-- **Development of an Evaluation Logic:** Systematic capture and measurement of usability, cognitive load, and system performance for quantitative assessment of the human-robot interface.
-- **Derivation of Action Recommendations:** Formulation of standardized guidelines that serve companies as a strategic guide during the introduction of modern robot systems.
-- **Answering the Transformation Question:** Concrete practical assistance on the core question: *“How can processes and workplaces be structured to measurably meet the human-centered requirements of Industry 5.0?”*
-- **Service Potential:** The resulting frameworks and guidelines have the potential to be provided as a validated, monetizable consulting and service offering for industry, accompanying digital and demographic changes in production.
+- **Development of an Evaluation Logic:** <br> Systematic capture and measurement of usability, cognitive load, and system performance for quantitative assessment of the human-robot interface.
+- **Derivation of Action Recommendations:** <br> Formulation of standardized guidelines that serve companies as a strategic guide during the introduction of modern robot systems.
+- **Answering the Transformation Question:** <br> Concrete practical assistance on the core question: *“How can processes and workplaces be structured to measurably meet the human-centered requirements of Industry 5.0?”*
+- **Service Potential:** <br> The resulting frameworks and guidelines have the potential to be provided as a validated, monetizable consulting and service offering for industry, accompanying digital and demographic changes in production.
 
 ## <a id="chapter-2"></a> 2. 🔬 Architecture & Guiding Principles
 
@@ -201,23 +201,23 @@ The platform strictly distinguishes between two operating modes for the robot ar
 To ensure scientific validity, the project is designed as an open-source architecture. Disclosing the complete codebase ensures the methodological transparency of all algorithms, configurations, and data flows. For the scientific community, this yields key added value:
 
 > - **Methodological Transparency:** Full visibility of all underlying algorithms, URDF models, and MoveIt configurations.
-- **Exact Replication:** Enabling straightforward secondary investigations by independent research groups under identical conditions.
-- **Statistical Verifiability:** Traceability and validation of complex, recorded sensor data streams and control inputs.
-- **Standardized Benchmark:** Establishing the platform as a reliable baseline for comparative studies in the field of assistive and inclusive robotics.
+- **Exact Replication:** <br> Enabling straightforward secondary investigations by independent research groups under identical conditions.
+- **Statistical Verifiability:** <br> Traceability and validation of complex, recorded sensor data streams and control inputs.
+- **Standardized Benchmark:** <br> Establishing the platform as a reliable baseline for comparative studies in the field of assistive and inclusive robotics.
 
 ### Cost-Effective Hardware
 The system configuration is primarily based on economically affordable, commercially available off-the-shelf components (COTS), without compromising the required precision and functional reliability. This approach pursues clear strategic goals:
 
-- **Democratizing Access:** Reducing investment and financial barriers when entering modern, multimodally controlled robotics technologies.
-- **Target Audience Transfer:** Facilitating technology transfer into inclusive projects, educational institutions, and smaller research facilities (e.g., via the UFactory xArm Lite 6 and consumer controllers).
-- **Validating Reliability:** Targeted scientific evaluation of the extent to which cost-effective hardware represents a valid research platform in direct comparison to high-priced industrial systems.
+- **Democratizing Access:** <br> Reducing investment and financial barriers when entering modern, multimodally controlled robotics technologies.
+- **Target Audience Transfer:** <br> Facilitating technology transfer into inclusive projects, educational institutions, and smaller research facilities (e.g., via the UFactory xArm Lite 6 and consumer controllers).
+- **Validating Reliability:** <br> Targeted scientific evaluation of the extent to which cost-effective hardware represents a valid research platform in direct comparison to high-priced industrial systems.
 
 ### Modular & Industry Standard
 The software-side infrastructure is modularly encapsulated and fully integrated into the ROS 2 Humble middleware framework. The native use of standardized communication primitives ensures interoperability with industrial ecosystems. The consistent modular principle offers crucial architectural advantages:
 
-- **Native ROS 2 Communication:** Full compatibility with established ecosystems (like MoveIt 2) and modern sensor SDKs via nodes, topics, services, and actions.
-- **Isolated Subsystem Encapsulation:** Straightforward replacement or extension of individual modules—such as VLA pipelines for intent recognition or specific eye-tracking drivers.
-- **Future-Proofing & Portability:** Low-maintenance software structure allowing easy migration to future ROS 2 LTS distributions without modifying the overall platform.
+- **Native ROS 2 Communication:** <br> Full compatibility with established ecosystems (like MoveIt 2) and modern sensor SDKs via nodes, topics, services, and actions.
+- **Isolated Subsystem Encapsulation:** <br> Straightforward replacement or extension of individual modules—such as VLA pipelines for intent recognition or specific eye-tracking drivers.
+- **Future-Proofing & Portability:** <br> Low-maintenance software structure allowing easy migration to future ROS 2 LTS distributions without modifying the overall platform.
 
 ---
 
@@ -400,9 +400,9 @@ To provide a clear understanding of the architecture, the software modules are c
 
 > [!NOTE]
 > **Purpose & Task:** The central control logic of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the YOLO coordinates, and coordinates a robust **3-Phase Collision-Free Grasping Sequence**:
-  - **Phase 1 (Retract):** Safely moves the arm strictly upwards from its current position to clear the table.
-  - **Phase 2 (Hover):** Translates horizontally to a safe height (15cm) exactly above the target object. Forces a strict top-down orientation and uses tight IK tolerances (5mm positional, 0.001 rad tilt) to guarantee millimeter-accurate vertical alignment.
-  - **Phase 3 (Approach):** Temporarily removes the target object from the MoveIt global collision scene via `/ui/ignore_collision_object` to allow the TCP to physically reach into the object's bounding box without triggering emergency stops, then moves down.
+  - **Phase 1 (Retract):** <br> Safely moves the arm strictly upwards from its current position to clear the table.
+  - **Phase 2 (Hover):** <br> Translates horizontally to a safe height (15cm) exactly above the target object. Forces a strict top-down orientation and uses tight IK tolerances (5mm positional, 0.001 rad tilt) to guarantee millimeter-accurate vertical alignment.
+  - **Phase 3 (Approach):** <br> Temporarily removes the target object from the MoveIt global collision scene via `/ui/ignore_collision_object` to allow the TCP to physically reach into the object's bounding box without triggering emergency stops, then moves down.
 - ⚙️ **Parameters:** Features tunable `velocity_scaling` (default: 0.2) and `acceleration_scaling` (default: 0.1) for extremely smooth, slow, and predictable robotic interactions during the grasp sequence.
 
 ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -637,12 +637,12 @@ To provide a clear understanding of the architecture, the software modules are c
 > [!TIP]
 > **Native Desktop Integration:** Both the *ROS 2 Nexus Web App* and the *Robot Control Web UI* now launch in dedicated, isolated Chrome `--app` profiles. They start perfectly maximized as standalone applications, completely detached from standard browser windows, and feature their own distinct taskbar icons for a seamless, native OS experience.
 - ✨ **Core Features:** 
-  - **Advanced Telemetry:** Live system status pills for network ports (UI, WS, Nexus), active Gamepad connection (USB), and automatic Hardware Mode detection (Fake Arm vs. Real Arm IP, reliably sourced via global `rosapi` endpoints).
-  - **MoveIt Servo Monitoring:** Dynamic UI indicators (Green/Orange/Red) with pulsing animations that mirror MoveIt collision/wait states in real-time.
-  - **Virtual Teleoperation:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments. Movement speed and Cartesian jogging have been perfectly synchronized with the physical Gamepad controllers, utilizing a `0.1` to `0.5` m/s range and dynamic trajectory recalculations to ensure 100% stutter-free and fast robotic movement at any speed.
-  - **Interactive UI & Layout Optimization:** The layout is intelligently structured (Cartesian Jogging top, Telemetry below) with zero wasted whitespace. Features dynamic, pulsing UI elements like the "Start Listening" Whisper AI button which now fully integrates with the backend, triggering a 5-second real-time speech recording via an Action Client upon activation. The final recognized transcription is published back to the ROS backend to be processed by the voice listener, replacing the need for standalone Whisper debug scripts.
-  - **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
-  - **Color-Coded Console Log:** A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
+  - **Advanced Telemetry:** <br> Live system status pills for network ports (UI, WS, Nexus), active Gamepad connection (USB), and automatic Hardware Mode detection (Fake Arm vs. Real Arm IP, reliably sourced via global `rosapi` endpoints).
+  - **MoveIt Servo Monitoring:** <br> Dynamic UI indicators (Green/Orange/Red) with pulsing animations that mirror MoveIt collision/wait states in real-time.
+  - **Virtual Teleoperation:** <br> An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments. Movement speed and Cartesian jogging have been perfectly synchronized with the physical Gamepad controllers, utilizing a `0.1` to `0.5` m/s range and dynamic trajectory recalculations to ensure 100% stutter-free and fast robotic movement at any speed.
+  - **Interactive UI & Layout Optimization:** <br> The layout is intelligently structured (Cartesian Jogging top, Telemetry below) with zero wasted whitespace. Features dynamic, pulsing UI elements like the "Start Listening" Whisper AI button which now fully integrates with the backend, triggering a 5-second real-time speech recording via an Action Client upon activation. The final recognized transcription is published back to the ROS backend to be processed by the voice listener, replacing the need for standalone Whisper debug scripts.
+  - **YOLO Grasp Integration:** <br> Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
+  - **Color-Coded Console Log:** <br> A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
 
 ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 
@@ -673,12 +673,11 @@ To provide a clear understanding of the architecture, the software modules are c
 
 > [!NOTE]
 > **Purpose & Task:** Integrates a locally built NVIDIA Isaac Sim environment directly into the ROS 2 Nexus bringup sequence. Instead of actively computing physics or conflicting with hardware controllers, Isaac Sim runs in **Shadow Mode**. It subscribes to the `/joint_states` topic and maps the physical (or fake) robot movements onto an extremely high-fidelity USD asset in real-time.
-- **Workflow:** 
-  1. The user launches `RUN DEV Setup (FAKE)` or `(REAL)` via the Nexus Dashboard.
+- **Workflow:** <br> 1. The user launches `RUN DEV Setup (FAKE)` or `(REAL)` via the Nexus Dashboard.
   2. The user clicks `Start Isaac Sim (Lite6 Modul)` under the Isaac Sim category.
   7. The custom script spawns the local `isaac-sim.sh` binary with `--allow-root` and automatically opens the pre-configured Action Graph scene (`lite6_isaac_ros2.usd`).
-- **OmniGraph Architecture:** The scene uses a minimal footprint Action Graph consisting of an `On Playback Tick` node firing into a `ROS2 Subscribe Joint State` node (listening to `/joint_states`), which pipes directly into the `Articulation Controller` driving the robot asset.
-- **`COLCON_IGNORE` Integration:** Because Isaac Sim contains thousands of non-ROS python scripts within its `_build` cache, a `.colconignore` (or `COLCON_IGNORE`) file is placed inside the `isaacsim` directory to prevent `colcon build` from fatally crashing the ROS 2 workspace compilation.
+- **OmniGraph Architecture:** <br> The scene uses a minimal footprint Action Graph consisting of an `On Playback Tick` node firing into a `ROS2 Subscribe Joint State` node (listening to `/joint_states`), which pipes directly into the `Articulation Controller` driving the robot asset.
+- **`COLCON_IGNORE` Integration:** <br> Because Isaac Sim contains thousands of non-ROS python scripts within its `_build` cache, a `.colconignore` (or `COLCON_IGNORE`) file is placed inside the `isaacsim` directory to prevent `colcon build` from fatally crashing the ROS 2 workspace compilation.
 
 ---
 
@@ -917,7 +916,7 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 ### Base System (Core Prerequisite)
 
 The absolute core prerequisite for this workspace is the official UFactory ROS 2 package. Because this repository acts as an extension, all dependencies of the main repository must be met:
-- **Repository:** [UFactory xarm_ros2 (Humble)](https://github.com/xArm-Developer/xarm_ros2/tree/humble)
+- **Repository:** <br> [UFactory xarm_ros2 (Humble)](https://github.com/xArm-Developer/xarm_ros2/tree/humble)
 - All official UFactory installation steps and drivers (e.g., xArm-C++-API) must be fully functional in the background.
 
 ### Core ROS 2 Packages
@@ -995,16 +994,16 @@ pip install ultralytics==6.7.171 # YOLO 3D Object detection
 To correctly calibrate the Tobii Pro Glasses 3 setup (using the glasses, the calibration card, and the 4 ArUco markers on the UI), two separate steps must be performed:
 
 1. **Glasses Calibration (using the Calibration Card):** This step ensures that the cameras inside the glasses accurately map the wearer's pupils to 3D space.
-   - **Put on Glasses:** Put on the glasses and connect them to the recording unit. Ensure the Tobii Pro Controller software is running.
-   - **Position the Card:** Hold the small Tobii calibration card (with the distinctive pattern) in front of you at a natural distance (about 50 to 80 cm).
-   - **Fixate Gaze:** Focus strictly on the **dot/hole in the center** of the card. Keep the card and your head as still as possible.
-   - **Start Calibration:** Click "Calibrate" in the Tobii software and keep your gaze fixated until the software reports a success.
+   - **Put on Glasses:** <br> Put on the glasses and connect them to the recording unit. Ensure the Tobii Pro Controller software is running.
+   - **Position the Card:** <br> Hold the small Tobii calibration card (with the distinctive pattern) in front of you at a natural distance (about 50 to 80 cm).
+   - **Fixate Gaze:** <br> Focus strictly on the **dot/hole in the center** of the card. Keep the card and your head as still as possible.
+   - **Start Calibration:** <br> Click "Calibrate" in the Tobii software and keep your gaze fixated until the software reports a success.
    - *Tip:* If the glasses shift or you take them off, you should repeat this step.
 
 2. **Display Mapping (using 4 ArUco Markers):** Now that the glasses know where you are looking in space, the system needs to understand where your monitor is located.
-   - **Show Markers:** Start the Gaze UI (`gaze_ui_node_tobii_glasses.py`). The 4 ArUco markers will be prominently displayed in the corners of the UI window.
-   - **Look at Monitor:** Sit in front of the monitor. Ensure that the front camera (scene camera) of the glasses has **all 4 ArUco markers simultaneously** in its field of view.
-   - **Tracking:** Once the scene camera sees all 4 markers, the system automatically computes a perspective transformation (homography). It then translates your 3D gaze vector from the glasses into exact 2D mouse coordinates on the screen. If you get too close to the screen and the scene camera loses sight of the markers, tracking will pause.
+   - **Show Markers:** <br> Start the Gaze UI (`gaze_ui_node_tobii_glasses.py`). The 4 ArUco markers will be prominently displayed in the corners of the UI window.
+   - **Look at Monitor:** <br> Sit in front of the monitor. Ensure that the front camera (scene camera) of the glasses has **all 4 ArUco markers simultaneously** in its field of view.
+   - **Tracking:** <br> Once the scene camera sees all 4 markers, the system automatically computes a perspective transformation (homography). It then translates your 3D gaze vector from the glasses into exact 2D mouse coordinates on the screen. If you get too close to the screen and the scene camera loses sight of the markers, tracking will pause.
 
 
 
@@ -1239,8 +1238,8 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 
 ### <a id="subchapter-7-3"></a> 7.3 Launch Commands for UI Components
 *Launch these components via ROS 2 Nexus, or manually via terminal:*
-- **Workspace Analyzer Backend:** `python3 src/dashboard_monitoring/workspace_analyzer.py`
-- **Web Server:** `python3 -m http.server 8080 -d src/dashboard_monitoring`
+- **Workspace Analyzer Backend:** <br> `python3 src/dashboard_monitoring/workspace_analyzer.py`
+- **Web Server:** <br> `python3 -m http.server 8080 -d src/dashboard_monitoring`
 * *(Dashboard accessible at: `http://localhost:8080/dashboard_index.html`)*
 
 ---
@@ -1273,7 +1272,7 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 #### Stereo Vision
 > Integration of true 3D depth data using a *ZED Mini (Stereolabs)* camera.
 - The camera can be mounted either **stationary** (on a tripod) or **on the end-effector (EEF)**.
-- **Object Cross Scan:** The robot can execute precise, individual cross-pattern flights directly over objects (using dynamic Just-in-Time live position lookups via TF) to capture detailed point clouds from multiple angles.
+- **Object Cross Scan:** <br> The robot can execute precise, individual cross-pattern flights directly over objects (using dynamic Just-in-Time live position lookups via TF) to capture detailed point clouds from multiple angles.
 #### VLA & Video Action Models (Planned)
 > AI-assisted action planning through *Vision-Language-Action* models.
 
@@ -1301,9 +1300,9 @@ For cognitively relieving teleoperation, the user is provided with a central, im
 > In *OBS Studio*, all components are consolidated and provided to the user as a central GUI for robot teleoperation.*
 
 **Gaze Control User Interface**<br>
-- **Safety Boundary:** Includes a soft-landing brake zone starting at 40.0mm that quadratically reduces downward velocity (Z < 0), and a hard stop that completely blocks downward movement at Z=33.0mm, protecting the workspace from collision.
-- **Speed & Ergonomics:** Fine-tuned translation speed (0.10 m/s) and rotation speed (0.5 rad/s) for precise gaze-based Cartesian jogging. The UI buttons feature an optimized hitbox architecture with increased widths and perfect bottom-edge screen alignment to maximize eye-tracking reliability.
-- **Vacuum Gripper Integration:** Full support for toggling the xArm Lite 6 vacuum gripper via the UI, using the `VacuumGripperCtrl` service.
+- **Safety Boundary:** <br> Includes a soft-landing brake zone starting at 40.0mm that quadratically reduces downward velocity (Z < 0), and a hard stop that completely blocks downward movement at Z=33.0mm, protecting the workspace from collision.
+- **Speed & Ergonomics:** <br> Fine-tuned translation speed (0.10 m/s) and rotation speed (0.5 rad/s) for precise gaze-based Cartesian jogging. The UI buttons feature an optimized hitbox architecture with increased widths and perfect bottom-edge screen alignment to maximize eye-tracking reliability.
+- **Vacuum Gripper Integration:** <br> Full support for toggling the xArm Lite 6 vacuum gripper via the UI, using the `VacuumGripperCtrl` service.
 
 ![Gaze Control UI](_imgs/gaze_control_interface.png)
 
