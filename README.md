@@ -10,6 +10,9 @@
   <img src="https://img.shields.io/badge/MoveIt-2-00529B?style=for-the-badge" alt="MoveIt 2">
 </p>
 
+<p align="center">
+  <a href="readme-de.md">🇩🇪 <b>Auf Deutsch lesen / Read in German</b></a>
+</p>
 
 This repository is a continuously evolving research and evaluation platform for multimodal teleoperation and Human-Computer Interaction (HCI). <br>
 > [!IMPORTANT]

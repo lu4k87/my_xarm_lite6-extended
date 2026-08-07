@@ -10,6 +10,9 @@
   <img src="https://img.shields.io/badge/MoveIt-2-00529B?style=for-the-badge" alt="MoveIt 2">
 </p>
 
+<p align="center">
+  <a href="README.md">🇬🇧 <b>Read in English / Auf Englisch lesen</b></a>
+</p>
 
 Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- und Evaluationsplattform für multimodale Teleoperation und Mensch-Computer-Interaktion (HCI). <br>
 > [!IMPORTANT]
