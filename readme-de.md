@@ -310,6 +310,7 @@ Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Se
   | **`/ui/collision_msg`** | `std_msgs/String` | *Meldet harte Stopps an das UI-Log.* |
 
 <br>
+
 ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
  
 | Parameter | Standardwert | Beschreibung |
@@ -342,6 +343,7 @@ Die Echtzeit-Bewegungs-Engine von MoveIt. Reagiert auf dynamische Hindernisse (Y
   | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | *Sendet validierte Gelenktrajektorien an den Roboter.* |
 
 <br>
+
 ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`xarm_moveit_servo_config.yaml`)**
 
 | Parameter | Standardwert | Beschreibung |
@@ -370,6 +372,7 @@ Der native Hardware-Treiber der Stereolabs ZED Mini Kamera.
   | **`/zed/zed_node/point_cloud/cloud_registered`** | `sensor_msgs/PointCloud2` | *Publiziert die dichte 3D-Punktwolke.* |
 
 <br>
+
 ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`)**
 
 | Parameter | Standardwert | Beschreibung |
@@ -403,6 +406,7 @@ Verarbeitet parallel den RGB- und Depth-Stream mit GPU-Beschleunigung und dem **
   | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Sendet die fertigen 3D-Boxen zur Visualisierung an RViz und Nodes.* |
 
 <br>
+
 ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 
 | Parameter | Standardwert | Beschreibung |
@@ -473,6 +477,7 @@ Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("G
   - **Phase 2 (Hover):** <br> Bewegt sich horizontal auf der sicheren Z-Höhe (15cm) exakt über das Zielobjekt. Erzwingt dabei eine strikte Top-Down Orientierung (gerade nach unten) und nutzt sehr enge IK-Toleranzen (5mm Position, 0.001 rad Neigung) für millimetergenaue Ausrichtung.
   - **Phase 3 (Approach):** <br> Schaltet das anvisierte Objekt kurzzeitig über `/ui/ignore_collision_object` in der globalen MoveIt Kollisionsszene ab, damit der Greifer physisch in die Bounding Box eindringen kann, ohne einen Not-Aus auszulösen, und fährt dann nach unten.
 <br>
+
 ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 
 | Parameter | Standardwert | Beschreibung |
