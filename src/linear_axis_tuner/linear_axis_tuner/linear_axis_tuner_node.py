@@ -7,11 +7,13 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QSlider
 from PyQt5.QtCore import Qt, QTimer
 from geometry_msgs.msg import TransformStamped
 from tf2_ros import TransformBroadcaster
+from visualization_msgs.msg import Marker
 
 class LinearAxisTuner(Node):
     def __init__(self):
         super().__init__('linear_axis_tuner')
         self.tf_broadcaster = TransformBroadcaster(self)
+        self.marker_pub = self.create_publisher(Marker, '/visualization_marker', 10)
         self.current_position = 0.0
 
         # PyQt5 Setup
@@ -67,6 +69,27 @@ class LinearAxisTuner(Node):
         t.transform.rotation.w = 1.0
 
         self.tf_broadcaster.sendTransform(t)
+
+        # Publish visual marker for the rail
+        marker = Marker()
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.header.frame_id = 'world'
+        marker.ns = 'linear_axis_rail'
+        marker.id = 0
+        marker.type = Marker.CUBE
+        marker.action = Marker.ADD
+        marker.pose.position.x = 0.0
+        marker.pose.position.y = 0.0
+        marker.pose.position.z = -0.025
+        marker.pose.orientation.w = 1.0
+        marker.scale.x = 0.12 # width
+        marker.scale.y = 1.2  # length
+        marker.scale.z = 0.05 # height
+        marker.color.r = 0.3
+        marker.color.g = 0.3
+        marker.color.b = 0.3
+        marker.color.a = 1.0
+        self.marker_pub.publish(marker)
 
     def run(self):
         sys.exit(self.app.exec_())
