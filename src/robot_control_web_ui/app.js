@@ -243,6 +243,15 @@ function updateLinearAxis(val) {
   const label = document.getElementById('linear-axis-val');
   if(label) label.innerText = numVal.toFixed(2) + " m";
   
+  // Update slider visual track fill
+  const slider = document.getElementById('linear-axis-slider');
+  if(slider) {
+    const min = parseFloat(slider.min) || -0.5;
+    const max = parseFloat(slider.max) || 0.5;
+    const percentage = ((numVal - min) / (max - min)) * 100;
+    slider.style.backgroundSize = percentage + '% 100%';
+  }
+  
   // Publish to ROS 2
   linearAxisPub.publish(new ROSLIB.Message({ data: numVal }));
 }

@@ -14,6 +14,7 @@
 #include <std_srvs/srv/set_bool.hpp>
 #include "std_msgs/msg/float32.hpp" // Für die Geschwindigkeitsanzeige
 #include "std_msgs/msg/string.hpp"   // Für Statusmeldungen
+#include "std_msgs/msg/float64.hpp"  // Für die Linearachse
 #include "std_msgs/msg/int32.hpp"
 #include "std_msgs/msg/float32_multi_array.hpp"
 #include <tf2_ros/buffer.h>
@@ -112,6 +113,7 @@ private:
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr speed_pub_;            
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr button_press_pub_;      
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr frame_pub_;
+    rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr linear_axis_pub_;
     rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr eef_pos_pub_;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr set_speed_index_sub_;
 
@@ -168,6 +170,7 @@ private:
     int current_speed_index_;                   
     double linear_speed_scale_;                 
     float prev_cross_key_fb_state_;
+    float current_linear_axis_pos_;
     
     // --- NEUE Timer-Variablen ---
     rclcpp::TimerBase::SharedPtr timeout_timer_; 

@@ -310,7 +310,7 @@ class TFTunerGUI(QWidget):
         for name, data in self.elements.items():
             t = TransformStamped()
             t.header.stamp = timestamp
-            t.header.frame_id = 'link_base'
+            t.header.frame_id = 'world'
             t.child_frame_id = data['frame_id']
     
             t.transform.translation.x = data['x'] / 1000.0

@@ -110,7 +110,7 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true",
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
           "label": "Fake Move Launch",
           "type": "launch"
         }
@@ -134,7 +134,7 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_vacuum_gripper:=true",
+          "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
           "label": "MoveGroup Server (FAKE)",
           "type": "launch"
         },

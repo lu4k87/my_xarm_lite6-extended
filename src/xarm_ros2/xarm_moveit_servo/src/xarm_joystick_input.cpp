@@ -18,6 +18,7 @@
 #include <sensor_msgs/msg/joy.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/float64.hpp>
 #include <std_msgs/msg/int32.hpp>
 #include <xarm_msgs/srv/call.hpp>
 #include <xarm_msgs/srv/get_float32_list.hpp>
@@ -56,7 +57,8 @@ namespace xarm_moveit_servo
           ee_frame_name_("link_tcp"),
           planning_frame_("link_base"),
           current_speed_index_(2),
-          prev_cross_key_fb_state_(0.0f)
+          prev_cross_key_fb_state_(0.0f),
+          current_linear_axis_pos_(0.0f)
 
     { 
         speed_levels_ = {0.1, 0.2, 0.3, 0.4, 0.5};
@@ -81,6 +83,7 @@ namespace xarm_moveit_servo
 	    speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/ui/robot_control/current_speed", rclcpp::QoS(1).transient_local()); 
         button_press_pub_ = this->create_publisher<std_msgs::msg::String>("/ui/joy_button_presses", 10);
         frame_pub_ = this->create_publisher<std_msgs::msg::String>("/ui/robot_control/current_frame", rclcpp::QoS(1).transient_local());
+        linear_axis_pub_ = this->create_publisher<std_msgs::msg::Float64>("/linear_axis_cmd", 10);
 
         tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
         tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -363,8 +366,12 @@ namespace xarm_moveit_servo
         // ----------------------------------------------------------------
 
         if (axes[xbox_CROSS_KEY_LR]) {
-            joint->joint_names.push_back("joint1");
-            joint->velocities.push_back(axes[xbox_CROSS_KEY_LR] * 0.0);
+            current_linear_axis_pos_ += axes[xbox_CROSS_KEY_LR] * 0.005; // ~0.1 m/s bei 20Hz Autorepeat
+            current_linear_axis_pos_ = std::clamp(current_linear_axis_pos_, -0.5f, 0.5f);
+            
+            auto msg = std::make_unique<std_msgs::msg::Float64>();
+            msg->data = current_linear_axis_pos_;
+            linear_axis_pub_->publish(std::move(msg));
             return false;
         }
 

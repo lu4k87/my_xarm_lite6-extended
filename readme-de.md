@@ -316,6 +316,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 >> | **LT / RT** (Trigger) | **Heben/Senken (Z)** | *Bewegt den Roboterarm auf/ab* |
 >> | **LB / RB** (Bumper) | **Rotieren (Yaw)** | *Dreht den Endeffektor um die eigene Achse* |
 >> | **D-Pad** (↕️) | **Speed Control** | *Schaltet 5 Geschwindigkeitsstufen durch* |
+>> | **D-Pad** (↔️) | **Linearachse** | *Bewegt den Roboter auf der Schiene (Base Y-Shift)* |
 >> | **START / BACK** | **Referenzrahmen** | *Wechselt zwischen Basis- (`link_base`) und Werkzeug-Koordinaten (`link_tcp`)* |
 >> | **A-Taste** (🟢) | **Vakuumgreifer** | *Schaltet das Vakuum an / aus* |
 >> | **B-Taste** (🔴) | **Not-Aus (Greifer)** | *Stoppt den Vakuumgreifer sofort* |
@@ -1112,6 +1113,8 @@ Z ≤ 96,5 mm → 🛑 HARD STOP: Abwärtsachse genullt + Rumble
 | **RB (Right Bumper)** | Handgelenk CW (Z+) | `TwistStamped.angular.z` | *`buttons[LB] - buttons[RB]`* |
 | **D-Pad ↑** | Geschwindigkeit hoch | Pub → `/ui/robot_control/current_speed` | *5 Stufen durchschalten* |
 | **D-Pad ↓** | Geschwindigkeit runter | Pub → `/ui/robot_control/current_speed` | *5 Stufen durchschalten* |
+| **D-Pad ←** | Linearachse nach links | Pub → `/linear_axis_cmd` | *Verschiebt den Roboter auf der Schiene* |
+| **D-Pad →** | Linearachse nach rechts | Pub → `/linear_axis_cmd` | *Verschiebt den Roboter auf der Schiene* |
 | **Back (⊞)** | Rahmen → `link_base` | Pub → `/ui/joy_button_presses` | *Weltkoordinaten-Modus* |
 | **Start (≡)** | Rahmen → `link_tcp` | Pub → `/ui/joy_button_presses` | *EEF-relativer Modus* |
 | **A (grün)** | Greifer toggle | Service: `open/close_lite6_gripper` | *Zustand in `vacuum_gripper_state_`* |

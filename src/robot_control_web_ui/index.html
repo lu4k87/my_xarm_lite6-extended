@@ -131,14 +131,17 @@
             <input type="range" id="speed-slider" min="0" max="4" value="2" oninput="updateSpeed(this.value)">
           </div>
           
-          <div class="linear-axis-control" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <h3 style="font-size: 14px; margin: 0; color: var(--txt);"><i class="fa-solid fa-arrows-left-right"></i> Linear Axis (Base Y-Shift)</h3>
-              <span id="linear-axis-val" style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--rviz-y); font-weight: bold;">0.00 m</span>
-            </div>
-            <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0" oninput="updateLinearAxis(this.value)" style="width: 100%;">
-          </div>
+        </section>
 
+        <section id="panel-linear-axis" class="glass-panel">
+          <h2><i class="fa-solid fa-arrows-left-right"></i> Linear Axis Control</h2>
+          <div class="linear-axis-control">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h3 style="font-size: 14px; margin: 0; color: var(--txt);">Base Y-Shift</h3>
+              <span id="linear-axis-val" style="font-family: 'JetBrains Mono'; font-size: 14px; color: var(--rviz-y); font-weight: bold;">0.00 m</span>
+            </div>
+            <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0" oninput="updateLinearAxis(this.value)" style="width: 100%; background-size: 50% 100%;">
+          </div>
         </section>
 
         <section id="panel-telemetry" class="glass-panel">
