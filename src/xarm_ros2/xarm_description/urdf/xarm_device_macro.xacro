@@ -68,9 +68,9 @@
     <xacro:property name="inertial_params_filename" value="${scope_parent_inertial_params_filename}"/>
     <xacro:property name="model_num" value="${scope_parent_model_num}"/>
 
-    <!-- add one world link if no 'attach_to' specified  -->
-    <xacro:if value="${attach_to == 'world' and create_attach_link}">
-      <link name="world" />
+    <!-- add the attach_to link if create_attach_link is true -->
+    <xacro:if value="${create_attach_link}">
+      <link name="${attach_to}" />
     </xacro:if>
 
     <joint name="${prefix}world_joint" type="fixed">
