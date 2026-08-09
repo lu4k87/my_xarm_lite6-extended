@@ -287,8 +287,8 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 
 > [!NOTE]
 > **Virtual Linear Axis (Simulation Only):** In FAKE mode, it is possible to mount the robot on a virtual linear axis without affecting the MoveIt planning group (`lite6`).
-> - **Activation:** Use the launch parameter `use_linear_axis:=true`.
-> - **Control:** Start `ros2 run linear_axis_tuner linear_axis_tuner` to move the robot base horizontally via a GUI slider.
+> - **Activation:** The Nexus Web App automatically starts the linear axis tuner when you launch any FAKE mode. If starting manually, append `attach_to:=linear_axis_link` to the launch command.
+> - **Control:** The GUI slider (`ros2 run linear_axis_tuner linear_axis_tuner`) opens automatically to move the robot base horizontally.
 > - **MoveIt Architecture:** The axis is shifted purely via dynamic TF (`world` -> `linear_axis_link`), completely decoupled from the URDF joints. This ensures MoveIt automatically recognizes the new base pose for planning/collision detection without needing a 7-DoF IK solver.
 
 ---
