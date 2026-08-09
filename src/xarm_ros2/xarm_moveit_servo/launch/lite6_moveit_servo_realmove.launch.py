@@ -23,6 +23,7 @@ def generate_launch_description():
     velocity_control = LaunchConfiguration('velocity_control', default=False)
     add_gripper = LaunchConfiguration('add_gripper', default=False)
     add_vacuum_gripper = LaunchConfiguration('add_vacuum_gripper', default=False)
+    attach_to = LaunchConfiguration('attach_to', default='world')
     baud_checkset = LaunchConfiguration('baud_checkset', default=True)
     default_gripper_baud = LaunchConfiguration('default_gripper_baud', default=2000000)
 
@@ -44,6 +45,7 @@ def generate_launch_description():
             'add_gripper': add_gripper,
             'add_vacuum_gripper': add_vacuum_gripper,
             'robot_type': 'lite',
+            'attach_to': attach_to,
             'ros2_control_plugin': 'uf_robot_hardware/UFRobotSystemHardware',
         }.items(),
     )

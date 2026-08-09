@@ -210,12 +210,6 @@ def launch_setup(context, *args, **kwargs):
             parameters=[robot_description_parameters],
         ),
         ComposableNode(
-            package='tf2_ros',
-            plugin='tf2_ros::StaticTransformBroadcasterNode',
-            name='static_tf2_broadcaster',
-            parameters=[{'child_frame_id': 'link_base', 'frame_id': 'world'}],
-        ),
-        ComposableNode(
             package='moveit_servo',
             plugin='moveit_servo::ServoNode',
             name='servo_server',
