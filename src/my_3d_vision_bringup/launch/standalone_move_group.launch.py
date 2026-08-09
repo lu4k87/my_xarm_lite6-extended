@@ -26,7 +26,11 @@ def launch_setup(context, *args, **kwargs):
     velocity_control = LaunchConfiguration('velocity_control', default=False)
     model1300 = LaunchConfiguration('model1300', default=False)
     robot_sn = LaunchConfiguration('robot_sn', default='')
-    attach_to = LaunchConfiguration('attach_to', default='world')
+    
+    use_linear_axis = LaunchConfiguration('use_linear_axis', default='false')
+    use_linear_axis_val = use_linear_axis.perform(context)
+    attach_to_val = 'linear_axis_link' if use_linear_axis_val.lower() == 'true' else LaunchConfiguration('attach_to', default='world').perform(context)
+    
     attach_xyz = LaunchConfiguration('attach_xyz', default='"0 0 0"')
     attach_rpy = LaunchConfiguration('attach_rpy', default='"0 0 0"')
     mesh_suffix = LaunchConfiguration('mesh_suffix', default='stl')
@@ -88,7 +92,7 @@ def launch_setup(context, *args, **kwargs):
         velocity_control=velocity_control,
         model1300=model1300,
         robot_sn=robot_sn,
-        attach_to=attach_to,
+        attach_to=attach_to_val,
         attach_xyz=attach_xyz,
         attach_rpy=attach_rpy,
         mesh_suffix=mesh_suffix,

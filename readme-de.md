@@ -288,6 +288,12 @@ Der Roboter läuft über das `mock_components/GenericSystem` (bzw. FakeSystem) H
 ![Modus REAL](https://img.shields.io/badge/Modus-REAL_(Hardware)-red?style=for-the-badge)<br>
 Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein, welches via TCP/IP direkt mit dem physischen Controller des xArm Lite 6 kommuniziert. In diesem Modus greifen Hardware-Limits, physische Sicherheits-Stopps und die exklusive Umschaltung der proprietären xArm Hardware-Modi (z. B. Mode 0 für Pose-Steuerung vs. Mode 1 für Servo/Jogging) über die UFactory API.
 
+> [!NOTE]
+> **Virtuelle Linearachse (Nur Simulation):** Im FAKE-Modus kann der Roboter auf einer simulierten Linearachse bewegt werden, ohne die MoveIt-Planungsgruppe (`lite6`) zu beeinflussen.
+> - **Aktivierung:** Über den Launch-Parameter `use_linear_axis:=true`.
+> - **Steuerung:** Mit `ros2 run linear_axis_tuner linear_axis_tuner` kann die Basis über einen GUI-Slider horizontal verfahren werden.
+> - **MoveIt-Architektur:** Die Achse wird rein über dynamisches TF (`world` -> `linear_axis_link`) verschoben und nicht als URDF-Joint in die Kinematik aufgenommen. Dadurch weiß MoveIt (dank TF) automatisch, wo der Roboter steht, ohne dass ein 7-DoF IK-Solver benötigt wird.
+
 ---
 
 ### 3.2 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
