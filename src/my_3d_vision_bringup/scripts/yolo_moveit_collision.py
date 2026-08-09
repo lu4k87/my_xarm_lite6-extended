@@ -101,7 +101,7 @@ class YoloMoveitCollision(Node):
         # Get TCP position
         tcp_x, tcp_y, tcp_z = None, None, None
         try:
-            trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+            trans = self.tf_buffer.lookup_transform('world', 'link_tcp', rclpy.time.Time())
             tcp_x = trans.transform.translation.x
             tcp_y = trans.transform.translation.y
             tcp_z = trans.transform.translation.z

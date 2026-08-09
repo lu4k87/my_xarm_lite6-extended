@@ -130,8 +130,8 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'resolution': 0.02,          # 2cm Voxelgröße
-            'frame_id': 'link_base',     # Globale Karte relativ zum Roboterfuß
-            'base_frame_id': 'link_base',
+            'frame_id': 'world',         # Globale Karte relativ zum Roboterfuß
+            'base_frame_id': 'world',
             'sensor_model/max_range': 2.0, # Ignoriere alles, was weiter als 2m weg ist
             'latch': False
         }],

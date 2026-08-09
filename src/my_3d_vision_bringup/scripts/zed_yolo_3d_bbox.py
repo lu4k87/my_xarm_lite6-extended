@@ -148,7 +148,7 @@ class ZedYolo3DNode(Node):
 
         # Lookup TF to map 3D points exactly into link_base
         try:
-            trans = self.tf_buffer.lookup_transform('link_base', frame_id, rclpy.time.Time())
+            trans = self.tf_buffer.lookup_transform('world', frame_id, rclpy.time.Time())
             q = trans.transform.rotation
             t = trans.transform.translation
             x_q, y_q, z_q, w_q = q.x, q.y, q.z, q.w
@@ -276,7 +276,7 @@ class ZedYolo3DNode(Node):
                     center_z = (min_z + max_z) / 2.0
                     scale_z = max(0.02, max_z - min_z)
                 
-                marker_frame = 'link_base'
+                marker_frame = 'world'
             else:
                 if pts_opt.shape[1] < 10:
                     continue
@@ -453,7 +453,7 @@ class ZedYolo3DNode(Node):
                 tm.pose.position.x = float(center_x)
                 tm.pose.position.y = float(center_y)
                 
-                if marker.header.frame_id == 'link_base':
+                if marker.header.frame_id == 'world':
                     base_z = float(center_z) + (scale_z / 2.0) + 0.02
                     tm.pose.position.z = base_z + z_offset
                 else:

@@ -29,7 +29,7 @@ class ZedVisualPublisher(Node):
         
         def create_profile_part(m_id, dx, dy, sx, sy):
             m = Marker()
-            m.header.frame_id = 'link_base'
+            m.header.frame_id = 'world'
             m.header.stamp = now
             m.ns = 'zed_visuals_stand'
             m.id = m_id

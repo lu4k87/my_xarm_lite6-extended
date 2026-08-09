@@ -109,7 +109,7 @@ def generate_launch_description():
             '--yaw', LaunchConfiguration('tf_yaw'),
             '--pitch', LaunchConfiguration('tf_pitch'),
             '--roll', LaunchConfiguration('tf_roll'),
-            '--frame-id', 'link_base',        # Elternrahmen (Roboterbasis)
+            '--frame-id', 'world',            # Elternrahmen (Welt)
             '--child-frame-id', 'zed_camera_link',  # Kindrahmen (ZED-Kamera)
         ],
         output='screen'

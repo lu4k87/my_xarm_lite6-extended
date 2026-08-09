@@ -222,7 +222,7 @@ class YoloPlannedGraspExecutor(Node):
             time.sleep(0.5)
             
             try:
-                trans = tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+                trans = tf_buffer.lookup_transform('world', 'link_tcp', rclpy.time.Time())
                 cur_x = trans.transform.translation.x
                 cur_y = trans.transform.translation.y
                 cur_z = trans.transform.translation.z
@@ -393,7 +393,7 @@ class YoloPlannedGraspExecutor(Node):
         req.ik_request.timeout.sec = 1
         
         pose_stamped = PoseStamped()
-        pose_stamped.header.frame_id = "link_base"
+        pose_stamped.header.frame_id = "world"
         pose_stamped.pose.position.x = float(x)
         pose_stamped.pose.position.y = float(y)
         pose_stamped.pose.position.z = float(z)
@@ -421,7 +421,7 @@ class YoloPlannedGraspExecutor(Node):
         goal_msg = MoveGroup.Goal()
         
         req = MotionPlanRequest()
-        req.workspace_parameters.header.frame_id = "link_base"
+        req.workspace_parameters.header.frame_id = "world"
         req.workspace_parameters.min_corner.x = -1.0
         req.workspace_parameters.min_corner.y = -1.0
         req.workspace_parameters.min_corner.z = -0.5
@@ -436,7 +436,7 @@ class YoloPlannedGraspExecutor(Node):
         req.max_acceleration_scaling_factor = float(self.get_parameter('acceleration_scaling').value)
         
         p_constraint = PositionConstraint()
-        p_constraint.header.frame_id = "link_base"
+        p_constraint.header.frame_id = "world"
         p_constraint.link_name = "link_tcp"
         
         bv = BoundingVolume()
@@ -455,7 +455,7 @@ class YoloPlannedGraspExecutor(Node):
         p_constraint.weight = 1.0
 
         o_constraint = OrientationConstraint()
-        o_constraint.header.frame_id = "link_base"
+        o_constraint.header.frame_id = "world"
         o_constraint.link_name = "link_tcp"
         o_constraint.orientation = quat
         o_constraint.absolute_x_axis_tolerance = float(ik_tol_ori)

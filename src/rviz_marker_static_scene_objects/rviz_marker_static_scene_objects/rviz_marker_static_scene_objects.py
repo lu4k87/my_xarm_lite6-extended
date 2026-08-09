@@ -14,7 +14,7 @@ LINE_THICKNESS = 0.001
 
 # Frames und interaktive Schwellenwerte
 EEF_FRAME = 'link_eef'      
-TARGET_FRAME = 'link_base'  
+TARGET_FRAME = 'world'  
 POSITION_TOLERANCE = 0.01   # 10 mm Trigger-Radius für Farbumschlag
 
 # Zielpositionen für die Hohlkörper (jetzt über TF Tuner gesteuert, mit statischem Fallback)
