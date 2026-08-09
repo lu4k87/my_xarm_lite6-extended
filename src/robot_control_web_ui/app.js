@@ -231,6 +231,22 @@ function updateScanSpeed() {
   scanSpeedPub.publish(new ROSLIB.Message({ data: val }));
 }
 
+// ── Linear Axis ─────────────────────────────────────────────────────────
+const linearAxisPub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/linear_axis_cmd',
+  messageType: 'std_msgs/Float64'
+});
+
+function updateLinearAxis(val) {
+  const numVal = parseFloat(val);
+  const label = document.getElementById('linear-axis-val');
+  if(label) label.innerText = numVal.toFixed(2) + " m";
+  
+  // Publish to ROS 2
+  linearAxisPub.publish(new ROSLIB.Message({ data: numVal }));
+}
+
 // ── YOLO 3D Objects ─────────────────────────────────────────────────────
 const yoloSub = new ROSLIB.Topic({
   ros: ros,

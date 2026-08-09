@@ -1,64 +1,39 @@
 #!/usr/bin/env python3
 
-import sys
 import rclpy
 from rclpy.node import Node
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QSlider
-from PyQt5.QtCore import Qt, QTimer
 from geometry_msgs.msg import TransformStamped
 from tf2_ros import TransformBroadcaster
 from visualization_msgs.msg import Marker, MarkerArray
+from std_msgs.msg import Float64
 
 class LinearAxisTuner(Node):
     def __init__(self):
         super().__init__('linear_axis_tuner')
         self.tf_broadcaster = TransformBroadcaster(self)
         self.marker_pub = self.create_publisher(MarkerArray, '/visualization_marker_array', 10)
+        
+        # Subscribe to command from Web UI
+        self.sub = self.create_subscription(Float64, '/linear_axis_cmd', self.cmd_callback, 10)
+        
         self.current_position = 0.0
 
-        # PyQt5 Setup
-        self.app = QApplication(sys.argv)
-        self.window = QWidget()
-        self.window.setWindowTitle('Linear Axis Tuner (FAKE Mode)')
-        self.window.resize(400, 150)
+        # Timer to publish TF and Markers
+        self.timer = self.create_timer(0.05, self.timer_callback) # 20 Hz
 
-        layout = QVBoxLayout()
+    def cmd_callback(self, msg):
+        self.current_position = msg.data
+
+    def timer_callback(self):
+        now = self.get_clock().now().to_msg()
         
-        self.label = QLabel("Linear Axis Position (Y-Axis): 0.00 m")
-        self.label.setAlignment(Qt.AlignCenter)
-        self.label.setStyleSheet("font-size: 14px; font-weight: bold;")
-        layout.addWidget(self.label)
-
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setMinimum(-500) # -0.5m
-        self.slider.setMaximum(500)  # +0.5m
-        self.slider.setValue(0)
-        self.slider.setTickPosition(QSlider.TicksBelow)
-        self.slider.setTickInterval(100)
-        self.slider.valueChanged.connect(self.on_slider_changed)
-        layout.addWidget(self.slider)
-
-        self.window.setLayout(layout)
-        self.window.show()
-
-        # Timer to spin ROS 2 and publish TF
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.spin_and_publish)
-        self.timer.start(50) # 20 Hz
-
-    def on_slider_changed(self, value):
-        self.current_position = value / 1000.0
-        self.label.setText(f"Linear Axis Position (Y-Axis): {self.current_position:.2f} m")
-
-    def spin_and_publish(self):
-        rclpy.spin_once(self, timeout_sec=0)
-        
+        # Publish TF
         t = TransformStamped()
-        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.stamp = now
         t.header.frame_id = 'world'
         t.child_frame_id = 'linear_axis_link'
         
-        # Verschiebung auf der Y-Achse
+        # Translation on Y-Axis
         t.transform.translation.x = 0.0
         t.transform.translation.y = self.current_position
         t.transform.translation.z = 0.0
@@ -70,40 +45,108 @@ class LinearAxisTuner(Node):
 
         self.tf_broadcaster.sendTransform(t)
 
-        # Publish visual marker for the rail
-        marker = Marker()
-        marker.header.stamp = self.get_clock().now().to_msg()
-        marker.header.frame_id = 'world'
-        marker.ns = 'linear_axis_rail'
-        marker.id = 0
-        marker.type = Marker.CUBE
-        marker.action = Marker.ADD
-        marker.pose.position.x = 0.0
-        marker.pose.position.y = 0.0
-        marker.pose.position.z = -0.025
-        marker.pose.orientation.w = 1.0
-        marker.scale.x = 0.12 # width
-        marker.scale.y = 1.2  # length
-        marker.scale.z = 0.05 # height
-        marker.color.r = 0.3
-        marker.color.g = 0.3
-        marker.color.b = 0.3
-        marker.color.a = 1.0
-        
+        # Publish visual markers for the rail (MarkerArray)
         marker_array = MarkerArray()
-        marker_array.markers.append(marker)
+
+        # 1. Main Rail (Fixed in world)
+        main_rail = Marker()
+        main_rail.header.stamp = now
+        main_rail.header.frame_id = 'world'
+        main_rail.ns = 'linear_axis_rail'
+        main_rail.id = 0
+        main_rail.type = Marker.CUBE
+        main_rail.action = Marker.ADD
+        main_rail.pose.position.x = 0.0
+        main_rail.pose.position.y = 0.0
+        main_rail.pose.position.z = -0.04
+        main_rail.pose.orientation.w = 1.0
+        main_rail.scale.x = 0.15 # width
+        main_rail.scale.y = 1.2  # length
+        main_rail.scale.z = 0.03 # height
+        # White color to match the robot
+        main_rail.color.r = 0.95
+        main_rail.color.g = 0.95
+        main_rail.color.b = 0.95
+        main_rail.color.a = 1.0
+        marker_array.markers.append(main_rail)
         
+        # 2. Guide Rail Left (Fixed in world)
+        guide_left = Marker()
+        guide_left.header.stamp = now
+        guide_left.header.frame_id = 'world'
+        guide_left.ns = 'linear_axis_rail'
+        guide_left.id = 1
+        guide_left.type = Marker.CUBE
+        guide_left.action = Marker.ADD
+        guide_left.pose.position.x = 0.04
+        guide_left.pose.position.y = 0.0
+        guide_left.pose.position.z = -0.015
+        guide_left.pose.orientation.w = 1.0
+        guide_left.scale.x = 0.02
+        guide_left.scale.y = 1.2
+        guide_left.scale.z = 0.02
+        guide_left.color.r = 0.7
+        guide_left.color.g = 0.7
+        guide_left.color.b = 0.7
+        guide_left.color.a = 1.0
+        marker_array.markers.append(guide_left)
+
+        # 3. Guide Rail Right (Fixed in world)
+        guide_right = Marker()
+        guide_right.header.stamp = now
+        guide_right.header.frame_id = 'world'
+        guide_right.ns = 'linear_axis_rail'
+        guide_right.id = 2
+        guide_right.type = Marker.CUBE
+        guide_right.action = Marker.ADD
+        guide_right.pose.position.x = -0.04
+        guide_right.pose.position.y = 0.0
+        guide_right.pose.position.z = -0.015
+        guide_right.pose.orientation.w = 1.0
+        guide_right.scale.x = 0.02
+        guide_right.scale.y = 1.2
+        guide_right.scale.z = 0.02
+        guide_right.color.r = 0.7
+        guide_right.color.g = 0.7
+        guide_right.color.b = 0.7
+        guide_right.color.a = 1.0
+        marker_array.markers.append(guide_right)
+
+        # 4. Carriage (Moves with the robot base)
+        carriage = Marker()
+        carriage.header.stamp = now
+        # Attached to linear_axis_link so it moves automatically with the robot
+        carriage.header.frame_id = 'linear_axis_link'
+        carriage.ns = 'linear_axis_carriage'
+        carriage.id = 3
+        carriage.type = Marker.CUBE
+        carriage.action = Marker.ADD
+        carriage.pose.position.x = 0.0
+        carriage.pose.position.y = 0.0
+        carriage.pose.position.z = -0.01
+        carriage.pose.orientation.w = 1.0
+        carriage.scale.x = 0.16
+        carriage.scale.y = 0.16
+        carriage.scale.z = 0.02
+        carriage.color.r = 0.8
+        carriage.color.g = 0.8
+        carriage.color.b = 0.8
+        carriage.color.a = 1.0
+        marker_array.markers.append(carriage)
+
         self.marker_pub.publish(marker_array)
 
-    def run(self):
-        sys.exit(self.app.exec_())
 
 def main(args=None):
     rclpy.init(args=args)
     tuner = LinearAxisTuner()
-    tuner.run()
-    tuner.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(tuner)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        tuner.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
