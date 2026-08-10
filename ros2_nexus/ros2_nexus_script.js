@@ -153,7 +153,8 @@
         { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
         { cmd: "ros2 run tf_tuner tf_tuner", title: "Transform Tuner (tf_tuner)" },
         { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
-        { cmd: "ros2 run web_video_server web_video_server --ros-args -p port:=8082", title: "Web Video Server (Port 8082)" }
+        { cmd: "ros2 run web_video_server web_video_server --ros-args -p port:=8082", title: "Web Video Server (Port 8082)" },
+        { cmd: "ros2 run rviz_streamer rviz_streamer_node", title: "RViz Streamer Node" }
       ];
 
       if (mode !== "real") {
@@ -252,6 +253,7 @@
         { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
         { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
         { cmd: "ros2 run web_video_server web_video_server --ros-args -p port:=8082", title: "Web Video Server (Port 8082)" },
+        { cmd: "ros2 run rviz_streamer rviz_streamer_node", title: "RViz Streamer Node" },
         { cmd: "ros2 run gaze_control gaze_ui", title: "Gaze UI Node (Glasses 3 Pro)" }
       ];
 
@@ -402,6 +404,7 @@
                    <li><span style="color: var(--accent);">tf_tuner</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                    <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
                    <li><span style="color: var(--accent);">web_video_server</span> <span style="float: right; opacity: 0.7;">(ROS Video Stream :8082)</span></li>
+                   <li style="color: #f59e0b; font-weight: bold;"><span style="color: #f59e0b;">rviz_streamer_node</span> <span style="float: right; opacity: 0.7;">(RViz Streamer)</span></li>
                    <li style="color: #38bdf8; font-weight: bold;"><span style="color: #38bdf8;">linear_axis_tuner</span> <span style="float: right; opacity: 0.7;">(Linear Axis FAKE)</span></li>
                 </ul>
               </div>
@@ -469,6 +472,7 @@
                    <li><span style="color: var(--accent);">tf_tuner</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                    <li><span style="color: var(--accent);">robot_control_web_ui</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
                    <li><span style="color: var(--accent);">web_video_server</span> <span style="float: right; opacity: 0.7;">(ROS Video Stream :8082)</span></li>
+                   <li style="color: #f59e0b; font-weight: bold;"><span style="color: #f59e0b;">rviz_streamer_node</span> <span style="float: right; opacity: 0.7;">(RViz Streamer)</span></li>
                 </ul>
               </div>
             </div>
