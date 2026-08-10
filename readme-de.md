@@ -307,7 +307,11 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_joystick_input.cpp` &nbsp;&nbsp; <sub><i>[`/src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`](./src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 launch xarm_moveit_servo _robot_moveit_servo_realmove.launch.py` *(Loaded natively as Component)*
+> 💻 **Run Command:**
+> ```bash
+> ros2 launch xarm_moveit_servo _robot_moveit_servo_realmove.launch.py
+> ```
+> *(Loaded natively as Component)*
 >
 > **Zweck & Aufgabe:** Übersetzt die bereinigten Gamepad-Signale (Analog-Sticks & Trigger) in kartesische Geschwindigkeitsbefehle (`TwistStamped`) für MoveIt Servo. Wendet exponentielles Smoothing an und steuert alle Button-Mappings.
 >
@@ -365,7 +369,10 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`) &nbsp;&nbsp; <sub><i>[`/src/collision_check/collision_check/checker.py`](./src/collision_check/collision_check/checker.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run collision_check checker`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run collision_check checker
+> ```
 >
 > **Zweck & Aufgabe:** Sitzt als Wächter *vor* der Bewegungsübersetzung. Berechnet prädiktiv (0,1 Sek. in die Zukunft) die Z-Koordinate. Würde der Roboter den Tisch berühren, wird der Abwärtsbefehl des Controllers hart überschrieben und blockiert. Löst das Rumble-Feedback (Vibration) des Gamepads aus.
 >
@@ -445,7 +452,10 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_wrapper` &nbsp;&nbsp; <sub><i>[`/src/zed-ros2-wrapper`](./src/zed-ros2-wrapper)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm`
+> 💻 **Run Command:**
+> ```bash
+> ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm
+> ```
 >
 > **Zweck & Aufgabe:** Der native Hardware-Treiber der Stereolabs ZED Mini Kamera. 
 >
@@ -476,7 +486,10 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_yolo_3d_bbox.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/zed_yolo_3d_bbox.py`](./src/my_3d_vision_bringup/scripts/zed_yolo_3d_bbox.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run my_3d_vision_bringup zed_yolo_3d_bbox.py`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run my_3d_vision_bringup zed_yolo_3d_bbox.py
+> ```
 >
 > **Zweck & Aufgabe:** Verarbeitet parallel den RGB- und Depth-Stream mit GPU-Beschleunigung und dem **YOLOv8 Large** Modell. Isoliert Objekte, filtert Tiefenrauschen und berechnet millimetergenaue, auf die Tischebene geerdete 3D-Bounding-Boxen (inklusive Greifpunkt-Marker). Nutzt einen **robusten Oberflächen-Projektionsalgorithmus** (filtert die unteren 20% der Punkte heraus, um Tisch-Rauschen zu ignorieren), um die Bounding-Boxen exakt auf das tatsächliche physikalische Volumen der Objekte zu zentrieren, unabhängig vom Kamerawinkel. Nutzt ein **Dictionary-basiertes EMA-Tracking-System** mit persistenten, globalen IDs und einem engen 10cm-Distanz-Threshold, um ID-Swapping und Boxen-Jittering zwischen nah beieinander stehenden Objekten zu verhindern. Erkennt das System mehrere Objekte derselben Klasse, werden diese zur eindeutigen Identifikation dauerhaft durchnummeriert (z.B. `cup_1`, `cup_2`).
 >
@@ -515,7 +528,10 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py`](./src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run my_3d_vision_bringup pointcloud_optimizer.py`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run my_3d_vision_bringup pointcloud_optimizer.py
+> ```
 >
 > **Zweck & Aufgabe:** Läuft aktiv im Hintergrund während des 3D Vision Bringups. Fängt die rohe ZED-Punktwolke ab und transformiert das Koordinatensystem vom optischen Frame (`Z=vorwärts`) in den Standard-ROS-Frame (`X=vorwärts`), wobei RGB-Daten erhalten bleiben.
 >
@@ -543,7 +559,10 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py`](./src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run my_3d_vision_bringup yolo_moveit_collision.py`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run my_3d_vision_bringup yolo_moveit_collision.py
+> ```
 >
 > **Zweck & Aufgabe:** Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten um. Statt eines massiven Blocks wird eine **nach oben offene Becher-Form** (5 hauchdünne Wände à 1 mm) in den Planungsraum eingefügt. Dies erlaubt dem Greifer ein ungehindertes Eintauchen von oben (für Top-Down-Grasps), blockiert aber seitliche Kollisionen sicher.
 >
@@ -599,7 +618,10 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py`](./src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py
+> ```
 >
 > **Zweck & Aufgabe:** Die zentrale Steuerungslogik der autonomen Greif-Pipeline. Liest das UI-Feld ("Grasp Object") aus, holt sich die YOLO-Koordinaten und orchestriert eine robuste **Kollisionsfreie 3-Phasen Greif-Sequenz**:
 >   - **Phase 1 (Retract):** Fährt den Arm von seiner aktuellen Position exakt nach oben, um eine sichere Überflughöhe zu erreichen.
@@ -682,7 +704,10 @@ stateDiagram-v2
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/grasp_action_bridge.py`](./src/my_3d_vision_bringup/scripts/grasp_action_bridge.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run my_3d_vision_bringup grasp_action_bridge.py`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run my_3d_vision_bringup grasp_action_bridge.py
+> ```
 >
 > **Zweck & Aufgabe:** Übersetzer-Node zwischen dem RViz Control Panel und dem Action Server. Nimmt den simplen String des Zielobjekts aus dem UI entgegen und wandelt ihn in ein blockierungsfreies ROS 2 Action Goal um.
 >
@@ -707,7 +732,10 @@ stateDiagram-v2
 
 #### ![Python Script](https://img.shields.io/badge/Python_Script-3776AB?style=flat-square&logo=python&logoColor=white) `zed_stand_publisher.py`
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run my_3d_vision_bringup zed_stand_publisher.py`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run my_3d_vision_bringup zed_stand_publisher.py
+> ```
 >
 > **Zweck & Aufgabe:** Generiert mathematisch exakt das 3D-Modell des Kamerastativs (Aluminiumprofil) und publiziert dieses statisch in RViz.
 >
@@ -728,7 +756,10 @@ stateDiagram-v2
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `tf_tuner` &nbsp;&nbsp; <sub><i>[`/src/tf_tuner`](./src/tf_tuner)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run tf_tuner tf_tuner`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run tf_tuner tf_tuner
+> ```
 >
 > **Zweck & Aufgabe:** Ein dediziertes ROS 2 Paket, das ein Live-Tuner Interface (PyQt5) bereitstellt, um dynamisch Kamera-Offsets (Punktwolke) sowie die Positionierung interaktiver 3D-Szenelemente (Würfel, Rechteck, Zylinder, Weiße Plane) und einer anpassbaren **Safety Zone** (mit einstellbarem Radius) in RViz ohne Neustart zu justieren.
 >
@@ -760,7 +791,10 @@ stateDiagram-v2
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ros2_whisper` &nbsp;&nbsp; <sub><i>[`/src/ros2_whisper`](./src/ros2_whisper)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False`
+> 💻 **Run Command:**
+> ```bash
+> ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False
+> ```
 >
 > **Zweck & Aufgabe:** Lokale Speech-to-Text KI. Führt Whisper AI kontinuierlich auf dem Mikrofon-Stream aus und publiziert gesprochene Wörter als Text.
 > - **GPU-Beschleunigung & Modell-Optimierung:** Die Inference-Pipeline ist nativ für **GPU-Beschleunigung (CUDA)** optimiert und nutzt das dedizierte `base.en` Modell. Dies garantiert eine latenzfreie "High-Performance" Ausführung von Sprachbefehlen und verhindert Runtime-Timeouts.
@@ -783,7 +817,10 @@ stateDiagram-v2
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `audio_listener.py` &nbsp;&nbsp; <sub><i>[`/src/ros2_whisper/audio_listener/audio_listener/audio_listener.py`](./src/ros2_whisper/audio_listener/audio_listener/audio_listener.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False`
+> 💻 **Run Command:**
+> ```bash
+> ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False
+> ```
 >
 > **Zweck & Aufgabe:** Verarbeitet Mikrofoneingaben für das Sprachsteuerungssystem. Beinhaltet eine automatische, systembewusste Fallback-Logik, die explizit nach den System-Standard-Audiogeräten `pulse` oder `default` sucht und diese priorisiert, um eine zuverlässige Sprachaufzeichnung über verschiedene Hardware-Umgebungen hinweg zu garantieren.
 >
@@ -795,7 +832,10 @@ stateDiagram-v2
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `voice_command_listener.py` &nbsp;&nbsp; <sub><i>[`/src/voice_command_listener/voice_command_listener/voice_command_listener.py`](./src/voice_command_listener/voice_command_listener/voice_command_listener.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run voice_command_listener voice_command_listener`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run voice_command_listener voice_command_listener
+> ```
 >
 > **Zweck & Aufgabe:** Analysiert den diskreten, einzeln getriggerten Rohtext über exakte Regex-Muster und extrahiert die vom Nutzer definierten Handlungs-Intents (d.h. "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Enthält eine hohe Toleranz für ähnlich klingende Whisper-Erkennungen (z.B. "pause" oder "power" als "pose"). Implementiert eine robuste **3-Stufen-Deduplikations-Zustandsmaschine**, die eine exakt einmalige Befehlsausführung garantiert.
 >
@@ -823,7 +863,10 @@ stateDiagram-v2
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses.py` &nbsp;&nbsp; <sub><i>[`/src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py`](./src/gaze_control/gaze_control/gaze_ui_node_tobii_glasses.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run gaze_control gaze_ui_node_tobii_glasses.py`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run gaze_control gaze_ui_node_tobii_glasses.py
+> ```
 >
 > **Zweck & Aufgabe:** Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 1 Sek. Fixationsdauer) und sendet direkte Bewegungs- und Greiferbefehle. 
 > - **RTSP & Datenverarbeitung:** Verbindet sich per RTSP (Real-Time Streaming Protocol) mit der Brille (`rtsp://192.168.75.51:8554/live/all`), um parallel zwei Datenströme zu empfangen. Der Video-Stream liefert das Kamerabild für die Marker-Erkennung, während der Daten-Stream (JSON) in Echtzeit die rohen `gaze2d`-Blickkoordinaten überträgt.
@@ -900,7 +943,10 @@ stateDiagram-v2
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `robot_motion_handler_movegroup.py` &nbsp;&nbsp; <sub><i>[`/src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py`](./src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 run robot_motion_handler_movegroup robot_motion_handler_movegroup`
+> 💻 **Run Command:**
+> ```bash
+> ros2 run robot_motion_handler_movegroup robot_motion_handler_movegroup
+> ```
 >
 > **Zweck & Aufgabe:** Führt die Befehle des Control Panels unsichtbar im Hintergrund aus. Beinhaltet einen intelligenten Startup-Trigger und sichere Gelenk-Ausführungen (pausiert Servo, plant Trajektorie, reaktiviert Servo). Sowohl die "Move To: Absolute Pose" als auch die "Move To: Initial Pose" Bewegungen (ausgelöst über Web UI oder RViz) nutzen nun einen robusten **IK-Solver (Inverse Kinematik)**. Dieser berechnet die perfekten Gelenkwinkel für absolute Koordinaten und führt diese als sichere, kollisionsfreie Kurvenfahrten (Joint-Trajectories). Dadurch werden Self-Collisions und Singularitäten, die bei sturen kartesischen Geradeausfahrten quer durch den Raum entstehen, vollständig eliminiert. Die Ausführungsgeschwindigkeit all dieser Gelenkbewegungen sowie der Scan-Pfade wird nun zentral über die **Action Speed Radiobuttons** (Slow, Normal, Fast) in der UI gesteuert, was für geschmeidige langsame Fahrten oder pfeilschnelle Bewegungen je nach Einstellung sorgt. **Object Cross Scan:** Verarbeitet den `/ui/start_object_scan` Service, der gezielte, halbkugelförmige Scan-Bögen (Kugeloberfläche) über die Objekte abfährt. Die exakten Positionen der Objekte (Cube, Rectangle, Cylinder) werden live über den TF-Baum ermittelt. Um den Kameraabstand exakt konstant zu halten, wandert der TCP in einem sanften Bogen über das Objekt und nutzt einen exakten trigonometrischen Look-At (Fokus-Punkt), um das Objekt ununterbrochen zentriert anzuvisieren. Um mechanische Handgelenks-Singularitäten (ein unkontrolliertes Rotieren von Joint 4) beim Abfahren der Y-Achse elegant zu vermeiden, führt der TCP vorher eine präzise **90-Grad-Drehung (Yaw)** um seine eigene Achse aus. Das richtet Joint 5 (das Pitch-Gelenk) perfekt aus, um die seitliche Neigung natürlich zu übernehmen. Des Weiteren verfügt die IK-Ausführungsschleife nun über einen aktiven **Joint Unwrapping Algorithmus**, der Sprünge in der IK-Lösung mathematisch abfängt und >180° Rotationen unterbindet, wodurch das Aufwickeln von Kabeln oder plötzliche 360-Grad-Flips des Handgelenks physisch ausgeschlossen werden. Zudem abonniert der Planer live die dynamische **Safety Zone**, stoppt den Arm sicher an der Grenze und neigt die Kamera automatisch weiter nach unten, um das Objekt weiterhin perfekt fokussiert zu halten, falls dieses zu nah am Roboterfuß liegt.
 >
@@ -961,7 +1007,10 @@ stateDiagram-v2
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_static_scene_objects.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects.py`](./src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py`
+> 💻 **Run Command:**
+> ```bash
+> ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py
+> ```
 >
 > **Zweck & Aufgabe:** Publiziert ROS `MarkerArray`-Nachrichten in die 3D-Szene von RViz2 (z.B. visuelle Tischkanten, interaktive Ziel-Boxen und eine dynamische, transparente **Safety Zone**). Verwendet den Zeitstempel `0`, um ein Flackern ("Flickering") aufgrund von asynchronen TF-Bäumen zu verhindern.
 >
@@ -980,7 +1029,10 @@ stateDiagram-v2
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>[`/src/rosbridge_suite/rosbridge_server`](./src/rosbridge_suite/rosbridge_server)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:** `ros2 launch rosbridge_server rosbridge_websocket_launch.xml`
+> 💻 **Run Command:**
+> ```bash
+> ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+> ```
 >
 > **Zweck & Aufgabe:** Standard-WebSocket-Brücke auf Port 9090, die dem webbasierten Dashboard erlaubt, direkt auf das ROS-Netzwerk zuzugreifen.
 >
@@ -991,7 +1043,10 @@ stateDiagram-v2
 
 #### ![Web App](https://img.shields.io/badge/Web_App-E34F26?style=flat-square&logo=html5&logoColor=white) `robot_control_web_ui`
 > [!NOTE]
-> 💻 **Run Command:** `python3 -m http.server 8081 -d src/robot_control_web_ui`
+> 💻 **Run Command:**
+> ```bash
+> python3 -m http.server 8081 -d src/robot_control_web_ui
+> ```
 >
 > **Zweck & Aufgabe:** Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorphism-Designsprache. Fungiert als multimodales Dashboard und spiegelt das RViz Control Panel für die Remote-Bedienung. Läuft auf **Port 8081**.
 > **Native Desktop Integration:** Sowohl die *ROS 2 Nexus Web App* als auch die *Robot Control Web UI* starten nun in dedizierten, isolierten Chrome `--app` Profilen. Sie öffnen sich automatisch maximiert als eigenständige Anwendungen, völlig losgelöst von Standard-Browserfenstern, und verfügen über eigene, unverwechselbare Taskleisten-Icons für ein perfektes, natives Desktop-Erlebnis.
