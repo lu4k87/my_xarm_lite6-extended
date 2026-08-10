@@ -33,7 +33,7 @@ This repository is a continuously evolving research and evaluation platform for 
    - [🎮 3.2 Feature: Gamepad Teleoperation & Hard Collision Protection](#32-feature-gamepad-teleoperation--hard-collision-protection)
    - [🟢 3.3 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)](#33-feature-autonomous-grasping--3d-object-detection-yolo--zed)
    - [🗣️ 3.4 Feature: Multimodal Interaction (Voice & Gaze Control)](#34-feature-multimodal-interaction-voice--gaze-control)
-   - [🖥️ 3.5 Feature: Graphical Control & Visual Feedback](#35-feature-graphical-control--visual-feedback)
+   - [🖥️ 3.5 Feature: GUI - Graphical Robot Control & Visual Feedback](#35-feature-gui---graphical-robot-control--visual-feedback)
    - [🌌 3.6 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)](#36-feature-digital-twin--simulation-nvidia-isaac-sim)
 
 4. [🎮 Gamepad Control — Deep Dive](#4--gamepad-control--deep-dive)
@@ -852,7 +852,7 @@ stateDiagram-v2
 <br>
 
 
-### 3.5 Feature: Graphical Control & Visual Feedback
+### 3.5 Feature: GUI - Graphical Robot Control & Visual Feedback
 *Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
 
 ---

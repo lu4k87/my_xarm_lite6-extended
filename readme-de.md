@@ -33,7 +33,7 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
    - [🎮 3.2 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz](#32-funktion-gamepad-teleoperation--harter-kollisionsschutz)
    - [🟢 3.3 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)](#33-funktion-autonomes-greifen--3d-objekterkennung-yolo--zed)
    - [🗣️ 3.4 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)](#34-funktion-multimodale-interaktion-sprache--blicksteuerung)
-   - [🖥️ 3.5 Funktion: Grafische Steuerung & Visuelles Feedback](#35-funktion-grafische-steuerung--visuelles-feedback)
+   - [🖥️ 3.5 Funktion: GUI - Grafische Robotersteuerung & Visuelles Feedback](#35-funktion-gui---grafische-robotersteuerung--visuelles-feedback)
    - [🌌 3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)](#36-funktion-digital-twin--simulation-nvidia-isaac-sim)
 
 4. [🎮 Gamepad-Steuerung — Technische Tiefenanalyse](#4--gamepad-steuerung--technische-tiefenanalyse)
@@ -899,7 +899,7 @@ stateDiagram-v2
 <br>
 
 
-### 3.5 Funktion: Grafische Steuerung & Visuelles Feedback
+### 3.5 Funktion: GUI - Grafische Robotersteuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
 ---
