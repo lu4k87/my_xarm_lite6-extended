@@ -189,12 +189,6 @@
               <div class="joy-label right">Y- <i class="fa-solid fa-caret-right"></i></div>
             </div>
             
-            <div class="gripper-controls" style="display: flex; flex-direction: column; gap: 20px;">
-              <button id="btn-grip-open" class="btn btn-primary" style="height: 52px; width: 60px; padding: 0;" onclick="setGripper('open')">Open</button>
-              <button id="btn-grip-close" class="btn btn-orange" style="height: 52px; width: 60px; padding: 0;" onclick="setGripper('close')">Close</button>
-              <button id="btn-grip-off" class="btn" style="height: 52px; width: 60px; padding: 0; border-color: rgba(239, 68, 68, 0.4); color: var(--red);" onclick="setGripper('off')">Off</button>
-            </div>
-            
             <div class="rot-controls" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               <button class="btn btn-rot" onmousedown="startJog(0,0,0,1,0,0)" onmouseup="stopJog()">Roll + (<span style="color: var(--rviz-x);">X</span>)</button>
               <button class="btn btn-rot" onmousedown="startJog(0,0,0,-1,0,0)" onmouseup="stopJog()">Roll - (<span style="color: var(--rviz-x);">X</span>)</button>
@@ -202,6 +196,23 @@
               <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,-1,0)" onmouseup="stopJog()">Pitch - (<span style="color: var(--rviz-y);">Y</span>)</button>
               <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,0,1)" onmouseup="stopJog()">Yaw + (<span style="color: var(--rviz-z);">Z</span>)</button>
               <button class="btn btn-rot" onmousedown="startJog(0,0,0,0,0,-1)" onmouseup="stopJog()">Yaw - (<span style="color: var(--rviz-z);">Z</span>)</button>
+            </div>
+
+            <div style="width: 1px; height: 140px; background: rgba(255, 255, 255, 0.1);"></div>
+            
+            <div class="gripper-controls" style="display: flex; flex-direction: column; gap: 12px;">
+              <button id="btn-grip-open" class="btn btn-primary" style="height: 52px; width: 64px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;" onclick="setGripper('open')">
+                <i class="fa-solid fa-hand" style="font-size: 16px;"></i>
+                <span style="font-size: 11px;">Open</span>
+              </button>
+              <button id="btn-grip-close" class="btn btn-orange" style="height: 52px; width: 64px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;" onclick="setGripper('close')">
+                <i class="fa-solid fa-hand-fist" style="font-size: 16px;"></i>
+                <span style="font-size: 11px;">Close</span>
+              </button>
+              <button id="btn-grip-off" class="btn" style="height: 52px; width: 64px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-color: rgba(239, 68, 68, 0.4); color: var(--red);" onclick="setGripper('off')">
+                <i class="fa-solid fa-power-off" style="font-size: 16px;"></i>
+                <span style="font-size: 11px;">Off</span>
+              </button>
             </div>
           </div>
           
