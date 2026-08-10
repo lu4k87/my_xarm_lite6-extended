@@ -145,7 +145,7 @@
         </section>
 
         <section id="panel-telemetry" class="glass-panel">
-          <h2><i class="fa-solid fa-satellite-dish"></i> Telemetry Live</h2>
+          <h2><i class="fa-solid fa-satellite-dish"></i> EEF Telemetry Live</h2>
           <div class="telemetry-grid">
             <div class="telem-box" style="flex-direction: row; gap: 8px; justify-content: center; align-items: baseline;">
               <span style="color: var(--rviz-x); font-size: 22px; font-weight: 800;">X:</span>
@@ -241,6 +241,13 @@
           </div>
         </section>
 
+        <section id="panel-camera-2" class="glass-panel" style="min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+          <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream 2</h2>
+          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+            <img id="cam-stream-2" src="http://192.168.0.123/html/cam_pic.php?time=0&pDelay=40000" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="Camera Stream 2">
+          </div>
+        </section>
+
         <section id="panel-zed-camera" class="glass-panel" style="min-height: 250px; min-width: 300px; padding-bottom: 10px;">
           <h2 style="cursor: grab;"><i class="fa-solid fa-camera"></i> ZED M Live Stream</h2>
           <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
@@ -288,6 +295,17 @@
       camImg.onload = updateCam;
       camImg.onerror = () => setTimeout(updateCam, 1000);
       updateCam(); // start the loop
+    }
+
+    // ── Live Camera 2 Update Loop ──
+    const camImg2 = document.getElementById('cam-stream-2');
+    if (camImg2) {
+      function updateCam2() {
+        camImg2.src = `http://192.168.0.123/html/cam_pic.php?time=${new Date().getTime()}&pDelay=40000`;
+      }
+      camImg2.onload = updateCam2;
+      camImg2.onerror = () => setTimeout(updateCam2, 1000);
+      updateCam2(); // start the loop
     }
     // ── ZED M Camera Stream ──
     const zedImg = document.getElementById('zed-cam-stream');
