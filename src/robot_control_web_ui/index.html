@@ -81,7 +81,7 @@
 
       <div class="col-left" id="col-left">
         
-        <section id="panel-camera" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+        <section id="panel-camera" class="glass-panel" style="height: calc(25vh - 56px); min-height: 180px; min-width: 300px; padding-bottom: 10px;">
           <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream</h2>
           <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <div id="cam-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
@@ -92,7 +92,7 @@
           </div>
         </section>
 
-        <section id="panel-camera-2" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+        <section id="panel-camera-2" class="glass-panel" style="height: calc(25vh - 56px); min-height: 180px; min-width: 300px; padding-bottom: 10px;">
           <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream 2</h2>
           <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <div id="cam-stream-2-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
@@ -103,15 +103,25 @@
           </div>
         </section>
 
-        <section id="panel-zed-camera" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+        <section id="panel-zed-camera" class="glass-panel" style="height: calc(25vh - 56px); min-height: 180px; min-width: 300px; padding-bottom: 10px;">
           <h2 style="cursor: grab;"><i class="fa-solid fa-camera"></i> ZED M Live Stream</h2>
           <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <div id="zed-cam-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
               <i class="fa-solid fa-video-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
               Stream Disconnected
             </div>
-            <!-- Dynamic src applied via JS at the bottom of the page -->
             <img id="zed-cam-stream" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="ZED M Camera Stream">
+          </div>
+        </section>
+
+        <section id="panel-rviz" class="glass-panel" style="height: calc(25vh - 56px); min-height: 180px; min-width: 300px; padding-bottom: 10px;">
+          <h2 style="cursor: grab;"><i class="fa-solid fa-cube"></i> RViz 3D View</h2>
+          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+            <div id="rviz-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
+              <i class="fa-solid fa-video-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
+              Stream Disconnected
+            </div>
+            <img id="rviz-stream" src="http://127.0.0.1:8082/stream?topic=/rviz_video/image_raw&type=mjpeg&width=640&height=360" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="RViz Stream" onload="this.style.display='block'; document.getElementById('rviz-stream-err').style.display='none';">
           </div>
         </section>
 
@@ -228,13 +238,12 @@
         </section>
 
         <section id="panel-linear-axis" class="glass-panel">
-          <h2><i class="fa-solid fa-arrows-left-right"></i> Linear Axis Control</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="margin-bottom: 0;"><i class="fa-solid fa-arrows-left-right"></i> Linear Axis Control <span style="font-size: 12px; color: var(--mut); font-weight: normal; margin-left: 6px;">(Base Y-Shift)</span></h2>
+            <span id="linear-axis-val" style="font-family: 'JetBrains Mono'; font-size: 14px; color: var(--rviz-y); font-weight: bold;">0.00 m</span>
+          </div>
           <div class="linear-axis-control">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <h3 style="font-size: 14px; margin: 0; color: var(--txt);">Base Y-Shift</h3>
-              <span id="linear-axis-val" style="font-family: 'JetBrains Mono'; font-size: 14px; color: var(--rviz-y); font-weight: bold;">0.00 m</span>
-            </div>
-            <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0" oninput="updateLinearAxis(this.value)" style="width: 100%; background-size: 50% 100%;">
+            <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0.0" oninput="updateLinearAxis(this.value)" style="width: 100%;">
           </div>
         </section>
 

@@ -38,6 +38,7 @@ install(PROGRAMS
   scripts/yolo_grasp_executor.py 
   scripts/yolo_planned_grasp_executor.py 
   scripts/grasp_action_bridge.py 
+  scripts/rviz_streamer.py 
   DESTINATION lib/${PROJECT_NAME}
 )
 
