@@ -46,7 +46,7 @@ This repository is a continuously evolving research and evaluation platform for 
    - [6.2 Step 2: Launch the System (ROS 2 Nexus)](#62-step-2-launch-the-system-ros-2-nexus)
    - [6.3 Step 3: Start Nodes via GUI](#63-step-3-start-nodes-via-gui)
    - [6.4 Network & Port Architecture](#64-network--port-architecture)
-   - [6.5 Distributed Control (Remote / Operator Station)](#65-distributed-control-remote--operator-station)
+   - [6.5 Remote Control (Server-/Client Communication)](#65-remote-control-server-client-communication)
    - [6.6 DDS Multicast Storm Prevention & Loopback Discovery (Critical)](#66-dds-multicast-storm-prevention--loopback-discovery-critical)
    - [6.7 Launcher Configuration (`launcher_config.json`)](#67-launcher-configuration-launcher_configjson)
    - [6.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#68-cyclonedds-udp-buffer-overflows-point-cloud-lag)
@@ -1585,7 +1585,7 @@ To run the complete system with both web interfaces (Nexus and Dashboard), three
 <br>
 
 
-### 6.5 Distributed Control (Remote / Operator Station)
+### 6.5 Remote Control (Server-/Client Communication)
 
 If you intend to control the system over the network from an operator station (e.g., a remote machine with a gamepad), you can seamlessly distribute the ROS 2 architecture via DDS. This distributes the CPU load and minimizes network latency during collision checks.
 
