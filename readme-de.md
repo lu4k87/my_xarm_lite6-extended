@@ -36,28 +36,28 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
    - [🖥️ 3.5 Funktion: GUI - Grafische Robotersteuerung & Visuelles Feedback](#35-funktion-gui---grafische-robotersteuerung--visuelles-feedback)
    - [🌌 3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)](#36-funktion-digital-twin--simulation-nvidia-isaac-sim)
 
-4. [🎮 Gamepad-Steuerung — Technische Tiefenanalyse](#4--gamepad-steuerung--technische-tiefenanalyse)
-   - [4.1 Pipeline-Architektur](#41-pipeline-architektur)
-   - [4.2 `checker.py` — Kollisionswächter (Python Node)](#42-checkerpy--kollisionswächter-python-node)
-   - [4.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)](#43-xarm_joystick_inputcpp--motion-controller-c-node)
-5. [📦 Abhängigkeiten & Voraussetzungen](#5--abhängigkeiten--voraussetzungen)
-6. [🚀 Ausführung: Systemstart](#6--ausführung-systemstart)
-   - [6.1 Schritt 1: Hardware vorbereiten](#hardware)
-   - [6.2 Schritt 2: System starten (ROS 2 Nexus)](#62-schritt-2-system-starten-ros-2-nexus)
-   - [6.3 Schritt 3: Module über die GUI aktivieren](#63-schritt-3-module-über-die-gui-aktivieren)
-   - [6.4 Netzwerk- & Port-Architektur](#64-netzwerk---port-architektur)
-   - [6.5 Remote Control (Server-/Client Kommunikation)](#65-remote-control-server-client-kommunikation)
-   - [6.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)](#66-dds-multicast-storm-prevention--loopback-discovery-kritisch)
-   - [6.7 Launcher-Konfiguration (`launcher_config.json`)](#67-launcher-konfiguration-launcher_configjson)
-   - [6.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#68-cyclonedds-udp-buffer-overflows-point-cloud-lag)
-7. [📊 Monitoring: Dashboard & Workspace Analyzer](#7--monitoring-dashboard--workspace-analyzer)
-   - [7.1 Workspace Analyzer Backend (`workspace_analyzer.py`)](#71-workspace-analyzer-backend-workspace_analyzerpy)
-   - [7.2 Frontend (`dashboard_index.html`)](#72-frontend-dashboard_indexhtml)
-   - [7.3 Startbefehle der UI-Komponenten](#73-startbefehle-der-ui-komponenten)
-8. [🕹️ Multimodale Technologien & Interaktionskonzepte](#8-️-multimodale-technologien--interaktionskonzepte)
-   - [8.1 Roboter-Steuerungsarten (Inputs)](#81-roboter-steuerungsarten-inputs)
-   - [8.2 Sensorik & Assistenz (Perception)](#82-sensorik--assistenz-perception)
-   - [8.4 User Interfaces (UI/GUI)](#84-user-interfaces-uigui)
+4. [🕹️ Multimodale Technologien & Interaktionskonzepte](#4-️-multimodale-technologien--interaktionskonzepte)
+   - [4.1 Roboter-Steuerungsarten (Inputs)](#41-roboter-steuerungsarten-inputs)
+   - [4.2 Sensorik & Assistenz (Perception)](#42-sensorik--assistenz-perception)
+   - [4.4 User Interfaces (UI/GUI)](#44-user-interfaces-uigui)
+5. [🎮 Gamepad-Steuerung — Technische Tiefenanalyse](#5--gamepad-steuerung--technische-tiefenanalyse)
+   - [5.1 Pipeline-Architektur](#51-pipeline-architektur)
+   - [5.2 `checker.py` — Kollisionswächter (Python Node)](#52-checkerpy--kollisionswächter-python-node)
+   - [5.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)](#53-xarm_joystick_inputcpp--motion-controller-c-node)
+6. [📦 Abhängigkeiten & Voraussetzungen](#6--abhängigkeiten--voraussetzungen)
+7. [🚀 Ausführung: Systemstart](#7--ausführung-systemstart)
+   - [7.1 Schritt 1: Hardware vorbereiten](#hardware)
+   - [7.2 Schritt 2: System starten (ROS 2 Nexus)](#72-schritt-2-system-starten-ros-2-nexus)
+   - [7.3 Schritt 3: Module über die GUI aktivieren](#73-schritt-3-module-über-die-gui-aktivieren)
+   - [7.4 Netzwerk- & Port-Architektur](#74-netzwerk---port-architektur)
+   - [7.5 Remote Control (Server-/Client Kommunikation)](#75-remote-control-server-client-kommunikation)
+   - [7.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)](#76-dds-multicast-storm-prevention--loopback-discovery-kritisch)
+   - [7.7 Launcher-Konfiguration (`launcher_config.json`)](#77-launcher-konfiguration-launcher_configjson)
+   - [7.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#78-cyclonedds-udp-buffer-overflows-point-cloud-lag)
+8. [📊 Monitoring: Dashboard & Workspace Analyzer](#8--monitoring-dashboard--workspace-analyzer)
+   - [8.1 Workspace Analyzer Backend (`workspace_analyzer.py`)](#81-workspace-analyzer-backend-workspace_analyzerpy)
+   - [8.2 Frontend (`dashboard_index.html`)](#82-frontend-dashboard_indexhtml)
+   - [8.3 Startbefehle der UI-Komponenten](#83-startbefehle-der-ui-komponenten)
 9. [🗂️ Repository-Struktur](#9-️-repository-struktur)
 10. [🗄️ Archiv / Veraltete Konzepte](#10-️-archiv--veraltete-konzepte)
 
@@ -1122,7 +1122,90 @@ stateDiagram-v2
 
 <br>
 
-## 4. 🎮 Gamepad-Steuerung — Technische Tiefenanalyse
+## 4. 🕹️ Multimodale Technologien & Interaktionskonzepte
+
+<br>
+
+<br>
+
+---
+
+
+### 4.1 Roboter-Steuerungsarten (Inputs)
+#
+
+<br>
+
+<br>
+
+---
+
+<br>
+
+### Gamepad Teleoperation
+> Latenzarme, kontinuierliche Feinsteuerung per Xbox One Elite Series 2 Controller (inkl. haptischem Feedback - Vibration bei Kollisionsgefahr).
+
+
+### 4.2 Sensorik & Assistenz (Perception)
+#### Computer Vision
+> ![Deprecated](https://img.shields.io/badge/Status-Deprecated-red?style=flat-square) Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* über PiCameras. Die Objekterkennung erfolgt vollständig in 3D durch die ZED-Kamera.
+#### Stereo Vision
+> Integration echter 3D-Tiefendaten durch eine *ZED Mini (Stereolabs)* Kamera.
+- Die Kamera kann wahlweise **stationär** (auf einem Stativ) oder **am Endeffektor (EEF)** montiert genutzt werden.
+- **Object Cross Scan:** Der Roboter kann präzise, individuelle Kreuzflüge direkt über Objekten ausführen (mit dynamischer Just-in-Time Live-Positionsbestimmung via TF), um detaillierte Punktwolken aus verschiedenen Blickwinkeln aufzunehmen.
+#
+
+
+
+---
+
+<br>
+
+### VLA & Video Action Models (Geplant)
+KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
+
+
+
+
+
+---
+
+<br>
+
+
+### 4.4 User Interfaces (UI/GUI)
+Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, immersives User Interface zur Verfügung, das alle Systemzustände bündelt.
+
+#### Telemetrie & Status
+Kontinuierliche Anzeige von Echtzeit-Telemetriedaten des Roboterarms.
+ 
+#### System Feedback & Intent Recognition
+Direktes visuelles und akustisches Feedback für manuelle Steuereingaben sowie erfolgreich geparste Sprachbefehle.
+ 
+#### Präventive Kollisionswarnungen
+Dynamische Warnungen beim Eingreifen softwareseitiger Kollisionsschutzmaßnahmen (z.B. Unterschreiten des Z-Limits).
+ 
+#### Visuelles Monitoring & Objekterkennung
+Nahtlose Integration von Video-Livestreams mit Live-Overlays erkannter Zielobjekte (YOLO Bounding Boxes) sowie einer synchronisierten 3D-Visualisierung (Digitaler Zwilling) der Arbeitsumgebung.
+
+#### Umsetzung via OBS Studio:
+In *OBS Studio* werden alle Komponenten gebündelt und dem Nutzer als zentrale GUI für die Roboter-Teleoperation bereitgestellt.*
+
+**Gaze Control User Interface**<br>
+
+- **Sicherheitsgrenze (Safety Boundary):** Beinhaltet eine Soft-Landing-Bremszone ab 40.0mm, die die Abwärtsgeschwindigkeit quadratisch drosselt (Z < 0), sowie einen absoluten Hard Stop bei Z=33.0mm, um den Arbeitsbereich vor Kollisionen zu schützen.
+- **Geschwindigkeit & Ergonomie:** Feinabgestimmte Translationsgeschwindigkeit (0.10 m/s) und Rotationsgeschwindigkeit (0.5 rad/s) für hochpräzises Gaze-Jogging. Die UI-Buttons nutzen eine optimierte Hitbox-Architektur mit vergrößerter Breite und flächenbündiger Platzierung am unteren Bildschirmrand, um die Zuverlässigkeit des Eye-Trackings zu maximieren.
+- **Vakuumgreifer-Integration:** Volle Unterstützung für die Steuerung des xArm Lite 6 Vakuumgreifers über die UI mittels des `VacuumGripperCtrl` Services.
+
+![Gaze Control UI](_imgs/gaze_control_interface.png)
+
+[⬆️ Zurück zum Inhaltsverzeichnis](#inhaltsverzeichnis)
+
+---
+
+<br>
+
+## 5. 🎮 Gamepad-Steuerung — Technische Tiefenanalyse
 
 Dieser Abschnitt liefert eine vollständige technische Referenz für die zweistufige Gamepad-Pipeline, die eine kollisionssichere Echtzeit-Teleoperation des xArm Lite 6 mit dem Xbox One Elite Series 2 Controller ermöglicht.
 
@@ -1132,7 +1215,7 @@ Dieser Abschnitt liefert eine vollständige technische Referenz für die zweistu
 <br>
 
 
-### 4.1 Pipeline-Architektur
+### 5.1 Pipeline-Architektur
 
 Das Gamepad-Signal durchläuft zwei Stufen, bevor es den MoveIt Servo Server erreicht. Dieses Zwei-Node-Design trennt **Sicherheitsdurchsetzung** (Python) von **Bewegungsübersetzung** (C++):
 
@@ -1160,7 +1243,7 @@ flowchart LR
 <br>
 
 
-### 4.2 `checker.py` — Kollisionswächter (Python Node)
+### 5.2 `checker.py` — Kollisionswächter (Python Node)
 
 **Datei:** `src/collision_check/collision_check/checker.py`
 
@@ -1168,7 +1251,7 @@ Dieser Node fungiert als transparenter **Sicherheits-Proxy** zwischen dem rohen 
 <br>
 
 
-#### 4.2.1 Prädiktiver Kollisions-Algorithmus
+#### 5.2.1 Prädiktiver Kollisions-Algorithmus
 
 ```
 trigger_intensity = (1.0 - axes[RT]) / 2.0 # 0.0 (los) → 1.0 (voll)
@@ -1198,7 +1281,7 @@ if predicted_z < Z_LIMIT:
 <br>
 
 
-### 4.2.2 Zwei-Stufen-Sicherheitsmodell
+### 5.2.2 Zwei-Stufen-Sicherheitsmodell
 
 ```
 Z > 110 mm → Volle Geschwindigkeit, keine Einschränkungen
@@ -1207,14 +1290,14 @@ Z ≤ 96,5 mm → 🛑 HARD STOP: Abwärtsachse genullt + Rumble
 ```
 
 
-### 4.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)
+### 5.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)
 
 **Datei:** `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp` 
 **Klasse:** `xarm_moveit_servo::JoyToServoPub` 
 **Registriert als:** ROS 2 Component (`RCLCPP_COMPONENTS_REGISTER_NODE`)
 
 
-#### 4.3.1 Vollständiges Controller Button-Mapping
+#### 5.3.1 Vollständiges Controller Button-Mapping
 
 | Eingabe | Funktion | ROS-Aktion | Technisches Detail |
 |---------|---------|-----------|-------------------|
@@ -1246,7 +1329,7 @@ Z ≤ 96,5 mm → 🛑 HARD STOP: Abwärtsachse genullt + Rumble
 | 5 | `100%` | *Maximum — volle Servo-Geschwindigkeit* |
 
 
-#### 4.3.2 Signal-Fluss & Exponentielle Glättung
+#### 5.3.2 Signal-Fluss & Exponentielle Glättung
 
 ```
 // Jeder Callback-Zyklus:
@@ -1264,7 +1347,7 @@ Hardware-Eingabe
 ```
 
 
-#### 4.3.3 Whisper AI Integration (X-Button)
+#### 5.3.3 Whisper AI Integration (X-Button)
 
 ```
 X drücken → async_send_goal (max_duration = 5s)
@@ -1278,7 +1361,7 @@ X drücken → async_send_goal (max_duration = 5s)
 Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 
 
-#### 4.3.4 Topics & Services Referenz
+#### 5.3.4 Topics & Services Referenz
 
 | Typ | Name | Message-Typ | Beschreibung |
 |-----|------|------------|-------------|
@@ -1303,7 +1386,7 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 
 <br>
 
-## 5. 📦 Abhängigkeiten & Voraussetzungen
+## 6. 📦 Abhängigkeiten & Voraussetzungen
 
 <br>
 
@@ -1507,7 +1590,7 @@ source install/setup.bash
 
 <br>
 
-## 6. 🚀 Ausführung: Systemstart
+## 7. 🚀 Ausführung: Systemstart
 
 Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Software. **ROS 2 Nexus** dient dabei als zentrale webbasierte Oberfläche, um alle Nodes, Sensoren und Algorithmen mit nur einem Klick hochzufahren.
 
@@ -1517,7 +1600,7 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 <br>
 
 
-### 6.1 Schritt 1: Hardware vorbereiten
+### 7.1 Schritt 1: Hardware vorbereiten
 1. **Roboter einschalten:** Schalte den UFactory xArm Lite 6 an und stelle sicher, dass der Not-Aus-Schalter entriegelt ist.
 2. **Controller verbinden:** Schalte den Xbox One Elite Series 2 Controller ein und prüfe die Verbindung (Bluetooth oder USB) mit dem Host-PC.
 
@@ -1526,7 +1609,7 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 <br>
 
 
-### 6.2 Schritt 2: System starten (ROS 2 Nexus)
+### 7.2 Schritt 2: System starten (ROS 2 Nexus)
 Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- oder `ros2 launch`-Befehle in mehreren Terminals parallel ausgeführt werden, um die einzelnen Nodes zu starten. Genau um dieses Problem zu lösen, wurde die **ROS 2 Nexus** WebApp entwickelt: Anstatt komplexe CLI-Befehle auswendig zu lernen, lassen sich alle benötigten Nodes und Launch-Files bequem per Klick direkt aus dem Browser heraus starten. Die UI ist dabei übersichtlich in zwei Hauptbereiche unterteilt: **Automated System Bringup** (für die lokale Entwicklung an einem PC) und **Remote Control System Bringup** (für verteilte Server/Client-Ausführung). Die Hintergrund-Startsequenzen wurden stark optimiert: Die Backend-Nodes und MoveIt starten nun mit einer Sekunde Verzögerung dazwischen, während die ROS Bridge und Web UI als Letztes laden. Dies beugt WebSocket-Abbrüchen vor.
 
 **Start über Terminal:**
@@ -1559,7 +1642,7 @@ Danach kann die App über das Suchfeld im Menü (nach **„ROS 2 Nexus"** suchen
 <br>
 
 
-### 6.3 Schritt 3: Module über die GUI aktivieren
+### 7.3 Schritt 3: Module über die GUI aktivieren
 Sobald sich ROS 2 Nexus im Browser geöffnet hat:
 1. Navigiere durch die verschiedenen Tabs der Oberfläche (z.B. `Nodes / Launch`, `Sensors`, `Hardware`, `Web`).
 2. Klicke auf die entsprechenden Buttons, um die benötigten Module zu starten (der Treiber für die ZED-Kamera befindet sich beispielsweise im Tab **Sensors**).
@@ -1574,7 +1657,7 @@ Sobald sich ROS 2 Nexus im Browser geöffnet hat:
 <br>
 
 
-### 6.4 Netzwerk- & Port-Architektur
+### 7.4 Netzwerk- & Port-Architektur
 
 ```mermaid
 graph TD
@@ -1620,7 +1703,7 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 <br>
 
 
-### 6.5 Remote Control (Server-/Client Kommunikation)
+### 7.5 Remote Control (Server-/Client Kommunikation)
 
 Wenn das System über das Netzwerk von einer Operator-Station aus gesteuert werden soll (z. B. von einem Remote-Rechner mit Gamepad), kann die ROS 2 Architektur dank DDS nahtlos aufgeteilt werden. Das verteilt die CPU-Last und minimiert Netzwerklatenzen bei der Kollisionsprüfung.
 
@@ -1639,7 +1722,7 @@ source ~/dev_ws/install/setup.bash
 ```
 
 
-### 6.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)
+### 7.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)
 > [!CAUTION]
 > **Internet-Abbrüche & Netzwerk-Überlastung:** Standardmäßig verwenden ROS 2 DDS-Implementierungen "UDP Multicast", wodurch alle Daten in das gesamte lokale Netzwerk (LAN/WLAN) gefunkt werden. Wenn die ZED-Kamera und YOLO gestartet werden, überflutet dies das Netzwerk mit Gigabit-Mengen an UDP-Paketen. **Das führt meist dazu, dass der Router abstürzt oder die Internetverbindung des PCs sofort getrennt wird.**
 >
@@ -1680,7 +1763,7 @@ sudo systemctl start lo-multicast.service
 <br>
 
 
-### 6.7 Launcher-Konfiguration (`launcher_config.json`)
+### 7.7 Launcher-Konfiguration (`launcher_config.json`)
 
 Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar.
 
@@ -1694,7 +1777,7 @@ Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind voll
 <br>
 
 
-### 6.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
+### 7.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
 **Ruckelnde Pointclouds in RViz:** ROS 2 (insbesondere CycloneDDS) versendet große Datenmengen wie Pointclouds (ZED Kamera) über viele kleine UDP-Pakete. Der Standard-Netzwerkpuffer des Linux-Kernels ist mit ca. 200 KB viel zu klein für diese Datenmengen. Wenn der Puffer überläuft, verwirft das Betriebssystem Pakete ("Receive Buffer Errors"), was zu extremen Lags in RViz führt.
 
 Um dieses Problem zu lösen und einen flüssigen Datenstrom zu garantieren, müssen die UDP-Puffergrößen des Systems dauerhaft auf das Maximum (2 GB) erhöht werden:
@@ -1717,7 +1800,7 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 
 <br>
 
-## 7. 📊 Monitoring: Dashboard & Workspace Analyzer
+## 8. 📊 Monitoring: Dashboard & Workspace Analyzer
 
 Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustand des Systems über das **ROS2 Core Dashboard** überwachen. Dies ist eine webbasierte Echtzeit-UI, die statische Quellcode-Analysen mit Live-Telemetriedaten des ROS 2 Netzwerks zu einer einheitlichen Monitoring-Oberfläche zusammenführt.
 
@@ -1728,7 +1811,7 @@ Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustan
 <br>
 
 
-### 7.1 Workspace Analyzer Backend (`workspace_analyzer.py`)
+### 8.1 Workspace Analyzer Backend (`workspace_analyzer.py`)
 Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, regex-basierte statische Code-Analyse durchführt. Es wurde stark modularisiert in drei Kerndateien: `workspace_analyzer.py` (behandelt ROS Pub/Sub), `workspace_parser.py` (führt die Regex-Analyse aus) und `system_utils.py` (parst Umgebungsvariablen). Dabei werden Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten extrahiert. Diese strukturierten JSON-Metadaten werden kontinuierlich an `/dashboard/workspace_metadata` publiziert (im 10-Sekunden-Timer-Zyklus). Es publiziert außerdem Dateiinhalte über `/dashboard/file_content` und ROS Topic-Aktivitäten über `/dashboard/topic_activity`. Zusätzlich werden Umgebungsvariablen (ROS Distro, Domain ID, DDS-Middleware, Localhost-Modus) aus `~/.bashrc` ausgelesen und als Live-Status-Badges bereitgestellt.
 
 **Hinweis zu `workspace_analyzer.py`:** Dies ist **kein** Netzwerk-Server, sondern ein normaler ROS 2 Node. Das Dashboard greift über die ROS Bridge (Port 9090) auf dessen publizierte Topics zu.
@@ -1739,7 +1822,7 @@ Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, r
 <br>
 
 
-### 7.2 Frontend (`dashboard_index.html`)
+### 8.2 Frontend (`dashboard_index.html`)
 Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Netzwerk. Die Frontend-Logik wurde für eine bessere Wartbarkeit strikt in 8 spezialisierte JavaScript-Module unterteilt (z.B. `dashboard_script_nodes.js`, `dashboard_script_graph.js`, `dashboard_script_ros.js`). Es gleicht statisch analysierte Nodes visuell mit den aktuell laufenden Nodes ab, zeigt Echtzeit-Topic-Frequenzen (Hz) an und ermöglicht die direkte Ausführung von System-Skripten aus der Browser-Oberfläche in einer übersichtlichen, einspaltigen Referenzansicht. Das UI nutzt eine moderne Glassmorphism-Designsprache und führt rekursives JSON-Parsing durch, um tief verschachtelte ROS-Nachrichtenstrukturen sauber formatiert darzustellen. Die Sidebar liefert auf einen Blick Statusinformationen wie Verbindungsgesundheit, Roboter-Verfügbarkeit und die aktive ROS 2 Umgebungskonfiguration.
 
 ![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
@@ -1751,7 +1834,7 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 <br>
 
 
-### 7.3 Startbefehle der UI-Komponenten
+### 8.3 Startbefehle der UI-Komponenten
 *Starte diese Komponenten über ROS 2 Nexus oder manuell über das Terminal:*
 - **Workspace Analyzer Backend:** `python3 src/dashboard_monitoring/workspace_analyzer.py`
 - **Webserver:** `python3 -m http.server 8080 -d src/dashboard_monitoring`
@@ -1762,89 +1845,6 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 
 
-
-[⬆️ Zurück zum Inhaltsverzeichnis](#inhaltsverzeichnis)
-
----
-
-<br>
-
-## 8. 🕹️ Multimodale Technologien & Interaktionskonzepte
-
-<br>
-
-<br>
-
----
-
-
-### 8.1 Roboter-Steuerungsarten (Inputs)
-#
-
-<br>
-
-<br>
-
----
-
-<br>
-
-### Gamepad Teleoperation
-> Latenzarme, kontinuierliche Feinsteuerung per Xbox One Elite Series 2 Controller (inkl. haptischem Feedback - Vibration bei Kollisionsgefahr).
-
-
-### 8.2 Sensorik & Assistenz (Perception)
-#### Computer Vision
-> ![Deprecated](https://img.shields.io/badge/Status-Deprecated-red?style=flat-square) Räumliche 2D-Objekterkennung und Lokalisierung mittels *YOLO* über PiCameras. Die Objekterkennung erfolgt vollständig in 3D durch die ZED-Kamera.
-#### Stereo Vision
-> Integration echter 3D-Tiefendaten durch eine *ZED Mini (Stereolabs)* Kamera.
-- Die Kamera kann wahlweise **stationär** (auf einem Stativ) oder **am Endeffektor (EEF)** montiert genutzt werden.
-- **Object Cross Scan:** Der Roboter kann präzise, individuelle Kreuzflüge direkt über Objekten ausführen (mit dynamischer Just-in-Time Live-Positionsbestimmung via TF), um detaillierte Punktwolken aus verschiedenen Blickwinkeln aufzunehmen.
-#
-
-
-
----
-
-<br>
-
-### VLA & Video Action Models (Geplant)
-KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
-
-
-
-
-
----
-
-<br>
-
-
-### 8.4 User Interfaces (UI/GUI)
-Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, immersives User Interface zur Verfügung, das alle Systemzustände bündelt.
-
-#### Telemetrie & Status
-Kontinuierliche Anzeige von Echtzeit-Telemetriedaten des Roboterarms.
- 
-#### System Feedback & Intent Recognition
-Direktes visuelles und akustisches Feedback für manuelle Steuereingaben sowie erfolgreich geparste Sprachbefehle.
- 
-#### Präventive Kollisionswarnungen
-Dynamische Warnungen beim Eingreifen softwareseitiger Kollisionsschutzmaßnahmen (z.B. Unterschreiten des Z-Limits).
- 
-#### Visuelles Monitoring & Objekterkennung
-Nahtlose Integration von Video-Livestreams mit Live-Overlays erkannter Zielobjekte (YOLO Bounding Boxes) sowie einer synchronisierten 3D-Visualisierung (Digitaler Zwilling) der Arbeitsumgebung.
-
-#### Umsetzung via OBS Studio:
-In *OBS Studio* werden alle Komponenten gebündelt und dem Nutzer als zentrale GUI für die Roboter-Teleoperation bereitgestellt.*
-
-**Gaze Control User Interface**<br>
-
-- **Sicherheitsgrenze (Safety Boundary):** Beinhaltet eine Soft-Landing-Bremszone ab 40.0mm, die die Abwärtsgeschwindigkeit quadratisch drosselt (Z < 0), sowie einen absoluten Hard Stop bei Z=33.0mm, um den Arbeitsbereich vor Kollisionen zu schützen.
-- **Geschwindigkeit & Ergonomie:** Feinabgestimmte Translationsgeschwindigkeit (0.10 m/s) und Rotationsgeschwindigkeit (0.5 rad/s) für hochpräzises Gaze-Jogging. Die UI-Buttons nutzen eine optimierte Hitbox-Architektur mit vergrößerter Breite und flächenbündiger Platzierung am unteren Bildschirmrand, um die Zuverlässigkeit des Eye-Trackings zu maximieren.
-- **Vakuumgreifer-Integration:** Volle Unterstützung für die Steuerung des xArm Lite 6 Vakuumgreifers über die UI mittels des `VacuumGripperCtrl` Services.
-
-![Gaze Control UI](_imgs/gaze_control_interface.png)
 
 [⬆️ Zurück zum Inhaltsverzeichnis](#inhaltsverzeichnis)
 
