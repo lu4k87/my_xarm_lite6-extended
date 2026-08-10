@@ -194,6 +194,7 @@ graph TD
 
 ---
 
+
 ### 2.1 Die Systemidee: Eine integrierte Entwicklungs-, Evaluierungs- und Validierungsplattform
 Das Kernziel des Projekts ist die Realisierung einer modularen, plattformbasierten Softwarearchitektur für die multimodale Teleoperation und KI-gestützte Assistenzrobotik. Das System fungiert als zentraler, softwareseitiger Integrationsknoten (Middleware-Ebene), der heterogene Teilsysteme in einer einheitlichen Laufzeitumgebung zusammenführt. Durch ein verteiltes Server-Client-Netzwerk (Multi-PC-Setup) und die softwareseitige Kopplung an einen echtzeitfähigen Digitalen Zwilling (NVIDIA Isaac Sim) dient die Plattform sowohl als flexible Entwicklungsumgebung als auch als standardisierte und replizierbare Testumgebung. Das Projekt ist explizit als geschlossener Kreislauf aus Entwicklung und empirischer Validierung konzipiert:
 
@@ -279,6 +280,7 @@ Um ein klares Verständnis für die Architektur zu schaffen, sind die Software-M
 ---
 <br>
 
+
 ### 3.1 Betriebsmodi: FAKE vs. REAL (Hardware Interfaces)
 Die Plattform unterscheidet strikt zwischen zwei Betriebsmodi für den Roboterarm. Diese Unterscheidung bezieht sich **ausschließlich auf das `ros2_control` Hardware Interface** und ist unabhängig von der Sensorik (wie Kamera oder YOLO, welche in beiden Modi live laufen können):
 
@@ -296,6 +298,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 > - **URDF Modifikation:** Um Fehler beim Parsen von dynamischen `attach_to`-Argumenten zu vermeiden, wurde `xarm_description/urdf/xarm_device_macro.xacro` angepasst. Die Bedingung für `create_attach_link` generiert nun einen Root-Link für *jeden* übergebenen String und nicht mehr exklusiv nur für `"world"`.
 
 ---
+
 
 ### 3.2 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz
 *Dieses Subsystem steuert das manuelle Jogging des Roboters per Xbox-Controller und verhindert aktiv, dass der Roboter durch Bedienfehler mit der Arbeitsfläche kollidiert.*
@@ -440,6 +443,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 
 ---
+
 
 ### 3.3 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
@@ -780,6 +784,7 @@ stateDiagram-v2
 ---
 <br>
 
+
 ### 3.4 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
 
@@ -892,6 +897,7 @@ stateDiagram-v2
 ---
 
 <br>
+
 
 ### 3.5 Funktion: Grafische Steuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
@@ -1092,6 +1098,7 @@ stateDiagram-v2
 
 <br>
 
+
 ### 3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *Physischer und virtueller Arbeitsraum werden durch NVIDIA Isaac Sim als passiver, hochauflösender Digitaler Zwilling nahtlos synchronisiert.*
 
@@ -1124,6 +1131,7 @@ Dieser Abschnitt liefert eine vollständige technische Referenz für die zweistu
 
 <br>
 
+
 ### 4.1 Pipeline-Architektur
 
 Das Gamepad-Signal durchläuft zwei Stufen, bevor es den MoveIt Servo Server erreicht. Dieses Zwei-Node-Design trennt **Sicherheitsdurchsetzung** (Python) von **Bewegungsübersetzung** (C++):
@@ -1151,12 +1159,14 @@ flowchart LR
 ---
 <br>
 
+
 ### 4.2 `checker.py` — Kollisionswächter (Python Node)
 
 **Datei:** `src/collision_check/collision_check/checker.py`
 
 Dieser Node fungiert als transparenter **Sicherheits-Proxy** zwischen dem rohen Joystick-Treiber und dem Motion-Controller. Er ist **zu 100% Hardware-unabhängig** (funktioniert identisch im REAL- und FAKE-Modus). Er abonniert kontinuierlich die Live-Z-Höhe von `/ui/eef_position` und prüft bei jedem eingehenden `/joy`-Signal prädiktiv, ob sich der Roboter dem Tisch nähert. Würde ein Limit unterschritten, wird das Signal blockiert. Er liefert zudem **haptisches Feedback** (Gamepad-Vibration), wenn sich der Roboter dem Tisch nähert oder über MoveIt Servo ein dynamisches 3D-Hindernis (YOLO Bounding Box) erkannt wird.
 <br>
+
 
 #### 4.2.1 Prädiktiver Kollisions-Algorithmus
 
@@ -1187,6 +1197,7 @@ if predicted_z < Z_LIMIT:
 ---
 <br>
 
+
 ### 4.2.2 Zwei-Stufen-Sicherheitsmodell
 
 ```
@@ -1195,11 +1206,13 @@ Z > 110 mm → Volle Geschwindigkeit, keine Einschränkungen
 Z ≤ 96,5 mm → 🛑 HARD STOP: Abwärtsachse genullt + Rumble
 ```
 
+
 ### 4.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)
 
 **Datei:** `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp` 
 **Klasse:** `xarm_moveit_servo::JoyToServoPub` 
 **Registriert als:** ROS 2 Component (`RCLCPP_COMPONENTS_REGISTER_NODE`)
+
 
 #### 4.3.1 Vollständiges Controller Button-Mapping
 
@@ -1232,6 +1245,7 @@ Z ≤ 96,5 mm → 🛑 HARD STOP: Abwärtsachse genullt + Rumble
 | 4 | `75%` | *Schnell — Weitstreckenfahrt* |
 | 5 | `100%` | *Maximum — volle Servo-Geschwindigkeit* |
 
+
 #### 4.3.2 Signal-Fluss & Exponentielle Glättung
 
 ```
@@ -1249,6 +1263,7 @@ Hardware-Eingabe
  └─ /servo_server/delta_twist_cmds (TwistStamped)
 ```
 
+
 #### 4.3.3 Whisper AI Integration (X-Button)
 
 ```
@@ -1261,6 +1276,7 @@ X drücken → async_send_goal (max_duration = 5s)
 ```
 
 Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
+
 
 #### 4.3.4 Topics & Services Referenz
 
@@ -1500,6 +1516,7 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 ---
 <br>
 
+
 ### 6.1 Schritt 1: Hardware vorbereiten
 1. **Roboter einschalten:** Schalte den UFactory xArm Lite 6 an und stelle sicher, dass der Not-Aus-Schalter entriegelt ist.
 2. **Controller verbinden:** Schalte den Xbox One Elite Series 2 Controller ein und prüfe die Verbindung (Bluetooth oder USB) mit dem Host-PC.
@@ -1507,6 +1524,7 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 
 ---
 <br>
+
 
 ### 6.2 Schritt 2: System starten (ROS 2 Nexus)
 Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- oder `ros2 launch`-Befehle in mehreren Terminals parallel ausgeführt werden, um die einzelnen Nodes zu starten. Genau um dieses Problem zu lösen, wurde die **ROS 2 Nexus** WebApp entwickelt: Anstatt komplexe CLI-Befehle auswendig zu lernen, lassen sich alle benötigten Nodes und Launch-Files bequem per Klick direkt aus dem Browser heraus starten. Die UI ist dabei übersichtlich in zwei Hauptbereiche unterteilt: **Automated System Bringup** (für die lokale Entwicklung an einem PC) und **Remote Control System Bringup** (für verteilte Server/Client-Ausführung). Die Hintergrund-Startsequenzen wurden stark optimiert: Die Backend-Nodes und MoveIt starten nun mit einer Sekunde Verzögerung dazwischen, während die ROS Bridge und Web UI als Letztes laden. Dies beugt WebSocket-Abbrüchen vor.
@@ -1540,6 +1558,7 @@ Danach kann die App über das Suchfeld im Menü (nach **„ROS 2 Nexus"** suchen
 ---
 <br>
 
+
 ### 6.3 Schritt 3: Module über die GUI aktivieren
 Sobald sich ROS 2 Nexus im Browser geöffnet hat:
 1. Navigiere durch die verschiedenen Tabs der Oberfläche (z.B. `Nodes / Launch`, `Sensors`, `Hardware`, `Web`).
@@ -1553,6 +1572,7 @@ Sobald sich ROS 2 Nexus im Browser geöffnet hat:
 
 ---
 <br>
+
 
 ### 6.4 Netzwerk- & Port-Architektur
 
@@ -1599,6 +1619,7 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 ---
 <br>
 
+
 ### 6.5 Verteilte Steuerung (Remote / Operator-Station)
 
 Wenn das System über das Netzwerk von einer Operator-Station aus gesteuert werden soll (z. B. von einem Remote-Rechner mit Gamepad), kann die ROS 2 Architektur dank DDS nahtlos aufgeteilt werden. Das verteilt die CPU-Last und minimiert Netzwerklatenzen bei der Kollisionsprüfung.
@@ -1616,6 +1637,7 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export ROS_LOCALHOST_ONLY=0
 source ~/dev_ws/install/setup.bash
 ```
+
 
 ### 6.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)
 > [!CAUTION]
@@ -1657,6 +1679,7 @@ sudo systemctl start lo-multicast.service
 ---
 <br>
 
+
 ### 6.7 Launcher-Konfiguration (`launcher_config.json`)
 
 Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind vollständig anpassbar.
@@ -1669,6 +1692,7 @@ Die Buttons, Kategorien und Befehle in der ROS 2 Nexus Web-Oberfläche sind voll
 
 ---
 <br>
+
 
 ### 6.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)
 **Ruckelnde Pointclouds in RViz:** ROS 2 (insbesondere CycloneDDS) versendet große Datenmengen wie Pointclouds (ZED Kamera) über viele kleine UDP-Pakete. Der Standard-Netzwerkpuffer des Linux-Kernels ist mit ca. 200 KB viel zu klein für diese Datenmengen. Wenn der Puffer überläuft, verwirft das Betriebssystem Pakete ("Receive Buffer Errors"), was zu extremen Lags in RViz führt.
@@ -1703,6 +1727,7 @@ Sobald die Nodes über ROS 2 Nexus gestartet wurden, lässt sich der Live-Zustan
 
 <br>
 
+
 ### 7.1 Workspace Analyzer Backend (`workspace_analyzer.py`)
 Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, regex-basierte statische Code-Analyse durchführt. Es wurde stark modularisiert in drei Kerndateien: `workspace_analyzer.py` (behandelt ROS Pub/Sub), `workspace_parser.py` (führt die Regex-Analyse aus) und `system_utils.py` (parst Umgebungsvariablen). Dabei werden Node-Namen, Publisher, Subscriber, Services, Actions und Paketabhängigkeiten extrahiert. Diese strukturierten JSON-Metadaten werden kontinuierlich an `/dashboard/workspace_metadata` publiziert (im 10-Sekunden-Timer-Zyklus). Es publiziert außerdem Dateiinhalte über `/dashboard/file_content` und ROS Topic-Aktivitäten über `/dashboard/topic_activity`. Zusätzlich werden Umgebungsvariablen (ROS Distro, Domain ID, DDS-Middleware, Localhost-Modus) aus `~/.bashrc` ausgelesen und als Live-Status-Badges bereitgestellt.
 
@@ -1712,6 +1737,7 @@ Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, r
 ---
 
 <br>
+
 
 ### 7.2 Frontend (`dashboard_index.html`)
 Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Netzwerk. Die Frontend-Logik wurde für eine bessere Wartbarkeit strikt in 8 spezialisierte JavaScript-Module unterteilt (z.B. `dashboard_script_nodes.js`, `dashboard_script_graph.js`, `dashboard_script_ros.js`). Es gleicht statisch analysierte Nodes visuell mit den aktuell laufenden Nodes ab, zeigt Echtzeit-Topic-Frequenzen (Hz) an und ermöglicht die direkte Ausführung von System-Skripten aus der Browser-Oberfläche in einer übersichtlichen, einspaltigen Referenzansicht. Das UI nutzt eine moderne Glassmorphism-Designsprache und führt rekursives JSON-Parsing durch, um tief verschachtelte ROS-Nachrichtenstrukturen sauber formatiert darzustellen. Die Sidebar liefert auf einen Blick Statusinformationen wie Verbindungsgesundheit, Roboter-Verfügbarkeit und die aktive ROS 2 Umgebungskonfiguration.
@@ -1723,6 +1749,7 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ---
 <br>
+
 
 ### 7.3 Startbefehle der UI-Komponenten
 *Starte diese Komponenten über ROS 2 Nexus oder manuell über das Terminal:*
@@ -1750,6 +1777,7 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ---
 
+
 ### 8.1 Roboter-Steuerungsarten (Inputs)
 #
 
@@ -1763,6 +1791,7 @@ Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Ne
 
 ### Gamepad Teleoperation
 > Latenzarme, kontinuierliche Feinsteuerung per Xbox One Elite Series 2 Controller (inkl. haptischem Feedback - Vibration bei Kollisionsgefahr).
+
 
 ### 8.2 Sensorik & Assistenz (Perception)
 #### Computer Vision
@@ -1789,6 +1818,7 @@ KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 ---
 
 <br>
+
 
 ### 8.4 User Interfaces (UI/GUI)
 Für eine kognitiv entlastende Teleoperation steht dem Nutzer ein zentrales, immersives User Interface zur Verfügung, das alle Systemzustände bündelt.
