@@ -573,7 +573,9 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 >> |---|---|---|
 >> | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Integriert die generierte OctoMap nativ in die Kollisionswelt.* |
 >
+> <img src="_imgs/SS4_pointcloud%20object%20det%20collision%20on.png" width="90%" alt="Pointcloud Collision Detection">
 >
+
 
 
 
@@ -986,7 +988,9 @@ stateDiagram-v2
 >> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggert Autonomie-Aktionen.* |
 >> | **`/whisper/inference`** | `whisper_idl/Inference` | *Startet Audio-Aufnahmen bei Klick auf das Mikrofon-Symbol.* |
 >
+> <img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control Web UI">
 >
+
 
 
 ---

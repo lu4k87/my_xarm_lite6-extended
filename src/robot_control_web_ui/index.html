@@ -81,6 +81,89 @@
 
       <div class="col-left" id="col-left">
         
+        <section id="panel-camera" class="glass-panel" style="height: calc(33.33vh - 40px); min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+          <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream</h2>
+          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+            <div id="cam-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
+              <i class="fa-solid fa-video-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
+              Stream Disconnected
+            </div>
+            <img id="cam-stream" src="http://192.168.0.124/html/cam_pic.php?time=0&pDelay=40000" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="Camera Stream">
+          </div>
+        </section>
+
+        <section id="panel-camera-2" class="glass-panel" style="height: calc(33.33vh - 40px); min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+          <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream 2</h2>
+          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+            <div id="cam-stream-2-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
+              <i class="fa-solid fa-video-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
+              Stream Disconnected
+            </div>
+            <img id="cam-stream-2" src="http://192.168.0.123/html/cam_pic.php?time=0&pDelay=40000" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="Camera Stream 2">
+          </div>
+        </section>
+
+        <section id="panel-zed-camera" class="glass-panel" style="height: calc(33.33vh - 40px); min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+          <h2 style="cursor: grab;"><i class="fa-solid fa-camera"></i> ZED M Live Stream</h2>
+          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+            <div id="zed-cam-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
+              <i class="fa-solid fa-video-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
+              Stream Disconnected
+            </div>
+            <!-- Dynamic src applied via JS at the bottom of the page -->
+            <img id="zed-cam-stream" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="ZED M Camera Stream">
+          </div>
+        </section>
+
+      </div>
+
+      <div class="col-middle" id="col-middle">
+        
+        <section id="panel-moveto" class="glass-panel">
+          <h2><i class="fa-solid fa-location-crosshairs"></i> Absolute Pose (MoveTo)</h2>
+          <div class="input-grid">
+            <div class="input-group"><label><span style="color: var(--rviz-x);">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
+            <div class="input-group"><label><span style="color: var(--rviz-y);">Y</span> [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
+            <div class="input-group"><label><span style="color: var(--rviz-z);">Z</span> [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
+            <div class="input-group"><label>Roll [rad] (<span style="color: var(--rviz-x);">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
+            <div class="input-group"><label>Pitch [rad] (<span style="color: var(--rviz-y);">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
+            <div class="input-group"><label>Yaw [rad] (<span style="color: var(--rviz-z);">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; justify-content: space-between;">
+            <button class="btn btn-primary" style="padding: 8px 14px; font-size: 12px;" onclick="moveToPose()">Move To: Absolute Pose</button>
+            <button class="btn btn-rot" style="padding: 8px 14px; font-size: 12px;" onclick="setInitialPose()">Move To: Initial Pose</button>
+            <button id="btn-scan-objects" class="btn btn-primary" style="padding: 8px 14px; font-size: 12px; background: rgba(56, 189, 248, 0.2); color: var(--rviz-z); border-color: var(--rviz-z);" onclick="startObjectScan()">
+              <i class="fa-solid fa-crosshairs"></i> Scan Objects
+            </button>
+            <button id="btn-emergency-stop" class="btn" style="padding: 8px 14px; font-size: 12px; background: rgba(239, 68, 68, 0.2); color: var(--rviz-x); border-color: var(--rviz-x); font-weight: 700; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);" onclick="emergencyStop()">
+              <i class="fa-solid fa-hand"></i> STOP
+            </button>
+          </div>
+          <div style="width: 100%; display: flex; justify-content: center; gap: 15px; margin-top: 12px; color: var(--txt); font-size: 13px; font-weight: bold;">
+             <span style="color: var(--rviz-z);"><i class="fa-solid fa-gauge"></i> Speed:</span>
+             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()"> Slow</label>
+             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()"> Normal</label>
+             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()"> Fast</label>
+          </div>
+        </section>
+
+        <section id="panel-yolo" class="glass-panel">
+          <h2><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO 3D)</h2>
+          <div id="yolo-container" class="yolo-container">
+            <div class="yolo-empty">Waiting for /zed/bboxes_3d...</div>
+          </div>
+          
+          <h2 style="margin-top: 24px; font-size: 14px;"><i class="fa-solid fa-hand-holding"></i> Manual Grasp Target</h2>
+          <div style="display: flex; gap: 12px;">
+            <input type="text" id="inp-grasp-obj" placeholder="Object class (e.g. cup)" style="flex: 1;">
+            <button class="btn btn-primary" style="background: rgba(245, 158, 11, 0.2); border-color: var(--orange); color: var(--orange);" onclick="executeGrasp()">Grasp Object</button>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="col-right" id="col-right">
+
         <section id="panel-jogging" class="glass-panel joystick-section">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
@@ -185,77 +268,6 @@
           </div>
         </section>
 
-      </div>
-
-      <div class="col-middle" id="col-middle">
-        
-        <section id="panel-moveto" class="glass-panel">
-          <h2><i class="fa-solid fa-location-crosshairs"></i> Absolute Pose (MoveTo)</h2>
-          <div class="input-grid">
-            <div class="input-group"><label><span style="color: var(--rviz-x);">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
-            <div class="input-group"><label><span style="color: var(--rviz-y);">Y</span> [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
-            <div class="input-group"><label><span style="color: var(--rviz-z);">Z</span> [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
-            <div class="input-group"><label>Roll [rad] (<span style="color: var(--rviz-x);">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-            <div class="input-group"><label>Pitch [rad] (<span style="color: var(--rviz-y);">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-            <div class="input-group"><label>Yaw [rad] (<span style="color: var(--rviz-z);">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
-          </div>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; justify-content: space-between;">
-            <button class="btn btn-primary" style="padding: 8px 14px; font-size: 12px;" onclick="moveToPose()">Move To: Absolute Pose</button>
-            <button class="btn btn-rot" style="padding: 8px 14px; font-size: 12px;" onclick="setInitialPose()">Move To: Initial Pose</button>
-            <button id="btn-scan-objects" class="btn btn-primary" style="padding: 8px 14px; font-size: 12px; background: rgba(56, 189, 248, 0.2); color: var(--rviz-z); border-color: var(--rviz-z);" onclick="startObjectScan()">
-              <i class="fa-solid fa-crosshairs"></i> Scan Objects
-            </button>
-            <button id="btn-emergency-stop" class="btn" style="padding: 8px 14px; font-size: 12px; background: rgba(239, 68, 68, 0.2); color: var(--rviz-x); border-color: var(--rviz-x); font-weight: 700; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);" onclick="emergencyStop()">
-              <i class="fa-solid fa-hand"></i> STOP
-            </button>
-          </div>
-          <div style="width: 100%; display: flex; justify-content: center; gap: 15px; margin-top: 12px; color: var(--txt); font-size: 13px; font-weight: bold;">
-             <span style="color: var(--rviz-z);"><i class="fa-solid fa-gauge"></i> Speed:</span>
-             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()"> Slow</label>
-             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()"> Normal</label>
-             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()"> Fast</label>
-          </div>
-        </section>
-
-        <section id="panel-yolo" class="glass-panel">
-          <h2><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO 3D)</h2>
-          <div id="yolo-container" class="yolo-container">
-            <div class="yolo-empty">Waiting for /zed/bboxes_3d...</div>
-          </div>
-          
-          <h2 style="margin-top: 24px; font-size: 14px;"><i class="fa-solid fa-hand-holding"></i> Manual Grasp Target</h2>
-          <div style="display: flex; gap: 12px;">
-            <input type="text" id="inp-grasp-obj" placeholder="Object class (e.g. cup)" style="flex: 1;">
-            <button class="btn btn-primary" style="background: rgba(245, 158, 11, 0.2); border-color: var(--orange); color: var(--orange);" onclick="executeGrasp()">Grasp Object</button>
-          </div>
-        </section>
-
-      </div>
-
-      <div class="col-right" id="col-right">
-
-        <section id="panel-camera" class="glass-panel" style="min-height: 250px; min-width: 300px; padding-bottom: 10px;">
-          <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream</h2>
-          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-            <img id="cam-stream" src="http://192.168.0.124/html/cam_pic.php?time=0&pDelay=40000" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="Camera Stream">
-          </div>
-        </section>
-
-        <section id="panel-camera-2" class="glass-panel" style="min-height: 250px; min-width: 300px; padding-bottom: 10px;">
-          <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream 2</h2>
-          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-            <img id="cam-stream-2" src="http://192.168.0.123/html/cam_pic.php?time=0&pDelay=40000" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="Camera Stream 2">
-          </div>
-        </section>
-
-        <section id="panel-zed-camera" class="glass-panel" style="min-height: 250px; min-width: 300px; padding-bottom: 10px;">
-          <h2 style="cursor: grab;"><i class="fa-solid fa-camera"></i> ZED M Live Stream</h2>
-          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-            <!-- Dynamic src applied via JS at the bottom of the page -->
-            <img id="zed-cam-stream" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="ZED M Camera Stream">
-          </div>
-        </section>
-
         <section id="panel-whisper" class="glass-panel">
           <h2><i class="fa-solid fa-microphone"></i> Speech Control (Whisper AI)</h2>
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
@@ -288,34 +300,60 @@
   <script>
     // ── Live Camera Update Loop ──
     const camImg = document.getElementById('cam-stream');
+    const camErr = document.getElementById('cam-stream-err');
     if (camImg) {
       function updateCam() {
         camImg.src = `http://192.168.0.124/html/cam_pic.php?time=${new Date().getTime()}&pDelay=40000`;
       }
-      camImg.onload = updateCam;
-      camImg.onerror = () => setTimeout(updateCam, 1000);
+      camImg.onload = () => {
+        if (camErr) camErr.style.display = 'none';
+        camImg.style.display = 'block';
+        updateCam();
+      };
+      camImg.onerror = () => {
+        if (camErr) camErr.style.display = 'flex';
+        camImg.style.display = 'none';
+        setTimeout(updateCam, 1000);
+      };
       updateCam(); // start the loop
     }
 
     // ── Live Camera 2 Update Loop ──
     const camImg2 = document.getElementById('cam-stream-2');
+    const camErr2 = document.getElementById('cam-stream-2-err');
     if (camImg2) {
       function updateCam2() {
         camImg2.src = `http://192.168.0.123/html/cam_pic.php?time=${new Date().getTime()}&pDelay=40000`;
       }
-      camImg2.onload = updateCam2;
-      camImg2.onerror = () => setTimeout(updateCam2, 1000);
+      camImg2.onload = () => {
+        if (camErr2) camErr2.style.display = 'none';
+        camImg2.style.display = 'block';
+        updateCam2();
+      };
+      camImg2.onerror = () => {
+        if (camErr2) camErr2.style.display = 'flex';
+        camImg2.style.display = 'none';
+        setTimeout(updateCam2, 1000);
+      };
       updateCam2(); // start the loop
     }
     // ── ZED M Camera Stream ──
     const zedImg = document.getElementById('zed-cam-stream');
+    const zedErr = document.getElementById('zed-cam-stream-err');
     if (zedImg) {
       // Connect to web_video_server on the same host as the UI
       const host = window.location.hostname || 'localhost';
       zedImg.src = `http://${host}:8082/stream?topic=/zed/zed_node/rgb/image_rect_color`;
       
+      zedImg.onload = () => {
+        if (zedErr) zedErr.style.display = 'none';
+        zedImg.style.display = 'block';
+      };
+
       // Auto-retry if connection fails or web_video_server restarts
       zedImg.onerror = () => {
+        if (zedErr) zedErr.style.display = 'flex';
+        zedImg.style.display = 'none';
         setTimeout(() => {
           zedImg.src = `http://${host}:8082/stream?topic=/zed/zed_node/rgb/image_rect_color&_t=${new Date().getTime()}`;
         }, 3000);
