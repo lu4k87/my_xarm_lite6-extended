@@ -902,6 +902,8 @@ stateDiagram-v2
 ### 3.5 Funktion: GUI - Grafische Robotersteuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
+<img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control Web UI">
+
 ---
 
 <br>
@@ -1088,8 +1090,6 @@ stateDiagram-v2
 >> | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | *Sichert die geänderte Geschwindigkeit.* |
 >> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggert Autonomie-Aktionen.* |
 >> | **`/whisper/inference`** | `whisper_idl/Inference` | *Startet Audio-Aufnahmen bei Klick auf das Mikrofon-Symbol.* |
->
-> <img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control Web UI">
 >
 
 

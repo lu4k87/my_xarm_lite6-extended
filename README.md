@@ -855,6 +855,8 @@ stateDiagram-v2
 ### 3.5 Feature: GUI - Graphical Robot Control & Visual Feedback
 *Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
 
+<img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control Web UI">
+
 ---
 
 <br>
@@ -1038,8 +1040,6 @@ stateDiagram-v2
 >> | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | *Saves the speed scale changed via web slider.* |
 >> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggers autonomy pipeline actions.* |
 >> | **`/whisper/inference`** | `whisper_idl/Inference` | *Initiates audio recording when the mic icon is clicked.* |
->
-> <img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control Web UI">
 >
 
 
