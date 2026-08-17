@@ -316,22 +316,15 @@ class EyeControlUI(QWidget):
                 print("[STREAM] Legacy-Cam Modus: Lade IP-Kamera 192.168.0.124")
 
         if HAS_WEBENGINE:
-            # Kleiner PIP-Stream (obere rechte Ecke) – direkter MJPEG-img-Tag, keine RPi-UI
+            # Kleiner PIP-Stream (obere rechte Ecke) – gleiche Methode wie Egocentric-Version
             self.web_view_small = QWebEngineView(self)
             self.web_view_small.setPage(SilentWebEnginePage(self.web_view_small))
+            self.web_view_small.setUrl(QUrl("http://192.168.0.123/html/"))
             self.web_view_small.setFocusPolicy(Qt.NoFocus)
             self.web_view_small.setAttribute(Qt.WA_TransparentForMouseEvents)
-            self.web_view_small.page().setBackgroundColor(QColor("#111111"))
-            self.web_view_small.setStyleSheet("background-color: #111111; border: 2px solid rgba(128, 128, 128, 0.5); border-radius: 4px;")
-            # Direkt MJPEG-Stream laden, keine RPi-Cam-Control-Webseite (vermeidet JS-Injection)
-            pip_html = """<!DOCTYPE html><html><head>
-            <style>*{margin:0;padding:0;overflow:hidden;background:#111}
-            body{width:100%;height:100%}
-            img{width:100%;height:100%;object-fit:cover;display:block}</style></head>
-            <body><img src="http://192.168.0.123/?action=stream"
-                onerror="setTimeout(function(){this.src='http://192.168.0.123/?action=stream&_t='+Date.now()},3000);"
-            ></body></html>"""
-            self.web_view_small.setHtml(pip_html, QUrl("http://192.168.0.123/"))
+            self.web_view_small.page().setBackgroundColor(QColor("#444444"))
+            self.web_view_small.setStyleSheet("background-color: #444444; border: 4px solid rgba(128, 128, 128, 0.6);")
+            self.web_view_small.loadFinished.connect(self._on_pip_loaded)
             self.web_view_small.show()
 
         print("[STREAM] Livestream-Hintergrund initialisiert.")
@@ -613,6 +606,45 @@ class EyeControlUI(QWidget):
 
         except Exception as e:
             print(f"[STREAM] Fehler beim Anzeigen des ZED-Frames: {e}")
+
+    def _on_pip_loaded(self, ok):
+        """JS-Injection für PIP-Stream: Blendet RPi-Cam-Control-UI aus, zeigt nur Video."""
+        if ok and self.web_view_small:
+            js = """
+            document.body.style.margin = '0';
+            document.body.style.padding = '0';
+            document.body.style.overflow = 'hidden';
+            document.body.style.background = 'black';
+
+            var allElements = document.querySelectorAll('div, nav, header, footer, table, form, select, input, button, a, span, p, h1, h2, h3, h4');
+            for (var i = 0; i < allElements.length; i++) {
+                var el = allElements[i];
+                if (!el.querySelector('video, img, canvas, object, embed')
+                    && el.tagName !== 'VIDEO' && el.tagName !== 'IMG' && el.tagName !== 'CANVAS') {
+                    el.style.display = 'none';
+                }
+            }
+
+            var applyStyles = function(elements) {
+                for (var i = 0; i < elements.length; i++) {
+                    elements[i].style.width = '100vw';
+                    elements[i].style.height = '100vh';
+                    elements[i].style.objectFit = 'cover';
+                    elements[i].style.position = 'fixed';
+                    elements[i].style.top = '0';
+                    elements[i].style.left = '0';
+                    elements[i].style.borderRadius = '0px';
+                }
+            };
+            applyStyles(document.querySelectorAll('video'));
+            applyStyles(document.querySelectorAll('img'));
+            """
+            self.web_view_small.page().runJavaScript(js)
+            self.web_view_small.show()
+            print("[STREAM] PIP-Stream (.123) geladen und UI bereinigt.")
+        elif not ok and self.web_view_small:
+            print("[STREAM] PIP-Stream (.123): Ladefehler, versuche erneut in 3s...")
+            QTimer.singleShot(3000, self.web_view_small.reload)
 
     def init_eye_tracker(self):
         self.g3_ip = "192.168.75.51"
