@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'gaze_ui = gaze_control.gaze_ui_node_tobii_glasses:main',
+            'gaze_ui_zedm = gaze_control.gaze_ui_node_tobii_glasses_zedm:main',
             'gaze_ui_tobii = gaze_control.gaze_ui_node_tobii_4c:main',
             'tobii_publisher = gaze_control.tobii_4c_publisher_node:main',
         ],

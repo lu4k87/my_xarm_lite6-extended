@@ -249,15 +249,39 @@
       const actions = [
         { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev", title: "MoveIt Servo (Real)" },
         { cmd: "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175", title: "MoveIt MoveGroup (Standalone/Real)" },
-        { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" },
         { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
         { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
         { cmd: "ros2 run web_video_server web_video_server --ros-args -p port:=8082", title: "Web Video Server (Port 8082)" },
-        { cmd: "ros2 run rviz_streamer rviz_streamer_node", title: "RViz Streamer Node" },
-        { cmd: "ros2 run gaze_control gaze_ui", title: "Gaze UI Node (Glasses 3 Pro)" }
+        { cmd: "ros2 run gaze_control gaze_ui_zedm", title: "Gaze UI Node ZED M (Glasses 3 Pro)" },
+        { cmd: "ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm", title: "ZED M Camera Node" }
       ];
 
       showToast(`🚀 EXTRAS EXEC gestartet... (${actions.length} Terminals)`);
+
+      for (const a of actions) {
+        try {
+          await fetch('/api/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
+          });
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (e) {
+          console.error("Failed to start command:", a.cmd, e);
+        }
+      }
+    }
+
+    async function runExtrasExecLegacyCam() {
+      const actions = [
+        { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev", title: "MoveIt Servo (Real)" },
+        { cmd: "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175", title: "MoveIt MoveGroup (Standalone/Real)" },
+        { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
+        { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
+        { cmd: "ros2 run gaze_control gaze_ui", title: "Gaze UI Node (Legacy IP Cam .124)" }
+      ];
+
+      showToast(`🚀 EXTRAS EXEC (Legacy) gestartet... (${actions.length} Terminals)`);
 
       for (const a of actions) {
         try {
@@ -464,7 +488,6 @@
                        <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> inference.cpp</span> <span style="float: right; opacity: 0.7;">(Whisper Engine)</span></li>
                      </ul>
                    </li>
-                   <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> voice_command_listener.py</span> <span style="float: right; opacity: 0.7;">(Voice Controller)</span></li>
                    <li><span style="color: var(--c-launch);"><i class="fa-solid fa-rocket" style="margin-right: 4px; font-size: 10px;"></i> rosbridge_websocket_launch.xml</span> <span style="float: right; opacity: 0.7;">(ROS Bridge)</span>
                      <ul style="padding-left: 16px; margin: 2px 0 4px 0;">
                        <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> rosbridge_websocket.py</span> <span style="float: right; opacity: 0.7;">(WebSocket Server)</span></li>
@@ -474,7 +497,6 @@
                    <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> tf_tuner.py</span> <span style="float: right; opacity: 0.7;">(TF Tuner)</span></li>
                    <li><span style="color: var(--c-cmd);"><i class="fa-solid fa-server" style="margin-right: 4px; font-size: 10px;"></i> robot_control_web_ui.py</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
                    <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> web_video_server.cpp</span> <span style="float: right; opacity: 0.7;">(ROS Video Stream :8082)</span></li>
-                   <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> rviz_streamer_node.py</span> <span style="float: right; opacity: 0.7;">(RViz Streamer)</span></li>
                 </ul>
               </div>
             </div>
@@ -653,14 +675,14 @@
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
                     <span class="badge badge-dev"><i class="fa-solid fa-bolt"></i>EXTRAS SEQUENCE</span>
-                    <span class="label">RUN DEV + Gaze UI (REAL)</span>
+                    <span class="label">RUN DEV + Gaze UI (ZED M) - Exocentric</span>
                   </div>
                   <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">DEV Setup (Real) + Gaze UI Node (Glasses 3 Pro) — 7 Terminals</span></div>
                 </div>
                  <button class="copy-btn" data-cmd="ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev" title="Kopieren:\nros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev"><i class="fa-regular fa-copy"></i></button>
               </div>
               <div class="card-tooltip">
-                <div class="card-tooltip-title"><i class="fa-solid fa-bolt"></i> RUN DEV + Gaze UI (REAL)</div>
+                <div class="card-tooltip-title"><i class="fa-solid fa-bolt"></i> RUN DEV + Gaze UI (ZED M) - Exocentric</div>
                 <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Startet folgende Terminals:</b></div>
                 <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
                    <li><span style="color: var(--c-launch);"><i class="fa-solid fa-rocket" style="margin-right: 4px; font-size: 10px;"></i> lite6_moveit_servo_realmove.launch.py</span> <span style="float: right; opacity: 0.7;">(MoveIt Servo Real)</span></li>
@@ -669,7 +691,34 @@
                    <li><span style="color: var(--c-launch);"><i class="fa-solid fa-rocket" style="margin-right: 4px; font-size: 10px;"></i> rosbridge_websocket_launch.xml</span> <span style="float: right; opacity: 0.7;">(ROS Bridge)</span></li>
                    <li><span style="color: var(--c-cmd);"><i class="fa-solid fa-server" style="margin-right: 4px; font-size: 10px;"></i> robot_control_web_ui.py</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
                    <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> web_video_server.cpp</span> <span style="float: right; opacity: 0.7;">(ROS Video Stream :8082)</span></li>
-                   <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> gaze_ui_node_tobii_glasses.py</span> <span style="float: right; opacity: 0.7;">(Gaze UI Glasses 3 Pro)</span></li>
+                   <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> gaze_ui_node_tobii_glasses_zedm.py</span> <span style="float: right; opacity: 0.7;">(Gaze UI ZED M Glasses 3 Pro))</span></li>
+                </ul>
+              </div>
+            </div>
+            <div class="card-wrapper">
+              <div class="action-card" data-type="dev" onclick="runExtrasExecLegacyCam()" style="cursor: pointer;">
+                <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-right: 1px solid var(--brd); color: #a855f7; font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
+                  <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div class="action-btn" style="pointer-events: none;">
+                  <div class="btn-top">
+                    <span class="badge badge-extras"><i class="fa-solid fa-bolt"></i>EXTRAS SEQUENCE</span>
+                    <span class="label">RUN DEV + Gaze UI (Rpi Cam) - Egocentric</span>
+                  </div>
+                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">DEV Setup (Real) + Gaze UI Node (IP Cam: .124) — 6 Terminals</span></div>
+                </div>
+                 <button class="copy-btn" data-cmd="ros2 run gaze_control gaze_ui --legacy-cam" title="Kopieren"><i class="fa-regular fa-copy"></i></button>
+              </div>
+              <div class="card-tooltip">
+                <div class="card-tooltip-title"><i class="fa-solid fa-bolt"></i> RUN DEV + Gaze UI (Rpi Cam) - Egocentric</div>
+                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Startet folgende Terminals:</b></div>
+                <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
+                   <li><span style="color: var(--c-launch);"><i class="fa-solid fa-rocket" style="margin-right: 4px; font-size: 10px;"></i> lite6_moveit_servo_realmove.launch.py</span> <span style="float: right; opacity: 0.7;">(MoveIt Servo Real)</span></li>
+                   <li><span style="color: var(--c-launch);"><i class="fa-solid fa-rocket" style="margin-right: 4px; font-size: 10px;"></i> standalone_move_group.launch.py</span> <span style="float: right; opacity: 0.7;">(MoveGroup Real)</span></li>
+                   <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> voice_command_listener.py</span> <span style="float: right; opacity: 0.7;">(Voice Controller)</span></li>
+                   <li><span style="color: var(--c-launch);"><i class="fa-solid fa-rocket" style="margin-right: 4px; font-size: 10px;"></i> rosbridge_websocket_launch.xml</span> <span style="float: right; opacity: 0.7;">(ROS Bridge)</span></li>
+                   <li><span style="color: var(--c-cmd);"><i class="fa-solid fa-server" style="margin-right: 4px; font-size: 10px;"></i> robot_control_web_ui.py</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>
+                   <li><span style="color: var(--c-node);"><svg viewBox="0 0 100 100" style="width: 12px; height: 12px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> gaze_ui_node_tobii_glasses.py</span> <span style="float: right; opacity: 0.7;">(Gaze UI Legacy Cam)</span></li>
                 </ul>
               </div>
             </div>
