@@ -35,6 +35,7 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
    - [3.4 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)](#34-funktion-multimodale-interaktion-sprache--blicksteuerung)
    - [3.5 Funktion: GUI - Grafische Robotersteuerung & Visuelles Feedback](#35-funktion-gui---grafische-robotersteuerung--visuelles-feedback)
    - [3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)](#36-funktion-digital-twin--simulation-nvidia-isaac-sim)
+   - [3.7 Funktion: VR-Teleoperation (Meta Quest 3)](#37-funktion-vr-teleoperation-meta-quest-3)
 
 4. [🕹️ Multimodale Technologien & Interaktionskonzepte](#4-️-multimodale-technologien--interaktionskonzepte)
    - [4.1 Roboter-Steuerungsarten (Inputs)](#41-roboter-steuerungsarten-inputs)
@@ -1121,6 +1122,75 @@ stateDiagram-v2
 > - **OmniGraph Architektur:** Die Szene nutzt einen minimalistischen Action Graph, bestehend aus einem `On Playback Tick` Knoten, der in einen `ROS2 Subscribe Joint State` Knoten feuert (welcher `/joint_states` abonniert), der wiederum direkt in den `Articulation Controller` mündet, welcher das Roboter-Asset steuert.
 > - **`COLCON_IGNORE` Integration:** Da Isaac Sim tausende nicht-ROS Python Skripte in seinem `_build` Cache enthält, wurde eine `.colconignore` (oder `COLCON_IGNORE`) Datei im `isaacsim` Ordner platziert, um zu verhindern, dass `colcon build` bei der ROS 2 Workspace-Kompilierung abstürzt.
 >
+
+[⬆️ Zurück zum Inhaltsverzeichnis](#inhaltsverzeichnis)
+
+---
+
+<br>
+
+### 3.7 Funktion: VR-Teleoperation (Meta Quest 3)
+*Dieses Subsystem ermöglicht die intuitive, räumliche 6DoF-Teleoperation des Roboters mit dem Meta Quest 3 VR-Controller. Der Operator bewegt den Controller physisch im Raum, und der Endeffektor des Roboters spiegelt diese Bewegungen im kartesischen Raum.*
+
+---
+
+<br>
+
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_quest3_vr_input.cpp` &nbsp;&nbsp; <sub><i>[`/src/xarm_quest3_vr/src/xarm_quest3_vr_input.cpp`](./src/xarm_quest3_vr/src/xarm_quest3_vr_input.cpp)</i></sub>
+> [!NOTE]
+> 💻 **Start-Befehl:**
+> ```bash
+> # Schritt 1: TCP-Bridge-Server starten (empfängt Daten von der Brille per WLAN)
+> ros2 launch ros_tcp_endpoint endpoint.launch.py
+>
+> # Schritt 2: VR-Input-Node starten
+> ros2 run xarm_quest3_vr xarm_quest3_vr_input
+> ```
+> *(Beide Schritte setzen voraus, dass die Quest2ROS-App auf der Quest 3 aktiv und mit der PC-IP auf Port 10000 verbunden ist.)*
+>
+> **Zweck & Aufgabe:** Verbindet den Meta Quest 3 Controller über die `ros_tcp_endpoint`-Netzwerkbrücke mit dem ROS 2-Ökosystem. Empfängt 6DoF räumliche Geschwindigkeitsdaten (`TwistStamped`) und Button-Zustände (`Joy`) vom VR-Headset und publiziert skalierte, deadzone-gefilterte `TwistStamped`-Befehle an MoveIt Servo. Dies ermöglicht eine vollständig physische, intuitive Steuerungsmodalität, bei der die räumliche Handbewegung direkt auf den Endeffektor des Roboters abgebildet wird.
+>
+> **🥽 VR-Controller-Belegung:**
+>> | Eingabe | Aktion | Details |
+>> | :--- | :--- | :--- |
+>> | **Controller-Bewegung** (6DoF) | **Kartesisches Verfahren + Rotation** | *Controller physisch im Raum bewegen, um den Endeffektor zu steuern* |
+>> | **A-Taste** (🟢) | **Greifer-Toggle** | *Öffnet / schließt den Greifer* |
+>
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/vr_teleop/right_controller/twist`** | `geometry_msgs/TwistStamped` | *Empfängt 6DoF-Geschwindigkeit (linear + angular) von der VR-Bridge (Quest2ROS).* |
+>> | **`/vr_teleop/right_controller/joy`** | `sensor_msgs/Joy` | *Empfängt Button-Zustände des VR-Controllers.* |
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Sendet skalierte, gefilterte kartesische Geschwindigkeitsbefehle an MoveIt Servo.* |
+>
+>
+> ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/ufactory/open_lite6_gripper`** | Client | *Öffnet den Greifer (A-Taste gedrückt).* |
+>> | **`/ufactory/close_lite6_gripper`** | Client | *Schließt den Greifer (A-Taste gedrückt).* |
+>
+>
+> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
+>
+>> | Parameter | Standardwert | Beschreibung |
+>> |---|---|---|
+>> | `vr_twist_topic` | `/vr_teleop/right_controller/twist` | *Eingehendes Twist-Topic — anpassen, falls der Quest2ROS-Output anders heißt.* |
+>> | `vr_joy_topic` | `/vr_teleop/right_controller/joy` | *Eingehendes Button-Topic — anpassen, falls der Quest2ROS-Output anders heißt.* |
+>> | `linear_speed_scale` | `0.5` | *Globaler Skalierungsfaktor für lineare (translatorische) Geschwindigkeit.* |
+>> | `angular_speed_scale` | `0.5` | *Globaler Skalierungsfaktor für rotatorische Geschwindigkeit.* |
+>
+>
+
 
 [⬆️ Zurück zum Inhaltsverzeichnis](#inhaltsverzeichnis)
 

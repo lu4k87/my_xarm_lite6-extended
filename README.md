@@ -35,6 +35,7 @@ This repository is a continuously evolving research and evaluation platform for 
    - [3.4 Feature: Multimodal Interaction (Voice & Gaze Control)](#34-feature-multimodal-interaction-voice--gaze-control)
    - [3.5 Feature: GUI - Graphical Robot Control & Visual Feedback](#35-feature-gui---graphical-robot-control--visual-feedback)
    - [3.6 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)](#36-feature-digital-twin--simulation-nvidia-isaac-sim)
+   - [3.7 Feature: VR Teleoperation (Meta Quest 3)](#37-feature-vr-teleoperation-meta-quest-3)
 
 4. [🕹️ Multimodal Technologies & Interaction Concepts](#4-️-multimodal-technologies--interaction-concepts)
    - [4.1 Robot Control Methods (Inputs)](#41-robot-control-methods-inputs)
@@ -362,6 +363,62 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 >> | **`/servo_server/switch_command_type`** | Client | *Switches the input mode of the Servo Server (e.g., Twist to Joint Jog).* |
 >
 >
+
+---
+
+<br>
+
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_quest3_vr_input.cpp` &nbsp;&nbsp; <sub><i>[`/src/xarm_quest3_vr/src/xarm_quest3_vr_input.cpp`](./src/xarm_quest3_vr/src/xarm_quest3_vr_input.cpp)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 run xarm_quest3_vr xarm_quest3_vr_input
+> ```
+> *(Requires the `ros_tcp_endpoint` server and Quest2ROS app on the headset to be running first.)*
+>
+> **Purpose & Task:** Receives 6DoF spatial tracking data from the Meta Quest 3 VR controller via the `ros_tcp_endpoint` bridge and translates it into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies a deadzone filter to eliminate hand tremor. Supports gripper control via the VR controller button.
+>
+> **🥽 VR Controller Mapping:**
+>> | Input | Action | Details |
+>> | :--- | :--- | :--- |
+>> | **Controller movement** (6DoF) | **Cartesian translation + rotation** | *Physically move the controller to move the robot end-effector in space* |
+>> | **Button A** (🟢) | **Gripper Toggle** | *Opens / closes the gripper* |
+>
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/vr_teleop/right_controller/twist`** | `geometry_msgs/TwistStamped` | *Receives 6DoF velocity (linear + angular) from the VR bridge.* |
+>> | **`/vr_teleop/right_controller/joy`** | `sensor_msgs/Joy` | *Receives button states from the VR controller.* |
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Sends scaled Cartesian velocity commands to MoveIt Servo.* |
+>
+>
+> ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/ufactory/open_lite6_gripper`** | Client | *Opens the robot gripper.* |
+>> | **`/ufactory/close_lite6_gripper`** | Client | *Closes the robot gripper.* |
+>
+>
+> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
+>
+>> | Parameter | Default | Description |
+>> |---|---|---|
+>> | `vr_twist_topic` | `/vr_teleop/right_controller/twist` | *Topic name for incoming VR twist data (adjust to match Quest2ROS output).* |
+>> | `vr_joy_topic` | `/vr_teleop/right_controller/joy` | *Topic name for incoming VR button data.* |
+>> | `linear_speed_scale` | `0.5` | *Scaling factor for linear (translational) velocity.* |
+>> | `angular_speed_scale` | `0.5` | *Scaling factor for angular (rotational) velocity.* |
+>
+>
+
 
 ---
 
@@ -1074,6 +1131,74 @@ stateDiagram-v2
 
 
 
+
+
+[⬆️ Back to Top](#table-of-contents)
+
+---
+<br>
+
+### 3.7 Feature: VR Teleoperation (Meta Quest 3)
+*This subsystem enables intuitive 6DoF spatial teleoperation of the robot using the Meta Quest 3 VR controller. The operator physically moves the controller in space, and the robot end-effector mirrors those movements in Cartesian space.*
+
+---
+
+<br>
+
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_quest3_vr_input.cpp` &nbsp;&nbsp; <sub><i>[`/src/xarm_quest3_vr/src/xarm_quest3_vr_input.cpp`](./src/xarm_quest3_vr/src/xarm_quest3_vr_input.cpp)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> # Step 1: Start the TCP bridge server (receives data from the headset over Wi-Fi)
+> ros2 launch ros_tcp_endpoint endpoint.launch.py
+>
+> # Step 2: Start the VR input node
+> ros2 run xarm_quest3_vr xarm_quest3_vr_input
+> ```
+> *(Both require the Quest2ROS app on the Meta Quest 3 to be connected to the PC's IP on port 10000.)*
+>
+> **Purpose & Task:** Bridges the Meta Quest 3 controller into the ROS 2 ecosystem via the `ros_tcp_endpoint` network bridge. Receives 6DoF spatial velocity data (`TwistStamped`) and button states (`Joy`) from the VR headset and publishes scaled, deadzone-filtered `TwistStamped` commands to MoveIt Servo. This enables a fully physical, intuitive control modality where the spatial movement of the hand directly maps to the robot's end-effector.
+>
+> **🥽 VR Controller Mapping:**
+>> | Input | Action | Details |
+>> | :--- | :--- | :--- |
+>> | **Controller movement** (6DoF) | **Cartesian translation + rotation** | *Move the controller physically in space to move the robot end-effector* |
+>> | **Button A** (🟢) | **Gripper Toggle** | *Opens / closes the robot gripper* |
+>
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/vr_teleop/right_controller/twist`** | `geometry_msgs/TwistStamped` | *Receives 6DoF velocity (linear + angular) from the VR bridge (Quest2ROS).* |
+>> | **`/vr_teleop/right_controller/joy`** | `sensor_msgs/Joy` | *Receives button states from the VR controller.* |
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Sends scaled, filtered Cartesian velocity commands to MoveIt Servo.* |
+>
+>
+> ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/ufactory/open_lite6_gripper`** | Client | *Opens the robot gripper (Button A press).* |
+>> | **`/ufactory/close_lite6_gripper`** | Client | *Closes the robot gripper (Button A press).* |
+>
+>
+> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
+>
+>> | Parameter | Default | Description |
+>> |---|---|---|
+>> | `vr_twist_topic` | `/vr_teleop/right_controller/twist` | *Incoming VR twist topic — adjust to match actual Quest2ROS output topic name.* |
+>> | `vr_joy_topic` | `/vr_teleop/right_controller/joy` | *Incoming VR button topic — adjust to match actual Quest2ROS output topic name.* |
+>> | `linear_speed_scale` | `0.5` | *Global scaling factor for linear (translational) velocity. Reduce for finer control.* |
+>> | `angular_speed_scale` | `0.5` | *Global scaling factor for angular (rotational) velocity.* |
+>
+>
 
 
 [⬆️ Back to Top](#table-of-contents)
