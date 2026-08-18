@@ -368,62 +368,6 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_quest3_vr_input.cpp` &nbsp;&nbsp; <sub><i>[`/src/xarm_quest3_vr/src/xarm_quest3_vr_input.cpp`](./src/xarm_quest3_vr/src/xarm_quest3_vr_input.cpp)</i></sub>
-> [!NOTE]
-> 💻 **Run Command:**
-> ```bash
-> ros2 run xarm_quest3_vr xarm_quest3_vr_input
-> ```
-> *(Requires the `ros_tcp_endpoint` server and Quest2ROS app on the headset to be running first.)*
->
-> **Purpose & Task:** Receives 6DoF spatial tracking data from the Meta Quest 3 VR controller via the `ros_tcp_endpoint` bridge and translates it into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies a deadzone filter to eliminate hand tremor. Supports gripper control via the VR controller button.
->
-> **🥽 VR Controller Mapping:**
->> | Input | Action | Details |
->> | :--- | :--- | :--- |
->> | **Controller movement** (6DoF) | **Cartesian translation + rotation** | *Physically move the controller to move the robot end-effector in space* |
->> | **Button A** (🟢) | **Gripper Toggle** | *Opens / closes the gripper* |
->
->
-> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
->
->> | Topic / Interface | Msg Type | Description |
->> |---|---|---|
->> | **`/vr_teleop/right_controller/twist`** | `geometry_msgs/TwistStamped` | *Receives 6DoF velocity (linear + angular) from the VR bridge.* |
->> | **`/vr_teleop/right_controller/joy`** | `sensor_msgs/Joy` | *Receives button states from the VR controller.* |
->
->
-> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
->
->> | Topic / Interface | Msg Type | Description |
->> |---|---|---|
->> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Sends scaled Cartesian velocity commands to MoveIt Servo.* |
->
->
-> ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
->
->> | Topic / Interface | Msg Type | Description |
->> |---|---|---|
->> | **`/ufactory/open_lite6_gripper`** | Client | *Opens the robot gripper.* |
->> | **`/ufactory/close_lite6_gripper`** | Client | *Closes the robot gripper.* |
->
->
-> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
->
->> | Parameter | Default | Description |
->> |---|---|---|
->> | `vr_twist_topic` | `/vr_teleop/right_controller/twist` | *Topic name for incoming VR twist data (adjust to match Quest2ROS output).* |
->> | `vr_joy_topic` | `/vr_teleop/right_controller/joy` | *Topic name for incoming VR button data.* |
->> | `linear_speed_scale` | `0.5` | *Scaling factor for linear (translational) velocity.* |
->> | `angular_speed_scale` | `0.5` | *Scaling factor for angular (rotational) velocity.* |
->
->
-
-
----
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`) &nbsp;&nbsp; <sub><i>[`/src/collision_check/collision_check/checker.py`](./src/collision_check/collision_check/checker.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
