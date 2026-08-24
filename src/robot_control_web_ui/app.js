@@ -866,10 +866,18 @@ window.addEventListener("gamepaddisconnected", (e) => {
   }
 });
 
+// ── Global Sound Setup ──────────────────────────────────────────────────
+const uiClickSound = new Audio('ui_mouse_click.mp3');
+
 // ── Global Button Debounce (Anti-Double-Click) ──────────────────────────
 document.addEventListener('click', function(e) {
   const btn = e.target.closest('button');
   if (!btn) return;
+  
+  // Play UI click sound
+  uiClickSound.currentTime = 0;
+  uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
+
   
   // Allow continuous jogging buttons to be pressed rapidly or held
   if (btn.classList.contains('btn-z') || btn.classList.contains('btn-rot')) return;
