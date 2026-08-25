@@ -27,14 +27,8 @@
     <script>
         // Connect to ROS
         const ros = new ROSLIB.Ros({
-            url : 'wss://localhost:9090' // Typically ROSBridge uses wss over HTTPS, but local adb reverse uses ws
-            // wait, if we are accessing this from the quest on https://localhost:8443, mixed content might block ws://. 
-            // So we might need wss:// or we use ws:// if localhost allows it.
-            // Let's try ws:// since it's local ADB reverse.
+            url : 'ws://127.0.0.1:9090'
         });
-
-        // Use ws:// for localhost ADB reverse
-        ros.connect('ws://localhost:9090');
 
         ros.on('connection', () => {
             document.getElementById('status').innerText = 'ROS Connected!';
