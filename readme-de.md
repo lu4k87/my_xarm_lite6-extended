@@ -954,6 +954,12 @@ stateDiagram-v2
 > - **Grip Trigger (Mittelfinger):** Wirkt als "Kupplung". Solange er gedrückt ist, wird das exakte räumliche Delta (die Bewegung) des Controllers direkt auf den Endeffektor des Roboters übertragen.
 > - **Index Trigger (Zeigefinger):** Öffnet und schließt den Vakuumgreifer.
 > - **Thumbstick X:** Steuert die virtuelle lineare Achse.
+>
+> 🛠️ **System Setup & Nutzung:**
+> 1. **Voraussetzungen:** Installiere die Android Debug Bridge (`sudo apt update && sudo apt install adb -y`), um das USB-Tunneling zu ermöglichen.
+> 2. **Hardware-Verbindung:** Verbinde die Meta Quest 3 per USB-C mit dem PC. Setze die Brille auf und setze zwingend den Haken bei "Von diesem Computer immer zulassen" im USB-Debugging-Popup.
+> 3. **Node Starten:** Starte den Node über den Button in der Nexus Web-App oder den obigen Befehl. *(Dadurch wird der `adb reverse` Tunnel automatisch aufgebaut).*
+> 4. **VR Verbinden:** Öffne den Meta Quest Browser und navigiere exakt zu `http://127.0.0.1:8443/controller_reader.html`. Klicke auf "Enter VR" und halte den Grip-Trigger (Mittelfinger) gedrückt, um den Roboterarm zu bewegen!
 
 ---
 

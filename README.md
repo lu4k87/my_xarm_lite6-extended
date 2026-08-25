@@ -909,6 +909,12 @@ stateDiagram-v2
 > - **Grip Trigger:** Acts as a "clutch". Holding it maps the controller's exact positional delta to the robot's end effector.
 > - **Index Trigger:** Toggles the vacuum gripper.
 > - **Thumbstick X:** Controls the virtual linear axis.
+>
+> 🛠️ **System Setup & Usage:**
+> 1. **Prerequisites:** Install Android Debug Bridge (`sudo apt update && sudo apt install adb -y`) to enable USB port tunneling.
+> 2. **Hardware Connection:** Connect the Meta Quest 3 to the PC via USB-C. Put the headset on and explicitly check "Always allow from this computer" in the USB Debugging prompt.
+> 3. **Launch Node:** Start the node via the Nexus Web App or the command above. *(This automatically executes `adb reverse` to forward the ports).*
+> 4. **Connect VR:** Open the Meta Quest Browser and navigate precisely to `http://127.0.0.1:8443/controller_reader.html`. Click "Enter VR" and use the Grip trigger to take control of the robot.
 
 ---
 
