@@ -6,222 +6,234 @@
     <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
     <style>
         body { font-family: monospace; background: #111; color: #eee; text-align: center; padding: 20px; margin: 0; }
-        h1 { color: #4fc3f7; font-size: 24px; }
-        .card { background: #1e1e1e; border-radius: 10px; padding: 16px; margin: 12px auto; max-width: 420px; text-align: left; }
-        .row { display: flex; justify-content: space-between; margin: 5px 0; font-size: 15px; }
+        h1 { color: #4fc3f7; font-size: 22px; }
+        .card { background: #1e1e1e; border-radius: 10px; padding: 14px; margin: 10px auto; max-width: 440px; text-align: left; }
+        .row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 14px; }
         .k { color: #888; }
         .v { font-weight: bold; }
-        .ok { color: #66bb6a; }
-        .warn { color: orange; }
-        .err { color: #ef5350; }
+        .ok { color: #66bb6a; } .warn { color: orange; } .err { color: #ef5350; }
         button {
-            font-size: 20px; padding: 14px 28px; cursor: pointer;
+            font-size: 18px; padding: 12px 24px; cursor: pointer;
             border-radius: 10px; border: none; background: #4fc3f7;
-            color: #111; font-weight: bold; margin-top: 10px;
+            color: #111; font-weight: bold; margin: 6px 4px;
         }
+        button.red { background: #ef5350; color: #fff; }
+        #log { font-size: 11px; color: #555; max-height: 80px; overflow-y: auto; }
     </style>
 </head>
 <body>
     <h1>Quest 3 Teleop</h1>
 
     <div class="card">
-        <div class="row"><span class="k">ROS (Port 9090):</span><span class="v" id="s-ros">Verbinde...</span></div>
+        <div class="row"><span class="k">ROS:</span><span class="v" id="s-ros">Verbinde...</span></div>
         <div class="row"><span class="k">VR Session:</span><span class="v" id="s-vr">–</span></div>
-        <div class="row"><span class="k">Input Sources:</span><span class="v" id="s-inputs">0</span></div>
-        <div class="row"><span class="k">Ref Space:</span><span class="v" id="s-ref">–</span></div>
-        <div id="s-info" style="font-size:12px;color:#555;margin-top:6px;"></div>
+        <div class="row"><span class="k">InputSources (poll):</span><span class="v" id="s-inp">–</span></div>
+        <div class="row"><span class="k">Event-Controller:</span><span class="v" id="s-evt">–</span></div>
+        <div id="log"></div>
     </div>
 
-    <button id="vr-btn" style="display:none;" onclick="enterVR()">▶ Enter VR</button>
+    <button id="btn-vr" style="display:none" onclick="enterVR('immersive-vr')">▶ Enter VR</button>
+    <button id="btn-ar" style="display:none" onclick="enterVR('immersive-ar')">▶ Passthrough</button>
 
-    <div class="card" id="ctrl-card" style="display:none;">
-        <div class="row"><span class="k">🖐 Grip (Kupplung):</span><span class="v" id="d-grip">LOS</span></div>
-        <div class="row"><span class="k">☝ Index (Greifer):</span><span class="v" id="d-index">LOS</span></div>
-        <div class="row"><span class="k">🕹 Thumbstick X:</span><span class="v" id="d-thumb">0.00</span></div>
-        <div class="row"><span class="k">📍 Position:</span><span class="v" id="d-pos">–</span></div>
-        <div class="row"><span class="k">📨 Msgs gesendet:</span><span class="v ok" id="d-count">0</span></div>
+    <div class="card" id="ctrl-card" style="display:none">
+        <div class="row"><span class="k">Grip (Kupplung):</span><span class="v" id="d-grip">LOS</span></div>
+        <div class="row"><span class="k">Index (Greifer):</span><span class="v" id="d-index">LOS</span></div>
+        <div class="row"><span class="k">Thumbstick X:</span><span class="v" id="d-thumb">0.000</span></div>
+        <div class="row"><span class="k">Position X/Y/Z:</span><span class="v" id="d-pos">–</span></div>
+        <div class="row"><span class="k">Msgs gesendet:</span><span class="v ok" id="d-cnt">0</span></div>
     </div>
 
     <script>
-        let ros = null;
-        let vrTopic = null;
-        let xrSession = null;
-        let xrRefSpace = null;
-        let msgCount = 0;
-        let reconnectTimer = null;
-        let reconnectN = 0;
+    // ── State ────────────────────────────────────────────────────────
+    let ros = null, vrTopic = null, xrSession = null, xrRefSpace = null;
+    let gripActive = false, indexActive = false;
+    let msgCount = 0, reconnectN = 0, reconnectTimer = null;
+    let lastInputSrc = null; // from events
+    let posX=0, posY=0, posZ=0, oriX=0, oriY=0, oriZ=0, oriW=1;
 
-        // ── ROS Connection with auto-retry ─────────────────────────────
-        function connectROS() {
-            if (ros) { try { ros.close(); } catch(e){} }
-            ros = new ROSLIB.Ros({ url: 'ws://127.0.0.1:9090' });
+    function log(txt) {
+        const el = document.getElementById('log');
+        el.innerHTML = txt + '<br>' + el.innerHTML;
+    }
 
-            ros.on('connection', () => {
-                reconnectN = 0;
-                clearTimeout(reconnectTimer);
-                setStatus('s-ros', 'Verbunden ✅', 'ok');
-                setInfo('');
-                vrTopic = new ROSLIB.Topic({
-                    ros, name: '/vr_teleop/controller_data',
-                    messageType: 'std_msgs/String'
-                });
-                checkXR();
+    // ── ROS ─────────────────────────────────────────────────────────
+    function connectROS() {
+        if (ros) try { ros.close(); } catch(e){}
+        ros = new ROSLIB.Ros({ url: 'ws://127.0.0.1:9090' });
+        ros.on('connection', () => {
+            reconnectN = 0; clearTimeout(reconnectTimer);
+            setS('s-ros','Connected ✅','ok');
+            vrTopic = new ROSLIB.Topic({ ros, name: '/vr_teleop/controller_data', messageType: 'std_msgs/String' });
+            checkXR();
+        });
+        ros.on('error', () => { setS('s-ros','Error ❌','err'); retry(); });
+        ros.on('close', () => { setS('s-ros','Closed 🔄','warn'); retry(); });
+    }
+    function retry() {
+        reconnectN++;
+        const d = Math.min(3000, 800 + reconnectN * 400);
+        reconnectTimer = setTimeout(connectROS, d);
+    }
+
+    // ── WebXR ────────────────────────────────────────────────────────
+    function checkXR() {
+        if (!navigator.xr) { setS('s-vr','WebXR N/A','err'); return; }
+        navigator.xr.isSessionSupported('immersive-vr').then(ok => {
+            if (ok) document.getElementById('btn-vr').style.display='inline-block';
+        });
+        navigator.xr.isSessionSupported('immersive-ar').then(ok => {
+            if (ok) document.getElementById('btn-ar').style.display='inline-block';
+        });
+        setS('s-vr','Ready – choose mode','warn');
+    }
+
+    function enterVR(mode) {
+        log('Starting ' + mode + '...');
+        navigator.xr.requestSession(mode, {
+            requiredFeatures: [],
+            optionalFeatures: ['local-floor','local','bounded-floor','hand-tracking']
+        }).then(session => {
+            xrSession = session;
+            setS('s-vr', mode + ' ✅','ok');
+            document.getElementById('ctrl-card').style.display='block';
+
+            // ── Session Events (work even if inputSources is empty) ──
+            session.addEventListener('inputsourceschange', e => {
+                const n = session.inputSources.length;
+                setS('s-inp', n + ' source(s)', n>0?'ok':'warn');
+                log('inputsourceschange: ' + n + ' sources');
             });
 
-            ros.on('error', () => {
-                setStatus('s-ros', 'Fehler ❌', 'err');
-                retry();
+            // squeeze = grip button (Mittelfinger)
+            session.addEventListener('squeezestart', e => {
+                if (e.inputSource.handedness === 'right' || e.inputSource.handedness === 'none') {
+                    lastInputSrc = e.inputSource;
+                    gripActive = true;
+                    setS('s-evt','✅ GRIP aktiv ('+e.inputSource.handedness+')','ok');
+                    log('squeezestart: ' + e.inputSource.handedness);
+                    document.getElementById('d-grip').innerText = '🟢 GEDRÜCKT';
+                }
+            });
+            session.addEventListener('squeezeend', e => {
+                if (e.inputSource.handedness === 'right' || lastInputSrc === e.inputSource) {
+                    gripActive = false;
+                    document.getElementById('d-grip').innerText = '⚪ LOS';
+                    publish();  // send zero velocity
+                }
             });
 
-            ros.on('close', () => {
-                setStatus('s-ros', 'Getrennt 🔄', 'warn');
-                retry();
+            // select = index trigger (Zeigefinger)
+            session.addEventListener('selectstart', e => {
+                if (e.inputSource.handedness === 'right' || e.inputSource.handedness === 'none') {
+                    lastInputSrc = e.inputSource;
+                    indexActive = true;
+                    setS('s-evt','✅ INDEX aktiv','ok');
+                    document.getElementById('d-index').innerText = '🟢 GEDRÜCKT';
+                }
             });
+            session.addEventListener('selectend', e => {
+                indexActive = false;
+                document.getElementById('d-index').innerText = '⚪ LOS';
+            });
+
+            session.addEventListener('end', () => {
+                xrSession=null; xrRefSpace=null; gripActive=false; indexActive=false;
+                setS('s-vr','Ended','warn');
+                document.getElementById('ctrl-card').style.display='none';
+            });
+
+            // Reference space with fallback
+            tryRefSpace(session, ['local-floor','local','viewer']);
+
+        }).catch(e => {
+            setS('s-vr','ERROR: '+e.message,'err');
+            log('Session failed: '+e);
+        });
+    }
+
+    function tryRefSpace(session, list) {
+        if (!list.length) { log('All ref spaces failed!'); return; }
+        session.requestReferenceSpace(list[0]).then(rs => {
+            xrRefSpace = rs;
+            log('RefSpace: ' + list[0]);
+            session.requestAnimationFrame(onFrame);
+        }).catch(() => tryRefSpace(session, list.slice(1)));
+    }
+
+    // ── Frame Loop (position tracking) ───────────────────────────────
+    function onFrame(time, frame) {
+        const session = frame.session;
+        session.requestAnimationFrame(onFrame);
+
+        const sources = Array.from(session.inputSources);
+        setS('s-inp', sources.length + ' src', sources.length>0?'ok':'warn');
+
+        // Try all right-handed or any controller
+        let found = null;
+        for (const src of sources) {
+            if (src.handedness === 'right') { found = src; break; }
+            if (src.handedness === 'none' && !found) found = src;
         }
+        // Also check last event source
+        if (!found && lastInputSrc) found = lastInputSrc;
 
-        function retry() {
-            reconnectN++;
-            const d = Math.min(3000, 1000 + reconnectN * 500);
-            setInfo(`Reconnect in ${Math.round(d/1000)}s... (Versuch ${reconnectN})`);
-            reconnectTimer = setTimeout(connectROS, d);
-        }
-
-        // ── WebXR Support Check ─────────────────────────────────────────
-        function checkXR() {
-            if (!navigator.xr) {
-                setStatus('s-vr', 'WebXR nicht verfügbar', 'err');
-                return;
+        if (found && found.gripSpace && xrRefSpace) {
+            const pose = frame.getPose(found.gripSpace, xrRefSpace);
+            if (pose) {
+                posX = pose.transform.position.x;
+                posY = pose.transform.position.y;
+                posZ = pose.transform.position.z;
+                oriX = pose.transform.orientation.x;
+                oriY = pose.transform.orientation.y;
+                oriZ = pose.transform.orientation.z;
+                oriW = pose.transform.orientation.w;
+                document.getElementById('d-pos').innerText =
+                    posX.toFixed(2)+' / '+posY.toFixed(2)+' / '+posZ.toFixed(2);
             }
-            // Prefer AR (passthrough), fall back to VR
-            navigator.xr.isSessionSupported('immersive-ar').then(arOk => {
-                if (arOk) {
-                    document.getElementById('vr-btn').innerText = '▶ Enter Passthrough';
-                    document.getElementById('vr-btn').dataset.mode = 'immersive-ar';
-                } else {
-                    document.getElementById('vr-btn').innerText = '▶ Enter VR';
-                    document.getElementById('vr-btn').dataset.mode = 'immersive-vr';
+            // Axes from gamepad
+            const gp = found.gamepad;
+            if (gp) {
+                const gripBtn  = gp.buttons[1]?.value || (gp.buttons[1]?.pressed ? 1 : 0);
+                const indexBtn = gp.buttons[0]?.value || (gp.buttons[0]?.pressed ? 1 : 0);
+                const thumbX   = gp.axes[2] !== undefined ? gp.axes[2] : (gp.axes[0]||0);
+                // Override grip state from gamepad (more reliable)
+                if (gripBtn > 0.5 !== gripActive) {
+                    gripActive = gripBtn > 0.5;
+                    document.getElementById('d-grip').innerText = gripActive ? '🟢 GEDRÜCKT' : '⚪ LOS';
                 }
-                document.getElementById('vr-btn').style.display = 'inline-block';
-                setStatus('s-vr', 'Bereit – Button drücken', 'warn');
-            });
-        }
-
-        // ── Start XR Session ────────────────────────────────────────────
-        function enterVR() {
-            const mode = document.getElementById('vr-btn').dataset.mode || 'immersive-vr';
-            setInfo('Starte ' + mode + '...');
-
-            navigator.xr.requestSession(mode, {
-                requiredFeatures: [],                     // nothing required – most compatible
-                optionalFeatures: ['local-floor', 'local', 'hand-tracking']
-            }).then(session => {
-                xrSession = session;
-                setStatus('s-vr', mode + ' aktiv ✅', 'ok');
-                document.getElementById('ctrl-card').style.display = 'block';
-                session.addEventListener('end', () => {
-                    xrSession = null;
-                    xrRefSpace = null;
-                    setStatus('s-vr', 'Session beendet', 'warn');
-                    document.getElementById('ctrl-card').style.display = 'none';
-                });
-
-                // Update input source count live (catches controllers that wake up later)
-                session.addEventListener('inputsourceschange', (e) => {
-                    document.getElementById('s-inputs').innerText = session.inputSources.length;
-                    if (session.inputSources.length > 0) {
-                        setInfo('✅ Controller erkannt! Grip-Trigger drücken.');
-                        document.getElementById('ctrl-card').style.display = 'block';
-                    } else {
-                        setInfo('⚠️ Keine Controller – Taste auf Controller drücken zum Aufwecken!');
-                    }
-                });
-
-                // Try local-floor → local → viewer as fallback
-                session.requestReferenceSpace('local-floor')
-                    .catch(() => session.requestReferenceSpace('local'))
-                    .catch(() => session.requestReferenceSpace('viewer'))
-                    .then(refSpace => {
-                        xrRefSpace = refSpace;
-                        setStatus('s-ref', refSpace.toString().includes('floor') ? 'local-floor' : 'local', 'ok');
-                        session.requestAnimationFrame(onXRFrame);
-                    });
-
-            }).catch(e => {
-                setStatus('s-vr', 'Fehler: ' + e.message, 'err');
-                setInfo('Tipp: Controller einschalten, Brille aufsetzen, nochmal klicken');
-            });
-        }
-
-        // ── XR Frame Loop ───────────────────────────────────────────────
-        function onXRFrame(time, frame) {
-            const session = frame.session;
-            session.requestAnimationFrame(onXRFrame);
-
-            const sources = Array.from(session.inputSources);
-            document.getElementById('s-inputs').innerText = sources.length;
-
-            for (const src of sources) {
-                if (src.handedness === 'right') {
-                    const gp = src.gamepad;
-                    const gripSp = src.gripSpace;
-
-                    if (!gp) continue;
-
-                    const grip  = gp.buttons[1]?.pressed || false;
-                    const index = gp.buttons[0]?.pressed || false;
-                    const thumbX = (gp.axes.length > 2 ? gp.axes[2] : (gp.axes[0] || 0));
-
-                    document.getElementById('d-grip').innerText  = grip  ? '🟢 GEDRÜCKT' : '⚪ LOS';
-                    document.getElementById('d-grip').className  = 'v ' + (grip ? 'ok' : '');
-                    document.getElementById('d-index').innerText = index ? '🟢 GEDRÜCKT' : '⚪ LOS';
-                    document.getElementById('d-thumb').innerText = thumbX.toFixed(3);
-
-                    let posX = 0, posY = 0, posZ = 0;
-                    let ori = {x:0,y:0,z:0,w:1};
-
-                    if (gripSp && xrRefSpace) {
-                        const pose = frame.getPose(gripSp, xrRefSpace);
-                        if (pose) {
-                            posX = pose.transform.position.x;
-                            posY = pose.transform.position.y;
-                            posZ = pose.transform.position.z;
-                            ori  = pose.transform.orientation;
-                        }
-                    }
-
-                    document.getElementById('d-pos').innerText =
-                        `${posX.toFixed(2)} / ${posY.toFixed(2)} / ${posZ.toFixed(2)}`;
-
-                    // Publish regardless of grip so ROS node sees all state
-                    if (vrTopic) {
-                        vrTopic.publish(new ROSLIB.Message({
-                            data: JSON.stringify({
-                                position: {x: posX, y: posY, z: posZ},
-                                orientation: ori,
-                                buttons: { grip, index,
-                                    a: gp.buttons[4]?.pressed || false,
-                                    b: gp.buttons[5]?.pressed || false },
-                                axes: { x: thumbX }
-                            })
-                        }));
-                        msgCount++;
-                        document.getElementById('d-count').innerText = msgCount;
-                    }
-                }
+                indexActive = indexBtn > 0.5;
+                document.getElementById('d-index').innerText = indexActive ? '🟢 GEDRÜCKT' : '⚪ LOS';
+                document.getElementById('d-thumb').innerText = thumbX.toFixed(3);
             }
         }
 
-        // ── Helpers ─────────────────────────────────────────────────────
-        function setStatus(id, text, cls) {
-            const el = document.getElementById(id);
-            el.innerText = text;
-            el.className = 'v ' + (cls || '');
-        }
-        function setInfo(text) {
-            document.getElementById('s-info').innerText = text;
-        }
+        if (gripActive) publish();
+    }
 
-        connectROS();
+    // ── Publish to ROS ────────────────────────────────────────────────
+    let lastPublishPos = null;
+    function publish() {
+        if (!vrTopic) return;
+        vrTopic.publish(new ROSLIB.Message({
+            data: JSON.stringify({
+                position: {x:posX, y:posY, z:posZ},
+                orientation: {x:oriX, y:oriY, z:oriZ, w:oriW},
+                buttons: { grip: gripActive, index: indexActive, a:false, b:false },
+                axes: { x: 0 }
+            })
+        }));
+        msgCount++;
+        document.getElementById('d-cnt').innerText = msgCount;
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────
+    function setS(id, text, cls) {
+        const el = document.getElementById(id);
+        el.innerText = text;
+        el.className = 'v ' + (cls||'');
+    }
+
+    connectROS();
     </script>
 </body>
 </html>
