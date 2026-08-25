@@ -150,7 +150,7 @@
     },
     {
       "actions": [],
-      "col": 1,
+      "col": 0,
       "icon": "fa-solid fa-network-wired",
       "is_remote_bringup_section": true,
       "style": "border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.05); overflow: visible;",
@@ -158,6 +158,11 @@
     },
     {
       "actions": [
+        {
+          "cmd": "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
+          "label": "VR Quest 3 Teleop",
+          "type": "launch"
+        },
         {
           "cmd": "ros2 run collision_check checker",
           "label": "Collision Check Node",
@@ -192,25 +197,12 @@
           "cmd": "ros2 run linear_axis_tuner linear_axis_tuner",
           "label": "Linear Axis Tuner (FAKE Mode)",
           "type": "node"
-        },
-        {
-          "cmd": "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
-          "label": "VR Quest 3 Teleop",
-          "type": "launch"
         }
       ],
       "col": 1,
       "icon": "fa-solid fa-gamepad",
       "style": "break-before: column;",
       "title": "Controllers (Input -> Moveit Servo)"
-    },
-    {
-      "actions": [],
-      "col": 1,
-      "icon": "fa-solid fa-bolt",
-      "is_extras_section": true,
-      "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
-      "title": "EXTRAS EXECS"
     },
     {
       "actions": [
@@ -276,6 +268,14 @@
       "col": 2,
       "icon": "fa-solid fa-chart-network",
       "title": "Visualization (Rviz2)"
+    },
+    {
+      "actions": [],
+      "col": 2,
+      "icon": "fa-solid fa-bolt",
+      "is_extras_section": true,
+      "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
+      "title": "EXTRAS EXECS"
     }
   ],
   "system": [

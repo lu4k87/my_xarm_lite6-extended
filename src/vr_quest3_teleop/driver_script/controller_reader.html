@@ -46,9 +46,9 @@
     <script>
     // ── State ────────────────────────────────────────────────────────
     let ros = null, vrTopic = null, xrSession = null, xrRefSpace = null;
-    let gripActive = false, indexActive = false;
+    let gripActive = false, indexActive = false, thumbX = 0;
     let msgCount = 0, reconnectN = 0, reconnectTimer = null;
-    let lastInputSrc = null; // from events
+    let lastInputSrc = null;
     let posX=0, posY=0, posZ=0, oriX=0, oriY=0, oriZ=0, oriW=1;
 
     function log(txt) {
@@ -59,14 +59,22 @@
     // ── ROS ─────────────────────────────────────────────────────────
     function connectROS() {
         if (ros) try { ros.close(); } catch(e){}
-        ros = new ROSLIB.Ros({ url: 'ws://127.0.0.1:9090' });
+        const host = (window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1';
+        const rosUrl = 'ws://' + host + ':9090';
+        log('Connecting ROS to ' + rosUrl + '...');
+        setS('s-ros', 'Connecting (' + host + ':9090)...', 'warn');
+        ros = new ROSLIB.Ros({ url: rosUrl });
         ros.on('connection', () => {
             reconnectN = 0; clearTimeout(reconnectTimer);
-            setS('s-ros','Connected ✅','ok');
+            setS('s-ros','Connected ✅ (' + host + ':9090)','ok');
             vrTopic = new ROSLIB.Topic({ ros, name: '/vr_teleop/controller_data', messageType: 'std_msgs/String' });
             checkXR();
         });
-        ros.on('error', () => { setS('s-ros','Error ❌','err'); retry(); });
+        ros.on('error', (err) => { 
+            setS('s-ros','Error ❌ (' + rosUrl + ')','err'); 
+            log('ROS error: ' + JSON.stringify(err));
+            retry(); 
+        });
         ros.on('close', () => { setS('s-ros','Closed 🔄','warn'); retry(); });
     }
     function retry() {
@@ -97,43 +105,36 @@
             setS('s-vr', mode + ' ✅','ok');
             document.getElementById('ctrl-card').style.display='block';
 
-            // ── Session Events (work even if inputSources is empty) ──
             session.addEventListener('inputsourceschange', e => {
                 const n = session.inputSources.length;
                 setS('s-inp', n + ' source(s)', n>0?'ok':'warn');
                 log('inputsourceschange: ' + n + ' sources');
             });
 
-            // squeeze = grip button (Mittelfinger)
             session.addEventListener('squeezestart', e => {
-                if (e.inputSource.handedness === 'right' || e.inputSource.handedness === 'none') {
-                    lastInputSrc = e.inputSource;
-                    gripActive = true;
-                    setS('s-evt','✅ GRIP aktiv ('+e.inputSource.handedness+')','ok');
-                    log('squeezestart: ' + e.inputSource.handedness);
-                    document.getElementById('d-grip').innerText = '🟢 GEDRÜCKT';
-                }
+                lastInputSrc = e.inputSource;
+                gripActive = true;
+                setS('s-evt','✅ GRIP aktiv ('+(e.inputSource.handedness||'gen')+')','ok');
+                log('squeezestart: ' + e.inputSource.handedness);
+                document.getElementById('d-grip').innerText = '🟢 GEDRÜCKT';
             });
             session.addEventListener('squeezeend', e => {
-                if (e.inputSource.handedness === 'right' || lastInputSrc === e.inputSource) {
-                    gripActive = false;
-                    document.getElementById('d-grip').innerText = '⚪ LOS';
-                    publish();  // send zero velocity
-                }
+                gripActive = false;
+                document.getElementById('d-grip').innerText = '⚪ LOS';
+                publish();
             });
 
-            // select = index trigger (Zeigefinger)
             session.addEventListener('selectstart', e => {
-                if (e.inputSource.handedness === 'right' || e.inputSource.handedness === 'none') {
-                    lastInputSrc = e.inputSource;
-                    indexActive = true;
-                    setS('s-evt','✅ INDEX aktiv','ok');
-                    document.getElementById('d-index').innerText = '🟢 GEDRÜCKT';
-                }
+                lastInputSrc = e.inputSource;
+                indexActive = true;
+                setS('s-evt','✅ INDEX aktiv','ok');
+                document.getElementById('d-index').innerText = '🟢 GEDRÜCKT';
+                publish();
             });
             session.addEventListener('selectend', e => {
                 indexActive = false;
                 document.getElementById('d-index').innerText = '⚪ LOS';
+                publish();
             });
 
             session.addEventListener('end', () => {
@@ -142,7 +143,6 @@
                 document.getElementById('ctrl-card').style.display='none';
             });
 
-            // Reference space with fallback
             tryRefSpace(session, ['local-floor','local','viewer']);
 
         }).catch(e => {
@@ -160,7 +160,7 @@
         }).catch(() => tryRefSpace(session, list.slice(1)));
     }
 
-    // ── Frame Loop (position tracking) ───────────────────────────────
+    // ── Frame Loop ───────────────────────────────────────────────────
     function onFrame(time, frame) {
         const session = frame.session;
         session.requestAnimationFrame(onFrame);
@@ -168,50 +168,60 @@
         const sources = Array.from(session.inputSources);
         setS('s-inp', sources.length + ' src', sources.length>0?'ok':'warn');
 
-        // Try all right-handed or any controller
         let found = null;
         for (const src of sources) {
             if (src.handedness === 'right') { found = src; break; }
+            if (src.handedness === 'left' && !found) found = src;
             if (src.handedness === 'none' && !found) found = src;
         }
-        // Also check last event source
         if (!found && lastInputSrc) found = lastInputSrc;
 
-        if (found && found.gripSpace && xrRefSpace) {
-            const pose = frame.getPose(found.gripSpace, xrRefSpace);
-            if (pose) {
-                posX = pose.transform.position.x;
-                posY = pose.transform.position.y;
-                posZ = pose.transform.position.z;
-                oriX = pose.transform.orientation.x;
-                oriY = pose.transform.orientation.y;
-                oriZ = pose.transform.orientation.z;
-                oriW = pose.transform.orientation.w;
-                document.getElementById('d-pos').innerText =
-                    posX.toFixed(2)+' / '+posY.toFixed(2)+' / '+posZ.toFixed(2);
+        if (found) {
+            const space = found.gripSpace || found.targetRaySpace;
+            if (space && xrRefSpace) {
+                const pose = frame.getPose(space, xrRefSpace);
+                if (pose) {
+                    posX = pose.transform.position.x;
+                    posY = pose.transform.position.y;
+                    posZ = pose.transform.position.z;
+                    oriX = pose.transform.orientation.x;
+                    oriY = pose.transform.orientation.y;
+                    oriZ = pose.transform.orientation.z;
+                    oriW = pose.transform.orientation.w;
+                    document.getElementById('d-pos').innerText =
+                        posX.toFixed(2)+' / '+posY.toFixed(2)+' / '+posZ.toFixed(2);
+                }
             }
-            // Axes from gamepad
+
             const gp = found.gamepad;
             if (gp) {
-                const gripBtn  = gp.buttons[1]?.value || (gp.buttons[1]?.pressed ? 1 : 0);
-                const indexBtn = gp.buttons[0]?.value || (gp.buttons[0]?.pressed ? 1 : 0);
-                const thumbX   = gp.axes[2] !== undefined ? gp.axes[2] : (gp.axes[0]||0);
-                // Override grip state from gamepad (more reliable)
-                if (gripBtn > 0.5 !== gripActive) {
-                    gripActive = gripBtn > 0.5;
-                    document.getElementById('d-grip').innerText = gripActive ? '🟢 GEDRÜCKT' : '⚪ LOS';
+                const gripBtn  = (gp.buttons[1]?.value > 0.5) || gp.buttons[1]?.pressed;
+                const indexBtn = (gp.buttons[0]?.value > 0.5) || gp.buttons[0]?.pressed;
+                thumbX = gp.axes[2] !== undefined ? gp.axes[2] : (gp.axes[0] || 0);
+
+                if (gp.buttons[1] !== undefined) {
+                    if (gripBtn !== gripActive) {
+                        gripActive = gripBtn;
+                        document.getElementById('d-grip').innerText = gripActive ? '🟢 GEDRÜCKT' : '⚪ LOS';
+                    }
                 }
-                indexActive = indexBtn > 0.5;
-                document.getElementById('d-index').innerText = indexActive ? '🟢 GEDRÜCKT' : '⚪ LOS';
+                if (gp.buttons[0] !== undefined) {
+                    if (indexBtn !== indexActive) {
+                        indexActive = indexBtn;
+                        document.getElementById('d-index').innerText = indexActive ? '🟢 GEDRÜCKT' : '⚪ LOS';
+                    }
+                }
                 document.getElementById('d-thumb').innerText = thumbX.toFixed(3);
             }
         }
 
-        if (gripActive) publish();
+        // Publish on frame when active or thumbstick is moved
+        if (gripActive || indexActive || Math.abs(thumbX) > 0.05) {
+            publish();
+        }
     }
 
     // ── Publish to ROS ────────────────────────────────────────────────
-    let lastPublishPos = null;
     function publish() {
         if (!vrTopic) return;
         vrTopic.publish(new ROSLIB.Message({
@@ -219,14 +229,13 @@
                 position: {x:posX, y:posY, z:posZ},
                 orientation: {x:oriX, y:oriY, z:oriZ, w:oriW},
                 buttons: { grip: gripActive, index: indexActive, a:false, b:false },
-                axes: { x: 0 }
+                axes: { x: thumbX }
             })
         }));
         msgCount++;
         document.getElementById('d-cnt').innerText = msgCount;
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────
     function setS(id, text, cls) {
         const el = document.getElementById(id);
         el.innerText = text;
