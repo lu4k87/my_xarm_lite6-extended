@@ -5,74 +5,41 @@
     <title>Quest 3 VR Teleop</title>
     <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
     <style>
-        body {
-            font-family: monospace;
-            background: #111;
-            color: #eee;
-            text-align: center;
-            padding: 30px 20px;
-            margin: 0;
-        }
-        h1 { color: #4fc3f7; font-size: 28px; margin-bottom: 10px; }
-        #status-box {
-            background: #1e1e1e;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px auto;
-            max-width: 420px;
-            border: 2px solid #333;
-        }
-        .label { color: #888; font-size: 13px; margin-bottom: 4px; }
-        .value { font-size: 20px; font-weight: bold; margin-bottom: 16px; }
-        #ros-status { color: orange; }
-        #vr-status { color: #888; }
+        body { font-family: monospace; background: #111; color: #eee; text-align: center; padding: 20px; margin: 0; }
+        h1 { color: #4fc3f7; font-size: 24px; }
+        .card { background: #1e1e1e; border-radius: 10px; padding: 16px; margin: 12px auto; max-width: 420px; text-align: left; }
+        .row { display: flex; justify-content: space-between; margin: 5px 0; font-size: 15px; }
+        .k { color: #888; }
+        .v { font-weight: bold; }
+        .ok { color: #66bb6a; }
+        .warn { color: orange; }
+        .err { color: #ef5350; }
         button {
-            font-size: 20px;
-            padding: 14px 28px;
-            cursor: pointer;
-            border-radius: 10px;
-            border: none;
-            background: #4fc3f7;
-            color: #111;
-            font-weight: bold;
-            margin-top: 10px;
-            display: none;
+            font-size: 20px; padding: 14px 28px; cursor: pointer;
+            border-radius: 10px; border: none; background: #4fc3f7;
+            color: #111; font-weight: bold; margin-top: 10px;
         }
-        #debug {
-            margin-top: 20px;
-            background: #1a1a1a;
-            border-radius: 10px;
-            padding: 16px;
-            font-size: 14px;
-            text-align: left;
-            display: inline-block;
-            min-width: 300px;
-        }
-        .debug-row { display: flex; justify-content: space-between; margin: 4px 0; }
-        .debug-key { color: #888; }
-        .debug-val { color: #4fc3f7; font-weight: bold; }
-        #reconnect-info { font-size: 12px; color: #555; margin-top: 8px; }
     </style>
 </head>
 <body>
     <h1>Quest 3 Teleop</h1>
 
-    <div id="status-box">
-        <div class="label">ROS Connection</div>
-        <div class="value" id="ros-status">Connecting...</div>
-        <div class="label">VR Session</div>
-        <div class="value" id="vr-status">Not started</div>
-        <div id="reconnect-info"></div>
+    <div class="card">
+        <div class="row"><span class="k">ROS (Port 9090):</span><span class="v" id="s-ros">Verbinde...</span></div>
+        <div class="row"><span class="k">VR Session:</span><span class="v" id="s-vr">–</span></div>
+        <div class="row"><span class="k">Input Sources:</span><span class="v" id="s-inputs">0</span></div>
+        <div class="row"><span class="k">Ref Space:</span><span class="v" id="s-ref">–</span></div>
+        <div id="s-info" style="font-size:12px;color:#555;margin-top:6px;"></div>
     </div>
 
-    <button id="vr-btn" onclick="enterVR()">▶ Enter VR (Passthrough)</button>
+    <button id="vr-btn" style="display:none;" onclick="enterVR()">▶ Enter VR</button>
 
-    <div id="debug">
-        <div class="debug-row"><span class="debug-key">Grip (Kupplung):</span><span class="debug-val" id="d-grip">–</span></div>
-        <div class="debug-row"><span class="debug-key">Index (Greifer):</span><span class="debug-val" id="d-index">–</span></div>
-        <div class="debug-row"><span class="debug-key">Thumbstick X:</span><span class="debug-val" id="d-thumb">–</span></div>
-        <div class="debug-row"><span class="debug-key">Pos X/Y/Z:</span><span class="debug-val" id="d-pos">–</span></div>
-        <div class="debug-row"><span class="debug-key">Msgs gesendet:</span><span class="debug-val" id="d-count">0</span></div>
+    <div class="card" id="ctrl-card" style="display:none;">
+        <div class="row"><span class="k">🖐 Grip (Kupplung):</span><span class="v" id="d-grip">LOS</span></div>
+        <div class="row"><span class="k">☝ Index (Greifer):</span><span class="v" id="d-index">LOS</span></div>
+        <div class="row"><span class="k">🕹 Thumbstick X:</span><span class="v" id="d-thumb">0.00</span></div>
+        <div class="row"><span class="k">📍 Position:</span><span class="v" id="d-pos">–</span></div>
+        <div class="row"><span class="k">📨 Msgs gesendet:</span><span class="v ok" id="d-count">0</span></div>
     </div>
 
     <script>
@@ -82,140 +49,150 @@
         let xrRefSpace = null;
         let msgCount = 0;
         let reconnectTimer = null;
-        let reconnectAttempt = 0;
+        let reconnectN = 0;
 
+        // ── ROS Connection with auto-retry ─────────────────────────────
         function connectROS() {
-            if (ros) {
-                try { ros.close(); } catch(e) {}
-            }
-            reconnectAttempt++;
-            document.getElementById('reconnect-info').innerText =
-                reconnectAttempt > 1 ? `Versuch ${reconnectAttempt}...` : '';
-
+            if (ros) { try { ros.close(); } catch(e){} }
             ros = new ROSLIB.Ros({ url: 'ws://127.0.0.1:9090' });
 
             ros.on('connection', () => {
-                reconnectAttempt = 0;
-                document.getElementById('ros-status').innerText = 'ROS Connected! ✅';
-                document.getElementById('ros-status').style.color = '#66bb6a';
-                document.getElementById('reconnect-info').innerText = '';
+                reconnectN = 0;
                 clearTimeout(reconnectTimer);
-
+                setStatus('s-ros', 'Verbunden ✅', 'ok');
+                setInfo('');
                 vrTopic = new ROSLIB.Topic({
-                    ros: ros,
-                    name: '/vr_teleop/controller_data',
+                    ros, name: '/vr_teleop/controller_data',
                     messageType: 'std_msgs/String'
                 });
-
-                // Show Enter VR button if WebXR available
-                if (navigator.xr) {
-                    // Try passthrough (AR) first, fallback to immersive-vr
-                    navigator.xr.isSessionSupported('immersive-ar').then(supported => {
-                        if (supported) {
-                            document.getElementById('vr-btn').innerText = '▶ Enter VR (Passthrough)';
-                        } else {
-                            document.getElementById('vr-btn').innerText = '▶ Enter VR';
-                        }
-                        document.getElementById('vr-btn').style.display = 'inline-block';
-                        document.getElementById('vr-status').innerText = 'Bereit – Button drücken!';
-                        document.getElementById('vr-status').style.color = '#ffa726';
-                    });
-                } else {
-                    document.getElementById('vr-status').innerText = 'WebXR nicht verfügbar';
-                    document.getElementById('vr-status').style.color = 'red';
-                }
+                checkXR();
             });
 
-            ros.on('error', (err) => {
-                document.getElementById('ros-status').innerText = 'ROS Fehler ❌';
-                document.getElementById('ros-status').style.color = 'red';
-                scheduleReconnect();
+            ros.on('error', () => {
+                setStatus('s-ros', 'Fehler ❌', 'err');
+                retry();
             });
 
             ros.on('close', () => {
-                document.getElementById('ros-status').innerText = 'Verbindung getrennt 🔄';
-                document.getElementById('ros-status').style.color = 'orange';
-                document.getElementById('vr-btn').style.display = 'none';
-                scheduleReconnect();
+                setStatus('s-ros', 'Getrennt 🔄', 'warn');
+                retry();
             });
         }
 
-        function scheduleReconnect() {
-            clearTimeout(reconnectTimer);
-            const delay = Math.min(3000, 1000 + reconnectAttempt * 500);
-            document.getElementById('reconnect-info').innerText =
-                `Nächster Versuch in ${Math.round(delay/1000)}s...`;
-            reconnectTimer = setTimeout(connectROS, delay);
+        function retry() {
+            reconnectN++;
+            const d = Math.min(3000, 1000 + reconnectN * 500);
+            setInfo(`Reconnect in ${Math.round(d/1000)}s... (Versuch ${reconnectN})`);
+            reconnectTimer = setTimeout(connectROS, d);
         }
 
+        // ── WebXR Support Check ─────────────────────────────────────────
+        function checkXR() {
+            if (!navigator.xr) {
+                setStatus('s-vr', 'WebXR nicht verfügbar', 'err');
+                return;
+            }
+            // Prefer AR (passthrough), fall back to VR
+            navigator.xr.isSessionSupported('immersive-ar').then(arOk => {
+                if (arOk) {
+                    document.getElementById('vr-btn').innerText = '▶ Enter Passthrough';
+                    document.getElementById('vr-btn').dataset.mode = 'immersive-ar';
+                } else {
+                    document.getElementById('vr-btn').innerText = '▶ Enter VR';
+                    document.getElementById('vr-btn').dataset.mode = 'immersive-vr';
+                }
+                document.getElementById('vr-btn').style.display = 'inline-block';
+                setStatus('s-vr', 'Bereit – Button drücken', 'warn');
+            });
+        }
+
+        // ── Start XR Session ────────────────────────────────────────────
         function enterVR() {
-            // Try immersive-ar (passthrough) first, then fall back to immersive-vr
-            navigator.xr.isSessionSupported('immersive-ar').then(supported => {
-                const mode = supported ? 'immersive-ar' : 'immersive-vr';
-                navigator.xr.requestSession(mode, {
-                    requiredFeatures: ['local-floor'],
-                    optionalFeatures: ['hand-tracking']
-                }).then(session => {
-                    xrSession = session;
-                    session.addEventListener('end', () => {
-                        xrSession = null;
-                        document.getElementById('vr-status').innerText = 'Session beendet';
-                        document.getElementById('vr-status').style.color = '#888';
-                    });
-                    session.requestReferenceSpace('local-floor').then(refSpace => {
+            const mode = document.getElementById('vr-btn').dataset.mode || 'immersive-vr';
+            setInfo('Starte ' + mode + '...');
+
+            navigator.xr.requestSession(mode, {
+                requiredFeatures: [],                     // nothing required – most compatible
+                optionalFeatures: ['local-floor', 'local', 'hand-tracking']
+            }).then(session => {
+                xrSession = session;
+                setStatus('s-vr', mode + ' aktiv ✅', 'ok');
+                document.getElementById('ctrl-card').style.display = 'block';
+                session.addEventListener('end', () => {
+                    xrSession = null;
+                    xrRefSpace = null;
+                    setStatus('s-vr', 'Session beendet', 'warn');
+                    document.getElementById('ctrl-card').style.display = 'none';
+                });
+
+                // Try local-floor → local → viewer as fallback
+                session.requestReferenceSpace('local-floor')
+                    .catch(() => session.requestReferenceSpace('local'))
+                    .catch(() => session.requestReferenceSpace('viewer'))
+                    .then(refSpace => {
                         xrRefSpace = refSpace;
-                        document.getElementById('vr-status').innerText = 'VR aktiv – Grip drücken! 🟢';
-                        document.getElementById('vr-status').style.color = '#66bb6a';
+                        setStatus('s-ref', refSpace.toString().includes('floor') ? 'local-floor' : 'local', 'ok');
                         session.requestAnimationFrame(onXRFrame);
                     });
-                }).catch(e => {
-                    document.getElementById('vr-status').innerText = 'VR Start fehlgeschlagen: ' + e;
-                    document.getElementById('vr-status').style.color = 'red';
-                });
+
+            }).catch(e => {
+                setStatus('s-vr', 'Fehler: ' + e.message, 'err');
+                setInfo('Tipp: Controller einschalten, Brille aufsetzen, nochmal klicken');
             });
         }
 
+        // ── XR Frame Loop ───────────────────────────────────────────────
         function onXRFrame(time, frame) {
             const session = frame.session;
             session.requestAnimationFrame(onXRFrame);
 
-            for (const source of session.inputSources) {
-                if (source.handedness === 'right' && source.gripSpace && source.gamepad) {
-                    const pose = frame.getPose(source.gripSpace, xrRefSpace);
-                    if (!pose) continue;
+            const sources = Array.from(session.inputSources);
+            document.getElementById('s-inputs').innerText = sources.length;
 
-                    const gp = source.gamepad;
-                    const gripPressed  = gp.buttons[1]?.pressed || false;
-                    const indexPressed = gp.buttons[0]?.pressed || false;
-                    const thumbX = gp.axes[2] !== undefined ? gp.axes[2] : (gp.axes[0] || 0.0);
+            for (const src of sources) {
+                if (src.handedness === 'right') {
+                    const gp = src.gamepad;
+                    const gripSp = src.gripSpace;
 
-                    // Update debug display
-                    document.getElementById('d-grip').innerText  = gripPressed  ? '🟢 GEDRÜCKT' : '⚪ LOS';
-                    document.getElementById('d-index').innerText = indexPressed ? '🟢 GEDRÜCKT' : '⚪ LOS';
+                    if (!gp) continue;
+
+                    const grip  = gp.buttons[1]?.pressed || false;
+                    const index = gp.buttons[0]?.pressed || false;
+                    const thumbX = (gp.axes.length > 2 ? gp.axes[2] : (gp.axes[0] || 0));
+
+                    document.getElementById('d-grip').innerText  = grip  ? '🟢 GEDRÜCKT' : '⚪ LOS';
+                    document.getElementById('d-grip').className  = 'v ' + (grip ? 'ok' : '');
+                    document.getElementById('d-index').innerText = index ? '🟢 GEDRÜCKT' : '⚪ LOS';
                     document.getElementById('d-thumb').innerText = thumbX.toFixed(3);
-                    const p = pose.transform.position;
-                    document.getElementById('d-pos').innerText =
-                        `${p.x.toFixed(2)} / ${p.y.toFixed(2)} / ${p.z.toFixed(2)}`;
 
-                    // Always send data so the ROS node knows current state
-                    if (vrTopic && ros.isConnected) {
-                        const msgData = {
-                            position: { x: p.x, y: p.y, z: p.z },
-                            orientation: {
-                                x: pose.transform.orientation.x,
-                                y: pose.transform.orientation.y,
-                                z: pose.transform.orientation.z,
-                                w: pose.transform.orientation.w
-                            },
-                            buttons: {
-                                grip:  gripPressed,
-                                index: indexPressed,
-                                a: gp.buttons[4]?.pressed || false,
-                                b: gp.buttons[5]?.pressed || false
-                            },
-                            axes: { x: thumbX }
-                        };
-                        vrTopic.publish(new ROSLIB.Message({ data: JSON.stringify(msgData) }));
+                    let posX = 0, posY = 0, posZ = 0;
+                    let ori = {x:0,y:0,z:0,w:1};
+
+                    if (gripSp && xrRefSpace) {
+                        const pose = frame.getPose(gripSp, xrRefSpace);
+                        if (pose) {
+                            posX = pose.transform.position.x;
+                            posY = pose.transform.position.y;
+                            posZ = pose.transform.position.z;
+                            ori  = pose.transform.orientation;
+                        }
+                    }
+
+                    document.getElementById('d-pos').innerText =
+                        `${posX.toFixed(2)} / ${posY.toFixed(2)} / ${posZ.toFixed(2)}`;
+
+                    // Publish regardless of grip so ROS node sees all state
+                    if (vrTopic) {
+                        vrTopic.publish(new ROSLIB.Message({
+                            data: JSON.stringify({
+                                position: {x: posX, y: posY, z: posZ},
+                                orientation: ori,
+                                buttons: { grip, index,
+                                    a: gp.buttons[4]?.pressed || false,
+                                    b: gp.buttons[5]?.pressed || false },
+                                axes: { x: thumbX }
+                            })
+                        }));
                         msgCount++;
                         document.getElementById('d-count').innerText = msgCount;
                     }
@@ -223,7 +200,16 @@
             }
         }
 
-        // Start connecting immediately
+        // ── Helpers ─────────────────────────────────────────────────────
+        function setStatus(id, text, cls) {
+            const el = document.getElementById(id);
+            el.innerText = text;
+            el.className = 'v ' + (cls || '');
+        }
+        function setInfo(text) {
+            document.getElementById('s-info').innerText = text;
+        }
+
         connectROS();
     </script>
 </body>
