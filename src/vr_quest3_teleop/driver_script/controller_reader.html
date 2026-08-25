@@ -125,6 +125,17 @@
                     document.getElementById('ctrl-card').style.display = 'none';
                 });
 
+                // Update input source count live (catches controllers that wake up later)
+                session.addEventListener('inputsourceschange', (e) => {
+                    document.getElementById('s-inputs').innerText = session.inputSources.length;
+                    if (session.inputSources.length > 0) {
+                        setInfo('✅ Controller erkannt! Grip-Trigger drücken.');
+                        document.getElementById('ctrl-card').style.display = 'block';
+                    } else {
+                        setInfo('⚠️ Keine Controller – Taste auf Controller drücken zum Aufwecken!');
+                    }
+                });
+
                 // Try local-floor → local → viewer as fallback
                 session.requestReferenceSpace('local-floor')
                     .catch(() => session.requestReferenceSpace('local'))
