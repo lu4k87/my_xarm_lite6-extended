@@ -17,12 +17,15 @@ class LinearAxisTuner(Node):
         self.sub = self.create_subscription(Float64, '/linear_axis_cmd', self.cmd_callback, 10)
         
         self.current_position = 0.0
+        self.get_logger().info(f'Linear axis initialized at position: {self.current_position:.3f} m')
 
         # Timer to publish TF and Markers
         self.timer = self.create_timer(0.05, self.timer_callback) # 20 Hz
 
     def cmd_callback(self, msg):
-        self.current_position = msg.data
+        if self.current_position != msg.data:
+            self.current_position = msg.data
+            self.get_logger().info(f'Linear axis position updated to: {self.current_position:.3f} m')
 
     def timer_callback(self):
         now = self.get_clock().now().to_msg()

@@ -31,7 +31,9 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.conditions import IfCondition
 from ament_index_python.packages import get_package_share_directory
+from ament_index_python.packages import PackageNotFoundError
 import os
 
 
@@ -51,6 +53,12 @@ def generate_launch_description():
         'camera_model',
         default_value='zedm',
         description='ZED Kameramodell (zedm, zed, zed2, zed2i, zedx, zedxm)'
+    )
+
+    use_zed_hardware_arg = DeclareLaunchArgument(
+        'use_zed_hardware',
+        default_value='true',
+        description='Set to false to prevent loading the actual ZED SDK/wrapper'
     )
 
     # TF: Position der Kamera relativ zu link_base
@@ -76,23 +84,24 @@ def generate_launch_description():
     )
 
     # -----------------------------------------------------------------------
-    # ZED Wrapper Launch
+    # ZED Wrapper Launch (Safely handled for FAKE mode)
     # -----------------------------------------------------------------------
-    zed_wrapper_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('zed_wrapper'),
-                'launch',
-                'zed_camera.launch.py'
-            )
-        ),
-        launch_arguments={
-            'camera_model': LaunchConfiguration('camera_model'),
-            'publish_tf': 'false',
-            'publish_map_tf': 'false',
-            'ros_params_override_path': config_override_path,
-        }.items()
-    )
+    zed_wrapper_launch = None
+    try:
+        zed_share = get_package_share_directory('zed_wrapper')
+        zed_launch_file = os.path.join(zed_share, 'launch', 'zed_camera.launch.py')
+        zed_wrapper_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(zed_launch_file),
+            launch_arguments={
+                'camera_model': LaunchConfiguration('camera_model'),
+                'publish_tf': 'false',
+                'publish_map_tf': 'false',
+                'ros_params_override_path': config_override_path,
+            }.items(),
+            condition=IfCondition(LaunchConfiguration('use_zed_hardware'))
+        )
+    except PackageNotFoundError:
+        pass  # zed_wrapper is missing, so we just don't add it
 
     # -----------------------------------------------------------------------
     # Statischer TF Publisher: link_base → zed_camera_link
@@ -183,9 +192,10 @@ def generate_launch_description():
         output='screen'
     )
 
-    return LaunchDescription([
+    ld = LaunchDescription([
         # Arguments
         camera_model_arg,
+        use_zed_hardware_arg,
         tf_x_arg,
         tf_y_arg,
         tf_z_arg,
@@ -193,7 +203,6 @@ def generate_launch_description():
         tf_pitch_arg,
         tf_yaw_arg,
         # Nodes
-        zed_wrapper_launch,
         static_tf_node,
         zed_stand_publisher_node,
         pointcloud_optimizer_node,
@@ -202,3 +211,8 @@ def generate_launch_description():
         zed_yolo_3d_bbox_node,
         grasp_action_bridge_node,
     ])
+
+    if zed_wrapper_launch is not None:
+        ld.add_action(zed_wrapper_launch)
+
+    return ld

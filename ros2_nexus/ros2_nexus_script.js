@@ -134,12 +134,14 @@
       let servoTitle = "MoveIt Servo (Fake) + Linear Axis";
       let moveGroupCmd = "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link";
       let moveGroupTitle = "MoveIt MoveGroup (Standalone/Fake) + Linear Axis";
+      let zedBringupCmd = "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=false";
 
       if (mode === "real") {
         servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev";
         servoTitle = "MoveIt Servo (Real)";
         moveGroupCmd = "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175";
         moveGroupTitle = "MoveIt MoveGroup (Standalone/Real)";
+        zedBringupCmd = "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=true";
       }
 
       const actions = [
@@ -147,7 +149,7 @@
         { cmd: moveGroupCmd, title: moveGroupTitle },
         { cmd: "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py", title: "RViz Marker Launch" },
         { cmd: "ros2 run rviz_servo_status_overlay servo_status_overlay", title: "Rviz2 - Overlay: MoveIt Servo Status Warning" },
-        { cmd: "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py", title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
+        { cmd: zedBringupCmd, title: "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)" },
         { cmd: "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True", title: "Whisper Bringup (Voice AI)" },
         { cmd: "ros2 run voice_command_listener listener", title: "Voice Command Listener" },
         { cmd: "ros2 launch rosbridge_server rosbridge_websocket_launch.xml", title: "ROS Bridge Websocket Launch PORT: 9090" },
@@ -912,13 +914,21 @@
     });
 
     // ─── NEXUS WEB BACKEND ──────────────────────────────────────────────────────────────────
-    async function runCmd(command, title, mode = 'ros') {
-      try {
-        const res = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command, title, mode }) });
-        const data = await res.json();
-        if (data.ok) showToast(`✓ ${title} gestartet`);
-        else showToast(`✗ Fehler: ${data.error}`, true);
-      } catch (err) { showToast('✗ Nexus Web Backend nicht erreichbar', true); }
+    // Globale Queue für Befehle (damit bei schnellen Klicks immer 1 Sekunde Delay dazwischen liegt)
+    let cmdExecutionQueue = Promise.resolve();
+
+    function runCmd(command, title, mode = 'ros') {
+      cmdExecutionQueue = cmdExecutionQueue.then(async () => {
+        try {
+          const res = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command, title, mode }) });
+          const data = await res.json();
+          if (data.ok) showToast(`✓ ${title} gestartet`);
+          else showToast(`✗ Fehler: ${data.error}`, true);
+        } catch (err) { showToast('✗ Nexus Web Backend nicht erreichbar', true); }
+        // 1 Sekunde Delay nach jedem Command
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      });
+      return cmdExecutionQueue;
     }
 
     // ─── RUN ALL IN SECTION ──────────────────────────────────────────────────────

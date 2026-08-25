@@ -2,6 +2,8 @@
 import rclpy
 from rclpy.node import Node
 from visualization_msgs.msg import Marker, MarkerArray
+from ament_index_python.packages import get_package_share_directory
+import os
 
 class ZedVisualPublisher(Node):
     def __init__(self):
@@ -25,7 +27,7 @@ class ZedVisualPublisher(Node):
         cz = 0.0695
         
         # Color: Aluminum / Light Grey
-        r, g, b, a = 0.7, 0.7, 0.7, 1.0
+        r, g, b, a = 0.8, 0.8, 0.8, 1.0  # Silver (Aluminum)
         
         def create_profile_part(m_id, dx, dy, sx, sy):
             m = Marker()
@@ -71,7 +73,12 @@ class ZedVisualPublisher(Node):
         camera_mesh.id = 2
         camera_mesh.type = Marker.MESH_RESOURCE
         camera_mesh.action = Marker.ADD
-        camera_mesh.mesh_resource = "package://my_3d_vision_bringup/meshes/ZEDM.stl"
+        
+        # Resolve absolute path to bypass potential RViz package:// resolution bugs
+        pkg_share = get_package_share_directory('my_3d_vision_bringup')
+        mesh_file_path = os.path.join(pkg_share, 'meshes', 'ZEDM.stl')
+        camera_mesh.mesh_resource = "file://" + mesh_file_path
+        
         camera_mesh.mesh_use_embedded_materials = False
 
         # Since it's attached directly to the camera frame, position is 0,0,0
@@ -91,10 +98,10 @@ class ZedVisualPublisher(Node):
         camera_mesh.scale.y = 0.001
         camera_mesh.scale.z = 0.001
 
-        # Color: Dark Grey
-        camera_mesh.color.r = 0.2
-        camera_mesh.color.g = 0.2
-        camera_mesh.color.b = 0.2
+        # Color: Black (so it matches the real ZED M camera)
+        camera_mesh.color.r = 0.05
+        camera_mesh.color.g = 0.05
+        camera_mesh.color.b = 0.05
         camera_mesh.color.a = 1.0
 
         marker_array.markers.append(camera_mesh)
