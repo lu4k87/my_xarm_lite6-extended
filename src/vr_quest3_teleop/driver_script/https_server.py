@@ -5,7 +5,7 @@ import os
 import sys
 
 def main():
-    server_address = ('localhost', 8443)
+    server_address = ('0.0.0.0', 8443)
     web_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(web_dir)
     

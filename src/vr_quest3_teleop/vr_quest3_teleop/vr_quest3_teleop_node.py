@@ -4,6 +4,7 @@ import json
 from std_msgs.msg import String, Float64
 from geometry_msgs.msg import TwistStamped
 from xarm_msgs.srv import Call
+from std_srvs.srv import Trigger
 
 class VRTeleopNode(Node):
     def __init__(self):
@@ -19,6 +20,7 @@ class VRTeleopNode(Node):
         # Services
         self.open_gripper_cli = self.create_client(Call, '/ufactory/open_lite6_gripper')
         self.close_gripper_cli = self.create_client(Call, '/ufactory/close_lite6_gripper')
+        self.servo_start_cli = self.create_client(Trigger, '/servo_server/start_servo')
         
         # State variables
         self.grip_pressed = False
@@ -27,6 +29,7 @@ class VRTeleopNode(Node):
         
         self.index_pressed = False
         self.gripper_open = True
+        self.servo_started = False
         
         self.linear_axis_pos = 0.0
         
@@ -69,6 +72,15 @@ class VRTeleopNode(Node):
                 # First press, record initial position
                 self.initial_pos = pos
                 self.grip_pressed = True
+                
+                # Ensure Servo Server is running
+                if not self.servo_started:
+                    if self.servo_start_cli.wait_for_service(timeout_sec=0.1):
+                        self.servo_start_cli.call_async(Trigger.Request())
+                        self.servo_started = True
+                        self.get_logger().info("Started Servo Server.")
+                    else:
+                        self.get_logger().warn("Servo Server not available! Start FAKE or REAL mode in Nexus.")
             else:
                 # Calculate delta
                 dx = pos['x'] - self.initial_pos['x']
