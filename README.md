@@ -890,8 +890,11 @@ stateDiagram-v2
 >
 
 ---
+
 <br>
 
+### 3.5 Feature: VR Quest 3 Teleoperation
+*Immersive 6DoF Cartesian teleoperation utilizing Meta Quest 3 VR controllers and WebXR.*
 
 ---
 
@@ -905,7 +908,7 @@ stateDiagram-v2
 > ```
 >
 > **Purpose & Task:** Provides immersive 6DoF Cartesian teleoperation using the Meta Quest 3 VR headset. Translates the right VR controller's spatial movements via WebXR into smooth `TwistStamped` velocity commands for MoveIt Servo.
-> - Uses a web-based local UI (`https_server.py`) served via HTTP on port 8443, tunneled via ADB port forwarding directly into the VR browser.
+> - Uses a web-based local UI (`https_server.py`) served via HTTPS on port 8443, tunneled via ADB port forwarding directly into the VR browser.
 > - The launch file **automatically starts its own ROSbridge instance** (killing any conflict first) — no separate ROSbridge button needed.
 > - **Grip Trigger (middle finger):** Acts as a "clutch". Holding it maps the controller's exact positional delta to the robot's end effector.
 > - **Index Trigger (index finger):** Toggles the vacuum gripper.
@@ -916,7 +919,7 @@ stateDiagram-v2
 > 2. **Hardware Connection:** Connect the Meta Quest 3 to the PC via USB-C. Put the headset on and explicitly tap **"Always allow from this computer"** in the USB Debugging authorization popup inside the headset.
 > 3. **Wake up controllers:** Pick up both controllers and press any button (e.g. thumbstick) to wake them from sleep **before** starting the VR session.
 > 4. **Launch Node:** Start via the **"VR Quest 3 Teleop"** button in the Nexus Web App (section: *Controllers*) or the command above. Wait ~3 seconds for ROSbridge to initialize.
-> 5. **Connect VR:** Open the Meta Quest Browser, navigate to `http://127.0.0.1:8443/controller_reader.html`. Wait for **"ROS Connected! ✅"**, then click **"Enter VR"**.
+> 5. **Connect VR:** Open the Meta Quest Browser, navigate to `https://127.0.0.1:8443/controller_reader.html`. Wait for **"ROS Connected! ✅"**, then click **"Enter VR"**.
 > 6. **Control:** Hold the Grip trigger and move your hand — the robot follows. The page shows live debug info: **Input Sources** must be ≥ 1 for controller data to flow.
 >
 > ⚠️ **Troubleshooting:**

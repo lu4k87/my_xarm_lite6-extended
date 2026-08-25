@@ -937,6 +937,8 @@ stateDiagram-v2
 
 <br>
 
+### 3.5 Funktion: VR Quest 3 Teleoperation
+*Immersive 6DoF kartesische Teleoperation über Meta Quest 3 VR Controller und WebXR.*
 
 ---
 
@@ -950,7 +952,7 @@ stateDiagram-v2
 > ```
 >
 > **Zweck & Aufgabe:** Bietet eine immersive kartesische 6DoF-Teleoperation mithilfe der Meta Quest 3 VR-Brille. Übersetzt die räumlichen Bewegungen des rechten VR-Controllers über WebXR in weiche `TwistStamped` Geschwindigkeitsbefehle für MoveIt Servo.
-> - Nutzt ein webbasiertes lokales UI (`https_server.py`), das per HTTP auf Port 8443 über ADB-Port-Forwarding direkt in den VR-Browser getunnelt wird.
+> - Nutzt ein webbasiertes lokales UI (`https_server.py`), das per HTTPS auf Port 8443 über ADB-Port-Forwarding direkt in den VR-Browser getunnelt wird.
 > - Das Launch-File **startet automatisch eine eigene ROSbridge-Instanz** (tötet Konflikte vorher) — kein separater ROSbridge-Button notwendig.
 > - **Grip Trigger (Mittelfinger):** Wirkt als "Kupplung". Solange er gedrückt ist, wird das exakte räumliche Delta des Controllers direkt auf den Endeffektor des Roboters übertragen.
 > - **Index Trigger (Zeigefinger):** Öffnet und schließt den Vakuumgreifer.
@@ -961,7 +963,7 @@ stateDiagram-v2
 > 2. **Hardware-Verbindung:** Verbinde die Meta Quest 3 per USB-C mit dem PC. Setze die Brille auf und tippe zwingend auf **"Von diesem Computer immer zulassen"** im USB-Debugging-Autorisierungs-Popup innerhalb der Brille.
 > 3. **Controller aufwecken:** Beide Controller in die Hände nehmen und eine Taste drücken (z.B. Thumbstick), um sie aus dem Schlafmodus zu wecken — **vor** dem Starten der VR-Session!
 > 4. **Node Starten:** Über den Button **"VR Quest 3 Teleop"** in der Nexus Web-App (Sektion: *Controllers*) oder den obigen Befehl. Ca. 3 Sekunden warten bis ROSbridge bereit ist.
-> 5. **VR Verbinden:** Meta Quest Browser öffnen, zu `http://127.0.0.1:8443/controller_reader.html` navigieren. Warten bis **"ROS Connected! ✅"** erscheint, dann **"Enter VR"** klicken.
+> 5. **VR Verbinden:** Meta Quest Browser öffnen, zu `https://127.0.0.1:8443/controller_reader.html` navigieren. Warten bis **"ROS Connected! ✅"** erscheint, dann **"Enter VR"** klicken.
 > 6. **Steuerung:** Grip-Trigger gedrückt halten und Hand bewegen — der Roboter folgt. Die Seite zeigt Live-Debug-Infos: **Input Sources** muss ≥ 1 sein, damit Controllerdaten fließen!
 >
 > ⚠️ **Troubleshooting:**
