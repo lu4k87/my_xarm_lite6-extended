@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = 'rviz_marker_static_scene_objects'
+package_name = 'rviz_3d_scene_objects'
 
 setup(
     name=package_name,
@@ -28,8 +28,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'rviz_marker_static_scene_objects = rviz_marker_static_scene_objects.rviz_marker_static_scene_objects:main',
-            'zed_stand_publisher = rviz_marker_static_scene_objects.zed_stand_publisher:main',
+            'rviz_3d_scene_objects = rviz_3d_scene_objects.rviz_3d_scene_objects:main',
+            'zed_stand_publisher = rviz_3d_scene_objects.zed_stand_publisher:main',
         ],
     },
 )

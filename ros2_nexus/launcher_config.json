@@ -258,7 +258,7 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch rviz_marker_static_scene_objects rviz_marker_static_scene_objects.launch.py",
+          "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
           "label": "RViz Marker Launch",
           "type": "launch"
         },
