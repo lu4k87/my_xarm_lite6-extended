@@ -113,12 +113,7 @@ def generate_launch_description():
     # -----------------------------------------------------------------------
     # ZED Stativ (3D Marker) Publisher (deaktiviert für EEF, da Kamera am Arm ist)
     # -----------------------------------------------------------------------
-    # zed_stand_publisher_node = Node(
-    #     package='my_3d_vision_bringup',
-    #     executable='zed_stand_publisher.py',
-    #     name='zed_stand_publisher',
-    #     output='screen'
-    # )
+
 
     # -----------------------------------------------------------------------
     # Octomap Server (Generiert die 3D Voxelkarte aus der Punktwolke)

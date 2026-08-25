@@ -75,7 +75,7 @@ class ZedVisualPublisher(Node):
         camera_mesh.action = Marker.ADD
         
         # Resolve absolute path to bypass potential RViz package:// resolution bugs
-        pkg_share = get_package_share_directory('my_3d_vision_bringup')
+        pkg_share = get_package_share_directory('rviz_marker_static_scene_objects')
         mesh_file_path = os.path.join(pkg_share, 'meshes', 'ZEDM.stl')
         camera_mesh.mesh_resource = "file://" + mesh_file_path
         

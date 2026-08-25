@@ -13,7 +13,15 @@ def generate_launch_description():
         name='rviz_marker_static_scene_objects'
     )
 
-    # 5. Node starten
+    # 5. Node 3: ZED Stand + Mesh Publisher
+    zed_stand_publisher_node = Node(
+        package='rviz_marker_static_scene_objects',
+        executable='zed_stand_publisher',
+        name='zed_stand_publisher'
+    )
+
+    # 6. Nodes starten
     return LaunchDescription([
-        marker_node
+        marker_node,
+        zed_stand_publisher_node
     ])

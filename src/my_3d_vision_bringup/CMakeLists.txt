@@ -21,7 +21,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 # ==========================================
 install(DIRECTORY 
   launch 
-  meshes 
   config
   DESTINATION share/${PROJECT_NAME}
 )
@@ -31,7 +30,6 @@ install(DIRECTORY
 # ==========================================
 # WICHTIG: Die Skripte müssen zwingend ausführbar sein (chmod +x)
 install(PROGRAMS 
-  scripts/zed_stand_publisher.py 
   scripts/zed_yolo_3d_bbox.py 
   scripts/pointcloud_optimizer.py 
   scripts/yolo_moveit_collision.py 

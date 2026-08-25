@@ -754,30 +754,6 @@ stateDiagram-v2
 
 <br>
 
-#### ![Python Script](https://img.shields.io/badge/Python_Script-3776AB?style=flat-square&logo=python&logoColor=white) `zed_stand_publisher.py`
-> [!NOTE]
-> 💻 **Run Command:**
-> ```bash
-> ros2 run my_3d_vision_bringup zed_stand_publisher.py
-> ```
->
-> **Zweck & Aufgabe:** Generiert mathematisch exakt das 3D-Modell des Kamerastativs (Aluminiumprofil) zusammen mit dem 3D-Mesh (STL) der Stereolabs ZED M Kamera und publiziert diese statisch in RViz.
->
->
-> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
->
->> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
->> | **`/zed_visual_markers`** | `visualization_msgs/MarkerArray` | *Publiziert die visuellen 3D-Modelle des Stativs und der ZED-Kamera.* |
->
->
-
-
-
----
-
-<br>
-
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `tf_tuner` &nbsp;&nbsp; <sub><i>[`/src/tf_tuner`](./src/tf_tuner)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
@@ -1114,6 +1090,29 @@ stateDiagram-v2
 
 <br>
 
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_stand_publisher.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/zed_stand_publisher.py`](./src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/zed_stand_publisher.py)</i></sub>
+> [!NOTE]
+> 💻 **Start-Befehl:**
+> ```bash
+> ros2 run rviz_marker_static_scene_objects zed_stand_publisher
+> ```
+> *(Wird automatisch gestartet über `rviz_marker_static_scene_objects.launch.py`)*
+>
+> **Zweck & Aufgabe:** Generiert mathematisch exakt das 3D-Modell des Kamerastativs (Aluminiumprofil) zusammen mit dem 3D-Mesh (STL) der Stereolabs ZED M Kamera und publiziert diese statisch in RViz.
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/zed_visual_markers`** | `visualization_msgs/MarkerArray` | *Publiziert die statischen 3D-Modelle des Kamerastativs und des ZED-Kamera-Meshes.* |
+>
+>
+
+---
+
+<br>
+
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>[`/src/rosbridge_suite/rosbridge_server`](./src/rosbridge_suite/rosbridge_server)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
@@ -1423,7 +1422,7 @@ Hardware-Eingabe
  └─ xarm_joystick_input.cpp
  ├─ Totzone: |val| < 0,1 → 0,0
  ├─ Geschw.-Skala: val × speed_levels_[index]
- ├─ Exp. Smoothing: smoothed += (target - smoothed) × 0,5
+ ├─ Exp. Smoothing: smoothed += (target - smoothed) × 0.5
  └─ /servo_server/delta_twist_cmds (TwistStamped)
 ```
 
@@ -1904,7 +1903,7 @@ Das Workspace Analyzer Backend ist ein ROS 2 Node, der eine ausführungsfreie, r
 
 
 ### 8.2 Frontend (`dashboard_index.html`)
-Verbindet sich über WebSocket (`rosbridge_server` auf Port 9090) mit dem ROS-Netzwerk. Die Frontend-Logik wurde für eine bessere Wartbarkeit strikt in 8 spezialisierte JavaScript-Module unterteilt (z.B. `dashboard_script_nodes.js`, `dashboard_script_graph.js`, `dashboard_script_ros.js`). Es gleicht statisch analysierte Nodes visuell mit den aktuell laufenden Nodes ab, zeigt Echtzeit-Topic-Frequenzen (Hz) an und ermöglicht die direkte Ausführung von System-Skripten aus der Browser-Oberfläche in einer übersichtlichen, einspaltigen Referenzansicht. Das UI nutzt eine moderne Glassmorphism-Designsprache und führt rekursives JSON-Parsing durch, um tief verschachtelte ROS-Nachrichtenstrukturen sauber formatiert darzustellen. Die Sidebar liefert auf einen Blick Statusinformationen wie Verbindungsgesundheit, Roboter-Verfügbarkeit und die aktive ROS 2 Umgebungskonfiguration.
+Verbindet sich über WebSocket (`rosbridge_server` on Port 9090) mit dem ROS-Netzwerk. Die Frontend-Logik wurde für eine bessere Wartbarkeit strikt in 8 spezialisierte JavaScript-Module unterteilt (z.B. `dashboard_script_nodes.js`, `dashboard_script_graph.js`, `dashboard_script_ros.js`). Es gleicht statisch analysierte Nodes visuell mit den aktuell laufenden Nodes ab, zeigt Echtzeit-Topic-Frequenzen (Hz) an und ermöglicht die direkte Ausführung von System-Skripten aus der Browser-Oberfläche in einer übersichtlichen, einspaltigen Referenzansicht. Das UI nutzt eine moderne Glassmorphism-Designsprache und führt rekursives JSON-Parsing durch, um tief verschachtelte ROS-Nachrichtenstrukturen sauber formatiert darzustellen. Die Sidebar liefert auf einen Blick Statusinformationen wie Verbindungsgesundheit, Roboter-Verfügbarkeit und die aktive ROS 2 Umgebungskonfiguration.
 
 ![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
 
@@ -1966,7 +1965,6 @@ dev_ws/
 │ │ └── scripts/
 │ │ ├── pointcloud_optimizer.py                                            # 3D Tiefenrauschen reduzieren & filtern
 │ │ ├── yolo_moveit_collision.py                                           # MoveIt Kollisionsobjekte & dynamisches Ignorieren
-│ │ ├── zed_stand_publisher.py                                             # 3D-Stativ Mesh Publisher
 │ │ ├── zed_yolo_3d_bbox.py                                                # 3D Objekterkennung & Bounding-Boxen
 │ │ ├── yolo_planned_grasp_executor.py                                     # 3-Phasen Greiflogik & Planner Fallback
 │ │ └── grasp_action_bridge.py                                             # Übersetzer für RViz Grasp Action
@@ -1978,6 +1976,11 @@ dev_ws/
 │ ├── rviz_robot_control_panel/                                            # 🖥️ C++: RViz2 2D Control Panel Plugin
 │ │ └── src/rviz_robot_control_panel.cpp
 │ ├── rviz_marker_static_scene_objects/                                    # 📍 Python: RViz2 Marker-Publisher
+│ │ ├── launch/
+│ │ │ └── rviz_marker_static_scene_objects.launch.py                       # Launch-Datei für Safety-Zones & ZED Stativ
+│ │ └── rviz_marker_static_scene_objects/
+│ │     ├── rviz_marker_static_scene_objects.py                                # Generiert Safety-Zones & Hindernisse
+│ │     └── zed_stand_publisher.py                                             # Generiert das ZED 3D-Mesh & Kamerastativ
 │ ├── voice_command_listener/                                              # 🗣️ Python: Intent-Parser & Filter
 │ ├── dashboard_monitoring/                                                # 📊 Python/JS: Workspace Analyzer & Dashboard
 │ │ ├── workspace_analyzer.py                                              # Haupt-ROS 2-Node (Pub/Sub & Topologie)

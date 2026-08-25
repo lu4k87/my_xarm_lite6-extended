@@ -711,29 +711,7 @@ stateDiagram-v2
 >> | **`/ui/grasp_object`** | `my_3d_vision_msgs/action/GraspObject` | *Calls the Grasp Action Server.* |
 >
 
----
-
-<br>
-
-#### ![Python Script](https://img.shields.io/badge/Python_Script-3776AB?style=flat-square&logo=python&logoColor=white) `zed_stand_publisher.py`
-> [!NOTE]
-> 💻 **Run Command:**
-> ```bash
-> ros2 run my_3d_vision_bringup zed_stand_publisher.py
-> ```
->
-> **Purpose & Task:** Mathematically generates the exact 3D model of the camera tripod (aluminum profile) alongside the 3D mesh (STL) of the Stereolabs ZED M camera and publishes them statically in RViz.
->
->
-> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
->
->> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
->> | **`/zed_visual_markers`** | `visualization_msgs/MarkerArray` | *Publishes the static 3D models of the camera stand and the ZED camera mesh.* |
->
->
-
----
+------
 
 <br>
 
@@ -1061,6 +1039,29 @@ stateDiagram-v2
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
 >> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Renders virtual markers (safety-zone, tables) in RViz.* |
+>
+>
+
+---
+
+<br>
+
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_stand_publisher.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/zed_stand_publisher.py`](./src/rviz_marker_static_scene_objects/rviz_marker_static_scene_objects/zed_stand_publisher.py)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 run rviz_marker_static_scene_objects zed_stand_publisher
+> ```
+> *(Automatically started via `rviz_marker_static_scene_objects.launch.py`)*
+>
+> **Purpose & Task:** Mathematically generates the exact 3D model of the camera tripod (aluminum profile) alongside the 3D mesh (STL) of the Stereolabs ZED M camera and publishes them statically in RViz.
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/zed_visual_markers`** | `visualization_msgs/MarkerArray` | *Publishes the static 3D models of the camera stand and the ZED camera mesh.* |
 >
 >
 
@@ -1919,7 +1920,6 @@ dev_ws/
 │ │ └── scripts/
 │ │ ├── pointcloud_optimizer.py                                            # 3D depth noise reduction & filtering
 │ │ ├── yolo_moveit_collision.py                                           # MoveIt collision objects & dynamic ignoring
-│ │ ├── zed_stand_publisher.py                                             # 3D camera stand/tripod mesh publisher
 │ │ ├── zed_yolo_3d_bbox.py                                                # 3D object detection & bounding boxes
 │ │ ├── yolo_planned_grasp_executor.py                                     # 3-Phase grasping logic & planner fallback
 │ │ └── grasp_action_bridge.py                                             # Translator for RViz Grasp Action
@@ -1928,9 +1928,14 @@ dev_ws/
 │ │ └── rviz_servo_status_overlay/
 │ │ ├── rviz_servo_status_overlay.py                                       # TCP & Frame Overlay
 │ │ └── servo_status_overlay.py                                            # Servo Warning Overlay
+│ ├── rviz_marker_static_scene_objects/                                    # 📍 Python: RViz2 marker publisher
+│ │ ├── launch/
+│ │ │ └── rviz_marker_static_scene_objects.launch.py                       # Launch file for markers & ZED stand
+│ │ └── rviz_marker_static_scene_objects/
+│ │     ├── rviz_marker_static_scene_objects.py                                # Generates safe zones & static markers
+│ │     └── zed_stand_publisher.py                                             # Generates the ZED 3D camera mesh & stand
 │ ├── rviz_robot_control_panel/                                            # 🖥️ C++: RViz2 2D Control Panel Plugin
 │ │ └── src/rviz_robot_control_panel.cpp
-│ ├── rviz_marker_static_scene_objects/                                    # 📍 Python: RViz2 marker publisher
 │ ├── voice_command_listener/                                              # 🗣️ Python: Intent parser & filter
 │ ├── dashboard_monitoring/                                                # 📊 Python/JS: Workspace analyzer & Dashboard
 │ │ ├── workspace_analyzer.py                                              # Main ROS 2 Node (Pub/Sub & Topology)

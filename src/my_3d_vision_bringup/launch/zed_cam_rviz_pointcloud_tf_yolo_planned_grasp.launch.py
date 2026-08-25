@@ -125,16 +125,6 @@ def generate_launch_description():
     )
 
     # -----------------------------------------------------------------------
-    # ZED Stativ (3D Marker) Publisher
-    # -----------------------------------------------------------------------
-    zed_stand_publisher_node = Node(
-        package='my_3d_vision_bringup',
-        executable='zed_stand_publisher.py',
-        name='zed_stand_publisher',
-        output='screen'
-    )
-
-    # -----------------------------------------------------------------------
     # PointCloud ROI Optimizer (Crops Top 50% Background)
     # -----------------------------------------------------------------------
     pointcloud_optimizer_node = Node(
@@ -204,7 +194,6 @@ def generate_launch_description():
         tf_yaw_arg,
         # Nodes
         static_tf_node,
-        zed_stand_publisher_node,
         pointcloud_optimizer_node,
         yolo_moveit_collision_node,
         yolo_planned_grasp_executor_node,

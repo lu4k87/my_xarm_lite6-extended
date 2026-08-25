@@ -29,6 +29,7 @@ setup(
     entry_points={
         'console_scripts': [
             'rviz_marker_static_scene_objects = rviz_marker_static_scene_objects.rviz_marker_static_scene_objects:main',
+            'zed_stand_publisher = rviz_marker_static_scene_objects.zed_stand_publisher:main',
         ],
     },
 )
