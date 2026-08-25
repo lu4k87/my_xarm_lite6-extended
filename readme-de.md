@@ -33,8 +33,9 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
    - [3.2 Funktion: Gamepad Teleoperation & Harter Kollisionsschutz](#32-funktion-gamepad-teleoperation--harter-kollisionsschutz)
    - [3.3 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)](#33-funktion-autonomes-greifen--3d-objekterkennung-yolo--zed)
    - [3.4 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)](#34-funktion-multimodale-interaktion-sprache--blicksteuerung)
-   - [3.5 Funktion: GUI - Grafische Robotersteuerung & Visuelles Feedback](#35-funktion-gui---grafische-robotersteuerung--visuelles-feedback)
-   - [3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)](#36-funktion-digital-twin--simulation-nvidia-isaac-sim)
+   - [3.5 Funktion: VR Quest 3 Teleoperation](#35-funktion-vr-quest-3-teleoperation)
+   - [3.6 Funktion: GUI - Grafische Robotersteuerung & Visuelles Feedback](#36-funktion-gui---grafische-robotersteuerung--visuelles-feedback)
+   - [3.7 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)](#37-funktion-digital-twin--simulation-nvidia-isaac-sim)
 
 4. [🕹️ Multimodale Technologien & Interaktionskonzepte](#4-️-multimodale-technologien--interaktionskonzepte)
    - [4.1 Roboter-Steuerungsarten (Inputs)](#41-roboter-steuerungsarten-inputs)
@@ -937,7 +938,28 @@ stateDiagram-v2
 <br>
 
 
-### 3.5 Funktion: GUI - Grafische Robotersteuerung & Visuelles Feedback
+---
+
+<br>
+
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `vr_quest3_teleop_node.py` &nbsp;&nbsp; <sub><i>[`/src/vr_quest3_teleop/vr_quest3_teleop/vr_quest3_teleop_node.py`](./src/vr_quest3_teleop)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py
+> ```
+>
+> **Zweck & Aufgabe:** Bietet eine immersive kartesische 6DoF-Teleoperation mithilfe der Meta Quest 3 VR-Brille. Übersetzt die räumlichen Bewegungen des rechten VR-Controllers über WebXR in weiche `TwistStamped` Geschwindigkeitsbefehle für MoveIt Servo. 
+> - Nutzt ein webbasiertes lokales UI (`https_server.py`), das über ADB-Port-Forwarding (Port 8443) direkt in den VR-Browser getunnelt wird.
+> - **Grip Trigger (Mittelfinger):** Wirkt als "Kupplung". Solange er gedrückt ist, wird das exakte räumliche Delta (die Bewegung) des Controllers direkt auf den Endeffektor des Roboters übertragen.
+> - **Index Trigger (Zeigefinger):** Öffnet und schließt den Vakuumgreifer.
+> - **Thumbstick X:** Steuert die virtuelle lineare Achse.
+
+---
+
+<br>
+
+### 3.6 Funktion: GUI - Grafische Robotersteuerung & Visuelles Feedback
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
 <img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control Web UI">
@@ -1177,7 +1199,7 @@ stateDiagram-v2
 <br>
 
 
-### 3.6 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
+### 3.7 Funktion: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *Physischer und virtueller Arbeitsraum werden durch NVIDIA Isaac Sim als passiver, hochauflösender Digitaler Zwilling nahtlos synchronisiert.*
 
 ---
@@ -1218,13 +1240,20 @@ stateDiagram-v2
 
 <br>
 
----
+
+### Gamepad Teleoperation
+> Latenzarme, kontinuierliche Feinsteuerung mittels Xbox One Elite Series 2 Controller (inkl. Haptischem Feedback - Vibration bei Kollisionsgefahr).
+
+### VR Quest 3 Teleoperation
+> Immersive, räumliche 6DoF kartesische Steuerung mithilfe des Meta Quest 3 Controllers über WebXR und ADB-Tunneling.
 
 <br>
 
-### Gamepad Teleoperation
-> Latenzarme, kontinuierliche Feinsteuerung per Xbox One Elite Series 2 Controller (inkl. haptischem Feedback - Vibration bei Kollisionsgefahr).
+<br>
 
+---
+
+<br>
 
 ### 4.2 Sensorik & Assistenz (Perception)
 #### Computer Vision

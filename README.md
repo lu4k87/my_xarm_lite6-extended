@@ -33,8 +33,9 @@ This repository is a continuously evolving research and evaluation platform for 
    - [3.2 Feature: Gamepad Teleoperation & Hard Collision Protection](#32-feature-gamepad-teleoperation--hard-collision-protection)
    - [3.3 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)](#33-feature-autonomous-grasping--3d-object-detection-yolo--zed)
    - [3.4 Feature: Multimodal Interaction (Voice & Gaze Control)](#34-feature-multimodal-interaction-voice--gaze-control)
-   - [3.5 Feature: GUI - Graphical Robot Control & Visual Feedback](#35-feature-gui---graphical-robot-control--visual-feedback)
-   - [3.6 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)](#36-feature-digital-twin--simulation-nvidia-isaac-sim)
+   - [3.5 Feature: VR Quest 3 Teleoperation](#35-feature-vr-quest-3-teleoperation)
+   - [3.6 Feature: GUI - Graphical Robot Control & Visual Feedback](#36-feature-gui---graphical-robot-control--visual-feedback)
+   - [3.7 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)](#37-feature-digital-twin--simulation-nvidia-isaac-sim)
 
 4. [🕹️ Multimodal Technologies & Interaction Concepts](#4-️-multimodal-technologies--interaction-concepts)
    - [4.1 Robot Control Methods (Inputs)](#41-robot-control-methods-inputs)
@@ -892,7 +893,28 @@ stateDiagram-v2
 <br>
 
 
-### 3.5 Feature: GUI - Graphical Robot Control & Visual Feedback
+---
+
+<br>
+
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `vr_quest3_teleop_node.py` &nbsp;&nbsp; <sub><i>[`/src/vr_quest3_teleop/vr_quest3_teleop/vr_quest3_teleop_node.py`](./src/vr_quest3_teleop)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py
+> ```
+>
+> **Purpose & Task:** Provides immersive 6DoF Cartesian teleoperation using the Meta Quest 3 VR headset. Translates the right VR controller's spatial movements via WebXR into smooth `TwistStamped` velocity commands for MoveIt Servo. 
+> - Uses a web-based local UI (`https_server.py`) served via ADB port forwarding (Port 8443) directly into the VR browser.
+> - **Grip Trigger:** Acts as a "clutch". Holding it maps the controller's exact positional delta to the robot's end effector.
+> - **Index Trigger:** Toggles the vacuum gripper.
+> - **Thumbstick X:** Controls the virtual linear axis.
+
+---
+
+<br>
+
+### 3.6 Feature: GUI - Graphical Robot Control & Visual Feedback
 *Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
 
 <img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control Web UI">
@@ -1131,7 +1153,7 @@ stateDiagram-v2
 <br>
 
 
-### 3.6 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)
+### 3.7 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)
 *The physical and virtual workspaces are seamlessly synchronized using NVIDIA Isaac Sim as a passive, high-fidelity digital twin.*
 
 ---
@@ -1174,6 +1196,9 @@ stateDiagram-v2
 
 ### Gamepad Teleoperation
 > Low-latency, continuous fine control using Xbox One Elite Series 2 Controller (incl. haptic feedback - vibration on collision risk).
+
+### VR Quest 3 Teleoperation
+> Immersive, spatial 6DoF Cartesian control utilizing Meta Quest 3 controllers via WebXR and ADB tunneling.
 
 
 ### 4.2 Perception & Assistance

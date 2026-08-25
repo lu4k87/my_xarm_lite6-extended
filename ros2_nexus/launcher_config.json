@@ -192,6 +192,11 @@
           "cmd": "ros2 run linear_axis_tuner linear_axis_tuner",
           "label": "Linear Axis Tuner (FAKE Mode)",
           "type": "node"
+        },
+        {
+          "cmd": "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
+          "label": "VR Quest 3 Teleop",
+          "type": "launch"
         }
       ],
       "col": 1,

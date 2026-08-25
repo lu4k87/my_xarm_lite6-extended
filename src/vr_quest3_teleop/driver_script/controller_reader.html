@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Quest 3 VR Teleop</title>
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #222; color: #eee; text-align: center; padding-top: 50px; }
+        button { font-size: 24px; padding: 15px 30px; cursor: pointer; border-radius: 8px; border: none; background: #4CAF50; color: white; margin-top: 20px;}
+        #status { font-weight: bold; }
+        #debug { margin-top: 30px; text-align: left; display: inline-block; background: #111; padding: 20px; border-radius: 10px; min-width: 300px; }
+    </style>
+</head>
+<body>
+    <h1>Quest 3 VR Teleop</h1>
+    <p>Status: <span id="status" style="color: yellow;">Connecting to ROS...</span></p>
+    
+    <button id="vr-btn" style="display:none;" onclick="enterVR()">Enter VR</button>
+    <p id="xr-status">Checking WebXR...</p>
+
+    <div id="debug">
+        <p>Grip (Move): <span id="debug-grip">0</span></p>
+        <p>Index (Gripper): <span id="debug-index">0</span></p>
+        <p>Thumbstick X: <span id="debug-thumb">0</span></p>
+    </div>
+
+    <script>
+        // Connect to ROS
+        const ros = new ROSLIB.Ros({
+            url : 'wss://localhost:9090' // Typically ROSBridge uses wss over HTTPS, but local adb reverse uses ws
+            // wait, if we are accessing this from the quest on https://localhost:8443, mixed content might block ws://. 
+            // So we might need wss:// or we use ws:// if localhost allows it.
+            // Let's try ws:// since it's local ADB reverse.
+        });
+
+        // Use ws:// for localhost ADB reverse
+        ros.connect('ws://localhost:9090');
+
+        ros.on('connection', () => {
+            document.getElementById('status').innerText = 'ROS Connected!';
+            document.getElementById('status').style.color = '#4CAF50';
+        });
+
+        ros.on('error', (error) => {
+            document.getElementById('status').innerText = 'ROS Error. Check if ROSBridge is running on port 9090.';
+            document.getElementById('status').style.color = 'red';
+        });
+
+        ros.on('close', () => {
+            document.getElementById('status').innerText = 'ROS Connection Closed.';
+            document.getElementById('status').style.color = 'orange';
+        });
+
+        const vrTopic = new ROSLIB.Topic({
+            ros : ros,
+            name : '/vr_teleop/controller_data',
+            messageType : 'std_msgs/String'
+        });
+
+        // WebXR Setup
+        let xrSession = null;
+        let xrRefSpace = null;
+
+        if (navigator.xr) {
+            navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+                if (supported) {
+                    document.getElementById('vr-btn').style.display = 'inline-block';
+                    document.getElementById('xr-status').innerText = 'WebXR is supported! Click Enter VR to start.';
+                } else {
+                    document.getElementById('xr-status').innerText = 'WebXR not supported on this device/browser.';
+                    document.getElementById('xr-status').style.color = 'red';
+                }
+            });
+        } else {
+            document.getElementById('xr-status').innerText = 'WebXR API not available.';
+        }
+
+        function enterVR() {
+            navigator.xr.requestSession('immersive-vr').then(onSessionStarted);
+        }
+
+        function onSessionStarted(session) {
+            xrSession = session;
+            session.addEventListener('end', onSessionEnded);
+            
+            // local-floor gives us a seated/standing origin
+            session.requestReferenceSpace('local-floor').then((refSpace) => {
+                xrRefSpace = refSpace;
+                session.requestAnimationFrame(onXRFrame);
+            });
+        }
+
+        function onSessionEnded() {
+            xrSession = null;
+        }
+
+        function onXRFrame(time, frame) {
+            const session = frame.session;
+            session.requestAnimationFrame(onXRFrame);
+
+            for (const source of session.inputSources) {
+                if (source.handedness === 'right') {
+                    const pose = frame.getPose(source.gripSpace, xrRefSpace);
+                    if (pose && source.gamepad) {
+                        const gp = source.gamepad;
+                        
+                        // Map inputs
+                        const indexPressed = gp.buttons[0]?.pressed || false;
+                        const gripPressed = gp.buttons[1]?.pressed || false;
+                        const thumbX = gp.axes[2] || gp.axes[0] || 0.0; // Sometimes axes map differently
+                        
+                        // Update debug UI (only occasionally to save performance)
+                        if(time % 5 < 1) {
+                            document.getElementById('debug-grip').innerText = gripPressed ? 'PRESSED' : 'RELEASED';
+                            document.getElementById('debug-index').innerText = indexPressed ? 'PRESSED' : 'RELEASED';
+                            document.getElementById('debug-thumb').innerText = thumbX.toFixed(2);
+                        }
+                        
+                        const msgData = {
+                            position: {
+                                x: pose.transform.position.x,
+                                y: pose.transform.position.y,
+                                z: pose.transform.position.z
+                            },
+                            orientation: {
+                                x: pose.transform.orientation.x,
+                                y: pose.transform.orientation.y,
+                                z: pose.transform.orientation.z,
+                                w: pose.transform.orientation.w
+                            },
+                            buttons: {
+                                index: indexPressed,
+                                grip: gripPressed,
+                                a: gp.buttons[4]?.pressed || false,
+                                b: gp.buttons[5]?.pressed || false
+                            },
+                            axes: {
+                                x: thumbX
+                            }
+                        };
+                        
+                        const msg = new ROSLIB.Message({
+                            data: JSON.stringify(msgData)
+                        });
+                        vrTopic.publish(msg);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
