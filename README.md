@@ -940,6 +940,26 @@ stateDiagram-v2
 
 <br>
 
+#### ![Launch](https://img.shields.io/badge/Launch-Skript-FF9900?style=flat-square) `standalone_move_group.launch.py` &nbsp;&nbsp; <sub><i>[`/src/robot_motion_handler_movegroup/launch/standalone_move_group.launch.py`](./src/robot_motion_handler_movegroup/launch/standalone_move_group.launch.py)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:** *(Automatically executed in RUN DEV FAKE / RUN PROD REAL setup)*
+>
+> **Purpose & Task:** Serves as the "headless" backend for the Web UI. Starts MoveIt 2's `move_group` node without resource-intensive graphical interfaces like RViz. It provides all planning and execution services (Inverse Kinematics, Collision Avoidance, Action Servers) required by the Nexus Web App or other remote controllers to perform motion planning and execute complex trajectories. Decoupling this from RViz prevents synchronization errors (e.g., MotionPlanning load failures) during startup.
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) / ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/move_action`** | Action Server | *Provides trajectory planning and execution.* |
+>> | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Maintains the collision environment and robot state.* |
+>
+>
+
+---
+
+<br>
+
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>[`/src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp`](./src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:** *(Loaded automatically as C++ Plugin inside RViz2)*

@@ -134,12 +134,12 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
           "label": "MoveGroup Server (FAKE)",
           "type": "launch"
         },
         {
-          "cmd": "ros2 launch my_3d_vision_bringup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
+          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
           "label": "MoveGroup Server (REAL)",
           "type": "launch"
         }
