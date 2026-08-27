@@ -157,7 +157,7 @@
         { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
         { cmd: "ros2 run web_video_server web_video_server --ros-args -p port:=8082", title: "Web Video Server (Port 8082)" },
         { cmd: "ros2 run rviz_streamer rviz_streamer_node", title: "RViz Streamer Node" },
-        { cmd: "ros2 run tobii_glasses_yolo_blink_grasp tobii_glasses_yolo_blink_grasp", title: "Tobii Gaze Grasp Node" }
+        { cmd: "ros2 run tobii_glasses_and_yolo_to_grasp_routine tobii_glasses_and_yolo_to_grasp_routine", title: "Tobii Gaze Grasp Node" }
       ];
 
       if (mode !== "real") {

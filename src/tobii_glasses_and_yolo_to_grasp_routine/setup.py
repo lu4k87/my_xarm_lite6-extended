@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'tobii_glasses_yolo_blink_grasp'
+package_name = 'tobii_glasses_and_yolo_to_grasp_routine'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'tobii_glasses_yolo_blink_grasp = tobii_glasses_yolo_blink_grasp.tobii_glasses_yolo_blink_grasp:main'
+            'tobii_glasses_and_yolo_to_grasp_routine = tobii_glasses_and_yolo_to_grasp_routine.tobii_glasses_and_yolo_to_grasp_routine:main'
         ],
     },
 )

@@ -122,7 +122,7 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev & sleep 8 && ros2 run rviz_streamer rviz_streamer_node & ros2 run tobii_glasses_yolo_blink_grasp tobii_glasses_yolo_blink_grasp",
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev & sleep 8 && ros2 run rviz_streamer rviz_streamer_node & ros2 run tobii_glasses_and_yolo_to_grasp_routine tobii_glasses_and_yolo_to_grasp_routine",
           "label": "RUN DEV (REAL)",
           "type": "launch"
         }

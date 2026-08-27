@@ -15,9 +15,9 @@ import pygame
 
 from ultralytics import YOLO
 
-class TobiiYoloBlinkGrasp(Node):
+class TobiiYoloToGraspRoutine(Node):
     def __init__(self):
-        super().__init__('tobii_glasses_yolo_blink_grasp')
+        super().__init__('tobii_glasses_and_yolo_to_grasp_routine')
         
         yolo_path = os.path.expanduser('~/dev_ws/my_yolo_model.pt')
         if not os.path.exists(yolo_path):
@@ -317,7 +317,7 @@ class TobiiYoloBlinkGrasp(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = TobiiYoloBlinkGrasp()
+    node = TobiiYoloToGraspRoutine()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

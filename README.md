@@ -893,13 +893,13 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `tobii_glasses_yolo_blink_grasp.py` &nbsp;&nbsp; <sub><i>[`/src/tobii_glasses_yolo_blink_grasp`](./src/tobii_glasses_yolo_blink_grasp)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `tobii_glasses_and_yolo_to_grasp_routine.py` &nbsp;&nbsp; <sub><i>[`/src/tobii_glasses_and_yolo_to_grasp_routine`](./src/tobii_glasses_and_yolo_to_grasp_routine)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > # Automatically launched via Nexus Web UI:
 > # ➔ "RUN DEV SETUP (REAL)" Button
-> ros2 run tobii_glasses_yolo_blink_grasp tobii_glasses_yolo_blink_grasp
+> ros2 run tobii_glasses_and_yolo_to_grasp_routine tobii_glasses_and_yolo_to_grasp_routine
 > ```
 >
 > **Purpose & Task:** Enables "telepathic" hands-free object selection and grasping via Tobii Glasses 3. 
