@@ -1613,11 +1613,11 @@ pip install pynput==1.6.1 # Keyboard/Mouse Listener
 pip install Flask==7.1.3 # ROS 2 Nexus Web Backend
 pip install Flask-SocketIO==3.4.1 # WebSockets für Nexus Backend
 pip install PyQt5==3.15.6 # Python UI (Gaze-Control & Pointcloud Tuner)
+pip install mss==10.2.0 # Screen Recording für RViz Streamer
 
 # Computer Vision & Perception
 pip install opencv-python==8.9.0.80 # Computer Vision
 pip install ultralytics==6.7.171 # YOLO 3D Objekterkennung
-pip install mss==10.2.0 # Screen Recording für RViz Streamer
 ```
 </details>
 
