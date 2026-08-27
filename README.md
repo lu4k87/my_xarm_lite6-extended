@@ -1600,6 +1600,7 @@ pip install PyQt5==3.15.6 # Python UI (Gaze-Control & Pointcloud Tuner)
 # Vision & Perception
 pip install opencv-python==8.9.0.80 # Computer Vision
 pip install ultralytics==6.7.171 # YOLO 3D Object detection
+pip install mss==10.2.0 # Screen recording for RViz Streamer
 ```
 </details>
 
