@@ -761,6 +761,28 @@ function setInitialPose() {
   }, (err) => { logMsg('ROS', `❌ Trigger Error: ${err}`, 'err'); });
 }
 
+function showScene() {
+  const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
+  const x = 300.0;
+  const y = 0.0;
+  const z = 475.0;
+  const r = parseFloat(document.getElementById('inp-r').value) || 3.14;
+  const p = parseFloat(document.getElementById('inp-p').value) || 0.0;
+  const yw = parseFloat(document.getElementById('inp-yw').value) || 0.0;
+
+  const req = new ROSLIB.ServiceRequest({
+    pose: [x, y, z, r, p, yw],
+    speed: 100.0,
+    acc: 1000.0,
+    mvtime: 0.0
+  });
+  logMsg('UI', `➤ MoveTo Show Scene: X=${x} Y=${y} Z=${z}`);
+  srv.callService(req, (res) => {
+    if (res.ret === 0) logMsg('ROS', '✓ Show Scene successful.', 'info');
+    else logMsg('ROS', `❌ Show Scene failed (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
+  }, (err) => { logMsg('ROS', `❌ Show Scene Error: ${err}`, 'err'); });
+}
+
 const graspPub = new ROSLIB.Topic({
   ros: ros,
   name: '/ui/grasp_object_cmd',
