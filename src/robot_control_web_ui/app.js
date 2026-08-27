@@ -765,7 +765,7 @@ function showScene() {
   const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
   const x = 300.0;
   const y = 0.0;
-  const z = 475.0;
+  const z = 400.0;
   const r = parseFloat(document.getElementById('inp-r').value) || 3.14;
   const p = parseFloat(document.getElementById('inp-p').value) || 0.0;
   const yw = parseFloat(document.getElementById('inp-yw').value) || 0.0;
