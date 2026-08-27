@@ -90,7 +90,13 @@ class TobiiYoloToGraspRoutine(Node):
         
         while self.script_running:
             try:
-                container = av.open(rtsp_url, options={'rtsp_transport': 'tcp', 'stimeout': '5000000'})
+                container = av.open(rtsp_url, options={
+                    'rtsp_transport': 'tcp', 
+                    'stimeout': '5000000',
+                    'ffflags': 'nobuffer',
+                    'flags': 'low_delay',
+                    'strict': 'experimental'
+                })
                 video_stream = next((s for s in container.streams if s.type == 'video'), None)
                 data_stream = next((s for s in container.streams if s.type == 'data'), None)
                 
