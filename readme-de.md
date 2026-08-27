@@ -937,6 +937,24 @@ stateDiagram-v2
 
 <br>
 
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `tobii_glasses_yolo_blink_grasp.py` &nbsp;&nbsp; <sub><i>[`/src/tobii_glasses_yolo_blink_grasp`](./src/tobii_glasses_yolo_blink_grasp)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 run tobii_glasses_yolo_blink_grasp tobii_glasses_yolo_blink_grasp
+> ```
+>
+> **Zweck & Aufgabe:** Ermöglicht "telepathische", freihändige Objektauswahl und Greifvorgänge via Tobii Glasses 3.
+> - **Dwell-Time Auswahl:** Verbindet sich mit dem Tobii RTSP-Stream. Ein Hintergrundprozess führt YOLOv8 auf dem Live-Stream aus. Fixiert der Nutzer mit dem Gaze-Punkt ein erkanntes Objekt für **2,0 Sekunden** (Dwell-Time), loggt sich das System auf dieses Ziel ein und startet den Greifablauf.
+> - **Präzise Lokalisierung per Homographie:** Nach der Auswahl fährt der Arm in eine zentrale "Show Scene"-Pose. Die Endeffektor-Kamera sucht nach 12 bekannten ArUco-Markern auf dem Tisch, um eine hochpräzise `cv2.findHomography`-Matrix zu berechnen. Anschließend findet sie das ausgewählte Objekt erneut per YOLO und rechnet dessen Pixel-Koordinaten perfekt in den 3D-Referenzrahmen des Roboters um (`cv2.perspectiveTransform`). Der Arm schwebt danach exakt über dem Objekt.
+> - **Visuelles Feedback:** Öffnet ein Live-OpenCV-Fenster, das den Tobii-Stream, die YOLO-Bounding-Boxen, den Gaze-Punkt sowie einen Ladebalken anzeigt, der den 2-Sekunden-Fixationsvorgang visualisiert.
+>
+>
+
+---
+
+<br>
+
 ### 3.5 Funktion: VR Quest 3 Teleoperation
 *Immersive 6DoF kartesische Teleoperation über Meta Quest 3 VR Controller und WebXR.*
 
