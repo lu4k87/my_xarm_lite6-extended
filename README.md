@@ -905,7 +905,9 @@ stateDiagram-v2
 > **Purpose & Task:** Enables "telepathic" hands-free object selection and grasping via Tobii Glasses 3. 
 > - **Dwell-Time Selection:** Connects to the Tobii glasses RTSP stream. A background process runs YOLOv8 object detection on the live video stream. If the user's eye-gaze fixates on a recognized object's bounding box for **2.0 seconds** (Dwell-Time), the system automatically locks onto the target and triggers the grasp sequence.
 > - **Homography-based Precision Localization:** After selection, the robot moves to a central "Show Scene" position. The End-Effector (EEF) camera scans the table for 12 known ArUco markers to compute a highly precise `cv2.findHomography` transformation matrix. It then finds the selected object again using YOLO and maps its exact pixel coordinates perfectly into the robot's 3D base reference frame (`cv2.perspectiveTransform`), moving the EEF to hover exactly above the target.
-> - **Visual Feedback:** Displays a live OpenCV window showing the Tobii stream, YOLO bounding boxes, the exact gaze point, and a progress bar that visualizes the dwell-time lock-on process.
+> - **Robust ArUco Tracking:** Employs a sophisticated dual-detection mechanism (normal & horizontally mirrored) alongside CLAHE contrast equalization and subpixel corner refinement. This guarantees flawless marker detection even under poor lighting conditions or if the physical calibration board was accidentally printed mirrored.
+> - **Safety Verification Delay:** Introduces a 3-second safety countdown (`WAITING_FOR_VERIFICATION`) after calculating the target coordinates. This allows the operator to visually confirm the computed grasping point in the EEF camera before the robot commits to the movement.
+> - **Visual Feedback:** Displays two live OpenCV windows: One showing the Tobii stream (with YOLO boxes, gaze point, and dwell-time progress) and a second continuous live-feed ("EEF Debug View") streaming the robot's end-effector camera instantly upon startup via a dedicated background thread.
 >
 > > [!CAUTION]
 > > **Critical Hardware Setup: ArUco Marker Grid**

@@ -44,6 +44,8 @@ class TobiiYoloToGraspRoutine(Node):
         self.last_valid_gaze = None
         self.last_valid_frame = None
         self.last_eef_debug_frame = None
+        self.latest_eef_image = None
+        self.eef_worker_running = True
         
         # Dwell time variables
         self.current_gazed_class = None
@@ -54,13 +56,20 @@ class TobiiYoloToGraspRoutine(Node):
         try:
             self.aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
             self.aruco_params = cv2.aruco.DetectorParameters_create()
+            self.aruco_params.minMarkerPerimeterRate = 0.01
+            self.aruco_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
         except AttributeError:
             self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
             self.aruco_params = cv2.aruco.DetectorParameters()
+            self.aruco_params.minMarkerPerimeterRate = 0.01
+            self.aruco_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
             self.aruco_detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.aruco_params)
             
         self.t = threading.Thread(target=self.tobii_worker, daemon=True)
         self.t.start()
+        
+        self.t_eef = threading.Thread(target=self.eef_worker, daemon=True)
+        self.t_eef.start()
         
         # Timer for decoupled YOLO inference
         self.gaze_timer = self.create_timer(0.1, self.check_gaze_target)
@@ -126,6 +135,24 @@ class TobiiYoloToGraspRoutine(Node):
             except Exception as e:
                 self.get_logger().error(f"Tobii connection error: {e}")
                 time.sleep(2)
+
+    def eef_worker(self):
+        while self.script_running:
+            try:
+                req = urllib.request.urlopen('http://192.168.0.123/html/cam_pic.php?time=0', timeout=2)
+                arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
+                eef_img = cv2.imdecode(arr, -1)
+                
+                if eef_img is not None:
+                    self.latest_eef_image = eef_img
+                    if self.state < 2:
+                        # In idle or moving-to-scene state, show raw image with status
+                        disp = eef_img.copy()
+                        cv2.putText(disp, "EEF Camera Stream Active", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+                        self.last_eef_debug_frame = disp
+            except Exception:
+                pass
+            time.sleep(0.2) # Update at ~5 Hz
 
     def check_gaze_target(self):
         if self.last_valid_frame is None:
@@ -208,24 +235,25 @@ class TobiiYoloToGraspRoutine(Node):
             self.state = 0
             return
             
-        self.get_logger().info("Reached Show Scene. Capturing EEF image for localization...")
-        time.sleep(1.0)
+        self.get_logger().info("Reached Show Scene. Waiting 3 seconds for camera/robot to settle...")
         self.state = 2
-        
-        try:
-            req = urllib.request.urlopen('http://192.168.0.123/html/cam_pic.php?time=0', timeout=5)
-            arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
-            eef_img = cv2.imdecode(arr, -1)
-            
-            if eef_img is None:
-                self.get_logger().error("Failed to decode EEF image")
-                self.state = 0
-                return
-                
-            self.process_eef_image(eef_img)
-        except Exception as e:
-            self.get_logger().error(f"Error fetching EEF image: {e}")
+        self.settle_timer = self.create_timer(3.0, self.capture_eef_image)
+
+    def capture_eef_image(self):
+        if hasattr(self, 'settle_timer') and self.settle_timer:
+            self.settle_timer.cancel()
+            self.settle_timer = None
+
+        self.get_logger().info("Capturing EEF image for localization...")
+        if self.latest_eef_image is None:
+            self.get_logger().error("No EEF image available!")
             self.state = 0
+            return
+            
+        eef_img = self.latest_eef_image.copy()
+        
+        # Process image directly on the latest grabbed frame
+        self.process_eef_image(eef_img)
 
     def process_eef_image(self, eef_img):
         KNOWN_MARKERS = {
@@ -245,13 +273,71 @@ class TobiiYoloToGraspRoutine(Node):
         
         debug_img = eef_img.copy()
         
+        # --- YOLO Detection (Run early so we see boxes even if ArUco fails) ---
+        results = self.yolo_model(eef_img, verbose=False)
+        target_box = None
+        
+        for result in results:
+            for box in result.boxes:
+                cls_id = int(box.cls[0])
+                class_name = result.names[cls_id]
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                color = (0, 255, 0) if class_name == self.selected_object_class else (0, 0, 255)
+                cv2.rectangle(debug_img, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(debug_img, class_name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                
+                if class_name == self.selected_object_class:
+                    target_box = box.xyxy[0]
+                    break
+            if target_box is not None:
+                break
+
+        # --- ArUco Marker Detection (Original Resolution with CLAHE) ---
+        gray = cv2.cvtColor(eef_img, cv2.COLOR_BGR2GRAY)
+        
+        # Apply CLAHE to improve contrast and handle varied lighting
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        gray_enhanced = clahe.apply(gray)
+        
+        # 1. Normal detection
         try:
-            corners, ids, _ = cv2.aruco.detectMarkers(debug_img, self.aruco_dict, parameters=self.aruco_params)
+            corners1, ids1, _ = cv2.aruco.detectMarkers(gray_enhanced, self.aruco_dict, parameters=self.aruco_params)
         except AttributeError:
-            corners, ids, _ = self.aruco_detector.detectMarkers(debug_img)
+            corners1, ids1, _ = self.aruco_detector.detectMarkers(gray_enhanced)
             
-        if ids is not None and len(ids) > 0:
+        # 2. Flipped detection (to handle physically mirrored printouts of the board)
+        gray_flipped = cv2.flip(gray_enhanced, 1)
+        try:
+            corners2, ids2, _ = cv2.aruco.detectMarkers(gray_flipped, self.aruco_dict, parameters=self.aruco_params)
+        except AttributeError:
+            corners2, ids2, _ = self.aruco_detector.detectMarkers(gray_flipped)
+            
+        corners = []
+        ids_list = []
+        
+        if ids1 is not None and len(ids1) > 0:
+            for i, c in enumerate(corners1):
+                corners.append(c)
+                ids_list.append(ids1[i][0])
+                
+        if ids2 is not None and len(ids2) > 0:
+            w = gray_enhanced.shape[1]
+            for i, c in enumerate(corners2):
+                # Only add if we haven't found this ID already
+                if ids2[i][0] not in ids_list:
+                    c_unf = c.copy()
+                    # Unflip the X coordinates of the corners
+                    c_unf[0, :, 0] = w - 1 - c_unf[0, :, 0]
+                    # Restore correct ArUco corner ordering (top-left, top-right, bottom-right, bottom-left)
+                    c_unf = c_unf[:, [1, 0, 3, 2], :]
+                    corners.append(c_unf)
+                    ids_list.append(ids2[i][0])
+                    
+        if len(ids_list) > 0:
+            ids = np.array([[i] for i in ids_list], dtype=np.int32)
             cv2.aruco.drawDetectedMarkers(debug_img, corners, ids)
+        else:
+            ids = None
             
         if ids is None or len(ids) == 0:
             self.get_logger().warning("No ArUco markers found in EEF image. Cannot calculate homography.")
@@ -273,8 +359,8 @@ class TobiiYoloToGraspRoutine(Node):
                 dst_pts.append([KNOWN_MARKERS[marker_id][0], KNOWN_MARKERS[marker_id][1]])
                 
         if len(src_pts) < 4:
-            self.get_logger().warning(f"Not enough known ArUco markers found ({len(src_pts)}/4).")
-            cv2.putText(debug_img, f"ERR: Only {len(src_pts)}/4 Markers!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            self.get_logger().warning(f"Not enough known ArUco markers found ({len(src_pts)}, need at least 4).")
+            cv2.putText(debug_img, f"ERR: Only {len(src_pts)} Markers (Need 4)!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
             self.last_eef_debug_frame = debug_img
             self.state = 0
             return
@@ -291,24 +377,6 @@ class TobiiYoloToGraspRoutine(Node):
             return
             
         self.get_logger().info("Homography successfully computed based on ArUco markers.")
-        
-        results = self.yolo_model(eef_img, verbose=False)
-        target_box = None
-        
-        for result in results:
-            for box in result.boxes:
-                cls_id = int(box.cls[0])
-                class_name = result.names[cls_id]
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                color = (0, 255, 0) if class_name == self.selected_object_class else (0, 0, 255)
-                cv2.rectangle(debug_img, (x1, y1), (x2, y2), color, 2)
-                cv2.putText(debug_img, class_name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
-                
-                if class_name == self.selected_object_class:
-                    target_box = box.xyxy[0]
-                    break
-            if target_box is not None:
-                break
                 
         if target_box is None:
             self.get_logger().warning(f"Could not find {self.selected_object_class} in EEF image.")
@@ -326,14 +394,26 @@ class TobiiYoloToGraspRoutine(Node):
         
         target_x = float(pt_robot[0][0][0])
         target_y = float(pt_robot[0][0][1])
-        target_z = 200.0  # Hover height
+        target_z = 100.0  # Hover height (Z value constant at 100mm)
         
         self.get_logger().info(f"Object {self.selected_object_class} found! Hovering at X={target_x:.1f}, Y={target_y:.1f}, Z={target_z:.1f}")
         
-        cv2.putText(debug_img, f"Moving to X:{target_x:.1f} Y:{target_y:.1f}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
+        cv2.putText(debug_img, f"Calculated X:{target_x:.1f} Y:{target_y:.1f}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
+        cv2.putText(debug_img, "Moving in 3s...", (20, 90), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 3)
         self.last_eef_debug_frame = debug_img
         
         self.state = 3
+        # Add a delay so the user has more time to process the image and verify the debug view
+        self.get_logger().info("Giving the system 3 seconds to show processed image before moving...")
+        self.move_timer = self.create_timer(3.0, lambda: self.execute_hover_move(target_x, target_y, target_z))
+
+    def execute_hover_move(self, target_x, target_y, target_z):
+        if hasattr(self, 'move_timer') and self.move_timer:
+            self.move_timer.cancel()
+            self.move_timer = None
+            
+        self.state = 4
+        self.get_logger().info("Executing move to object!")
         self.move_to_pose(target_x, target_y, target_z, 3.14, 0.0, 0.0, self.on_hover_reached)
 
     def on_hover_reached(self, future):
