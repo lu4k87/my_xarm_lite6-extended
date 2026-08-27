@@ -941,6 +941,8 @@ stateDiagram-v2
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
+> # Wird automatisch via Nexus Web UI gestartet:
+> # ➔ "RUN DEV SETUP (REAL)" Button
 > ros2 run tobii_glasses_yolo_blink_grasp tobii_glasses_yolo_blink_grasp
 > ```
 >
@@ -948,6 +950,16 @@ stateDiagram-v2
 > - **Dwell-Time Auswahl:** Verbindet sich mit dem Tobii RTSP-Stream. Ein Hintergrundprozess führt YOLOv8 auf dem Live-Stream aus. Fixiert der Nutzer mit dem Gaze-Punkt ein erkanntes Objekt für **2,0 Sekunden** (Dwell-Time), loggt sich das System auf dieses Ziel ein und startet den Greifablauf.
 > - **Präzise Lokalisierung per Homographie:** Nach der Auswahl fährt der Arm in eine zentrale "Show Scene"-Pose. Die Endeffektor-Kamera sucht nach 12 bekannten ArUco-Markern auf dem Tisch, um eine hochpräzise `cv2.findHomography`-Matrix zu berechnen. Anschließend findet sie das ausgewählte Objekt erneut per YOLO und rechnet dessen Pixel-Koordinaten perfekt in den 3D-Referenzrahmen des Roboters um (`cv2.perspectiveTransform`). Der Arm schwebt danach exakt über dem Objekt.
 > - **Visuelles Feedback:** Öffnet ein Live-OpenCV-Fenster, das den Tobii-Stream, die YOLO-Bounding-Boxen, den Gaze-Punkt sowie einen Ladebalken anzeigt, der den 2-Sekunden-Fixationsvorgang visualisiert.
+>
+> > [!CAUTION]
+> > **Kritisches Hardware-Setup: ArUco Marker Grid**
+> > Damit die Homographie-Transformation funktioniert und gefährliche Kollisionen vermieden werden, müssen exakt 12 ArUco-Marker (Größe: 3x3 cm, Dictionary: DICT_4X4_50) dauerhaft flach auf dem Tisch (Z=0) befestigt werden. Die Mitte jedes Markers muss exakt an diesen Koordinaten im Base-Frame des Roboters liegen:
+> > - **ID 0:** X=150mm, Y=150mm  |  **ID 1:** X=150mm, Y=0mm
+> > - **ID 2:** X=150mm, Y=-150mm |  **ID 3:** X=150mm, Y=-250mm
+> > - **ID 4:** X=250mm, Y=200mm  |  **ID 5:** X=400mm, Y=200mm
+> > - **ID 6:** X=425mm, Y=100mm  |  **ID 7:** X=425mm, Y=0mm
+> > - **ID 8:** X=425mm, Y=-100mm |  **ID 9:** X=425mm, Y=-200mm
+> > - **ID 10:** X=350mm, Y=-200mm|  **ID 11:** X=250mm, Y=-200mm
 >
 >
 
