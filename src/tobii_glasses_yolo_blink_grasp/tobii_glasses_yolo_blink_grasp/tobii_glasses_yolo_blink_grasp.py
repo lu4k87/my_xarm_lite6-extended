@@ -26,10 +26,7 @@ class TobiiYoloBlinkGrasp(Node):
         self.yolo_model = YOLO(yolo_path)
         self.move_client = self.create_client(MoveCartesian, '/ui/execute_move_to_pose')
         
-        self.state = 0  # 0: wait for blink, 1: moving to scene, 2: capturing eef & localizing, 3: moving to hover, 4: done/cooldown
-        
-        self.blink_times = []
-        self.last_blink_state = False
+        self.state = 0  # 0: wait for dwell, 1: moving to scene, 2: capturing eef & localizing, 3: moving to hover, 4: done/cooldown
         
         self.selected_object_class = None
         self.tobii_ip = "192.168.75.51"
@@ -37,6 +34,11 @@ class TobiiYoloBlinkGrasp(Node):
         
         self.last_valid_gaze = None
         self.last_valid_frame = None
+        
+        # Dwell time variables
+        self.current_gazed_class = None
+        self.dwell_start_time = None
+        self.DWELL_THRESHOLD = 2.0  # seconds
         
         # Aruco setup for EEF camera
         try:
@@ -49,7 +51,11 @@ class TobiiYoloBlinkGrasp(Node):
             
         self.t = threading.Thread(target=self.tobii_worker, daemon=True)
         self.t.start()
-        self.get_logger().info("Tobii YOLO Blink Grasp Node started. Waiting for 4x blink...")
+        
+        # Timer for decoupled YOLO inference
+        self.gaze_timer = self.create_timer(0.1, self.check_gaze_target)
+        
+        self.get_logger().info("Tobii YOLO Dwell Grasp Node started. Waiting for 2s gaze focus...")
 
     def move_to_pose(self, x, y, z, r, p, yw, callback=None):
         if not self.move_client.wait_for_service(timeout_sec=2.0):
@@ -94,40 +100,34 @@ class TobiiYoloBlinkGrasp(Node):
                         payload = bytes(packet).decode('utf-8')
                         try:
                             data = json.loads(payload)
-                            has_gaze = 'gaze2d' in data
-                            
-                            if has_gaze:
+                            if 'gaze2d' in data:
                                 self.last_valid_gaze = data['gaze2d']
-                                
-                            current_blink_state = not has_gaze
-                            
-                            if current_blink_state and not self.last_blink_state:
-                                current_time = time.time()
-                                self.blink_times = [t for t in self.blink_times if current_time - t < 2.0]
-                                self.blink_times.append(current_time)
-                                
-                                if len(self.blink_times) >= 4 and self.state == 0:
-                                    self.get_logger().info("4x Blink Triggered!")
-                                    self.blink_times = []
-                                    self.process_trigger()
-                                    
-                            self.last_blink_state = current_blink_state
-                            
-                        except Exception as e:
+                            else:
+                                self.last_valid_gaze = None
+                        except Exception:
                             pass
                             
             except Exception as e:
                 self.get_logger().error(f"Tobii connection error: {e}")
                 time.sleep(2)
 
-    def process_trigger(self):
-        if self.last_valid_frame is None or self.last_valid_gaze is None:
-            self.get_logger().warning("No valid frame or gaze to process trigger.")
+    def check_gaze_target(self):
+        if self.state != 0:
             return
             
-        results = self.yolo_model(self.last_valid_frame, verbose=False)
-        g_x = int(self.last_valid_gaze[0] * self.last_valid_frame.shape[1])
-        g_y = int(self.last_valid_gaze[1] * self.last_valid_frame.shape[0])
+        if self.last_valid_frame is None or self.last_valid_gaze is None:
+            if self.current_gazed_class is not None:
+                self.get_logger().info(f"Lost gaze focus (blink/away).")
+            self.current_gazed_class = None
+            self.dwell_start_time = None
+            return
+            
+        # Copy to avoid race conditions with decoding thread
+        frame_copy = self.last_valid_frame.copy()
+        g_x = int(self.last_valid_gaze[0] * frame_copy.shape[1])
+        g_y = int(self.last_valid_gaze[1] * frame_copy.shape[0])
+        
+        results = self.yolo_model(frame_copy, verbose=False)
         
         target_class = None
         for result in results:
@@ -140,15 +140,29 @@ class TobiiYoloBlinkGrasp(Node):
             if target_class:
                 break
                 
-        if not target_class:
-            self.get_logger().warning(f"Looked at nothing recognizable at {g_x},{g_y}.")
-            return
-            
-        self.get_logger().info(f"Target selected via Tobii: {target_class}")
-        self.selected_object_class = target_class
-        self.state = 1
-        
-        self.move_to_pose(300.0, 0.0, 400.0, 3.14, 0.0, 0.0, self.on_show_scene_reached)
+        if target_class:
+            if target_class == self.current_gazed_class:
+                if self.dwell_start_time is None:
+                    self.dwell_start_time = time.time()
+                else:
+                    elapsed = time.time() - self.dwell_start_time
+                    if elapsed >= self.DWELL_THRESHOLD:
+                        self.get_logger().info(f"!!! Dwell time ({self.DWELL_THRESHOLD}s) reached for {target_class} !!! Triggering Grasp Sequence.")
+                        self.selected_object_class = target_class
+                        self.state = 1
+                        self.dwell_start_time = None
+                        self.current_gazed_class = None
+                        
+                        self.move_to_pose(300.0, 0.0, 400.0, 3.14, 0.0, 0.0, self.on_show_scene_reached)
+            else:
+                self.current_gazed_class = target_class
+                self.dwell_start_time = time.time()
+                self.get_logger().info(f"Started focusing on: {target_class}")
+        else:
+            if self.current_gazed_class is not None:
+                self.get_logger().info(f"Lost focus on {self.current_gazed_class}")
+            self.current_gazed_class = None
+            self.dwell_start_time = None
 
     def on_show_scene_reached(self, future):
         res = future.result()
@@ -158,7 +172,6 @@ class TobiiYoloBlinkGrasp(Node):
             return
             
         self.get_logger().info("Reached Show Scene. Capturing EEF image for localization...")
-        # Short wait to let camera stabilize
         time.sleep(1.0)
         self.state = 2
         
@@ -193,7 +206,6 @@ class TobiiYoloBlinkGrasp(Node):
             11: (250.0, -200.0)
         }
         
-        # 1. Detect ArUco
         try:
             corners, ids, _ = cv2.aruco.detectMarkers(eef_img, self.aruco_dict, parameters=self.aruco_params)
         except AttributeError:
@@ -232,7 +244,6 @@ class TobiiYoloBlinkGrasp(Node):
             
         self.get_logger().info("Homography successfully computed based on ArUco markers.")
         
-        # 2. Run YOLO to find target
         results = self.yolo_model(eef_img, verbose=False)
         target_box = None
         
@@ -251,7 +262,6 @@ class TobiiYoloBlinkGrasp(Node):
             self.state = 0
             return
             
-        # 3. Calculate target coordinates using Homography
         x1, y1, x2, y2 = target_box
         obj_cx = float((x1 + x2) / 2.0)
         obj_cy = float((y1 + y2) / 2.0)
@@ -275,7 +285,6 @@ class TobiiYoloBlinkGrasp(Node):
         else:
             self.get_logger().error(f"Hover move failed: {res.message}")
             
-        # Reset state
         self.state = 0
 
 def main(args=None):
