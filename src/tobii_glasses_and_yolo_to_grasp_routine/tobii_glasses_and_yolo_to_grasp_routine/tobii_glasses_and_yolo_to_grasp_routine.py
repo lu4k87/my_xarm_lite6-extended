@@ -43,6 +43,7 @@ class TobiiYoloToGraspRoutine(Node):
         
         self.last_valid_gaze = None
         self.last_valid_frame = None
+        self.last_eef_debug_frame = None
         
         # Dwell time variables
         self.current_gazed_class = None
@@ -190,6 +191,8 @@ class TobiiYoloToGraspRoutine(Node):
             cv2.putText(frame_copy, f"ROBOT ACTIVE: {self.selected_object_class}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 3)
 
         cv2.imshow("Tobii Gaze Grasp Stream", frame_copy)
+        if self.last_eef_debug_frame is not None:
+            cv2.imshow("EEF Debug View", self.last_eef_debug_frame)
         cv2.waitKey(1)
 
     def on_show_scene_reached(self, future):
@@ -234,13 +237,20 @@ class TobiiYoloToGraspRoutine(Node):
             11: (250.0, -200.0)
         }
         
+        debug_img = eef_img.copy()
+        
         try:
-            corners, ids, _ = cv2.aruco.detectMarkers(eef_img, self.aruco_dict, parameters=self.aruco_params)
+            corners, ids, _ = cv2.aruco.detectMarkers(debug_img, self.aruco_dict, parameters=self.aruco_params)
         except AttributeError:
-            corners, ids, _ = self.aruco_detector.detectMarkers(eef_img)
+            corners, ids, _ = self.aruco_detector.detectMarkers(debug_img)
+            
+        if ids is not None and len(ids) > 0:
+            cv2.aruco.drawDetectedMarkers(debug_img, corners, ids)
             
         if ids is None or len(ids) == 0:
             self.get_logger().warning("No ArUco markers found in EEF image. Cannot calculate homography.")
+            cv2.putText(debug_img, "ERR: No ArUco Markers!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            self.last_eef_debug_frame = debug_img
             self.state = 0
             return
             
@@ -258,6 +268,8 @@ class TobiiYoloToGraspRoutine(Node):
                 
         if len(src_pts) < 4:
             self.get_logger().warning(f"Not enough known ArUco markers found ({len(src_pts)}/4).")
+            cv2.putText(debug_img, f"ERR: Only {len(src_pts)}/4 Markers!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            self.last_eef_debug_frame = debug_img
             self.state = 0
             return
             
@@ -267,6 +279,8 @@ class TobiiYoloToGraspRoutine(Node):
         H, _ = cv2.findHomography(src_pts, dst_pts)
         if H is None:
             self.get_logger().error("Failed to compute homography matrix.")
+            cv2.putText(debug_img, "ERR: Homography Failed!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            self.last_eef_debug_frame = debug_img
             self.state = 0
             return
             
@@ -279,6 +293,11 @@ class TobiiYoloToGraspRoutine(Node):
             for box in result.boxes:
                 cls_id = int(box.cls[0])
                 class_name = result.names[cls_id]
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                color = (0, 255, 0) if class_name == self.selected_object_class else (0, 0, 255)
+                cv2.rectangle(debug_img, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(debug_img, class_name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                
                 if class_name == self.selected_object_class:
                     target_box = box.xyxy[0]
                     break
@@ -287,6 +306,8 @@ class TobiiYoloToGraspRoutine(Node):
                 
         if target_box is None:
             self.get_logger().warning(f"Could not find {self.selected_object_class} in EEF image.")
+            cv2.putText(debug_img, f"ERR: {self.selected_object_class} not found!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            self.last_eef_debug_frame = debug_img
             self.state = 0
             return
             
@@ -302,6 +323,9 @@ class TobiiYoloToGraspRoutine(Node):
         target_z = 200.0  # Hover height
         
         self.get_logger().info(f"Object {self.selected_object_class} found! Hovering at X={target_x:.1f}, Y={target_y:.1f}, Z={target_z:.1f}")
+        
+        cv2.putText(debug_img, f"Moving to X:{target_x:.1f} Y:{target_y:.1f}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
+        self.last_eef_debug_frame = debug_img
         
         self.state = 3
         self.move_to_pose(target_x, target_y, target_z, 3.14, 0.0, 0.0, self.on_hover_reached)
