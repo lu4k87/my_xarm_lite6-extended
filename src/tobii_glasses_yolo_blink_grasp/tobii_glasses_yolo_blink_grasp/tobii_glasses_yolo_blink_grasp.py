@@ -11,6 +11,7 @@ import time
 import threading
 import urllib.request
 import os
+import pygame
 
 from ultralytics import YOLO
 
@@ -24,6 +25,14 @@ class TobiiYoloBlinkGrasp(Node):
             return
             
         self.yolo_model = YOLO(yolo_path)
+        
+        try:
+            pygame.mixer.init()
+            self.click_sound = pygame.mixer.Sound(os.path.expanduser('~/dev_ws/src/gaze_control/gaze_control/ui_mouse_click.mp3'))
+        except Exception as e:
+            self.get_logger().error(f"Could not load click sound: {e}")
+            self.click_sound = None
+            
         self.move_client = self.create_client(MoveCartesian, '/ui/execute_move_to_pose')
         
         self.state = 0  # 0: wait for dwell, 1: moving to scene, 2: capturing eef & localizing, 3: moving to hover, 4: done/cooldown
@@ -112,57 +121,76 @@ class TobiiYoloBlinkGrasp(Node):
                 time.sleep(2)
 
     def check_gaze_target(self):
-        if self.state != 0:
+        if self.last_valid_frame is None:
             return
             
-        if self.last_valid_frame is None or self.last_valid_gaze is None:
-            if self.current_gazed_class is not None:
-                self.get_logger().info(f"Lost gaze focus (blink/away).")
-            self.current_gazed_class = None
-            self.dwell_start_time = None
-            return
-            
-        # Copy to avoid race conditions with decoding thread
         frame_copy = self.last_valid_frame.copy()
-        g_x = int(self.last_valid_gaze[0] * frame_copy.shape[1])
-        g_y = int(self.last_valid_gaze[1] * frame_copy.shape[0])
         
+        has_gaze = self.last_valid_gaze is not None
+        g_x = 0
+        g_y = 0
+        if has_gaze:
+            g_x = int(self.last_valid_gaze[0] * frame_copy.shape[1])
+            g_y = int(self.last_valid_gaze[1] * frame_copy.shape[0])
+            cv2.circle(frame_copy, (g_x, g_y), 15, (0, 0, 255), -1)
+            cv2.circle(frame_copy, (g_x, g_y), 5, (255, 255, 255), -1)
+            
         results = self.yolo_model(frame_copy, verbose=False)
         
         target_class = None
         for result in results:
             for box in result.boxes:
-                x1, y1, x2, y2 = box.xyxy[0]
-                if x1 <= g_x <= x2 and y1 <= g_y <= y2:
-                    cls_id = int(box.cls[0])
-                    target_class = result.names[cls_id]
-                    break
-            if target_class:
-                break
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                cls_id = int(box.cls[0])
+                conf = float(box.conf[0])
+                class_name = result.names[cls_id]
                 
-        if target_class:
-            if target_class == self.current_gazed_class:
-                if self.dwell_start_time is None:
-                    self.dwell_start_time = time.time()
-                else:
-                    elapsed = time.time() - self.dwell_start_time
-                    if elapsed >= self.DWELL_THRESHOLD:
-                        self.get_logger().info(f"!!! Dwell time ({self.DWELL_THRESHOLD}s) reached for {target_class} !!! Triggering Grasp Sequence.")
-                        self.selected_object_class = target_class
-                        self.state = 1
-                        self.dwell_start_time = None
-                        self.current_gazed_class = None
+                cv2.rectangle(frame_copy, (x1, y1), (x2, y2), (255, 100, 100), 2)
+                cv2.putText(frame_copy, f"{class_name} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                
+                if self.state == 0 and has_gaze and target_class is None:
+                    if x1 <= g_x <= x2 and y1 <= g_y <= y2:
+                        target_class = class_name
                         
-                        self.move_to_pose(300.0, 0.0, 400.0, 3.14, 0.0, 0.0, self.on_show_scene_reached)
+        if self.state == 0:
+            if target_class:
+                if target_class == self.current_gazed_class:
+                    if self.dwell_start_time is None:
+                        self.dwell_start_time = time.time()
+                    else:
+                        elapsed = time.time() - self.dwell_start_time
+                        
+                        bar_w = 200
+                        bar_fill = int((elapsed / self.DWELL_THRESHOLD) * bar_w)
+                        bar_fill = min(bar_w, bar_fill)
+                        cv2.rectangle(frame_copy, (50, 50), (50 + bar_w, 80), (100, 100, 100), -1)
+                        cv2.rectangle(frame_copy, (50, 50), (50 + bar_fill, 80), (0, 255, 0), -1)
+                        cv2.putText(frame_copy, f"Locking {target_class}...", (50, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                        
+                        if elapsed >= self.DWELL_THRESHOLD:
+                            if self.click_sound:
+                                self.click_sound.play()
+                            self.get_logger().info(f"!!! Dwell time ({self.DWELL_THRESHOLD}s) reached for {target_class} !!! Triggering Grasp Sequence.")
+                            self.selected_object_class = target_class
+                            self.state = 1
+                            self.dwell_start_time = None
+                            self.current_gazed_class = None
+                            
+                            self.move_to_pose(300.0, 0.0, 400.0, 3.14, 0.0, 0.0, self.on_show_scene_reached)
+                else:
+                    self.current_gazed_class = target_class
+                    self.dwell_start_time = time.time()
+                    self.get_logger().info(f"Started focusing on: {target_class}")
             else:
-                self.current_gazed_class = target_class
-                self.dwell_start_time = time.time()
-                self.get_logger().info(f"Started focusing on: {target_class}")
+                if self.current_gazed_class is not None:
+                    self.get_logger().info(f"Lost focus on {self.current_gazed_class}")
+                self.current_gazed_class = None
+                self.dwell_start_time = None
         else:
-            if self.current_gazed_class is not None:
-                self.get_logger().info(f"Lost focus on {self.current_gazed_class}")
-            self.current_gazed_class = None
-            self.dwell_start_time = None
+            cv2.putText(frame_copy, f"ROBOT ACTIVE: {self.selected_object_class}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 3)
+
+        cv2.imshow("Tobii Gaze Grasp Stream", frame_copy)
+        cv2.waitKey(1)
 
     def on_show_scene_reached(self, future):
         res = future.result()
