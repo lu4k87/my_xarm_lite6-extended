@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>tobii_glasses_and_yolo_to_grasp_routine</name>
+  <name>gaze_grasp_routine_tobii_glasses</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="mk@lab.local">mk</maintainer>

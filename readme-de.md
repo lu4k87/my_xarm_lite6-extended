@@ -883,15 +883,15 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses...` &nbsp;&nbsp; <sub><i>[`/src/gaze_control/...`](./src/gaze_control/gaze_control)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `gaze_control_ui_tobii_glasses` &nbsp;&nbsp; <sub><i>[`/src/gaze_control_ui_tobii_glasses/...`](./src/gaze_control_ui_tobii_glasses/gaze_control_ui_tobii_glasses)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > # Legacy (Raspberry Pi Camera):
-> ros2 run gaze_control gaze_ui_node_tobii_glasses.py
+> ros2 run gaze_control_ui_tobii_glasses gaze_ui
 > 
 > # ZED Mini Camera:
-> ros2 run gaze_control gaze_ui_node_tobii_glasses_zedm.py
+> ros2 run gaze_control_ui_tobii_glasses gaze_ui_zedm
 > ```
 >
 > **Zweck & Aufgabe:** Eine übergeordnete Master-Control-UI (PyQt5). Setzt Eye-Tracking-Blickpunkte (über RTSP Gaze-Daten) in Button-Klicks um (z.B. bei 1 Sek. Fixationsdauer) und sendet direkte Bewegungs- und Greiferbefehle. Es existieren zwei Varianten des Skripts für unterschiedliche Kamera-Setups:
@@ -903,7 +903,7 @@ stateDiagram-v2
 > - **Homographie-Mapping:** Erkennt 4 ArUco-Marker in den Bildschirmecken über die Szenenkamera der Brille. Nutzt `cv2.findHomography`, um den 3D-Blickvektor (`gaze2d`) aus dem RTSP-Stream passgenau auf den 2D-Bildschirm in echte Pixelkoordinaten zu projizieren.
 > - **Subpixel-Genauigkeit:** Wendet `cv2.cornerSubPix` bei der Marker-Erkennung an, um Kamerazittern drastisch zu reduzieren und die Berechnung der Homographie-Matrix zu stabilisieren.
 > - **Soft-Landing Bremszone (Z-Achse):** Implementiert eine dedizierte Sicherheitslogik für Abwärtsbewegungen. Ab `Z = 40.0 mm` greift eine quadratische Bremskurve, und bei `Z = 33.0 mm` wird ein harter Not-Stopp ("Hard Stop") ausgelöst, um Tischkollisionen sicher zu verhindern.
-> - **Robustes Eye-Tracking:** Beinhaltet eine **Hitbox-Architektur**: Die visuellen Buttons bleiben unverändert, sind jedoch mit unsichtbaren "Hitbox-Rahmen" hinterlegt, die die Gaze-Toleranz extrem vergrößern. Die Blickpunkte werden zudem durch einen Alpha-Glättungsalgorithmus (Alpha = 0,20) gefiltert, um einen stabilen Cursor zu gewährleisten. Erfolgreiche Gaze-Klicks werden durch präzises **akustisches Feedback** (`ui_mouse_click.mp3` via Pygame) und pulsierende Button-Animationen bestätigt.
+> - **Robustes Eye-Tracking:** Beinhaltet eine **Hitbox-Architektur**: Die visuellen Buttons bleiben unverändert, sind jedoch mit unsiktbaren "Hitbox-Rahmen" hinterlegt, die die Gaze-Toleranz extrem vergrößern. Die Blickpunkte werden zudem durch einen Alpha-Glättungsalgorithmus (Alpha = 0,20) gefiltert, um einen stabilen Cursor zu gewährleisten. Erfolgreiche Gaze-Klicks werden durch präzises **akustisches Feedback** (`ui_mouse_click.mp3` via Pygame) und pulsierende Button-Animationen bestätigt.
 > - **Steuerung:** Beinhaltet Richtungssteuerungen (Vor, Zurück, Links, Rechts, Hoch, Runter, Drehen), Greifer-Befehle und einen dedizierten **HOME ⌂** Button für das Anfahren der Initialpose.
 >
 >
@@ -930,20 +930,19 @@ stateDiagram-v2
 >> | **`/ui/execute_initial_pose`** | Client | *Fährt den Roboter in die Home-Pose.* |
 >
 >
-
-
+>
 
 ---
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `tobii_glasses_and_yolo_to_grasp_routine.py` &nbsp;&nbsp; <sub><i>[`/src/tobii_glasses_and_yolo_to_grasp_routine`](./src/tobii_glasses_and_yolo_to_grasp_routine)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `gaze_grasp_routine_tobii_glasses` &nbsp;&nbsp; <sub><i>[`/src/gaze_grasp_routine_tobii_glasses`](./src/gaze_grasp_routine_tobii_glasses)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > # Wird automatisch via Nexus Web UI gestartet:
 > # ➔ "RUN DEV SETUP (REAL)" Button
-> ros2 run tobii_glasses_and_yolo_to_grasp_routine tobii_glasses_and_yolo_to_grasp_routine
+> ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses
 > ```
 >
 > **Zweck & Aufgabe:** Ermöglicht "telepathische", freihändige Objektauswahl und Greifvorgänge via Tobii Glasses 3.
@@ -2033,7 +2032,8 @@ dev_ws/
 │ ├── collision_check/                                                     # 🛡️ Python: Prädiktiver Kollisionsschutz
 │ │ └── collision_check/checker.py
 │ ├── robot_motion_handler_movegroup/                                      # 🤖 Python: Setzt Fake-Arm Startpose
-│ ├── gaze_control/                                                        # 👁️ Python: PyQt5 Gaze-Control-UI
+│ ├── gaze_control_ui_tobii_glasses/                                       # 👁️ Python: PyQt5 Gaze-Control-UI
+│ ├── gaze_grasp_routine_tobii_glasses/                                    # 👁️ Python: Eye-Tracking & YOLO Greif-Routine
 │ ├── motion_sequence/                                                     # 🦾 Python: Kartesische Bewegungs-State-Machine
 │ │ └── motion_sequence/motion_sequence.py
 │ ├── my_3d_vision_bringup/                                                # 🌟 [VISION SYSTEM] Kamera Bringup, TF, 3D BBox & Perception

@@ -815,14 +815,6 @@ stateDiagram-v2
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
->> | **`/ui/voice_listen_trigger`** | `std_msgs/String` | *Subscribes to the trigger to start/stop listening for voice commands.* |
->
->
-> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
->
->> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
 >> | **`/ui/voice_feedback`** | `std_msgs/String` | *Directly triggers UI actions based on voice commands.* |
 >> | **`/ui/voice_status`** | `std_msgs/String` | *Publishes the current listening status to the UI.* |
 >
@@ -841,15 +833,15 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses...` &nbsp;&nbsp; <sub><i>[`/src/gaze_control/...`](./src/gaze_control/gaze_control)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `gaze_control_ui_tobii_glasses` &nbsp;&nbsp; <sub><i>[`/src/gaze_control_ui_tobii_glasses/...`](./src/gaze_control_ui_tobii_glasses/gaze_control_ui_tobii_glasses)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > # Legacy (Raspberry Pi Camera):
-> ros2 run gaze_control gaze_ui_node_tobii_glasses.py
+> ros2 run gaze_control_ui_tobii_glasses gaze_ui
 > 
 > # ZED Mini Camera:
-> ros2 run gaze_control gaze_ui_node_tobii_glasses_zedm.py
+> ros2 run gaze_control_ui_tobii_glasses gaze_ui_zedm
 > ```
 >
 > **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 1 sec fixation time) and sends direct movement and gripper commands. Two variants of the script exist for different camera setups:
@@ -888,18 +880,19 @@ stateDiagram-v2
 >> | **`/ui/execute_initial_pose`** | Client | *Triggers the robot to move to its home pose.* |
 >
 >
+>
 
 ---
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `tobii_glasses_and_yolo_to_grasp_routine.py` &nbsp;&nbsp; <sub><i>[`/src/tobii_glasses_and_yolo_to_grasp_routine`](./src/tobii_glasses_and_yolo_to_grasp_routine)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `gaze_grasp_routine_tobii_glasses` &nbsp;&nbsp; <sub><i>[`/src/gaze_grasp_routine_tobii_glasses`](./src/gaze_grasp_routine_tobii_glasses)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > # Automatically launched via Nexus Web UI:
 > # ➔ "RUN DEV SETUP (REAL)" Button
-> ros2 run tobii_glasses_and_yolo_to_grasp_routine tobii_glasses_and_yolo_to_grasp_routine
+> ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses
 > ```
 >
 > **Purpose & Task:** Enables "telepathic" hands-free object selection and grasping via Tobii Glasses 3. 
@@ -2007,7 +2000,8 @@ dev_ws/
 │ ├── collision_check/                                                     # 🛡️ Python: Predictive collision guard
 │ │ └── collision_check/checker.py
 │ ├── robot_motion_handler_movegroup/                                      # 🤖 Python: Sets Fake-Arm initial pose
-│ ├── gaze_control/                                                        # 👁️ Python: PyQt5 gaze control UI
+│ ├── gaze_control_ui_tobii_glasses/                                       # 👁️ Python: PyQt5 gaze control UI
+│ ├── gaze_grasp_routine_tobii_glasses/                                    # 👁️ Python: Eye-tracking & YOLO grasp routine
 │ ├── motion_sequence/                                                     # 🦾 Python: Cartesian motion state machine
 │ │ └── motion_sequence/motion_sequence.py
 │ ├── my_3d_vision_bringup/                                                # 🌟 [VISION SYSTEM] Camera Bringup, TF, 3D BBox & Perception

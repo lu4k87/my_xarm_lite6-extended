@@ -17,7 +17,7 @@ from ultralytics import YOLO
 
 class TobiiYoloToGraspRoutine(Node):
     def __init__(self):
-        super().__init__('tobii_glasses_and_yolo_to_grasp_routine')
+        super().__init__('gaze_grasp_routine_tobii_glasses')
         
         yolo_path = os.path.expanduser('~/dev_ws/my_yolo_model.pt')
         if not os.path.exists(yolo_path):
@@ -28,7 +28,7 @@ class TobiiYoloToGraspRoutine(Node):
         
         try:
             pygame.mixer.init()
-            self.click_sound = pygame.mixer.Sound(os.path.expanduser('~/dev_ws/src/gaze_control/gaze_control/ui_mouse_click.mp3'))
+            self.click_sound = pygame.mixer.Sound(os.path.expanduser('~/dev_ws/src/gaze_control_ui_tobii_glasses/gaze_control_ui_tobii_glasses/ui_mouse_click.mp3'))
         except Exception as e:
             self.get_logger().error(f"Could not load click sound: {e}")
             self.click_sound = None

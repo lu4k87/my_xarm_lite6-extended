@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'tobii_glasses_and_yolo_to_grasp_routine'
+package_name = 'gaze_control_ui_tobii_glasses'
 
 setup(
     name=package_name,
@@ -14,13 +14,20 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='mk',
-    maintainer_email='mk@lab.local',
+    maintainer_email='lu4k87@live.de',
     description='TODO: Package description',
     license='TODO: License declaration',
-    tests_require=['pytest'],
+    extras_require={
+        'test': [
+            'pytest',
+        ],
+    },
     entry_points={
         'console_scripts': [
-            'tobii_glasses_and_yolo_to_grasp_routine = tobii_glasses_and_yolo_to_grasp_routine.tobii_glasses_and_yolo_to_grasp_routine:main'
+            'gaze_ui = gaze_control_ui_tobii_glasses.gaze_ui_node_tobii_glasses:main',
+            'gaze_ui_zedm = gaze_control_ui_tobii_glasses.gaze_ui_node_tobii_glasses_zedm:main',
+            'gaze_ui_tobii = gaze_control_ui_tobii_glasses.gaze_ui_node_tobii_4c:main',
+            'tobii_publisher = gaze_control_ui_tobii_glasses.tobii_4c_publisher_node:main',
         ],
     },
 )

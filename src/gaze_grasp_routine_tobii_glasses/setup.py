@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'gaze_control'
+package_name = 'gaze_grasp_routine_tobii_glasses'
 
 setup(
     name=package_name,
@@ -14,20 +14,13 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='mk',
-    maintainer_email='lu4k87@live.de',
+    maintainer_email='mk@lab.local',
     description='TODO: Package description',
     license='TODO: License declaration',
-    extras_require={
-        'test': [
-            'pytest',
-        ],
-    },
+    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'gaze_ui = gaze_control.gaze_ui_node_tobii_glasses:main',
-            'gaze_ui_zedm = gaze_control.gaze_ui_node_tobii_glasses_zedm:main',
-            'gaze_ui_tobii = gaze_control.gaze_ui_node_tobii_4c:main',
-            'tobii_publisher = gaze_control.tobii_4c_publisher_node:main',
+            'gaze_grasp_routine_tobii_glasses = gaze_grasp_routine_tobii_glasses.gaze_grasp_routine_tobii_glasses:main'
         ],
     },
 )
