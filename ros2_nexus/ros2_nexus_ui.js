@@ -311,7 +311,31 @@
           const topUl = topUls[0];
           topUl.style.listStyle = 'none';
           topUl.style.padding = '0';
-          topUl.style.margin = '0';
+          topUl.style.margin = '0 auto';
+          topUl.style.width = '70%';
+          
+          const selectAllDiv = document.createElement('div');
+          selectAllDiv.style.cssText = 'display:flex; justify-content:flex-end; align-items:center; margin:0 auto -5px auto; padding-right:5px; width:70%;';
+          const selectAllLabel = document.createElement('label');
+          selectAllLabel.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:12px; color:var(--mut); cursor:pointer; font-weight:bold; letter-spacing:1px; text-transform:uppercase;';
+          const selectAllCb = document.createElement('input');
+          selectAllCb.type = 'checkbox';
+          selectAllCb.checked = true;
+          selectAllCb.style.cssText = 'accent-color:#00FF66; cursor:pointer; width:16px; height:16px; filter: drop-shadow(0 0 4px rgba(0,255,102,0.4));';
+          selectAllCb.onchange = (e) => {
+              const isChecked = e.target.checked;
+              const mainCbs = topUl.querySelectorAll('.main-action-cb');
+              mainCbs.forEach(cb => {
+                  if (cb.checked !== isChecked) {
+                      cb.checked = isChecked;
+                      cb.dispatchEvent(new Event('change'));
+                  }
+              });
+          };
+          selectAllLabel.appendChild(selectAllCb);
+          selectAllLabel.appendChild(document.createTextNode('Select All'));
+          selectAllDiv.appendChild(selectAllLabel);
+          contentClone.insertBefore(selectAllDiv, topUl);
           
           const topLis = Array.from(topUl.children).filter(n => n.tagName === 'LI');
           const matchedCmds = new Set();
@@ -358,12 +382,18 @@
               
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
+              mainCb.className = 'main-action-cb';
               mainCb.checked = true;
               mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); margin-top: 2px;';
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
                   if (action) action.active = e.target.checked;
                   li.style.opacity = e.target.checked ? '1' : '0.4';
+                  
+                  const allCbs = Array.from(topUl.querySelectorAll('.main-action-cb'));
+                  if (allCbs.length > 0) {
+                      selectAllCb.checked = allCbs.every(c => c.checked);
+                  }
               };
               
               li.style.cursor = 'pointer';
