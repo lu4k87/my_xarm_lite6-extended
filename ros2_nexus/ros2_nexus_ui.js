@@ -505,3 +505,31 @@
     window.showToast = showToast;
     window.toggleConsole = toggleConsole;
     window.checkStatus = checkStatus;
+
+    // ─── CLICK SOUND ──────────────────────────────────────────────────────────────
+    const uiClickSound = new Audio('ui_mouse_click.mp3');
+
+    document.addEventListener('click', function(e) {
+      const isClickable = e.target.closest('button') || 
+                          e.target.closest('.action-card') || 
+                          e.target.closest('.tab-btn') || 
+                          e.target.closest('.footer-btn') || 
+                          e.target.closest('a') || 
+                          e.target.closest('#console-toggle-icon') ||
+                          e.target.closest('div[onclick]') ||
+                          e.target.closest('label'); // for checkbox labels if they are clicked
+      
+      // Checkboxes have their own change listener, but if we clicked a label or other clickable
+      if (isClickable && e.target.type !== 'checkbox') {
+        uiClickSound.currentTime = 0;
+        uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
+      }
+    });
+
+    document.addEventListener('change', function(e) {
+      if (e.target.type === 'checkbox' || e.target.type === 'radio') {
+        uiClickSound.currentTime = 0;
+        uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
+      }
+    });
+
