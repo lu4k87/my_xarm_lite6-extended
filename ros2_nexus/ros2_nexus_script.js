@@ -462,8 +462,13 @@
           const safeLbl = a.label.replace(/"/g, '&quot;');
           
           let tooltipHtml = '';
-          if (CMD_DETAILS[a.cmd]) {
-             tooltipHtml = CMD_DETAILS[a.cmd];
+          const aCmdBase = a.cmd.split(' &')[0].trim();
+          let matchedKey = Object.keys(CMD_DETAILS)
+                              .sort((k1, k2) => k2.length - k1.length)
+                              .find(k => a.cmd.includes(k) || k.includes(aCmdBase));
+          
+          if (matchedKey) {
+             tooltipHtml = CMD_DETAILS[matchedKey];
           } else if (a.cmd.startsWith('ros2 launch')) {
              const parts = a.cmd.split(' ');
              const pkg = parts[2] || '';
