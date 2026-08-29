@@ -278,7 +278,7 @@
            argsDiv.style.flexWrap = 'wrap';
            argsDiv.style.gap = '8px';
            argsDiv.style.flex = '1';
-           argsDiv.style.justifyContent = 'center';
+           argsDiv.style.justifyContent = 'flex-end';
            argsDiv.style.padding = '0 15px';
            
            if (action && action.args.length > 0) {
@@ -317,7 +317,7 @@
           const matchedCmds = new Set();
           topLis.forEach(li => {
               const clone = li.cloneNode(true);
-              Array.from(clone.children).forEach(c => { if (c.tagName === 'UL') c.remove(); });
+              Array.from(clone.children).forEach(c => { if (c.tagName === 'UL' || c.classList.contains('badge')) c.remove(); });
               const text = clone.textContent.replace(/\(.*?\)/g, '').trim();
               if (!text) return;
               
@@ -334,6 +334,7 @@
               if (action) {
                   matchedCmds.add(action.cmd);
                   parseArgs(action);
+                  action.active = true;
               }
               
               // Build Flex Header
@@ -363,6 +364,13 @@
               mainCb.onchange = (e) => {
                   if (action) action.active = e.target.checked;
                   li.style.opacity = e.target.checked ? '1' : '0.4';
+              };
+              
+              li.style.cursor = 'pointer';
+              li.onclick = (e) => {
+                  if (e.target === mainCb || e.target.closest('label') || e.target.closest('a')) return;
+                  mainCb.checked = !mainCb.checked;
+                  mainCb.dispatchEvent(new Event('change'));
               };
               
               headerDiv.appendChild(textDiv);
@@ -420,7 +428,7 @@
        
        const modalHtml = `
           <div id="launch-modal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); animation: fadeIn 0.3s ease;">
-             <div style="background: linear-gradient(145deg, rgba(20,25,35,0.95), rgba(10,15,25,0.98)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:24px; width:85vw; max-width: 1000px; height:85vh; max-height: 800px; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
+             <div style="background: linear-gradient(145deg, rgba(20,25,35,0.95), rgba(10,15,25,0.98)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:24px; width:90vw; max-width: 90vw; height:90vh; max-height: 90vh; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
                 
                 <div style="padding:25px 35px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border-radius: 24px 24px 0 0;">
                    <h2 style="margin:0; font-size:26px; font-weight:800; color:#fff; text-shadow:0 0 15px rgba(0,255,102,0.3); display:flex; align-items:center; gap:12px;">

@@ -336,7 +336,7 @@
       box-shadow: 0 16px 40px rgba(0,0,0,0.8);
       z-index: 10000;
       width: max-content;
-      max-width: 450px;
+      max-width: 900px;
       transition: all 0.2s;
       pointer-events: none;
       text-align: left;
@@ -632,7 +632,8 @@
       letter-spacing: 1px;
       border: 1px solid transparent;
       flex-shrink: 0;
-      display: flex;
+      display: inline-flex;
+      vertical-align: middle;
       align-items: center;
       gap: 5px;
       font-family: 'Outfit', sans-serif;
