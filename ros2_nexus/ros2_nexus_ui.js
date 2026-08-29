@@ -202,7 +202,23 @@
               }
            }
            if (fileIndex === -1 && tokens[0] === 'ros2' && tokens[1] === 'run') fileIndex = 3;
-           if (fileIndex === -1 && tokens[0] === 'ros2' && tokens[1] === 'topic' && tokens[2] === 'pub') fileIndex = 4;
+           if (fileIndex === -1 && tokens[0] === 'ros2' && tokens[1] === 'topic' && tokens[2] === 'pub') {
+                // For 'ros2 topic pub', scan past optional flags to find topic-name and msg-type
+                // Structure: ros2 topic pub [flags] <topic> <msg_type> [<msg_yaml>]
+                // We want: baseCmd = everything up to and including msg_type
+                // So only the message payload (and nothing else) becomes a checkbox
+                let idx = 3;
+                // skip optional flags like --rate <n>, --once, --keep-alive <s>, etc.
+                while (idx < tokens.length && tokens[idx].startsWith('-')) {
+                    idx++; // skip the flag name
+                    if (idx < tokens.length && !tokens[idx].startsWith('-') && !tokens[idx].startsWith('/')) {
+                        idx++; // skip the flag value
+                    }
+                }
+                // idx now points to <topic>, skip topic and msg_type
+                idx += 2; // past <topic> and <msg_type>
+                fileIndex = idx - 1; // fileIndex is last mandatory token (msg_type)
+            }
            
            if (fileIndex !== -1 && fileIndex < tokens.length - 1) {
                let baseTokens = tokens.slice(0, fileIndex + 1);
