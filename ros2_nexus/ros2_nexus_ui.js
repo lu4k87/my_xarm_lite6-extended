@@ -314,22 +314,27 @@
           topUl.style.margin = '0';
           
           const topLis = Array.from(topUl.children).filter(n => n.tagName === 'LI');
+          const matchedCmds = new Set();
           topLis.forEach(li => {
               const clone = li.cloneNode(true);
               Array.from(clone.children).forEach(c => { if (c.tagName === 'UL') c.remove(); });
               const text = clone.textContent.replace(/\(.*?\)/g, '').trim();
               if (!text) return;
               
-              // Find matching action
               const action = actionsData.find(a => {
-                  if (a.cmd.includes(text)) return true;
-                  const baseTerm = text.replace('.py', '').replace('.cpp', '').replace('.xml', '');
-                  if (a.cmd.includes(baseTerm)) return true;
-                  if (a.cmd.includes(baseTerm.replace('_node', ''))) return true;
+                  if (matchedCmds.has(a.cmd)) return false;
+                  const cmdTokens = a.cmd.split(/\s+/);
+                  if (cmdTokens.some(t => t === text || t.endsWith('/' + text))) return true;
+                  const baseTerm = text.replace(/\.(py|cpp|xml)$/, '');
+                  if (cmdTokens.some(t => t === baseTerm || t === baseTerm + '.py' || t === baseTerm + '.cpp' || t === baseTerm + '.xml')) return true;
+                  if (cmdTokens.some(t => t.replace(/_node$/, '') === baseTerm)) return true;
                   return false;
               });
               
-              if (action) parseArgs(action);
+              if (action) {
+                  matchedCmds.add(action.cmd);
+                  parseArgs(action);
+              }
               
               // Build Flex Header
               const headerDiv = document.createElement('div');
