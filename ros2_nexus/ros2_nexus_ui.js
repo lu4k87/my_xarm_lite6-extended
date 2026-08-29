@@ -428,9 +428,9 @@
        
        const modalHtml = `
           <div id="launch-modal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); animation: fadeIn 0.3s ease;">
-             <div style="background: linear-gradient(145deg, rgba(20,25,35,0.95), rgba(10,15,25,0.98)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:16px; width:75vw; max-width: 1000px; height:auto; max-height: 85vh; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
+             <div style="background: linear-gradient(145deg, rgba(20,25,35,0.95), rgba(10,15,25,0.98)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:24px; width:90vw; max-width: 90vw; height:90vh; max-height: 90vh; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
                 
-                <div style="padding:15px 25px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border-radius: 16px 16px 0 0;">
+                <div style="padding:15px 25px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border-radius: 24px 24px 0 0;">
                    <h2 style="margin:0; font-size:18px; font-weight:800; color:#fff; text-shadow:0 0 15px rgba(0,255,102,0.3); display:flex; align-items:center; gap:12px;">
                       ${titleHTML.replace('<i', '<i style="color: #00FF66;"')}
                    </h2>
@@ -440,7 +440,7 @@
                 <div id="launch-modal-body" style="flex:1; padding:20px; overflow-y:auto; overflow-x:hidden;">
                 </div>
                 
-                <div style="padding:15px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.3); border-radius: 0 0 16px 16px;">
+                <div style="padding:15px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.3); border-radius: 0 0 24px 24px;">
                    <button id="launch-modal-start-btn" style="background:linear-gradient(135deg, #00FF66, #00CC55); color:#000; font-size:16px; font-weight:900; padding:12px 45px; border-radius:50px; border:none; cursor:pointer; box-shadow:0 10px 30px rgba(0,255,102,0.3); transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); letter-spacing: 2px; text-transform:uppercase; display:flex; align-items:center; gap:10px;">
                       <i class="fa-solid fa-play"></i> EXECUTE
                    </button>
