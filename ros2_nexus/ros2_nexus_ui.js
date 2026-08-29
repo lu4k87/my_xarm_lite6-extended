@@ -236,7 +236,29 @@
                action.baseCmd = baseTokens.join(' ');
                action.postCmd = postArgsTokens.length > 0 ? ' ' + postArgsTokens.join(' ') : '';
                
-               argTokens.forEach(arg => {
+               let mergedArgs = [];
+               for (let i = 0; i < argTokens.length; i++) {
+                   let t = argTokens[i];
+                   if (t.startsWith('-')) {
+                       let group = t;
+                       while (i + 1 < argTokens.length) {
+                           let nextToken = argTokens[i+1];
+                           if (nextToken.startsWith('-')) {
+                               group += ' ' + nextToken;
+                               i++;
+                           } else {
+                               group += ' ' + nextToken;
+                               i++;
+                               break;
+                           }
+                       }
+                       mergedArgs.push(group);
+                   } else {
+                       mergedArgs.push(t);
+                   }
+               }
+
+               mergedArgs.forEach(arg => {
                    action.args.push({ text: arg, checked: true });
                });
            } else {
