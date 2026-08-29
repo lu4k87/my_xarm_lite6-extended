@@ -160,26 +160,7 @@
     }
 
 
-    // ─── DYNAMIC TOOLTIP POSITIONING ──────────────────────────────────────────────
-    document.addEventListener('mouseover', function(e) {
-      const wrapper = e.target.closest('.card-wrapper');
-      if (!wrapper) return;
-      const tooltip = wrapper.querySelector('.card-tooltip');
-      if (!tooltip) return;
-      
-      const rect = wrapper.getBoundingClientRect();
-      // Calculate actual height if possible, fallback to 250px
-      const tooltipHeight = tooltip.offsetHeight || 250; 
-      
-      // If there is not enough space above the button, force the tooltip below it
-      if (rect.top < tooltipHeight + 20) {
-         tooltip.classList.add('tooltip-bottom');
-      } else {
-         tooltip.classList.remove('tooltip-bottom');
-      }
-    });
 
-    
 
     function openLaunchModal(wrapper, actionsData, toastMsg) {
        const tooltip = wrapper.querySelector('.card-tooltip');

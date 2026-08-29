@@ -607,9 +607,12 @@
 
       document.getElementById('main-content').innerHTML = colHtml[0] + '</div>' + colHtml[1] + '</div>' + colHtml[2] + '</div>';
 
-      document.querySelectorAll('.action-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-           const wrapper = e.currentTarget.closest('.card-wrapper');
+      document.querySelectorAll('.action-card:not([onclick])').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', (e) => {
+           const btn = card.querySelector('.action-btn');
+           if (!btn) return;
+           const wrapper = card.closest('.card-wrapper');
            openLaunchModal(wrapper, [{cmd: btn.dataset.cmd, title: btn.dataset.label}], `🚀 ${btn.dataset.label} gestartet...`);
         });
       });
