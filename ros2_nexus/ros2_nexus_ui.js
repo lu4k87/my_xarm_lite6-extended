@@ -395,9 +395,8 @@
                   subLi.style.marginBottom = '8px';
                   subLi.style.fontSize = '14px';
                   subLi.style.color = 'var(--mut)';
-                  subLi.style.display = 'flex';
-                  subLi.style.alignItems = 'center';
-                  subLi.style.gap = '8px';
+                  subLi.style.display = 'block';
+                  subLi.style.clear = 'both';
               });
           });
        } else {
