@@ -584,7 +584,7 @@
           
           html += `
         <div class="card-wrapper">
-          <div class="action-card" data-type="${a.type}" data-action-index="${aIndex}">
+          <div class="action-card" data-type="${a.type}" data-action-index="${aIndex}" onclick="openLaunchModalFromCard(this)" style="cursor: pointer;">
             <div class="action-btn" data-cmd="${safeCmd}" data-label="${safeLbl}" data-mode="${mode}">
               <div class="btn-top">
                 <span class="badge ${b.cls}">${b.icon.startsWith('<svg') ? b.icon : `<i class="${b.icon}"></i>`}${b.label}</span>
@@ -607,15 +607,7 @@
 
       document.getElementById('main-content').innerHTML = colHtml[0] + '</div>' + colHtml[1] + '</div>' + colHtml[2] + '</div>';
 
-      document.querySelectorAll('.action-card:not([onclick])').forEach(card => {
-        card.style.cursor = 'pointer';
-        card.addEventListener('click', (e) => {
-           const btn = card.querySelector('.action-btn');
-           if (!btn) return;
-           const wrapper = card.closest('.card-wrapper');
-           openLaunchModal(wrapper, [{cmd: btn.dataset.cmd, title: btn.dataset.label}], `🚀 ${btn.dataset.label} gestartet...`);
-        });
-      });
+      // Event listeners for copy buttons
       document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', e => { e.stopPropagation(); copyCmd(btn.dataset.cmd, btn); });
       });

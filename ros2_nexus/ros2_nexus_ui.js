@@ -162,6 +162,14 @@
 
 
 
+    function openLaunchModalFromCard(card) {
+       const btn = card.querySelector('.action-btn');
+       if (!btn) return;
+       const wrapper = card.closest('.card-wrapper');
+       if (!wrapper) return;
+       openLaunchModal(wrapper, [{cmd: btn.dataset.cmd, title: btn.dataset.label}], `🚀 ${btn.dataset.label} gestartet...`);
+    }
+
     function openLaunchModal(wrapper, actionsData, toastMsg) {
        const tooltip = wrapper.querySelector('.card-tooltip');
        if (!tooltip) return;
