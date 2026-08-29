@@ -469,3 +469,11 @@
           }
        });
     }
+
+    // ─── GLOBAL EXPORTS (required for inline onclick="..." attributes) ──────────────
+    window.openLaunchModalFromCard = openLaunchModalFromCard;
+    window.openLaunchModal = openLaunchModal;
+    window.copyCmd = copyCmd;
+    window.showToast = showToast;
+    window.toggleConsole = toggleConsole;
+    window.checkStatus = checkStatus;

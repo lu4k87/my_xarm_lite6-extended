@@ -88,33 +88,6 @@
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
-
-  <div id="offline-overlay"
-    style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Outfit',sans-serif;">
-    <i class="fa-solid fa-power-off" style="font-size: 80px; color: var(--red); margin-bottom: 20px;"></i>
-    <h1 style="font-size: 32px; margin: 0 0 10px 0;">SYSTEM OFFLINE</h1>
-    <p style="font-size: 18px; color: #a5b4fc; max-width: 600px; text-align: center; line-height: 1.5;">
-      Alle Nexus Web Backend-Prozesse wurden erfolgreich beendet.<br><br>
-      Bitte starte <b>ros2_nexus_web_start.sh</b> in deinem Ubuntu-Terminal neu, um das System wieder hochzufahren.
-    </p>
-  </div>
-
-  <div id="console-popup" style="width: 300px; height: 40px;">
-    <div
-      style="background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--brd); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;"
-      onclick="toggleConsole()">
-      <div style="font-size: 12px; font-weight: 700; color: var(--mut); letter-spacing: 1px;"><i
-          class="fa-solid fa-terminal" style="color: var(--accent); margin-right: 6px;"></i> TERMINAL LOGS</div>
-      <div style="display: flex; gap: 8px;">
-        <i id="console-toggle-icon" class="fa-solid fa-window-maximize" style="color: var(--dim); font-size: 14px;" title="Minimieren/Wiederherstellen"></i>
-      </div>
-    </div>
-    <div id="console-content"
-      style="flex: 1; overflow-y: auto; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="ros2_nexus_ui.js?v=5"></script>
   <script src="ros2_nexus_script.js?v=5"></script>

@@ -815,7 +815,11 @@
       }
     }
 
+    // ─── GLOBAL EXPORTS (required for inline onclick="..." attributes) ──────────────
+    window.renderTab = renderTab;
+    window.runCmd = runCmd;
+
     // ─── INIT ─────────────────────────────────────────────────────────────────────
     loadConfig();
-    checkStatus();
-    setInterval(checkStatus, 5000);
+    window.checkStatus();
+    setInterval(() => window.checkStatus(), 5000);
