@@ -129,7 +129,7 @@
     pollInterval = setInterval(pollLogs, 1000);
 
     // ─── DEV SETUP ────────────────────────────────────────────────────────────────
-    async function runDevSetup(mode) {
+    function getDevSetupActions(mode) {
       let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link";
       let servoTitle = "MoveIt Servo (Fake) + Linear Axis";
       let moveGroupCmd = "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link";
@@ -164,24 +164,12 @@
         actions.push({ cmd: "ros2 run linear_axis_tuner linear_axis_tuner", title: "Linear Axis Tuner (FAKE Mode)" });
       }
 
-      showToast(`🚀 DEV Setup gestartet... (${actions.length} Terminals)`);
+      
 
-      for (const a of actions) {
-        try {
-          await fetch('/api/run', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
-          });
-          // Delay so terminals open sequentially and nodes have time to initialize
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } catch (e) {
-          console.error("Failed to start command:", a.cmd, e);
-        }
-      }
+      return actions;
     }
 
-    async function runServerSetup(mode) {
+    function getServerSetupActions(mode) {
       let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true joystick_and_checker:=false";
       let servoTitle = "MoveIt Servo (Fake) [Server]";
       let moveGroupCmd = "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true";
@@ -203,23 +191,12 @@
         { cmd: "ros2 run tf_tuner tf_tuner", title: "Transform Tuner (tf_tuner)" }
       ];
 
-      showToast(`🚀 SERVER Setup (${mode.toUpperCase()}) gestartet... (${actions.length} Terminals)`);
+      
 
-      for (const a of actions) {
-        try {
-          await fetch('/api/run', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
-          });
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } catch (e) {
-          console.error("Failed to start command:", a.cmd, e);
-        }
-      }
+      return actions;
     }
 
-    async function runClientSetup() {
+    function getClientSetupActions() {
       const actions = [
         { cmd: "ros2 run joy joy_node", title: "Gamepad Driver (joy_node)" },
         { cmd: "ros2 run collision_check checker", title: "Collision Checker Node" },
@@ -230,24 +207,13 @@
         { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" }
       ];
 
-      showToast(`🚀 CLIENT Setup gestartet... (${actions.length} Terminals)`);
+      
 
-      for (const a of actions) {
-        try {
-          await fetch('/api/run', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
-          });
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } catch (e) {
-          console.error("Failed to start command:", a.cmd, e);
-        }
-      }
+      return actions;
     }
 
     // ─── EXTRAS EXEC SETUP ───────────────────────────────────────────────────────
-    async function runExtrasExec() {
+    function getExtrasExecActions() {
       // Alles was runDevSetup('real') startet + Gaze UI Glasses Node
       const actions = [
         { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev", title: "MoveIt Servo (Real)" },
@@ -259,20 +225,9 @@
         { cmd: "ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm", title: "ZED M Camera Node" }
       ];
 
-      showToast(`🚀 EXTRAS EXEC gestartet... (${actions.length} Terminals)`);
+      
 
-      for (const a of actions) {
-        try {
-          await fetch('/api/run', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
-          });
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } catch (e) {
-          console.error("Failed to start command:", a.cmd, e);
-        }
-      }
+      return actions;
     }
 
     async function runExtrasExecLegacyCam() {
@@ -286,18 +241,7 @@
 
       showToast(`🚀 EXTRAS EXEC (Legacy) gestartet... (${actions.length} Terminals)`);
 
-      for (const a of actions) {
-        try {
-          await fetch('/api/run', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command: a.cmd, title: a.title, mode: "ros" })
-          });
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } catch (e) {
-          console.error("Failed to start command:", a.cmd, e);
-        }
-      }
+      return actions;
     }
 
     // ─── TAB DATA ────────────────────────────────────────────────────────────────
@@ -369,7 +313,7 @@
           <div class="section-title" style="color: var(--red);"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span></div>
           <div class="actions-grid" style="grid-template-columns: 1fr;">
             <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="runDevSetup('fake')" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getDevSetupActions('fake'), '🚀 DEV Setup gestartet...')" style="cursor: pointer;">
                 <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-right: 1px solid var(--brd); color: var(--c-dev); font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
                   <i class="fa-solid fa-rocket"></i>
                 </div>
@@ -438,7 +382,7 @@
               </div>
             </div>
             <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="runDevSetup('real')" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getDevSetupActions('real'), '🚀 DEV Setup gestartet...')" style="cursor: pointer;">
                 <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-right: 1px solid var(--brd); color: var(--c-dev); font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
                   <i class="fa-solid fa-rocket"></i>
                 </div>
@@ -517,7 +461,7 @@
           </div>
           <div class="actions-grid" style="grid-template-columns: 1fr;">
             <div class="card-wrapper">
-              <div class="action-card" data-type="server" onclick="runServerSetup('fake')" style="cursor: pointer;">
+              <div class="action-card" data-type="server" onclick="openLaunchModal(this.closest('.card-wrapper'), getServerSetupActions('fake'), '🚀 SERVER Setup gestartet...')" style="cursor: pointer;">
                 <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-right: 1px solid var(--brd); color: var(--c-server); font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
                   <i class="fa-solid fa-server"></i>
                 </div>
@@ -570,7 +514,7 @@
             </div>
             
             <div class="card-wrapper">
-              <div class="action-card" data-type="server" onclick="runServerSetup('real')" style="cursor: pointer;">
+              <div class="action-card" data-type="server" onclick="openLaunchModal(this.closest('.card-wrapper'), getServerSetupActions('real'), '🚀 SERVER Setup gestartet...')" style="cursor: pointer;">
                 <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-right: 1px solid var(--brd); color: var(--c-server); font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
                   <i class="fa-solid fa-server"></i>
                 </div>
@@ -623,7 +567,7 @@
             </div>
             
             <div class="card-wrapper">
-              <div class="action-card" data-type="client" onclick="runClientSetup()" style="cursor: pointer;">
+              <div class="action-card" data-type="client" onclick="openLaunchModal(this.closest('.card-wrapper'), getClientSetupActions(), '🚀 CLIENT Setup gestartet...')" style="cursor: pointer;">
                 <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-right: 1px solid var(--brd); color: var(--c-client); font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
                   <i class="fa-solid fa-desktop"></i>
                 </div>
@@ -671,7 +615,7 @@
           <div class="section-title" style="color: #a855f7;"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span></div>
           <div class="actions-grid" style="grid-template-columns: 1fr;">
             <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="runExtrasExec()" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getExtrasExecActions(), '🚀 EXTRAS EXEC gestartet...')" style="cursor: pointer;">
                 <div class="side-icon" style="width: 54px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.1); border-right: 1px solid var(--brd); color: #a855f7; font-size: 20px; flex-shrink: 0; transition: all 0.2s;">
                   <i class="fa-solid fa-bolt"></i>
                 </div>
@@ -794,7 +738,10 @@
       document.getElementById('main-content').innerHTML = colHtml[0] + '</div>' + colHtml[1] + '</div>' + colHtml[2] + '</div>';
 
       document.querySelectorAll('.action-btn').forEach(btn => {
-        btn.addEventListener('click', () => runCmd(btn.dataset.cmd, btn.dataset.label, btn.dataset.mode));
+        btn.addEventListener('click', (e) => {
+           const wrapper = e.currentTarget.closest('.card-wrapper');
+           openLaunchModal(wrapper, [{cmd: btn.dataset.cmd, title: btn.dataset.label}], `🚀 ${btn.dataset.label} gestartet...`);
+        });
       });
       document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', e => { e.stopPropagation(); copyCmd(btn.dataset.cmd, btn); });
@@ -1054,3 +1001,282 @@
          tooltip.classList.remove('tooltip-bottom');
       }
     });
+
+    
+    function openLaunchModal(wrapper, actionsData, toastMsg) {
+       const tooltip = wrapper.querySelector('.card-tooltip');
+       if (!tooltip) return;
+       const titleEl = tooltip.querySelector('.card-tooltip-title');
+       const titleHTML = titleEl ? titleEl.innerHTML : 'Launch Command';
+       
+       const contentClone = tooltip.cloneNode(true);
+       contentClone.className = '';
+       contentClone.style.cssText = 'width: 100%; display: flex; flex-direction: column; gap: 15px; padding: 10px;';
+       
+       const cloneTitle = contentClone.querySelector('.card-tooltip-title');
+       if (cloneTitle) cloneTitle.remove();
+       
+       // Initialize active states
+       actionsData.forEach(a => { a.active = true; a.baseCmd = a.cmd; a.args = []; });
+       
+              function parseArgs(action) {
+           if (!action.cmd.startsWith('ros2 launch') && !action.cmd.startsWith('ros2 run') && !action.cmd.startsWith('ros2 topic pub')) {
+               action.baseCmd = action.cmd;
+               action.postCmd = '';
+               return;
+           }
+
+           const tokens = action.cmd.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+           
+           let fileIndex = -1;
+           for (let i = 0; i < tokens.length; i++) {
+              if (tokens[i].endsWith('.py') || tokens[i].endsWith('.cpp') || tokens[i].endsWith('.xml')) {
+                  fileIndex = i; break;
+              }
+           }
+           if (fileIndex === -1 && tokens[0] === 'ros2' && tokens[1] === 'run') fileIndex = 3;
+           if (fileIndex === -1 && tokens[0] === 'ros2' && tokens[1] === 'topic' && tokens[2] === 'pub') fileIndex = 4;
+           
+           if (fileIndex !== -1 && fileIndex < tokens.length - 1) {
+               let baseTokens = tokens.slice(0, fileIndex + 1);
+               let argTokens = [];
+               let postArgsTokens = [];
+               let parsingArgs = true;
+               
+               for (let i = fileIndex + 1; i < tokens.length; i++) {
+                   const t = tokens[i];
+                   if (t === '&' || t === '&&' || t === ';' || t === '|' || t === '||') {
+                       parsingArgs = false;
+                   }
+                   if (parsingArgs) {
+                       argTokens.push(t);
+                   } else {
+                       postArgsTokens.push(t);
+                   }
+               }
+               
+               action.baseCmd = baseTokens.join(' ');
+               action.postCmd = postArgsTokens.length > 0 ? ' ' + postArgsTokens.join(' ') : '';
+               
+               argTokens.forEach(arg => {
+                   action.args.push({ text: arg, checked: true });
+               });
+           } else {
+               action.baseCmd = action.cmd;
+               action.postCmd = '';
+           }
+       }
+       
+       function createArgsDiv(action) {
+           const argsDiv = document.createElement('div');
+           argsDiv.style.display = 'flex';
+           argsDiv.style.flexWrap = 'wrap';
+           argsDiv.style.gap = '8px';
+           argsDiv.style.flex = '1';
+           argsDiv.style.justifyContent = 'center';
+           argsDiv.style.padding = '0 15px';
+           
+           if (action && action.args.length > 0) {
+               action.args.forEach(argObj => {
+                   const argLbl = document.createElement('label');
+                   argLbl.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:12px; color:var(--accent); background:rgba(0,255,102,0.1); padding:4px 8px; border-radius:6px; border:1px solid rgba(0,255,102,0.3); cursor:pointer; transition:all 0.2s; white-space:nowrap;';
+                   
+                   const argCb = document.createElement('input');
+                   argCb.type = 'checkbox';
+                   argCb.checked = true;
+                   argCb.style.accentColor = '#00FF66';
+                   argCb.style.cursor = 'pointer';
+                   argCb.onclick = (e) => e.stopPropagation();
+                   argCb.onchange = (e) => {
+                       argObj.checked = e.target.checked;
+                       argLbl.style.opacity = e.target.checked ? '1' : '0.4';
+                       argLbl.style.borderColor = e.target.checked ? 'rgba(0,255,102,0.3)' : 'rgba(255,255,255,0.1)';
+                   };
+                   
+                   argLbl.appendChild(argCb);
+                   argLbl.appendChild(document.createTextNode(argObj.text));
+                   argsDiv.appendChild(argLbl);
+               });
+           }
+           return argsDiv;
+       }
+
+       const topUls = Array.from(contentClone.children).filter(n => n.tagName === 'UL');
+       if (topUls.length > 0) {
+          const topUl = topUls[0];
+          topUl.style.listStyle = 'none';
+          topUl.style.padding = '0';
+          topUl.style.margin = '0';
+          
+          const topLis = Array.from(topUl.children).filter(n => n.tagName === 'LI');
+          topLis.forEach(li => {
+              const clone = li.cloneNode(true);
+              Array.from(clone.children).forEach(c => { if (c.tagName === 'UL') c.remove(); });
+              const text = clone.textContent.replace(/\(.*?\)/g, '').trim();
+              if (!text) return;
+              
+              // Find matching action
+              const action = actionsData.find(a => {
+                  if (a.cmd.includes(text)) return true;
+                  const baseTerm = text.replace('.py', '').replace('.cpp', '').replace('.xml', '');
+                  if (a.cmd.includes(baseTerm)) return true;
+                  if (a.cmd.includes(baseTerm.replace('_node', ''))) return true;
+                  return false;
+              });
+              
+              if (action) parseArgs(action);
+              
+              // Build Flex Header
+              const headerDiv = document.createElement('div');
+              headerDiv.style.display = 'flex';
+              headerDiv.style.justifyContent = 'space-between';
+              headerDiv.style.alignItems = 'flex-start';
+              headerDiv.style.width = '100%';
+              headerDiv.style.gap = '15px';
+              
+              const textDiv = document.createElement('div');
+              textDiv.style.display = 'flex';
+              textDiv.style.alignItems = 'center';
+              textDiv.style.gap = '8px';
+              
+              Array.from(li.childNodes).forEach(node => {
+                  if (node.tagName !== 'UL') textDiv.appendChild(node);
+              });
+              
+              const argsDiv = createArgsDiv(action);
+              
+              const mainCb = document.createElement('input');
+              mainCb.type = 'checkbox';
+              mainCb.checked = true;
+              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); margin-top: 2px;';
+              mainCb.onclick = (e) => e.stopPropagation();
+              mainCb.onchange = (e) => {
+                  if (action) action.active = e.target.checked;
+                  li.style.opacity = e.target.checked ? '1' : '0.4';
+              };
+              
+              headerDiv.appendChild(textDiv);
+              headerDiv.appendChild(argsDiv);
+              headerDiv.appendChild(mainCb);
+              
+              li.insertBefore(headerDiv, li.firstChild);
+              
+              li.style.background = 'rgba(255, 255, 255, 0.03)';
+              li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+              li.style.borderRadius = '12px';
+              li.style.padding = '18px 20px';
+              li.style.marginBottom = '12px';
+              li.style.fontSize = '16px';
+              li.style.color = '#fff';
+              li.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+              li.style.transition = 'all 0.3s ease';
+              
+              li.onmouseover = () => { li.style.background = 'rgba(255, 255, 255, 0.08)'; li.style.transform = 'translateX(5px)'; li.style.borderColor = 'rgba(0, 255, 102, 0.3)'; };
+              li.onmouseout = () => { li.style.background = 'rgba(255, 255, 255, 0.03)'; li.style.transform = 'translateX(0)'; li.style.borderColor = 'rgba(255, 255, 255, 0.08)'; };
+              
+              const nestedUls = li.querySelectorAll('ul');
+              nestedUls.forEach(ul => {
+                  ul.style.listStyle = 'none';
+                  ul.style.marginTop = '15px';
+                  ul.style.paddingLeft = '20px';
+                  ul.style.borderLeft = '2px solid rgba(255,255,255,0.1)';
+              });
+              li.querySelectorAll('li').forEach(subLi => {
+                  subLi.style.marginBottom = '8px';
+                  subLi.style.fontSize = '14px';
+                  subLi.style.color = 'var(--mut)';
+                  subLi.style.display = 'flex';
+                  subLi.style.alignItems = 'center';
+                  subLi.style.gap = '8px';
+              });
+          });
+       } else {
+           contentClone.style.background = 'rgba(255,255,255,0.03)';
+           contentClone.style.border = '1px solid rgba(255,255,255,0.08)';
+           contentClone.style.borderRadius = '12px';
+           contentClone.style.padding = '20px';
+           contentClone.style.fontSize = '16px';
+           contentClone.style.color = '#fff';
+           
+           if (actionsData[0]) {
+               parseArgs(actionsData[0]);
+               const argsDiv = createArgsDiv(actionsData[0]);
+               if (actionsData[0].args.length > 0) {
+                   argsDiv.style.marginTop = '15px';
+                   argsDiv.style.justifyContent = 'flex-start';
+                   contentClone.appendChild(argsDiv);
+               }
+           }
+       }
+       
+       const modalHtml = `
+          <div id="launch-modal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); animation: fadeIn 0.3s ease;">
+             <div style="background: linear-gradient(145deg, rgba(20,25,35,0.95), rgba(10,15,25,0.98)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:24px; width:85vw; max-width: 1000px; height:85vh; max-height: 800px; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
+                
+                <div style="padding:25px 35px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border-radius: 24px 24px 0 0;">
+                   <h2 style="margin:0; font-size:26px; font-weight:800; color:#fff; text-shadow:0 0 15px rgba(0,255,102,0.3); display:flex; align-items:center; gap:12px;">
+                      ${titleHTML.replace('<i', '<i style="color: #00FF66;"')}
+                   </h2>
+                   <button onclick="document.getElementById('launch-modal').remove()" style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:45px; height:45px; border-radius:50%; font-size:20px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='rgba(255,50,50,0.8)'; this.style.transform='rotate(90deg)';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='rotate(0)';"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div id="launch-modal-body" style="flex:1; padding:35px; overflow-y:auto; overflow-x:hidden;">
+                </div>
+                
+                <div style="padding:25px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.3); border-radius: 0 0 24px 24px;">
+                   <button id="launch-modal-start-btn" style="background:linear-gradient(135deg, #00FF66, #00CC55); color:#000; font-size:22px; font-weight:900; padding:18px 70px; border-radius:50px; border:none; cursor:pointer; box-shadow:0 10px 30px rgba(0,255,102,0.3); transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); letter-spacing: 2px; text-transform:uppercase; display:flex; align-items:center; gap:12px;">
+                      <i class="fa-solid fa-play"></i> EXECUTE
+                   </button>
+                </div>
+                
+                <style>
+                  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                  @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+                  #launch-modal-body::-webkit-scrollbar { width: 8px; }
+                  #launch-modal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+                  #launch-modal-body::-webkit-scrollbar-thumb { background: rgba(0,255,102,0.3); border-radius: 10px; }
+                  #launch-modal-body::-webkit-scrollbar-thumb:hover { background: rgba(0,255,102,0.5); }
+                </style>
+             </div>
+          </div>
+       `;
+       
+       document.body.insertAdjacentHTML('beforeend', modalHtml);
+       document.getElementById('launch-modal-body').appendChild(contentClone);
+       
+       const startBtn = document.getElementById('launch-modal-start-btn');
+       startBtn.onmouseover = () => { startBtn.style.transform='scale(1.05) translateY(-2px)'; startBtn.style.boxShadow='0 15px 35px rgba(0,255,102,0.5)'; };
+       startBtn.onmouseout = () => { startBtn.style.transform='scale(1) translateY(0)'; startBtn.style.boxShadow='0 10px 30px rgba(0,255,102,0.3)'; };
+       
+       startBtn.addEventListener('click', async () => {
+          document.getElementById('launch-modal').remove();
+          if (toastMsg) showToast(toastMsg);
+          
+          for (const action of actionsData) {
+              if (!action.active) continue;
+              
+              // Reconstruct command based on checked args
+              let finalCmd = action.baseCmd;
+              if (action.args.length > 0) {
+                  const activeArgs = action.args.filter(a => a.checked).map(a => a.text);
+                  if (activeArgs.length > 0) {
+                      finalCmd += ' ' + activeArgs.join(' ');
+                  }
+              }
+              if (action.postCmd) {
+                  finalCmd += action.postCmd;
+              }
+              
+              try {
+                await fetch('/api/run', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ command: finalCmd, title: action.title || 'Launch', mode: "ros" })
+                });
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              } catch (e) {
+                console.error("Failed to start:", finalCmd);
+              }
+          }
+       });
+    }
