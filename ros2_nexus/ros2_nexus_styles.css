@@ -341,6 +341,9 @@
       pointer-events: none;
       text-align: left;
     }
+    .card-tooltip ul {
+      list-style: none !important;
+    }
     .card-wrapper:hover .card-tooltip {
       visibility: visible;
       opacity: 1;

@@ -473,7 +473,7 @@
                             <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
                               <li><span class="badge badge-launch" style="margin-right: 6px;"><i class="fa-solid fa-rocket" style="margin-right: 4px;"></i>LAUNCH</span><span style="color: var(--c-launch);"> ${launchFile}</span> <span style="float: right; opacity: 0.7;">(${pkg})</span>
                               ${args ? `<ul style="padding-left: 16px; margin: 4px 0 0 0; border-left: 2px solid rgba(96,165,250,0.35);">
-                                <li><span style="color: var(--c-node);">${args}</span> <span style="float: right; opacity: 0.7;">(Arguments)</span></li>
+                                <li><span class="badge badge-node" style="margin-right: 6px; background: rgba(255,255,255,0.1); color: #aaa; border-color: rgba(255,255,255,0.2);"><i class="fa-solid fa-sliders" style="margin-right: 4px;"></i>ARGS</span><span style="color: var(--mut);">${args}</span></li>
                               </ul>` : ''}
                               </li>
                             </ul>`;
@@ -487,7 +487,7 @@
                             <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
                               <li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);"> ${node}</span> <span style="float: right; opacity: 0.7;">(${pkg})</span>
                               ${args ? `<ul style="padding-left: 14px; margin: 4px 0 0 0; border-left: 2px solid rgba(96,165,250,0.35);">
-                                <li><span style="color: var(--c-node);">${args}</span> <span style="float: right; opacity: 0.7;">(Arguments)</span></li>
+                                <li><span class="badge badge-node" style="margin-right: 6px; background: rgba(255,255,255,0.1); color: #aaa; border-color: rgba(255,255,255,0.2);"><i class="fa-solid fa-sliders" style="margin-right: 4px;"></i>ARGS</span><span style="color: var(--mut);">${args}</span></li>
                               </ul>` : ''}
                               </li>
                             </ul>`;
