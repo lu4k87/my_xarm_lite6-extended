@@ -128,6 +128,10 @@ def styles():
 def script():
     return send_from_directory(BASE_DIR, "ros2_nexus_script.js")
 
+@app.route("/ros2_nexus_ui.js")
+def ui_script():
+    return send_from_directory(BASE_DIR, "ros2_nexus_ui.js")
+
 @app.route("/icon")
 def icon():
     return send_from_directory(BASE_DIR, "ros2_nexus_icon.png")
