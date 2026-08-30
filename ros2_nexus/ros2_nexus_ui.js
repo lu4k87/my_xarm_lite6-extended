@@ -432,12 +432,13 @@
               rightCol.style.display = 'flex';
               rightCol.style.flexDirection = 'column';
               rightCol.style.alignItems = 'flex-end';
-              rightCol.style.justifyContent = 'flex-start';
-              rightCol.style.gap = '12px';
+              rightCol.style.justifyContent = 'center';
+              rightCol.style.position = 'relative';
+              rightCol.style.minWidth = '45px';
               
               const cmdBadge1 = document.createElement('div');
               cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal"></i> CMD<div class="cmd-tooltip" style="position:absolute; top:-30px; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:6px 10px; font-size:10px; color:#fff; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; font-family:monospace; letter-spacing:0;">${(action ? action.cmd : text).replace(/"/g, '&quot;')}</div>`;
-              cmdBadge1.style.cssText = 'position:relative; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s; margin-top:2px;';
+              cmdBadge1.style.cssText = 'position:absolute; top:-2px; right:0; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
               cmdBadge1.onmouseover = () => {
                   cmdBadge1.style.background = 'rgba(255,255,255,0.2)';
                   cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '1';
@@ -586,12 +587,13 @@
               rightCol.style.display = 'flex';
               rightCol.style.flexDirection = 'column';
               rightCol.style.alignItems = 'flex-end';
-              rightCol.style.justifyContent = 'flex-start';
-              rightCol.style.gap = '12px';
+              rightCol.style.justifyContent = 'center';
+              rightCol.style.position = 'relative';
+              rightCol.style.minWidth = '45px';
               
               const cmdBadge1 = document.createElement('div');
               cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal"></i> CMD<div class="cmd-tooltip" style="position:absolute; top:-30px; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:6px 10px; font-size:10px; color:#fff; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; font-family:monospace; letter-spacing:0;">${(action ? action.cmd : text).replace(/"/g, '&quot;')}</div>`;
-              cmdBadge1.style.cssText = 'position:relative; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s; margin-top:2px;';
+              cmdBadge1.style.cssText = 'position:absolute; top:-2px; right:0; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
               cmdBadge1.onmouseover = () => {
                   cmdBadge1.style.background = 'rgba(255,255,255,0.2)';
                   cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '1';
