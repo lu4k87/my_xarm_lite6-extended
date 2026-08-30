@@ -344,6 +344,12 @@
     .card-tooltip ul, #launch-modal-body ul {
       list-style: none !important;
     }
+    .card-tooltip ul ul, #launch-modal-body ul ul {
+      list-style-type: '\25B8   ' !important;
+    }
+    .card-tooltip ul ul li::marker, #launch-modal-body ul ul li::marker {
+      color: rgba(96, 165, 250, 0.6);
+    }
     .card-wrapper:hover .card-tooltip {
       visibility: visible;
       opacity: 1;
