@@ -422,21 +422,85 @@
               li.onmouseover = () => { li.style.background = 'rgba(255, 255, 255, 0.08)'; li.style.transform = 'translateX(5px)'; li.style.borderColor = 'rgba(0, 255, 102, 0.3)'; };
               li.onmouseout = () => { li.style.background = 'rgba(255, 255, 255, 0.03)'; li.style.transform = 'translateX(0)'; li.style.borderColor = 'rgba(255, 255, 255, 0.08)'; };
               
-              const nestedUls = li.querySelectorAll('ul');
-              nestedUls.forEach(ul => {
-                  ul.style.listStyle = 'none';
-                  ul.style.marginTop = '8px';
-                  ul.style.paddingLeft = '15px';
-                  ul.style.borderLeft = '2px solid rgba(255,255,255,0.1)';
-              });
-              li.querySelectorAll('li').forEach(subLi => {
-                  subLi.style.marginBottom = '4px';
-                  subLi.style.fontSize = '12px';
-                  subLi.style.color = 'var(--mut)';
-                  subLi.style.display = 'block';
-                  subLi.style.clear = 'both';
-              });
+              // Preserve original inline styles for nested elements from CMD_DETAILS
           });
+          
+          // Append any unmatched actions to the bottom to ensure nothing is missing
+          const unmatchedActions = actionsData.filter(a => !matchedCmds.has(a.cmd));
+          unmatchedActions.forEach(action => {
+              const li = document.createElement('li');
+              
+              let baseHtml = `<span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> SCRIPT</span>`;
+              if (action.cmd.startsWith('ros2 launch')) {
+                  baseHtml = `<span class="badge badge-launch" style="margin-right: 6px;"><i class="fa-solid fa-rocket" style="margin-right: 4px;"></i>LAUNCH</span>`;
+              } else if (action.cmd.includes('python3 -m http.server') || action.cmd.includes('robot_control_web_ui')) {
+                  baseHtml = `<span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span>`;
+              }
+              
+              let cmdName = action.title || action.cmd.split(' ').slice(0, 3).join(' ');
+              
+              const headerDiv = document.createElement('div');
+              headerDiv.style.display = 'flex';
+              headerDiv.style.justifyContent = 'space-between';
+              headerDiv.style.alignItems = 'flex-start';
+              headerDiv.style.width = '100%';
+              headerDiv.style.gap = '15px';
+              
+              const textDiv = document.createElement('div');
+              textDiv.style.display = 'flex';
+              textDiv.style.alignItems = 'center';
+              textDiv.style.gap = '8px';
+              textDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: bold;">${cmdName}</span> <span style="color: var(--mut); font-size: 11px;">(Auto-Added)</span>`;
+              
+              parseArgs(action);
+              action.active = true;
+              const argsDiv = createArgsDiv(action);
+              
+              const mainCb = document.createElement('input');
+              mainCb.type = 'checkbox';
+              mainCb.className = 'main-action-cb';
+              mainCb.checked = true;
+              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); margin-top: 2px;';
+              mainCb.onclick = (e) => e.stopPropagation();
+              mainCb.onchange = (e) => {
+                  action.active = e.target.checked;
+                  li.style.opacity = e.target.checked ? '1' : '0.4';
+                  
+                  const allCbs = Array.from(topUl.querySelectorAll('.main-action-cb'));
+                  if (allCbs.length > 0) {
+                      selectAllCb.checked = allCbs.every(c => c.checked);
+                  }
+              };
+              
+              li.style.cursor = 'pointer';
+              li.onclick = (e) => {
+                  if (e.target === mainCb || e.target.closest('label') || e.target.closest('a')) return;
+                  mainCb.checked = !mainCb.checked;
+                  mainCb.dispatchEvent(new Event('change'));
+              };
+              
+              headerDiv.appendChild(textDiv);
+              headerDiv.appendChild(argsDiv);
+              headerDiv.appendChild(mainCb);
+              
+              li.appendChild(headerDiv);
+              
+              li.style.background = 'rgba(255, 255, 255, 0.03)';
+              li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+              li.style.borderRadius = '8px';
+              li.style.padding = '10px 15px';
+              li.style.marginBottom = '8px';
+              li.style.fontSize = '13px';
+              li.style.color = '#fff';
+              li.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+              li.style.transition = 'all 0.3s ease';
+              
+              li.onmouseover = () => { li.style.background = 'rgba(255, 255, 255, 0.08)'; li.style.transform = 'translateX(5px)'; li.style.borderColor = 'rgba(0, 255, 102, 0.3)'; };
+              li.onmouseout = () => { li.style.background = 'rgba(255, 255, 255, 0.03)'; li.style.transform = 'translateX(0)'; li.style.borderColor = 'rgba(255, 255, 255, 0.08)'; };
+              
+              topUl.appendChild(li);
+          });
+
        } else {
            contentClone.style.background = 'rgba(255,255,255,0.03)';
            contentClone.style.border = '1px solid rgba(255,255,255,0.08)';
