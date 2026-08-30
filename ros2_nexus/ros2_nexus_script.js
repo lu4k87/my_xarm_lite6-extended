@@ -458,6 +458,7 @@
           } else {
              tooltipHtml = `<div class="card-tooltip-cmd">${a.cmd}</div>`;
           }
+          }
           
           html += `
         <div class="card-wrapper">
