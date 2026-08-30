@@ -421,7 +421,7 @@
               spacer.style.color = 'var(--mut)';
               spacer.style.textTransform = 'uppercase';
               spacer.style.letterSpacing = '1px';
-              spacer.innerText = 'Params/Args';
+              spacer.innerText = 'Parameters / Arguments';
               middleCol.appendChild(spacer);
               
               const argsDiv = createArgsDiv(action);
@@ -544,7 +544,7 @@
               spacer.style.color = 'var(--mut)';
               spacer.style.textTransform = 'uppercase';
               spacer.style.letterSpacing = '1px';
-              spacer.innerText = 'Params/Args';
+              spacer.innerText = 'Parameters / Arguments';
               middleCol.appendChild(spacer);
               
               parseArgs(action);
