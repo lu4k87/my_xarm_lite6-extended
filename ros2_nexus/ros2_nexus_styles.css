@@ -342,10 +342,7 @@
       text-align: left;
     }
     .card-tooltip ul, #launch-modal-body ul {
-      list-style-type: '\25B8   ' !important;
-    }
-    .card-tooltip li::marker, #launch-modal-body li::marker {
-      color: rgba(96, 165, 250, 0.6);
+      list-style: none !important;
     }
     .card-wrapper:hover .card-tooltip {
       visibility: visible;
