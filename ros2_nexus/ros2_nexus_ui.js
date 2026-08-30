@@ -274,23 +274,23 @@
        
        function createArgsDiv(action) {
            const argsDiv = document.createElement('div');
-           argsDiv.style.display = 'flex';
-           argsDiv.style.flexWrap = 'wrap';
-           argsDiv.style.gap = '8px';
            argsDiv.style.flex = '1';
-           argsDiv.style.justifyContent = 'flex-end';
-           argsDiv.style.padding = '0 15px';
+           argsDiv.style.display = 'flex';
+           argsDiv.style.flexDirection = 'column'; // Stack vertically
+           argsDiv.style.gap = '6px';
+           argsDiv.style.alignItems = 'flex-end';
            
            if (action && action.args.length > 0) {
                action.args.forEach(argObj => {
                    const argLbl = document.createElement('label');
-                   argLbl.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:12px; color:var(--accent); background:rgba(0,255,102,0.1); padding:4px 8px; border-radius:6px; border:1px solid rgba(0,255,102,0.3); cursor:pointer; transition:all 0.2s; white-space:nowrap;';
+                   argLbl.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:11px; color:var(--accent); background:rgba(0,255,102,0.1); padding:4px 8px; border-radius:6px; border:1px solid rgba(0,255,102,0.3); cursor:pointer; transition:all 0.2s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; max-width:100%;';
                    
                    const argCb = document.createElement('input');
                    argCb.type = 'checkbox';
                    argCb.checked = true;
                    argCb.style.accentColor = '#00FF66';
                    argCb.style.cursor = 'pointer';
+                   argCb.style.flexShrink = '0';
                    argCb.onclick = (e) => e.stopPropagation();
                    argCb.onchange = (e) => {
                        argObj.checked = e.target.checked;
@@ -298,8 +298,14 @@
                        argLbl.style.borderColor = e.target.checked ? 'rgba(0,255,102,0.3)' : 'rgba(255,255,255,0.1)';
                    };
                    
+                   const txtSpan = document.createElement('span');
+                   txtSpan.style.overflow = 'hidden';
+                   txtSpan.style.textOverflow = 'ellipsis';
+                   txtSpan.style.whiteSpace = 'nowrap';
+                   txtSpan.textContent = argObj.text;
+                   
                    argLbl.appendChild(argCb);
-                   argLbl.appendChild(document.createTextNode(argObj.text));
+                   argLbl.appendChild(txtSpan);
                    argsDiv.appendChild(argLbl);
                });
            }
@@ -361,30 +367,66 @@
                   action.active = true;
               }
               
-              // Build Flex Header
-              const headerDiv = document.createElement('div');
-              headerDiv.style.display = 'flex';
-              headerDiv.style.justifyContent = 'space-between';
-              headerDiv.style.alignItems = 'flex-start';
-              headerDiv.style.width = '100%';
-              headerDiv.style.gap = '15px';
+              // Build Flex Layout
+              const cardLayout = document.createElement('div');
+              cardLayout.style.display = 'flex';
+              cardLayout.style.width = '100%';
+              cardLayout.style.justifyContent = 'space-between';
+              cardLayout.style.alignItems = 'stretch';
+              cardLayout.style.gap = '15px';
               
-              const textDiv = document.createElement('div');
-              textDiv.style.display = 'flex';
-              textDiv.style.alignItems = 'center';
-              textDiv.style.gap = '8px';
+              const leftCol = document.createElement('div');
+              leftCol.style.display = 'flex';
+              leftCol.style.flexDirection = 'column';
+              leftCol.style.gap = '8px';
+              leftCol.style.flex = '1';
               
+              const titleDiv = document.createElement('div');
+              titleDiv.style.display = 'flex';
+              titleDiv.style.alignItems = 'center';
+              titleDiv.style.gap = '8px';
+              titleDiv.style.minHeight = '32px'; // Height for 1st row
+              
+              const ulNode = Array.from(li.childNodes).find(n => n.tagName === 'UL');
               Array.from(li.childNodes).forEach(node => {
-                  if (node.tagName !== 'UL') textDiv.appendChild(node);
+                  if (node !== ulNode) {
+                      if (node.nodeType === 1 && node.style.float === 'right') {
+                          node.style.float = 'none';
+                          node.style.marginLeft = 'auto';
+                      }
+                      titleDiv.appendChild(node);
+                  }
               });
               
+              leftCol.appendChild(titleDiv);
+              if (ulNode) leftCol.appendChild(ulNode);
+              
+              const middleCol = document.createElement('div');
+              middleCol.style.flex = '0 0 210px'; // Fixed width so leftCol is identical across cards
+              middleCol.style.display = 'flex';
+              middleCol.style.flexDirection = 'column';
+              middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.05)';
+              middleCol.style.borderRight = '1px solid rgba(255, 255, 255, 0.05)';
+              middleCol.style.padding = '0 15px';
+              middleCol.style.minWidth = '0';
+              
+              const spacer = document.createElement('div');
+              spacer.style.height = '32px'; // Matches title row
+              spacer.style.flexShrink = '0';
+              middleCol.appendChild(spacer);
+              
               const argsDiv = createArgsDiv(action);
+              middleCol.appendChild(argsDiv);
+              
+              const rightCol = document.createElement('div');
+              rightCol.style.display = 'flex';
+              rightCol.style.alignItems = 'center';
               
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
               mainCb.checked = true;
-              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); margin-top: 2px;';
+              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4));';
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
                   if (action) action.active = e.target.checked;
@@ -403,11 +445,12 @@
                   mainCb.dispatchEvent(new Event('change'));
               };
               
-              headerDiv.appendChild(textDiv);
-              headerDiv.appendChild(argsDiv);
-              headerDiv.appendChild(mainCb);
+              rightCol.appendChild(mainCb);
+              cardLayout.appendChild(leftCol);
+              cardLayout.appendChild(middleCol);
+              cardLayout.appendChild(rightCol);
               
-              li.insertBefore(headerDiv, li.firstChild);
+              li.insertBefore(cardLayout, li.firstChild);
               
               li.style.background = 'rgba(255, 255, 255, 0.03)';
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
@@ -439,28 +482,56 @@
               
               let cmdName = action.title || action.cmd.split(' ').slice(0, 3).join(' ');
               
-              const headerDiv = document.createElement('div');
-              headerDiv.style.display = 'flex';
-              headerDiv.style.justifyContent = 'space-between';
-              headerDiv.style.alignItems = 'flex-start';
-              headerDiv.style.width = '100%';
-              headerDiv.style.gap = '15px';
+              const cardLayout = document.createElement('div');
+              cardLayout.style.display = 'flex';
+              cardLayout.style.width = '100%';
+              cardLayout.style.justifyContent = 'space-between';
+              cardLayout.style.alignItems = 'stretch';
+              cardLayout.style.gap = '15px';
               
-              const textDiv = document.createElement('div');
-              textDiv.style.display = 'flex';
-              textDiv.style.alignItems = 'center';
-              textDiv.style.gap = '8px';
-              textDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: bold;">${cmdName}</span> <span style="color: var(--mut); font-size: 11px;">(Auto-Added)</span>`;
+              const leftCol = document.createElement('div');
+              leftCol.style.display = 'flex';
+              leftCol.style.flexDirection = 'column';
+              leftCol.style.gap = '8px';
+              leftCol.style.flex = '1';
+              
+              const titleDiv = document.createElement('div');
+              titleDiv.style.display = 'flex';
+              titleDiv.style.alignItems = 'center';
+              titleDiv.style.gap = '8px';
+              titleDiv.style.minHeight = '32px';
+              titleDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: bold;">${cmdName}</span> <span style="color: var(--mut); font-size: 11px; margin-left: auto;">(Auto-Added)</span>`;
+              
+              leftCol.appendChild(titleDiv);
+              
+              const middleCol = document.createElement('div');
+              middleCol.style.flex = '0 0 210px'; // Fixed width so leftCol is identical across cards
+              middleCol.style.display = 'flex';
+              middleCol.style.flexDirection = 'column';
+              middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.05)';
+              middleCol.style.borderRight = '1px solid rgba(255, 255, 255, 0.05)';
+              middleCol.style.padding = '0 15px';
+              middleCol.style.minWidth = '0';
+              
+              const spacer = document.createElement('div');
+              spacer.style.height = '32px';
+              spacer.style.flexShrink = '0';
+              middleCol.appendChild(spacer);
               
               parseArgs(action);
               action.active = true;
               const argsDiv = createArgsDiv(action);
+              middleCol.appendChild(argsDiv);
+              
+              const rightCol = document.createElement('div');
+              rightCol.style.display = 'flex';
+              rightCol.style.alignItems = 'center';
               
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
               mainCb.checked = true;
-              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); margin-top: 2px;';
+              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4));';
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
                   action.active = e.target.checked;
@@ -479,11 +550,12 @@
                   mainCb.dispatchEvent(new Event('change'));
               };
               
-              headerDiv.appendChild(textDiv);
-              headerDiv.appendChild(argsDiv);
-              headerDiv.appendChild(mainCb);
+              rightCol.appendChild(mainCb);
+              cardLayout.appendChild(leftCol);
+              cardLayout.appendChild(middleCol);
+              cardLayout.appendChild(rightCol);
               
-              li.appendChild(headerDiv);
+              li.appendChild(cardLayout);
               
               li.style.background = 'rgba(255, 255, 255, 0.03)';
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
@@ -521,8 +593,8 @@
        }
        
        const modalHtml = `
-          <div id="launch-modal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); animation: fadeIn 0.3s ease;">
-             <div style="background: linear-gradient(145deg, rgba(20,25,35,0.95), rgba(10,15,25,0.98)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:24px; width:72vw; max-width: 72vw; height:90vh; max-height: 90vh; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
+          <div id="launch-modal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.35); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(12px) saturate(0.7); -webkit-backdrop-filter: blur(12px) saturate(0.7); animation: fadeIn 0.3s ease;">
+             <div style="background: linear-gradient(145deg, rgba(20,25,35,0.97), rgba(10,15,25,0.99)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:24px; width:72vw; max-width: 72vw; height:90vh; max-height: 90vh; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.9), 0 0 0 1px rgba(0,255,102,0.08), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; isolation: isolate; filter: none;">
                 
                 <div style="padding:15px 25px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border-radius: 24px 24px 0 0;">
                    <h2 style="margin:0; font-size:18px; font-weight:800; color:#fff; text-shadow:0 0 15px rgba(0,255,102,0.3); display:flex; align-items:center; gap:12px;">
