@@ -379,7 +379,7 @@
               const leftCol = document.createElement('div');
               leftCol.style.display = 'flex';
               leftCol.style.flexDirection = 'column';
-              leftCol.style.gap = '8px';
+              leftCol.style.gap = '16px';
               leftCol.style.flex = '1';
               
               const titleDiv = document.createElement('div');
@@ -425,7 +425,7 @@
               middleCol.appendChild(spacer);
               
               const argsDiv = createArgsDiv(action);
-              argsDiv.style.marginTop = '8px';
+              argsDiv.style.marginTop = '16px';
               middleCol.appendChild(argsDiv);
               
               const rightCol = document.createElement('div');
