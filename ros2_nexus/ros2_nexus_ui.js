@@ -411,8 +411,16 @@
               middleCol.style.minWidth = '0';
               
               const spacer = document.createElement('div');
-              spacer.style.height = '32px'; // Matches title row
+              spacer.style.height = '32px';
               spacer.style.flexShrink = '0';
+              spacer.style.display = 'flex';
+              spacer.style.alignItems = 'center';
+              spacer.style.fontSize = '10px';
+              spacer.style.fontWeight = 'bold';
+              spacer.style.color = 'var(--mut)';
+              spacer.style.textTransform = 'uppercase';
+              spacer.style.letterSpacing = '1px';
+              spacer.innerText = 'Params/Args';
               middleCol.appendChild(spacer);
               
               const argsDiv = createArgsDiv(action);
@@ -516,6 +524,14 @@
               const spacer = document.createElement('div');
               spacer.style.height = '32px';
               spacer.style.flexShrink = '0';
+              spacer.style.display = 'flex';
+              spacer.style.alignItems = 'center';
+              spacer.style.fontSize = '10px';
+              spacer.style.fontWeight = 'bold';
+              spacer.style.color = 'var(--mut)';
+              spacer.style.textTransform = 'uppercase';
+              spacer.style.letterSpacing = '1px';
+              spacer.innerText = 'Params/Args';
               middleCol.appendChild(spacer);
               
               parseArgs(action);
