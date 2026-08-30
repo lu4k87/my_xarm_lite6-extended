@@ -460,6 +460,18 @@
               
               li.insertBefore(cardLayout, li.firstChild);
               
+              li.style.position = 'relative';
+              
+              const hrLine = document.createElement('div');
+              hrLine.style.position = 'absolute';
+              hrLine.style.top = '42px'; // 10px li padding + 32px row height
+              hrLine.style.left = '15px'; // matching li padding
+              hrLine.style.width = 'calc(100% - 70px)'; // leave room for checkbox
+              hrLine.style.height = '1px';
+              hrLine.style.background = '#fff';
+              hrLine.style.pointerEvents = 'none';
+              li.appendChild(hrLine);
+              
               li.style.background = 'rgba(255, 255, 255, 0.03)';
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
               li.style.borderRadius = '8px';
@@ -572,6 +584,18 @@
               cardLayout.appendChild(rightCol);
               
               li.appendChild(cardLayout);
+              
+              li.style.position = 'relative';
+              
+              const hrLine2 = document.createElement('div');
+              hrLine2.style.position = 'absolute';
+              hrLine2.style.top = '42px';
+              hrLine2.style.left = '15px';
+              hrLine2.style.width = 'calc(100% - 70px)';
+              hrLine2.style.height = '1px';
+              hrLine2.style.background = '#fff';
+              hrLine2.style.pointerEvents = 'none';
+              li.appendChild(hrLine2);
               
               li.style.background = 'rgba(255, 255, 255, 0.03)';
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
