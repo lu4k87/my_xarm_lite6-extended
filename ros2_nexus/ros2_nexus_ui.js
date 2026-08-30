@@ -406,8 +406,8 @@
               middleCol.style.flex = '0 0 240px'; // Fixed width so leftCol is identical across cards
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
-              middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.05)';
-              middleCol.style.borderRight = '1px solid rgba(255, 255, 255, 0.05)';
+              middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.35)';
+              middleCol.style.borderRight = '1px solid rgba(255, 255, 255, 0.35)';
               middleCol.style.padding = '0 30px';
               middleCol.style.minWidth = '0';
               
@@ -470,10 +470,37 @@
               hrLine.style.left = '15px'; // matching li padding
               hrLine.style.width = 'calc(100% - 70px)'; // leave room for checkbox
               hrLine.style.height = '1px';
-              hrLine.style.background = 'rgba(255, 255, 255, 0.05)';
+              hrLine.style.background = 'rgba(255, 255, 255, 0.35)';
               hrLine.style.pointerEvents = 'none';
               li.appendChild(hrLine);
               
+              
+              const cmdBadge1 = document.createElement('div');
+              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal"></i> CMD<div class="cmd-tooltip" style="position:absolute; bottom:120%; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:6px 10px; font-size:10px; color:#fff; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; font-family:monospace; letter-spacing:0;">${(action ? action.cmd : text).replace(/"/g, '&quot;')}</div>`;
+              cmdBadge1.style.cssText = 'position:absolute; top:12px; right:45px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; z-index:10; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
+              cmdBadge1.onmouseover = () => {
+                  cmdBadge1.style.background = 'rgba(255,255,255,0.2)';
+                  cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '1';
+              };
+              cmdBadge1.onmouseout = () => {
+                  cmdBadge1.style.background = 'rgba(0,0,0,0.5)';
+                  cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '0';
+              };
+              cmdBadge1.onclick = (e) => {
+                  e.stopPropagation();
+                  const cmdToCopy = action ? action.cmd : text;
+                  navigator.clipboard.writeText(cmdToCopy).then(() => {
+                      const icon = cmdBadge1.querySelector('i');
+                      icon.className = 'fa-solid fa-check';
+                      icon.style.color = '#00FF66';
+                      setTimeout(() => {
+                          icon.className = 'fa-solid fa-terminal';
+                          icon.style.color = '#fff';
+                      }, 1500);
+                  });
+              };
+              li.appendChild(cmdBadge1);
+
               li.style.background = 'rgba(255, 255, 255, 0.03)';
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
               li.style.borderRadius = '8px';
@@ -530,8 +557,8 @@
               middleCol.style.flex = '0 0 210px'; // Fixed width so leftCol is identical across cards
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
-              middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.05)';
-              middleCol.style.borderRight = '1px solid rgba(255, 255, 255, 0.05)';
+              middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.35)';
+              middleCol.style.borderRight = '1px solid rgba(255, 255, 255, 0.35)';
               middleCol.style.padding = '0 15px';
               middleCol.style.minWidth = '0';
               
@@ -595,10 +622,37 @@
               hrLine2.style.left = '15px';
               hrLine2.style.width = 'calc(100% - 70px)';
               hrLine2.style.height = '1px';
-              hrLine2.style.background = 'rgba(96, 165, 250, 0.35)';
+              hrLine2.style.background = 'rgba(255, 255, 255, 0.35)';
               hrLine2.style.pointerEvents = 'none';
               li.appendChild(hrLine2);
               
+              
+              const cmdBadge1 = document.createElement('div');
+              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal"></i> CMD<div class="cmd-tooltip" style="position:absolute; bottom:120%; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:6px 10px; font-size:10px; color:#fff; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; font-family:monospace; letter-spacing:0;">${(action ? action.cmd : text).replace(/"/g, '&quot;')}</div>`;
+              cmdBadge1.style.cssText = 'position:absolute; top:12px; right:45px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; z-index:10; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
+              cmdBadge1.onmouseover = () => {
+                  cmdBadge1.style.background = 'rgba(255,255,255,0.2)';
+                  cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '1';
+              };
+              cmdBadge1.onmouseout = () => {
+                  cmdBadge1.style.background = 'rgba(0,0,0,0.5)';
+                  cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '0';
+              };
+              cmdBadge1.onclick = (e) => {
+                  e.stopPropagation();
+                  const cmdToCopy = action ? action.cmd : text;
+                  navigator.clipboard.writeText(cmdToCopy).then(() => {
+                      const icon = cmdBadge1.querySelector('i');
+                      icon.className = 'fa-solid fa-check';
+                      icon.style.color = '#00FF66';
+                      setTimeout(() => {
+                          icon.className = 'fa-solid fa-terminal';
+                          icon.style.color = '#fff';
+                      }, 1500);
+                  });
+              };
+              li.appendChild(cmdBadge1);
+
               li.style.background = 'rgba(255, 255, 255, 0.03)';
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
               li.style.borderRadius = '8px';
