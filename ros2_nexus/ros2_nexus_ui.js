@@ -465,7 +465,7 @@
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
               mainCb.checked = true;
-              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4));';
+              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 18px; height: 18px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4));';
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
                   if (action) action.active = e.target.checked;
@@ -619,7 +619,7 @@
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
               mainCb.checked = true;
-              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4));';
+              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 18px; height: 18px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4));';
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
                   action.active = e.target.checked;
