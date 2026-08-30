@@ -32,14 +32,17 @@
 
 
     <nav class="tab-nav" id="tab-nav">
-      <button class="tab-btn" onclick="location.reload()" title="Reload ROS2 Nexus" style="padding: 0 15px;"><i class="fa-solid fa-arrows-rotate"></i></button>
+      <button class="tab-btn" onclick="location.reload()" title="Reload ROS2 Nexus" style="padding: 0 15px;"><i
+          class="fa-solid fa-arrows-rotate"></i></button>
       <button class="tab-btn active" data-tab="nodes"><i class="fa-solid fa-circle-nodes"></i> Nodes / Launch</button>
       <button class="tab-btn" data-tab="topic_pubs"><i class="fa-solid fa-arrow-up-from-bracket"></i> Pub MSG on
         Topic</button>
       <button class="tab-btn" data-tab="web"><i class="fa-solid fa-server"></i> Web- / Server + UI</button>
       <button class="tab-btn" data-tab="info"><i class="fa-solid fa-gauge-high"></i> ROS Info</button>
       <button class="tab-btn" data-tab="system"><i class="fa-solid fa-terminal"></i> System</button>
-      <button class="tab-btn" style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); margin-left: 10px;" onclick="killAllROS2()">
+      <button class="tab-btn"
+        style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); margin-left: 10px;"
+        onclick="killAllROS2()">
         <i class="fa-solid fa-skull"></i> KILL ALL ROS2 Processes
       </button>
     </nav>
@@ -83,7 +86,8 @@
       <div style="font-size: 12px; font-weight: 700; color: var(--mut); letter-spacing: 1px;"><i
           class="fa-solid fa-terminal" style="color: var(--accent); margin-right: 6px;"></i> TERMINAL LOGS</div>
       <div style="display: flex; gap: 8px;">
-        <i id="console-toggle-icon" class="fa-solid fa-window-maximize" style="color: var(--dim); font-size: 14px;" title="Minimieren/Wiederherstellen"></i>
+        <i id="console-toggle-icon" class="fa-solid fa-window-maximize" style="color: var(--dim); font-size: 14px;"
+          title="Minimieren/Wiederherstellen"></i>
       </div>
     </div>
     <div id="console-content"
@@ -93,7 +97,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="ros2_nexus_ui.js?v=31"></script>
-  <script src="ros2_nexus_script.js?v=22"></script>
+  <script src="ros2_nexus_script.js?v=23"></script>
 </body>
 
 </html>
