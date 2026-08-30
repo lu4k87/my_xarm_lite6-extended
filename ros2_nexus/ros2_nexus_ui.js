@@ -278,7 +278,7 @@
            argsDiv.style.display = 'flex';
            argsDiv.style.flexDirection = 'column'; // Stack vertically
            argsDiv.style.gap = '6px';
-           argsDiv.style.alignItems = 'flex-end';
+           argsDiv.style.alignItems = 'flex-start';
            argsDiv.style.marginTop = '8px';
            
            if (action && action.args.length > 0) {
