@@ -100,7 +100,7 @@
       return actions;
     }
 
-    async function runExtrasExecLegacyCam() {
+    function getExtrasExecLegacyCamActions() {
       const actions = [
         { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev", title: "MoveIt Servo (Real)" },
         { cmd: "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175", title: "MoveIt MoveGroup (Standalone/Real)" },
@@ -108,9 +108,6 @@
         { cmd: "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "Robot Control Web UI SERVER PORT: 8081" },
         { cmd: "ros2 run gaze_control_ui_tobii_glasses gaze_ui", title: "Gaze UI Node (Legacy IP Cam .124)" }
       ];
-
-      showToast(`🚀 EXTRAS EXEC (Legacy) gestartet... (${actions.length} Terminals)`);
-
       return actions;
     }
 
@@ -353,7 +350,7 @@
               </div>
             </div>
             <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="runExtrasExecLegacyCam()" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getExtrasExecLegacyCamActions(), '🚀 EXTRAS EXEC (Legacy) gestartet...')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
                     <span class="badge badge-extras"><i class="fa-solid fa-bolt"></i>EXTRAS SEQUENCE</span>
