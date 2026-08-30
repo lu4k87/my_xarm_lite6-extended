@@ -469,7 +469,7 @@
               hrLine.style.left = '15px'; // matching li padding
               hrLine.style.width = 'calc(100% - 70px)'; // leave room for checkbox
               hrLine.style.height = '1px';
-              hrLine.style.background = '#fff';
+              hrLine.style.background = 'rgba(96, 165, 250, 0.35)';
               hrLine.style.pointerEvents = 'none';
               li.appendChild(hrLine);
               
@@ -594,7 +594,7 @@
               hrLine2.style.left = '15px';
               hrLine2.style.width = 'calc(100% - 70px)';
               hrLine2.style.height = '1px';
-              hrLine2.style.background = '#fff';
+              hrLine2.style.background = 'rgba(96, 165, 250, 0.35)';
               hrLine2.style.pointerEvents = 'none';
               li.appendChild(hrLine2);
               
