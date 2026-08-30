@@ -425,6 +425,7 @@
               middleCol.appendChild(spacer);
               
               const argsDiv = createArgsDiv(action);
+              argsDiv.style.marginTop = '8px';
               middleCol.appendChild(argsDiv);
               
               const rightCol = document.createElement('div');
@@ -469,7 +470,7 @@
               hrLine.style.left = '15px'; // matching li padding
               hrLine.style.width = 'calc(100% - 70px)'; // leave room for checkbox
               hrLine.style.height = '1px';
-              hrLine.style.background = 'rgba(96, 165, 250, 0.35)';
+              hrLine.style.background = 'rgba(255, 255, 255, 0.05)';
               hrLine.style.pointerEvents = 'none';
               li.appendChild(hrLine);
               

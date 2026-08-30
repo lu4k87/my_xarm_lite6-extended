@@ -207,6 +207,23 @@
     {
       "actions": [
         {
+          "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
+          "label": "RViz Marker Launch",
+          "type": "launch"
+        },
+        {
+          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
+          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
+          "type": "node"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-chart-network",
+      "title": "Visualization (Rviz2)"
+    },
+    {
+      "actions": [
+        {
           "cmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
           "label": "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)",
           "type": "launch"
@@ -251,23 +268,6 @@
       "icon": "fa-solid fa-camera",
       "style": "break-before: column;",
       "title": "Cameras, Sensors"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
-          "label": "RViz Marker Launch",
-          "type": "launch"
-        },
-        {
-          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
-          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
-          "type": "node"
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-chart-network",
-      "title": "Visualization (Rviz2)"
     },
     {
       "actions": [],
