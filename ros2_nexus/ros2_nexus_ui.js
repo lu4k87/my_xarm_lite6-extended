@@ -374,7 +374,7 @@
               cardLayout.style.width = '100%';
               cardLayout.style.justifyContent = 'space-between';
               cardLayout.style.alignItems = 'stretch';
-              cardLayout.style.gap = '15px';
+              cardLayout.style.gap = '30px';
               
               const leftCol = document.createElement('div');
               leftCol.style.display = 'flex';
@@ -403,12 +403,12 @@
               if (ulNode) leftCol.appendChild(ulNode);
               
               const middleCol = document.createElement('div');
-              middleCol.style.flex = '0 0 210px'; // Fixed width so leftCol is identical across cards
+              middleCol.style.flex = '0 0 240px'; // Fixed width so leftCol is identical across cards
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
               middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.05)';
               middleCol.style.borderRight = '1px solid rgba(255, 255, 255, 0.05)';
-              middleCol.style.padding = '0 15px';
+              middleCol.style.padding = '0 30px';
               middleCol.style.minWidth = '0';
               
               const spacer = document.createElement('div');
