@@ -259,7 +259,7 @@
           "type": "node"
         },
         {
-          "cmd": "ros2 run web_video_server web_video_server --ros-args -p port:=8082",
+          "cmd": "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
           "label": "Web Video Server (Port 8082)",
           "type": "node"
         }
@@ -358,17 +358,17 @@
           "type": "launch"
         },
         {
-          "cmd": "python3 -m http.server 8080 -d src/dashboard_monitoring & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
+          "cmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080 & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
           "label": "Dashboard Monitoring (Port 8080)",
           "type": "node"
         },
         {
-          "cmd": "python3 -m http.server 8081 -d src/robot_control_web_ui & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
+          "cmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
           "label": "Robot Control Web UI (Port 8081)",
           "type": "node"
         },
         {
-          "cmd": "python3 src/dashboard_monitoring/workspace_analyzer.py",
+          "cmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
           "label": "Workspace Analyzer",
           "type": "node"
         }
