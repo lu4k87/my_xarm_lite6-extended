@@ -400,7 +400,10 @@
               });
               
               leftCol.appendChild(titleDiv);
-              if (ulNode) leftCol.appendChild(ulNode);
+              if (ulNode) {
+                  ulNode.style.marginLeft = '20px';
+                  leftCol.appendChild(ulNode);
+              }
               
               const middleCol = document.createElement('div');
               middleCol.style.flex = '0 0 240px'; // Fixed width so leftCol is identical across cards
@@ -427,8 +430,10 @@
               argsDiv.style.marginTop = '16px';
               middleCol.appendChild(argsDiv);
               
+              const rawCmdData = li.getAttribute('data-raw-cmd');
+              const cmdToDisplay = rawCmdData ? rawCmdData : (action ? action.cmd : text);
               const cmdBadge1 = document.createElement('div');
-              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal"></i> CMD<div class="cmd-tooltip" style="position:absolute; top:-30px; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:6px 10px; font-size:10px; color:#fff; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; font-family:monospace; letter-spacing:0;">${(action ? action.cmd : text).replace(/"/g, '&quot;')}</div>`;
+              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal"></i> CMD<div class="cmd-tooltip" style="position:absolute; top:-30px; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:8px 12px; font-size:10px; color:#fff; white-space:pre-wrap; overflow-wrap:break-word; width:350px; text-align:left; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; font-family:monospace; letter-spacing:0; line-height:1.3;">${cmdToDisplay.replace(/"/g, '&quot;')}</div>`;
               cmdBadge1.style.cssText = 'position:relative; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
               cmdBadge1.onmouseover = () => {
                   cmdBadge1.style.background = 'rgba(255,255,255,0.2)';
@@ -440,7 +445,7 @@
               };
               cmdBadge1.onclick = (e) => {
                   e.stopPropagation();
-                  const cmdToCopy = action ? action.cmd : text;
+                  const cmdToCopy = rawCmdData ? rawCmdData : (action ? action.cmd : text);
                   navigator.clipboard.writeText(cmdToCopy).then(() => {
                       const icon = cmdBadge1.querySelector('i');
                       icon.className = 'fa-solid fa-check';
@@ -482,19 +487,39 @@
                   mainCb.dispatchEvent(new Event('change'));
               };
               
-              titleDiv.insertBefore(mainCb, titleDiv.firstChild);
               cardLayout.appendChild(leftCol);
               cardLayout.appendChild(middleCol);
+              cardLayout.style.flex = '1';
+              cardLayout.style.minWidth = '0'; // Prevent overflow
+
+              const liInnerWrapper = document.createElement('div');
+              liInnerWrapper.style.display = 'flex';
+              liInnerWrapper.style.alignItems = 'center'; // Vertically center!
+              liInnerWrapper.style.width = '100%';
               
-              li.insertBefore(cardLayout, li.firstChild);
+              const cbContainer = document.createElement('div');
+              cbContainer.style.display = 'flex';
+              cbContainer.style.alignItems = 'center';
+              cbContainer.style.justifyContent = 'center';
+              cbContainer.style.width = '40px';
+              cbContainer.style.flexShrink = '0';
+              
+              mainCb.style.marginRight = '0';
+              mainCb.style.marginLeft = '0';
+              cbContainer.appendChild(mainCb);
+              
+              liInnerWrapper.appendChild(cbContainer);
+              liInnerWrapper.appendChild(cardLayout);
+              
+              li.insertBefore(liInnerWrapper, li.firstChild);
               
               li.style.position = 'relative';
               
               const hrLine = document.createElement('div');
               hrLine.style.position = 'absolute';
               hrLine.style.top = '42px'; // 10px li padding + 32px row height
-              hrLine.style.left = '15px'; // matching li padding
-              hrLine.style.width = 'calc(100% - 70px)'; // leave room for checkbox
+              hrLine.style.left = '55px'; // 15px li padding + 40px cb width
+              hrLine.style.width = 'calc(100% - 110px)';
               hrLine.style.height = '1px';
               hrLine.style.background = 'rgba(255, 255, 255, 0.35)';
               hrLine.style.pointerEvents = 'none';
@@ -512,6 +537,27 @@
               
               li.onmouseover = () => { li.style.background = 'rgba(255, 255, 255, 0.08)'; li.style.transform = 'translateX(5px)'; li.style.borderColor = 'rgba(0, 255, 102, 0.3)'; };
               li.onmouseout = () => { li.style.background = 'rgba(255, 255, 255, 0.03)'; li.style.transform = 'translateX(0)'; li.style.borderColor = 'rgba(255, 255, 255, 0.08)'; };
+              
+              let descText = 'Details zur Node / zum Launch-File';
+              const rightSpan = Array.from(titleDiv.children).find(n => n.tagName === 'SPAN' && (n.style.marginLeft === 'auto' || n.style.float === 'right'));
+              if (rightSpan) {
+                  descText = rightSpan.textContent.replace(/^\(|\)$/g, '').trim();
+              } else if (action && action.title) {
+                  descText = action.title;
+              }
+              
+              const infoBadge = document.createElement('div');
+              infoBadge.innerHTML = `<i class="fa-solid fa-info"></i><div class="info-tooltip" style="position:absolute; top:25px; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:8px 12px; font-size:11px; color:#fff; white-space:normal; width:max-content; max-width:250px; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; line-height:1.4;">${descText.replace(/"/g, '&quot;')}</div>`;
+              infoBadge.style.cssText = 'position:absolute; top:10px; right:10px; width:18px; height:18px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; cursor:default; transition:all 0.2s; border:1px solid rgba(255,255,255,0.2); z-index:10;';
+              infoBadge.onmouseover = () => {
+                  infoBadge.style.background = 'rgba(255,255,255,0.3)';
+                  infoBadge.querySelector('.info-tooltip').style.opacity = '1';
+              };
+              infoBadge.onmouseout = () => {
+                  infoBadge.style.background = 'rgba(255,255,255,0.1)';
+                  infoBadge.querySelector('.info-tooltip').style.opacity = '0';
+              };
+              li.appendChild(infoBadge);
               
               // Preserve original inline styles for nested elements from CMD_DETAILS
           });
@@ -664,6 +710,25 @@
               li.onmouseover = () => { li.style.background = 'rgba(255, 255, 255, 0.08)'; li.style.transform = 'translateX(5px)'; li.style.borderColor = 'rgba(0, 255, 102, 0.3)'; };
               li.onmouseout = () => { li.style.background = 'rgba(255, 255, 255, 0.03)'; li.style.transform = 'translateX(0)'; li.style.borderColor = 'rgba(255, 255, 255, 0.08)'; };
               
+              let descText2 = action.title || cmdName || 'Details zur Node / zum Launch-File';
+              const rightSpan2 = Array.from(titleDiv.children).find(n => n.tagName === 'SPAN' && (n.style.marginLeft === 'auto' || n.style.float === 'right'));
+              if (rightSpan2) {
+                  descText2 = rightSpan2.textContent.replace(/^\(|\)$/g, '').trim();
+              }
+              
+              const infoBadge2 = document.createElement('div');
+              infoBadge2.innerHTML = `<i class="fa-solid fa-info"></i><div class="info-tooltip" style="position:absolute; top:25px; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:8px 12px; font-size:11px; color:#fff; white-space:normal; width:max-content; max-width:250px; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; line-height:1.4;">${descText2.replace(/"/g, '&quot;')}</div>`;
+              infoBadge2.style.cssText = 'position:absolute; top:10px; right:10px; width:18px; height:18px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; cursor:default; transition:all 0.2s; border:1px solid rgba(255,255,255,0.2); z-index:10;';
+              infoBadge2.onmouseover = () => {
+                  infoBadge2.style.background = 'rgba(255,255,255,0.3)';
+                  infoBadge2.querySelector('.info-tooltip').style.opacity = '1';
+              };
+              infoBadge2.onmouseout = () => {
+                  infoBadge2.style.background = 'rgba(255,255,255,0.1)';
+                  infoBadge2.querySelector('.info-tooltip').style.opacity = '0';
+              };
+              li.appendChild(infoBadge2);
+              
               topUl.appendChild(li);
           });
 
@@ -767,7 +832,11 @@
     window.checkStatus = checkStatus;
 
     // ─── CLICK SOUND ──────────────────────────────────────────────────────────────
-    const uiClickSound = new Audio('ui_mouse_click.mp3');
+    function playClickSound() {
+        const sound = new Audio('ui_mouse_click.mp3');
+        sound.volume = 0.5;
+        sound.play().catch(err => console.warn('Audio play failed:', err));
+    }
 
     document.addEventListener('click', function(e) {
       const isClickable = e.target.closest('button') || 
@@ -777,19 +846,18 @@
                           e.target.closest('a') || 
                           e.target.closest('#console-toggle-icon') ||
                           e.target.closest('div[onclick]') ||
-                          e.target.closest('label'); // for checkbox labels if they are clicked
+                          e.target.closest('label') ||
+                          e.target.closest('li'); // for popup action cards
       
       // Checkboxes have their own change listener, but if we clicked a label or other clickable
       if (isClickable && e.target.type !== 'checkbox') {
-        uiClickSound.currentTime = 0;
-        uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
+        playClickSound();
       }
     });
 
     document.addEventListener('change', function(e) {
       if (e.target.type === 'checkbox' || e.target.type === 'radio') {
-        uiClickSound.currentTime = 0;
-        uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
+        playClickSound();
       }
     });
 
