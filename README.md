@@ -2040,6 +2040,10 @@ dev_ws/
 │ │ ├── dashboard_index.html                                               # Main dashboard UI
 │ │ ├── dashboard_script_*.js                                              # 8 modular frontend logic scripts
 │ │ └── dashboard_style.css                                                # Dashboard UI styling
+│ ├── http_robot_control_ui_p8081/                                         # 🎮 Python/JS: Standalone Robot Control Web App
+│ ├── vr_quest3_teleop/                                                    # 🥽 Python/JS: Meta Quest 3 WebXR Teleoperation
+│ │ ├── https_vr_webxr_p8443/                                              # WebXR HTTPS Server & UI
+│ │ └── vr_quest3_teleop_node.py                                           # VR Controller to MoveIt Servo Bridge
 │ ├── xarm_ros2/                                                           # 🤖 Official xArm ROS 2 packages (submodule)
 │ │ └── xarm_moveit_servo/
 │ │ └── src/
