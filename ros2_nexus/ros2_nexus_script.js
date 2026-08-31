@@ -142,7 +142,7 @@
         'ros2_control_node', 'component_container', 'spawner', 'spawner ×2',
         'rviz2', 'joint_state_publisher', 'static_tf2_broadcaster',
         'static_transform_publisher', 'move_group', 'octomap_server_node',
-        'rosbridge_websocket.py', 'rosapi_node.py', 'joy_node', 'web_video_server', 'rviz_streamer_node'
+        'rosbridge_websocket.py', 'rosapi_node.py', 'joy_node', 'web_video_server'
     ];
 
     function injectOptBadges(htmlStr) {
