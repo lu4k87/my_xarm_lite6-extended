@@ -40,6 +40,7 @@ This repository is a continuously evolving research and evaluation platform for 
 4. [🕹️ Multimodal Technologies & Interaction Concepts](#4-️-multimodal-technologies--interaction-concepts)
    - [4.1 Robot Control Methods (Inputs)](#41-robot-control-methods-inputs)
    - [4.2 Perception & Assistance](#42-perception--assistance)
+   - [4.3 VLA & Video Action Models (Planned)](#43-vla--video-action-models-planned)
    - [4.4 User Interfaces (UI/GUI)](#44-user-interfaces-uigui)
 5. [🎮 Gamepad Control — Deep Dive](#5--gamepad-control--deep-dive)
    - [5.1 Pipeline Architecture](#51-pipeline-architecture)
@@ -1153,7 +1154,7 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>[`/src/rosbridge_suite/rosbridge_server`](./src/rosbridge_suite/rosbridge_server)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>[`/opt/ros/humble/share/rosbridge_server`](https://github.com/RobotWebTools/rosbridge_suite)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -1275,7 +1276,7 @@ stateDiagram-v2
 ---
 <br>
 
-### VLA & Video Action Models (Planned)
+### 4.3 VLA & Video Action Models (Planned)
 > AI-assisted action planning through *Vision-Language-Action* models.
 
 

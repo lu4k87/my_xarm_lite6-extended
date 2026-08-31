@@ -40,6 +40,7 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
 4. [🕹️ Multimodale Technologien & Interaktionskonzepte](#4-️-multimodale-technologien--interaktionskonzepte)
    - [4.1 Roboter-Steuerungsarten (Inputs)](#41-roboter-steuerungsarten-inputs)
    - [4.2 Sensorik & Assistenz (Perception)](#42-sensorik--assistenz-perception)
+   - [4.3 VLA & Video Action Models (Geplant)](#43-vla--video-action-models-geplant)
    - [4.4 User Interfaces (UI/GUI)](#44-user-interfaces-uigui)
 5. [🎮 Gamepad-Steuerung — Technische Tiefenanalyse](#5--gamepad-steuerung--technische-tiefenanalyse)
    - [5.1 Pipeline-Architektur](#51-pipeline-architektur)
@@ -1180,7 +1181,7 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>[`/src/rosbridge_suite/rosbridge_server`](./src/rosbridge_suite/rosbridge_server)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>[`/opt/ros/humble/share/rosbridge_server`](https://github.com/RobotWebTools/rosbridge_suite)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -1315,7 +1316,7 @@ stateDiagram-v2
 
 <br>
 
-### VLA & Video Action Models (Geplant)
+### 4.3 VLA & Video Action Models (Geplant)
 KI-gestützte Handlungsplanung durch *Vision-Language-Action* Modelle.
 
 
