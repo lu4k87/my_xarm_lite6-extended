@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', ['launch/vr_quest3_teleop.launch.py']),
-        ('share/' + package_name + '/driver_script', ['driver_script/https_server.py', 'driver_script/controller_reader.html']),
+        ('share/' + package_name + '/https_vr_webxr_p8443', ['https_vr_webxr_p8443/https_vr_webxr_p8443.py', 'https_vr_webxr_p8443/controller_reader.html']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
