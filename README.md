@@ -933,7 +933,7 @@ stateDiagram-v2
 > ```
 >
 > **Purpose & Task:** Provides immersive 6DoF Cartesian teleoperation using the Meta Quest 3 VR headset. Translates the right VR controller's spatial movements via WebXR into smooth `TwistStamped` velocity commands for MoveIt Servo.
-> - Uses a web-based local UI (`https_server.py`) served via HTTPS on port 8443, tunneled via ADB port forwarding directly into the VR browser.
+> - Uses a web-based local UI served via HTTPS on port 8443 (from the `https_vr_webxr_p8443` package), tunneled via ADB port forwarding directly into the VR browser.
 > - The launch file **automatically starts its own ROSbridge instance** (killing any conflict first) — no separate ROSbridge button needed.
 > - **Grip Trigger (middle finger):** Acts as a "clutch". Holding it maps the controller's exact positional delta to the robot's end effector.
 > - **Index Trigger (index finger):** Toggles the vacuum gripper.
@@ -1829,6 +1829,10 @@ To run the complete system with both web interfaces (Nexus and Dashboard), three
 | **`9090`** | **ROS Bridge** | WebSocket | *The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) and the Robot Control Web UI (Port 8081) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services.* |
 
 **Why strict port separation?** Ports 8080 and 9090 serve fundamentally different purposes and protocols. Port 8080 (HTTP) acts as a standard web server to deliver the static UI files (HTML/CSS) to the browser. Port 9090 (WebSocket via `rosbridge`) is a highly specialized data broker that exclusively streams live ROS telemetry and lacks the capability to serve web pages. Port 5000 (Flask) provides Nexus Web Backend business logic independent of ROS.
+
+**Native ROS 2 Server vs. Static Python Web Server:**
+- **Native ROS 2 Server (`ros2 run web_video_server ...`):** This is a native C++ ROS 2 node. It must hook directly into the ROS network (subscribing to topics via `image_transport`) to receive raw camera images, compress them in real-time (e.g., as an MJPEG stream), and then serve them via HTTP. Because it directly processes ROS data in the backend, it must run natively as a ROS 2 node.
+- **Static Python File Server (`python3 -m http.server ...`):** In contrast, the UIs (`http_robot_control_ui_p8081` and `http_dashboard_monitoring_p8080`) are pure frontend web applications (HTML, CSS, JS). The Python backend serving these files does *not* speak ROS; it is a lightweight, standard "dumb" file server that merely hosts the directory so the browser can access it. All actual ROS communication happens exclusively *in the browser of the client* (using JavaScript and `roslibjs`) via the WebSocket on Port 9090. This separation ensures the backend remains simple, without requiring complex ROS dependencies for UI hosting.
 
 ---
 <br>
