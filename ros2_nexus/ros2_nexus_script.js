@@ -137,7 +137,26 @@
       kill: { cls: "badge-kill", icon: "fa-solid fa-skull-crossbones", label: "KILL" },
     };
 
-    
+    const OPT_NODES = [
+        'robot_state_publisher', 'servo_node', 'joy_to_servo_node',
+        'ros2_control_node', 'component_container', 'spawner', 'spawner ×2',
+        'rviz2', 'joint_state_publisher', 'static_tf2_broadcaster',
+        'static_transform_publisher', 'move_group', 'octomap_server_node',
+        'rosbridge_websocket.py', 'rosapi_node.py', 'joy_node', 'web_video_server', 'rviz_streamer_node'
+    ];
+
+    function injectOptBadges(htmlStr) {
+        let res = htmlStr;
+        OPT_NODES.forEach(nodeName => {
+            const escapedNode = nodeName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex1 = new RegExp(`(NODE<\\/span>)(<span style="color: var\\(--c-node\\);">(?:&nbsp;|\\s)*)(${escapedNode})(<\\/span>)`, 'g');
+            const regex2 = new RegExp(`(SERVER<\\/span>)(<span style="color: var\\(--c-cmd\\);">(?:&nbsp;|\\s)*)(${escapedNode})(<\\/span>)`, 'g');
+            res = res.replace(regex1, `$1<span class="badge badge-opt" style="margin-right: 6px; padding: 2px 4px; font-size: 8.5px;">OPT</span>$2$3$4`);
+            res = res.replace(regex2, `$1<span class="badge badge-opt" style="margin-right: 6px; padding: 2px 4px; font-size: 8.5px;">OPT</span>$2$3$4`);
+        });
+        return res;
+    }
+
     function buildExpandedTooltip(actions) {
        let html = `<ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">`;
        actions.forEach(a => {
@@ -459,6 +478,10 @@
           } else {
              tooltipHtml = `<div class="card-tooltip-cmd">${a.cmd}</div>`;
           }
+          }
+          
+          if (tooltipHtml) {
+              tooltipHtml = injectOptBadges(tooltipHtml);
           }
           
           html += `
