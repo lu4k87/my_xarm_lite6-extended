@@ -7,11 +7,11 @@ import os
 
 def generate_launch_description():
     pkg_dir = get_package_share_directory('vr_quest3_teleop')
-    driver_script_path = os.path.join(pkg_dir, 'driver_script', 'https_vr_webxr_p8443.py')
+    driver_script_path = os.path.join(pkg_dir, 'driver_script', 'https_server.py')
     
     # Kill any existing https_server to avoid port conflicts (8443)
     kill_existing = ExecuteProcess(
-        cmd=['bash', '-c', 'pkill -9 -f https_vr_webxr_p8443.py || true'],
+        cmd=['bash', '-c', 'pkill -9 -f https_server.py || true'],
         output='screen'
     )
 
