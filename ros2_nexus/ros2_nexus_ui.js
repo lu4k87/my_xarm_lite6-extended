@@ -319,10 +319,10 @@
           topUl.style.listStyle = 'none';
           topUl.style.padding = '0';
           topUl.style.margin = '0 auto';
-          topUl.style.width = '70%';
+          topUl.style.width = '85%';
           
           const selectAllDiv = document.createElement('div');
-          selectAllDiv.style.cssText = 'display:flex; justify-content:flex-end; align-items:center; margin:0 auto -5px auto; padding-right:5px; width:70%;';
+          selectAllDiv.style.cssText = 'display:flex; justify-content:flex-end; align-items:center; margin:0 auto -5px auto; padding-right:5px; width:85%;';
           const selectAllLabel = document.createElement('label');
           selectAllLabel.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:12px; color:var(--mut); cursor:pointer; font-weight:bold; letter-spacing:1px; text-transform:uppercase;';
           const selectAllCb = document.createElement('input');
@@ -407,7 +407,6 @@
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
               middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.35)';
-              middleCol.style.borderRight = '1px solid rgba(255, 255, 255, 0.35)';
               middleCol.style.padding = '0 30px';
               middleCol.style.minWidth = '0';
               
@@ -428,17 +427,9 @@
               argsDiv.style.marginTop = '16px';
               middleCol.appendChild(argsDiv);
               
-              const rightCol = document.createElement('div');
-              rightCol.style.display = 'flex';
-              rightCol.style.flexDirection = 'column';
-              rightCol.style.alignItems = 'flex-end';
-              rightCol.style.justifyContent = 'center';
-              rightCol.style.position = 'relative';
-              rightCol.style.minWidth = '45px';
-              
               const cmdBadge1 = document.createElement('div');
               cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal"></i> CMD<div class="cmd-tooltip" style="position:absolute; top:-30px; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:6px 10px; font-size:10px; color:#fff; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; font-family:monospace; letter-spacing:0;">${(action ? action.cmd : text).replace(/"/g, '&quot;')}</div>`;
-              cmdBadge1.style.cssText = 'position:absolute; top:-2px; right:0; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
+              cmdBadge1.style.cssText = 'position:relative; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
               cmdBadge1.onmouseover = () => {
                   cmdBadge1.style.background = 'rgba(255,255,255,0.2)';
                   cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '1';
@@ -460,13 +451,19 @@
                       }, 1500);
                   });
               };
-              rightCol.appendChild(cmdBadge1);
+              cmdBadge1.style.marginLeft = '8px';
+              const autoMarginNode = Array.from(titleDiv.children).find(n => n.style && n.style.marginLeft === 'auto');
+              if (autoMarginNode) {
+                  titleDiv.insertBefore(cmdBadge1, autoMarginNode);
+              } else {
+                  titleDiv.appendChild(cmdBadge1);
+              }
               
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
               mainCb.checked = true;
-              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 18px; height: 18px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4));';
+              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 18px; height: 18px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); margin-right: 10px; margin-left: 4px;';
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
                   if (action) action.active = e.target.checked;
@@ -485,10 +482,9 @@
                   mainCb.dispatchEvent(new Event('change'));
               };
               
-              rightCol.appendChild(mainCb);
+              titleDiv.insertBefore(mainCb, titleDiv.firstChild);
               cardLayout.appendChild(leftCol);
               cardLayout.appendChild(middleCol);
-              cardLayout.appendChild(rightCol);
               
               li.insertBefore(cardLayout, li.firstChild);
               
@@ -561,7 +557,6 @@
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
               middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.35)';
-              middleCol.style.borderRight = '1px solid rgba(255, 255, 255, 0.35)';
               middleCol.style.padding = '0 15px';
               middleCol.style.minWidth = '0';
               
@@ -583,17 +578,9 @@
               const argsDiv = createArgsDiv(action);
               middleCol.appendChild(argsDiv);
               
-              const rightCol = document.createElement('div');
-              rightCol.style.display = 'flex';
-              rightCol.style.flexDirection = 'column';
-              rightCol.style.alignItems = 'flex-end';
-              rightCol.style.justifyContent = 'center';
-              rightCol.style.position = 'relative';
-              rightCol.style.minWidth = '45px';
-              
               const cmdBadge1 = document.createElement('div');
               cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal"></i> CMD<div class="cmd-tooltip" style="position:absolute; top:-30px; right:0; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:6px 10px; font-size:10px; color:#fff; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:100; font-family:monospace; letter-spacing:0;">${(action ? action.cmd : text).replace(/"/g, '&quot;')}</div>`;
-              cmdBadge1.style.cssText = 'position:absolute; top:-2px; right:0; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
+              cmdBadge1.style.cssText = 'position:relative; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
               cmdBadge1.onmouseover = () => {
                   cmdBadge1.style.background = 'rgba(255,255,255,0.2)';
                   cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '1';
@@ -615,13 +602,19 @@
                       }, 1500);
                   });
               };
-              rightCol.appendChild(cmdBadge1);
+              cmdBadge1.style.marginLeft = '8px';
+              const autoMarginNode2 = Array.from(titleDiv.children).find(n => n.style && n.style.marginLeft === 'auto');
+              if (autoMarginNode2) {
+                  titleDiv.insertBefore(cmdBadge1, autoMarginNode2);
+              } else {
+                  titleDiv.appendChild(cmdBadge1);
+              }
               
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
               mainCb.checked = true;
-              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 18px; height: 18px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4));';
+              mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 18px; height: 18px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); margin-right: 10px; margin-left: 4px;';
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
                   action.active = e.target.checked;
@@ -640,10 +633,9 @@
                   mainCb.dispatchEvent(new Event('change'));
               };
               
-              rightCol.appendChild(mainCb);
+              titleDiv.insertBefore(mainCb, titleDiv.firstChild);
               cardLayout.appendChild(leftCol);
               cardLayout.appendChild(middleCol);
-              cardLayout.appendChild(rightCol);
               
               li.appendChild(cardLayout);
               
