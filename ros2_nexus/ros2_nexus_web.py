@@ -136,6 +136,10 @@ def ui_script():
 def icon():
     return send_from_directory(BASE_DIR, "ros2_nexus_icon.png")
 
+@app.route("/ui_mouse_click.mp3")
+def click_sound():
+    return send_from_directory(BASE_DIR, "ui_mouse_click.mp3")
+
 
 @app.route("/api/ping")
 def ping():

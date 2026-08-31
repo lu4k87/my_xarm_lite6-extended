@@ -60,13 +60,13 @@
     function connectROS() {
         if (ros) try { ros.close(); } catch(e){}
         const host = (window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1';
-        const rosUrl = 'ws://' + host + ':9090';
+        const rosUrl = 'ws://' + host + ':9091';
         log('Connecting ROS to ' + rosUrl + '...');
-        setS('s-ros', 'Connecting (' + host + ':9090)...', 'warn');
+        setS('s-ros', 'Connecting (' + host + ':9091)...', 'warn');
         ros = new ROSLIB.Ros({ url: rosUrl });
         ros.on('connection', () => {
             reconnectN = 0; clearTimeout(reconnectTimer);
-            setS('s-ros','Connected ✅ (' + host + ':9090)','ok');
+            setS('s-ros','Connected ✅ (' + host + ':9091)','ok');
             vrTopic = new ROSLIB.Topic({ ros, name: '/vr_teleop/controller_data', messageType: 'std_msgs/String' });
             checkXR();
         });

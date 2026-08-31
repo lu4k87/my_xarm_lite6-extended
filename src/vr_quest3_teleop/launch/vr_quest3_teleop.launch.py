@@ -9,14 +9,14 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('vr_quest3_teleop')
     driver_script_path = os.path.join(pkg_dir, 'driver_script', 'https_server.py')
     
-    # Kill any existing rosbridge or https_server to avoid port conflicts (8443 / 9090)
+    # Kill any existing https_server to avoid port conflicts (8443)
     kill_existing = ExecuteProcess(
-        cmd=['bash', '-c', 'pkill -9 -f rosbridge_websocket || true; pkill -9 -f https_server.py || true'],
+        cmd=['bash', '-c', 'pkill -9 -f https_server.py || true'],
         output='screen'
     )
 
-    adb_rev_9090 = ExecuteProcess(
-        cmd=['adb', 'reverse', 'tcp:9090', 'tcp:9090'],
+    adb_rev_9091 = ExecuteProcess(
+        cmd=['adb', 'reverse', 'tcp:9091', 'tcp:9091'],
         output='screen'
     )
     
@@ -28,7 +28,8 @@ def generate_launch_description():
     rosbridge = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(
             os.path.join(get_package_share_directory('rosbridge_server'), 'launch', 'rosbridge_websocket_launch.xml')
-        )
+        ),
+        launch_arguments={'port': '9091'}.items()
     )
 
     https_server = ExecuteProcess(
@@ -45,7 +46,7 @@ def generate_launch_description():
     
     return LaunchDescription([
         kill_existing,
-        adb_rev_9090,
+        adb_rev_9091,
         adb_rev_8443,
         TimerAction(
             period=1.5,
