@@ -1194,11 +1194,11 @@ stateDiagram-v2
 
 <br>
 
-#### ![Web App](https://img.shields.io/badge/Web_App-E34F26?style=flat-square&logo=html5&logoColor=white) `robot_control_web_ui`
+#### ![Web App](https://img.shields.io/badge/Web_App-E34F26?style=flat-square&logo=html5&logoColor=white) `http_robot_control_ui_p8081`
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> python3 -m http.server 8081 -d src/robot_control_web_ui
+> python3 -m http.server 8081 -d src/http_robot_control_ui_p8081
 > ```
 >
 > **Zweck & Aufgabe:** Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorphism-Designsprache. Fungiert als multimodales Dashboard und spiegelt das RViz Control Panel für die Remote-Bedienung. Läuft auf **Port 8081**.
@@ -1994,8 +1994,8 @@ Verbindet sich über WebSocket (`rosbridge_server` on Port 9090) mit dem ROS-Net
 
 ### 8.3 Startbefehle der UI-Komponenten
 *Starte diese Komponenten über ROS 2 Nexus oder manuell über das Terminal:*
-- **Workspace Analyzer Backend:** `python3 src/dashboard_monitoring/workspace_analyzer.py`
-- **Webserver:** `python3 -m http.server 8080 -d src/dashboard_monitoring`
+- **Workspace Analyzer Backend:** `python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py`
+- **Webserver:** `python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080`
 * *(Dashboard erreichbar unter: `http://localhost:8080/dashboard_index.html`)*
 
 
@@ -2061,7 +2061,7 @@ dev_ws/
 │ │     ├── rviz_3d_scene_objects.py                                # Generiert Safety-Zones & Hindernisse
 │ │     └── zed_stand_publisher.py                                             # Generiert das ZED 3D-Mesh & Kamerastativ
 │ ├── voice_command_listener/                                              # 🗣️ Python: Intent-Parser & Filter
-│ ├── dashboard_monitoring/                                                # 📊 Python/JS: Workspace Analyzer & Dashboard
+│ ├── http_dashboard_monitoring_p8080/                                                # 📊 Python/JS: Workspace Analyzer & Dashboard
 │ │ ├── workspace_analyzer.py                                              # Haupt-ROS 2-Node (Pub/Sub & Topologie)
 │ │ ├── workspace_parser.py                                                # Statische Code-Analyse (Regex)
 │ │ ├── system_utils.py                                                    # Umgebungsvariablen-Parsing

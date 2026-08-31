@@ -1167,11 +1167,11 @@ stateDiagram-v2
 
 <br>
 
-#### ![Web App](https://img.shields.io/badge/Web_App-E34F26?style=flat-square&logo=html5&logoColor=white) `robot_control_web_ui`
+#### ![Web App](https://img.shields.io/badge/Web_App-E34F26?style=flat-square&logo=html5&logoColor=white) `http_robot_control_ui_p8081`
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> python3 -m http.server 8081 -d src/robot_control_web_ui
+> python3 -m http.server 8081 -d src/http_robot_control_ui_p8081
 > ```
 >
 > **Purpose & Task:** A native-feeling, standalone Chrome Web App designed with a modern Glassmorphism aesthetic. It acts as a comprehensive multimodal dashboard directly replicating the RViz control panel features for remote operation. Operates on **Port 8081**.
@@ -1963,8 +1963,8 @@ Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The
 
 ### 8.3 Launch Commands for UI Components
 *Launch these components via ROS 2 Nexus, or manually via terminal:*
-- **Workspace Analyzer Backend:** `python3 src/dashboard_monitoring/workspace_analyzer.py`
-- **Web Server:** `python3 -m http.server 8080 -d src/dashboard_monitoring`
+- **Workspace Analyzer Backend:** `python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py`
+- **Web Server:** `python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080`
 * *(Dashboard accessible at: `http://localhost:8080/dashboard_index.html`)*
 
 
@@ -2029,7 +2029,7 @@ dev_ws/
 │ ├── rviz_robot_control_panel/                                            # 🖥️ C++: RViz2 2D Control Panel Plugin
 │ │ └── src/rviz_robot_control_panel.cpp
 │ ├── voice_command_listener/                                              # 🗣️ Python: Intent parser & filter
-│ ├── dashboard_monitoring/                                                # 📊 Python/JS: Workspace analyzer & Dashboard
+│ ├── http_dashboard_monitoring_p8080/                                                # 📊 Python/JS: Workspace analyzer & Dashboard
 │ │ ├── workspace_analyzer.py                                              # Main ROS 2 Node (Pub/Sub & Topology)
 │ │ ├── workspace_parser.py                                                # Static code analysis (Regex)
 │ │ ├── system_utils.py                                                    # Environment parsing (bashrc cache)
