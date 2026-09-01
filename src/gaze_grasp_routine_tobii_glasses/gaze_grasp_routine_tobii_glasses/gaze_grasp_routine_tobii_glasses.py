@@ -229,7 +229,22 @@ class TobiiYoloToGraspRoutine(Node):
                         # In idle or moving-to-scene state, show raw image with status
                         disp = eef_img.copy()
                         _, _, _, big_disp = self.detect_and_draw_aruco(disp, draw=True, scale_factor=1.8)
-                        cv2.putText(big_disp, "EEF Camera Stream Active", (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
+                        
+                        # Run YOLO on the idle EEF frame for live debugging
+                        results = self.yolo_model(disp, conf=0.7, verbose=False)
+                        for result in results:
+                            for box in result.boxes:
+                                cls_id = int(box.cls[0])
+                                class_name = result.names[cls_id]
+                                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                                conf = float(box.conf[0])
+                                
+                                # Scale YOLO boxes for drawing
+                                sx1, sy1, sx2, sy2 = int(x1*1.8), int(y1*1.8), int(x2*1.8), int(y2*1.8)
+                                cv2.rectangle(big_disp, (sx1, sy1), (sx2, sy2), (255, 100, 100), 2, cv2.LINE_AA)
+                                cv2.putText(big_disp, f"{class_name} {conf:.2f}", (sx1, sy1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+                        
+                        cv2.putText(big_disp, "EEF Camera Stream Active (YOLO ON)", (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
                         self.last_eef_debug_frame = big_disp
             except Exception:
                 pass
