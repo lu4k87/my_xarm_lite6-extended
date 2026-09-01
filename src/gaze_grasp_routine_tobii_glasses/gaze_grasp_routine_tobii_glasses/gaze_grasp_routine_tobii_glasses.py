@@ -231,7 +231,7 @@ class TobiiYoloToGraspRoutine(Node):
                         _, _, _, big_disp = self.detect_and_draw_aruco(disp, draw=True, scale_factor=1.8)
                         
                         # Run YOLO on the idle EEF frame for live debugging
-                        results = self.yolo_model(disp, conf=0.7, verbose=False)
+                        results = self.yolo_model(disp, conf=0.4, verbose=False)
                         for result in results:
                             for box in result.boxes:
                                 cls_id = int(box.cls[0])
@@ -266,7 +266,7 @@ class TobiiYoloToGraspRoutine(Node):
             cv2.circle(frame_copy, (g_x, g_y), 4, (255, 255, 255), -1)
             
         # Pass the clean frame without any drawings to YOLO
-        results = self.yolo_model(self.last_valid_frame, conf=0.7, verbose=False)
+        results = self.yolo_model(self.last_valid_frame, conf=0.4, verbose=False)
         
         target_class = None
         min_dist = float('inf')
@@ -374,7 +374,7 @@ class TobiiYoloToGraspRoutine(Node):
         corners, ids_list, KNOWN_MARKERS, big_debug_img = self.detect_and_draw_aruco(eef_img, draw=True, scale_factor=scale_factor)
         
         # --- YOLO Detection ---
-        results = self.yolo_model(eef_img, conf=0.7, verbose=False)
+        results = self.yolo_model(eef_img, conf=0.4, verbose=False)
         target_box = None
         
         for result in results:
