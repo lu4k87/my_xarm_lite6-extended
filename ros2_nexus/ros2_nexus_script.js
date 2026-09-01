@@ -517,6 +517,8 @@
           } else {
              tooltipHtml = `<div class="card-tooltip-cmd">${a.cmd}</div>`;
           }
+          }
+          }
           if (tooltipHtml) {
               tooltipHtml = injectOptBadges(tooltipHtml);
           }
