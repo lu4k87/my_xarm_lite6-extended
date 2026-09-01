@@ -35,6 +35,8 @@
     <button id="btn-vr" style="display:none" onclick="enterVR('immersive-vr')">▶ Enter VR</button>
     <button id="btn-ar" style="display:none" onclick="enterVR('immersive-ar')">▶ Passthrough</button>
 
+
+
     <div class="card" id="ctrl-card" style="display:none">
         <div class="row"><span class="k">Grip (Kupplung):</span><span class="v" id="d-grip">LOS</span></div>
         <div class="row"><span class="k">Index (Greifer):</span><span class="v" id="d-index">LOS</span></div>
@@ -60,7 +62,8 @@
     function connectROS() {
         if (ros) try { ros.close(); } catch(e){}
         const host = (window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1';
-        const rosUrl = 'ws://' + host + ':9091';
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const rosUrl = protocol + '//' + host + ':9091';
         log('Connecting ROS to ' + rosUrl + '...');
         setS('s-ros', 'Connecting (' + host + ':9091)...', 'warn');
         ros = new ROSLIB.Ros({ url: rosUrl });
@@ -143,6 +146,11 @@
                 document.getElementById('ctrl-card').style.display='none';
             });
 
+            // Initialize WebGL context for WebXR baseLayer (REQUIRED by Quest to start tracking)
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl', { xrCompatible: true });
+            session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
+
             tryRefSpace(session, ['local-floor','local','viewer']);
 
         }).catch(e => {
@@ -184,6 +192,7 @@
                     posX = pose.transform.position.x;
                     posY = pose.transform.position.y;
                     posZ = pose.transform.position.z;
+                    
                     oriX = pose.transform.orientation.x;
                     oriY = pose.transform.orientation.y;
                     oriZ = pose.transform.orientation.z;

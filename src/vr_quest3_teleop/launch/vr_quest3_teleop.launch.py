@@ -25,11 +25,19 @@ def generate_launch_description():
         output='screen'
     )
 
+    cert_path = os.path.expanduser('~/dev_ws/certs/cert.pem')
+    key_path = os.path.expanduser('~/dev_ws/certs/key.pem')
+    
     rosbridge = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(
             os.path.join(get_package_share_directory('rosbridge_server'), 'launch', 'rosbridge_websocket_launch.xml')
         ),
-        launch_arguments={'port': '9091'}.items()
+        launch_arguments={
+            'port': '9091',
+            'ssl': 'true',
+            'certfile': cert_path,
+            'keyfile': key_path
+        }.items()
     )
 
     https_server = ExecuteProcess(
