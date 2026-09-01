@@ -172,6 +172,13 @@ class TobiiYoloToGraspRoutine(Node):
         except AttributeError:
             corners1, ids1, _ = self.aruco_detector.detectMarkers(gray)
             
+        # Detect on flipped image for physically mirrored markers!
+        gray_flipped = cv2.flip(gray, 1)
+        try:
+            corners2, ids2, _ = cv2.aruco.detectMarkers(gray_flipped, self.aruco_dict, parameters=self.aruco_params)
+        except AttributeError:
+            corners2, ids2, _ = self.aruco_detector.detectMarkers(gray_flipped)
+            
         corners = []
         ids_list = []
         
@@ -179,6 +186,16 @@ class TobiiYoloToGraspRoutine(Node):
             for i, c in enumerate(corners1):
                 corners.append(c)
                 ids_list.append(ids1[i][0])
+                
+        if ids2 is not None and len(ids2) > 0:
+            w = gray.shape[1]
+            for i, c in enumerate(corners2):
+                if ids2[i][0] not in ids_list:
+                    c_unf = c.copy()
+                    c_unf[0, :, 0] = w - 1 - c_unf[0, :, 0]
+                    c_unf = c_unf[:, [1, 0, 3, 2], :]
+                    corners.append(c_unf)
+                    ids_list.append(ids2[i][0])
                     
         big_img = img.copy()
         if draw:
