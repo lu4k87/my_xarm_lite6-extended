@@ -264,18 +264,18 @@ class TobiiYoloToGraspRoutine(Node):
                                 cv2.rectangle(big_disp, (sx1, sy1), (sx2, sy2), (255, 100, 100), 2, cv2.LINE_AA)
                                 cv2.putText(big_disp, f"{class_name} {conf:.2f}", (sx1, sy1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
                         
-                        cv2.putText(big_disp, "EEF Camera Stream Active (YOLO ON)", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
+                        cv2.putText(big_disp, "EEF Camera Stream Active (YOLO ON)", (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 1, cv2.LINE_AA)
                         if self.selected_object_class is not None:
-                            cv2.putText(big_disp, f"Triggered: {self.selected_object_class}", (30, 95), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(big_disp, f"Triggered: {self.selected_object_class}", (30, 95), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 255), 1, cv2.LINE_AA)
                         self.last_eef_debug_frame = big_disp
                     elif self.state == 3 and hasattr(self, 'frozen_eef_frame') and self.frozen_eef_frame is not None:
                         if hasattr(self, 'hover_start_time') and self.hover_start_time is not None:
                             elapsed = time.time() - self.hover_start_time
                             remain = max(0.0, 3.0 - elapsed)
                             disp = self.frozen_eef_frame.copy()
-                            cv2.putText(disp, f"Target: {self.selected_object_class}", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255, 255, 0), 1, cv2.LINE_AA)
-                            cv2.putText(disp, f"Calculated X:{self.target_x:.1f} Y:{self.target_y:.1f}", (20, 75), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 0), 1, cv2.LINE_AA)
-                            cv2.putText(disp, f"Moving in {remain:.1f}s...", (20, 110), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 165, 255), 1, cv2.LINE_AA)
+                            cv2.putText(disp, f"Target: {self.selected_object_class}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 0), 1, cv2.LINE_AA)
+                            cv2.putText(disp, f"Calculated X:{self.target_x:.1f} Y:{self.target_y:.1f}", (20, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 1, cv2.LINE_AA)
+                            cv2.putText(disp, f"Moving in {remain:.1f}s...", (20, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 165, 255), 1, cv2.LINE_AA)
                             self.last_eef_debug_frame = disp
             except Exception:
                 pass
@@ -310,7 +310,7 @@ class TobiiYoloToGraspRoutine(Node):
                 class_name = result.names[cls_id]
                 
                 cv2.rectangle(frame_copy, (x1, y1), (x2, y2), (255, 100, 100), 2)
-                cv2.putText(frame_copy, f"{class_name} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                cv2.putText(frame_copy, f"{class_name} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
                 
                 if self.state == 0 and has_gaze:
                     if x1 <= g_x <= x2 and y1 <= g_y <= y2:
@@ -334,7 +334,7 @@ class TobiiYoloToGraspRoutine(Node):
                         bar_fill = min(bar_w, bar_fill)
                         cv2.rectangle(frame_copy, (50, 50), (50 + bar_w, 80), (100, 100, 100), -1)
                         cv2.rectangle(frame_copy, (50, 50), (50 + bar_fill, 80), (0, 255, 0), -1)
-                        cv2.putText(frame_copy, f"Locking {target_class}...", (50, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                        cv2.putText(frame_copy, f"Locking {target_class}...", (50, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1, cv2.LINE_AA)
                         
                         if elapsed >= self.DWELL_THRESHOLD:
                             if self.click_sound:
@@ -360,7 +360,7 @@ class TobiiYoloToGraspRoutine(Node):
                 self.current_gazed_class = None
                 self.dwell_start_time = None
         else:
-            cv2.putText(frame_copy, f"ROBOT ACTIVE: {self.selected_object_class}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 3)
+            cv2.putText(frame_copy, f"ROBOT ACTIVE: {self.selected_object_class}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 1, cv2.LINE_AA)
 
         # Resize the frame to make the window much bigger (1.8x scale)
         big_frame = cv2.resize(frame_copy, (0, 0), fx=1.8, fy=1.8)
@@ -438,7 +438,7 @@ class TobiiYoloToGraspRoutine(Node):
                 
         if len(ids_list) == 0:
             self.get_logger().warning("No ArUco markers found in EEF image. Cannot calculate homography.")
-            cv2.putText(big_debug_img, "ERR: No ArUco Markers!", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
+            cv2.putText(big_debug_img, "ERR: No ArUco Markers!", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 1, cv2.LINE_AA)
             self.last_eef_debug_frame = big_debug_img
             self.state = 5
             self.error_timer = self.create_timer(3.0, self.reset_state)
@@ -457,7 +457,7 @@ class TobiiYoloToGraspRoutine(Node):
                 
         if len(src_pts) < 4:
             self.get_logger().warning(f"Not enough known ArUco markers found ({len(src_pts)}, need at least 4).")
-            cv2.putText(big_debug_img, f"ERR: Only {len(src_pts)} Markers (Need 4)!", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
+            cv2.putText(big_debug_img, f"ERR: Only {len(src_pts)} Markers (Need 4)!", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             self.last_eef_debug_frame = big_debug_img
             self.state = 5
             self.error_timer = self.create_timer(3.0, self.reset_state)
@@ -469,7 +469,7 @@ class TobiiYoloToGraspRoutine(Node):
         H, _ = cv2.findHomography(src_pts, dst_pts)
         if H is None:
             self.get_logger().error("Failed to compute homography matrix.")
-            cv2.putText(big_debug_img, "ERR: Homography Failed!", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
+            cv2.putText(big_debug_img, "ERR: Homography Failed!", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             self.last_eef_debug_frame = big_debug_img
             self.state = 5
             self.error_timer = self.create_timer(3.0, self.reset_state)
@@ -479,7 +479,7 @@ class TobiiYoloToGraspRoutine(Node):
                 
         if target_box is None:
             self.get_logger().warning(f"Could not find {self.selected_object_class} in EEF image.")
-            cv2.putText(big_debug_img, f"ERR: {self.selected_object_class} not found by YOLO!", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
+            cv2.putText(big_debug_img, f"ERR: {self.selected_object_class} not found by YOLO!", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             self.last_eef_debug_frame = big_debug_img
             self.state = 5
             self.error_timer = self.create_timer(3.0, self.reset_state)
