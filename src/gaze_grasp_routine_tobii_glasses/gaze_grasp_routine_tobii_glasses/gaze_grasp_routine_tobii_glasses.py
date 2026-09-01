@@ -46,7 +46,7 @@ class TobiiYoloToGraspRoutine(Node):
         self.state = 0  # 0: wait for dwell, 1: moving to scene, 2: capturing eef & localizing, 3: moving to hover, 4: done/cooldown
         
         self.selected_object_class = None
-        self.tobii_ip = "192.168.75.51"
+        self.tobii_ip = "192.168.100.2"
         self.script_running = True
         
         self.last_valid_gaze = None
