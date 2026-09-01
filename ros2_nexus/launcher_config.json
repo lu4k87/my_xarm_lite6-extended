@@ -418,18 +418,6 @@
     {
       "actions": [
         {
-          "cmd": "(google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) &",
-          "label": "Dashboard öffnen (Port 8080)",
-          "mode": "bg",
-          "type": "sys"
-        },
-        {
-          "cmd": "google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html",
-          "label": "Robot Control Web UI öffnen (Port 8081)",
-          "mode": "bg",
-          "type": "sys"
-        },
-        {
           "cmd": "obs",
           "label": "OBS Studio",
           "type": "sys"

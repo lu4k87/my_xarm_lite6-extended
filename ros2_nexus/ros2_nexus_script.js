@@ -207,13 +207,16 @@
                        html += `<li data-raw-cmd="${subCmd.replace(/"/g, '&quot;')}"><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd);">${subCmd}</span></li>`;
                    }
                } else if (subCmd.startsWith('(google-chrome') || subCmd.startsWith('google-chrome')) {
-                   html += `<li data-raw-cmd="${subCmd.replace(/"/g, '&quot;')}"><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-globe"></i>WEB</span><span style="color: var(--c-cmd);"> Chrome Browser</span> <span style="float: right; opacity: 0.7;">(Frontend)</span></li>`;
+                   if (!a.cmd.includes('http.server')) {
+                       html += `<li data-raw-cmd="${subCmd.replace(/"/g, '&quot;')}"><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-globe"></i>WEB</span><span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span><span style="color: var(--c-cmd);"> Chrome Browser</span> <span style="float: right; opacity: 0.7;">(Frontend)</span></li>`;
+                   }
                } else {
                    let badge = subCmd.startsWith('ros2 launch') ? `<span class="badge badge-launch" style="margin-right: 6px;"><i class="fa-solid fa-rocket" style="margin-right: 4px;"></i>LAUNCH</span><span style="color: var(--c-launch);">` : `<span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width:10px;height:10px;margin-right:4px;vertical-align:-0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);">`;
                    let term = subCmd.split(' ').slice(2).join(' ') || subCmd;
                    if (subCmd.includes('http.server')) {
-                       badge = `<span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span><span style="color: var(--c-cmd);">`;
-                       term = "http_robot_control_ui_p8081";
+                       let chromeBadgeStr = a.cmd.includes('google-chrome') || a.cmd.includes('chromium-browser') ? `<span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span>` : '';
+                       badge = `<span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span>${chromeBadgeStr}<span style="color: var(--c-cmd);">`;
+                       term = a.cmd.includes('dashboard') ? "http_dashboard_monitoring_p8080" : "http_robot_control_ui_p8081";
                    }
                    // Use a.title if there's only 1 subCmd, otherwise we don't have a specific title.
                    let lbl = subCmds.length === 1 ? a.title : term;
@@ -474,7 +477,16 @@
                      if (!node.includes('.')) node += ' (Source: .py / .cpp)';
                      tooltipHtml += `<li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);"> ${node}</span> <span style="float: right; opacity: 0.7;">(${pkg})</span></li>`;
                  } else if (subCmd.startsWith('(google-chrome') || subCmd.startsWith('google-chrome')) {
-                     tooltipHtml += `<li><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-globe"></i>WEB</span><span style="color: var(--c-cmd);"> Chrome Browser</span> <span style="float: right; opacity: 0.7;">(Frontend)</span></li>`;
+                     if (!a.cmd.includes('http.server')) {
+                         tooltipHtml += `<li><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-globe"></i>WEB</span><span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span><span style="color: var(--c-cmd);"> Chrome Browser</span> <span style="float: right; opacity: 0.7;">(Frontend)</span></li>`;
+                     }
+                 } else if (subCmd.includes('http.server')) {
+                     let chromeBadgeStr = a.cmd.includes('google-chrome') || a.cmd.includes('chromium-browser') ? `<span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span>` : '';
+                     let term = subCmd.includes('dashboard') ? "http_dashboard_monitoring_p8080" : "http_robot_control_ui_p8081";
+                     tooltipHtml += `<li><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span>${chromeBadgeStr}<span style="color: var(--c-cmd);"> ${term}</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>`;
+                 } else if (subCmd.startsWith('python3')) {
+                     const scriptName = subCmd.split(' ')[1] || subCmd;
+                     tooltipHtml += `<li><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd);"> python3 ${scriptName}</span> <span style="float: right; opacity: 0.7;">(Script)</span></li>`;
                  }
              });
              tooltipHtml += `</ul>`;
@@ -510,10 +522,18 @@
                               </li>
                             </ul>`;
           } else if (a.cmd.startsWith('python3')) {
-             const scriptName = a.cmd.split(' ')[1] || a.cmd;
-             tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                            <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                            <li><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd);"> python3 ${scriptName}</span> <span style="float: right; opacity: 0.7;">(Script)</span></li></ul>`;
+             if (a.cmd.includes('http.server')) {
+                 let chromeBadgeStr = a.cmd.includes('google-chrome') || a.cmd.includes('chromium-browser') ? `<span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span>` : '';
+                 let term = a.cmd.includes('dashboard') ? "http_dashboard_monitoring_p8080" : "http_robot_control_ui_p8081";
+                 tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
+                                <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
+                                <li><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span>${chromeBadgeStr}<span style="color: var(--c-cmd);"> ${term}</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li></ul>`;
+             } else {
+                 const scriptName = a.cmd.split(' ')[1] || a.cmd;
+                 tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
+                                <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
+                                <li><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd);"> python3 ${scriptName}</span> <span style="float: right; opacity: 0.7;">(Script)</span></li></ul>`;
+             }
           } else {
              tooltipHtml = `<div class="card-tooltip-cmd">${a.cmd}</div>`;
           }
