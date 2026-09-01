@@ -183,8 +183,38 @@
        const cloneTitle = contentClone.querySelector('.card-tooltip-title');
        if (cloneTitle) cloneTitle.remove();
        
-       // Initialize active states
-       actionsData.forEach(a => { a.active = true; a.baseCmd = a.cmd; a.args = []; });
+       let activeSet = null;
+       if (popupId && window.TABS && window.TABS['__popups_active'] && window.TABS['__popups_active'][popupId]) {
+           activeSet = new Set(window.TABS['__popups_active'][popupId]);
+       }
+       
+       actionsData.forEach(a => { 
+           a.active = activeSet ? activeSet.has(a.cmd) : false; 
+           a.baseCmd = a.cmd; 
+           a.args = []; 
+       });
+       
+       const saveActiveState = () => {
+           if (!popupId) return;
+           const activeCmds = [];
+           const topUl = document.getElementById('launch-modal-body').querySelector('ul');
+           if (!topUl) return;
+           topUl.querySelectorAll('li').forEach(item => {
+               const cb = item.querySelector('.main-action-cb');
+               if (cb && cb.checked && item.dataset.cmd) {
+                   activeCmds.push(item.dataset.cmd);
+               }
+           });
+           if (!window.TABS) window.TABS = {};
+           if (!window.TABS['__popups_active']) window.TABS['__popups_active'] = {};
+           window.TABS['__popups_active'][popupId] = activeCmds;
+           
+           fetch('/api/config', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify(window.TABS)
+           }).catch(err => console.error(err));
+       };
        
               function parseArgs(action) {
            if (!action.cmd.startsWith('ros2 launch') && !action.cmd.startsWith('ros2 run') && !action.cmd.startsWith('ros2 topic pub')) {
@@ -327,17 +357,19 @@
           selectAllLabel.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:12px; color:var(--mut); cursor:pointer; font-weight:bold; letter-spacing:1px; text-transform:uppercase;';
           const selectAllCb = document.createElement('input');
           selectAllCb.type = 'checkbox';
-          selectAllCb.checked = true;
+          selectAllCb.checked = false;
           selectAllCb.style.cssText = 'accent-color:#00FF66; cursor:pointer; width:16px; height:16px; filter: drop-shadow(0 0 4px rgba(0,255,102,0.4));';
           selectAllCb.onchange = (e) => {
-              const isChecked = e.target.checked;
-              const mainCbs = topUl.querySelectorAll('.main-action-cb');
-              mainCbs.forEach(cb => {
-                  if (cb.checked !== isChecked) {
-                      cb.checked = isChecked;
-                      cb.dispatchEvent(new Event('change'));
+              Array.from(topUl.querySelectorAll('.main-action-cb')).forEach(cb => {
+                  if (cb.checked !== e.target.checked) {
+                      cb.checked = e.target.checked;
+                      // Trigger only visually and update action state
+                      const ev = new Event('change');
+                      ev.simulated = true;
+                      cb.dispatchEvent(ev);
                   }
               });
+              saveActiveState();
           };
           selectAllLabel.appendChild(selectAllCb);
           selectAllLabel.appendChild(document.createTextNode('Select All'));
@@ -365,7 +397,6 @@
               if (action) {
                   matchedCmds.add(action.cmd);
                   parseArgs(action);
-                  action.active = true;
                   li.dataset.cmd = action.cmd;
               }
               
@@ -498,7 +529,8 @@
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
-              mainCb.checked = true;
+              mainCb.checked = action ? action.active : (activeSet ? activeSet.has(li.dataset.cmd) : false);
+              li.style.opacity = mainCb.checked ? '1' : '0.4';
               mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 18px; height: 18px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); margin-right: 10px; margin-left: 4px;';
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
@@ -509,6 +541,7 @@
                   if (allCbs.length > 0) {
                       selectAllCb.checked = allCbs.every(c => c.checked);
                   }
+                  if (!e.simulated) saveActiveState();
               };
               
               li.style.cursor = 'pointer';
@@ -651,8 +684,9 @@
               middleCol.appendChild(spacer);
               
               parseArgs(action);
-              action.active = true;
               li.dataset.cmd = action.cmd;
+              let isActive = activeSet ? activeSet.has(li.dataset.cmd) : false;
+              action.active = isActive;
               const argsDiv = createArgsDiv(action);
               middleCol.appendChild(argsDiv);
               
@@ -711,7 +745,8 @@
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
-              mainCb.checked = true;
+              mainCb.checked = isActive;
+              li.style.opacity = mainCb.checked ? '1' : '0.4';
               mainCb.style.cssText = 'accent-color: #00FF66; cursor: pointer; flex-shrink: 0; width: 18px; height: 18px; filter: drop-shadow(0 0 8px rgba(0,255,102,0.4)); margin-right: 10px; margin-left: 4px;';
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
@@ -722,6 +757,7 @@
                   if (allCbs.length > 0) {
                       selectAllCb.checked = allCbs.every(c => c.checked);
                   }
+                  if (!e.simulated) saveActiveState();
               };
               
               li.style.cursor = 'pointer';
@@ -783,6 +819,11 @@
               
               topUl.appendChild(li);
           });
+          
+          const allCbs = Array.from(topUl.querySelectorAll('.main-action-cb'));
+          if (allCbs.length > 0) {
+              selectAllCb.checked = allCbs.every(c => c.checked);
+          }
 
        } else {
            contentClone.style.background = 'rgba(255,255,255,0.03)';
