@@ -509,9 +509,13 @@
                               
                               </li>
                             </ul>`;
+          } else if (a.cmd.startsWith('python3')) {
+             const scriptName = a.cmd.split(' ')[1] || a.cmd;
+             tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
+                            <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
+                            <li><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd);"> python3 ${scriptName}</span> <span style="float: right; opacity: 0.7;">(Script)</span></li></ul>`;
           } else {
              tooltipHtml = `<div class="card-tooltip-cmd">${a.cmd}</div>`;
-          }
           }
           if (tooltipHtml) {
               tooltipHtml = injectOptBadges(tooltipHtml);
