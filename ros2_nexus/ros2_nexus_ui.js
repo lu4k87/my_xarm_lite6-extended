@@ -474,6 +474,26 @@
                   titleDiv.appendChild(cmdBadge1);
               }
               
+              let isRos2 = (action && action.cmd && action.cmd.startsWith('ros2 run')) || (cmdToDisplay && cmdToDisplay.startsWith('ros2 run'));
+              if (isRos2) {
+                  const ros2Badge = document.createElement('div');
+                  ros2Badge.innerHTML = `<i class="fa-solid fa-robot"></i> ROS 2`;
+                  ros2Badge.style.cssText = 'background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:4px; padding:3px 6px; font-size:9px; color:#93c5fd; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
+                  titleDiv.insertBefore(ros2Badge, cmdBadge1);
+              }
+              
+              let hasPython3 = (action && action.cmd && action.cmd.includes('python3')) || (cmdToDisplay && cmdToDisplay.includes('python3'));
+              if (hasPython3) {
+                  const pythonBadge = document.createElement('div');
+                  pythonBadge.innerHTML = `<i class="fa-brands fa-python"></i> Python3`;
+                  pythonBadge.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4); border-radius:4px; padding:3px 6px; font-size:9px; color:#fde047; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
+                  if (autoMarginNode) {
+                      titleDiv.insertBefore(pythonBadge, autoMarginNode);
+                  } else {
+                      titleDiv.appendChild(pythonBadge);
+                  }
+              }
+              
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
@@ -664,6 +684,26 @@
                   titleDiv.insertBefore(cmdBadge1, autoMarginNode2);
               } else {
                   titleDiv.appendChild(cmdBadge1);
+              }
+              
+              let isRos2_2 = action && action.cmd && action.cmd.startsWith('ros2 run');
+              if (isRos2_2) {
+                  const ros2Badge2 = document.createElement('div');
+                  ros2Badge2.innerHTML = `<i class="fa-solid fa-robot"></i> ROS 2`;
+                  ros2Badge2.style.cssText = 'background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:4px; padding:3px 6px; font-size:9px; color:#93c5fd; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
+                  titleDiv.insertBefore(ros2Badge2, cmdBadge1);
+              }
+              
+              let hasPython3_2 = action && action.cmd && action.cmd.includes('python3');
+              if (hasPython3_2) {
+                  const pythonBadge2 = document.createElement('div');
+                  pythonBadge2.innerHTML = `<i class="fa-brands fa-python"></i> Python3`;
+                  pythonBadge2.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4); border-radius:4px; padding:3px 6px; font-size:9px; color:#fde047; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
+                  if (autoMarginNode2) {
+                      titleDiv.insertBefore(pythonBadge2, autoMarginNode2);
+                  } else {
+                      titleDiv.appendChild(pythonBadge2);
+                  }
               }
               
               const mainCb = document.createElement('input');
