@@ -57,12 +57,18 @@ class TobiiYoloToGraspRoutine(Node):
             self.aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
             self.aruco_params = cv2.aruco.DetectorParameters_create()
             self.aruco_params.minMarkerPerimeterRate = 0.01
-            self.aruco_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+            self.aruco_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_APRILTAG
+            self.aruco_params.adaptiveThreshWinSizeMin = 3
+            self.aruco_params.adaptiveThreshWinSizeMax = 23
+            self.aruco_params.adaptiveThreshWinSizeStep = 10
         except AttributeError:
             self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
             self.aruco_params = cv2.aruco.DetectorParameters()
             self.aruco_params.minMarkerPerimeterRate = 0.01
-            self.aruco_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+            self.aruco_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_APRILTAG
+            self.aruco_params.adaptiveThreshWinSizeMin = 3
+            self.aruco_params.adaptiveThreshWinSizeMax = 23
+            self.aruco_params.adaptiveThreshWinSizeStep = 10
             self.aruco_detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.aruco_params)
             
         self.t = threading.Thread(target=self.tobii_worker, daemon=True)
@@ -159,19 +165,12 @@ class TobiiYoloToGraspRoutine(Node):
             11: (250.0, -200.0)
         }
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-        gray_enhanced = clahe.apply(gray)
         
+        # Detect on raw gray image (CLAHE often amplifies noise inside markers)
         try:
-            corners1, ids1, _ = cv2.aruco.detectMarkers(gray_enhanced, self.aruco_dict, parameters=self.aruco_params)
+            corners1, ids1, _ = cv2.aruco.detectMarkers(gray, self.aruco_dict, parameters=self.aruco_params)
         except AttributeError:
-            corners1, ids1, _ = self.aruco_detector.detectMarkers(gray_enhanced)
-            
-        gray_flipped = cv2.flip(gray_enhanced, 1)
-        try:
-            corners2, ids2, _ = cv2.aruco.detectMarkers(gray_flipped, self.aruco_dict, parameters=self.aruco_params)
-        except AttributeError:
-            corners2, ids2, _ = self.aruco_detector.detectMarkers(gray_flipped)
+            corners1, ids1, _ = self.aruco_detector.detectMarkers(gray)
             
         corners = []
         ids_list = []
@@ -180,16 +179,6 @@ class TobiiYoloToGraspRoutine(Node):
             for i, c in enumerate(corners1):
                 corners.append(c)
                 ids_list.append(ids1[i][0])
-                
-        if ids2 is not None and len(ids2) > 0:
-            w = gray_enhanced.shape[1]
-            for i, c in enumerate(corners2):
-                if ids2[i][0] not in ids_list:
-                    c_unf = c.copy()
-                    c_unf[0, :, 0] = w - 1 - c_unf[0, :, 0]
-                    c_unf = c_unf[:, [1, 0, 3, 2], :]
-                    corners.append(c_unf)
-                    ids_list.append(ids2[i][0])
                     
         big_img = img.copy()
         if draw:
