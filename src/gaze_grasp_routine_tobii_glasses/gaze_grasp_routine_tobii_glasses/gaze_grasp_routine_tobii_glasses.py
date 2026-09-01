@@ -247,8 +247,8 @@ class TobiiYoloToGraspRoutine(Node):
         if has_gaze:
             g_x = int(self.last_valid_gaze[0] * frame_copy.shape[1])
             g_y = int(self.last_valid_gaze[1] * frame_copy.shape[0])
-            cv2.circle(frame_copy, (g_x, g_y), 22, (0, 0, 255), -1)
-            cv2.circle(frame_copy, (g_x, g_y), 8, (255, 255, 255), -1)
+            cv2.circle(frame_copy, (g_x, g_y), 12, (0, 0, 255), -1)
+            cv2.circle(frame_copy, (g_x, g_y), 4, (255, 255, 255), -1)
             
         # Pass the clean frame without any drawings to YOLO
         results = self.yolo_model(self.last_valid_frame, conf=0.7, verbose=False)
