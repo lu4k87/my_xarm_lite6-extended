@@ -1,4 +1,34 @@
 {
+  "__popups": {
+    "dev_fake": [
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
+      "ros2 run linear_axis_tuner linear_axis_tuner",
+      "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
+      "ros2 run my_3d_vision_bringup ip_cam_yolo_3d_bbox.py",
+      "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
+      "ros2 run rviz_servo_status_overlay servo_status_overlay",
+      "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=false",
+      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True",
+      "ros2 run voice_command_listener voice_command_listener",
+      "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+      "ros2 run tf_tuner tf_tuner",
+      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
+      "ros2 run rviz_streamer rviz_streamer_node",
+      "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses"
+    ]
+  },
+  "__popups_active": {
+    "dev_fake": [
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
+      "ros2 run linear_axis_tuner linear_axis_tuner",
+      "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
+      "ros2 run my_3d_vision_bringup ip_cam_yolo_3d_bbox.py"
+    ]
+  },
   "info": [
     {
       "actions": [

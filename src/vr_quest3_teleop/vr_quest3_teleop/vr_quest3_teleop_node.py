@@ -26,7 +26,7 @@ class VRTeleopNode(Node):
         # State variables
         self.grip_pressed = False
         self.initial_pos = None
-        self.k_linear = 2.5  # Sensitivity for translation
+        self.k_linear = 3.2  # Sensitivity for translation (slightly increased for faster movement)
         
         self.index_pressed = False
         self.gripper_open = True
@@ -111,14 +111,14 @@ class VRTeleopNode(Node):
                     ros_vy = -dx * self.k_linear
                     ros_vz = dy * self.k_linear
                     
-                    # Deadzone (1.5cm)
-                    deadzone = 0.015
+                    # Deadzone (0.8cm - lowered for more direct response)
+                    deadzone = 0.008
                     if abs(dz) < deadzone: ros_vx = 0.0
                     if abs(dx) < deadzone: ros_vy = 0.0
                     if abs(dy) < deadzone: ros_vz = 0.0
                     
                     # Velocity limits for MoveIt Servo unitless input [-1.0, 1.0]
-                    max_v = 0.8
+                    max_v = 1.0
                     twist_msg.twist.linear.x = max(-max_v, min(max_v, ros_vx))
                     twist_msg.twist.linear.y = max(-max_v, min(max_v, ros_vy))
                     twist_msg.twist.linear.z = max(-max_v, min(max_v, ros_vz))
