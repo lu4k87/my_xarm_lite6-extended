@@ -29,9 +29,17 @@ class TobiiYoloToGraspRoutine(Node):
         try:
             pygame.mixer.init()
             self.click_sound = pygame.mixer.Sound(os.path.expanduser('~/dev_ws/src/gaze_control_ui_tobii_glasses/gaze_control_ui_tobii_glasses/ui_mouse_click.mp3'))
+            
+            pkg_path = os.path.expanduser('~/dev_ws/src/gaze_grasp_routine_tobii_glasses/gaze_grasp_routine_tobii_glasses/')
+            self.voice_sounds = {
+                'blue cube': pygame.mixer.Sound(os.path.join(pkg_path, '_voice_blue_cube.mp3')),
+                'red rectangle': pygame.mixer.Sound(os.path.join(pkg_path, '_voice_red_rectangle.mp3')),
+                'green cylinder': pygame.mixer.Sound(os.path.join(pkg_path, '_voice_green_cylinder.mp3')),
+            }
         except Exception as e:
-            self.get_logger().error(f"Could not load click sound: {e}")
+            self.get_logger().warning(f"Could not initialize audio: {e}")
             self.click_sound = None
+            self.voice_sounds = {}
             
         self.move_client = self.create_client(MoveCartesian, '/ui/execute_move_to_pose')
         
@@ -331,6 +339,10 @@ class TobiiYoloToGraspRoutine(Node):
                         if elapsed >= self.DWELL_THRESHOLD:
                             if self.click_sound:
                                 self.click_sound.play()
+                                
+                            if target_class in self.voice_sounds:
+                                self.voice_sounds[target_class].play()
+                                
                             self.get_logger().info(f"!!! Dwell time ({self.DWELL_THRESHOLD}s) reached for {target_class} !!! Triggering Grasp Sequence.")
                             self.selected_object_class = target_class
                             self.state = 1
