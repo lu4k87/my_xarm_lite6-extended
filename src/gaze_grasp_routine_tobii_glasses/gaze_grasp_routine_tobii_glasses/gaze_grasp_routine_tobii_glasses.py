@@ -250,7 +250,8 @@ class TobiiYoloToGraspRoutine(Node):
             cv2.circle(frame_copy, (g_x, g_y), 22, (0, 0, 255), -1)
             cv2.circle(frame_copy, (g_x, g_y), 8, (255, 255, 255), -1)
             
-        results = self.yolo_model(frame_copy, conf=0.7, verbose=False)
+        # Pass the clean frame without any drawings to YOLO
+        results = self.yolo_model(self.last_valid_frame, conf=0.7, verbose=False)
         
         target_class = None
         min_dist = float('inf')
