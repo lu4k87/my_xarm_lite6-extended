@@ -94,6 +94,12 @@ class TobiiYoloToGraspRoutine(Node):
         if callback:
             future.add_done_callback(callback)
 
+    def reset_state(self):
+        if hasattr(self, 'error_timer') and self.error_timer:
+            self.error_timer.cancel()
+            self.error_timer = None
+        self.state = 0
+
     def tobii_worker(self):
         rtsp_url = f"rtsp://{self.tobii_ip}:8554/live/all"
         
@@ -399,7 +405,8 @@ class TobiiYoloToGraspRoutine(Node):
             self.get_logger().warning("No ArUco markers found in EEF image. Cannot calculate homography.")
             cv2.putText(big_debug_img, "ERR: No ArUco Markers!", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
             self.last_eef_debug_frame = big_debug_img
-            self.state = 0
+            self.state = 5
+            self.error_timer = self.create_timer(3.0, self.reset_state)
             return
             
         src_pts = []
@@ -417,7 +424,8 @@ class TobiiYoloToGraspRoutine(Node):
             self.get_logger().warning(f"Not enough known ArUco markers found ({len(src_pts)}, need at least 4).")
             cv2.putText(big_debug_img, f"ERR: Only {len(src_pts)} Markers (Need 4)!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
             self.last_eef_debug_frame = big_debug_img
-            self.state = 0
+            self.state = 5
+            self.error_timer = self.create_timer(3.0, self.reset_state)
             return
             
         src_pts = np.array(src_pts, dtype=np.float32)
@@ -428,16 +436,18 @@ class TobiiYoloToGraspRoutine(Node):
             self.get_logger().error("Failed to compute homography matrix.")
             cv2.putText(big_debug_img, "ERR: Homography Failed!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
             self.last_eef_debug_frame = big_debug_img
-            self.state = 0
+            self.state = 5
+            self.error_timer = self.create_timer(3.0, self.reset_state)
             return
             
         self.get_logger().info("Homography successfully computed based on ArUco markers.")
                 
         if target_box is None:
             self.get_logger().warning(f"Could not find {self.selected_object_class} in EEF image.")
-            cv2.putText(big_debug_img, f"ERR: {self.selected_object_class} not found!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            cv2.putText(big_debug_img, f"ERR: {self.selected_object_class} not found by YOLO!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
             self.last_eef_debug_frame = big_debug_img
-            self.state = 0
+            self.state = 5
+            self.error_timer = self.create_timer(3.0, self.reset_state)
             return
             
         x1, y1, x2, y2 = target_box
