@@ -941,7 +941,12 @@ stateDiagram-v2
 > - **Index Trigger (index finger):** Toggles the vacuum gripper.
 >
 > 🛠️ **System Setup & Usage:**
-> 1. **Network:** The PC and Quest 3 must be on the same Wi-Fi/Network. Alternatively, the headset can be connected via USB-C (ADB port-forwarding starts automatically in the background).
+> 1. **Network & Firewall:** The PC and Quest 3 must be on the same Wi-Fi/Network. If your Ubuntu uses a firewall (UFW), you MUST open the ports for the headset, otherwise the web interface and WebSocket connections will be blocked:
+>    ```bash
+>    sudo ufw allow 8443/tcp
+>    sudo ufw allow 9091/tcp
+>    ```
+>    *(Alternatively, the headset can be connected via USB-C; ADB port-forwarding bypasses the firewall automatically).*
 > 2. **Generate Certificates:** Ensure `cert.pem` and `key.pem` are located in the `~/dev_ws/certs/` folder, otherwise the secure ROSbridge will fail to start.
 > 3. **Launch Node:** Start via the **"VR Quest 3 Teleop"** button in the Nexus Web App or via the launch command above.
 > 4. **Accept SSL Certificates in VR (Critical!):** Because self-signed certificates are used, the Meta Quest Browser blocks the connection by default. You MUST manually open and accept **two addresses** sequentially in the headset's browser:

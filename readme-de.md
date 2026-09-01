@@ -989,7 +989,12 @@ stateDiagram-v2
 > - **Index Trigger (Zeigefinger):** Öffnet und schließt den Vakuumgreifer.
 >
 > 🛠️ **System Setup & Nutzung:**
-> 1. **Netzwerk:** PC und Quest 3 müssen sich im selben WLAN/Netzwerk befinden. Alternativ kann die Brille per USB-C verbunden werden (die ADB Port-Weiterleitung startet automatisch im Hintergrund).
+> 1. **Netzwerk & Firewall:** PC und Quest 3 müssen sich im selben WLAN/Netzwerk befinden. Wenn dein Ubuntu eine Firewall (UFW) nutzt, musst du zwingend die Ports für die Brille öffnen, da das Web-Interface und die WebSocket-Verbindung sonst blockiert werden:
+>    ```bash
+>    sudo ufw allow 8443/tcp
+>    sudo ufw allow 9091/tcp
+>    ```
+>    *(Alternativ kann die Brille auch per USB-C verbunden werden; die ADB Port-Weiterleitung umgeht die Firewall automatisch).*
 > 2. **Zertifikate generieren:** Stelle sicher, dass `cert.pem` und `key.pem` im Ordner `~/dev_ws/certs/` liegen, sonst scheitert der Start der gesicherten rosbridge.
 > 3. **Node Starten:** Über den Button **"VR Quest 3 Teleop"** in der Nexus Web-App oder den obigen Launch-Befehl.
 > 4. **SSL-Zertifikate in der Brille akzeptieren (Kritisch!):** Da selbstsignierte Zertifikate genutzt werden, blockiert der Meta Quest Browser die Verbindung standardmäßig. Du musst **zwei Adressen** nacheinander im Browser der Brille öffnen und freigeben:
