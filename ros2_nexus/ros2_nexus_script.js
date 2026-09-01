@@ -640,6 +640,7 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentTab = btn.dataset.tab;
+        window.currentTab = currentTab;
         renderTab(currentTab);
       });
     });
@@ -735,6 +736,7 @@
 
     // ─── GLOBAL EXPORTS (required for inline onclick="..." attributes) ──────────────
     window.renderTab = renderTab;
+    window.currentTab = currentTab;
     window.runCmd = runCmd;
 
     // ─── INIT ─────────────────────────────────────────────────────────────────────
