@@ -189,7 +189,11 @@
        }
        
        actionsData.forEach(a => { 
-           a.active = activeSet ? activeSet.has(a.cmd) : false; 
+           if (popupId) {
+               a.active = activeSet ? activeSet.has(a.cmd) : false; 
+           } else {
+               a.active = true;
+           }
            a.baseCmd = a.cmd; 
            a.args = []; 
        });
