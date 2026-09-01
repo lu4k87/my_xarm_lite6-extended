@@ -253,6 +253,8 @@ class TobiiYoloToGraspRoutine(Node):
         results = self.yolo_model(frame_copy, verbose=False)
         
         target_class = None
+        min_dist = float('inf')
+        
         for result in results:
             for box in result.boxes:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
@@ -263,9 +265,14 @@ class TobiiYoloToGraspRoutine(Node):
                 cv2.rectangle(frame_copy, (x1, y1), (x2, y2), (255, 100, 100), 2)
                 cv2.putText(frame_copy, f"{class_name} {conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
                 
-                if self.state == 0 and has_gaze and target_class is None:
+                if self.state == 0 and has_gaze:
                     if x1 <= g_x <= x2 and y1 <= g_y <= y2:
-                        target_class = class_name
+                        bx = (x1 + x2) / 2.0
+                        by = (y1 + y2) / 2.0
+                        dist = (bx - g_x)**2 + (by - g_y)**2
+                        if dist < min_dist:
+                            min_dist = dist
+                            target_class = class_name
                         
         if self.state == 0:
             if target_class:
