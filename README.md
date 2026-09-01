@@ -294,7 +294,7 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 > [!NOTE]
 > **Virtual Linear Axis (Simulation Only):** In FAKE mode, it is possible to mount the robot on a virtual linear axis without affecting the MoveIt planning group (`lite6`).
 > - **Activation:** The Nexus Web App automatically starts the linear axis tuner when you click the **RUN DEV Setup (FAKE)** button. If starting manually, append `attach_to:=linear_axis_link` to the launch command.
-> - **Control:** The GUI slider (`ros2 run linear_axis_tuner linear_axis_tuner`) opens automatically to move the robot base horizontally.
+> - **Control:** The GUI slider (`ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner`) opens automatically to move the robot base horizontally.
 > - **MoveIt Architecture:** The axis is shifted purely via dynamic TF (`world` -> `linear_axis_link`), completely decoupled from the URDF joints. This ensures MoveIt automatically recognizes the new base pose for planning/collision detection without needing a 7-DoF IK solver.
 > - **URDF Modification:** To prevent parsing errors with dynamic `attach_to` arguments, `xarm_description/urdf/xarm_device_macro.xacro` was modified. The `create_attach_link` condition now generates a root link for *any* custom `attach_to` string, rather than being hardcoded to only `"world"`.
 

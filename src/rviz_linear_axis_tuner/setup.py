@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'linear_axis_tuner'
+package_name = 'rviz_linear_axis_tuner'
 
 setup(
     name=package_name,
@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'linear_axis_tuner = linear_axis_tuner.linear_axis_tuner_node:main'
+            'rviz_linear_axis_tuner = rviz_linear_axis_tuner.rviz_linear_axis_tuner_node:main'
         ],
     },
 )

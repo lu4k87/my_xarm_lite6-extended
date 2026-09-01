@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>linear_axis_tuner</name>
+  <name>rviz_linear_axis_tuner</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="lu4k87@live.de">mk</maintainer>

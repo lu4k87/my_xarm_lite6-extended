@@ -4,7 +4,7 @@
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
-      "ros2 run linear_axis_tuner linear_axis_tuner",
+      "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner",
       "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
       "ros2 run my_3d_vision_bringup ip_cam_yolo_3d_bbox.py",
       "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
@@ -148,7 +148,7 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run linear_axis_tuner linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
           "label": "RUN DEV (FAKE)",
           "type": "launch"
         }
@@ -232,7 +232,7 @@
           "type": "node"
         },
         {
-          "cmd": "ros2 run linear_axis_tuner linear_axis_tuner",
+          "cmd": "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner",
           "label": "Linear Axis Tuner (FAKE Mode)",
           "type": "node"
         }
