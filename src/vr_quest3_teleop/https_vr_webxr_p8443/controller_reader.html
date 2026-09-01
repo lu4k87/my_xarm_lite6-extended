@@ -35,6 +35,13 @@
     <button id="btn-vr" style="display:none" onclick="enterVR('immersive-vr')">▶ Enter VR</button>
     <button id="btn-ar" style="display:none" onclick="enterVR('immersive-ar')">▶ Passthrough</button>
 
+    <div style="margin: 15px auto; max-width: 440px; text-align: left;">
+        <label style="cursor:pointer; display:inline-flex; align-items:center; gap:10px; font-size:14px; background:#1e1e1e; padding:12px 18px; border-radius:10px; color:#4fc3f7; font-weight:bold;">
+            <input type="checkbox" id="cb-desktop" style="width:18px; height:18px; accent-color:#4fc3f7;">
+            Desktop-Mode (Brille liegt auf Tisch)
+        </label>
+    </div>
+
 
 
     <div class="card" id="ctrl-card" style="display:none">
@@ -233,10 +240,24 @@
     // ── Publish to ROS ────────────────────────────────────────────────
     function publish() {
         if (!vrTopic) return;
+        
+        let pX = posX, pY = posY, pZ = posZ;
+        let oX = oriX, oY = oriY, oZ = oriZ, oW = oriW;
+        
+        const cbDesktop = document.getElementById('cb-desktop');
+        if (cbDesktop && cbDesktop.checked) {
+            pX = -posX;
+            pZ = -posZ;
+            oW = oriY;
+            oX = -oriZ;
+            oY = -oriW;
+            oZ = oriX;
+        }
+
         vrTopic.publish(new ROSLIB.Message({
             data: JSON.stringify({
-                position: {x:posX, y:posY, z:posZ},
-                orientation: {x:oriX, y:oriY, z:oriZ, w:oriW},
+                position: {x: pX, y: pY, z: pZ},
+                orientation: {x: oX, y: oY, z: oZ, w: oW},
                 buttons: { grip: gripActive, index: indexActive, a:false, b:false },
                 axes: { x: thumbX }
             })
