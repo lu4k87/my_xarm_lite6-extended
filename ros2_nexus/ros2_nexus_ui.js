@@ -593,7 +593,7 @@
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
               li.style.borderRadius = '8px';
               li.style.padding = '10px 15px';
-              li.style.marginBottom = '8px';
+              li.style.marginBottom = '16px';
               li.style.fontSize = '13px';
               li.style.color = '#fff';
               li.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
@@ -789,7 +789,7 @@
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
               li.style.borderRadius = '8px';
               li.style.padding = '10px 15px';
-              li.style.marginBottom = '8px';
+              li.style.marginBottom = '16px';
               li.style.fontSize = '13px';
               li.style.color = '#fff';
               li.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';

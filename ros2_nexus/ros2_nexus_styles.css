@@ -394,7 +394,7 @@
 
     /* ── SECTION ── */
     .section {
-      margin-bottom: 24px;
+      margin-bottom: 40px;
       background: rgba(10, 15, 25, 0.45);
       border: 1px solid var(--brd);
       border-radius: 12px;
@@ -856,7 +856,7 @@
 
       .section {
         padding: 16px;
-        margin-bottom: 20px;
+        margin-bottom: 32px;
       }
 
       .actions-grid {
