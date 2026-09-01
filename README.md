@@ -933,25 +933,28 @@ stateDiagram-v2
 > ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py
 > ```
 >
-> **Purpose & Task:** Provides immersive 6DoF Cartesian teleoperation using the Meta Quest 3 VR headset. Translates the right VR controller's spatial movements via WebXR into smooth `TwistStamped` velocity commands for MoveIt Servo.
-> - Uses a web-based local UI served via HTTPS on port 8443 (from the `https_vr_webxr_p8443` package), tunneled via ADB port forwarding directly into the VR browser.
-> - The launch file **automatically starts its own ROSbridge instance** (killing any conflict first) — no separate ROSbridge button needed.
-> - **Grip Trigger (middle finger):** Acts as a "clutch". Holding it maps the controller's exact positional delta to the robot's end effector.
+> **Purpose & Task:** Provides immersive 6DoF Cartesian teleoperation using the Meta Quest 3 VR headset. Translates the VR controller's spatial movements via WebXR into smooth `TwistStamped` velocity commands for MoveIt Servo.
+> - Uses a web-based local UI served via **HTTPS** on port `8443` (from the `https_vr_webxr_p8443` package).
+> - The launch file **automatically starts a secure ROSbridge instance (WSS)** on port `9091` using SSL certificates (`~/dev_ws/certs/cert.pem`). This is strictly required since WebXR (for spatial 6DoF tracking) mandates a Secure Context (HTTPS/WSS).
+> - Features an integrated WebGL rendering engine (`XRWebGLLayer`) to bypass the native Quest 3 "loading screen" (flying stars) and unlock the controller data streams.
+> - **Grip Trigger (middle finger):** Acts as a "clutch". Holding it maps the controller's exact positional delta directly to the robot's end effector (dynamically tracks whichever controller pressed the button).
 > - **Index Trigger (index finger):** Toggles the vacuum gripper.
-> - **Thumbstick X:** Controls the virtual linear axis.
 >
 > 🛠️ **System Setup & Usage:**
-> 1. **Prerequisites:** Install Android Debug Bridge: `sudo apt update && sudo apt install adb -y`
-> 2. **Hardware Connection:** Connect the Meta Quest 3 to the PC via USB-C. Put the headset on and explicitly tap **"Always allow from this computer"** in the USB Debugging authorization popup inside the headset.
-> 3. **Wake up controllers:** Pick up both controllers and press any button (e.g. thumbstick) to wake them from sleep **before** starting the VR session.
-> 4. **Launch Node:** Start via the **"VR Quest 3 Teleop"** button in the Nexus Web App (section: *Controllers*) or the command above. Wait ~3 seconds for ROSbridge to initialize.
-> 5. **Connect VR:** Open the Meta Quest Browser, navigate to `https://127.0.0.1:8443/controller_reader.html`. Wait for **"ROS Connected! ✅"**, then click **"Enter VR"**.
-> 6. **Control:** Hold the Grip trigger and move your hand — the robot follows. The page shows live debug info: **Input Sources** must be ≥ 1 for controller data to flow.
+> 1. **Network:** The PC and Quest 3 must be on the same Wi-Fi/Network. Alternatively, the headset can be connected via USB-C (ADB port-forwarding starts automatically in the background).
+> 2. **Generate Certificates:** Ensure `cert.pem` and `key.pem` are located in the `~/dev_ws/certs/` folder, otherwise the secure ROSbridge will fail to start.
+> 3. **Launch Node:** Start via the **"VR Quest 3 Teleop"** button in the Nexus Web App or via the launch command above.
+> 4. **Accept SSL Certificates in VR (Critical!):** Because self-signed certificates are used, the Meta Quest Browser blocks the connection by default. You MUST manually open and accept **two addresses** sequentially in the headset's browser:
+>    - Navigate to `https://<PC-IP>:9091` -> Click "Advanced" -> "Proceed (unsafe)". (You will see a blank page or an error after, this is normal! The WebSocket certificate is now accepted).
+>    - Navigate to `https://<PC-IP>:8443/controller_reader.html` -> Click "Advanced" -> "Proceed (unsafe)".
+> 5. **Connect VR:** Wait until the webpage displays **"ROS Connected! ✅"** (Port 9091), then click **"Enter VR"**.
+> 6. **Control:** Inside the dark VR environment, hold the Grip trigger and move your hand — the robot will follow your movements in real-time with zero latency.
 >
 > ⚠️ **Troubleshooting:**
-> - **"Input Sources: 0"** → Controllers are asleep. Press any button on both controllers to wake them, then re-enter VR.
-> - **"ROS Connection Closed"** → ROSbridge not yet ready. Wait a few seconds — the page auto-reconnects.
-> - **`adb devices` shows nothing** → Re-plug the USB cable and re-confirm the authorization dialog inside the headset.
+> - **Stuck seeing flying stars in VR?** → The browser is loading an old cached page without the `XRWebGLLayer`. Force a reload by appending a parameter: `https://<PC-IP>:8443/controller_reader.html?v=1`.
+> - **Webpage says "ROS Connection Closed"?** → You forgot Step 4. You must manually accept the SSL certificate for the WebSocket port `9091` in the browser!
+> - **"Input Sources: 0" / No movement?** → Controllers are asleep. Press any button to wake them up.
+> - **ADB Error in the terminal?** → If you are using Wi-Fi, you can safely ignore the `adb reverse` error in the terminal. It only appears when no USB cable is connected.
 
 ---
 
