@@ -228,7 +228,7 @@ class TobiiYoloToGraspRoutine(Node):
                     if self.state < 2:
                         # In idle or moving-to-scene state, show raw image with status
                         disp = eef_img.copy()
-                        _, _, _, big_disp = self.detect_and_draw_aruco(disp, draw=True, scale_factor=2.5)
+                        _, _, _, big_disp = self.detect_and_draw_aruco(disp, draw=True, scale_factor=1.8)
                         cv2.putText(big_disp, "EEF Camera Stream Active", (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
                         self.last_eef_debug_frame = big_disp
             except Exception:
@@ -311,7 +311,7 @@ class TobiiYoloToGraspRoutine(Node):
         if self.last_eef_debug_frame is not None:
             if not hasattr(self, 'eef_window_created'):
                 cv2.namedWindow("EEF Debug View", cv2.WINDOW_NORMAL)
-                cv2.resizeWindow("EEF Debug View", 1600, 1200)
+                cv2.resizeWindow("EEF Debug View", 1280, 960)
                 self.eef_window_created = True
             
             # Image is already scaled up beautifully inside detect_and_draw_aruco
@@ -347,7 +347,7 @@ class TobiiYoloToGraspRoutine(Node):
 
     def process_eef_image(self, eef_img):
         # --- ArUco Marker Detection ---
-        scale_factor = 2.5
+        scale_factor = 1.8
         corners, ids_list, KNOWN_MARKERS, big_debug_img = self.detect_and_draw_aruco(eef_img, draw=True, scale_factor=scale_factor)
         
         # --- YOLO Detection ---
