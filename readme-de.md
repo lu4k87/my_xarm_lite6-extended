@@ -540,6 +540,35 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 <br>
 
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ip_cam_yolo_3d_bbox.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/ip_cam_yolo_3d_bbox.py`](./src/my_3d_vision_bringup/scripts/ip_cam_yolo_3d_bbox.py)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 run my_3d_vision_bringup ip_cam_yolo_3d_bbox.py
+> ```
+>
+> **Zweck & Aufgabe:** Eine leichtgewichtige Alternative zu `zed_yolo_3d_bbox.py` für Setups ohne ZED-Tiefenkamera. Zieht sich einen HTTP-JPEG-Stream (IP Kamera `.123`), erkennt ArUco-Marker auf dem Tisch, um dynamisch eine **Homografie-Matrix** zu berechnen, und führt **YOLOv8** zur Objekterkennung aus. Projiziert die 2D-YOLO-Bounding-Boxen mithilfe der Homografie-Matrix in den 3D-Roboter-Basisrahmen (`link_base`). Generiert und veröffentlicht exakt dasselbe 3D `MarkerArray`-Format auf `/zed/bboxes_3d`, wodurch es zu 100% Plug-and-Play mit dem bestehenden UI und Grasp-Executor ist, ohne echte Tiefen-Hardware zu benötigen.
+>
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | *-* | *-* | *Ruft den HTTP JPEG Stream direkt ab (`http://192.168.0.123/...`).* |
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Publiziert exakt dasselbe 3D MarkerArray-Format wie die ZED-Kamera für UI-Kompatibilität.* |
+>
+>
+
+---
+
+<br>
+
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py`](./src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
@@ -2057,6 +2086,7 @@ dev_ws/
 │ │ └── scripts/
 │ │ ├── pointcloud_optimizer.py                                            # 3D Tiefenrauschen reduzieren & filtern
 │ │ ├── yolo_moveit_collision.py                                           # MoveIt Kollisionsobjekte & dynamisches Ignorieren
+│ │ ├── ip_cam_yolo_3d_bbox.py                                             # IP Camera Homografie YOLO 3D Objekterkennung
 │ │ ├── zed_yolo_3d_bbox.py                                                # 3D Objekterkennung & Bounding-Boxen
 │ │ ├── yolo_planned_grasp_executor.py                                     # 3-Phasen Greiflogik & Planner Fallback
 │ │ └── grasp_action_bridge.py                                             # Übersetzer für RViz Grasp Action
