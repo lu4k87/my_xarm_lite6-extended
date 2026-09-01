@@ -52,6 +52,8 @@ This repository is a continuously evolving research and evaluation platform for 
    - [7.2 Step 2: Launch the System (ROS 2 Nexus)](#72-step-2-launch-the-system-ros-2-nexus)
    - [7.3 Step 3: Start Nodes via GUI](#73-step-3-start-nodes-via-gui)
    - [7.4 Network & Port Architecture](#74-network--port-architecture)
+     - [7.4.1 Nexus Web Backend Architecture](#741-nexus-web-backend-architecture)
+     - [7.4.2 Dashboard & Control Web UI Architecture](#742-dashboard--control-web-ui-architecture)
    - [7.5 Remote Control (Server-/Client Communication)](#75-remote-control-server-client-communication)
    - [7.6 DDS Multicast Storm Prevention & Loopback Discovery (Critical)](#76-dds-multicast-storm-prevention--loopback-discovery-critical)
    - [7.7 Launcher Configuration (`launcher_config.json`)](#77-launcher-configuration-launcher_configjson)
@@ -1867,6 +1869,12 @@ To run the complete system with both web interfaces (Nexus and Dashboard), three
 | **`9090`** | **ROS Bridge** | WebSocket | *The bridge between ROS 2 and the browser. Allows the Dashboard (Port 8080) and the Robot Control Web UI (Port 8081) to connect directly to the ROS network via `roslib.js` to read real-time telemetry and call services.* |
 
 **Why strict port separation?** Ports 8080 and 9090 serve fundamentally different purposes and protocols. Port 8080 (HTTP) acts as a standard web server to deliver the static UI files (HTML/CSS) to the browser. Port 9090 (WebSocket via `rosbridge`) is a highly specialized data broker that exclusively streams live ROS telemetry and lacks the capability to serve web pages. Port 5000 (Flask) provides Nexus Web Backend business logic independent of ROS.
+
+#### 7.4.1 Nexus Web Backend Architecture
+
+The ROS 2 Nexus Web UI (Port 5000) acts as the central command orchestrator. It is built on a Flask (Python) backend and operates completely independently of the ROS 2 network. Its primary function is to interpret button clicks from the web interface and spawn native OS subprocesses (such as `gnome-terminal -- ros2 launch ...`). Because it directly interacts with the host operating system to manage terminal instances and process IDs, it must run natively on the host machine.
+
+#### 7.4.2 Dashboard & Control Web UI Architecture
 
 **Native ROS 2 Server vs. Static Python Web Server:**
 - **Native ROS 2 Server (`ros2 run web_video_server ...`):** This is a native C++ ROS 2 node. It must hook directly into the ROS network (subscribing to topics via `image_transport`) to receive raw camera images, compress them in real-time (e.g., as an MJPEG stream), and then serve them via HTTP. Because it directly processes ROS data in the backend, it must run natively as a ROS 2 node.

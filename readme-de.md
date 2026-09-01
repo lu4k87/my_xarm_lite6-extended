@@ -52,6 +52,8 @@ Dieses Repository ist eine sich kontinuierlich weiterentwickelnde Forschungs- un
    - [7.2 Schritt 2: System starten (ROS 2 Nexus)](#72-schritt-2-system-starten-ros-2-nexus)
    - [7.3 Schritt 3: Module über die GUI aktivieren](#73-schritt-3-module-über-die-gui-aktivieren)
    - [7.4 Netzwerk- & Port-Architektur](#74-netzwerk---port-architektur)
+     - [7.4.1 Nexus Web Backend Architektur](#741-nexus-web-backend-architektur)
+     - [7.4.2 Dashboard & Control Web UI Architektur](#742-dashboard--control-web-ui-architektur)
    - [7.5 Remote Control (Server-/Client Kommunikation)](#75-remote-control-server-client-kommunikation)
    - [7.6 DDS Multicast Storm Prevention & Loopback Discovery (Kritisch)](#76-dds-multicast-storm-prevention--loopback-discovery-kritisch)
    - [7.7 Launcher-Konfiguration (`launcher_config.json`)](#77-launcher-konfiguration-launcher_configjson)
@@ -1891,7 +1893,13 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 | **`9090`** | **ROS Bridge** | WebSocket | *Die Brücke zwischen ROS 2 und dem Browser. Erlaubt dem Dashboard (Port 8080) und der Robot Control Web UI (Port 8081), sich über `roslib.js` direkt mit dem ROS-Netzwerk zu verbinden, um Echtzeit-Telemetrie auszulesen und Services aufzurufen.* |
 
 > **Warum diese strikte Trennung?** Die Ports 8080 und 9090 dienen grundverschiedenen Zwecken. Port 8080 (HTTP) fungiert als Standard-Webserver, um die Oberfläche auszuliefern. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich Live-Telemetrie streamt und keine Webseiten bereitstellen kann. Port 5000 (Flask) verarbeitet die Logik des Nexus Web Backends völlig unabhängig von ROS.
->
+
+#### 7.4.1 Nexus Web Backend Architektur
+
+Das ROS 2 Nexus Web UI (Port 5000) fungiert als zentraler Befehls-Orchestrator. Es basiert auf einem Flask (Python) Backend und arbeitet völlig unabhängig vom ROS 2 Netzwerk. Seine Hauptfunktion besteht darin, Klicks aus der Web-Oberfläche zu interpretieren und native Betriebssystem-Unterprozesse (wie `gnome-terminal -- ros2 launch ...`) zu starten. Da es direkt mit dem Host-Betriebssystem interagiert, um Terminal-Instanzen und Prozess-IDs zu verwalten, muss es nativ auf dem Host-Rechner laufen.
+
+#### 7.4.2 Dashboard & Control Web UI Architektur
+
 > **Nativer ROS 2 Server vs. Statischer Python Webserver:**
 > - **Nativer ROS 2 Server (`ros2 run web_video_server ...`):** Dies ist ein nativer C++ ROS 2 Node. Er muss sich tief in das ROS-Netzwerk einklinken (Abonnieren von Topics via `image_transport`), um rohe Kamerabilder zu empfangen, diese in Echtzeit zu komprimieren (z. B. als MJPEG-Stream) und anschließend über HTTP auszuliefern. Da er ROS-Nachrichten direkt im Backend verarbeiten muss, wird er nativ als regulärer ROS 2 Node gestartet.
 > - **Statischer Python File-Server (`python3 -m http.server ...`):** Im Gegensatz dazu sind die UIs (`http_robot_control_ui_p8081` und `http_dashboard_monitoring_p8080`) reine Frontend-Webanwendungen (HTML, CSS, JS). Das Python-Backend spricht hier *überhaupt kein ROS*; es ist ein extrem leichtgewichtiger, "dummer" Server, der lediglich den Ordner bereitstellt, damit ein Browser die Dateien abrufen kann. Die eigentliche ROS-Kommunikation findet ausschließlich *im Browser des Clients* (über JavaScript und `roslibjs`) via WebSocket auf Port 9090 statt. Diese Trennung hält das Backend schlank, ohne dass komplexe ROS-Abhängigkeiten für das einfache Hosting benötigt werden.
