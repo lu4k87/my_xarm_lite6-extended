@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'tf_tuner'
+package_name = 'rviz_tf_tuner'
 
 setup(
     name=package_name,
@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'tf_tuner = tf_tuner.tf_tuner:main'
+            'rviz_tf_tuner = rviz_tf_tuner.rviz_tf_tuner:main'
         ],
     },
 )
