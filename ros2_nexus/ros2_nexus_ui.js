@@ -360,15 +360,17 @@
           selectAllCb.checked = false;
           selectAllCb.style.cssText = 'accent-color:#00FF66; cursor:pointer; width:16px; height:16px; filter: drop-shadow(0 0 4px rgba(0,255,102,0.4));';
           selectAllCb.onchange = (e) => {
+              const targetChecked = e.target.checked;
               Array.from(topUl.querySelectorAll('.main-action-cb')).forEach(cb => {
-                  if (cb.checked !== e.target.checked) {
-                      cb.checked = e.target.checked;
+                  if (cb.checked !== targetChecked) {
+                      cb.checked = targetChecked;
                       // Trigger only visually and update action state
                       const ev = new Event('change');
                       ev.simulated = true;
                       cb.dispatchEvent(ev);
                   }
               });
+              selectAllCb.checked = targetChecked;
               saveActiveState();
           };
           selectAllLabel.appendChild(selectAllCb);
