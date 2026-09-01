@@ -465,7 +465,7 @@ class TobiiYoloToGraspRoutine(Node):
         
         target_x = float(pt_robot[0][0][0])
         target_y = float(pt_robot[0][0][1])
-        target_z = 95.0  # Hover height (Z value constant at 95mm)
+        target_z = 40.0  # Hover height (Z value constant at 40mm)
         
         self.get_logger().info(f"Object {self.selected_object_class} found! Hovering at X={target_x:.1f}, Y={target_y:.1f}, Z={target_z:.1f}")
         
