@@ -1,4 +1,18 @@
     // ─── DEV SETUP ────────────────────────────────────────────────────────────────
+    function sortActions(actions, popupId) {
+        if (window.TABS && window.TABS['__popups'] && window.TABS['__popups'][popupId]) {
+            const order = window.TABS['__popups'][popupId];
+            actions.sort((a, b) => {
+                let idxA = order.indexOf(a.cmd);
+                let idxB = order.indexOf(b.cmd);
+                if (idxA === -1) idxA = 999;
+                if (idxB === -1) idxB = 999;
+                return idxA - idxB;
+            });
+        }
+        return actions;
+    }
+
     function getDevSetupActions(mode) {
       let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link";
       let servoTitle = "MoveIt Servo (Fake) + Linear Axis";
@@ -36,7 +50,7 @@
 
       
 
-      return actions;
+      return sortActions(actions, 'dev_' + mode);
     }
 
     function getServerSetupActions(mode) {
@@ -65,7 +79,7 @@
 
       
 
-      return actions;
+      return sortActions(actions, 'server_' + mode);
     }
 
     function getClientSetupActions() {
@@ -81,7 +95,7 @@
 
       
 
-      return actions;
+      return sortActions(actions, 'client');
     }
 
     // ─── EXTRAS EXEC SETUP ───────────────────────────────────────────────────────
@@ -99,7 +113,7 @@
 
       
 
-      return actions;
+      return sortActions(actions, 'extras');
     }
 
     function getExtrasExecLegacyCamActions() {
@@ -110,16 +124,18 @@
         { cmd: "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait", title: "http_robot_control_ui_p8081" },
         { cmd: "ros2 run gaze_control_ui_tobii_glasses gaze_ui --legacy-cam", title: "Gaze UI Node (Legacy IP Cam .124)" }
       ];
-      return actions;
+      return sortActions(actions, 'extras_legacy');
     }
 
     // ─── TAB DATA ────────────────────────────────────────────────────────────────
     let TABS = {};
+    window.TABS = TABS;
 
     async function loadConfig() {
       try {
         const res = await fetch('/api/config');
         TABS = await res.json();
+        window.TABS = TABS;
         renderTab(currentTab);
       } catch (err) {
         console.error("Failed to load config:", err);
@@ -255,7 +271,7 @@
           <div class="section-title" style="color: var(--red);"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span></div>
           <div class="actions-grid" style="grid-template-columns: 1fr;">
             <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getDevSetupActions('fake'), '🚀 DEV Setup gestartet...')" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getDevSetupActions('fake'), '🚀 DEV Setup gestartet...', 'dev_fake')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
                     <span class="badge badge-dev"><i class="fa-solid fa-rocket"></i>DEV SEQUENCE</span>
@@ -272,7 +288,7 @@
               </div>
             </div>
             <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getDevSetupActions('real'), '🚀 DEV Setup gestartet...')" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getDevSetupActions('real'), '🚀 DEV Setup gestartet...', 'dev_real')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
                     <span class="badge badge-dev"><i class="fa-solid fa-rocket"></i>DEV SEQUENCE</span>
@@ -302,7 +318,7 @@
           </div>
           <div class="actions-grid" style="grid-template-columns: 1fr;">
             <div class="card-wrapper">
-              <div class="action-card" data-type="server" onclick="openLaunchModal(this.closest('.card-wrapper'), getServerSetupActions('fake'), '🚀 SERVER Setup gestartet...')" style="cursor: pointer;">
+              <div class="action-card" data-type="server" onclick="openLaunchModal(this.closest('.card-wrapper'), getServerSetupActions('fake'), '🚀 SERVER Setup gestartet...', 'server_fake')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
                     <span class="badge badge-server"><i class="fa-solid fa-server"></i>SERVER LAUNCH SEQUENCE</span>
@@ -320,7 +336,7 @@
             </div>
             
             <div class="card-wrapper">
-              <div class="action-card" data-type="server" onclick="openLaunchModal(this.closest('.card-wrapper'), getServerSetupActions('real'), '🚀 SERVER Setup gestartet...')" style="cursor: pointer;">
+              <div class="action-card" data-type="server" onclick="openLaunchModal(this.closest('.card-wrapper'), getServerSetupActions('real'), '🚀 SERVER Setup gestartet...', 'server_real')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
                     <span class="badge badge-server"><i class="fa-solid fa-server"></i>SERVER LAUNCH SEQUENCE</span>
@@ -338,7 +354,7 @@
             </div>
             
             <div class="card-wrapper">
-              <div class="action-card" data-type="client" onclick="openLaunchModal(this.closest('.card-wrapper'), getClientSetupActions(), '🚀 CLIENT Setup gestartet...')" style="cursor: pointer;">
+              <div class="action-card" data-type="client" onclick="openLaunchModal(this.closest('.card-wrapper'), getClientSetupActions(), '🚀 CLIENT Setup gestartet...', 'client')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
                     <span class="badge badge-client"><i class="fa-solid fa-desktop"></i>CLIENT LAUNCH SEQUENCE</span>
@@ -365,7 +381,7 @@
           <div class="section-title" style="color: #a855f7;"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span></div>
           <div class="actions-grid" style="grid-template-columns: 1fr;">
             <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getExtrasExecActions(), '🚀 EXTRAS EXEC gestartet...')" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getExtrasExecActions(), '🚀 EXTRAS EXEC gestartet...', 'extras')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
                     <span class="badge badge-dev"><i class="fa-solid fa-bolt"></i>EXTRAS SEQUENCE</span>
@@ -382,7 +398,7 @@
               </div>
             </div>
             <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getExtrasExecLegacyCamActions(), '🚀 EXTRAS EXEC (Legacy) gestartet...')" style="cursor: pointer;">
+              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getExtrasExecLegacyCamActions(), '🚀 EXTRAS EXEC (Legacy) gestartet...', 'extras_legacy')" style="cursor: pointer;">
                 <div class="action-btn" style="pointer-events: none;">
                   <div class="btn-top">
                     <span class="badge badge-extras"><i class="fa-solid fa-bolt"></i>EXTRAS SEQUENCE</span>

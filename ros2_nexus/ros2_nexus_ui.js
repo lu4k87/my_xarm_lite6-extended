@@ -170,7 +170,7 @@
        openLaunchModal(wrapper, [{cmd: btn.dataset.cmd, title: btn.dataset.label}], `🚀 ${btn.dataset.label} gestartet...`);
     }
 
-    function openLaunchModal(wrapper, actionsData, toastMsg) {
+    function openLaunchModal(wrapper, actionsData, toastMsg, popupId) {
        const tooltip = wrapper.querySelector('.card-tooltip');
        if (!tooltip) return;
        const titleEl = tooltip.querySelector('.card-tooltip-title');
@@ -366,6 +366,7 @@
                   matchedCmds.add(action.cmd);
                   parseArgs(action);
                   action.active = true;
+                  li.dataset.cmd = action.cmd;
               }
               
               // Build Flex Layout
@@ -651,6 +652,7 @@
               
               parseArgs(action);
               action.active = true;
+              li.dataset.cmd = action.cmd;
               const argsDiv = createArgsDiv(action);
               middleCol.appendChild(argsDiv);
               
@@ -835,6 +837,38 @@
        
        document.body.insertAdjacentHTML('beforeend', modalHtml);
        document.getElementById('launch-modal-body').appendChild(contentClone);
+       
+       if (popupId) {
+           const actualTopUl = contentClone.querySelector('ul');
+           if (actualTopUl) {
+               new Sortable(actualTopUl, {
+                   animation: 200,
+                   ghostClass: 'sortable-ghost',
+                   onEnd: async function (evt) {
+                       const newOrder = Array.from(actualTopUl.querySelectorAll('li')).map(li => li.dataset.cmd).filter(c => c);
+                       if (!window.TABS) window.TABS = {};
+                       if (!window.TABS['__popups']) window.TABS['__popups'] = {};
+                       window.TABS['__popups'][popupId] = newOrder;
+                       
+                       try {
+                           const res = await fetch('/api/config', {
+                               method: 'POST',
+                               headers: { 'Content-Type': 'application/json' },
+                               body: JSON.stringify(window.TABS)
+                           });
+                           const data = await res.json();
+                           if (data.ok) showToast('✓ Layout gespeichert');
+                           else showToast('✗ Speichern fehlgeschlagen', true);
+                       } catch (err) {
+                           showToast('✗ Speichern fehlgeschlagen', true);
+                       }
+                       if (window.renderTab && typeof window.currentTab !== 'undefined') {
+                           window.renderTab(window.currentTab);
+                       }
+                   }
+               });
+           }
+       }
        
        const startBtn = document.getElementById('launch-modal-start-btn');
        startBtn.onmouseover = () => { startBtn.style.transform='scale(1.05) translateY(-2px)'; startBtn.style.boxShadow='0 15px 35px rgba(0,255,102,0.5)'; };
