@@ -352,6 +352,12 @@ class TobiiYoloToGraspRoutine(Node):
 
         # Resize the frame to make the window much bigger (1.8x scale)
         big_frame = cv2.resize(frame_copy, (0, 0), fx=1.8, fy=1.8)
+        
+        if not hasattr(self, 'tobii_window_created'):
+            cv2.namedWindow("Tobii Gaze Grasp Stream", cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("Tobii Gaze Grasp Stream", 1600, 900)
+            self.tobii_window_created = True
+            
         cv2.imshow("Tobii Gaze Grasp Stream", big_frame)
         
         if self.last_eef_debug_frame is not None:
