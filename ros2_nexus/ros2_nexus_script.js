@@ -178,6 +178,17 @@
     function buildExpandedTooltip(actions) {
        let html = `<ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">`;
        actions.forEach(a => {
+           let expandedWhole = CMD_DETAILS[a.cmd];
+           if (expandedWhole) {
+               let match = expandedWhole.match(/<ul[^>]*>([\s\S]*?)<\/ul>$/);
+               if (match) {
+                   html += match[1];
+               } else {
+                   html += `<li data-raw-cmd="${a.cmd.replace(/"/g, '&quot;')}"><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd);">${a.cmd}</span></li>`;
+               }
+               return; // Skip splitting
+           }
+
            let subCmds = a.cmd.split(/(?:&&|&)/).map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('sleep') && !s.startsWith('wait'));
            subCmds.forEach(subCmd => {
                let expanded = CMD_DETAILS[subCmd];
@@ -438,10 +449,13 @@
           const safeLbl = a.label.replace(/"/g, '&quot;');
           
           let tooltipHtml = '';
-          let subCmds = a.cmd.split(/(?:&&|&)/).map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('sleep') && !s.startsWith('wait'));
-          
-          if (subCmds.length > 1) {
-             tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">`;
+          if (CMD_DETAILS[a.cmd]) {
+             tooltipHtml = CMD_DETAILS[a.cmd];
+          } else {
+             let subCmds = a.cmd.split(/(?:&&|&)/).map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('sleep') && !s.startsWith('wait'));
+             
+             if (subCmds.length > 1) {
+                tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">`;
              subCmds.forEach(subCmd => {
                  let mKey = Object.keys(CMD_DETAILS)
                               .sort((k1, k2) => k2.length - k1.length)
