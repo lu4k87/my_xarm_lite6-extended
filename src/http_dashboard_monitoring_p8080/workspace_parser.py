@@ -153,10 +153,13 @@ class WorkspaceParser:
                         is_comp = False
                     
                     if pkg and exe_val != "unknown":
+                        parsed_name = name_m.group(1) if name_m else exe_val
+                        if parsed_name.endswith('.py'):
+                            parsed_name = parsed_name[:-3]
                         nodes_list.append({
                             "package":      pkg.group(1),
                             "executable":   exe_val,
-                            "name":         name_m.group(1) if name_m else exe_val,
+                            "name":         parsed_name,
                             "is_container": is_cont,
                             "is_component": is_comp
                         })
@@ -167,10 +170,13 @@ class WorkspaceParser:
                     exe    = re.search(r'exec\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
                     name_m = re.search(r'name\s*=\s*[\'"]([^\'"]+)[\'"]', n_str)
                     if pkg and exe:
+                        parsed_name = name_m.group(1) if name_m else exe.group(1)
+                        if parsed_name.endswith('.py'):
+                            parsed_name = parsed_name[:-3]
                         nodes_list.append({
                             "package":    pkg.group(1),
                             "executable": exe.group(1),
-                            "name":       name_m.group(1) if name_m else exe.group(1),
+                            "name":       parsed_name,
                         })
 
                 all_launch_refs = set(re.findall(

@@ -136,6 +136,86 @@ class TobiiYoloToGraspRoutine(Node):
                 self.get_logger().error(f"Tobii connection error: {e}")
                 time.sleep(2)
 
+
+    def detect_and_draw_aruco(self, img, draw=True, scale_factor=2.5):
+        KNOWN_MARKERS = {
+            0: (150.0, 150.0),
+            1: (150.0, 0.0),
+            2: (150.0, -150.0),
+            3: (150.0, -250.0),
+            4: (250.0, 200.0),
+            5: (400.0, 200.0),
+            6: (425.0, 100.0),
+            7: (425.0, 0.0),
+            8: (425.0, -100.0),
+            9: (425.0, -200.0),
+            10: (350.0, -200.0),
+            11: (250.0, -200.0)
+        }
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        gray_enhanced = clahe.apply(gray)
+        
+        try:
+            corners1, ids1, _ = cv2.aruco.detectMarkers(gray_enhanced, self.aruco_dict, parameters=self.aruco_params)
+        except AttributeError:
+            corners1, ids1, _ = self.aruco_detector.detectMarkers(gray_enhanced)
+            
+        gray_flipped = cv2.flip(gray_enhanced, 1)
+        try:
+            corners2, ids2, _ = cv2.aruco.detectMarkers(gray_flipped, self.aruco_dict, parameters=self.aruco_params)
+        except AttributeError:
+            corners2, ids2, _ = self.aruco_detector.detectMarkers(gray_flipped)
+            
+        corners = []
+        ids_list = []
+        
+        if ids1 is not None and len(ids1) > 0:
+            for i, c in enumerate(corners1):
+                corners.append(c)
+                ids_list.append(ids1[i][0])
+                
+        if ids2 is not None and len(ids2) > 0:
+            w = gray_enhanced.shape[1]
+            for i, c in enumerate(corners2):
+                if ids2[i][0] not in ids_list:
+                    c_unf = c.copy()
+                    c_unf[0, :, 0] = w - 1 - c_unf[0, :, 0]
+                    c_unf = c_unf[:, [1, 0, 3, 2], :]
+                    corners.append(c_unf)
+                    ids_list.append(ids2[i][0])
+                    
+        big_img = img.copy()
+        if draw:
+            big_img = cv2.resize(img, (0, 0), fx=scale_factor, fy=scale_factor)
+            if len(ids_list) > 0:
+                scaled_corners = [c * scale_factor for c in corners]
+                for i, marker_id in enumerate(ids_list):
+                    c = scaled_corners[i][0]
+                    # Draw green polygon ourselves (thickness 1)
+                    pts = np.int32(c).reshape(-1, 1, 2)
+                    cv2.polylines(big_img, [pts], True, (0, 255, 0), 1, cv2.LINE_AA)
+                    
+                    cx = int(np.mean(c[:, 0]))
+                    cy = int(np.mean(c[:, 1]))
+                    
+                    if marker_id in KNOWN_MARKERS:
+                        mx, my = KNOWN_MARKERS[marker_id]
+                        
+                        # Anti-aliased lines, thinner (1) and smaller font (0.35)
+                        cv2.arrowedLine(big_img, (cx, cy), (cx + 35, cy), (0, 0, 255), 1, line_type=cv2.LINE_AA, tipLength=0.2)
+                        cv2.putText(big_img, "X", (cx + 40, cy + 3), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                        
+                        cv2.arrowedLine(big_img, (cx, cy), (cx, cy - 35), (0, 255, 0), 1, line_type=cv2.LINE_AA, tipLength=0.2)
+                        cv2.putText(big_img, "Y", (cx - 4, cy - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
+                        
+                        coord_text = f"ID:{marker_id} [{mx:.0f}, {my:.0f}]"
+                        cv2.putText(big_img, coord_text, (cx + 5, cy + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1, cv2.LINE_AA)
+                    else:
+                        cv2.putText(big_img, f"ID:{marker_id}", (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
+                        
+        return corners, ids_list, KNOWN_MARKERS, big_img
+
     def eef_worker(self):
         while self.script_running:
             try:
@@ -148,8 +228,9 @@ class TobiiYoloToGraspRoutine(Node):
                     if self.state < 2:
                         # In idle or moving-to-scene state, show raw image with status
                         disp = eef_img.copy()
-                        cv2.putText(disp, "EEF Camera Stream Active", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
-                        self.last_eef_debug_frame = disp
+                        _, _, _, big_disp = self.detect_and_draw_aruco(disp, draw=True, scale_factor=2.5)
+                        cv2.putText(big_disp, "EEF Camera Stream Active", (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
+                        self.last_eef_debug_frame = big_disp
             except Exception:
                 pass
             time.sleep(0.2) # Update at ~5 Hz
@@ -223,8 +304,17 @@ class TobiiYoloToGraspRoutine(Node):
         else:
             cv2.putText(frame_copy, f"ROBOT ACTIVE: {self.selected_object_class}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 3)
 
-        cv2.imshow("Tobii Gaze Grasp Stream", frame_copy)
+        # Resize the frame to make the window much bigger (1.8x scale)
+        big_frame = cv2.resize(frame_copy, (0, 0), fx=1.8, fy=1.8)
+        cv2.imshow("Tobii Gaze Grasp Stream", big_frame)
+        
         if self.last_eef_debug_frame is not None:
+            if not hasattr(self, 'eef_window_created'):
+                cv2.namedWindow("EEF Debug View", cv2.WINDOW_NORMAL)
+                cv2.resizeWindow("EEF Debug View", 1600, 1200)
+                self.eef_window_created = True
+            
+            # Image is already scaled up beautifully inside detect_and_draw_aruco
             cv2.imshow("EEF Debug View", self.last_eef_debug_frame)
         cv2.waitKey(1)
 
@@ -256,24 +346,11 @@ class TobiiYoloToGraspRoutine(Node):
         self.process_eef_image(eef_img)
 
     def process_eef_image(self, eef_img):
-        KNOWN_MARKERS = {
-            0: (150.0, 150.0),
-            1: (150.0, 0.0),
-            2: (150.0, -150.0),
-            3: (150.0, -250.0),
-            4: (250.0, 200.0),
-            5: (400.0, 200.0),
-            6: (425.0, 100.0),
-            7: (425.0, 0.0),
-            8: (425.0, -100.0),
-            9: (425.0, -200.0),
-            10: (350.0, -200.0),
-            11: (250.0, -200.0)
-        }
+        # --- ArUco Marker Detection ---
+        scale_factor = 2.5
+        corners, ids_list, KNOWN_MARKERS, big_debug_img = self.detect_and_draw_aruco(eef_img, draw=True, scale_factor=scale_factor)
         
-        debug_img = eef_img.copy()
-        
-        # --- YOLO Detection (Run early so we see boxes even if ArUco fails) ---
+        # --- YOLO Detection ---
         results = self.yolo_model(eef_img, verbose=False)
         target_box = None
         
@@ -282,75 +359,30 @@ class TobiiYoloToGraspRoutine(Node):
                 cls_id = int(box.cls[0])
                 class_name = result.names[cls_id]
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
+                
+                # Scale YOLO boxes for drawing
+                sx1, sy1, sx2, sy2 = int(x1*scale_factor), int(y1*scale_factor), int(x2*scale_factor), int(y2*scale_factor)
                 color = (0, 255, 0) if class_name == self.selected_object_class else (0, 0, 255)
-                cv2.rectangle(debug_img, (x1, y1), (x2, y2), color, 2)
-                cv2.putText(debug_img, class_name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                cv2.rectangle(big_debug_img, (sx1, sy1), (sx2, sy2), color, 1, cv2.LINE_AA)
+                cv2.putText(big_debug_img, class_name, (sx1, sy1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
                 
                 if class_name == self.selected_object_class:
                     target_box = box.xyxy[0]
                     break
             if target_box is not None:
                 break
-
-        # --- ArUco Marker Detection (Original Resolution with CLAHE) ---
-        gray = cv2.cvtColor(eef_img, cv2.COLOR_BGR2GRAY)
-        
-        # Apply CLAHE to improve contrast and handle varied lighting
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-        gray_enhanced = clahe.apply(gray)
-        
-        # 1. Normal detection
-        try:
-            corners1, ids1, _ = cv2.aruco.detectMarkers(gray_enhanced, self.aruco_dict, parameters=self.aruco_params)
-        except AttributeError:
-            corners1, ids1, _ = self.aruco_detector.detectMarkers(gray_enhanced)
-            
-        # 2. Flipped detection (to handle physically mirrored printouts of the board)
-        gray_flipped = cv2.flip(gray_enhanced, 1)
-        try:
-            corners2, ids2, _ = cv2.aruco.detectMarkers(gray_flipped, self.aruco_dict, parameters=self.aruco_params)
-        except AttributeError:
-            corners2, ids2, _ = self.aruco_detector.detectMarkers(gray_flipped)
-            
-        corners = []
-        ids_list = []
-        
-        if ids1 is not None and len(ids1) > 0:
-            for i, c in enumerate(corners1):
-                corners.append(c)
-                ids_list.append(ids1[i][0])
                 
-        if ids2 is not None and len(ids2) > 0:
-            w = gray_enhanced.shape[1]
-            for i, c in enumerate(corners2):
-                # Only add if we haven't found this ID already
-                if ids2[i][0] not in ids_list:
-                    c_unf = c.copy()
-                    # Unflip the X coordinates of the corners
-                    c_unf[0, :, 0] = w - 1 - c_unf[0, :, 0]
-                    # Restore correct ArUco corner ordering (top-left, top-right, bottom-right, bottom-left)
-                    c_unf = c_unf[:, [1, 0, 3, 2], :]
-                    corners.append(c_unf)
-                    ids_list.append(ids2[i][0])
-                    
-        if len(ids_list) > 0:
-            ids = np.array([[i] for i in ids_list], dtype=np.int32)
-            cv2.aruco.drawDetectedMarkers(debug_img, corners, ids)
-        else:
-            ids = None
-            
-        if ids is None or len(ids) == 0:
+        if len(ids_list) == 0:
             self.get_logger().warning("No ArUco markers found in EEF image. Cannot calculate homography.")
-            cv2.putText(debug_img, "ERR: No ArUco Markers!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
-            self.last_eef_debug_frame = debug_img
+            cv2.putText(big_debug_img, "ERR: No ArUco Markers!", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
+            self.last_eef_debug_frame = big_debug_img
             self.state = 0
             return
             
         src_pts = []
         dst_pts = []
         
-        ids_flat = ids.flatten().tolist()
-        for i, marker_id in enumerate(ids_flat):
+        for i, marker_id in enumerate(ids_list):
             if marker_id in KNOWN_MARKERS:
                 c = corners[i][0]
                 cx = np.mean(c[:, 0])
@@ -360,8 +392,8 @@ class TobiiYoloToGraspRoutine(Node):
                 
         if len(src_pts) < 4:
             self.get_logger().warning(f"Not enough known ArUco markers found ({len(src_pts)}, need at least 4).")
-            cv2.putText(debug_img, f"ERR: Only {len(src_pts)} Markers (Need 4)!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
-            self.last_eef_debug_frame = debug_img
+            cv2.putText(big_debug_img, f"ERR: Only {len(src_pts)} Markers (Need 4)!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            self.last_eef_debug_frame = big_debug_img
             self.state = 0
             return
             
@@ -371,8 +403,8 @@ class TobiiYoloToGraspRoutine(Node):
         H, _ = cv2.findHomography(src_pts, dst_pts)
         if H is None:
             self.get_logger().error("Failed to compute homography matrix.")
-            cv2.putText(debug_img, "ERR: Homography Failed!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
-            self.last_eef_debug_frame = debug_img
+            cv2.putText(big_debug_img, "ERR: Homography Failed!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            self.last_eef_debug_frame = big_debug_img
             self.state = 0
             return
             
@@ -380,8 +412,8 @@ class TobiiYoloToGraspRoutine(Node):
                 
         if target_box is None:
             self.get_logger().warning(f"Could not find {self.selected_object_class} in EEF image.")
-            cv2.putText(debug_img, f"ERR: {self.selected_object_class} not found!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
-            self.last_eef_debug_frame = debug_img
+            cv2.putText(big_debug_img, f"ERR: {self.selected_object_class} not found!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            self.last_eef_debug_frame = big_debug_img
             self.state = 0
             return
             
@@ -398,9 +430,9 @@ class TobiiYoloToGraspRoutine(Node):
         
         self.get_logger().info(f"Object {self.selected_object_class} found! Hovering at X={target_x:.1f}, Y={target_y:.1f}, Z={target_z:.1f}")
         
-        cv2.putText(debug_img, f"Calculated X:{target_x:.1f} Y:{target_y:.1f}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
-        cv2.putText(debug_img, "Moving in 3s...", (20, 90), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 3)
-        self.last_eef_debug_frame = debug_img
+        cv2.putText(big_debug_img, f"Calculated X:{target_x:.1f} Y:{target_y:.1f}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
+        cv2.putText(big_debug_img, "Moving in 3s...", (20, 90), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 3)
+        self.last_eef_debug_frame = big_debug_img
         
         self.state = 3
         # Add a delay so the user has more time to process the image and verify the debug view
