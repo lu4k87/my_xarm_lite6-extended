@@ -1004,7 +1004,7 @@ stateDiagram-v2
 > 6. **Steuerung:** In der dunklen VR-Umgebung den Grip-Trigger gedrückt halten und die Hand bewegen — der Roboter folgt latenzfrei in Echtzeit.
 >
 > ⚠️ **Troubleshooting:**
-> - **Nur fliegende Sterne in VR?** → Der Browser lädt noch alte, gecachte Seiten ohne `XRWebGLLayer`. Zwinge den Browser zum Neuladen mit einem Parameter: `https://<PC-IP>:8443/controller_reader.html?v=1`.
+> - **Nur fliegende Sterne in VR?** → Du befindest dich im falschen Raum oder hast die VR-Session zu früh gestartet. Lade die Seite neu (`https://<PC-IP>:8443/controller_reader.html`).
 > - **Webseite meldet "ROS Connection Closed"?** → Du hast Schritt 4 vergessen. Du musst das Zertifikat für den WebSocket-Port `9091` manuell im Browser akzeptieren!
 > - **"Input Sources: 0" / Keine Bewegung?** → Controller schlafen. Beliebige Taste drücken, um sie aufzuwecken.
 > - **ADB Error im Terminal?** → Wenn du WLAN nutzt, kannst du den `adb reverse` Fehler im Terminal ignorieren. Er tritt nur auf, wenn kein USB-Kabel steckt.

@@ -8,6 +8,13 @@ import time
 class ReusableHTTPServer(http.server.HTTPServer):
     allow_reuse_address = True
 
+class NoCacheHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
 def main():
     server_address = ('0.0.0.0', 8443)
     web_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +23,7 @@ def main():
     httpd = None
     for attempt in range(5):
         try:
-            httpd = ReusableHTTPServer(server_address, http.server.SimpleHTTPRequestHandler)
+            httpd = ReusableHTTPServer(server_address, NoCacheHTTPRequestHandler)
             break
         except OSError as e:
             print(f"Port 8443 in use (attempt {attempt+1}/5). Retrying in 1s...")
