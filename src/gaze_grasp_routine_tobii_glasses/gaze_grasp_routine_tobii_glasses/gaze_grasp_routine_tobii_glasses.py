@@ -256,8 +256,19 @@ class TobiiYoloToGraspRoutine(Node):
                                 cv2.rectangle(big_disp, (sx1, sy1), (sx2, sy2), (255, 100, 100), 2, cv2.LINE_AA)
                                 cv2.putText(big_disp, f"{class_name} {conf:.2f}", (sx1, sy1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
                         
-                        cv2.putText(big_disp, "EEF Camera Stream Active (YOLO ON)", (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2, cv2.LINE_AA)
+                        cv2.putText(big_disp, "EEF Camera Stream Active (YOLO ON)", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
+                        if self.selected_object_class is not None:
+                            cv2.putText(big_disp, f"Triggered: {self.selected_object_class}", (30, 95), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 1, cv2.LINE_AA)
                         self.last_eef_debug_frame = big_disp
+                    elif self.state == 3 and hasattr(self, 'frozen_eef_frame') and self.frozen_eef_frame is not None:
+                        if hasattr(self, 'hover_start_time') and self.hover_start_time is not None:
+                            elapsed = time.time() - self.hover_start_time
+                            remain = max(0.0, 3.0 - elapsed)
+                            disp = self.frozen_eef_frame.copy()
+                            cv2.putText(disp, f"Target: {self.selected_object_class}", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255, 255, 0), 1, cv2.LINE_AA)
+                            cv2.putText(disp, f"Calculated X:{self.target_x:.1f} Y:{self.target_y:.1f}", (20, 75), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 0), 1, cv2.LINE_AA)
+                            cv2.putText(disp, f"Moving in {remain:.1f}s...", (20, 110), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 165, 255), 1, cv2.LINE_AA)
+                            self.last_eef_debug_frame = disp
             except Exception:
                 pass
             time.sleep(0.2) # Update at ~5 Hz
@@ -428,7 +439,7 @@ class TobiiYoloToGraspRoutine(Node):
                 
         if len(src_pts) < 4:
             self.get_logger().warning(f"Not enough known ArUco markers found ({len(src_pts)}, need at least 4).")
-            cv2.putText(big_debug_img, f"ERR: Only {len(src_pts)} Markers (Need 4)!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            cv2.putText(big_debug_img, f"ERR: Only {len(src_pts)} Markers (Need 4)!", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             self.last_eef_debug_frame = big_debug_img
             self.state = 5
             self.error_timer = self.create_timer(3.0, self.reset_state)
@@ -440,7 +451,7 @@ class TobiiYoloToGraspRoutine(Node):
         H, _ = cv2.findHomography(src_pts, dst_pts)
         if H is None:
             self.get_logger().error("Failed to compute homography matrix.")
-            cv2.putText(big_debug_img, "ERR: Homography Failed!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            cv2.putText(big_debug_img, "ERR: Homography Failed!", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             self.last_eef_debug_frame = big_debug_img
             self.state = 5
             self.error_timer = self.create_timer(3.0, self.reset_state)
@@ -450,7 +461,7 @@ class TobiiYoloToGraspRoutine(Node):
                 
         if target_box is None:
             self.get_logger().warning(f"Could not find {self.selected_object_class} in EEF image.")
-            cv2.putText(big_debug_img, f"ERR: {self.selected_object_class} not found by YOLO!", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+            cv2.putText(big_debug_img, f"ERR: {self.selected_object_class} not found by YOLO!", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             self.last_eef_debug_frame = big_debug_img
             self.state = 5
             self.error_timer = self.create_timer(3.0, self.reset_state)
@@ -469,11 +480,12 @@ class TobiiYoloToGraspRoutine(Node):
         
         self.get_logger().info(f"Object {self.selected_object_class} found! Hovering at X={target_x:.1f}, Y={target_y:.1f}, Z={target_z:.1f}")
         
-        cv2.putText(big_debug_img, f"Calculated X:{target_x:.1f} Y:{target_y:.1f}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
-        cv2.putText(big_debug_img, "Moving in 3s...", (20, 90), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 3)
-        self.last_eef_debug_frame = big_debug_img
+        self.target_x = target_x
+        self.target_y = target_y
+        self.frozen_eef_frame = big_debug_img.copy()
         
         self.state = 3
+        self.hover_start_time = time.time()
         # Add a delay so the user has more time to process the image and verify the debug view
         self.get_logger().info("Giving the system 3 seconds to show processed image before moving...")
         self.move_timer = self.create_timer(3.0, lambda: self.execute_hover_move(target_x, target_y, target_z))
