@@ -292,8 +292,10 @@
                 'server_fake': { primary: '#93c5fd', bg1: 'rgba(147, 197, 253, 0.15)', bg2: 'rgba(147, 197, 253, 0.05)', border: 'rgba(147, 197, 253, 0.4)', glow: 'rgba(147, 197, 253, 0.2)' },
                 'server_real': { primary: '#3b82f6', bg1: 'rgba(59, 130, 246, 0.15)', bg2: 'rgba(59, 130, 246, 0.05)', border: 'rgba(59, 130, 246, 0.4)', glow: 'rgba(59, 130, 246, 0.3)' },
                 'client': { primary: '#a78bfa', bg1: 'rgba(167, 139, 250, 0.15)', bg2: 'rgba(167, 139, 250, 0.05)', border: 'rgba(167, 139, 250, 0.4)', glow: 'rgba(167, 139, 250, 0.3)' },
-                'extras_zed': { primary: '#f472b6', bg1: 'rgba(244, 114, 182, 0.15)', bg2: 'rgba(244, 114, 182, 0.05)', border: 'rgba(244, 114, 182, 0.4)', glow: 'rgba(244, 114, 182, 0.3)' },
-                'extras_legacy': { primary: '#fb923c', bg1: 'rgba(251, 146, 60, 0.15)', bg2: 'rgba(251, 146, 60, 0.05)', border: 'rgba(251, 146, 60, 0.4)', glow: 'rgba(251, 146, 60, 0.3)' }
+                'extras_zed': { primary: '#4ade80', bg1: 'rgba(74, 222, 128, 0.15)', bg2: 'rgba(74, 222, 128, 0.05)', border: 'rgba(74, 222, 128, 0.4)', glow: 'rgba(74, 222, 128, 0.3)' },
+                'extras_legacy': { primary: '#fb923c', bg1: 'rgba(251, 146, 60, 0.15)', bg2: 'rgba(251, 146, 60, 0.05)', border: 'rgba(251, 146, 60, 0.4)', glow: 'rgba(251, 146, 60, 0.3)' },
+                'vr_exocentric': { primary: '#8b5cf6', bg1: 'rgba(139, 92, 246, 0.15)', bg2: 'rgba(139, 92, 246, 0.05)', border: 'rgba(139, 92, 246, 0.4)', glow: 'rgba(139, 92, 246, 0.3)' },
+                'vr_egocentric': { primary: '#a78bfa', bg1: 'rgba(167, 139, 250, 0.15)', bg2: 'rgba(167, 139, 250, 0.05)', border: 'rgba(167, 139, 250, 0.4)', glow: 'rgba(167, 139, 250, 0.3)' }
             };
 
             let secBgGradient1 = 'rgba(240, 180, 41, 0.15)';
@@ -371,6 +373,18 @@
                     cmdSub = "Egocentric Mode";
                     cmdDesc = "DEV Setup (Real) + Gaze UI Node (IP Cam: .124) — 6 Terminals";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "EXTRAS SEQUENCE";
+                } else if (a.type === 'vr_exocentric') {
+                    actionFunc = "getExtrasExecActions()";
+                    cmdTitle = a.label;
+                    cmdSub = "VR Exocentric Camera Mode";
+                    cmdDesc = "Meta Quest VR Teleop + Gaze UI (ZED M) — Exocentric";
+                    badgeIcon = "fa-solid fa-vr-cardboard"; badgeText = "VR CONTROL SEQUENCE";
+                } else if (a.type === 'vr_egocentric') {
+                    actionFunc = "getExtrasExecLegacyCamActions()";
+                    cmdTitle = a.label;
+                    cmdSub = "VR Egocentric Camera Mode";
+                    cmdDesc = "Meta Quest VR Teleop + Gaze UI (Rpi Cam) — Egocentric";
+                    badgeIcon = "fa-solid fa-vr-cardboard"; badgeText = "VR CONTROL SEQUENCE";
                 }
 
                 let words = badgeText.split(' ');

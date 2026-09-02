@@ -150,6 +150,49 @@
     {
       "actions": [
         {
+          "label": "RUN DEV SETUP (FAKE)",
+          "type": "dev_fake"
+        },
+        {
+          "label": "RUN DEV SETUP (REAL)",
+          "type": "dev_real"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-power-off",
+      "is_bringup_section": true,
+      "style": "border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); overflow: visible;",
+      "title": "AUTOMATED SYSTEM BRINGUP"
+    },
+    {
+      "actions": [
+        {
+          "active": false,
+          "args": [
+            {
+              "checked": true,
+              "text": "add_vacuum_gripper:=true"
+            },
+            {
+              "checked": true,
+              "text": "attach_to:=linear_axis_link"
+            }
+          ],
+          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
+          "label": "RUN DEV (FAKE)",
+          "postCmd": " & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
+          "type": "launch"
+        }
+      ],
+      "col": 0,
+      "color": "#f0b429",
+      "icon": "fa-solid fa-robot",
+      "title": "Lite6 Fake - Moveit Servo (+Rviz2)"
+    },
+    {
+      "actions": [
+        {
           "active": true,
           "args": [
             {
@@ -173,35 +216,9 @@
         }
       ],
       "col": 0,
+      "color": "#00e5ff",
       "icon": "fa-solid fa-robot",
-      "title": "Lite6 - Moveit Servo (+Rviz2)",
-      "color": "#00e5ff"
-    },
-    {
-      "actions": [
-        {
-          "active": false,
-          "args": [
-            {
-              "text": "add_vacuum_gripper:=true",
-              "checked": true
-            },
-            {
-              "text": "attach_to:=linear_axis_link",
-              "checked": true
-            }
-          ],
-          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
-          "label": "RUN DEV (FAKE)",
-          "postCmd": " & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
-          "type": "launch"
-        }
-      ],
-      "col": 0,
-      "icon": "fa-solid fa-robot",
-      "title": "Lite6 Fake - Moveit Servo (+Rviz2)",
-      "color": "#f0b429"
+      "title": "Lite6 - Moveit Servo (+Rviz2)"
     },
     {
       "actions": [
@@ -218,24 +235,25 @@
       "icon": "fa-solid fa-bolt",
       "is_extras_section": true,
       "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
-      "title": "EXTRAS EXECS"
+      "title": "GAZE UI(Screen) Button Control Interface"
     },
     {
       "actions": [
         {
-          "label": "RUN DEV SETUP (FAKE)",
-          "type": "dev_fake"
+          "label": "REAL + Gaze UI for Exocentric Camera Mode",
+          "type": "vr_exocentric"
         },
         {
-          "label": "RUN DEV SETUP (REAL)",
-          "type": "dev_real"
+          "label": "REAL + Gaze UI for Egocentric Camera Mode",
+          "type": "vr_egocentric"
         }
       ],
-      "col": 1,
-      "icon": "fa-solid fa-power-off",
-      "is_bringup_section": true,
-      "style": "border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); overflow: visible;",
-      "title": "AUTOMATED SYSTEM BRINGUP"
+      "col": 0,
+      "icon": "fa-solid fa-vr-cardboard",
+      "is_extras_section": true,
+      "color": "#8b5cf6",
+      "style": "border: 1px solid rgba(139, 92, 246, 0.35); background: rgba(139, 92, 246, 0.06);",
+      "title": "META QUEST VR CONTROL TELEOP"
     },
     {
       "actions": [
@@ -288,49 +306,27 @@
     {
       "actions": [
         {
-          "active": true,
-          "args": [
-            {
-              "checked": true,
-              "text": "add_vacuum_gripper:=true"
-            },
-            {
-              "checked": true,
-              "text": "attach_to:=linear_axis_link"
-            }
-          ],
-          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
-          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
-          "label": "MoveGroup Server (FAKE)",
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
+          "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
+          "label": "RViz Marker Launch",
           "postCmd": "",
           "type": "launch"
         },
         {
-          "active": true,
-          "args": [
-            {
-              "checked": true,
-              "text": "robot_ip:=192.168.1.175"
-            },
-            {
-              "checked": true,
-              "text": "add_vacuum_gripper:=true"
-            },
-            {
-              "checked": true,
-              "text": "report_type:=dev"
-            }
-          ],
-          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
-          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
-          "label": "MoveGroup Server (REAL)",
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
+          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
+          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
           "postCmd": "",
-          "type": "launch"
+          "type": "node"
         }
       ],
       "col": 1,
-      "icon": "fa-solid fa-map-location-dot",
-      "title": "MoveIt Planning (OMPL Server)"
+      "icon": "fa-solid fa-chart-network",
+      "title": "Visualization (Rviz2)"
     },
     {
       "actions": [
@@ -401,12 +397,12 @@
           "active": false,
           "args": [
             {
-              "text": "--ros-args -r __node:=http_web_video_server_p8082",
-              "checked": true
+              "checked": true,
+              "text": "--ros-args -r __node:=http_web_video_server_p8082"
             },
             {
-              "text": "-p port:=8082",
-              "checked": true
+              "checked": true,
+              "text": "-p port:=8082"
             }
           ],
           "baseCmd": "ros2 run web_video_server web_video_server",
@@ -420,31 +416,6 @@
       "icon": "fa-solid fa-camera",
       "style": "break-before: column;",
       "title": "Cameras, Sensors"
-    },
-    {
-      "actions": [
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
-          "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
-          "label": "RViz Marker Launch",
-          "postCmd": "",
-          "type": "launch"
-        },
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
-          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
-          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
-          "postCmd": "",
-          "type": "node"
-        }
-      ],
-      "col": 1,
-      "icon": "fa-solid fa-chart-network",
-      "title": "Visualization (Rviz2)"
     },
     {
       "actions": [
@@ -492,6 +463,53 @@
       "icon": "fa-solid fa-vr-cardboard",
       "style": "border: 1px solid rgba(118, 185, 0, 0.5); background: rgba(118, 185, 0, 0.05);",
       "title": "NVIDIA Isaac Sim"
+    },
+    {
+      "actions": [
+        {
+          "active": true,
+          "args": [
+            {
+              "checked": true,
+              "text": "add_vacuum_gripper:=true"
+            },
+            {
+              "checked": true,
+              "text": "attach_to:=linear_axis_link"
+            }
+          ],
+          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
+          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+          "label": "MoveGroup Server (FAKE)",
+          "postCmd": "",
+          "type": "launch"
+        },
+        {
+          "active": true,
+          "args": [
+            {
+              "checked": true,
+              "text": "robot_ip:=192.168.1.175"
+            },
+            {
+              "checked": true,
+              "text": "add_vacuum_gripper:=true"
+            },
+            {
+              "checked": true,
+              "text": "report_type:=dev"
+            }
+          ],
+          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
+          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
+          "label": "MoveGroup Server (REAL)",
+          "postCmd": "",
+          "type": "launch"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-map-location-dot",
+      "title": "MoveIt Planning (OMPL Server)"
     }
   ],
   "system": [
