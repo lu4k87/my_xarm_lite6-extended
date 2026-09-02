@@ -298,23 +298,23 @@
             else if (sec.is_extras_section) { secBgGradient1 = 'rgba(244, 114, 182, 0.15)'; secBgGradient2 = 'rgba(251, 146, 60, 0.12)'; }
 
             let sectionHtml = `
-        <div class="section" data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 24px; ${sec.style || ''}">
+        <div class="section" data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 16px; ${sec.style || ''}">
           <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 0;">
              <!-- Abstract Background Elements -->
              <div style="position: absolute; top: -300px; right: -300px; width: 800px; height: 800px; background: radial-gradient(circle, ${secBgGradient1} 0%, transparent 60%); pointer-events: none; z-index: 0;"></div>
              <div style="position: absolute; bottom: -250px; left: -250px; width: 600px; height: 600px; background: radial-gradient(circle, ${secBgGradient2} 0%, transparent 60%); pointer-events: none; z-index: 0;"></div>
           </div>
           
-          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 20px; color: #fff;">
+          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; color: #fff;">
              <span style="height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1));"></span>
              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                 <span style="font-size: 9px; font-weight: 800; letter-spacing: 6px; color: var(--mut); text-transform: uppercase;">System Init</span>
-                 <span style="font-size: 16px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="${sec.icon} section-icon" style="color: ${badgeColors[sec.actions[0]?.type || 'dev_fake']?.primary || 'var(--c-dev)'}; margin-right: 12px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
+                 <span style="font-size: 8px; font-weight: 800; letter-spacing: 6px; color: var(--mut); text-transform: uppercase;">System Init</span>
+                 <span style="font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="${sec.icon} section-icon" style="color: ${badgeColors[sec.actions[0]?.type || 'dev_fake']?.primary || 'var(--c-dev)'}; margin-right: 10px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
              </div>
              <span style="height: 1px; flex: 1; background: linear-gradient(270deg, transparent, rgba(255,255,255,0.1));"></span>
           </div>
 
-          <div class="actions-grid" data-sec-index="${secIndex}" style="grid-template-columns: 1fr; gap: 16px; position: relative; z-index: 1;">`;
+          <div class="actions-grid" data-sec-index="${secIndex}" style="grid-template-columns: 1fr; gap: 10px; position: relative; z-index: 1;">`;
 
             (sec.actions || []).forEach((a, aIndex) => {
                 let badgeParams = badgeColors[a.type] || badgeColors['dev_fake'];
@@ -378,21 +378,21 @@
             <div class="card-wrapper" style="width: 100%;">
               <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), ${actionFunc}, '🚀 ${a.label} gestartet...', '${a.type}')" style="cursor: pointer; border-radius: 16px; background: rgba(0,0,0,0.5); border: 1px solid ${badgeParams.border}; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; --card-accent: linear-gradient(90deg, ${badgeParams.primary} 0%, transparent 50%);">
                 <div style="position: absolute; top: 0; right: 0; width: 5px; height: 100%; background: linear-gradient(270deg, ${badgeParams.primary} 0%, transparent 100%); pointer-events: none; border-top-right-radius: 16px; border-bottom-right-radius: 16px; z-index: 0;"></div>
-                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 16px; position: relative; z-index: 1;">
-                  <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 16px; width: 100%;">
-                    <div style="background: linear-gradient(135deg, ${badgeParams.bg1}, ${badgeParams.bg2}); border: 1px solid ${badgeParams.border}; border-radius: 12px; padding: 8px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${badgeParams.bg1};">
-                      <span style="color: ${badgeParams.primary}; font-size: 10px; font-weight: 800; letter-spacing: 2px;"><i class="${badgeIcon}" style="margin-right: 6px;"></i>${bText1}</span>
-                      <span style="color: #fff; font-size: 12px; font-weight: 900; letter-spacing: 1.5px;">${bText2}</span>
+                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 12px; position: relative; z-index: 1;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; width: 100%;">
+                    <div style="background: linear-gradient(135deg, ${badgeParams.bg1}, ${badgeParams.bg2}); border: 1px solid ${badgeParams.border}; border-radius: 10px; padding: 6px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${badgeParams.bg1};">
+                      <span style="color: ${badgeParams.primary}; font-size: 8px; font-weight: 800; letter-spacing: 2px;"><i class="${badgeIcon}" style="margin-right: 6px;"></i>${bText1}</span>
+                      <span style="color: #fff; font-size: 10px; font-weight: 900; letter-spacing: 1.5px;">${bText2}</span>
                     </div>
                     <div style="display: flex; flex-direction: column; text-align: left;">
-                      <span style="font-size: 9px; color: ${badgeParams.primary}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 4px; opacity: 0.9;">${cmdSub}</span>
-                      <span style="font-size: 20px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${badgeParams.glow};">${cmdTitle}</span>
+                      <span style="font-size: 8px; color: ${badgeParams.primary}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 2px; opacity: 0.9;">${cmdSub}</span>
+                      <span style="font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${badgeParams.glow};">${cmdTitle}</span>
                     </div>
                   </div>
-                  <div class="cmd-wrap" style="width: 100%; text-align: left; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
+                  <div class="cmd-wrap" style="width: 100%; text-align: left; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 10px; position: relative; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
                      <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${badgeParams.primary}; box-shadow: 0 0 10px ${badgeParams.primary}; opacity: 0.8;"></div>
                      <div style="position: absolute; top: 0; right: 0; width: 4px; height: 100%; background: ${badgeParams.primary}; box-shadow: 0 0 10px ${badgeParams.primary}; opacity: 0.8;"></div>
-                     <span class="cmd-text" style="color: var(--mut); font-size: 11px; font-family: 'JetBrains Mono', monospace;"><span style="color: ${badgeParams.primary};">></span> ${cmdDesc}<span style="animation: pulse-dot 1s infinite;">_</span></span>
+                     <span class="cmd-text" style="color: var(--mut); font-size: 10px; font-family: 'JetBrains Mono', monospace;"><span style="color: ${badgeParams.primary};">></span> ${cmdDesc}<span style="animation: pulse-dot 1s infinite;">_</span></span>
                   </div>
                 </div>
               </div>
@@ -415,41 +415,41 @@
         const secColor = colors[secIndex % colors.length];
         
         let html = `
-        <div class="section"${extraStyle} data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 24px;">
+        <div class="section"${extraStyle} data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 16px;">
           <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 0;">
              <!-- Abstract Background Elements -->
              <div style="position: absolute; top: -300px; right: -300px; width: 800px; height: 800px; background: radial-gradient(circle, ${secColor} 0%, transparent 60%); opacity: 0.15; pointer-events: none; z-index: 0;"></div>
              <div style="position: absolute; bottom: -250px; left: -250px; width: 600px; height: 600px; background: radial-gradient(circle, ${secColor} 0%, transparent 60%); opacity: 0.12; pointer-events: none; z-index: 0;"></div>
           </div>
           
-          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 20px; color: #fff;">
+          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; color: #fff;">
              <span style="height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1));"></span>
              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                 <span style="font-size: 9px; font-weight: 800; letter-spacing: 6px; color: var(--mut); text-transform: uppercase;">Module Init</span>
-                 <span style="font-size: 16px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="${sec.icon} section-icon" style="color: ${secColor}; margin-right: 12px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
+                 <span style="font-size: 8px; font-weight: 800; letter-spacing: 6px; color: var(--mut); text-transform: uppercase;">Module Init</span>
+                 <span style="font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="${sec.icon} section-icon" style="color: ${secColor}; margin-right: 10px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
              </div>
              <span style="height: 1px; flex: 1; background: linear-gradient(270deg, transparent, rgba(255,255,255,0.1));"></span>
           </div>
 
-          <div class="actions-grid" style="grid-template-columns: 1fr; gap: 16px; position: relative; z-index: 1;" data-sec-index="${secIndex}">
+          <div class="actions-grid" style="grid-template-columns: 1fr; gap: 10px; position: relative; z-index: 1;" data-sec-index="${secIndex}">
             <div class="card-wrapper" style="width: 100%;">
               <div class="action-card" data-type="sys" onclick="openLaunchModal(this.closest('.card-wrapper'), TABS[window.currentTab][${secIndex}].actions, '🚀 ${sec.title.replace(/'/g, "\\'")} gestartet...', 'sec_${secIndex}')" style="cursor: pointer; border-radius: 16px; background: rgba(0,0,0,0.5); border: 1px solid ${secColor}40; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; --card-accent: linear-gradient(90deg, ${secColor} 0%, transparent 50%);">
                 <div style="position: absolute; top: 0; right: 0; width: 5px; height: 100%; background: linear-gradient(270deg, ${secColor} 0%, transparent 100%); pointer-events: none; border-top-right-radius: 16px; border-bottom-right-radius: 16px; z-index: 0;"></div>
-                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 16px; position: relative; z-index: 1;">
-                  <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 16px; width: 100%;">
-                    <div style="background: linear-gradient(135deg, ${secColor}26, ${secColor}0D); border: 1px solid ${secColor}66; border-radius: 12px; padding: 8px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${secColor}26;">
-                      <span style="color: ${secColor}; font-size: 10px; font-weight: 800; letter-spacing: 2px;"><i class="fa-solid fa-layer-group" style="margin-right: 6px;"></i>MODULE</span>
-                      <span style="color: #fff; font-size: 12px; font-weight: 900; letter-spacing: 1.5px;">SEQUENCE</span>
+                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 12px; position: relative; z-index: 1;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; width: 100%;">
+                    <div style="background: linear-gradient(135deg, ${secColor}26, ${secColor}0D); border: 1px solid ${secColor}66; border-radius: 10px; padding: 6px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${secColor}26;">
+                      <span style="color: ${secColor}; font-size: 8px; font-weight: 800; letter-spacing: 2px;"><i class="fa-solid fa-layer-group" style="margin-right: 6px;"></i>MODULE</span>
+                      <span style="color: #fff; font-size: 10px; font-weight: 900; letter-spacing: 1.5px;">SEQUENCE</span>
                     </div>
                     <div style="display: flex; flex-direction: column; text-align: left;">
-                      <span style="font-size: 9px; color: ${secColor}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 4px; opacity: 0.9;">Contains ${actionCount} Components</span>
-                      <span style="font-size: 20px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${secColor}33;">RUN MODULE</span>
+                      <span style="font-size: 8px; color: ${secColor}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 2px; opacity: 0.9;">Contains ${actionCount} Components</span>
+                      <span style="font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${secColor}33;">RUN MODULE</span>
                     </div>
                   </div>
-                  <div class="cmd-wrap" style="width: 100%; text-align: left; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
+                  <div class="cmd-wrap" style="width: 100%; text-align: left; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 10px; position: relative; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
                      <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${secColor}; box-shadow: 0 0 10px ${secColor}; opacity: 0.8;"></div>
                      <div style="position: absolute; top: 0; right: 0; width: 4px; height: 100%; background: ${secColor}; box-shadow: 0 0 10px ${secColor}; opacity: 0.8;"></div>
-                     <span class="cmd-text" style="color: var(--mut); font-size: 11px; font-family: 'JetBrains Mono', monospace;"><span style="color: ${secColor};">></span> Öffnet Launcher Menu für ${actionCount} hinterlegte Nodes/Launches<span style="animation: pulse-dot 1s infinite;">_</span></span>
+                     <span class="cmd-text" style="color: var(--mut); font-size: 10px; font-family: 'JetBrains Mono', monospace;"><span style="color: ${secColor};">></span> Öffnet Launcher Menu für ${actionCount} hinterlegte Nodes/Launches<span style="animation: pulse-dot 1s infinite;">_</span></span>
                   </div>
                 </div>
               </div>
