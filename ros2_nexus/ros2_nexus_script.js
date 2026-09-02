@@ -328,43 +328,43 @@
 
                 if (a.type === 'dev_fake') {
                     actionFunc = "getDevSetupActions('fake')";
-                    cmdTitle = `RUN DEV SETUP <span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
+                    cmdTitle = `RUN DEV SETUP <span style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
                     cmdSub = "Virtual Mode";
                     cmdDesc = "Startet die simulierte Roboter-Umgebung in Terminals";
                     badgeIcon = "fa-solid fa-rocket"; badgeText = "DEV SEQUENCE";
                 } else if (a.type === 'dev_real') {
                     actionFunc = "getDevSetupActions('real')";
-                    cmdTitle = `RUN DEV SETUP <span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
+                    cmdTitle = `RUN DEV SETUP <span style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
                     cmdSub = "Hardware Mode";
                     cmdDesc = "Verbindet mit dem physischen xArm Lite 6 (IP: 192.168.1.175)";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "DEV SEQUENCE";
                 } else if (a.type === 'server_fake') {
                     actionFunc = "getServerSetupActions('fake')";
-                    cmdTitle = `RUN SERVER SETUP <span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
+                    cmdTitle = `RUN SERVER SETUP <span style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
                     cmdSub = "Virtual Mode";
                     cmdDesc = "Host-PC: MoveIt Fake, RViz2, Vision, AI";
                     badgeIcon = "fa-solid fa-server"; badgeText = "SERVER SEQUENCE";
                 } else if (a.type === 'server_real') {
                     actionFunc = "getServerSetupActions('real')";
-                    cmdTitle = `RUN SERVER SETUP <span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
+                    cmdTitle = `RUN SERVER SETUP <span style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
                     cmdSub = "Hardware Mode";
                     cmdDesc = "Host-PC: MoveIt Real, RViz2, Vision, AI (IP: 192.168.1.175)";
                     badgeIcon = "fa-solid fa-server"; badgeText = "SERVER SEQUENCE";
                 } else if (a.type === 'client') {
                     actionFunc = "getClientSetupActions()";
-                    cmdTitle = `RUN CLIENT SETUP <span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(CLIENT)</span>`;
+                    cmdTitle = `RUN CLIENT SETUP <span style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(CLIENT)</span>`;
                     cmdSub = "Operator Station";
                     cmdDesc = "Client-PC: Gamepad, Kollisionswächter, RViz2 & ROS-Bridge";
                     badgeIcon = "fa-solid fa-desktop"; badgeText = "CLIENT SEQUENCE";
                 } else if (a.type === 'extras_zed') {
                     actionFunc = "getExtrasExecActions()";
-                    cmdTitle = `RUN DEV + Gaze UI <span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(ZED M)</span>`;
+                    cmdTitle = `RUN DEV + Gaze UI <span style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(ZED M)</span>`;
                     cmdSub = "Exocentric Mode";
                     cmdDesc = "DEV Setup (Real) + Gaze UI Node (Glasses 3 Pro) — 7 Terminals";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "EXTRAS SEQUENCE";
                 } else if (a.type === 'extras_legacy') {
                     actionFunc = "getExtrasExecLegacyCamActions()";
-                    cmdTitle = `RUN DEV + Gaze UI <span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(Rpi Cam)</span>`;
+                    cmdTitle = `RUN DEV + Gaze UI <span style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(Rpi Cam)</span>`;
                     cmdSub = "Egocentric Mode";
                     cmdDesc = "DEV Setup (Real) + Gaze UI Node (IP Cam: .124) — 6 Terminals";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "EXTRAS SEQUENCE";

@@ -149,23 +149,6 @@
     {
       "actions": [
         {
-          "label": "RUN DEV + Gaze UI (ZED M) - Exocentric",
-          "type": "extras_zed"
-        },
-        {
-          "label": "RUN DEV + Gaze UI (Rpi Cam) - Egocentric",
-          "type": "extras_legacy"
-        }
-      ],
-      "col": 0,
-      "icon": "fa-solid fa-bolt",
-      "is_extras_section": true,
-      "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
-      "title": "EXTRAS EXECS"
-    },
-    {
-      "actions": [
-        {
           "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
           "label": "RUN DEV (FAKE)",
           "type": "launch"
@@ -250,6 +233,23 @@
       "col": 0,
       "icon": "fa-solid fa-map-location-dot",
       "title": "MoveIt Planning (OMPL Server)"
+    },
+    {
+      "actions": [
+        {
+          "label": "RUN DEV + Gaze UI (ZED M) - Exocentric",
+          "type": "extras_zed"
+        },
+        {
+          "label": "RUN DEV + Gaze UI (Rpi Cam) - Egocentric",
+          "type": "extras_legacy"
+        }
+      ],
+      "col": 0,
+      "icon": "fa-solid fa-bolt",
+      "is_extras_section": true,
+      "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
+      "title": "EXTRAS EXECS"
     },
     {
       "actions": [
