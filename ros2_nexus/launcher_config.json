@@ -174,7 +174,8 @@
       ],
       "col": 0,
       "icon": "fa-solid fa-robot",
-      "title": "Lite6 - Moveit Servo (+Rviz2)"
+      "title": "Lite6 - Moveit Servo (+Rviz2)",
+      "color": "#00e5ff"
     },
     {
       "actions": [
