@@ -83,7 +83,7 @@ class IPCamYolo3DNode(Node):
         self.timer = self.create_timer(0.25, self.process_frame)
         self.get_logger().info('IP Cam YOLO Homography Node gestartet (.123)')
 
-    def get_homography(self, img):
+    def get_homography_and_draw(self, img, draw=True, scale_factor=1.8):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         try:
             corners1, ids1, _ = cv2.aruco.detectMarkers(gray, self.aruco_dict, parameters=self.aruco_params)
@@ -114,6 +114,30 @@ class IPCamYolo3DNode(Node):
                     corners.append(c_unf)
                     ids_list.append(ids2[i][0])
 
+        big_img = img.copy()
+        if draw:
+            big_img = cv2.resize(img, (0, 0), fx=scale_factor, fy=scale_factor)
+            if len(ids_list) > 0:
+                scaled_corners = [c * scale_factor for c in corners]
+                for i, marker_id in enumerate(ids_list):
+                    c = scaled_corners[i][0]
+                    pts = np.int32(c).reshape(-1, 1, 2)
+                    cv2.polylines(big_img, [pts], True, (0, 255, 0), 1, cv2.LINE_AA)
+                    
+                    cx = int(np.mean(c[:, 0]))
+                    cy = int(np.mean(c[:, 1]))
+                    
+                    if marker_id in self.KNOWN_MARKERS:
+                        mx, my = self.KNOWN_MARKERS[marker_id]
+                        cv2.arrowedLine(big_img, (cx, cy), (cx + 35, cy), (0, 0, 255), 1, line_type=cv2.LINE_AA, tipLength=0.2)
+                        cv2.putText(big_img, "X", (cx + 40, cy + 3), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+                        cv2.arrowedLine(big_img, (cx, cy), (cx, cy - 35), (0, 255, 0), 1, line_type=cv2.LINE_AA, tipLength=0.2)
+                        cv2.putText(big_img, "Y", (cx - 4, cy - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
+                        coord_text = f"ID:{marker_id} [{mx:.0f}, {my:.0f}]"
+                        cv2.putText(big_img, coord_text, (cx + 5, cy + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1, cv2.LINE_AA)
+                    else:
+                        cv2.putText(big_img, f"ID:{marker_id}", (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
+
         src_pts = []
         dst_pts = []
         
@@ -125,12 +149,13 @@ class IPCamYolo3DNode(Node):
                 src_pts.append([cx, cy])
                 dst_pts.append([self.KNOWN_MARKERS[marker_id][0], self.KNOWN_MARKERS[marker_id][1]])
                 
+        H = None
         if len(src_pts) >= 4:
             src_pts = np.array(src_pts, dtype=np.float32)
             dst_pts = np.array(dst_pts, dtype=np.float32)
             H, _ = cv2.findHomography(src_pts, dst_pts)
-            return H
-        return None
+            
+        return H, big_img
 
     def process_frame(self):
         try:
@@ -144,11 +169,16 @@ class IPCamYolo3DNode(Node):
         if eef_img is None:
             return
 
-        H = self.get_homography(eef_img)
+        H, big_img = self.get_homography_and_draw(eef_img, draw=True, scale_factor=1.8)
         if H is not None:
             self.last_H = H
         else:
             H = self.last_H
+            
+        if not hasattr(self, 'window_created'):
+            cv2.namedWindow('IP Camera 3D Bounding Boxes (.123)', cv2.WINDOW_NORMAL)
+            cv2.resizeWindow('IP Camera 3D Bounding Boxes (.123)', 1280, 960)
+            self.window_created = True
             
         if H is None:
             self.get_logger().warning("No ArUco markers found. Cannot calculate homography.")
@@ -158,6 +188,9 @@ class IPCamYolo3DNode(Node):
             m_array = MarkerArray()
             m_array.markers.append(clear_marker)
             self.pub_markers.publish(m_array)
+            
+            cv2.imshow('IP Camera 3D Bounding Boxes (.123)', big_img)
+            cv2.waitKey(1)
             return
 
         results = self.model.predict(eef_img, verbose=False, conf=0.25)
@@ -169,6 +202,8 @@ class IPCamYolo3DNode(Node):
         
         if len(results) == 0 or len(results[0].boxes) == 0:
             self.pub_markers.publish(marker_array)
+            cv2.imshow('IP Camera 3D Bounding Boxes (.123)', big_img)
+            cv2.waitKey(1)
             return
 
         boxes = results[0].boxes.xyxy.cpu().numpy()
@@ -180,6 +215,14 @@ class IPCamYolo3DNode(Node):
 
         for i, (box, cls_id) in enumerate(zip(boxes, classes)):
             x_min, y_min, x_max, y_max = map(int, box)
+            
+            # Draw YOLO boxes on big_img
+            conf = float(results[0].boxes.conf[i].cpu().numpy())
+            class_name = names[cls_id]
+            sx1, sy1, sx2, sy2 = int(x_min*1.8), int(y_min*1.8), int(x_max*1.8), int(y_max*1.8)
+            cv2.rectangle(big_img, (sx1, sy1), (sx2, sy2), (255, 100, 100), 2, cv2.LINE_AA)
+            cv2.putText(big_img, f"{class_name} {conf:.2f}", (sx1, sy1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+            
             
             # Bottom center of bounding box to project to table surface (Z=0)
             obj_cx = (x_min + x_max) / 2.0
@@ -333,6 +376,9 @@ class IPCamYolo3DNode(Node):
             marker_array.markers.append(create_text_marker('z', i, f"Z:_{z_mm}_mm", 0.2, 0.5, 1.0, 0.000))
             
         self.pub_markers.publish(marker_array)
+        
+        cv2.imshow('IP Camera 3D Bounding Boxes (.123)', big_img)
+        cv2.waitKey(1)
 
 def main(args=None):
     rclpy.init(args=args)

@@ -532,6 +532,18 @@
                   }
               }
               
+              let hasChrome = (action && action.cmd && (action.cmd.includes('google-chrome') || action.cmd.includes('chromium-browser'))) || (cmdToDisplay && (cmdToDisplay.includes('google-chrome') || cmdToDisplay.includes('chromium-browser')));
+              if (hasChrome) {
+                  const chromeBadge = document.createElement('div');
+                  chromeBadge.innerHTML = `<i class="fa-brands fa-chrome"></i> +CHROME`;
+                  chromeBadge.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#4285F4; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
+                  if (autoMarginNode) {
+                      titleDiv.insertBefore(chromeBadge, autoMarginNode);
+                  } else {
+                      titleDiv.appendChild(chromeBadge);
+                  }
+              }
+              
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
@@ -745,6 +757,18 @@
                       titleDiv.insertBefore(pythonBadge2, autoMarginNode2);
                   } else {
                       titleDiv.appendChild(pythonBadge2);
+                  }
+              }
+              
+              let hasChrome_2 = action && action.cmd && (action.cmd.includes('google-chrome') || action.cmd.includes('chromium-browser'));
+              if (hasChrome_2) {
+                  const chromeBadge2 = document.createElement('div');
+                  chromeBadge2.innerHTML = `<i class="fa-brands fa-chrome"></i> +CHROME`;
+                  chromeBadge2.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#4285F4; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
+                  if (autoMarginNode2) {
+                      titleDiv.insertBefore(chromeBadge2, autoMarginNode2);
+                  } else {
+                      titleDiv.appendChild(chromeBadge2);
                   }
               }
               
