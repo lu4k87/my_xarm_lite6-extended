@@ -42,9 +42,7 @@
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175",
       "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082"
     ],
-    "sec_0": [
-      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node"
-    ],
+    "sec_0": [],
     "sec_1": [
       "obs"
     ],
@@ -176,20 +174,20 @@
       ],
       "col": 0,
       "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 - Moveit Servo (+Rviz2)"
+      "title": "Lite6 - Moveit Servo (+Rviz2)"
     },
     {
       "actions": [
         {
-          "active": true,
+          "active": false,
           "args": [
             {
-              "checked": true,
-              "text": "add_vacuum_gripper:=true"
+              "text": "add_vacuum_gripper:=true",
+              "checked": true
             },
             {
-              "checked": true,
-              "text": "attach_to:=linear_axis_link"
+              "text": "attach_to:=linear_axis_link",
+              "checked": true
             }
           ],
           "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
@@ -201,7 +199,7 @@
       ],
       "col": 0,
       "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
+      "title": "Lite6 Fake - Moveit Servo (+Rviz2)"
     },
     {
       "actions": [
@@ -335,7 +333,7 @@
     {
       "actions": [
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
           "cmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
@@ -401,12 +399,12 @@
           "active": false,
           "args": [
             {
-              "checked": true,
-              "text": "--ros-args -r __node:=http_web_video_server_p8082"
+              "text": "--ros-args -r __node:=http_web_video_server_p8082",
+              "checked": true
             },
             {
-              "checked": true,
-              "text": "-p port:=8082"
+              "text": "-p port:=8082",
+              "checked": true
             }
           ],
           "baseCmd": "ros2 run web_video_server web_video_server",
