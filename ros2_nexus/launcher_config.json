@@ -196,16 +196,16 @@
           "active": true,
           "args": [
             {
-              "checked": true,
-              "text": "robot_ip:=192.168.1.175"
+              "text": "robot_ip:=192.168.1.175",
+              "checked": true
             },
             {
-              "checked": true,
-              "text": "add_vacuum_gripper:=true"
+              "text": "add_vacuum_gripper:=true",
+              "checked": true
             },
             {
-              "checked": true,
-              "text": "report_type:=dev"
+              "text": "report_type:=dev",
+              "checked": true
             }
           ],
           "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py",
@@ -235,25 +235,7 @@
       "icon": "fa-solid fa-bolt",
       "is_extras_section": true,
       "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
-      "title": "GAZE UI(Screen) Button Control Interface"
-    },
-    {
-      "actions": [
-        {
-          "label": "REAL + Gaze UI for Exocentric Camera Mode",
-          "type": "vr_exocentric"
-        },
-        {
-          "label": "REAL + Gaze UI for Egocentric Camera Mode",
-          "type": "vr_egocentric"
-        }
-      ],
-      "col": 0,
-      "icon": "fa-solid fa-vr-cardboard",
-      "is_extras_section": true,
-      "color": "#8b5cf6",
-      "style": "border: 1px solid rgba(139, 92, 246, 0.35); background: rgba(139, 92, 246, 0.06);",
-      "title": "META QUEST VR CONTROL TELEOP"
+      "title": "EXTRAS EXECS"
     },
     {
       "actions": [

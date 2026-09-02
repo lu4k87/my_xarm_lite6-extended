@@ -277,7 +277,7 @@
 
       let colHtml = [
         '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 15px; margin-top: 0; text-transform: uppercase;">Full Setups</h2><div style="height: 2px; background: rgba(255,255,255,0.25); margin: 0 40px 30px 40px;"></div><div class="col" id="col-0" style="flex: 1;">',
-        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 15px; margin-top: 0; text-transform: uppercase;">Single Nodes</h2><div style="height: 2px; background: rgba(255,255,255,0.25); margin: 0 40px 30px 40px;"></div><div class="col" id="col-1" style="flex: 1;">',
+        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 15px; margin-top: 0; text-transform: uppercase;">Launches / Nodes</h2><div style="height: 2px; background: rgba(255,255,255,0.25); margin: 0 40px 30px 40px;"></div><div class="col" id="col-1" style="flex: 1;">',
         '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 15px; margin-top: 0; text-transform: uppercase;">Web/-Server and more</h2><div style="height: 2px; background: rgba(255,255,255,0.25); margin: 0 40px 30px 40px;"></div><div class="col" id="col-2" style="flex: 1;">'
       ];
 
@@ -333,43 +333,43 @@
 
                 if (a.type === 'dev_fake') {
                     actionFunc = "getDevSetupActions('fake')";
-                    cmdTitle = `RUN DEV SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
+                    cmdTitle = `DEV SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
                     cmdSub = "Virtual Mode";
                     cmdDesc = "Startet die simulierte Roboter-Umgebung in Terminals";
                     badgeIcon = "fa-solid fa-rocket"; badgeText = "DEV SEQUENCE";
                 } else if (a.type === 'dev_real') {
                     actionFunc = "getDevSetupActions('real')";
-                    cmdTitle = `RUN DEV SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
+                    cmdTitle = `DEV SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
                     cmdSub = "Hardware Mode";
                     cmdDesc = "Verbindet mit dem physischen xArm Lite 6 (IP: 192.168.1.175)";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "DEV SEQUENCE";
                 } else if (a.type === 'server_fake') {
                     actionFunc = "getServerSetupActions('fake')";
-                    cmdTitle = `RUN SERVER SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
+                    cmdTitle = `SERVER SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
                     cmdSub = "Virtual Mode";
                     cmdDesc = "Host-PC: MoveIt Fake, RViz2, Vision, AI";
                     badgeIcon = "fa-solid fa-server"; badgeText = "SERVER SEQUENCE";
                 } else if (a.type === 'server_real') {
                     actionFunc = "getServerSetupActions('real')";
-                    cmdTitle = `RUN SERVER SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
+                    cmdTitle = `SERVER SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
                     cmdSub = "Hardware Mode";
                     cmdDesc = "Host-PC: MoveIt Real, RViz2, Vision, AI (IP: 192.168.1.175)";
                     badgeIcon = "fa-solid fa-server"; badgeText = "SERVER SEQUENCE";
                 } else if (a.type === 'client') {
                     actionFunc = "getClientSetupActions()";
-                    cmdTitle = `RUN CLIENT SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(CLIENT)</span>`;
+                    cmdTitle = `CLIENT SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(CLIENT)</span>`;
                     cmdSub = "Operator Station";
                     cmdDesc = "Client-PC: Gamepad, Kollisionswächter, RViz2 & ROS-Bridge";
                     badgeIcon = "fa-solid fa-desktop"; badgeText = "CLIENT SEQUENCE";
                 } else if (a.type === 'extras_zed') {
                     actionFunc = "getExtrasExecActions()";
-                    cmdTitle = `RUN DEV + Gaze UI <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(ZED M)</span>`;
+                    cmdTitle = `DEV + Gaze UI <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(ZED M)</span>`;
                     cmdSub = "Exocentric Mode";
                     cmdDesc = "DEV Setup (Real) + Gaze UI Node (Glasses 3 Pro) — 7 Terminals";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "EXTRAS SEQUENCE";
                 } else if (a.type === 'extras_legacy') {
                     actionFunc = "getExtrasExecLegacyCamActions()";
-                    cmdTitle = `RUN DEV + Gaze UI <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(Rpi Cam)</span>`;
+                    cmdTitle = `DEV + Gaze UI <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(Rpi Cam)</span>`;
                     cmdSub = "Egocentric Mode";
                     cmdDesc = "DEV Setup (Real) + Gaze UI Node (IP Cam: .124) — 6 Terminals";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "EXTRAS SEQUENCE";
