@@ -275,7 +275,11 @@
         if (sec.col === undefined) sec.col = i % 3;
       });
 
-      let colHtml = ['<div class="col" id="col-0">', '<div class="col" id="col-1">', '<div class="col" id="col-2">'];
+      let colHtml = [
+        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 30px; margin-top: 0; text-transform: uppercase;">Full Setups</h2><div class="col" id="col-0" style="flex: 1;">',
+        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 30px; margin-top: 0; text-transform: uppercase;">Single Nodes</h2><div class="col" id="col-1" style="flex: 1;">',
+        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 30px; margin-top: 0; text-transform: uppercase;">Web/-Server and more</h2><div class="col" id="col-2" style="flex: 1;">'
+      ];
 
       sections.forEach((sec, secIndex) => {
         let isSpecialSection = sec.is_bringup_section || sec.is_server_bringup_section || sec.is_client_bringup_section || sec.is_extras_section;
@@ -468,7 +472,7 @@
         colHtml[sec.col] += html;
       });
 
-      document.getElementById('main-content').innerHTML = colHtml[0] + '</div>' + colHtml[1] + '</div>' + colHtml[2] + '</div>';
+      document.getElementById('main-content').innerHTML = colHtml[0] + '</div></div>' + colHtml[1] + '</div></div>' + colHtml[2] + '</div></div>';
 
       // Event listeners for copy buttons
       document.querySelectorAll('.copy-btn').forEach(btn => {
