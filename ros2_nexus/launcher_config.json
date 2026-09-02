@@ -32,6 +32,9 @@
       "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
       "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py"
+    ],
+    "sec_1": [
+      "obs"
     ]
   },
   "info": [
@@ -122,7 +125,10 @@
   ],
   "nodes": [
     {
-      "actions": [],
+      "actions": [
+        { "type": "dev_fake", "label": "RUN DEV SETUP (FAKE)" },
+        { "type": "dev_real", "label": "RUN DEV SETUP (REAL)" }
+      ],
       "col": 0,
       "icon": "fa-solid fa-power-off",
       "is_bringup_section": true,
@@ -157,8 +163,25 @@
     {
       "actions": [
         {
+          "active": false,
+          "args": [
+            {
+              "checked": true,
+              "text": "robot_ip:=192.168.1.175"
+            },
+            {
+              "checked": true,
+              "text": "add_vacuum_gripper:=true"
+            },
+            {
+              "checked": true,
+              "text": "report_type:=dev"
+            }
+          ],
+          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py",
           "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev & sleep 8 && ros2 run rviz_streamer rviz_streamer_node & ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses",
           "label": "RUN DEV (REAL)",
+          "postCmd": " & sleep 8 && ros2 run rviz_streamer rviz_streamer_node & ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses",
           "type": "launch"
         }
       ],
@@ -182,14 +205,6 @@
       "col": 0,
       "icon": "fa-solid fa-map-location-dot",
       "title": "MoveIt Planning (OMPL Server)"
-    },
-    {
-      "actions": [],
-      "col": 0,
-      "icon": "fa-solid fa-network-wired",
-      "is_remote_bringup_section": true,
-      "style": "border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.05); overflow: visible;",
-      "title": "Remote Control System Bringup"
     },
     {
       "actions": [
@@ -242,19 +257,35 @@
     {
       "actions": [
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
           "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
           "label": "RViz Marker Launch",
+          "postCmd": "",
           "type": "launch"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
           "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
           "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
+          "postCmd": "",
           "type": "node"
         }
       ],
       "col": 1,
       "icon": "fa-solid fa-chart-network",
       "title": "Visualization (Rviz2)"
+    },
+    {
+      "actions": [],
+      "col": 1,
+      "icon": "fa-solid fa-bolt",
+      "is_extras_section": true,
+      "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
+      "title": "EXTRAS EXECS"
     },
     {
       "actions": [
@@ -305,12 +336,36 @@
       "title": "Cameras, Sensors"
     },
     {
-      "actions": [],
+      "actions": [
+        { "type": "extras_zed", "label": "RUN DEV + Gaze UI (ZED M) - Exocentric" },
+        { "type": "extras_legacy", "label": "RUN DEV + Gaze UI (Rpi Cam) - Egocentric" }
+      ],
       "col": 2,
       "icon": "fa-solid fa-bolt",
       "is_extras_section": true,
       "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
       "title": "EXTRAS EXECS"
+    },
+    {
+      "actions": [
+        { "type": "server_fake", "label": "RUN SERVER (FAKE)" },
+        { "type": "server_real", "label": "RUN SERVER (REAL)" }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-server",
+      "is_server_bringup_section": true,
+      "style": "",
+      "title": "Server Control Bringup"
+    },
+    {
+      "actions": [
+        { "type": "client", "label": "RUN CLIENT (Operator Station)" }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-desktop",
+      "is_client_bringup_section": true,
+      "style": "",
+      "title": "Client Control Bringup"
     }
   ],
   "system": [
@@ -390,22 +445,38 @@
         {
           "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
           "label": "ROS Bridge Websocket Launch (Port 9090)",
-          "type": "launch"
+          "type": "launch",
+          "active": false,
+          "baseCmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080 & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
           "label": "Dashboard Monitoring (Port 8080)",
-          "type": "node"
+          "type": "node",
+          "active": false,
+          "baseCmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080 & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
           "label": "Robot Control Web UI (Port 8081)",
-          "type": "node"
+          "type": "node",
+          "active": false,
+          "baseCmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
           "label": "Workspace Analyzer",
-          "type": "node"
+          "type": "node",
+          "active": false,
+          "baseCmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
+          "args": [],
+          "postCmd": ""
         }
       ],
       "col": 1,
@@ -417,7 +488,11 @@
         {
           "cmd": "obs",
           "label": "OBS Studio",
-          "type": "sys"
+          "type": "sys",
+          "active": true,
+          "baseCmd": "obs",
+          "args": [],
+          "postCmd": ""
         }
       ],
       "col": 1,

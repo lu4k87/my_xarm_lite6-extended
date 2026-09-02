@@ -262,311 +262,188 @@
       "ros2 run my_3d_vision_bringup ip_cam_yolo_3d_bbox.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);">  ip_cam_yolo_3d_bbox</span> <span style="float: right; opacity: 0.7;">(my_3d_vision_bringup)</span></li></ul>`,
       "ros2 run rviz_tf_tuner rviz_tf_tuner": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);">  rviz_tf_tuner</span> <span style="float: right; opacity: 0.7;">(rviz_tf_tuner)</span></li></ul>`,
       "ros2 run gaze_control_ui_tobii_glasses gaze_ui_zedm": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);">  gaze_ui_zedm</span> <span style="float: right; opacity: 0.7;">(gaze_control_ui_tobii_glasses)</span></li></ul>`,
-      "ros2 run joy joy_node": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);">  joy_node</span> <span style="float: right; opacity: 0.7;">(joy)</span></li></ul>`,
-      "ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-launch" style="margin-right: 6px;"><i class="fa-solid fa-rocket" style="margin-right: 4px;"></i>LAUNCH</span><span style="color: var(--c-launch);"> zed_camera.launch.py</span> <span style="float: right; opacity: 0.7;">(Launch-File)</span><ul style="padding-left: 14px; margin: 4px 0 0 0; border-left: 1px solid rgba(255, 255, 255, 0.35);"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);"> zed_wrapper_node</span> <span style="float: right; opacity: 0.7;">(zed_wrapper)</span></li></ul></li></ul>`,
-      "ros2 run rviz2 rviz2 -d ~/dev_ws/src/xarm_ros2/xarm_moveit_servo/rviz/servo.rviz": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);">  rviz2</span> <span style="float: right; opacity: 0.7;">(rviz2)</span></li></ul>`,
-      "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);"> workspace_analyzer</span> <span style="float: right; opacity: 0.7;">(Dashboard Monitoring)</span></li></ul>`,
-      "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080 & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span><span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span><span style="color: var(--c-cmd);"> http_dashboard_monitoring_p8080</span> <span style="float: right; opacity: 0.7;">(Web Server Port 8080)</span></li></ul>`,
-      "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span><span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span><span style="color: var(--c-cmd);"> http_robot_control_ui_p8081</span> <span style="float: right; opacity: 0.7;">(Web Server Port 8081)</span></li></ul>`
-    };
+        let isSpecialSection = sec.is_bringup_section || sec.is_server_bringup_section || sec.is_client_bringup_section || sec.is_extras_section;
+        
+        if (isSpecialSection) {
+            let badgeColors = {
+                'dev_fake': { primary: 'var(--c-dev)', bg1: 'rgba(240, 180, 41, 0.15)', bg2: 'rgba(240, 180, 41, 0.05)', border: 'rgba(240, 180, 41, 0.4)', glow: 'rgba(240, 180, 41, 0.2)' },
+                'dev_real': { primary: '#00e5ff', bg1: 'rgba(0, 229, 255, 0.15)', bg2: 'rgba(0, 229, 255, 0.05)', border: 'rgba(0, 229, 255, 0.4)', glow: 'rgba(0, 229, 255, 0.3)' },
+                'server_fake': { primary: '#93c5fd', bg1: 'rgba(147, 197, 253, 0.15)', bg2: 'rgba(147, 197, 253, 0.05)', border: 'rgba(147, 197, 253, 0.4)', glow: 'rgba(147, 197, 253, 0.2)' },
+                'server_real': { primary: '#3b82f6', bg1: 'rgba(59, 130, 246, 0.15)', bg2: 'rgba(59, 130, 246, 0.05)', border: 'rgba(59, 130, 246, 0.4)', glow: 'rgba(59, 130, 246, 0.3)' },
+                'client': { primary: '#a78bfa', bg1: 'rgba(167, 139, 250, 0.15)', bg2: 'rgba(167, 139, 250, 0.05)', border: 'rgba(167, 139, 250, 0.4)', glow: 'rgba(167, 139, 250, 0.3)' },
+                'extras_zed': { primary: '#f472b6', bg1: 'rgba(244, 114, 182, 0.15)', bg2: 'rgba(244, 114, 182, 0.05)', border: 'rgba(244, 114, 182, 0.4)', glow: 'rgba(244, 114, 182, 0.3)' },
+                'extras_legacy': { primary: '#fb923c', bg1: 'rgba(251, 146, 60, 0.15)', bg2: 'rgba(251, 146, 60, 0.05)', border: 'rgba(251, 146, 60, 0.4)', glow: 'rgba(251, 146, 60, 0.3)' }
+            };
 
-    // ─── RENDER ───────────────────────────────────────────────────────────────────
-    function renderTab(tabId) {
-      try {
-      const sections = TABS[tabId] || [];
+            let secBgGradient1 = 'rgba(240, 180, 41, 0.15)';
+            let secBgGradient2 = 'rgba(0, 229, 255, 0.12)';
+            if (sec.is_server_bringup_section) { secBgGradient1 = 'rgba(59, 130, 246, 0.15)'; secBgGradient2 = 'rgba(147, 197, 253, 0.12)'; }
+            else if (sec.is_client_bringup_section) { secBgGradient1 = 'rgba(167, 139, 250, 0.15)'; secBgGradient2 = 'rgba(139, 92, 246, 0.12)'; }
+            else if (sec.is_extras_section) { secBgGradient1 = 'rgba(244, 114, 182, 0.15)'; secBgGradient2 = 'rgba(251, 146, 60, 0.12)'; }
 
-      // Ensure each section has a column assignment, default to distributing 0, 1, 2
-      sections.forEach((sec, i) => {
-        if (sec.col === undefined) sec.col = i % 3;
-      });
-
-      let colHtml = ['<div class="col" id="col-0">', '<div class="col" id="col-1">', '<div class="col" id="col-2">'];
-
-      sections.forEach((sec, secIndex) => {
-        if (sec.is_bringup_section) {
-          colHtml[sec.col] += `
-        <div class="section" data-sec-id="${secIndex}" style="${sec.style || ''}">
-          <div class="section-title" style="color: var(--red);"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span></div>
-          <div class="actions-grid" style="grid-template-columns: 1fr;">
-            <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getDevSetupActions('fake'), '🚀 DEV Setup gestartet...', 'dev_fake')" style="cursor: pointer;">
-                <div class="action-btn" style="pointer-events: none;">
-                  <div class="btn-top">
-                    <span class="badge badge-dev"><i class="fa-solid fa-rocket"></i>DEV SEQUENCE</span>
-                    <span class="label">RUN DEV Setup (FAKE)</span>
-                  </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Startet die simulierte Roboter-Umgebung in Terminals</span></div>
-                </div>
-                 
-              </div>
-              <div class="card-tooltip">
-                <div class="card-tooltip-title"><i class="fa-solid fa-rocket"></i> RUN DEV Setup (FAKE)</div>
-                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                ${buildExpandedTooltip(getDevSetupActions('fake'))}
-              </div>
-            </div>
-            <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getDevSetupActions('real'), '🚀 DEV Setup gestartet...', 'dev_real')" style="cursor: pointer;">
-                <div class="action-btn" style="pointer-events: none;">
-                  <div class="btn-top">
-                    <span class="badge badge-dev"><i class="fa-solid fa-rocket"></i>DEV SEQUENCE</span>
-                    <span class="label">RUN DEV Setup (REAL)</span>
-                  </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Verbindet mit dem physischen xArm Lite 6 (IP: 192.168.1.175)</span></div>
-                </div>
-                 
-              </div>
-              <div class="card-tooltip">
-                <div class="card-tooltip-title"><i class="fa-solid fa-rocket"></i> RUN DEV Setup (REAL)</div>
-                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                ${buildExpandedTooltip(getDevSetupActions('real'))}
-              </div>
-            </div>
+            let sectionHtml = `
+        <div class="section" data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 24px; ${sec.style || ''}">
+          <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 0;">
+             <!-- Abstract Background Elements -->
+             <div style="position: absolute; top: -300px; right: -300px; width: 800px; height: 800px; background: radial-gradient(circle, ${secBgGradient1} 0%, transparent 60%); pointer-events: none; z-index: 0;"></div>
+             <div style="position: absolute; bottom: -250px; left: -250px; width: 600px; height: 600px; background: radial-gradient(circle, ${secBgGradient2} 0%, transparent 60%); pointer-events: none; z-index: 0;"></div>
           </div>
-        </div>`;
-          return;
-        }
+          
+          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 20px; color: #fff;">
+             <span style="height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1));"></span>
+             <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                 <span style="font-size: 9px; font-weight: 800; letter-spacing: 6px; color: var(--mut); text-transform: uppercase;">System Init</span>
+                 <span style="font-size: 16px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="${sec.icon} section-icon" style="color: ${badgeColors[sec.actions[0]?.type || 'dev_fake']?.primary || 'var(--c-dev)'}; margin-right: 12px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
+             </div>
+             <span style="height: 1px; flex: 1; background: linear-gradient(270deg, transparent, rgba(255,255,255,0.1));"></span>
+          </div>
 
-        if (sec.is_remote_bringup_section) {
-          colHtml[sec.col] += `
-        <div class="section" data-sec-id="${secIndex}" style="${sec.style || ''}">
-          <div class="section-title" style="color: var(--cyan);">
-            <i class="${sec.icon} section-icon"></i>${sec.title}
-            <span class="title-line" style="margin-left: 12px;"></span>
-          </div>
-          <div class="actions-grid" style="grid-template-columns: 1fr;">
-            <div class="card-wrapper">
-              <div class="action-card" data-type="server" onclick="openLaunchModal(this.closest('.card-wrapper'), getServerSetupActions('fake'), '🚀 SERVER Setup gestartet...', 'server_fake')" style="cursor: pointer;">
-                <div class="action-btn" style="pointer-events: none;">
-                  <div class="btn-top">
-                    <span class="badge badge-server"><i class="fa-solid fa-server"></i>SERVER LAUNCH SEQUENCE</span>
-                    <span class="label">RUN SERVER (FAKE)</span>
-                  </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Host-PC: MoveIt Fake, RViz2, Vision, AI</span></div>
-                </div>
-                 
-              </div>
-              <div class="card-tooltip">
-                <div class="card-tooltip-title"><i class="fa-solid fa-server"></i> RUN SERVER (FAKE)</div>
-                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                ${buildExpandedTooltip(getServerSetupActions("fake"))}
-              </div>
-            </div>
-            
-            <div class="card-wrapper">
-              <div class="action-card" data-type="server" onclick="openLaunchModal(this.closest('.card-wrapper'), getServerSetupActions('real'), '🚀 SERVER Setup gestartet...', 'server_real')" style="cursor: pointer;">
-                <div class="action-btn" style="pointer-events: none;">
-                  <div class="btn-top">
-                    <span class="badge badge-server"><i class="fa-solid fa-server"></i>SERVER LAUNCH SEQUENCE</span>
-                    <span class="label">RUN SERVER (REAL)</span>
-                  </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Host-PC: MoveIt Real, RViz2, Vision, AI (IP: 192.168.1.175)</span></div>
-                </div>
-                 
-              </div>
-              <div class="card-tooltip">
-                <div class="card-tooltip-title"><i class="fa-solid fa-server"></i> RUN SERVER (REAL)</div>
-                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                ${buildExpandedTooltip(getServerSetupActions("real"))}
-              </div>
-            </div>
-            
-            <div class="card-wrapper">
-              <div class="action-card" data-type="client" onclick="openLaunchModal(this.closest('.card-wrapper'), getClientSetupActions(), '🚀 CLIENT Setup gestartet...', 'client')" style="cursor: pointer;">
-                <div class="action-btn" style="pointer-events: none;">
-                  <div class="btn-top">
-                    <span class="badge badge-client"><i class="fa-solid fa-desktop"></i>CLIENT LAUNCH SEQUENCE</span>
-                    <span class="label">RUN CLIENT (Operator Station)</span>
-                  </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">Client-PC: Gamepad, Kollisionswächter, RViz2 & ROS-Bridge</span></div>
-                </div>
-                 
-              </div>
-              <div class="card-tooltip">
-                <div class="card-tooltip-title"><i class="fa-solid fa-desktop"></i> RUN CLIENT (Operator Station)</div>
-                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                ${buildExpandedTooltip(getClientSetupActions())}
-              </div>
-            </div>
-          </div>
-        </div>`;
-          return;
-        }
+          <div class="actions-grid" data-sec-index="${secIndex}" style="grid-template-columns: 1fr; gap: 16px; position: relative; z-index: 1;">`;
 
-        if (sec.is_extras_section) {
-          colHtml[sec.col] += `
-        <div class="section" data-sec-id="${secIndex}" style="${sec.style || ''}">
-          <div class="section-title" style="color: #a855f7;"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span></div>
-          <div class="actions-grid" style="grid-template-columns: 1fr;">
-            <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getExtrasExecActions(), '🚀 EXTRAS EXEC gestartet...', 'extras')" style="cursor: pointer;">
-                <div class="action-btn" style="pointer-events: none;">
-                  <div class="btn-top">
-                    <span class="badge badge-dev"><i class="fa-solid fa-bolt"></i>EXTRAS SEQUENCE</span>
-                    <span class="label">RUN DEV + Gaze UI (ZED M) - Exocentric</span>
+            (sec.actions || []).forEach((a, aIndex) => {
+                let badgeParams = badgeColors[a.type] || badgeColors['dev_fake'];
+                let actionFunc = "[]";
+                let cmdTitle = "";
+                let cmdSub = "";
+                let cmdDesc = "";
+                let badgeIcon = "fa-solid fa-rocket";
+                let badgeText = "SEQUENCE";
+
+                if (a.type === 'dev_fake') {
+                    actionFunc = "getDevSetupActions('fake')";
+                    cmdTitle = `RUN DEV SETUP <span style="color: ${badgeParams.primary}; font-weight: 300; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
+                    cmdSub = "Virtual Mode";
+                    cmdDesc = "Startet die simulierte Roboter-Umgebung in Terminals";
+                    badgeIcon = "fa-solid fa-rocket"; badgeText = "DEV SEQUENCE";
+                } else if (a.type === 'dev_real') {
+                    actionFunc = "getDevSetupActions('real')";
+                    cmdTitle = `RUN DEV SETUP <span style="color: ${badgeParams.primary}; font-weight: 300; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
+                    cmdSub = "Hardware Mode";
+                    cmdDesc = "Verbindet mit dem physischen xArm Lite 6 (IP: 192.168.1.175)";
+                    badgeIcon = "fa-solid fa-bolt"; badgeText = "DEV SEQUENCE";
+                } else if (a.type === 'server_fake') {
+                    actionFunc = "getServerSetupActions('fake')";
+                    cmdTitle = `RUN SERVER SETUP <span style="color: ${badgeParams.primary}; font-weight: 300; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
+                    cmdSub = "Virtual Mode";
+                    cmdDesc = "Host-PC: MoveIt Fake, RViz2, Vision, AI";
+                    badgeIcon = "fa-solid fa-server"; badgeText = "SERVER SEQUENCE";
+                } else if (a.type === 'server_real') {
+                    actionFunc = "getServerSetupActions('real')";
+                    cmdTitle = `RUN SERVER SETUP <span style="color: ${badgeParams.primary}; font-weight: 300; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
+                    cmdSub = "Hardware Mode";
+                    cmdDesc = "Host-PC: MoveIt Real, RViz2, Vision, AI (IP: 192.168.1.175)";
+                    badgeIcon = "fa-solid fa-server"; badgeText = "SERVER SEQUENCE";
+                } else if (a.type === 'client') {
+                    actionFunc = "getClientSetupActions()";
+                    cmdTitle = `RUN CLIENT SETUP <span style="color: ${badgeParams.primary}; font-weight: 300; text-shadow: 0 0 20px ${badgeParams.glow};">(CLIENT)</span>`;
+                    cmdSub = "Operator Station";
+                    cmdDesc = "Client-PC: Gamepad, Kollisionswächter, RViz2 & ROS-Bridge";
+                    badgeIcon = "fa-solid fa-desktop"; badgeText = "CLIENT SEQUENCE";
+                } else if (a.type === 'extras_zed') {
+                    actionFunc = "getExtrasExecActions()";
+                    cmdTitle = `RUN DEV + Gaze UI <span style="color: ${badgeParams.primary}; font-weight: 300; text-shadow: 0 0 20px ${badgeParams.glow};">(ZED M)</span>`;
+                    cmdSub = "Exocentric Mode";
+                    cmdDesc = "DEV Setup (Real) + Gaze UI Node (Glasses 3 Pro) — 7 Terminals";
+                    badgeIcon = "fa-solid fa-bolt"; badgeText = "EXTRAS SEQUENCE";
+                } else if (a.type === 'extras_legacy') {
+                    actionFunc = "getExtrasExecLegacyCamActions()";
+                    cmdTitle = `RUN DEV + Gaze UI <span style="color: ${badgeParams.primary}; font-weight: 300; text-shadow: 0 0 20px ${badgeParams.glow};">(Rpi Cam)</span>`;
+                    cmdSub = "Egocentric Mode";
+                    cmdDesc = "DEV Setup (Real) + Gaze UI Node (IP Cam: .124) — 6 Terminals";
+                    badgeIcon = "fa-solid fa-bolt"; badgeText = "EXTRAS SEQUENCE";
+                }
+
+                let words = badgeText.split(' ');
+                let bText1 = words[0];
+                let bText2 = words.slice(1).join(' ');
+
+                sectionHtml += `
+            <div class="card-wrapper" style="width: 100%;">
+              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), ${actionFunc}, '🚀 ${a.label} gestartet...', '${a.type}')" style="cursor: pointer; border-radius: 16px; background: rgba(0,0,0,0.5); border: 1px solid ${badgeParams.border}; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; --card-accent: linear-gradient(90deg, ${badgeParams.primary} 0%, transparent 50%);">
+                <div style="position: absolute; top: 0; right: 0; width: 5px; height: 100%; background: linear-gradient(270deg, ${badgeParams.primary} 0%, transparent 100%); pointer-events: none; border-top-right-radius: 16px; border-bottom-right-radius: 16px; z-index: 0;"></div>
+                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 16px; position: relative; z-index: 1;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 16px; width: 100%;">
+                    <div style="background: linear-gradient(135deg, ${badgeParams.bg1}, ${badgeParams.bg2}); border: 1px solid ${badgeParams.border}; border-radius: 12px; padding: 8px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${badgeParams.bg1};">
+                      <span style="color: ${badgeParams.primary}; font-size: 10px; font-weight: 800; letter-spacing: 2px;"><i class="${badgeIcon}" style="margin-right: 6px;"></i>${bText1}</span>
+                      <span style="color: #fff; font-size: 12px; font-weight: 900; letter-spacing: 1.5px;">${bText2}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; text-align: left;">
+                      <span style="font-size: 9px; color: ${badgeParams.primary}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 4px; opacity: 0.9;">${cmdSub}</span>
+                      <span style="font-size: 20px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${badgeParams.glow};">${cmdTitle}</span>
+                    </div>
                   </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">DEV Setup (Real) + Gaze UI Node (Glasses 3 Pro) — 7 Terminals</span></div>
+                  <div class="cmd-wrap" style="width: 100%; text-align: left; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
+                     <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${badgeParams.primary}; box-shadow: 0 0 10px ${badgeParams.primary}; opacity: 0.8;"></div>
+                     <div style="position: absolute; top: 0; right: 0; width: 4px; height: 100%; background: ${badgeParams.primary}; box-shadow: 0 0 10px ${badgeParams.primary}; opacity: 0.8;"></div>
+                     <span class="cmd-text" style="color: var(--mut); font-size: 11px; font-family: 'JetBrains Mono', monospace;"><span style="color: ${badgeParams.primary};">></span> ${cmdDesc}<span style="animation: pulse-dot 1s infinite;">_</span></span>
+                  </div>
                 </div>
-                 
               </div>
               <div class="card-tooltip">
-                <div class="card-tooltip-title"><i class="fa-solid fa-bolt"></i> RUN DEV + Gaze UI (ZED M) - Exocentric</div>
-                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Startet folgende Terminals:</b></div>
-                ${buildExpandedTooltip(getExtrasExecActions())}
+                <div class="card-tooltip-title"><i class="${badgeIcon}"></i> ${a.label}</div>
+                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
+                ${buildExpandedTooltip(window[actionFunc.replace('()', '')] || [])}
               </div>
-            </div>
-            <div class="card-wrapper">
-              <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), getExtrasExecLegacyCamActions(), '🚀 EXTRAS EXEC (Legacy) gestartet...', 'extras_legacy')" style="cursor: pointer;">
-                <div class="action-btn" style="pointer-events: none;">
-                  <div class="btn-top">
-                    <span class="badge badge-extras"><i class="fa-solid fa-bolt"></i>EXTRAS SEQUENCE</span>
-                    <span class="label">RUN DEV + Gaze UI (Rpi Cam) - Egocentric</span>
-                  </div>
-                  <div class="cmd-wrap"><span class="cmd-text" style="color: var(--mut);">DEV Setup (Real) + Gaze UI Node (IP Cam: .124) — 6 Terminals</span></div>
-                </div>
-                 
-              </div>
-              <div class="card-tooltip">
-                <div class="card-tooltip-title"><i class="fa-solid fa-bolt"></i> RUN DEV + Gaze UI (Rpi Cam) - Egocentric</div>
-                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Startet folgende Terminals:</b></div>
-                ${buildExpandedTooltip(getExtrasExecLegacyCamActions())}
-              </div>
-            </div>
-          </div>
-        </div>`;
-          return;
+            </div>`;
+            });
+            sectionHtml += `</div></div>`;
+            colHtml[sec.col] += sectionHtml;
+            return;
         }
 
         const extraStyle = sec.style ? ` style="${sec.style}"` : '';
         const actionCount = sec.actions ? sec.actions.length : 0;
-        const runAllBtn = actionCount > 1
-          ? `<button class="run-all-badge" data-sec-index="${secIndex}" onclick="event.stopPropagation(); runAllInSection(${secIndex})" title="Alle ${actionCount} Befehle nacheinander ausführen"><i class="fa-solid fa-play"></i>RUN ALL</button>`
-          : '';
-        let html = `<div class="section"${extraStyle} data-sec-id="${secIndex}">
-      <div class="section-title"><i class="${sec.icon} section-icon"></i>${sec.title}<span class="title-line"></span>${runAllBtn}</div>
-      <div class="actions-grid" data-sec-index="${secIndex}">`;
-        sec.actions.forEach((a, aIndex) => {
-          const mode = a.mode || 'ros';
-          const b = BADGE[a.type] || BADGE.sys;
-          const safeCmd = a.cmd.replace(/"/g, '&quot;');
-          const safeLbl = a.label.replace(/"/g, '&quot;');
-          
-          let tooltipHtml = '';
-          if (CMD_DETAILS[a.cmd]) {
-             tooltipHtml = CMD_DETAILS[a.cmd];
-          } else {
-             let subCmds = a.cmd.split(/(?:&&|&)/).map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('sleep') && !s.startsWith('wait'));
-             
-             if (subCmds.length > 1) {
-                tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">`;
-             subCmds.forEach(subCmd => {
-                 let mKey = Object.keys(CMD_DETAILS)
-                              .sort((k1, k2) => k2.length - k1.length)
-                              .find(k => subCmd.includes(k));
-                 if (mKey) {
-                     let match = CMD_DETAILS[mKey].match(/<ul[^>]*>([\s\S]*?)<\/ul>$/);
-                     if (match) {
-                         tooltipHtml += match[1];
-                     } else {
-                         tooltipHtml += CMD_DETAILS[mKey];
-                     }
-                 } else if (subCmd.startsWith('ros2 run')) {
-                     const parts = subCmd.split(' ');
-                     const pkg = parts[2] || '';
-                     let node = parts[3] || '';
-                     if (!node.includes('.')) node += ' (Source: .py / .cpp)';
-                     tooltipHtml += `<li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);"> ${node}</span> <span style="float: right; opacity: 0.7;">(${pkg})</span></li>`;
-                 } else if (subCmd.startsWith('(google-chrome') || subCmd.startsWith('google-chrome')) {
-                     if (!a.cmd.includes('http.server')) {
-                         tooltipHtml += `<li><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-globe"></i>WEB</span><span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span><span style="color: var(--c-cmd);"> Chrome Browser</span> <span style="float: right; opacity: 0.7;">(Frontend)</span></li>`;
-                     }
-                 } else if (subCmd.includes('http.server')) {
-                     let chromeBadgeStr = a.cmd.includes('google-chrome') || a.cmd.includes('chromium-browser') ? `<span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span>` : '';
-                     let term = subCmd.includes('dashboard') ? "http_dashboard_monitoring_p8080" : "http_robot_control_ui_p8081";
-                     tooltipHtml += `<li><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span>${chromeBadgeStr}<span style="color: var(--c-cmd);"> ${term}</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li>`;
-                 } else if (subCmd.startsWith('python3')) {
-                     const scriptName = subCmd.split(' ')[1] || subCmd;
-                     tooltipHtml += `<li><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd);"> python3 ${scriptName}</span> <span style="float: right; opacity: 0.7;">(Script)</span></li>`;
-                 }
-             });
-             tooltipHtml += `</ul>`;
-          } else {
-             const aCmdBase = a.cmd.split(' &')[0].trim();
-             let matchedKey = Object.keys(CMD_DETAILS)
-                                 .sort((k1, k2) => k2.length - k1.length)
-                                 .find(k => a.cmd.includes(k) || k.includes(aCmdBase));
-             
-             if (matchedKey) {
-                tooltipHtml = CMD_DETAILS[matchedKey];
-             } else if (a.cmd.startsWith('ros2 launch')) {
-             const parts = a.cmd.split(' ');
-             const pkg = parts[2] || '';
-             const launchFile = parts[3] || '';
-             const args = parts.slice(4).join(' ');
-             tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                            <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                              <li><span class="badge badge-launch" style="margin-right: 6px;"><i class="fa-solid fa-rocket" style="margin-right: 4px;"></i>LAUNCH</span><span style="color: var(--c-launch);"> ${launchFile}</span> <span style="float: right; opacity: 0.7;">(${pkg})</span>
-                              
-                              </li>
-                            </ul>`;
-          } else if (a.cmd.startsWith('ros2 run')) {
-             const parts = a.cmd.split(' ');
-             const pkg = parts[2] || '';
-             let node = parts[3] || '';
-             if (!node.includes('.')) node += ' (Source: .py / .cpp)';
-             const args = parts.slice(4).join(' ');
-             tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                            <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                              <li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);"> ${node}</span> <span style="float: right; opacity: 0.7;">(${pkg})</span>
-                              
-                              </li>
-                            </ul>`;
-          } else if (a.cmd.startsWith('python3')) {
-             if (a.cmd.includes('http.server')) {
-                 let chromeBadgeStr = a.cmd.includes('google-chrome') || a.cmd.includes('chromium-browser') ? `<span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-right: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span>` : '';
-                 let term = a.cmd.includes('dashboard') ? "http_dashboard_monitoring_p8080" : "http_robot_control_ui_p8081";
-                 tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                                <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                                <li><span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span>${chromeBadgeStr}<span style="color: var(--c-cmd);"> ${term}</span> <span style="float: right; opacity: 0.7;">(Web Server)</span></li></ul>`;
-             } else {
-                 const scriptName = a.cmd.split(' ')[1] || a.cmd;
-                 tooltipHtml = `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                                <ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;">
-                                <li><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd);"> python3 ${scriptName}</span> <span style="float: right; opacity: 0.7;">(Script)</span></li></ul>`;
-             }
-          } else {
-             tooltipHtml = `<div class="card-tooltip-cmd">${a.cmd}</div>`;
-          }
-          }
-          }
-          if (tooltipHtml) {
-              tooltipHtml = injectOptBadges(tooltipHtml);
-          }
-          
-          let chromeBadge = '';
-          if (a.cmd.includes('google-chrome') || a.cmd.includes('chromium-browser')) {
-              chromeBadge = `<span class="badge" style="background: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid rgba(66, 133, 244, 0.3); margin-left: 6px;"><i class="fa-brands fa-chrome" style="margin-right: 4px;"></i>+CHROME</span>`;
-          }
-          
-          html += `
-        <div class="card-wrapper">
-          <div class="action-card" data-type="${a.type}" data-action-index="${aIndex}" onclick="openLaunchModalFromCard(this)" style="cursor: pointer;">
-            <div class="action-btn" data-cmd="${safeCmd}" data-label="${safeLbl}" data-mode="${mode}">
-              <div class="btn-top">
-                <span class="badge ${b.cls}">${b.icon.startsWith('<svg') ? b.icon : `<i class="${b.icon}"></i>`}${b.label}</span>${chromeBadge}
-                <span class="label">${a.label}</span>
-              </div>
-              <div class="cmd-wrap"><span class="cmd-text">${a.cmd}</span></div>
-            </div>
-            <button class="copy-btn" data-cmd="${safeCmd}" title="Kopieren:\n${safeCmd}"><i class="fa-regular fa-copy"></i></button>
+        
+        const colors = ['#38bdf8', '#a855f7', '#f43f5e', '#10b981', '#f59e0b', '#ec4899', '#14b8a6'];
+        const secColor = colors[secIndex % colors.length];
+        
+        let html = `
+        <div class="section"${extraStyle} data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 24px;">
+          <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 0;">
+             <!-- Abstract Background Elements -->
+             <div style="position: absolute; top: -300px; right: -300px; width: 800px; height: 800px; background: radial-gradient(circle, ${secColor} 0%, transparent 60%); opacity: 0.15; pointer-events: none; z-index: 0;"></div>
+             <div style="position: absolute; bottom: -250px; left: -250px; width: 600px; height: 600px; background: radial-gradient(circle, ${secColor} 0%, transparent 60%); opacity: 0.12; pointer-events: none; z-index: 0;"></div>
           </div>
-          <div class="card-tooltip">
-            <div class="card-tooltip-title">${b.icon.startsWith('<svg') ? b.icon : `<i class="${b.icon}"></i>`} ${a.label}</div>
-            ${tooltipHtml}
+          
+          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 20px; color: #fff;">
+             <span style="height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1));"></span>
+             <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                 <span style="font-size: 9px; font-weight: 800; letter-spacing: 6px; color: var(--mut); text-transform: uppercase;">Module Init</span>
+                 <span style="font-size: 16px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="${sec.icon} section-icon" style="color: ${secColor}; margin-right: 12px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
+             </div>
+             <span style="height: 1px; flex: 1; background: linear-gradient(270deg, transparent, rgba(255,255,255,0.1));"></span>
+          </div>
+
+          <div class="actions-grid" style="grid-template-columns: 1fr; gap: 16px; position: relative; z-index: 1;" data-sec-index="${secIndex}">
+            <div class="card-wrapper" style="width: 100%;">
+              <div class="action-card" data-type="sys" onclick="openLaunchModal(this.closest('.card-wrapper'), TABS[window.currentTab][${secIndex}].actions, '🚀 ${sec.title.replace(/'/g, "\\'")} gestartet...', 'sec_${secIndex}')" style="cursor: pointer; border-radius: 16px; background: rgba(0,0,0,0.5); border: 1px solid ${secColor}40; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; --card-accent: linear-gradient(90deg, ${secColor} 0%, transparent 50%);">
+                <div style="position: absolute; top: 0; right: 0; width: 5px; height: 100%; background: linear-gradient(270deg, ${secColor} 0%, transparent 100%); pointer-events: none; border-top-right-radius: 16px; border-bottom-right-radius: 16px; z-index: 0;"></div>
+                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 16px; position: relative; z-index: 1;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 16px; width: 100%;">
+                    <div style="background: linear-gradient(135deg, ${secColor}26, ${secColor}0D); border: 1px solid ${secColor}66; border-radius: 12px; padding: 8px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${secColor}26;">
+                      <span style="color: ${secColor}; font-size: 10px; font-weight: 800; letter-spacing: 2px;"><i class="fa-solid fa-layer-group" style="margin-right: 6px;"></i>MODULE</span>
+                      <span style="color: #fff; font-size: 12px; font-weight: 900; letter-spacing: 1.5px;">SEQUENCE</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; text-align: left;">
+                      <span style="font-size: 9px; color: ${secColor}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 4px; opacity: 0.9;">Contains ${actionCount} Components</span>
+                      <span style="font-size: 20px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${secColor}33;">RUN MODULE</span>
+                    </div>
+                  </div>
+                  <div class="cmd-wrap" style="width: 100%; text-align: left; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
+                     <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${secColor}; box-shadow: 0 0 10px ${secColor}; opacity: 0.8;"></div>
+                     <div style="position: absolute; top: 0; right: 0; width: 4px; height: 100%; background: ${secColor}; box-shadow: 0 0 10px ${secColor}; opacity: 0.8;"></div>
+                     <span class="cmd-text" style="color: var(--mut); font-size: 11px; font-family: 'JetBrains Mono', monospace;"><span style="color: ${secColor};">></span> Öffnet Launcher Menu für ${actionCount} hinterlegte Nodes/Launches<span style="animation: pulse-dot 1s infinite;">_</span></span>
+                  </div>
+                </div>
+              </div>
+              <div class="card-tooltip">
+                <div class="card-tooltip-title"><i class="fa-solid fa-layer-group"></i> ${sec.title}</div>
+                <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
+                ${buildExpandedTooltip(sec.actions)}
+              </div>
+            </div>
           </div>
         </div>`;
-        });
-        html += `</div></div>`;
 
         colHtml[sec.col] += html;
       });
