@@ -399,8 +399,8 @@
       top: 40px;
       bottom: 40px;
       right: -32px; /* Centers the line in the 64px gap */
-      width: 1px;
-      background: rgba(255, 255, 255, 0.1);
+      width: 2px;
+      background: rgba(255, 255, 255, 0.25);
     }
 
     /* ── SECTION ── */
