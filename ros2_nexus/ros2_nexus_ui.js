@@ -443,11 +443,15 @@
                   leftCol.appendChild(ulNode);
               }
               
+              const rawCmdData = li.getAttribute('data-raw-cmd');
+              const cmdToDisplay = rawCmdData ? rawCmdData : (action ? action.cmd : text);
+              const isLaunchCard = (action && action.cmd && action.cmd.startsWith('ros2 launch')) || (cmdToDisplay && cmdToDisplay.startsWith('ros2 launch'));
+
               const middleCol = document.createElement('div');
               middleCol.style.flex = '0 0 240px'; // Fixed width so leftCol is identical across cards
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
-              middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.35)';
+              middleCol.style.borderLeft = isLaunchCard ? '1px solid rgba(255, 255, 255, 0.35)' : 'none';
               middleCol.style.padding = '0 30px';
               middleCol.style.minWidth = '0';
               
@@ -468,8 +472,7 @@
               argsDiv.style.marginTop = '16px';
               middleCol.appendChild(argsDiv);
               
-              const rawCmdData = li.getAttribute('data-raw-cmd');
-              const cmdToDisplay = rawCmdData ? rawCmdData : (action ? action.cmd : text);
+              // rawCmdData and cmdToDisplay are defined above
               const cmdBadge1 = document.createElement('div');
               cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal"></i> CMD<div class="cmd-tooltip" style="position:absolute; background:rgba(15,23,42,0.95); border:1px solid rgba(255,255,255,0.4); border-radius:6px; padding:8px 12px; font-size:10px; color:#fff; white-space:pre-wrap; overflow-wrap:break-word; width:350px; text-align:left; pointer-events:none; opacity:0; transition:opacity 0.1s; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:999999; font-family:monospace; letter-spacing:0; line-height:1.3;">${cmdToDisplay.replace(/"/g, '&quot;')}</div>`;
               cmdBadge1.style.cssText = 'position:relative; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#fff; cursor:pointer; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; transition:all 0.2s;';
@@ -597,15 +600,17 @@
               
               li.style.position = 'relative';
               
-              const hrLine = document.createElement('div');
-              hrLine.style.position = 'absolute';
-              hrLine.style.top = '42px'; // 10px li padding + 32px row height
-              hrLine.style.left = '55px'; // 15px li padding + 40px cb width
-              hrLine.style.width = 'calc(100% - 110px)';
-              hrLine.style.height = '1px';
-              hrLine.style.background = 'rgba(255, 255, 255, 0.35)';
-              hrLine.style.pointerEvents = 'none';
-              li.appendChild(hrLine);
+              if (isLaunchCard) {
+                  const hrLine = document.createElement('div');
+                  hrLine.style.position = 'absolute';
+                  hrLine.style.top = '42px'; // 10px li padding + 32px row height
+                  hrLine.style.left = '55px'; // 15px li padding + 40px cb width
+                  hrLine.style.width = 'calc(100% - 110px)';
+                  hrLine.style.height = '1px';
+                  hrLine.style.background = 'rgba(255, 255, 255, 0.35)';
+                  hrLine.style.pointerEvents = 'none';
+                  li.appendChild(hrLine);
+              }
 
               li.style.background = 'rgba(255, 255, 255, 0.03)';
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
@@ -680,11 +685,13 @@
               
               leftCol.appendChild(titleDiv);
               
+              const isLaunchCard2 = action.cmd.startsWith('ros2 launch');
+              
               const middleCol = document.createElement('div');
               middleCol.style.flex = '0 0 210px'; // Fixed width so leftCol is identical across cards
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
-              middleCol.style.borderLeft = '1px solid rgba(255, 255, 255, 0.35)';
+              middleCol.style.borderLeft = isLaunchCard2 ? '1px solid rgba(255, 255, 255, 0.35)' : 'none';
               middleCol.style.padding = '0 15px';
               middleCol.style.minWidth = '0';
               
@@ -805,15 +812,17 @@
               
               li.style.position = 'relative';
               
-              const hrLine2 = document.createElement('div');
-              hrLine2.style.position = 'absolute';
-              hrLine2.style.top = '42px';
-              hrLine2.style.left = '15px';
-              hrLine2.style.width = 'calc(100% - 70px)';
-              hrLine2.style.height = '1px';
-              hrLine2.style.background = 'rgba(255, 255, 255, 0.35)';
-              hrLine2.style.pointerEvents = 'none';
-              li.appendChild(hrLine2);
+              if (isLaunchCard2) {
+                  const hrLine2 = document.createElement('div');
+                  hrLine2.style.position = 'absolute';
+                  hrLine2.style.top = '42px';
+                  hrLine2.style.left = '15px';
+                  hrLine2.style.width = 'calc(100% - 70px)';
+                  hrLine2.style.height = '1px';
+                  hrLine2.style.background = 'rgba(255, 255, 255, 0.35)';
+                  hrLine2.style.pointerEvents = 'none';
+                  li.appendChild(hrLine2);
+              }
 
               li.style.background = 'rgba(255, 255, 255, 0.03)';
               li.style.border = '1px solid rgba(255, 255, 255, 0.08)';
