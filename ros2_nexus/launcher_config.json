@@ -17,6 +17,16 @@
       "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
       "ros2 run rviz_streamer rviz_streamer_node",
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses"
+    ],
+    "sec_4": [
+      "ros2 run collision_check checker",
+      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
+      "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
+      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False",
+      "ros2 run whisper_demos whisper_on_key",
+      "ros2 run xarm_moveit_servo xarm_keyboard_input",
+      "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner",
+      "ros2 run voice_command_listener listener"
     ]
   },
   "__popups_active": {
@@ -167,33 +177,6 @@
     {
       "actions": [
         {
-          "active": false,
-          "args": [
-            {
-              "checked": true,
-              "text": "add_vacuum_gripper:=true"
-            },
-            {
-              "checked": true,
-              "text": "attach_to:=linear_axis_link"
-            }
-          ],
-          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
-          "label": "RUN DEV (FAKE)",
-          "postCmd": " & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
-          "type": "launch"
-        }
-      ],
-      "col": 0,
-      "color": "#f0b429",
-      "icon": "fa-solid fa-robot",
-      "badge": "FAKE",
-      "title": "Lite6 Fake - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
           "active": true,
           "args": [
             {
@@ -216,21 +199,48 @@
           "type": "launch"
         }
       ],
+      "badge": "REAL",
       "col": 0,
       "color": "#00e5ff",
       "icon": "fa-solid fa-robot",
-      "badge": "REAL",
       "title": "Lite6 - Moveit Servo (+Rviz2)"
     },
     {
       "actions": [
         {
-          "label": "RUN DEV + Gaze UI (ZED M) - Exocentric",
-          "type": "extras_zed"
-        },
+          "active": false,
+          "args": [
+            {
+              "checked": true,
+              "text": "add_vacuum_gripper:=true"
+            },
+            {
+              "checked": true,
+              "text": "attach_to:=linear_axis_link"
+            }
+          ],
+          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
+          "label": "RUN DEV (FAKE)",
+          "postCmd": " & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
+          "type": "launch"
+        }
+      ],
+      "badge": "FAKE",
+      "col": 0,
+      "color": "#f0b429",
+      "icon": "fa-solid fa-robot",
+      "title": "Lite6 Fake - Moveit Servo (+Rviz2)"
+    },
+    {
+      "actions": [
         {
           "label": "RUN DEV + Gaze UI (Rpi Cam) - Egocentric",
           "type": "extras_legacy"
+        },
+        {
+          "label": "RUN DEV + Gaze UI (ZED M) - Exocentric",
+          "type": "extras_zed"
         }
       ],
       "col": 0,
@@ -242,43 +252,84 @@
     {
       "actions": [
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
           "cmd": "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
           "label": "VR Quest 3 Teleop (Port 9091 / 8443)",
+          "postCmd": "",
           "type": "launch"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run collision_check checker",
           "cmd": "ros2 run collision_check checker",
           "label": "Collision Check Node",
+          "postCmd": "",
           "type": "node"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
           "cmd": "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
           "label": "Gaze UI Node (Glasses 3 Pro)",
+          "postCmd": "",
           "type": "node"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run voice_command_listener listener",
           "cmd": "ros2 run voice_command_listener listener",
           "label": "Voice Command Listener",
+          "postCmd": "",
           "type": "node"
         },
         {
+          "active": false,
+          "args": [
+            {
+              "checked": true,
+              "text": "silero_vad_use_cuda:=False"
+            },
+            {
+              "checked": true,
+              "text": "use_gpu:=False"
+            }
+          ],
+          "baseCmd": "ros2 launch whisper_bringup bringup.launch.py",
           "cmd": "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False",
           "label": "Whisper Bringup",
+          "postCmd": "",
           "type": "launch"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run whisper_demos whisper_on_key",
           "cmd": "ros2 run whisper_demos whisper_on_key",
           "label": "Whisper Stream Demo",
+          "postCmd": "",
           "type": "node"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
           "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
           "label": "Keyboard Input",
+          "postCmd": "",
           "type": "node"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner",
           "cmd": "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner",
           "label": "Linear Axis Tuner (FAKE Mode)",
+          "postCmd": "",
           "type": "node"
         }
       ],
