@@ -35,6 +35,13 @@
     ],
     "sec_1": [
       "obs"
+    ],
+    "sec_6": [
+      "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
+      "ros2 run rviz_servo_status_overlay servo_status_overlay"
+    ],
+    "sec_8": [
+      "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py"
     ]
   },
   "info": [
@@ -126,27 +133,20 @@
   "nodes": [
     {
       "actions": [
-        { "type": "dev_fake", "label": "RUN DEV SETUP (FAKE)" },
-        { "type": "dev_real", "label": "RUN DEV SETUP (REAL)" }
+        {
+          "label": "RUN DEV SETUP (FAKE)",
+          "type": "dev_fake"
+        },
+        {
+          "label": "RUN DEV SETUP (REAL)",
+          "type": "dev_real"
+        }
       ],
       "col": 0,
       "icon": "fa-solid fa-power-off",
       "is_bringup_section": true,
       "style": "border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); overflow: visible;",
       "title": "AUTOMATED SYSTEM BRINGUP"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
-          "label": "Start Isaac Sim (Lite6 Modul)",
-          "type": "launch"
-        }
-      ],
-      "col": 0,
-      "icon": "fa-solid fa-vr-cardboard",
-      "style": "border: 1px solid rgba(118, 185, 0, 0.5); background: rgba(118, 185, 0, 0.05);",
-      "title": "NVIDIA Isaac Sim"
     },
     {
       "actions": [
@@ -257,7 +257,7 @@
     {
       "actions": [
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
           "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
@@ -266,7 +266,7 @@
           "type": "launch"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
           "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
@@ -279,55 +279,102 @@
       "icon": "fa-solid fa-chart-network",
       "title": "Visualization (Rviz2)"
     },
+
     {
-      "actions": [],
+      "actions": [
+        {
+          "cmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
+          "label": "Start Isaac Sim (Lite6 Modul)",
+          "type": "launch"
+        }
+      ],
       "col": 1,
-      "icon": "fa-solid fa-bolt",
-      "is_extras_section": true,
-      "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
-      "title": "EXTRAS EXECS"
+      "icon": "fa-solid fa-vr-cardboard",
+      "style": "border: 1px solid rgba(118, 185, 0, 0.5); background: rgba(118, 185, 0, 0.05);",
+      "title": "NVIDIA Isaac Sim"
     },
     {
       "actions": [
         {
           "cmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
           "label": "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)",
-          "type": "launch"
+          "type": "launch",
+          "active": true,
+          "baseCmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
           "label": "3D Vision Bringup (EEF Mounted, Octomap)",
-          "type": "launch"
+          "type": "launch",
+          "active": false,
+          "baseCmd": "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
           "label": "Pointcloud Optimizer",
-          "type": "node"
+          "type": "node",
+          "active": false,
+          "baseCmd": "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
           "label": "YOLO Planned Grasp Executor",
-          "type": "node"
+          "type": "node",
+          "active": false,
+          "baseCmd": "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "ros2 run my_3d_vision_bringup zed_yolo_3d_bbox.py",
           "label": "YOLO 3D BBox Node",
-          "type": "node"
+          "type": "node",
+          "active": false,
+          "baseCmd": "ros2 run my_3d_vision_bringup zed_yolo_3d_bbox.py",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "ros2 run rviz_tf_tuner rviz_tf_tuner",
           "label": "Transform Tuner (rviz_tf_tuner)",
-          "type": "node"
+          "type": "node",
+          "active": false,
+          "baseCmd": "ros2 run rviz_tf_tuner rviz_tf_tuner",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
           "label": "YOLO Grasp Executor (Backup)",
-          "type": "node"
+          "type": "node",
+          "active": false,
+          "baseCmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
           "label": "Web Video Server (Port 8082)",
-          "type": "node"
+          "type": "node",
+          "active": false,
+          "baseCmd": "ros2 run web_video_server web_video_server",
+          "args": [
+            {
+              "text": "--ros-args -r __node:=http_web_video_server_p8082",
+              "checked": true
+            },
+            {
+              "text": "-p port:=8082",
+              "checked": true
+            }
+          ],
+          "postCmd": ""
         }
       ],
       "col": 2,
@@ -337,8 +384,14 @@
     },
     {
       "actions": [
-        { "type": "extras_zed", "label": "RUN DEV + Gaze UI (ZED M) - Exocentric" },
-        { "type": "extras_legacy", "label": "RUN DEV + Gaze UI (Rpi Cam) - Egocentric" }
+        {
+          "label": "RUN DEV + Gaze UI (ZED M) - Exocentric",
+          "type": "extras_zed"
+        },
+        {
+          "label": "RUN DEV + Gaze UI (Rpi Cam) - Egocentric",
+          "type": "extras_legacy"
+        }
       ],
       "col": 2,
       "icon": "fa-solid fa-bolt",
@@ -348,8 +401,14 @@
     },
     {
       "actions": [
-        { "type": "server_fake", "label": "RUN SERVER (FAKE)" },
-        { "type": "server_real", "label": "RUN SERVER (REAL)" }
+        {
+          "label": "RUN SERVER (FAKE)",
+          "type": "server_fake"
+        },
+        {
+          "label": "RUN SERVER (REAL)",
+          "type": "server_real"
+        }
       ],
       "col": 2,
       "icon": "fa-solid fa-server",
@@ -359,7 +418,10 @@
     },
     {
       "actions": [
-        { "type": "client", "label": "RUN CLIENT (Operator Station)" }
+        {
+          "label": "RUN CLIENT (Operator Station)",
+          "type": "client"
+        }
       ],
       "col": 2,
       "icon": "fa-solid fa-desktop",
@@ -443,40 +505,40 @@
     {
       "actions": [
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
           "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
           "label": "ROS Bridge Websocket Launch (Port 9090)",
-          "type": "launch",
-          "active": false,
-          "baseCmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-          "args": [],
-          "postCmd": ""
+          "postCmd": "",
+          "type": "launch"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080 & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
           "cmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080 & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
           "label": "Dashboard Monitoring (Port 8080)",
-          "type": "node",
-          "active": false,
-          "baseCmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080 & sleep 1 && (google-chrome --app=http://localhost:8080/dashboard_index.html || chromium-browser --app=http://localhost:8080/dashboard_index.html || xdg-open http://localhost:8080/dashboard_index.html) & wait",
-          "args": [],
-          "postCmd": ""
+          "postCmd": "",
+          "type": "node"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
           "cmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
           "label": "Robot Control Web UI (Port 8081)",
-          "type": "node",
-          "active": false,
-          "baseCmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
-          "args": [],
-          "postCmd": ""
+          "postCmd": "",
+          "type": "node"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
           "cmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
           "label": "Workspace Analyzer",
-          "type": "node",
-          "active": false,
-          "baseCmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
-          "args": [],
-          "postCmd": ""
+          "postCmd": "",
+          "type": "node"
         }
       ],
       "col": 1,
@@ -486,13 +548,13 @@
     {
       "actions": [
         {
+          "active": true,
+          "args": [],
+          "baseCmd": "obs",
           "cmd": "obs",
           "label": "OBS Studio",
-          "type": "sys",
-          "active": true,
-          "baseCmd": "obs",
-          "args": [],
-          "postCmd": ""
+          "postCmd": "",
+          "type": "sys"
         }
       ],
       "col": 1,
