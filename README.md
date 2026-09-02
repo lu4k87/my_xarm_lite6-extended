@@ -748,11 +748,11 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `rviz_tf_tuner` &nbsp;&nbsp; <sub><i>[`/src/rviz_tf_tuner`](./src/rviz_tf_tuner)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `tf_control_tuner` &nbsp;&nbsp; <sub><i>[`/src/tf_control_tuner`](./src/tf_control_tuner)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run rviz_tf_tuner rviz_tf_tuner
+> ros2 run tf_control_tuner tf_control_tuner
 > ```
 >
 > **Purpose & Task:** A dedicated ROS 2 package providing a live tuner interface (PyQt5) to dynamically adjust the camera offsets (Pointcloud) as well as interactively position 3D scene elements (Cube, Rectangle, Cylinder, White Plane) and an adjustable **Safety Zone** (with tunable radius) in RViz without restarting nodes.

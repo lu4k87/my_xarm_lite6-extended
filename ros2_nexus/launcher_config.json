@@ -13,7 +13,7 @@
       "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True",
       "ros2 run voice_command_listener voice_command_listener",
       "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-      "ros2 run rviz_tf_tuner rviz_tf_tuner",
+      "ros2 run tf_control_tuner tf_control_tuner",
       "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
       "ros2 run rviz_streamer rviz_streamer_node",
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses"
@@ -37,11 +37,22 @@
       "obs"
     ],
     "sec_6": [
-      "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
-      "ros2 run rviz_servo_status_overlay servo_status_overlay"
+      "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh"
     ],
     "sec_8": [
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py"
+    ],
+    "sec_2": [
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev & sleep 8 && ros2 run rviz_streamer rviz_streamer_node & ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses"
+    ],
+    "sec_3": [
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev"
+    ],
+    "extras_zed": [
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175",
+      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082"
     ]
   },
   "info": [
@@ -163,19 +174,19 @@
     {
       "actions": [
         {
-          "active": false,
+          "active": true,
           "args": [
             {
-              "checked": true,
-              "text": "robot_ip:=192.168.1.175"
+              "text": "robot_ip:=192.168.1.175",
+              "checked": true
             },
             {
-              "checked": true,
-              "text": "add_vacuum_gripper:=true"
+              "text": "add_vacuum_gripper:=true",
+              "checked": true
             },
             {
-              "checked": true,
-              "text": "report_type:=dev"
+              "text": "report_type:=dev",
+              "checked": true
             }
           ],
           "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py",
@@ -194,12 +205,42 @@
         {
           "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
           "label": "MoveGroup Server (FAKE)",
-          "type": "launch"
+          "type": "launch",
+          "active": true,
+          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
+          "args": [
+            {
+              "text": "add_vacuum_gripper:=true",
+              "checked": true
+            },
+            {
+              "text": "attach_to:=linear_axis_link",
+              "checked": true
+            }
+          ],
+          "postCmd": ""
         },
         {
           "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
           "label": "MoveGroup Server (REAL)",
-          "type": "launch"
+          "type": "launch",
+          "active": true,
+          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
+          "args": [
+            {
+              "text": "robot_ip:=192.168.1.175",
+              "checked": true
+            },
+            {
+              "text": "add_vacuum_gripper:=true",
+              "checked": true
+            },
+            {
+              "text": "report_type:=dev",
+              "checked": true
+            }
+          ],
+          "postCmd": ""
         }
       ],
       "col": 0,
@@ -257,7 +298,7 @@
     {
       "actions": [
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
           "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
@@ -266,7 +307,7 @@
           "type": "launch"
         },
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
           "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
@@ -279,108 +320,22 @@
       "icon": "fa-solid fa-chart-network",
       "title": "Visualization (Rviz2)"
     },
-
     {
       "actions": [
         {
           "cmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
           "label": "Start Isaac Sim (Lite6 Modul)",
-          "type": "launch"
+          "type": "launch",
+          "active": true,
+          "baseCmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
+          "args": [],
+          "postCmd": ""
         }
       ],
       "col": 1,
       "icon": "fa-solid fa-vr-cardboard",
       "style": "border: 1px solid rgba(118, 185, 0, 0.5); background: rgba(118, 185, 0, 0.05);",
       "title": "NVIDIA Isaac Sim"
-    },
-    {
-      "actions": [
-        {
-          "cmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
-          "label": "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)",
-          "type": "launch",
-          "active": true,
-          "baseCmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
-          "args": [],
-          "postCmd": ""
-        },
-        {
-          "cmd": "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
-          "label": "3D Vision Bringup (EEF Mounted, Octomap)",
-          "type": "launch",
-          "active": false,
-          "baseCmd": "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
-          "args": [],
-          "postCmd": ""
-        },
-        {
-          "cmd": "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
-          "label": "Pointcloud Optimizer",
-          "type": "node",
-          "active": false,
-          "baseCmd": "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
-          "args": [],
-          "postCmd": ""
-        },
-        {
-          "cmd": "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
-          "label": "YOLO Planned Grasp Executor",
-          "type": "node",
-          "active": false,
-          "baseCmd": "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
-          "args": [],
-          "postCmd": ""
-        },
-        {
-          "cmd": "ros2 run my_3d_vision_bringup zed_yolo_3d_bbox.py",
-          "label": "YOLO 3D BBox Node",
-          "type": "node",
-          "active": false,
-          "baseCmd": "ros2 run my_3d_vision_bringup zed_yolo_3d_bbox.py",
-          "args": [],
-          "postCmd": ""
-        },
-        {
-          "cmd": "ros2 run rviz_tf_tuner rviz_tf_tuner",
-          "label": "Transform Tuner (rviz_tf_tuner)",
-          "type": "node",
-          "active": false,
-          "baseCmd": "ros2 run rviz_tf_tuner rviz_tf_tuner",
-          "args": [],
-          "postCmd": ""
-        },
-        {
-          "cmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
-          "label": "YOLO Grasp Executor (Backup)",
-          "type": "node",
-          "active": false,
-          "baseCmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
-          "args": [],
-          "postCmd": ""
-        },
-        {
-          "cmd": "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
-          "label": "Web Video Server (Port 8082)",
-          "type": "node",
-          "active": false,
-          "baseCmd": "ros2 run web_video_server web_video_server",
-          "args": [
-            {
-              "text": "--ros-args -r __node:=http_web_video_server_p8082",
-              "checked": true
-            },
-            {
-              "text": "-p port:=8082",
-              "checked": true
-            }
-          ],
-          "postCmd": ""
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-camera",
-      "style": "break-before: column;",
-      "title": "Cameras, Sensors"
     },
     {
       "actions": [
@@ -393,11 +348,113 @@
           "type": "extras_legacy"
         }
       ],
-      "col": 2,
+      "col": 1,
       "icon": "fa-solid fa-bolt",
       "is_extras_section": true,
       "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
       "title": "EXTRAS EXECS"
+    },
+    {
+      "actions": [
+        {
+          "active": true,
+          "args": [],
+          "baseCmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
+          "cmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
+          "label": "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)",
+          "postCmd": "",
+          "type": "launch"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
+          "cmd": "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
+          "label": "3D Vision Bringup (EEF Mounted, Octomap)",
+          "postCmd": "",
+          "type": "launch"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
+          "cmd": "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
+          "label": "Pointcloud Optimizer",
+          "postCmd": "",
+          "type": "node"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
+          "cmd": "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
+          "label": "YOLO Planned Grasp Executor",
+          "postCmd": "",
+          "type": "node"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run my_3d_vision_bringup zed_yolo_3d_bbox.py",
+          "cmd": "ros2 run my_3d_vision_bringup zed_yolo_3d_bbox.py",
+          "label": "YOLO 3D BBox Node",
+          "postCmd": "",
+          "type": "node"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run tf_control_tuner tf_control_tuner",
+          "cmd": "ros2 run tf_control_tuner tf_control_tuner",
+          "label": "Transform Tuner (tf_control_tuner)",
+          "postCmd": "",
+          "type": "node"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
+          "cmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
+          "label": "YOLO Grasp Executor (Backup)",
+          "postCmd": "",
+          "type": "node"
+        },
+        {
+          "active": false,
+          "args": [
+            {
+              "checked": true,
+              "text": "--ros-args -r __node:=http_web_video_server_p8082"
+            },
+            {
+              "checked": true,
+              "text": "-p port:=8082"
+            }
+          ],
+          "baseCmd": "ros2 run web_video_server web_video_server",
+          "cmd": "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
+          "label": "Web Video Server (Port 8082)",
+          "postCmd": "",
+          "type": "node"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-camera",
+      "style": "break-before: column;",
+      "title": "Cameras, Sensors"
+    },
+    {
+      "actions": [
+        {
+          "label": "RUN CLIENT (Operator Station)",
+          "type": "client"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-desktop",
+      "is_client_bringup_section": true,
+      "style": "",
+      "title": "Client Control Bringup"
     },
     {
       "actions": [
@@ -415,19 +472,6 @@
       "is_server_bringup_section": true,
       "style": "",
       "title": "Server Control Bringup"
-    },
-    {
-      "actions": [
-        {
-          "label": "RUN CLIENT (Operator Station)",
-          "type": "client"
-        }
-      ],
-      "col": 2,
-      "icon": "fa-solid fa-desktop",
-      "is_client_bringup_section": true,
-      "style": "",
-      "title": "Client Control Bringup"
     }
   ],
   "system": [

@@ -349,7 +349,7 @@ class TFTunerGUI(QWidget):
 
 class TFTunerNode(Node):
     def __init__(self):
-        super().__init__('rviz_tf_tuner_node')
+        super().__init__('tf_control_tuner_node')
         self.tf_broadcaster = TransformBroadcaster(self)
         from std_msgs.msg import Float32MultiArray
         self.params_pub = self.create_publisher(Float32MultiArray, '/ui/safety_zone_params', 10)
