@@ -188,6 +188,7 @@
       "col": 0,
       "color": "#f0b429",
       "icon": "fa-solid fa-robot",
+      "badge": "FAKE",
       "title": "Lite6 Fake - Moveit Servo (+Rviz2)"
     },
     {
@@ -196,16 +197,16 @@
           "active": true,
           "args": [
             {
-              "text": "robot_ip:=192.168.1.175",
-              "checked": true
+              "checked": true,
+              "text": "robot_ip:=192.168.1.175"
             },
             {
-              "text": "add_vacuum_gripper:=true",
-              "checked": true
+              "checked": true,
+              "text": "add_vacuum_gripper:=true"
             },
             {
-              "text": "report_type:=dev",
-              "checked": true
+              "checked": true,
+              "text": "report_type:=dev"
             }
           ],
           "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py",
@@ -218,6 +219,7 @@
       "col": 0,
       "color": "#00e5ff",
       "icon": "fa-solid fa-robot",
+      "badge": "REAL",
       "title": "Lite6 - Moveit Servo (+Rviz2)"
     },
     {
@@ -415,12 +417,12 @@
     {
       "actions": [
         {
-          "label": "RUN SERVER (FAKE)",
-          "type": "server_fake"
-        },
-        {
           "label": "RUN SERVER (REAL)",
           "type": "server_real"
+        },
+        {
+          "label": "RUN SERVER (FAKE)",
+          "type": "server_fake"
         }
       ],
       "col": 2,
