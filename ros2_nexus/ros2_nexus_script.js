@@ -331,45 +331,54 @@
                 let badgeIcon = "fa-solid fa-rocket";
                 let badgeText = "SEQUENCE";
 
+                let cmdBadge = '';
+
                 if (a.type === 'dev_fake') {
                     actionFunc = "getDevSetupActions('fake')";
-                    cmdTitle = `DEV SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
+                    cmdTitle = `DEV SETUP`;
+                    cmdBadge = 'FAKE';
                     cmdSub = "Virtual Mode";
                     cmdDesc = "Startet die simulierte Roboter-Umgebung in Terminals";
                     badgeIcon = "fa-solid fa-rocket"; badgeText = "DEV SEQUENCE";
                 } else if (a.type === 'dev_real') {
                     actionFunc = "getDevSetupActions('real')";
-                    cmdTitle = `DEV SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
+                    cmdTitle = `DEV SETUP`;
+                    cmdBadge = 'REAL';
                     cmdSub = "Hardware Mode";
                     cmdDesc = "Verbindet mit dem physischen xArm Lite 6 (IP: 192.168.1.175)";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "DEV SEQUENCE";
                 } else if (a.type === 'server_fake') {
                     actionFunc = "getServerSetupActions('fake')";
-                    cmdTitle = `SERVER SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(FAKE)</span>`;
+                    cmdTitle = `SERVER SETUP`;
+                    cmdBadge = 'FAKE';
                     cmdSub = "Virtual Mode";
                     cmdDesc = "Host-PC: MoveIt Fake, RViz2, Vision, AI";
                     badgeIcon = "fa-solid fa-server"; badgeText = "SERVER SEQUENCE";
                 } else if (a.type === 'server_real') {
                     actionFunc = "getServerSetupActions('real')";
-                    cmdTitle = `SERVER SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(REAL)</span>`;
+                    cmdTitle = `SERVER SETUP`;
+                    cmdBadge = 'REAL';
                     cmdSub = "Hardware Mode";
                     cmdDesc = "Host-PC: MoveIt Real, RViz2, Vision, AI (IP: 192.168.1.175)";
                     badgeIcon = "fa-solid fa-server"; badgeText = "SERVER SEQUENCE";
                 } else if (a.type === 'client') {
                     actionFunc = "getClientSetupActions()";
-                    cmdTitle = `CLIENT SETUP <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(CLIENT)</span>`;
+                    cmdTitle = `CLIENT SETUP`;
+                    cmdBadge = 'CLIENT';
                     cmdSub = "Operator Station";
                     cmdDesc = "Client-PC: Gamepad, Kollisionswächter, RViz2 & ROS-Bridge";
                     badgeIcon = "fa-solid fa-desktop"; badgeText = "CLIENT SEQUENCE";
                 } else if (a.type === 'extras_zed') {
                     actionFunc = "getExtrasExecActions()";
-                    cmdTitle = `DEV + Gaze UI <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(ZED M)</span>`;
+                    cmdTitle = `DEV + Gaze UI`;
+                    cmdBadge = 'ZED M';
                     cmdSub = "Exocentric Mode";
                     cmdDesc = "DEV Setup (Real) + Gaze UI Node (Glasses 3 Pro) — 7 Terminals";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "EXTRAS SEQUENCE";
                 } else if (a.type === 'extras_legacy') {
                     actionFunc = "getExtrasExecLegacyCamActions()";
-                    cmdTitle = `DEV + Gaze UI <span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${badgeParams.primary}; text-shadow: 0 0 20px ${badgeParams.glow};">(Rpi Cam)</span>`;
+                    cmdTitle = `DEV + Gaze UI`;
+                    cmdBadge = 'Rpi Cam';
                     cmdSub = "Egocentric Mode";
                     cmdDesc = "DEV Setup (Real) + Gaze UI Node (IP Cam: .124) — 6 Terminals";
                     badgeIcon = "fa-solid fa-bolt"; badgeText = "EXTRAS SEQUENCE";
@@ -398,6 +407,7 @@
                 <div style="position: absolute; top: 0; right: 0; width: 5px; height: 100%; background: linear-gradient(270deg, ${badgeParams.primary} 0%, transparent 100%); pointer-events: none; border-top-right-radius: 16px; border-bottom-right-radius: 16px; z-index: 0;"></div>
                 <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 12px; position: relative; z-index: 1;">
                   <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; width: 100%; position: relative;">
+                    ${cmdBadge ? `<span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); background: ${badgeParams.bg1}; border: 1px solid ${badgeParams.border}; border-radius: 6px; padding: 3px 9px; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: ${badgeParams.primary}; text-shadow: 0 0 12px ${badgeParams.glow}; white-space: nowrap;">${cmdBadge}</span>` : ''}
                     <div style="background: linear-gradient(135deg, ${badgeParams.bg1}, ${badgeParams.bg2}); border: 1px solid ${badgeParams.border}; border-radius: 10px; padding: 6px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${badgeParams.bg1};">
                       <span style="color: ${badgeParams.primary}; font-size: 8px; font-weight: 800; letter-spacing: 2px;"><i class="${badgeIcon}" style="margin-right: 6px;"></i>${bText1}</span>
                       <span style="color: #fff; font-size: 10px; font-weight: 900; letter-spacing: 1.5px;">${bText2}</span>
@@ -456,7 +466,7 @@
                 <div style="position: absolute; top: 0; right: 0; width: 5px; height: 100%; background: linear-gradient(270deg, ${secColor} 0%, transparent 100%); pointer-events: none; border-top-right-radius: 16px; border-bottom-right-radius: 16px; z-index: 0;"></div>
                 <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 12px; position: relative; z-index: 1;">
                    <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; width: 100%; position: relative;">
-                    ${sec.badge ? `<span style="position: absolute; left: 0px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 800; letter-spacing: 1px; color: ${secColor}; text-shadow: 0 0 20px ${secColor}66;">(${sec.badge})</span>` : ''}
+                    ${sec.badge ? `<span style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); background: ${secColor}26; border: 1px solid ${secColor}66; border-radius: 6px; padding: 3px 9px; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: ${secColor}; text-shadow: 0 0 12px ${secColor}66; white-space: nowrap;">${sec.badge}</span>` : ''}
                     <div style="background: linear-gradient(135deg, ${secColor}26, ${secColor}0D); border: 1px solid ${secColor}66; border-radius: 10px; padding: 6px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${secColor}26;">
                       <span style="color: ${secColor}; font-size: 8px; font-weight: 800; letter-spacing: 2px;"><i class="fa-solid fa-layer-group" style="margin-right: 6px;"></i>MODULE</span>
                       <span style="color: #fff; font-size: 10px; font-weight: 900; letter-spacing: 1.5px;">SEQUENCE</span>
