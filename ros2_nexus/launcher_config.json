@@ -42,6 +42,9 @@
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175",
       "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082"
     ],
+    "sec_0": [
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node"
+    ],
     "sec_1": [
       "obs"
     ],
@@ -57,9 +60,6 @@
     ],
     "sec_8": [
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py"
-    ],
-    "sec_0": [
-      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node"
     ]
   },
   "info": [
@@ -152,31 +152,6 @@
     {
       "actions": [
         {
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
-          "label": "RUN DEV (FAKE)",
-          "type": "launch",
-          "active": true,
-          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
-          "args": [
-            {
-              "text": "add_vacuum_gripper:=true",
-              "checked": true
-            },
-            {
-              "text": "attach_to:=linear_axis_link",
-              "checked": true
-            }
-          ],
-          "postCmd": " & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node"
-        }
-      ],
-      "col": 0,
-      "icon": "fa-solid fa-robot",
-      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
           "active": true,
           "args": [
             {
@@ -217,38 +192,16 @@
               "text": "attach_to:=linear_axis_link"
             }
           ],
-          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
-          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
-          "label": "MoveGroup Server (FAKE)",
-          "postCmd": "",
-          "type": "launch"
-        },
-        {
-          "active": true,
-          "args": [
-            {
-              "checked": true,
-              "text": "robot_ip:=192.168.1.175"
-            },
-            {
-              "checked": true,
-              "text": "add_vacuum_gripper:=true"
-            },
-            {
-              "checked": true,
-              "text": "report_type:=dev"
-            }
-          ],
-          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
-          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
-          "label": "MoveGroup Server (REAL)",
-          "postCmd": "",
+          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
+          "label": "RUN DEV (FAKE)",
+          "postCmd": " & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
           "type": "launch"
         }
       ],
       "col": 0,
-      "icon": "fa-solid fa-map-location-dot",
-      "title": "MoveIt Planning (OMPL Server)"
+      "icon": "fa-solid fa-robot",
+      "title": "Roboter xArm Lite6 Fake - Moveit Servo (+Rviz2)"
     },
     {
       "actions": [
@@ -331,6 +284,53 @@
       "icon": "fa-solid fa-gamepad",
       "style": "break-before: column;",
       "title": "Controllers (Input -> Moveit Servo)"
+    },
+    {
+      "actions": [
+        {
+          "active": true,
+          "args": [
+            {
+              "checked": true,
+              "text": "add_vacuum_gripper:=true"
+            },
+            {
+              "checked": true,
+              "text": "attach_to:=linear_axis_link"
+            }
+          ],
+          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
+          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+          "label": "MoveGroup Server (FAKE)",
+          "postCmd": "",
+          "type": "launch"
+        },
+        {
+          "active": true,
+          "args": [
+            {
+              "checked": true,
+              "text": "robot_ip:=192.168.1.175"
+            },
+            {
+              "checked": true,
+              "text": "add_vacuum_gripper:=true"
+            },
+            {
+              "checked": true,
+              "text": "report_type:=dev"
+            }
+          ],
+          "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
+          "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
+          "label": "MoveGroup Server (REAL)",
+          "postCmd": "",
+          "type": "launch"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-map-location-dot",
+      "title": "MoveIt Planning (OMPL Server)"
     },
     {
       "actions": [

@@ -313,7 +313,6 @@
           <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; color: #fff;">
              <span style="height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1));"></span>
              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                 <span style="font-size: 8px; font-weight: 800; letter-spacing: 6px; color: var(--mut); text-transform: uppercase;">System Init</span>
                  <span style="font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="${sec.icon} section-icon" style="color: ${badgeColors[sec.actions[0]?.type || 'dev_fake']?.primary || 'var(--c-dev)'}; margin-right: 10px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
              </div>
              <span style="height: 1px; flex: 1; background: linear-gradient(270deg, transparent, rgba(255,255,255,0.1));"></span>
@@ -432,7 +431,6 @@
           <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; color: #fff;">
              <span style="height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1));"></span>
              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                 <span style="font-size: 8px; font-weight: 800; letter-spacing: 6px; color: var(--mut); text-transform: uppercase;">Module Init</span>
                  <span style="font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="${sec.icon} section-icon" style="color: ${secColor}; margin-right: 10px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
              </div>
              <span style="height: 1px; flex: 1; background: linear-gradient(270deg, transparent, rgba(255,255,255,0.1));"></span>
