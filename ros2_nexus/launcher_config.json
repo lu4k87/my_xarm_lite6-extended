@@ -57,6 +57,9 @@
     ],
     "sec_8": [
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py"
+    ],
+    "sec_0": [
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node"
     ]
   },
   "info": [
@@ -151,7 +154,20 @@
         {
           "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
           "label": "RUN DEV (FAKE)",
-          "type": "launch"
+          "type": "launch",
+          "active": true,
+          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
+          "args": [
+            {
+              "text": "add_vacuum_gripper:=true",
+              "checked": true
+            },
+            {
+              "text": "attach_to:=linear_axis_link",
+              "checked": true
+            }
+          ],
+          "postCmd": " & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node"
         }
       ],
       "col": 0,

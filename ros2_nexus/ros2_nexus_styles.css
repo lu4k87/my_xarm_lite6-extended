@@ -393,6 +393,16 @@
       min-width: 0;
     }
 
+    .col-wrapper:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 40px;
+      bottom: 40px;
+      right: -32px; /* Centers the line in the 64px gap */
+      width: 1px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
     /* ── SECTION ── */
     .section {
       margin-bottom: 40px;
