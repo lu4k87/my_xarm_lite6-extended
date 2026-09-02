@@ -326,18 +326,18 @@
       top: calc(100% + 5px);
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(10, 15, 25, 0.95);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: rgba(13, 17, 25, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       color: var(--txt);
-      padding: 14px;
-      border-radius: 10px;
-      border: 1px solid var(--accent);
-      box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.3);
       z-index: 10000;
       width: max-content;
       max-width: 900px;
-      transition: all 0.2s;
+      transition: all 0.2s ease-out;
       pointer-events: none;
       text-align: left;
     }
@@ -348,7 +348,7 @@
       list-style-type: '\25B8   ' !important;
     }
     .card-tooltip ul ul li::marker, #launch-modal-body ul ul li::marker {
-      color: rgba(96, 165, 250, 0.6);
+      color: rgba(255, 255, 255, 0.3);
     }
     .card-wrapper:hover .card-tooltip {
       visibility: visible;
@@ -358,10 +358,10 @@
     .card-tooltip-title {
       font-size: 13px;
       font-weight: 700;
-      color: var(--accent);
-      margin-bottom: 8px;
-      border-bottom: 1px solid var(--brd);
-      padding-bottom: 6px;
+      color: var(--txt);
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
     }
     .card-tooltip-cmd {
       font-family: 'JetBrains Mono', monospace;
@@ -377,11 +377,11 @@
     /* ── MAIN ── */
     main {
       flex: 1;
-      padding: 36px 36px;
+      padding: 36px 120px;
       width: 100%;
       display: flex;
       flex-direction: row;
-      gap: 32px;
+      gap: 64px;
       align-items: stretch;
     }
 
