@@ -149,19 +149,19 @@
     {
       "actions": [
         {
-          "label": "RUN DEV SETUP (FAKE)",
-          "type": "dev_fake"
+          "label": "RUN DEV + Gaze UI (ZED M) - Exocentric",
+          "type": "extras_zed"
         },
         {
-          "label": "RUN DEV SETUP (REAL)",
-          "type": "dev_real"
+          "label": "RUN DEV + Gaze UI (Rpi Cam) - Egocentric",
+          "type": "extras_legacy"
         }
       ],
       "col": 0,
-      "icon": "fa-solid fa-power-off",
-      "is_bringup_section": true,
-      "style": "border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); overflow: visible;",
-      "title": "AUTOMATED SYSTEM BRINGUP"
+      "icon": "fa-solid fa-bolt",
+      "is_extras_section": true,
+      "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
+      "title": "EXTRAS EXECS"
     },
     {
       "actions": [
@@ -254,6 +254,23 @@
     {
       "actions": [
         {
+          "label": "RUN DEV SETUP (FAKE)",
+          "type": "dev_fake"
+        },
+        {
+          "label": "RUN DEV SETUP (REAL)",
+          "type": "dev_real"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-power-off",
+      "is_bringup_section": true,
+      "style": "border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); overflow: visible;",
+      "title": "AUTOMATED SYSTEM BRINGUP"
+    },
+    {
+      "actions": [
+        {
           "cmd": "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
           "label": "VR Quest 3 Teleop (Port 9091 / 8443)",
           "type": "launch"
@@ -298,65 +315,6 @@
       "icon": "fa-solid fa-gamepad",
       "style": "break-before: column;",
       "title": "Controllers (Input -> Moveit Servo)"
-    },
-    {
-      "actions": [
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
-          "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
-          "label": "RViz Marker Launch",
-          "postCmd": "",
-          "type": "launch"
-        },
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
-          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
-          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
-          "postCmd": "",
-          "type": "node"
-        }
-      ],
-      "col": 1,
-      "icon": "fa-solid fa-chart-network",
-      "title": "Visualization (Rviz2)"
-    },
-    {
-      "actions": [
-        {
-          "active": true,
-          "args": [],
-          "baseCmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
-          "cmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
-          "label": "Start Isaac Sim (Lite6 Modul)",
-          "postCmd": "",
-          "type": "launch"
-        }
-      ],
-      "col": 1,
-      "icon": "fa-solid fa-vr-cardboard",
-      "style": "border: 1px solid rgba(118, 185, 0, 0.5); background: rgba(118, 185, 0, 0.05);",
-      "title": "NVIDIA Isaac Sim"
-    },
-    {
-      "actions": [
-        {
-          "label": "RUN DEV + Gaze UI (ZED M) - Exocentric",
-          "type": "extras_zed"
-        },
-        {
-          "label": "RUN DEV + Gaze UI (Rpi Cam) - Egocentric",
-          "type": "extras_legacy"
-        }
-      ],
-      "col": 1,
-      "icon": "fa-solid fa-bolt",
-      "is_extras_section": true,
-      "style": "border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.05);",
-      "title": "EXTRAS EXECS"
     },
     {
       "actions": [
@@ -476,6 +434,48 @@
       "is_server_bringup_section": true,
       "style": "",
       "title": "Server Control Bringup"
+    },
+    {
+      "actions": [
+        {
+          "active": true,
+          "args": [],
+          "baseCmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
+          "cmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
+          "label": "Start Isaac Sim (Lite6 Modul)",
+          "postCmd": "",
+          "type": "launch"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-vr-cardboard",
+      "style": "border: 1px solid rgba(118, 185, 0, 0.5); background: rgba(118, 185, 0, 0.05);",
+      "title": "NVIDIA Isaac Sim"
+    },
+    {
+      "actions": [
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
+          "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
+          "label": "RViz Marker Launch",
+          "postCmd": "",
+          "type": "launch"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
+          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
+          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
+          "postCmd": "",
+          "type": "node"
+        }
+      ],
+      "col": 2,
+      "icon": "fa-solid fa-chart-network",
+      "title": "Visualization (Rviz2)"
     }
   ],
   "system": [
