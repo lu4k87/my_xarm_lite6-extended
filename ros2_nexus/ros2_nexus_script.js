@@ -372,6 +372,7 @@
                 let words = badgeText.split(' ');
                 let bText1 = words[0];
                 let bText2 = words.slice(1).join(' ');
+                const _tooltipActions = (function() { try { return eval(actionFunc); } catch(e) { return []; } })();
 
                 sectionHtml += `
             <div class="card-wrapper" style="width: 100%;">
@@ -398,7 +399,7 @@
               <div class="card-tooltip">
                 <div class="card-tooltip-title"><i class="${badgeIcon}"></i> ${a.label}</div>
                 <div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div>
-                ${buildExpandedTooltip(window[actionFunc.replace('()', '')] || [])}
+                ${buildExpandedTooltip(_tooltipActions)}
               </div>
             </div>`;
             });
