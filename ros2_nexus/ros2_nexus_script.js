@@ -418,7 +418,7 @@
         const colors = ['#38bdf8', '#a855f7', '#f43f5e', '#10b981', '#f59e0b', '#ec4899', '#14b8a6'];
         let hash = 0;
         for (let i = 0; i < sec.title.length; i++) hash = sec.title.charCodeAt(i) + ((hash << 5) - hash);
-        const secColor = colors[Math.abs(hash) % colors.length];
+        const secColor = sec.color || colors[Math.abs(hash) % colors.length];
         
         let html = `
         <div class="section"${extraStyle} data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 16px;">
