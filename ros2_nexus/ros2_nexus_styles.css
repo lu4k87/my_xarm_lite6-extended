@@ -719,6 +719,7 @@
       border-radius: 6px;
       padding: 6px 10px;
       overflow-x: auto;
+      text-align: center;
     }
 
     .cmd-text {
@@ -727,6 +728,7 @@
       color: var(--mut);
       white-space: pre;
       display: block;
+      text-align: center;
     }
 
     /* ── COPY BUTTON ── */
