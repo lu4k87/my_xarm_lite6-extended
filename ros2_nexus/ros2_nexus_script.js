@@ -386,8 +386,8 @@
                       <span style="color: #fff; font-size: 10px; font-weight: 900; letter-spacing: 1.5px;">${bText2}</span>
                     </div>
                     <div style="display: flex; flex-direction: column; text-align: left;">
-                      <span style="font-size: 8px; color: ${badgeParams.primary}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 2px; opacity: 0.9;">${cmdSub}</span>
-                      <span style="font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${badgeParams.glow};">${cmdTitle}</span>
+                      <span style="font-size: 24px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${badgeParams.glow};">${cmdTitle}</span>
+                      <span style="font-size: 8px; color: ${badgeParams.primary}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-top: 2px; opacity: 0.9;">${cmdSub}</span>
                     </div>
                   </div>
                   <div class="cmd-wrap" style="width: 100%; text-align: left; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 10px; position: relative; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
@@ -443,8 +443,8 @@
                       <span style="color: #fff; font-size: 10px; font-weight: 900; letter-spacing: 1.5px;">SEQUENCE</span>
                     </div>
                     <div style="display: flex; flex-direction: column; text-align: left;">
-                      <span style="font-size: 8px; color: ${secColor}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 2px; opacity: 0.9;">Contains ${actionCount} Components</span>
-                      <span style="font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${secColor}33;">RUN MODULE</span>
+                      <span style="font-size: 24px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${secColor}33;">RUN MODULE</span>
+                      <span style="font-size: 8px; color: ${secColor}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-top: 2px; opacity: 0.9;">Contains ${actionCount} Components</span>
                     </div>
                   </div>
                   <div class="cmd-wrap" style="width: 100%; text-align: left; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 10px; position: relative; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">
