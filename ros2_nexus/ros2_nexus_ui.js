@@ -431,7 +431,7 @@
                   if (node !== ulNode) {
                       if (node.nodeType === 1 && node.style.float === 'right') {
                           node.style.float = 'none';
-                          node.style.marginLeft = 'auto';
+                          node.style.marginLeft = '8px';
                       }
                       titleDiv.appendChild(node);
                   }
@@ -507,44 +507,39 @@
                       }, 1500);
                   });
               };
-              cmdBadge1.style.marginLeft = '8px';
-              const autoMarginNode = Array.from(titleDiv.children).find(n => n.style && n.style.marginLeft === 'auto');
-              if (autoMarginNode) {
-                  titleDiv.insertBefore(cmdBadge1, autoMarginNode);
-              } else {
-                  titleDiv.appendChild(cmdBadge1);
-              }
+              const badgeContainer = document.createElement('div');
+              badgeContainer.style.display = 'flex';
+              badgeContainer.style.alignItems = 'center';
+              badgeContainer.style.gap = '8px';
+              badgeContainer.style.marginLeft = 'auto';
+              badgeContainer.style.marginRight = '8px';
+              titleDiv.appendChild(badgeContainer);
+
+              cmdBadge1.style.marginLeft = '0';
+              badgeContainer.appendChild(cmdBadge1);
               
               let isRos2 = (action && action.cmd && action.cmd.startsWith('ros2 run')) || (cmdToDisplay && cmdToDisplay.startsWith('ros2 run'));
               if (isRos2) {
                   const ros2Badge = document.createElement('div');
                   ros2Badge.innerHTML = `<i class="fa-solid fa-robot"></i> ROS 2`;
-                  ros2Badge.style.cssText = 'background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:4px; padding:3px 6px; font-size:9px; color:#93c5fd; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
-                  titleDiv.insertBefore(ros2Badge, cmdBadge1);
+                  ros2Badge.style.cssText = 'background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:4px; padding:3px 6px; font-size:9px; color:#93c5fd; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
+                  badgeContainer.insertBefore(ros2Badge, cmdBadge1);
               }
               
               let hasPython3 = (action && action.cmd && action.cmd.includes('python3')) || (cmdToDisplay && cmdToDisplay.includes('python3'));
               if (hasPython3) {
                   const pythonBadge = document.createElement('div');
                   pythonBadge.innerHTML = `<i class="fa-brands fa-python"></i> Python3`;
-                  pythonBadge.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4); border-radius:4px; padding:3px 6px; font-size:9px; color:#fde047; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
-                  if (autoMarginNode) {
-                      titleDiv.insertBefore(pythonBadge, autoMarginNode);
-                  } else {
-                      titleDiv.appendChild(pythonBadge);
-                  }
+                  pythonBadge.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4); border-radius:4px; padding:3px 6px; font-size:9px; color:#fde047; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
+                  badgeContainer.insertBefore(pythonBadge, cmdBadge1);
               }
               
               let hasChrome = (action && action.cmd && (action.cmd.includes('google-chrome') || action.cmd.includes('chromium-browser'))) || (cmdToDisplay && (cmdToDisplay.includes('google-chrome') || cmdToDisplay.includes('chromium-browser')));
               if (hasChrome) {
                   const chromeBadge = document.createElement('div');
                   chromeBadge.innerHTML = `<i class="fa-brands fa-chrome"></i> +CHROME`;
-                  chromeBadge.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#4285F4; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
-                  if (autoMarginNode) {
-                      titleDiv.insertBefore(chromeBadge, autoMarginNode);
-                  } else {
-                      titleDiv.appendChild(chromeBadge);
-                  }
+                  chromeBadge.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#4285F4; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
+                  badgeContainer.insertBefore(chromeBadge, cmdBadge1);
               }
               
               const mainCb = document.createElement('input');
@@ -681,7 +676,7 @@
               titleDiv.style.alignItems = 'center';
               titleDiv.style.gap = '8px';
               titleDiv.style.minHeight = '32px';
-              titleDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: bold;">${cmdName}</span> <span style="color: var(--mut); font-size: 11px; margin-left: auto;">(Auto-Added)</span>`;
+              titleDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: bold;">${cmdName}</span> <span style="color: var(--mut); font-size: 11px; margin-left: 8px;">(Auto-Added)</span>`;
               
               leftCol.appendChild(titleDiv);
               
@@ -739,44 +734,39 @@
                       }, 1500);
                   });
               };
-              cmdBadge1.style.marginLeft = '8px';
-              const autoMarginNode2 = Array.from(titleDiv.children).find(n => n.style && n.style.marginLeft === 'auto');
-              if (autoMarginNode2) {
-                  titleDiv.insertBefore(cmdBadge1, autoMarginNode2);
-              } else {
-                  titleDiv.appendChild(cmdBadge1);
-              }
+              const badgeContainer = document.createElement('div');
+              badgeContainer.style.display = 'flex';
+              badgeContainer.style.alignItems = 'center';
+              badgeContainer.style.gap = '8px';
+              badgeContainer.style.marginLeft = 'auto';
+              badgeContainer.style.marginRight = '8px';
+              titleDiv.appendChild(badgeContainer);
+
+              cmdBadge1.style.marginLeft = '0';
+              badgeContainer.appendChild(cmdBadge1);
               
               let isRos2_2 = action && action.cmd && action.cmd.startsWith('ros2 run');
               if (isRos2_2) {
                   const ros2Badge2 = document.createElement('div');
                   ros2Badge2.innerHTML = `<i class="fa-solid fa-robot"></i> ROS 2`;
-                  ros2Badge2.style.cssText = 'background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:4px; padding:3px 6px; font-size:9px; color:#93c5fd; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
-                  titleDiv.insertBefore(ros2Badge2, cmdBadge1);
+                  ros2Badge2.style.cssText = 'background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); border-radius:4px; padding:3px 6px; font-size:9px; color:#93c5fd; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
+                  badgeContainer.insertBefore(ros2Badge2, cmdBadge1);
               }
               
               let hasPython3_2 = action && action.cmd && action.cmd.includes('python3');
               if (hasPython3_2) {
                   const pythonBadge2 = document.createElement('div');
                   pythonBadge2.innerHTML = `<i class="fa-brands fa-python"></i> Python3`;
-                  pythonBadge2.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4); border-radius:4px; padding:3px 6px; font-size:9px; color:#fde047; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
-                  if (autoMarginNode2) {
-                      titleDiv.insertBefore(pythonBadge2, autoMarginNode2);
-                  } else {
-                      titleDiv.appendChild(pythonBadge2);
-                  }
+                  pythonBadge2.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.4); border-radius:4px; padding:3px 6px; font-size:9px; color:#fde047; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
+                  badgeContainer.insertBefore(pythonBadge2, cmdBadge1);
               }
               
               let hasChrome_2 = action && action.cmd && (action.cmd.includes('google-chrome') || action.cmd.includes('chromium-browser'));
               if (hasChrome_2) {
                   const chromeBadge2 = document.createElement('div');
                   chromeBadge2.innerHTML = `<i class="fa-brands fa-chrome"></i> +CHROME`;
-                  chromeBadge2.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#4285F4; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; margin-left:8px; flex-shrink:0;';
-                  if (autoMarginNode2) {
-                      titleDiv.insertBefore(chromeBadge2, autoMarginNode2);
-                  } else {
-                      titleDiv.appendChild(chromeBadge2);
-                  }
+                  chromeBadge2.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.3); border-radius:4px; padding:3px 6px; font-size:9px; color:#4285F4; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
+                  badgeContainer.insertBefore(chromeBadge2, cmdBadge1);
               }
               
               const mainCb = document.createElement('input');
