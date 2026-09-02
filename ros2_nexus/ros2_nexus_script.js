@@ -445,7 +445,7 @@
                       <span style="color: #fff; font-size: 10px; font-weight: 900; letter-spacing: 1.5px;">SEQUENCE</span>
                     </div>
                     <div style="display: flex; flex-direction: column; text-align: left;">
-                      <span style="font-size: 24px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${secColor}33;">RUN MODULE</span>
+                      <span style="font-size: 18px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${secColor}33;">Choose: Robot Control Moveit - Input Device</span>
                       <span style="font-size: 11px; color: ${secColor}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-top: 2px; opacity: 0.9;">Contains ${actionCount} Components</span>
                     </div>
                   </div>
