@@ -262,8 +262,24 @@
       "ros2 run my_3d_vision_bringup ip_cam_yolo_3d_bbox.py": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);">  ip_cam_yolo_3d_bbox</span> <span style="float: right; opacity: 0.7;">(my_3d_vision_bringup)</span></li></ul>`,
       "ros2 run rviz_tf_tuner rviz_tf_tuner": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);">  rviz_tf_tuner</span> <span style="float: right; opacity: 0.7;">(rviz_tf_tuner)</span></li></ul>`,
       "ros2 run gaze_control_ui_tobii_glasses gaze_ui_zedm": `<div style="font-size: 11px; color: var(--mut); margin-bottom: 4px;"><b>Included Source Files:</b></div><ul style="padding-left: 16px; margin: 0; font-size: 11px; color: var(--mut); line-height: 1.4;"><li><span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> NODE</span><span style="color: var(--c-node);">  gaze_ui_zedm</span> <span style="float: right; opacity: 0.7;">(gaze_control_ui_tobii_glasses)</span></li></ul>`,
+    };
+
+    // ─── RENDER ───────────────────────────────────────────────────────────────────
+    function renderTab(tabId) {
+      try {
+      const sections = TABS[tabId] || [];
+
+      // Ensure each section has a column assignment, default to distributing 0, 1, 2
+      sections.forEach((sec, i) => {
+        if (sec.col === undefined) sec.col = i % 3;
+      });
+
+      let colHtml = ['<div class="col" id="col-0">', '<div class="col" id="col-1">', '<div class="col" id="col-2">'];
+
+      sections.forEach((sec, secIndex) => {
         let isSpecialSection = sec.is_bringup_section || sec.is_server_bringup_section || sec.is_client_bringup_section || sec.is_extras_section;
         
+
         if (isSpecialSection) {
             let badgeColors = {
                 'dev_fake': { primary: 'var(--c-dev)', bg1: 'rgba(240, 180, 41, 0.15)', bg2: 'rgba(240, 180, 41, 0.05)', border: 'rgba(240, 180, 41, 0.4)', glow: 'rgba(240, 180, 41, 0.2)' },
