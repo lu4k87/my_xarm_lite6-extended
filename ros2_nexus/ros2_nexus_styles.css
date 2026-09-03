@@ -427,6 +427,21 @@
       margin-bottom: 0;
     }
 
+    .section::after {
+      content: "";
+      position: absolute;
+      bottom: -20px; /* Center in the 40px margin gap */
+      left: 12%;
+      right: 12%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      pointer-events: none;
+    }
+
+    .section:last-child::after {
+      display: none;
+    }
+
     .section-title {
       font-size: 13px;
       font-weight: 700;
