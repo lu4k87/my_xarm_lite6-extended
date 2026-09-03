@@ -527,7 +527,7 @@
       background: var(--card);
       border: 1px solid var(--brd);
       border-radius: 14px;
-      overflow: hidden;
+      overflow: visible;
       transition: border-color .2s, box-shadow .2s, transform .2s;
       position: relative;
       backdrop-filter: blur(12px);
