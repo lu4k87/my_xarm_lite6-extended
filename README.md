@@ -2071,8 +2071,8 @@ dev_ws/
 │ ├── ros2_whisper/                                                        # 🎙️ Whisper AI speech-to-text node
 │ ├── rviz_overlay_servo_status/                                           # 🖥️ Python: RViz2 2D Text Overlays
 │ │ └── rviz_overlay_servo_status/
-│ │ ├── rviz_overlay_servo_status.py                                       # TCP & Frame Overlay
-│ │ └── servo_status_overlay.py                                            # Servo Warning Overlay
+│ │     ├── rviz_overlay.py                                                # TCP & Frame Overlay
+│ │     └── servo_status_overlay.py                                        # Servo Warning Overlay
 │ ├── rviz_marker_3d_scene_objects/                                    # 📍 Python: RViz2 marker publisher
 │ │ ├── launch/
 │ │ │ └── rviz_marker_3d_scene_objects.launch.py                       # Launch file for markers & ZED stand

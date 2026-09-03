@@ -2103,8 +2103,8 @@ dev_ws/
 │ ├── ros2_whisper/                                                        # 🎙️ Whisper AI Speech-to-Text
 │ ├── rviz_overlay_servo_status/                                           # 🖥️ Python: RViz2 2D Text Overlays
 │ │ └── rviz_overlay_servo_status/
-│ │ ├── rviz_overlay_servo_status.py                                       # TCP & Frame Overlay
-│ │ └── servo_status_overlay.py                                            # Servo Warn-Overlay
+│ │     ├── rviz_overlay.py                                                # TCP & Frame Overlay
+│ │     └── servo_status_overlay.py                                        # Servo Warn-Overlay
 │ ├── rviz_tab_robot_control_panel/                                            # 🖥️ C++: RViz2 2D Control Panel Plugin
 │ │ └── src/rviz_tab_robot_control_panel.cpp
 │ ├── rviz_marker_3d_scene_objects/                                    # 📍 Python: RViz2 Marker-Publisher
