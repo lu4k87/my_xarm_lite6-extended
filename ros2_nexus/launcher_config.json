@@ -75,7 +75,7 @@
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev"
     ],
     "sec_6": [
-      "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh"
+      "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node"
     ],
     "sec_8": [
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py"
@@ -443,12 +443,12 @@
           "active": false,
           "args": [
             {
-              "checked": true,
-              "text": "--ros-args -r __node:=http_web_video_server_p8082"
+              "text": "--ros-args -r __node:=http_web_video_server_p8082",
+              "checked": true
             },
             {
-              "checked": true,
-              "text": "-p port:=8082"
+              "text": "-p port:=8082",
+              "checked": true
             }
           ],
           "baseCmd": "ros2 run web_video_server web_video_server",
@@ -458,7 +458,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node",
           "cmd": "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node",
