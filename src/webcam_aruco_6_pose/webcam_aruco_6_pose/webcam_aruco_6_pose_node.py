@@ -20,6 +20,10 @@ class WebcamArucoPoseNode(Node):
             self.get_logger().error('Could not open webcam!')
             return
             
+        # Optimize capture to reduce latency
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        
         # Set a decent resolution
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
