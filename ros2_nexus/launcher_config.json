@@ -450,7 +450,7 @@
       "col": 1,
       "icon": "fa-solid fa-camera",
       "style": "break-before: column;",
-      "title": "Cameras, Sensors"
+      "title": "Vision (Cameras + CV)"
     },
     {
       "actions": [
