@@ -527,7 +527,7 @@
       background: var(--card);
       border: 1px solid var(--brd);
       border-radius: 14px;
-      overflow: visible;
+      overflow: hidden; /* MUST be hidden to clip backdrop-filter correctly in webkit */
       transition: border-color .2s, box-shadow .2s, transform .2s;
       position: relative;
       backdrop-filter: blur(12px);
@@ -538,7 +538,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      border-radius: 14px;
+      border-radius: 13px; /* 14px parent - 1px border = 13px inner padding curve */
       background: linear-gradient(135deg, rgba(56, 189, 248, .04) 0%, transparent 60%);
       opacity: 0;
       transition: opacity .2s;
@@ -559,11 +559,11 @@
     .action-card::after {
       content: "";
       position: absolute;
-      inset: -1px;
-      border-radius: 14px;
+      inset: 0;
+      border-radius: 13px; /* match padding box curve perfectly */
       border-style: solid;
       border-color: transparent;
-      border-width: 1px;
+      border-width: 2px 0 2px 5px;
       background: var(--card-accent, transparent) border-box;
       -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
