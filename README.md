@@ -375,11 +375,11 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `checker.py` (`collision_check`) &nbsp;&nbsp; <sub><i>[`/src/collision_check/collision_check/checker.py`](./src/collision_check/collision_check/checker.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `teleop_pre_collision_checker.py` (`teleop_pre_collision_checker`) &nbsp;&nbsp; <sub><i>[`/src/teleop_pre_collision_checker/teleop_pre_collision_checker/teleop_pre_collision_checker.py`](./src/teleop_pre_collision_checker/teleop_pre_collision_checker/teleop_pre_collision_checker.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run collision_check checker
+> ros2 run teleop_pre_collision_checker teleop_pre_collision_checker
 > ```
 >
 > **Purpose & Task:** Acts as a guardian *before* the movement translation. Predictively computes the Z-coordinate (0.1 sec into the future). If the robot were to touch the table, the controller's downward command is hard-overridden and blocked. Triggers gamepad rumble feedback (vibration).
@@ -1377,7 +1377,7 @@ The gamepad signal is processed in two sequential stages before reaching the Mov
 ```mermaid
 flowchart LR
  JOY["🎮 /joy\n(Raw gamepad input\nfrom joy_node)"]
- CHECKER["🛡️ collision_check\nchecker.py\n(Python)"]
+ CHECKER["🛡️ teleop_pre_collision_checker\nteleop_pre_collision_checker.py\n(Python)"]
  JOY_CHECK["✅ /joy_check\n(Sanitized signal)"]
  CPP["⚙️ xarm_joystick_input\n.cpp (C++)"]
  SERVO["🦾 /servo_server/\ndelta_twist_cmds"]
@@ -1398,9 +1398,9 @@ flowchart LR
 <br>
 
 
-### 5.2 `checker.py` — Collision Guard (Python Node)
+### 5.2 `teleop_pre_collision_checker.py` — Collision Guard (Python Node)
 
-**File:** `src/collision_check/collision_check/checker.py`
+**File:** `src/teleop_pre_collision_checker/teleop_pre_collision_checker/teleop_pre_collision_checker.py`
 
 This node acts as a transparent **safety proxy** between the raw joystick driver and the motion controller. It is **100% hardware-agnostic** (works identically in REAL and FAKE modes). It continuously subscribes to the live Z height from `/ui/eef_position` and predictively checks with every incoming `/joy` message whether the robot approaches the table. If a limit is breached, the signal is blocked. It also actively provides **haptic feedback** (gamepad vibration) whenever the robot approaches the table or encounters a dynamic YOLO bounding box obstacle via MoveIt Servo.
 
@@ -2052,8 +2052,8 @@ dev_ws/
 │ ├── gaze_control_interface.png
 │ └── gamepad_layout.png                                                   # Xbox controller button mapping
 ├── src/
-│ ├── collision_check/                                                     # 🛡️ Python: Predictive collision guard
-│ │ └── collision_check/checker.py
+│ ├── teleop_pre_collision_checker/                                                     # 🛡️ Python: Predictive collision guard
+│ │ └── teleop_pre_collision_checker/teleop_pre_collision_checker.py
 │ ├── robot_motion_handler_movegroup/                                      # 🤖 Python: Sets Fake-Arm initial pose
 │ ├── gaze_control_ui_tobii_glasses/                                       # 👁️ Python: PyQt5 gaze control UI
 │ ├── gaze_grasp_routine_tobii_glasses/                                    # 👁️ Python: Eye-tracking & YOLO grasp routine

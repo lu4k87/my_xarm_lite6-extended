@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'collision_check'
+package_name = 'teleop_pre_collision_checker'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "checker = collision_check.checker:main" # <<-----------------add entry point for checker node         'mein_node = mein_paket.mein_script:main',            
+            "teleop_pre_collision_checker = teleop_pre_collision_checker.teleop_pre_collision_checker:main" # <<-----------------add entry point for checker node         'mein_node = mein_paket.mein_script:main',            
         ],
     },
 )

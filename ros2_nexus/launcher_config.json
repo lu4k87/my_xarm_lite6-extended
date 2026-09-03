@@ -19,7 +19,7 @@
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses"
     ],
     "sec_4": [
-      "ros2 run collision_check checker",
+      "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
       "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
       "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False",
@@ -274,8 +274,8 @@
         {
           "active": false,
           "args": [],
-          "baseCmd": "ros2 run collision_check checker",
-          "cmd": "ros2 run collision_check checker",
+          "baseCmd": "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
+          "cmd": "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
           "label": "Collision Check Node",
           "postCmd": "",
           "type": "node"

@@ -262,9 +262,9 @@ def launch_setup(context, *args, **kwargs):
     )
 
     checker_node = Node(
-        package='collision_check',
-        executable='checker',
-        name='collision_checker',
+        package='teleop_pre_collision_checker',
+        executable='teleop_pre_collision_checker',
+        name='teleop_pre_collision_checker',
         output='screen',
         condition=IfCondition(LaunchConfiguration('joystick_and_checker', default='true'))
     )
