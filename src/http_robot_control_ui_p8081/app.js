@@ -106,12 +106,24 @@ ros.on('error', (error) => {
   logMsg('System', 'Error connecting to websocket server', 'err');
 });
 
+let reconnectTimer = null;
+
 ros.on('close', () => {
   document.getElementById('connection-status').innerText = 'WS Closed';
   document.getElementById('connection-dot').className = 'dot glow-red';
   document.getElementById('mode-dot').className = 'dot glow-red';
   document.getElementById('mode-status').innerText = 'Mode: Offline';
-  logMsg('System', 'Connection to websocket server closed', 'warn');
+  
+  if (!reconnectTimer) {
+    logMsg('System', 'Connection closed. Retrying in 3s...', 'warn');
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      const host = window.location.hostname || 'localhost';
+      if (ros) {
+        ros.connect('ws://' + host + ':9090');
+      }
+    }, 3000);
+  }
 });
 
 // ── Shared Messages ─────────────────────────────────────────────────────
@@ -840,8 +852,9 @@ voiceFeedbackSub.subscribe((msg) => {
     const radios = document.getElementsByName('scanSpeed');
     let current = 1;
     for(let i=0; i<radios.length; i++) if(radios[i].checked) current = parseInt(radios[i].value);
-    if(current < 2) {
-      radios[current+1].checked = true;
+    const next = current + 1;
+    if(next <= 2) {
+      for(let i=0; i<radios.length; i++) if(parseInt(radios[i].value) === next) { radios[i].checked = true; break; }
       updateScanSpeed();
     }
   }
@@ -852,8 +865,9 @@ voiceFeedbackSub.subscribe((msg) => {
     const radios = document.getElementsByName('scanSpeed');
     let current = 1;
     for(let i=0; i<radios.length; i++) if(radios[i].checked) current = parseInt(radios[i].value);
-    if(current > 0) {
-      radios[current-1].checked = true;
+    const prev = current - 1;
+    if(prev >= 0) {
+      for(let i=0; i<radios.length; i++) if(parseInt(radios[i].value) === prev) { radios[i].checked = true; break; }
       updateScanSpeed();
     }
   }

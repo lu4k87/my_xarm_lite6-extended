@@ -1025,7 +1025,7 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>[`/src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp`](./src/rviz_robot_control_panel/src/rviz_robot_control_panel.cpp)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_tab_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>[`/src/rviz_tab_robot_control_panel/src/rviz_tab_robot_control_panel.cpp`](./src/rviz_tab_robot_control_panel/src/rviz_tab_robot_control_panel.cpp)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:** *(Loaded automatically as C++ Plugin inside RViz2)*
 >
@@ -1141,11 +1141,11 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_3d_scene_objects.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_3d_scene_objects/rviz_3d_scene_objects/rviz_3d_scene_objects.py`](./src/rviz_3d_scene_objects/rviz_3d_scene_objects/rviz_3d_scene_objects.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_3d_scene_objects.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py
+> ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py
 > ```
 >
 > **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges, interactive target boxes, and a dynamic transparent **Safety Zone**). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
@@ -1170,13 +1170,13 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_stand_publisher.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_3d_scene_objects/rviz_3d_scene_objects/zed_stand_publisher.py`](./src/rviz_3d_scene_objects/rviz_3d_scene_objects/zed_stand_publisher.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_stand_publisher.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/zed_stand_publisher.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/zed_stand_publisher.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run rviz_3d_scene_objects zed_stand_publisher
+> ros2 run rviz_marker_3d_scene_objects zed_stand_publisher
 > ```
-> *(Automatically started via `rviz_3d_scene_objects.launch.py`)*
+> *(Automatically started via `rviz_marker_3d_scene_objects.launch.py`)*
 >
 > **Purpose & Task:** Mathematically generates the exact 3D model of the camera tripod (aluminum profile) alongside the 3D mesh (STL) of the Stereolabs ZED M camera and publishes them statically in RViz.
 >
@@ -2069,18 +2069,18 @@ dev_ws/
 │ │ ├── yolo_planned_grasp_executor.py                                     # 3-Phase grasping logic & planner fallback
 │ │ └── grasp_action_bridge.py                                             # Translator for RViz Grasp Action
 │ ├── ros2_whisper/                                                        # 🎙️ Whisper AI speech-to-text node
-│ ├── rviz_servo_status_overlay/                                           # 🖥️ Python: RViz2 2D Text Overlays
-│ │ └── rviz_servo_status_overlay/
-│ │ ├── rviz_servo_status_overlay.py                                       # TCP & Frame Overlay
+│ ├── rviz_overlay_servo_status/                                           # 🖥️ Python: RViz2 2D Text Overlays
+│ │ └── rviz_overlay_servo_status/
+│ │ ├── rviz_overlay_servo_status.py                                       # TCP & Frame Overlay
 │ │ └── servo_status_overlay.py                                            # Servo Warning Overlay
-│ ├── rviz_3d_scene_objects/                                    # 📍 Python: RViz2 marker publisher
+│ ├── rviz_marker_3d_scene_objects/                                    # 📍 Python: RViz2 marker publisher
 │ │ ├── launch/
-│ │ │ └── rviz_3d_scene_objects.launch.py                       # Launch file for markers & ZED stand
-│ │ └── rviz_3d_scene_objects/
-│ │     ├── rviz_3d_scene_objects.py                                # Generates safe zones & static markers
+│ │ │ └── rviz_marker_3d_scene_objects.launch.py                       # Launch file for markers & ZED stand
+│ │ └── rviz_marker_3d_scene_objects/
+│ │     ├── rviz_marker_3d_scene_objects.py                                # Generates safe zones & static markers
 │ │     └── zed_stand_publisher.py                                             # Generates the ZED 3D camera mesh & stand
-│ ├── rviz_robot_control_panel/                                            # 🖥️ C++: RViz2 2D Control Panel Plugin
-│ │ └── src/rviz_robot_control_panel.cpp
+│ ├── rviz_tab_robot_control_panel/                                            # 🖥️ C++: RViz2 2D Control Panel Plugin
+│ │ └── src/rviz_tab_robot_control_panel.cpp
 │ ├── voice_command_listener/                                              # 🗣️ Python: Intent parser & filter
 │ ├── http_dashboard_monitoring_p8080/                                                # 📊 Python/JS: Workspace analyzer & Dashboard
 │ │ ├── workspace_analyzer.py                                              # Main ROS 2 Node (Pub/Sub & Topology)

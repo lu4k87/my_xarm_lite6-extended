@@ -41,6 +41,19 @@ class RobotMotionHandlerMovegroup(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
+        
+        try:
+            import pygame
+            import os
+            pygame.mixer.init()
+            sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
+            self.sound_initial = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_initial_pose.mp3'))
+            self.sound_absolute = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_absolute_pose.mp3'))
+        except Exception as e:
+            self.get_logger().warning(f"Could not init audio: {e}")
+            self.sound_initial = None
+            self.sound_absolute = None
+
 
         
         self.publisher_ = self.create_publisher(
@@ -214,43 +227,12 @@ class RobotMotionHandlerMovegroup(Node):
         self.is_executing = True
         self.stop_requested = False
         
+        if self.sound_initial:
+            self.sound_initial.play()
+        
         def _task():
             try:
-                # --- PHASE 1: RETRACT (Move up by 15cm) ---
-                try:
-                    trans = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
-                    cur_x = trans.transform.translation.x * 1000.0
-                    cur_y = trans.transform.translation.y * 1000.0
-                    cur_z = trans.transform.translation.z * 1000.0
-                    
-                    cur_q = [
-                        trans.transform.rotation.x,
-                        trans.transform.rotation.y,
-                        trans.transform.rotation.z,
-                        trans.transform.rotation.w
-                    ]
-                    cur_rot = R.from_quat(cur_q)
-                    cur_euler = cur_rot.as_euler('xyz', degrees=False)
-                    
-                    target_z = min(cur_z + 150.0, 500.0) 
-                    
-                    class DummyRequest:
-                        pose = [cur_x, cur_y, target_z, cur_euler[0], cur_euler[1], cur_euler[2]]
-                    
-                    class DummyResponse:
-                        ret = 0
-                        message = ""
-                    
-                    move_req = DummyRequest()
-                    move_res = DummyResponse()
-                    
-                    self.ui_log('Phase 1: Retracting 15cm upwards...', 'action')
-                    self._execute_move_to_pose_core(move_req, move_res)
-                    
-                except Exception as e:
-                    self.ui_log(f'Retract Phase failed or skipped: {e}', 'warn')
-
-                # --- PHASE 2: MOVE TO INITIAL POSE ---
+                # --- DIRECT MOVE TO INITIAL POSE ---
                 self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
                     
                 self.ui_log("Initial Pose reached.", 'success')
@@ -1005,6 +987,12 @@ class RobotMotionHandlerMovegroup(Node):
             target_r = request.pose[3]
             target_p = request.pose[4]
             target_yaw = request.pose[5]
+            
+            is_scan_pos = (abs(target_x - 0.3) < 0.001 and abs(target_y - 0.0) < 0.001 and abs(target_z - 0.4) < 0.001)
+            is_hover_pos = (abs(target_z - 0.04) < 0.001)
+            
+            if self.sound_absolute and not is_scan_pos and not is_hover_pos:
+                self.sound_absolute.play()
             
             self.ui_log(f"MoveTo started (IK mode): X={target_x:.3f}, Y={target_y:.3f}, Z={target_z:.3f}", 'action')
             

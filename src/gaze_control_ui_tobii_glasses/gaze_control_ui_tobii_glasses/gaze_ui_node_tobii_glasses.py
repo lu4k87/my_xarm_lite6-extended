@@ -185,7 +185,7 @@ class EyeControlUI(QWidget):
         
         try:
             pygame.mixer.init()
-            sound_path = os.path.expanduser("~/dev_ws/src/gaze_control_ui_tobii_glasses/gaze_control_ui_tobii_glasses/ui_mouse_click.mp3")
+            sound_path = os.path.expanduser("~/dev_ws/sounds/ui_mouse_click.mp3")
             if os.path.exists(sound_path):
                 self.click_sound = pygame.mixer.Sound(sound_path)
             else:

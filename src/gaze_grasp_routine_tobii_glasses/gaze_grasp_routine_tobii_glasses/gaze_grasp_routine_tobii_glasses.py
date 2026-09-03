@@ -28,18 +28,27 @@ class TobiiYoloToGraspRoutine(Node):
         
         try:
             pygame.mixer.init()
-            self.click_sound = pygame.mixer.Sound(os.path.expanduser('~/dev_ws/src/gaze_control_ui_tobii_glasses/gaze_control_ui_tobii_glasses/ui_mouse_click.mp3'))
+            sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
+            self.click_sound = pygame.mixer.Sound(os.path.join(sounds_dir, 'ui_mouse_click.mp3'))
             
-            pkg_path = os.path.expanduser('~/dev_ws/src/gaze_grasp_routine_tobii_glasses/gaze_grasp_routine_tobii_glasses/')
             self.voice_sounds = {
-                'blue cube': pygame.mixer.Sound(os.path.join(pkg_path, '_voice_blue_cube.mp3')),
-                'red rectangle': pygame.mixer.Sound(os.path.join(pkg_path, '_voice_red_rectangle.mp3')),
-                'green cylinder': pygame.mixer.Sound(os.path.join(pkg_path, '_voice_green_cylinder.mp3')),
+                'blue cube': pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_blue_cube.mp3')),
+                'red rectangle': pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_red_rectangle.mp3')),
+                'green cylinder': pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_green_cylinder.mp3')),
             }
+            self.sound_scan_pos = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_scan_pos.mp3'))
+            self.sound_obj_detected = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_object_detected.mp3'))
+            self.sound_moves_to_obj = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_selected_object.mp3'))
+            self.sound_moves_to_init = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_initial_pose.mp3'))
+            
         except Exception as e:
             self.get_logger().warning(f"Could not initialize audio: {e}")
             self.click_sound = None
             self.voice_sounds = {}
+            self.sound_scan_pos = None
+            self.sound_obj_detected = None
+            self.sound_moves_to_obj = None
+            self.sound_moves_to_init = None
             
         self.move_client = self.create_client(MoveCartesian, '/ui/execute_move_to_pose')
         
@@ -349,6 +358,9 @@ class TobiiYoloToGraspRoutine(Node):
                             self.dwell_start_time = None
                             self.current_gazed_class = None
                             
+                            if self.sound_scan_pos:
+                                self.sound_scan_pos.play()
+                            
                             self.move_to_pose(300.0, 0.0, 400.0, 3.14, 0.0, 0.0, self.on_show_scene_reached)
                 else:
                     self.current_gazed_class = target_class
@@ -502,6 +514,9 @@ class TobiiYoloToGraspRoutine(Node):
         self.target_y = target_y
         self.frozen_eef_frame = big_debug_img.copy()
         
+        if self.sound_obj_detected:
+            self.sound_obj_detected.play()
+        
         self.state = 3
         self.hover_start_time = time.time()
         # Add a delay so the user has more time to process the image and verify the debug view
@@ -515,6 +530,8 @@ class TobiiYoloToGraspRoutine(Node):
             
         self.state = 4
         self.get_logger().info("Executing move to object!")
+        if self.sound_moves_to_obj:
+            self.sound_moves_to_obj.play()
         self.move_to_pose(target_x, target_y, target_z, 3.14, 0.0, 0.0, self.on_hover_reached)
 
     def on_hover_reached(self, future):

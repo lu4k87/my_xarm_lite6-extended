@@ -4,6 +4,8 @@
 import time
 import math
 import rclpy
+import os
+import pygame
 from rclpy.node import Node
 from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
 from std_srvs.srv import Trigger
@@ -42,6 +44,16 @@ class YoloPlannedGraspExecutor(Node):
         self.target_object_name = ""
         self.latest_markers = []
         self.is_executing = False
+
+        try:
+            pygame.mixer.init()
+            sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
+            self.sound_obj_detected = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_object_detected.mp3'))
+            self.sound_moves_to_obj = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_selected_object.mp3'))
+        except Exception as e:
+            self.get_logger().warning(f"Could not initialize audio: {e}")
+            self.sound_obj_detected = None
+            self.sound_moves_to_obj = None
 
         # End effector links that are allowed to collide with the objects
         self.eef_links = [
@@ -207,6 +219,8 @@ class YoloPlannedGraspExecutor(Node):
             grasp_z_above = grasp_z + grasp_z_offset
             
             self.publish_status(f"✓ Found '{self.target_object_name}' (ID: {collision_object_name}) at X={grasp_x*1000.0:.1f}mm, Y={grasp_y*1000.0:.1f}mm, Z={grasp_z_above*1000.0:.1f}mm", goal_handle)
+            if self.sound_obj_detected:
+                self.sound_obj_detected.play()
 
             if not self.move_group_client.wait_for_server(timeout_sec=5.0):
                 self.publish_status("❌ Error: MoveIt action server /move_action not available!", goal_handle)
@@ -268,6 +282,8 @@ class YoloPlannedGraspExecutor(Node):
             # --- PHASE 1: RETRACT (UP) ---
             if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
             self.publish_status("➤ Phase 1: Lifting arm to avoid collisions.", goal_handle)
+            if self.sound_moves_to_obj:
+                self.sound_moves_to_obj.play()
             ik_valid_0 = self._check_ik(cur_x, cur_y, retract_z, target_quat)
             if not ik_valid_0:
                 self.publish_status("❌ Error: IK check failed for Phase 1. Using Fallback Direct Move.", goal_handle)

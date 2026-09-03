@@ -107,17 +107,55 @@ class VoiceCommandListener(Node):
         # <<< Publisher fuer UI-Feedback >>>
         self.feedback_pub = self.create_publisher(StringMsg, UI_VOICE_FEEDBACK_TOPIC, 10)
 
-        # ---- State-Variablen fuer Entprellung und Matching ----
+        # ---- Sound-Feedback ----
+        try:
+            import pygame
+            import os
+            pygame.mixer.init()
+            sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
+            self._sound_initial  = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_initial_pose.mp3'))
+            self._sound_absolute = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_absolute_pose.mp3'))
+        except Exception as e:
+            self.get_logger().warning(f'Audio init failed (sounds disabled): {e}')
+            self._sound_initial  = None
+            self._sound_absolute = None
+
         self.word_buffer = deque(maxlen=50)                     
         self.last_trigger_ts = 0.0                          
         
         # Regex-Pattern fuer die Befehlserkennung (Englisch und Deutsch)
         self.patterns = {
-            "MoveTo: pose": re.compile(r"\b(?:move to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa)|fahre zur absoluten position|gehe zur zielpose|absolute position anfahren)\b", re.IGNORECASE),
-            "MoveTo: initial": re.compile(r"\b(?:(?:move to )?initial (?:pose|pause|power|post|posts|pass|poza|posa)|fahre zur startposition|zur(?:ü|ue)ck zur ausgangsposition|grundstellung anfahren|zur(?:ü|ue)ck zum start)\b", re.IGNORECASE),
-            "Speed: faster": re.compile(r"\b(?:(?:go |move )?faster|fahre schneller|bewege dich schneller|erh(?:ö|oe)he die geschwindigkeit|schneller)\b", re.IGNORECASE),
-            "Speed: slower": re.compile(r"\b(?:(?:go |move )?slower|fahre langsamer|bewege dich langsamer|verringere die geschwindigkeit|langsamer)\b", re.IGNORECASE),
-            "Scan: objects": re.compile(r"\b(?:scan objects?|scanne objekte|starte objektscan|objekte erfassen|objektscan ausf(?:ü|ue)hren)\b", re.IGNORECASE)
+            "MoveTo: pose": re.compile(
+                r"\b(?:"
+                r"move to (?:absolute )?(?:pose|pause|power|post|posts|pass|poza|posa|paws|pores|poll|pols|poor|pore|pulse|poles)"
+                r"|absolute (?:pose|pause|power|post|pass|poza|posa|paws|position)"
+                r"|(?:go to |fly to |drive to )?(?:absolute|target) (?:pose|position)"
+                r"|fahre zur absoluten position"
+                r"|gehe zur zielpose"
+                r"|absolute position anfahren"
+                r")\b", re.IGNORECASE),
+            "MoveTo: initial": re.compile(
+                r"\b(?:"
+                r"(?:move to |go to |fly to |drive to )?initial (?:pose|pause|power|post|posts|pass|poza|posa|paws|pores|position|home)"
+                r"|(?:go )?home(?: position)?"
+                r"|home pose"
+                r"|reset(?: position| pose)?"
+                r"|return (?:to )?(?:home|start|initial)"
+                r"|starting position"
+                r"|fahre zur startposition"
+                r"|zur(?:ü|ue)ck zur ausgangsposition"
+                r"|grundstellung anfahren"
+                r"|zur(?:ü|ue)ck zum start"
+                r")\b", re.IGNORECASE),
+            "Speed: faster": re.compile(
+                r"\b(?:(?:go |move )?faster|speed up|fahre schneller|bewege dich schneller|erh(?:ö|oe)he die geschwindigkeit|schneller)\b",
+                re.IGNORECASE),
+            "Speed: slower": re.compile(
+                r"\b(?:(?:go |move )?slower|slow down|fahre langsamer|bewege dich langsamer|verringere die geschwindigkeit|langsamer)\b",
+                re.IGNORECASE),
+            "Scan: objects": re.compile(
+                r"\b(?:scan objects?|scanne objekte|starte objektscan|objekte erfassen|objektscan ausf(?:ü|ue)hren)\b",
+                re.IGNORECASE)
         }
         
         self._last_cmd_text = ""
@@ -325,6 +363,15 @@ class VoiceCommandListener(Node):
         print(CLEAR_SCREEN, end='')
         print(f"✅ Sprachbefehl erkannt: {cmd}")
         self.get_logger().info(f'Executing voice command: "{cmd}" (raw: "{original}")')
+        
+        # Sound-Feedback sofort bei Erkennung abspielen
+        try:
+            if cmd == 'MoveTo: initial' and self._sound_initial:
+                self._sound_initial.play()
+            elif cmd == 'MoveTo: pose' and self._sound_absolute:
+                self._sound_absolute.play()
+        except Exception as e:
+            self.get_logger().warning(f'Sound playback error: {e}')
         
         try:
             self.feedback_pub.publish(StringMsg(data=cmd))
