@@ -527,7 +527,7 @@
       background: var(--card);
       border: 1px solid var(--brd);
       border-radius: 14px;
-      overflow: hidden;
+      overflow: visible;
       transition: border-color .2s, box-shadow .2s, transform .2s;
       position: relative;
       backdrop-filter: blur(12px);
@@ -559,7 +559,7 @@
     .action-card::after {
       content: "";
       position: absolute;
-      inset: 0;
+      inset: -1px;
       border-radius: 14px;
       border-style: solid;
       border-color: transparent;
