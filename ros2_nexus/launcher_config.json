@@ -354,6 +354,31 @@
         {
           "active": false,
           "args": [],
+          "baseCmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
+          "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
+          "label": "RViz Marker Launch",
+          "postCmd": "",
+          "type": "launch"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
+          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
+          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
+          "postCmd": "",
+          "type": "node"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-chart-network",
+      "title": "Visualization (Rviz2)"
+    },
+    {
+      "actions": [
+        {
+          "active": false,
+          "args": [],
           "baseCmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
           "cmd": "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
           "label": "3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)",
@@ -431,37 +456,21 @@
           "label": "Web Video Server (Port 8082)",
           "postCmd": "",
           "type": "node"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node",
+          "cmd": "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node",
+          "label": "Webcam ArUco 6D Pose Node",
+          "postCmd": "",
+          "type": "node"
         }
       ],
       "col": 1,
       "icon": "fa-solid fa-camera",
       "style": "break-before: column;",
       "title": "Vision (Cameras + CV)"
-    },
-    {
-      "actions": [
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
-          "cmd": "ros2 launch rviz_3d_scene_objects rviz_3d_scene_objects.launch.py",
-          "label": "RViz Marker Launch",
-          "postCmd": "",
-          "type": "launch"
-        },
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
-          "cmd": "ros2 run rviz_servo_status_overlay servo_status_overlay",
-          "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
-          "postCmd": "",
-          "type": "node"
-        }
-      ],
-      "col": 1,
-      "icon": "fa-solid fa-chart-network",
-      "title": "Visualization (Rviz2)"
     },
     {
       "actions": [
