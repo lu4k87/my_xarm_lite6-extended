@@ -525,20 +525,23 @@
     .action-card {
       display: flex;
       background: var(--card);
-      border: 1px solid var(--brd);
+      border: none; /* Changed to none, we will use box-shadow for the border in JS to fix radius math */
       border-radius: 14px;
       overflow: hidden; /* MUST be hidden to clip backdrop-filter correctly in webkit */
       transition: border-color .2s, box-shadow .2s, transform .2s;
       position: relative;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
+      /* Force WebKit to clip backdrop-filter and background perfectly to border-radius */
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
+      mask-image: radial-gradient(white, black);
     }
 
     .action-card::before {
       content: "";
       position: absolute;
       inset: 0;
-      border-radius: 13px; /* 14px parent - 1px border = 13px inner padding curve */
+      border-radius: 14px;
       background: linear-gradient(135deg, rgba(56, 189, 248, .04) 0%, transparent 60%);
       opacity: 0;
       transition: opacity .2s;
@@ -546,8 +549,7 @@
     }
 
     .action-card:hover {
-      border-color: var(--brd-h);
-      box-shadow: 0 8px 28px rgba(0, 0, 0, .5), 0 0 0 1px rgba(56, 189, 248, .1);
+      box-shadow: inset 0 0 0 1px var(--brd-h), 0 8px 28px rgba(0, 0, 0, .5), 0 0 0 1px rgba(56, 189, 248, .1) !important;
       transform: translateY(-1px)
     }
 
@@ -560,10 +562,10 @@
       content: "";
       position: absolute;
       inset: 0;
-      border-radius: 13px; /* match padding box curve perfectly */
+      border-radius: 14px;
       border-style: solid;
       border-color: transparent;
-      border-width: 2px 0 2px 5px;
+      border-width: 1px; /* Uniform width prevents elliptical inner curve */
       background: var(--card-accent, transparent) border-box;
       -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
