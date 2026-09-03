@@ -1951,6 +1951,8 @@ The buttons, categories, and commands in the ROS 2 Nexus web interface are fully
 
 **Hierarchical Launch Inspection:** Every action button in the Nexus UI features an interactive [CMD] indicator. Clicking the button opens a detailed modal that visually breaks down the exact hierarchical structure of the target launch file. This accurately mirrors deeply nested sub-launches and individual nodes (e.g., `ros2_control_node`, `spawner`, `robot_state_publisher`). A global 'Select All' checkbox enables quick toggling of all main components within the sequence. Dynamic launch arguments are displayed as interactive checkboxes right next to the corresponding launch files, allowing for intuitive, real-time parameterization before execution. **Furthermore, the action cards within these popups support persistent drag-and-drop sorting, allowing users to customize their execution order. By default, all cards are initially deselected; however, any individual checkbox selections are automatically saved and restored the next time the popup is opened.**
 
+![](_imgs/ros2_nexus_web_popup.png)
+
 **Manual Configuration:** The entire UI layout is stored persistently in `ros2_nexus/launcher_config.json`. To manually add custom scripts or nodes, edit this JSON file. The WebApp loads the configuration dynamically – reloading the browser page is enough.
 
 ---
