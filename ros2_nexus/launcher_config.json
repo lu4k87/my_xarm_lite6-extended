@@ -188,6 +188,33 @@
     {
       "actions": [
         {
+          "active": false,
+          "args": [
+            {
+              "checked": true,
+              "text": "add_vacuum_gripper:=true"
+            },
+            {
+              "checked": true,
+              "text": "attach_to:=linear_axis_link"
+            }
+          ],
+          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
+          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
+          "label": "RUN DEV (FAKE)",
+          "postCmd": " & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
+          "type": "launch"
+        }
+      ],
+      "badge": "FAKE",
+      "col": 0,
+      "color": "#f0b429",
+      "icon": "fa-solid fa-robot",
+      "title": "Lite6 Fake - Moveit Servo (+Rviz2)"
+    },
+    {
+      "actions": [
+        {
           "active": true,
           "args": [
             {
@@ -215,33 +242,6 @@
       "color": "#00e5ff",
       "icon": "fa-solid fa-robot",
       "title": "Lite6 - Moveit Servo (+Rviz2)"
-    },
-    {
-      "actions": [
-        {
-          "active": false,
-          "args": [
-            {
-              "checked": true,
-              "text": "add_vacuum_gripper:=true"
-            },
-            {
-              "checked": true,
-              "text": "attach_to:=linear_axis_link"
-            }
-          ],
-          "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
-          "cmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
-          "label": "RUN DEV (FAKE)",
-          "postCmd": " & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_streamer rviz_streamer_node",
-          "type": "launch"
-        }
-      ],
-      "badge": "FAKE",
-      "col": 0,
-      "color": "#f0b429",
-      "icon": "fa-solid fa-robot",
-      "title": "Lite6 Fake - Moveit Servo (+Rviz2)"
     },
     {
       "actions": [
@@ -466,6 +466,65 @@
     {
       "actions": [
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+          "label": "ROS Bridge Websocket Launch (Port 9090)",
+          "postCmd": "",
+          "type": "launch"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
+          "cmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
+          "label": "Dashboard Monitoring (Port 8080)",
+          "postCmd": "",
+          "type": "node"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
+          "cmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
+          "label": "Robot Control Web UI (Port 8081)",
+          "postCmd": "",
+          "type": "node"
+        },
+        {
+          "active": false,
+          "args": [],
+          "baseCmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
+          "cmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
+          "label": "Workspace Analyzer",
+          "postCmd": "",
+          "type": "node"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-server",
+      "title": "Workspace Analyzer Backend"
+    },
+    {
+      "actions": [
+        {
+          "active": true,
+          "args": [],
+          "baseCmd": "obs",
+          "cmd": "obs",
+          "label": "OBS Studio",
+          "postCmd": "",
+          "type": "sys"
+        }
+      ],
+      "col": 1,
+      "icon": "fa-solid fa-globe",
+      "title": "Frontend & Browser"
+    },
+    {
+      "actions": [
+        {
           "label": "RUN CLIENT (Operator Station)",
           "type": "client"
         }
@@ -556,65 +615,6 @@
       "col": 2,
       "icon": "fa-solid fa-map-location-dot",
       "title": "MoveIt Planning (OMPL Server)"
-    },
-    {
-      "actions": [
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-          "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-          "label": "ROS Bridge Websocket Launch (Port 9090)",
-          "postCmd": "",
-          "type": "launch"
-        },
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
-          "cmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
-          "label": "Dashboard Monitoring (Port 8080)",
-          "postCmd": "",
-          "type": "node"
-        },
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
-          "cmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
-          "label": "Robot Control Web UI (Port 8081)",
-          "postCmd": "",
-          "type": "node"
-        },
-        {
-          "active": false,
-          "args": [],
-          "baseCmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
-          "cmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
-          "label": "Workspace Analyzer",
-          "postCmd": "",
-          "type": "node"
-        }
-      ],
-      "col": 1,
-      "icon": "fa-solid fa-server",
-      "title": "Workspace Analyzer Backend"
-    },
-    {
-      "actions": [
-        {
-          "active": true,
-          "args": [],
-          "baseCmd": "obs",
-          "cmd": "obs",
-          "label": "OBS Studio",
-          "postCmd": "",
-          "type": "sys"
-        }
-      ],
-      "col": 1,
-      "icon": "fa-solid fa-globe",
-      "title": "Frontend & Browser"
     }
   ],
   "system": [

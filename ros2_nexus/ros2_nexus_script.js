@@ -306,7 +306,7 @@
             else if (sec.is_extras_section) { secBgGradient1 = 'rgba(244, 114, 182, 0.15)'; secBgGradient2 = 'rgba(251, 146, 60, 0.12)'; }
 
             let sectionHtml = `
-        <div class="section" data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 16px; ${sec.style || ''}">
+        <div class="section" data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 16px 28px; ${sec.style || ''}">
           <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 0;">
              <!-- Abstract Background Elements -->
              <div style="position: absolute; top: -300px; right: -300px; width: 800px; height: 800px; background: radial-gradient(circle, ${secBgGradient1} 0%, transparent 60%); pointer-events: none; z-index: 0;"></div>
@@ -437,7 +437,7 @@
             return;
         }
 
-        const extraStyle = sec.style ? ` style="${sec.style}"` : '';
+        const extraStyle = sec.style ? `${sec.style} ` : '';
         const actionCount = sec.actions ? sec.actions.length : 0;
         
         const colors = ['#38bdf8', '#a855f7', '#f43f5e', '#10b981', '#f59e0b', '#ec4899', '#14b8a6'];
@@ -446,7 +446,7 @@
         const secColor = sec.color || colors[Math.abs(hash) % colors.length];
         
         let html = `
-        <div class="section"${extraStyle} data-sec-id="${secIndex}" style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 16px;">
+        <div class="section" data-sec-id="${secIndex}" style="${extraStyle}position: relative; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; background: linear-gradient(145deg, rgba(15, 15, 20, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05); padding: 16px 28px;">
           <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 0;">
              <!-- Abstract Background Elements -->
              <div style="position: absolute; top: -300px; right: -300px; width: 800px; height: 800px; background: radial-gradient(circle, ${secColor} 0%, transparent 60%); opacity: 0.15; pointer-events: none; z-index: 0;"></div>
