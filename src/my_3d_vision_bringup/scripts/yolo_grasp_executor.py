@@ -82,7 +82,7 @@ class YoloGraspExecutor(Node):
             for marker in self.latest_markers:
                 if marker.ns.startswith('yolo_labels_') and marker.type == Marker.TEXT_VIEW_FACING:
                     # The text might contain newlines or prefixes, but usually the class name is the first line or exact match
-                    # Wait, in zed_yolo_3d_bbox.py, we have `tm.text = class_name` for the first label (yolo_labels_class)
+                    # Wait, in yolo_3d_bbox_for_zed_m.py, we have `tm.text = class_name` for the first label (yolo_labels_class)
                     if marker.text.strip().lower() == self.target_object_name:
                         target_id = marker.id
                         break

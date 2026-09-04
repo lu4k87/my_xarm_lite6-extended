@@ -21,7 +21,7 @@ except ImportError:
 
 class ZedYolo3DNode(Node):
     def __init__(self):
-        super().__init__('zed_yolo_3d_bbox')
+        super().__init__('yolo_3d_bbox_for_zed_m')
         
         # Load the locally available custom YOLO model
         self.get_logger().info('Lade my_yolo_model.pt Modell...')

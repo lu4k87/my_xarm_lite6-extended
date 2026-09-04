@@ -169,8 +169,8 @@ def generate_launch_description():
     # -----------------------------------------------------------------------
     zed_yolo_3d_bbox_node = Node(
         package='my_3d_vision_bringup',
-        executable='zed_yolo_3d_bbox.py',
-        name='zed_yolo_3d_bbox',
+        executable='yolo_3d_bbox_for_zed_m.py',
+        name='yolo_3d_bbox_for_zed_m',
         output='screen',
         parameters=[perception_params_file]
     )

@@ -1,4 +1,4 @@
-zed_yolo_3d_bbox:
+yolo_3d_bbox_for_zed_m:
   ros__parameters:
     # Overrides for specific object classes (if their BBox is often cropped or needs manual adjustment)
     # Format: "class_name:size_x,size_y,size_z" or "class_name:size"

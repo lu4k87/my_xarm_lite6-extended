@@ -18,7 +18,7 @@ except ImportError:
 
 class IPCamYolo3DNode(Node):
     def __init__(self):
-        super().__init__('ip_cam_yolo_3d_bbox')
+        super().__init__('yolo_3d_bbox_ip_cam')
         
         yolo_path = os.path.expanduser('~/dev_ws/my_yolo_model.pt')
         self.get_logger().info(f'Lade {yolo_path} Modell...')
