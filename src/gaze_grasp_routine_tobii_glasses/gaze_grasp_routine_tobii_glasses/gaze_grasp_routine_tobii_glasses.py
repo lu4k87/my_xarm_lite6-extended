@@ -117,6 +117,14 @@ class TobiiYoloToGraspRoutine(Node):
         if callback:
             future.add_done_callback(callback)
 
+    def play_sounds_sequentially(self, sounds):
+        def _play():
+            for s in sounds:
+                if s:
+                    s.play()
+                    time.sleep(s.get_length() + 0.1)
+        threading.Thread(target=_play, daemon=True).start()
+
     def reset_state(self):
         if hasattr(self, 'error_timer') and self.error_timer:
             self.error_timer.cancel()
@@ -346,20 +354,21 @@ class TobiiYoloToGraspRoutine(Node):
                         cv2.putText(frame_copy, f"Locking {target_class}...", (50, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1, cv2.LINE_AA)
                         
                         if elapsed >= self.DWELL_THRESHOLD:
+                            sounds_to_play = []
                             if self.click_sound:
-                                self.click_sound.play()
-                                
+                                sounds_to_play.append(self.click_sound)
                             if target_class in self.voice_sounds:
-                                self.voice_sounds[target_class].play()
+                                sounds_to_play.append(self.voice_sounds[target_class])
+                            if self.sound_scan_pos:
+                                sounds_to_play.append(self.sound_scan_pos)
+                                
+                            self.play_sounds_sequentially(sounds_to_play)
                                 
                             self.get_logger().info(f"!!! Dwell time ({self.DWELL_THRESHOLD}s) reached for {target_class} !!! Triggering Grasp Sequence.")
                             self.selected_object_class = target_class
                             self.state = 1
                             self.dwell_start_time = None
                             self.current_gazed_class = None
-                            
-                            if self.sound_scan_pos:
-                                self.sound_scan_pos.play()
                             
                             self.move_to_pose(300.0, 0.0, 400.0, 3.14, 0.0, 0.0, self.on_show_scene_reached)
                 else:
@@ -516,7 +525,7 @@ class TobiiYoloToGraspRoutine(Node):
         
         if self.sound_obj_detected:
             self.sound_obj_detected.play()
-        
+            
         self.state = 3
         self.hover_start_time = time.time()
         # Add a delay so the user has more time to process the image and verify the debug view
@@ -530,8 +539,10 @@ class TobiiYoloToGraspRoutine(Node):
             
         self.state = 4
         self.get_logger().info("Executing move to object!")
+        
         if self.sound_moves_to_obj:
             self.sound_moves_to_obj.play()
+        
         self.move_to_pose(target_x, target_y, target_z, 3.14, 0.0, 0.0, self.on_hover_reached)
 
     def on_hover_reached(self, future):

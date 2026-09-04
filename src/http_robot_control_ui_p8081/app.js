@@ -439,6 +439,7 @@ function setFrame(frame) {
 }
 
 function startObjectScan() {
+  setButtonsLocked(true);
   logMsg('UI', `➤ Starting Object Cross Scan...`);
   const scanClient = new ROSLIB.Service({
     ros: ros,
@@ -447,12 +448,14 @@ function startObjectScan() {
   });
   
   scanClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
+    setButtonsLocked(false);
     if (result.success) {
       logMsg('System', '✓ Object Scan initiated successfully.', 'success');
     } else {
       logMsg('System', 'Object Scan failed: ' + result.message, 'err');
     }
   }, (error) => {
+    setButtonsLocked(false);
     logMsg('System', 'Failed to call Object Scan service: ' + error, 'err');
   });
 }
@@ -742,7 +745,17 @@ function createSrv(name, type) {
   return new ROSLIB.Service({ ros: ros, name: name, serviceType: type });
 }
 
+function setButtonsLocked(locked) {
+  const btns = document.querySelectorAll('.motion-lockable');
+  btns.forEach(btn => {
+    btn.disabled = locked;
+    btn.style.opacity = locked ? '0.4' : '1.0';
+    btn.style.pointerEvents = locked ? 'none' : 'auto';
+  });
+}
+
 function moveToPose() {
+  setButtonsLocked(true);
   const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
   const x = parseFloat(document.getElementById('inp-x').value);
   const y = parseFloat(document.getElementById('inp-y').value);
@@ -759,21 +772,34 @@ function moveToPose() {
   });
   logMsg('UI', `➤ MoveTo Absolute Pose: X=${x} Y=${y} Z=${z}`);
   srv.callService(req, (res) => {
+    setButtonsLocked(false);
     if (res.ret === 0) logMsg('ROS', '✓ MoveTo successful.', 'info');
     else logMsg('ROS', `❌ MoveTo failed (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
-  }, (err) => { logMsg('ROS', `❌ MoveTo Error: ${err}`, 'err'); });
+  }, (err) => { 
+    setButtonsLocked(false);
+    logMsg('ROS', `❌ MoveTo Error: ${err}`, 'err'); 
+  });
 }
 
 function setInitialPose() {
+  setButtonsLocked(true);
   const srv = createSrv('/ui/execute_initial_pose', 'std_srvs/Trigger');
   logMsg('UI', '➤ Triggering Initial Pose...');
   srv.callService(new ROSLIB.ServiceRequest({}), (res) => {
+    setButtonsLocked(false);
     if (res.success) logMsg('ROS', '✓ Initial Pose reached successfully.', 'info');
     else logMsg('ROS', `❌ Initial Pose failed: ${res.message}`, 'err');
-  }, (err) => { logMsg('ROS', `❌ Trigger Error: ${err}`, 'err'); });
+  }, (err) => { 
+    setButtonsLocked(false);
+    logMsg('ROS', `❌ Trigger Error: ${err}`, 'err'); 
+  });
 }
 
 function showScene() {
+  setButtonsLocked(true);
+  scanPosSound.currentTime = 0;
+  scanPosSound.play().catch(err => console.warn('Audio play failed:', err));
+
   const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
   const x = 300.0;
   const y = 0.0;
@@ -790,9 +816,13 @@ function showScene() {
   });
   logMsg('UI', `➤ MoveTo Show Scene: X=${x} Y=${y} Z=${z}`);
   srv.callService(req, (res) => {
+    setButtonsLocked(false);
     if (res.ret === 0) logMsg('ROS', '✓ Show Scene successful.', 'info');
     else logMsg('ROS', `❌ Show Scene failed (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
-  }, (err) => { logMsg('ROS', `❌ Show Scene Error: ${err}`, 'err'); });
+  }, (err) => { 
+    setButtonsLocked(false);
+    logMsg('ROS', `❌ Show Scene Error: ${err}`, 'err'); 
+  });
 }
 
 const graspPub = new ROSLIB.Topic({
@@ -904,6 +934,7 @@ window.addEventListener("gamepaddisconnected", (e) => {
 
 // ── Global Sound Setup ──────────────────────────────────────────────────
 const uiClickSound = new Audio('ui_mouse_click.mp3');
+const scanPosSound = new Audio('_voice_robot_moves_to_scan_pos.mp3');
 
 // ── Global Button Debounce (Anti-Double-Click) ──────────────────────────
 document.addEventListener('click', function(e) {

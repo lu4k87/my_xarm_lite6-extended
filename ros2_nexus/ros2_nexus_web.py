@@ -51,7 +51,7 @@ source ~/.bashrc 2>/dev/null || true
 cd {ws_path} 2>/dev/null || true
 clear
 echo -e "\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\033[0m"
-echo -e "\033[36m[Terminal: $(tty)  PID: $$]\033[0m"
+echo -e "\033[36m[Terminal: $(tty) PID: $$]\033[0m"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m"
 echo -e "{safe_disp}"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m\n"
