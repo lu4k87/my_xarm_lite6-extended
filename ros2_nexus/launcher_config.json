@@ -56,8 +56,7 @@
       "ros2 run my_3d_vision_bringup yolo_3d_bbox_ip_cam.py",
       "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
       "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
-      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
-      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py"
+      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082"
     ],
     "extras_zed": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
