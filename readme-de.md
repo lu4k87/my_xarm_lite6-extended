@@ -493,6 +493,17 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 ### 3.3 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
 
+```mermaid
+flowchart TD
+    ZED["ZED-Kamera (RGB-D)"] --> PC["pointcloud_optimizer.py<br/>(Frame-Transformation)"]
+    PC --> YOLO["yolo_3d_bbox_for_zed_m.py<br/>(YOLOv8 3D Cluster)"]
+    YOLO --> COLL["yolo_moveit_collision.py<br/>(Kollisionsobjekte)"]
+    YOLO --> GRASP["yolo_planned_grasp_executor.py<br/>(3-Phasen Greifpfad)"]
+    COLL --> OCTO["octomap_server<br/>(3D Voxelkarte)"]
+    OCTO --> MOVEIT["MoveIt 2<br/>(Bewegungsplanung)"]
+    GRASP --> MOVEIT
+```
+
 
 
 ---
@@ -929,7 +940,25 @@ stateDiagram-v2
 ### 3.4 Funktion: Multimodale Interaktion (Sprache & Blicksteuerung)
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
 
+#### Whisper AI Sprachsteuerungs-Pipeline
+```mermaid
+flowchart TD
+    MIC["Mikrofon"] --> AL["audio_listener.py"]
+    AL --> AS["C++ Action Server<br/>(ros2_whisper)"]
+    AS --> INF["/whisper/inference<br/>(Action)"]
+    INF --> VCL["voice_command_listener.py<br/>(Regex Intents)"]
+    VCL --> UI["/ui/voice_feedback<br/>& Service Trigger"]
+```
 
+#### Tobii Eye-Tracking Pipeline
+```mermaid
+flowchart TD
+    TOBII["Tobii Pro Glasses 3<br/>(RTSP Stream)"] --> ARUCO["ArUco Corner Detection<br/>(Homographie)"]
+    ARUCO --> DWELL["Dwell-Time Fixation<br/>(2,0 Sek. Timer)"]
+    DWELL --> TARGET["Zielverriegelung"]
+    TARGET --> SCENE["Show-Scene Trajektorie"]
+    SCENE --> GRASP["Greifbefehl"]
+```
 
 ---
 
@@ -1932,7 +1961,7 @@ sudo apt install python3-pyqt5.qtwebengine python3-opencv python3-av
 ```bash
 # Kritische Basis-Pakete
 pip install "numpy==1.24.4" # KRITISCH: Muss < 2.0 sein, sonst brechen ROS 2 cv_bridge und tf2
-pip install scipy==1.6.0 # Mathematik und Transformationen
+pip install "scipy>=1.8.0" # Mathematik und Transformationen
 
 # Hardware & Audio
 pip install pygame==2.1.2 # Haptisches Feedback (Controller-Vibration)
@@ -1940,14 +1969,14 @@ pip install PyAudio==0.2.14 # Mikrofon-Stream für Whisper
 pip install pynput==1.6.1 # Keyboard/Mouse Listener
 
 # Web Backend & UI
-pip install Flask==7.1.3 # ROS 2 Nexus Web Backend
+pip install "Flask>=2.2.0" # ROS 2 Nexus Web Backend
 pip install Flask-SocketIO==3.4.1 # WebSockets für Nexus Backend
-pip install PyQt5==3.15.6 # Python UI (Gaze-Control & Pointcloud Tuner)
+pip install "PyQt5>=5.15.6" # Python UI (Gaze-Control & Pointcloud Tuner)
 pip install mss==10.2.0 # Screen Recording für RViz Streamer
 
 # Computer Vision & Perception
-pip install opencv-python==8.9.0.80 # Computer Vision
-pip install ultralytics==6.7.171 # YOLO 3D Objekterkennung
+pip install "opencv-python>=4.9.0" # Computer Vision
+pip install "ultralytics>=8.0.0" # YOLO 3D Objekterkennung
 ```
 </details>
 
@@ -2050,7 +2079,15 @@ source install/setup.bash
 
 Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Software. **ROS 2 Nexus** dient dabei als zentrale webbasierte Oberfläche, um alle Nodes, Sensoren und Algorithmen mit nur einem Klick hochzufahren.
 
+### ⚡ Quickstart-Entscheidungsbaum ("Was starte ich wann?")
 
+| Use-Case / Szenario | Benötigte Hardware | Empfohlene Start-Sequenz in Nexus | Erreichbare Web-Tools |
+| :--- | :--- | :--- | :--- |
+| **Reine Simulation / GUI-Test** | Nur PC (Keine Roboter-HW) | 1. `RUN DEV Setup (FAKE)` | Dashboard (8080), Control UI (8081) |
+| **Gamepad Teleoperation** | xArm Lite 6 + Xbox Controller | 1. Roboter einschalten<br>2. `RUN DEV Setup (REAL)` | RViz2, Control UI (8081) |
+| **3D-Objekterkennung & Greifen** | xArm Lite 6 + ZED Mini | 1. `RUN DEV Setup (REAL)`<br>2. `3D Vision Bringup` | RViz2, Web-Video (8082) |
+| **Eye-Tracking Teleoperation** | Tobii Glasses 3 + ArUco-Setup | 1. `RUN DEV Setup (REAL)`<br>2. `Gaze UI (ZED M)` | Gaze-Fenster, Live-Feedback |
+| **Meta Quest 3 VR Teleop** | Meta Quest 3 + PC im selben WLAN | 1. `RUN DEV Setup (REAL)`<br>2. `VR Quest 3 Teleop` | WebXR (`https://<IP>:8443`) |
 
 ---
 <br>
@@ -2143,19 +2180,32 @@ graph TD
 ```
 
 
-Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nutzen, laufen im Hintergrund drei verschiedene Server auf drei separaten Ports:
+Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nutzen, laufen im Hintergrund mehrere Server auf separaten Ports:
 
-| Port | Service | Typ | Beschreibung |
-|------|---------|-----|--------------|
-| **`5000`** | **ROS 2 Nexus Web** | Nexus Web Backend | *Stellt die grafische Nexus-Oberfläche bereit. Empfängt Klicks aus dem Browser, führt ROS-Shell-Befehle als Unterprozesse in `gnome-terminal` auf dem Host-PC aus.* |
-| **`8080`** | **Dashboard Frontend** | HTTP Server | *Hostet die statischen HTML/CSS/JS-Dateien für das ROS2 Core Dashboard.* |
-| **`8081`** | **Robot Control Web UI** | HTTP Server | *Hostet die eigenständige Chrome Web App für die Remote-Robotersteuerung (Glassmorphism-Dashboard mit Joystick, Joint-Slidern, YOLO-Grasp und Konsolen-Log).* |
-| **`8082`** | **Web Video Server** | HTTP Server | *Streamt ROS Bild-Topics (wie den ZED-Kamera-Stream) via HTTP an Webbrowser.* |
-| **`9090`** | **ROS Bridge** | WebSocket | *Die Brücke zwischen ROS 2 und dem Browser. Erlaubt dem Dashboard (Port 8080) und der Robot Control Web UI (Port 8081), sich über `roslib.js` direkt mit dem ROS-Netzwerk zu verbinden, um Echtzeit-Telemetrie auszulesen und Services aufzurufen.* |
+| Port | Protokoll | Dienst / Komponente | Verwendung / Zweck |
+| :--- | :--- | :--- | :--- |
+| **`5000`** | HTTP / SocketIO | **ROS 2 Nexus Web Backend** | *Zentraler Prozess-Starter & Web-Konsole.* |
+| **`8080`** | HTTP | **ROS 2 Core Dashboard** | *Systemüberwachung, Hz-Monitoring, Topologie.* |
+| **`8081`** | HTTP | **Robot Control Web UI** | *Eigenständige Web App für Remote-Robotersteuerung.* |
+| **`8082`** | HTTP / MJPEG | **Web Video Server** | *Videostreaming von Kamera- und RViz-Window-Feeds.* |
+| **`8443`** | HTTPS | **WebXR VR Server** | *Meta Quest 3 3D-Browseroberfläche.* |
+| **`8554`** | RTSP | **Tobii Glasses 3 Stream** | *Video- & JSON-Gaze-Datenübertragung.* |
+| **`9090`** | WS (WebSocket) | **ROSBridge Server** | *Telemetrie & Service-Bridge für Web-UIs.* |
+| **`9091`** | WSS (Secure WS)| **ROSBridge Secure** | *Verschlüsselte WebSocket-Verbindung für WebXR.* |
+| **`502 / 7000`** | TCP/IP | **xArm Lite 6 Controller** | *Modbus TCP & Hardware-Steuerungsschnittstelle.* |
+| **`7410+`** | UDP | **CycloneDDS Discovery** | *Discovery & Datenaustausch im lokalen Subnetz.* |
 
 > **Warum diese strikte Trennung?** Die Ports 8080 und 9090 dienen grundverschiedenen Zwecken. Port 8080 (HTTP) fungiert als Standard-Webserver, um die Oberfläche auszuliefern. Port 9090 (WebSocket via `rosbridge`) ist ein hochspezialisierter Daten-Broker, der ausschließlich Live-Telemetrie streamt und keine Webseiten bereitstellen kann. Port 5000 (Flask) verarbeitet die Logik des Nexus Web Backends völlig unabhängig von ROS.
 
 #### 7.4.1 Nexus Web Backend Architektur
+
+```mermaid
+flowchart TD
+    WEB["Webbrowser Frontend<br/>(Port 5000)"] --> FLASK["Flask & SocketIO Server"]
+    FLASK --> PROC["Prozessmanager<br/>(kill_ros2.sh, Subprozesse)"]
+    PROC --> ROS2["Native ROS 2 Knoten"]
+    ROS2 --> ROSB["Rosbridge WebSocket Broker<br/>(Port 9090)"]
+```
 
 Das ROS 2 Nexus Web UI (Port 5000) fungiert als zentraler Befehls-Orchestrator. Es basiert auf einem Flask (Python) Backend und arbeitet völlig unabhängig vom ROS 2 Netzwerk. Seine Hauptfunktion besteht darin, Klicks aus der Web-Oberfläche zu interpretieren und native Betriebssystem-Unterprozesse (wie `gnome-terminal -- ros2 launch ...`) zu starten. Da es direkt mit dem Host-Betriebssystem interagiert, um Terminal-Instanzen und Prozess-IDs zu verwalten, muss es nativ auf dem Host-Rechner laufen.
 
@@ -2430,11 +2480,21 @@ dev_ws/
 
 <br>
 
-## 10. 🗄️ Archiv / Veraltete Konzepte
+## 10. 🗄️ Archiv / Architektur-Entscheidungen & Veraltete Konzepte
 
-<br>
+Dieser Abschnitt dokumentiert Legacy-Komponenten und die architektonischen Gründe für deren Ablösung. Zu verstehen, *warum* bestimmte Konzepte ersetzt wurden, hilft beim Nachvollziehen des aktuellen Systemdesigns.
 
-### ArUco Marker System [VERALTET]
-> *[Veraltet]* Im Arbeitsbereich des Roboters platzierte Marker dienen als Referenz für Homographie-Matrizen.
-* *[Veraltet]* Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsfläche (Z = 90 mm).
-- Präzise Projektion von Eye-Tracking Blickkoordinaten auf die Steuerungs-**UI**, um den Blick in Roboterbefehle zu übersetzen.
+### 10.1 `motion_sequence` (Kartesische State-Machine) [VERALTET]
+Ursprünglich wurde die Greiflogik des Roboters von einem Node namens `motion_sequence` gesteuert, der kartesische Wegpunkte (Pre-Grasp, Grasp, Post-Grasp) starr interpoliert hat.
+- **Warum es abgelöst wurde:** Dieser Ansatz hatte keine dynamische Kollisionserkennung. Der Arm wäre Hindernissen blind auf geraden Linien gefolgt. Das System wurde durch `robot_motion_handler_movegroup` und MoveIt 2 ersetzt, welche dynamische Sicherheitszonen, Hindernisvermeidung via OctoMaps und weiche Spline-Interpolationen bieten.
+
+### 10.2 2D Raspberry Pi Kameras vs. 3D Stereo Vision [VERALTET]
+Frühe Iterationen setzten auf Standard-2D-Webcams oder Raspberry Pi Kameras in Kombination mit 2D-Homographie (ArUco Marker), um Objektpositionen auf einem flachen Tisch zu schätzen.
+- **Warum es abgelöst wurde:** 2D-Vision kann keine Tiefen oder Objektvolumen wahrnehmen. Das System wurde auf die ZED Mini 3D-Stereokamera aufgerüstet. Dichte Punktwolken kombiniert mit YOLOv8 3D-Boundingboxen ermöglichen echte räumliche Wahrnehmung, sodass der Roboter Objekte unterschiedlicher Höhe greifen und komplexen Hindernissen ausweichen kann, die eine 2D-Kamera nicht sehen würde.
+
+### 10.3 Manuelle Multi-Terminal Shell-Skripte (`lite6.sh`) [VERALTET]
+In der Vergangenheit erforderte der Start des Systems das manuelle Ausführen mehrerer `.sh` Skripte (`lite6.sh`, `start.sh`) in verschiedenen Terminalfenstern.
+- **Warum es abgelöst wurde:** Dies war fehleranfällig, schwer zu debuggen und für neue Nutzer wenig intuitiv. Es wurde vollständig durch **ROS 2 Nexus** abgelöst, einem webbasierten Orchestrator, der Prozesslebenszyklen sicher verwaltet, Logs aggregiert und einen One-Click-Start von jedem Gerät aus ermöglicht.
+
+### 10.4 ArUco Marker System [VERALTET]
+> *[Veraltet]* Im Arbeitsbereich des Roboters platzierte Marker dienten als Referenz für Homographie-Matrizen zur Ableitung von 3D-Weltkoordinaten für Objekte auf der Arbeitsfläche (Z = 90 mm). Dies wird heute größtenteils durch native 3D-TF-Frames der ZED-Kamera abgelöst, wird aber teilweise noch genutzt, um die Blickkoordinaten des Tobii Eye-Trackers auf die 2D-Ebene zu mappen.
