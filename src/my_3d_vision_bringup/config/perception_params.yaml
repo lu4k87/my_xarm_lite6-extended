@@ -1,5 +1,8 @@
 yolo_3d_bbox_for_zed_m:
   ros__parameters:
+    # Model path for YOLOv8 (default yolov8l.pt)
+    model_path: "yolov8l.pt"
+
     # Overrides for specific object classes (if their BBox is often cropped or needs manual adjustment)
     # Format: "class_name:size_x,size_y,size_z" or "class_name:size"
     class_dimension_overrides:

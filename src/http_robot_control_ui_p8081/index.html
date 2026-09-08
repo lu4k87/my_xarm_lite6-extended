@@ -12,6 +12,9 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="shortcut icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
 </head>
 <body>
   
@@ -26,17 +29,29 @@
       </div>
       <div class="header-status">
         <div class="status-group">
-          <div class="status-pill">
-            <div class="dot glow-green"></div>
-            <span>UI Port: 8081</span>
+          <div class="status-pill" id="pill-port-8081" title="Port 8081: Robot Control UI (Webserver HTTP)">
+            <div id="dot-port-8081" class="dot glow-green"></div>
+            <span>Robot Control (8081)</span>
           </div>
-          <div class="status-pill">
+          <div class="status-pill" id="pill-port-9090" title="Port 9090: ROS 2 WebSocket Schnittstelle (rosbridge)">
             <div id="connection-dot" class="dot glow-red"></div>
-            <span id="connection-status">WS Port: 9090</span>
+            <span id="connection-status">ROS 2 Bridge (9090)</span>
           </div>
-          <div class="status-pill">
-            <div class="dot glow-green"></div>
-            <span>Nexus Port: 5000</span>
+          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus Launcher & Web Backend (Flask API)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':5000', '_blank')">
+            <div id="dot-port-5000" class="dot glow-red"></div>
+            <span>Nexus Launcher (5000)</span>
+          </div>
+          <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node-Topologie (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8080/dashboard_index.html', '_blank')">
+            <div id="dot-port-8080" class="dot glow-red"></div>
+            <span>Dashboard (8080)</span>
+          </div>
+          <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server für Kamera & RViz Streams (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8082', '_blank')">
+            <div id="dot-port-8082" class="dot glow-red"></div>
+            <span>Video Streams (8082)</span>
+          </div>
+          <div class="status-pill" id="pill-port-9091" title="Port 9091: Meta Quest 3 VR Teleoperation (WebSocket)">
+            <div id="dot-port-9091" class="dot glow-red"></div>
+            <span>VR Teleop (9091)</span>
           </div>
         </div>
 
@@ -123,31 +138,50 @@
         <section id="panel-moveto" class="glass-panel">
           <h2><i class="fa-solid fa-location-crosshairs"></i> Absolute Pose (MoveTo)</h2>
           <div class="input-grid">
-            <div class="input-group"><label><span style="color: var(--rviz-x);">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
-            <div class="input-group"><label><span style="color: var(--rviz-y);">Y</span> [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
-            <div class="input-group"><label><span style="color: var(--rviz-z);">Z</span> [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
-            <div class="input-group"><label>Roll [rad] (<span style="color: var(--rviz-x);">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-            <div class="input-group"><label>Pitch [rad] (<span style="color: var(--rviz-y);">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-            <div class="input-group"><label>Yaw [rad] (<span style="color: var(--rviz-z);">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
+            <div class="input-group"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
+            <div class="input-group"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span> [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
+            <div class="input-group"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span> [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
+            <div class="input-group"><label>Roll [rad] (<span style="color: var(--rviz-x); font-weight: 700;">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
+            <div class="input-group"><label>Pitch [rad] (<span style="color: var(--rviz-y); font-weight: 700;">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
+            <div class="input-group"><label>Yaw [rad] (<span style="color: var(--rviz-z); font-weight: 700;">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
           </div>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; justify-content: space-between;">
-            <button class="btn motion-lockable" style="padding: 8px 14px; font-size: 12px;" onclick="moveToPose()">Move to: Absolute Pose</button>
-            <button class="btn motion-lockable" style="padding: 8px 14px; font-size: 12px;" onclick="setInitialPose()">Move to: Initial Pose</button>
-            <button id="btn-show-scene" class="btn motion-lockable" style="padding: 8px 14px; font-size: 12px;" onclick="showScene()">
+          
+          <div style="display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <button class="btn btn-primary motion-lockable" style="padding: 8px 6px; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="moveToPose()">
+              <i class="fa-solid fa-crosshairs"></i> Move to: Absolute Pose
+            </button>
+            <button class="btn motion-lockable" style="padding: 8px 6px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="setInitialPose()">
+              <i class="fa-solid fa-house" style="color: var(--mut);"></i> Move to: Initial Pose
+            </button>
+            <button id="btn-show-scene" class="btn motion-lockable" style="padding: 8px 6px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="showScene()">
               <i class="fa-solid fa-eye" style="color: #3b82f6;"></i> Move to: Scan Position
             </button>
-            <button id="btn-scan-objects" class="btn motion-lockable" style="padding: 8px 14px; font-size: 12px;" onclick="startObjectScan()">
-              <i class="fa-solid fa-crosshairs" style="color: var(--rviz-z);"></i> Create OctoMap of Objects
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.15fr 1.1fr 0.75fr; gap: 8px; align-items: center;">
+            <button id="btn-scan-objects" class="btn motion-lockable" style="padding: 8px 6px; font-size: 12px; color: var(--rviz-z); display: flex; align-items: center; justify-content: center; gap: 6px; height: 34px;" onclick="startObjectScan()">
+              <i class="fa-solid fa-cube"></i> Create OctoMap of Objects
             </button>
-            <button id="btn-emergency-stop" class="btn" style="padding: 8px 14px; font-size: 12px; color: var(--rviz-x); font-weight: 700;" onclick="emergencyStop()">
+            
+            <div class="speed-toggle-group" style="height: 34px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--rviz-z); margin: 0 4px 0 6px; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-gauge"></i> Speed:</span>
+              <label class="speed-opt">
+                <input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()">
+                <span>Slow</span>
+              </label>
+              <label class="speed-opt">
+                <input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()">
+                <span>Normal</span>
+              </label>
+              <label class="speed-opt">
+                <input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()">
+                <span>Fast</span>
+              </label>
+            </div>
+
+            <button id="btn-emergency-stop" class="btn" style="padding: 8px 6px; font-size: 12px; color: var(--rviz-x); font-weight: 800; border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.15); display: flex; align-items: center; justify-content: center; gap: 6px; height: 34px;" onclick="emergencyStop()">
               <i class="fa-solid fa-hand"></i> STOP
             </button>
-          </div>
-          <div style="width: 100%; display: flex; justify-content: center; gap: 15px; margin-top: 12px; color: var(--txt); font-size: 13px; font-weight: bold;">
-             <span style="color: var(--rviz-z);"><i class="fa-solid fa-gauge"></i> Speed:</span>
-             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()"> Slow</label>
-             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()"> Normal</label>
-             <label style="cursor: pointer;"><input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()"> Fast</label>
           </div>
         </section>
 
@@ -164,15 +198,6 @@
           </div>
         </section>
 
-        <section id="panel-linear-axis" class="glass-panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h2 style="margin-bottom: 0;"><i class="fa-solid fa-arrows-left-right"></i> Linear Axis Control <span style="font-size: 12px; color: var(--mut); font-weight: normal; margin-left: 6px;">(Base Y-Shift)</span></h2>
-            <span id="linear-axis-val" style="font-family: 'JetBrains Mono'; font-size: 14px; color: var(--rviz-y); font-weight: bold;">0.00 m</span>
-          </div>
-          <div class="linear-axis-control">
-            <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0.0" oninput="updateLinearAxis(this.value)" style="width: 100%;">
-          </div>
-        </section>
 
         <section id="panel-rviz" class="glass-panel" style="padding-bottom: 10px;">
           <h2 style="cursor: grab;"><i class="fa-solid fa-cube"></i> RViz 3D View</h2>
@@ -190,11 +215,10 @@
       <div class="col-right" id="col-right">
 
         <section id="panel-jogging" class="glass-panel joystick-section">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
-            <div class="status-pill" style="margin-bottom: 15px;">
-              <div id="moveit-dot" class="dot glow-red"></div>
-              <span id="moveit-status">MoveIt: Off</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="margin-bottom: 0;"><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
+            <div id="moveit-badge" class="moveit-badge">
+              MoveIt: Off
             </div>
           </div>
           
@@ -291,6 +315,16 @@
             <div class="j-bar" onpointerdown="startJointJog(3, event)"><div class="j-fill" id="j4-fill"></div><span class="j-lbl">J4 <span id="j4-val">0.0</span></span></div>
             <div class="j-bar" onpointerdown="startJointJog(4, event)"><div class="j-fill" id="j5-fill"></div><span class="j-lbl">J5 <span id="j5-val">0.0</span></span></div>
             <div class="j-bar" onpointerdown="startJointJog(5, event)"><div class="j-fill" id="j6-fill"></div><span class="j-lbl">J6 <span id="j6-val">0.0</span></span></div>
+          </div>
+          
+          <div style="margin-top: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="color: var(--mut); font-size: 12px; font-weight: 600; font-family: 'Outfit', sans-serif;">Linear Axis Shift (Y)</span>
+              <span id="linear-axis-val" style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--rviz-y); font-weight: bold;">0.00 m</span>
+            </div>
+            <div class="linear-axis-control" style="width: 100%;">
+              <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0.0" oninput="updateLinearAxis(this.value)" style="width: 100%;">
+            </div>
           </div>
         </section>
 

@@ -162,13 +162,104 @@
 
 
 
+    function getSavedArgState(popupId, cmd, baseCmd, argText) {
+        const keysToCheck = [cmd, baseCmd].filter(Boolean);
+        
+        // 1. Check popup-specific args in window.TABS
+        if (popupId && window.TABS && window.TABS['__popups_args'] && window.TABS['__popups_args'][popupId]) {
+            const popupArgs = window.TABS['__popups_args'][popupId];
+            for (const k of keysToCheck) {
+                if (popupArgs[k] && popupArgs[k][argText] !== undefined) {
+                    return popupArgs[k][argText];
+                }
+            }
+        }
+        
+        // 2. Check global __cmd_args in window.TABS
+        if (window.TABS && window.TABS['__cmd_args']) {
+            for (const k of keysToCheck) {
+                if (window.TABS['__cmd_args'][k] && window.TABS['__cmd_args'][k][argText] !== undefined) {
+                    return window.TABS['__cmd_args'][k][argText];
+                }
+            }
+        }
+
+        // 3. Check localStorage
+        try {
+            const localPopups = JSON.parse(localStorage.getItem('ros2_nexus_popups_args') || '{}');
+            if (popupId && localPopups[popupId]) {
+                for (const k of keysToCheck) {
+                    if (localPopups[popupId][k] && localPopups[popupId][k][argText] !== undefined) {
+                        return localPopups[popupId][k][argText];
+                    }
+                }
+            }
+            const localCmds = JSON.parse(localStorage.getItem('ros2_nexus_cmd_args') || '{}');
+            for (const k of keysToCheck) {
+                if (localCmds[k] && localCmds[k][argText] !== undefined) {
+                    return localCmds[k][argText];
+                }
+            }
+        } catch (e) {}
+
+        // Default:
+        if (argText.startsWith('yolo_model:=')) {
+            return argText === 'yolo_model:=yolov8l.pt';
+        }
+        if (argText === 'use_zed_hardware:=false') {
+            return false;
+        }
+        return true;
+    }
+
     function openLaunchModalFromCard(card) {
        const btn = card.querySelector('.action-btn');
        if (!btn) return;
        const wrapper = card.closest('.card-wrapper');
        if (!wrapper) return;
-       openLaunchModal(wrapper, [{cmd: btn.dataset.cmd, title: btn.dataset.label}], `🚀 ${btn.dataset.label} gestartet...`);
+       const popupKey = btn.dataset.label ? 'card_' + btn.dataset.label.replace(/\s+/g, '_') : 'card_single';
+       openLaunchModal(wrapper, [{cmd: btn.dataset.cmd, title: btn.dataset.label}], `🚀 ${btn.dataset.label} gestartet...`, popupKey);
     }
+
+    function alignModalArgs(container) {
+        if (!container) return;
+        const layouts = container.querySelectorAll('.modal-card-layout');
+        layouts.forEach(cardLayout => {
+            const leftCol = cardLayout.querySelector('.modal-card-left-col');
+            const middleCol = cardLayout.querySelector('.modal-card-middle-col');
+            if (!leftCol || !middleCol) return;
+
+            // Find element for zed_camera.launch.py in leftCol
+            const zedLaunchEl = Array.from(leftCol.querySelectorAll('li, span, div')).find(el => 
+                el.textContent && el.textContent.includes('zed_camera.launch.py') && (el.tagName === 'LI' || el.classList.contains('badge-launch'))
+            );
+
+            // Find use_zed_hardware label in middleCol
+            const zedHwLabel = Array.from(middleCol.querySelectorAll('label')).find(lbl => 
+                lbl.textContent && lbl.textContent.includes('use_zed_hardware')
+            );
+
+            if (zedLaunchEl && zedHwLabel) {
+                const targetLine = zedLaunchEl.tagName === 'LI' ? (zedLaunchEl.querySelector('.badge-launch') || zedLaunchEl) : zedLaunchEl;
+                
+                const middleColRect = middleCol.getBoundingClientRect();
+                const targetRect = targetLine.getBoundingClientRect();
+                const labelRect = zedHwLabel.getBoundingClientRect();
+
+                if (middleColRect.height > 0 && targetRect.height > 0) {
+                    const targetCenterY = (targetRect.top + targetRect.height / 2) - middleColRect.top;
+                    const labelHeight = labelRect.height || 32;
+                    const desiredTop = targetCenterY - (labelHeight / 2);
+
+                    zedHwLabel.style.position = 'absolute';
+                    zedHwLabel.style.top = desiredTop + 'px';
+                    zedHwLabel.style.left = '16px';
+                    zedHwLabel.style.margin = '0';
+                    middleCol.style.position = 'relative';
+                }
+            }
+        });
+     }
 
     function openLaunchModal(wrapper, actionsData, toastMsg, popupId) {
        const tooltip = wrapper.querySelector('.card-tooltip');
@@ -183,44 +274,144 @@
        const cloneTitle = contentClone.querySelector('.card-tooltip-title');
        if (cloneTitle) cloneTitle.remove();
        
+       const effPopupId = popupId || (actionsData && actionsData[0] && actionsData[0].cmd ? 'cmd_' + actionsData[0].cmd.split(' ')[0] : 'general');
+       
        let activeSet = null;
-       if (popupId && window.TABS && window.TABS['__popups_active'] && window.TABS['__popups_active'][popupId]) {
-           activeSet = new Set(window.TABS['__popups_active'][popupId]);
+       if (window.TABS && window.TABS['__popups_active'] && window.TABS['__popups_active'][effPopupId]) {
+           activeSet = new Set(window.TABS['__popups_active'][effPopupId]);
+       } else {
+           try {
+               const localActive = JSON.parse(localStorage.getItem('ros2_nexus_popups_active') || '{}');
+               if (localActive[effPopupId]) {
+                   activeSet = new Set(localActive[effPopupId]);
+               }
+           } catch(e) {}
        }
        
        actionsData.forEach(a => { 
-           if (popupId) {
-               a.active = activeSet ? activeSet.has(a.cmd) : false; 
+           if (activeSet) {
+               a.active = activeSet.has(a.cmd); 
            } else {
-               a.active = true;
+               a.active = true; 
            }
            a.baseCmd = a.cmd; 
            a.args = []; 
        });
        
        const saveActiveState = () => {
-           if (!popupId) return;
            const activeCmds = [];
-           const topUl = document.getElementById('launch-modal-body').querySelector('ul');
-           if (!topUl) return;
-           topUl.querySelectorAll('li').forEach(item => {
-               const cb = item.querySelector('.main-action-cb');
-               if (cb && cb.checked && item.dataset.cmd) {
-                   activeCmds.push(item.dataset.cmd);
+           const topUl = document.getElementById('launch-modal-body') ? document.getElementById('launch-modal-body').querySelector('ul') : null;
+           if (topUl) {
+               topUl.querySelectorAll('li').forEach(item => {
+                   const cb = item.querySelector('.main-action-cb');
+                   if (cb && cb.checked && item.dataset.cmd) {
+                       activeCmds.push(item.dataset.cmd);
+                   }
+               });
+           }
+           
+           // Sync with actionsData
+           actionsData.forEach(a => {
+               if (topUl && a.cmd) {
+                   a.active = activeCmds.includes(a.cmd);
                }
            });
+
+           // Gather args state
+           const currentArgsState = {};
+           actionsData.forEach(a => {
+               if (a.args && a.args.length > 0) {
+                   const cmdKey = a.cmd || a.baseCmd;
+                   if (!currentArgsState[cmdKey]) currentArgsState[cmdKey] = {};
+                   a.args.forEach(argObj => {
+                       currentArgsState[cmdKey][argObj.text] = !!argObj.checked;
+                   });
+                   if (a.baseCmd && a.baseCmd !== a.cmd) {
+                       if (!currentArgsState[a.baseCmd]) currentArgsState[a.baseCmd] = {};
+                       a.args.forEach(argObj => {
+                           currentArgsState[a.baseCmd][argObj.text] = !!argObj.checked;
+                       });
+                   }
+               }
+           });
+
            if (!window.TABS) window.TABS = {};
            if (!window.TABS['__popups_active']) window.TABS['__popups_active'] = {};
-           window.TABS['__popups_active'][popupId] = activeCmds;
-           
+           if (!window.TABS['__popups_args']) window.TABS['__popups_args'] = {};
+           if (!window.TABS['__cmd_args']) window.TABS['__cmd_args'] = {};
+
+           window.TABS['__popups_active'][effPopupId] = activeCmds;
+           window.TABS['__popups_args'][effPopupId] = Object.assign(window.TABS['__popups_args'][effPopupId] || {}, currentArgsState);
+
+           Object.keys(currentArgsState).forEach(k => {
+               window.TABS['__cmd_args'][k] = Object.assign(window.TABS['__cmd_args'][k] || {}, currentArgsState[k]);
+           });
+
+           // LocalStorage backup
+           try {
+               localStorage.setItem('ros2_nexus_popups_active', JSON.stringify(window.TABS['__popups_active']));
+               localStorage.setItem('ros2_nexus_popups_args', JSON.stringify(window.TABS['__popups_args']));
+               localStorage.setItem('ros2_nexus_cmd_args', JSON.stringify(window.TABS['__cmd_args']));
+           } catch (e) {}
+
+           // Save to backend config file
            fetch('/api/config', {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify(window.TABS)
-           }).catch(err => console.error(err));
+           }).catch(err => console.error('Failed to save config to /api/config:', err));
        };
        
-              function parseArgs(action) {
+        function syncLinearAxisState(isLinearAxisActive) {
+            actionsData.forEach(act => {
+                if (act.args) {
+                    act.args.forEach(a => {
+                        if (a.text.includes('linear_axis')) {
+                            a.checked = isLinearAxisActive;
+                        }
+                    });
+                }
+                if (act.title && (act.cmd.includes('servo') || act.cmd.includes('move_group') || act.cmd.includes('standalone_move_group') || act.title.toLowerCase().includes('linear axis'))) {
+                    if (!isLinearAxisActive) {
+                        act.title = act.title.replace(/\s*\+\s*Linear\s*Axis/gi, '')
+                                             .replace(/\s*\(\s*\+\s*Linear\s*Axis\s*\)/gi, '')
+                                             .replace(/\s*-\s*Linear\s*Axis/gi, '')
+                                             .trim();
+                    } else if (!act.title.toLowerCase().includes('linear axis')) {
+                        act.title += ' + Linear Axis';
+                    }
+                }
+            });
+
+            const tunerAction = actionsData.find(act => act.cmd && act.cmd.includes('rviz_linear_axis_tuner'));
+            if (tunerAction) {
+                tunerAction.active = isLinearAxisActive;
+            }
+
+            const modalBody = document.getElementById('launch-modal-body');
+            if (modalBody) {
+                modalBody.querySelectorAll('li').forEach(liEl => {
+                    if (liEl.dataset.cmd && liEl.dataset.cmd.includes('rviz_linear_axis_tuner')) {
+                        const cb = liEl.querySelector('.main-action-cb');
+                        if (cb && cb.checked !== isLinearAxisActive) {
+                            cb.checked = isLinearAxisActive;
+                            liEl.style.opacity = isLinearAxisActive ? '1' : '0.4';
+                        }
+                    }
+                });
+                modalBody.querySelectorAll('label').forEach(lbl => {
+                    const span = lbl.querySelector('span');
+                    const cb = lbl.querySelector('input');
+                    if (span && span.textContent.includes('linear_axis') && cb) {
+                        cb.checked = isLinearAxisActive;
+                        lbl.style.opacity = isLinearAxisActive ? '1' : '0.4';
+                        lbl.style.borderColor = isLinearAxisActive ? 'rgba(0,255,102,0.3)' : 'rgba(255,255,255,0.1)';
+                    }
+                });
+            }
+        }
+        
+        function parseArgs(action) {
            if (!action.cmd.startsWith('ros2 launch') && !action.cmd.startsWith('ros2 run') && !action.cmd.startsWith('ros2 topic pub')) {
                action.baseCmd = action.cmd;
                action.postCmd = '';
@@ -297,12 +488,43 @@
                    }
                }
 
-               mergedArgs.forEach(arg => {
-                   action.args.push({ text: arg, checked: true });
-               });
-           } else {
+                mergedArgs.forEach(arg => {
+                    const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, arg);
+                    action.args.push({ text: arg, checked: isChecked });
+                });
+
+                // Update action.title if linear_axis arg or tuner node is not checked initially
+                const hasLinearAxisArg = action.args.some(a => a.text.includes('linear_axis'));
+                if ((hasLinearAxisArg || (action.title && action.title.toLowerCase().includes('linear axis'))) && action.title) {
+                    const isLinearAxisChecked = action.args.some(a => a.text.includes('linear_axis') && a.checked);
+                    const tunerNode = actionsData.find(a => a.cmd && a.cmd.includes('rviz_linear_axis_tuner'));
+                    const isTunerActive = tunerNode ? tunerNode.active : true;
+                    if (!isLinearAxisChecked || !isTunerActive) {
+                        action.title = action.title.replace(/\s*\+\s*Linear\s*Axis/gi, '')
+                                                   .replace(/\s*\(\s*\+\s*Linear\s*Axis\s*\)/gi, '')
+                                                   .replace(/\s*-\s*Linear\s*Axis/gi, '')
+                                                   .trim();
+                    }
+                }
+            } else {
                action.baseCmd = action.cmd;
                action.postCmd = '';
+           }
+
+           // Ensure ZED M YOLO models and use_zed_hardware args are available for zed_cam_rviz_pointcloud_tf_yolo_planned_grasp
+           if (action.baseCmd && action.baseCmd.includes('zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py')) {
+               const zedDefaults = [
+                   'yolo_model:=yolov8l.pt',
+                   'yolo_model:=yolov8s.pt',
+                   'yolo_model:=my_yolo_model.pt',
+                   'use_zed_hardware:=false'
+               ];
+               zedDefaults.forEach(defArg => {
+                   if (!action.args.some(a => a.text === defArg)) {
+                       const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
+                       action.args.push({ text: defArg, checked: isChecked });
+                   }
+               });
            }
        }
        
@@ -311,26 +533,124 @@
            argsDiv.style.flex = '1';
            argsDiv.style.display = 'flex';
            argsDiv.style.flexDirection = 'column'; // Stack vertically
-           argsDiv.style.gap = '6px';
+           argsDiv.style.gap = '8px';
            argsDiv.style.alignItems = 'flex-start';
            argsDiv.style.marginTop = '8px';
            
            if (action && action.args.length > 0) {
+               // Ensure at most one yolo_model:= arg is checked initially
+               const checkedYoloModels = action.args.filter(a => a.text.startsWith('yolo_model:=') && a.checked);
+               if (checkedYoloModels.length > 1) {
+                   const preferred = checkedYoloModels.find(a => a.text === 'yolo_model:=yolov8l.pt') || checkedYoloModels[0];
+                   checkedYoloModels.forEach(a => { if (a !== preferred) a.checked = false; });
+               }
+
+               // Put yolo_model args first, use_zed_hardware after
+               action.args.sort((a, b) => {
+                   const isYoloA = a.text.startsWith('yolo_model:=');
+                   const isYoloB = b.text.startsWith('yolo_model:=');
+                   const isZedHwA = a.text.startsWith('use_zed_hardware');
+                   const isZedHwB = b.text.startsWith('use_zed_hardware');
+                   if (isYoloA && !isYoloB) return -1;
+                   if (!isYoloA && isYoloB) return 1;
+                   if (isZedHwA && !isZedHwB) return 1;
+                   if (!isZedHwA && isZedHwB) return -1;
+                   return 0;
+               });
+
                action.args.forEach(argObj => {
                    const argLbl = document.createElement('label');
-                   argLbl.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:11px; color:var(--accent); background:rgba(0,255,102,0.1); padding:4px 8px; border-radius:6px; border:1px solid rgba(0,255,102,0.3); cursor:pointer; transition:all 0.2s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; max-width:100%;';
+                   argLbl.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:500; color:var(--accent); background:rgba(0,255,102,0.1); padding:6px 12px; border-radius:6px; border:1px solid rgba(0,255,102,0.3); cursor:pointer; transition:all 0.2s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; max-width:100%;';
                    
                    const argCb = document.createElement('input');
                    argCb.type = 'checkbox';
-                   argCb.checked = true;
-                   argCb.style.accentColor = '#00FF66';
-                   argCb.style.cursor = 'pointer';
-                   argCb.style.flexShrink = '0';
+                   argCb.checked = !!argObj.checked;
+                   argCb.style.cssText = 'accent-color:#00FF66; cursor:pointer; flex-shrink:0; width:16px; height:16px;';
+                   
+                   argLbl.style.opacity = argObj.checked ? '1' : '0.4';
+                   argLbl.style.borderColor = argObj.checked ? 'rgba(0,255,102,0.3)' : 'rgba(255,255,255,0.1)';
+
                    argCb.onclick = (e) => e.stopPropagation();
                    argCb.onchange = (e) => {
                        argObj.checked = e.target.checked;
-                       argLbl.style.opacity = e.target.checked ? '1' : '0.4';
-                       argLbl.style.borderColor = e.target.checked ? 'rgba(0,255,102,0.3)' : 'rgba(255,255,255,0.1)';
+                       
+                       // Mutually exclusive yolo_model selection
+                       if (e.target.checked && argObj.text.startsWith('yolo_model:=')) {
+                           action.args.forEach(otherArg => {
+                               if (otherArg !== argObj && otherArg.text.startsWith('yolo_model:=')) {
+                                   otherArg.checked = false;
+                               }
+                           });
+                           argsDiv.querySelectorAll('label').forEach(lbl => {
+                               const cb = lbl.querySelector('input');
+                               const txtSpan = lbl.querySelector('span');
+                               if (txtSpan && cb) {
+                                   const matchArg = action.args.find(a => a.text === txtSpan.textContent);
+                                   if (matchArg) {
+                                       cb.checked = matchArg.checked;
+                                       lbl.style.opacity = matchArg.checked ? '1' : '0.4';
+                                       lbl.style.borderColor = matchArg.checked ? 'rgba(0,255,102,0.3)' : 'rgba(255,255,255,0.1)';
+                                   }
+                               }
+                           });
+                       } else {
+                           argLbl.style.opacity = e.target.checked ? '1' : '0.4';
+                           argLbl.style.borderColor = e.target.checked ? 'rgba(0,255,102,0.3)' : 'rgba(255,255,255,0.1)';
+                       }
+
+                       // Linear Axis dynamic title and checkbox synchronization
+                       if (argObj.text.includes('linear_axis')) {
+                           const isChecked = e.target.checked;
+                           actionsData.forEach(act => {
+                               if (act.args) {
+                                   act.args.forEach(a => {
+                                       if (a.text.includes('linear_axis')) {
+                                           a.checked = isChecked;
+                                       }
+                                   });
+                               }
+                               if (act.title && (act.cmd.includes('servo') || act.cmd.includes('move_group') || act.cmd.includes('standalone_move_group') || act.title.toLowerCase().includes('linear axis'))) {
+                                   if (!isChecked) {
+                                       act.title = act.title.replace(/\s*\+\s*Linear\s*Axis/gi, '')
+                                                            .replace(/\s*\(\s*\+\s*Linear\s*Axis\s*\)/gi, '')
+                                                            .replace(/\s*-\s*Linear\s*Axis/gi, '')
+                                                            .trim();
+                                   } else if (!act.title.toLowerCase().includes('linear axis')) {
+                                       act.title += ' + Linear Axis';
+                                   }
+                               }
+                           });
+
+                           const tunerAction = actionsData.find(act => act.cmd && act.cmd.includes('rviz_linear_axis_tuner'));
+                           if (tunerAction) {
+                               tunerAction.active = isChecked;
+                               const topUl = document.getElementById('launch-modal-body') ? document.getElementById('launch-modal-body').querySelector('ul') : null;
+                               if (topUl) {
+                                   topUl.querySelectorAll('li').forEach(liEl => {
+                                       if (liEl.dataset.cmd && liEl.dataset.cmd.includes('rviz_linear_axis_tuner')) {
+                                           const cb = liEl.querySelector('.main-action-cb');
+                                           if (cb) cb.checked = isChecked;
+                                           liEl.style.opacity = isChecked ? '1' : '0.4';
+                                       }
+                                   });
+                               }
+                           }
+
+                           const modalBody = document.getElementById('launch-modal-body');
+                           if (modalBody) {
+                               modalBody.querySelectorAll('label').forEach(lbl => {
+                                   const span = lbl.querySelector('span');
+                                   const cb = lbl.querySelector('input');
+                                   if (span && span.textContent.includes('linear_axis') && cb) {
+                                       cb.checked = isChecked;
+                                       lbl.style.opacity = isChecked ? '1' : '0.4';
+                                       lbl.style.borderColor = isChecked ? 'rgba(0,255,102,0.3)' : 'rgba(255,255,255,0.1)';
+                                   }
+                               });
+                           }
+                       }
+                       
+                       saveActiveState();
                    };
                    
                    const txtSpan = document.createElement('span');
@@ -408,6 +728,7 @@
               
               // Build Flex Layout
               const cardLayout = document.createElement('div');
+              cardLayout.className = 'modal-card-layout';
               cardLayout.style.display = 'flex';
               cardLayout.style.width = '100%';
               cardLayout.style.justifyContent = 'space-between';
@@ -415,6 +736,7 @@
               cardLayout.style.gap = '30px';
               
               const leftCol = document.createElement('div');
+              leftCol.className = 'modal-card-left-col';
               leftCol.style.display = 'flex';
               leftCol.style.flexDirection = 'column';
               leftCol.style.gap = '16px';
@@ -448,11 +770,12 @@
               const isLaunchCard = (action && action.cmd && action.cmd.startsWith('ros2 launch')) || (cmdToDisplay && cmdToDisplay.startsWith('ros2 launch'));
 
               const middleCol = document.createElement('div');
-              middleCol.style.flex = '0 0 240px'; // Fixed width so leftCol is identical across cards
+              middleCol.className = 'modal-card-middle-col';
+              middleCol.style.flex = '0 0 280px'; // Width for args and parameters
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
               middleCol.style.borderLeft = isLaunchCard ? '1px solid rgba(255, 255, 255, 0.35)' : 'none';
-              middleCol.style.padding = '0 30px';
+              middleCol.style.padding = '0 20px';
               middleCol.style.minWidth = '0';
               
               const spacer = document.createElement('div');
@@ -460,7 +783,7 @@
               spacer.style.flexShrink = '0';
               spacer.style.display = 'flex';
               spacer.style.alignItems = 'center';
-              spacer.style.fontSize = '10px';
+              spacer.style.fontSize = '12px';
               spacer.style.fontWeight = 'bold';
               spacer.style.color = 'var(--mut)';
               spacer.style.textTransform = 'uppercase';
@@ -552,6 +875,10 @@
               mainCb.onchange = (e) => {
                   if (action) action.active = e.target.checked;
                   li.style.opacity = e.target.checked ? '1' : '0.4';
+                  
+                  if (action && (action.cmd.includes('rviz_linear_axis_tuner') || action.cmd.includes('linear_axis'))) {
+                      syncLinearAxisState(e.target.checked);
+                  }
                   
                   const allCbs = Array.from(topUl.querySelectorAll('.main-action-cb'));
                   if (allCbs.length > 0) {
@@ -659,6 +986,7 @@
               let cmdName = action.title || action.cmd.split(' ').slice(0, 3).join(' ');
               
               const cardLayout = document.createElement('div');
+              cardLayout.className = 'modal-card-layout';
               cardLayout.style.display = 'flex';
               cardLayout.style.width = '100%';
               cardLayout.style.justifyContent = 'space-between';
@@ -666,6 +994,7 @@
               cardLayout.style.gap = '15px';
               
               const leftCol = document.createElement('div');
+              leftCol.className = 'modal-card-left-col';
               leftCol.style.display = 'flex';
               leftCol.style.flexDirection = 'column';
               leftCol.style.gap = '8px';
@@ -683,11 +1012,12 @@
               const isLaunchCard2 = action.cmd.startsWith('ros2 launch');
               
               const middleCol = document.createElement('div');
-              middleCol.style.flex = '0 0 210px'; // Fixed width so leftCol is identical across cards
+              middleCol.className = 'modal-card-middle-col';
+              middleCol.style.flex = '0 0 280px'; // Width for args and parameters
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
               middleCol.style.borderLeft = isLaunchCard2 ? '1px solid rgba(255, 255, 255, 0.35)' : 'none';
-              middleCol.style.padding = '0 15px';
+              middleCol.style.padding = '0 20px';
               middleCol.style.minWidth = '0';
               
               const spacer = document.createElement('div');
@@ -695,7 +1025,7 @@
               spacer.style.flexShrink = '0';
               spacer.style.display = 'flex';
               spacer.style.alignItems = 'center';
-              spacer.style.fontSize = '10px';
+              spacer.style.fontSize = '12px';
               spacer.style.fontWeight = 'bold';
               spacer.style.color = 'var(--mut)';
               spacer.style.textTransform = 'uppercase';
@@ -779,6 +1109,9 @@
               mainCb.onchange = (e) => {
                   action.active = e.target.checked;
                   li.style.opacity = e.target.checked ? '1' : '0.4';
+                  if (action && (action.cmd.includes("rviz_linear_axis_tuner") || action.cmd.includes("linear_axis"))) {
+                      syncLinearAxisState(e.target.checked);
+                  }
                   
                   const allCbs = Array.from(topUl.querySelectorAll('.main-action-cb'));
                   if (allCbs.length > 0) {
@@ -908,6 +1241,12 @@
        document.body.insertAdjacentHTML('beforeend', modalHtml);
        document.getElementById('launch-modal-body').appendChild(contentClone);
        
+       requestAnimationFrame(() => {
+           alignModalArgs(contentClone);
+           setTimeout(() => alignModalArgs(contentClone), 100);
+           setTimeout(() => alignModalArgs(contentClone), 300);
+       });
+       
        if (popupId) {
            const actualTopUl = contentClone.querySelector('ul');
            if (actualTopUl) {
@@ -945,8 +1284,12 @@
        startBtn.onmouseout = () => { startBtn.style.transform='scale(1) translateY(0)'; startBtn.style.boxShadow='0 10px 30px rgba(0,255,102,0.3)'; };
        
        startBtn.addEventListener('click', async () => {
+          saveActiveState();
           document.getElementById('launch-modal').remove();
           if (toastMsg) showToast(toastMsg);
+
+          const linearAxisNode = actionsData.find(a => a.cmd && a.cmd.includes('rviz_linear_axis_tuner'));
+          const isLinearAxisNodeActive = linearAxisNode ? linearAxisNode.active : true;
           
           for (const action of actionsData) {
               if (!action.active) continue;
@@ -962,12 +1305,32 @@
               if (action.postCmd) {
                   finalCmd += action.postCmd;
               }
+
+              // Dynamically compute terminal window title based on linear axis active state
+              let finalTitle = action.title || 'Launch';
+              const hasLinearAxisArgChecked = action.args && action.args.some(a => a.text.includes('linear_axis') && a.checked);
+              const cmdHasLinearAxis = finalCmd.includes('linear_axis');
+              const isLinearAxisEnabled = isLinearAxisNodeActive && (cmdHasLinearAxis || hasLinearAxisArgChecked);
+
+              if (!isLinearAxisEnabled) {
+                  finalTitle = finalTitle.replace(/\s*\+\s*Linear\s*Axis/gi, '')
+                                         .replace(/\s*\(\s*\+\s*Linear\s*Axis\s*\)/gi, '')
+                                         .replace(/\s*-\s*Linear\s*Axis/gi, '')
+                                         .trim();
+                  if (!isLinearAxisNodeActive && finalCmd.includes('attach_to:=linear_axis_link')) {
+                      finalCmd = finalCmd.replace(/\s*attach_to:=linear_axis_link/g, '').trim();
+                  }
+              } else {
+                  if ((finalTitle.toLowerCase().includes('servo') || finalTitle.toLowerCase().includes('movegroup')) && !finalTitle.toLowerCase().includes('linear axis')) {
+                      finalTitle += ' + Linear Axis';
+                  }
+              }
               
               try {
                 await fetch('/api/run', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ command: finalCmd, title: action.title || 'Launch', mode: "ros" })
+                  body: JSON.stringify({ command: finalCmd, title: finalTitle, mode: "ros" })
                 });
                 await new Promise(resolve => setTimeout(resolve, 1000));
               } catch (e) {

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import math
+import os
 
 import rclpy
 from rclpy.node import Node
@@ -23,9 +24,19 @@ class ZedYolo3DNode(Node):
     def __init__(self):
         super().__init__('yolo_3d_bbox_for_zed_m')
         
-        # Load the locally available custom YOLO model
-        self.get_logger().info('Lade my_yolo_model.pt Modell...')
-        self.model = YOLO('my_yolo_model.pt')
+        # Declare parameter for model path
+        self.declare_parameter('model_path', 'yolov8l.pt')
+        model_name = self.get_parameter('model_path').value
+
+        # Resolve full path if file exists in ~/dev_ws or relative
+        if not os.path.isabs(model_name):
+            ws_model = os.path.expanduser(f'~/dev_ws/{model_name}')
+            if os.path.exists(ws_model):
+                model_name = ws_model
+
+        # Load YOLO model
+        self.get_logger().info(f'Lade {model_name} Modell...')
+        self.model = YOLO(model_name)
         self.get_logger().info('Modell erfolgreich geladen (nutzt GPU falls verfügbar).')
         
         self.bridge = CvBridge()
@@ -58,7 +69,7 @@ class ZedYolo3DNode(Node):
         # EMA Filtering state
         self.ema_states = {} # maps cls_id -> dict of {obj_id: {'state': np.array, 'last_seen': float}}
         # Declare parameters
-        self.declare_parameter('confidence_threshold', 0.25)
+        self.declare_parameter('confidence_threshold', 0.60)
         self.declare_parameter('ema_alpha', 0.2)
         self.declare_parameter('class_dimension_overrides', [
             'sports ball:0.0654', 
@@ -167,6 +178,13 @@ class ZedYolo3DNode(Node):
         for i, (box, cls_id) in enumerate(zip(boxes, classes)):
             x_min, y_min, x_max, y_max = map(int, box)
             
+            # Erweitere die 2D Box um 30 Pixel, um auch Randbereiche der Pointcloud zu erfassen
+            pad = 30
+            x_min -= pad
+            y_min -= pad
+            x_max += pad
+            y_max += pad
+            
             # Ensure within bounds
             h, w = cv_depth.shape
             x_min, x_max = max(0, x_min), min(w-1, x_max)
@@ -201,18 +219,20 @@ class ZedYolo3DNode(Node):
                 # Transform to link_base
                 pts_base = R @ pts_opt + T
                 
-                # Robustly filter out table points (Z < 0.015) and robot base (cylinder with radius 12cm)
+                # Robustly filter out table points (Z < 0.005) and robot base (cylinder with radius 12cm)
                 # also filter out points that are too high (Z > 0.4) to avoid grasping the camera stand or robot arm
                 dist_from_base = np.sqrt(pts_base[0, :]**2 + pts_base[1, :]**2)
-                valid_pts_filter = (pts_base[2, :] > 0.010) & (dist_from_base > 0.12) & (pts_base[2, :] < 0.4)
+                valid_pts_filter = (pts_base[2, :] > 0.005) & (dist_from_base > 0.12) & (pts_base[2, :] < 0.4)
                 if np.sum(valid_pts_filter) < 5:
                     continue # Not enough points belonging to the object
                 pts_base = pts_base[:, valid_pts_filter]
                 
-                # Compute 3D Bounding Box in link_base (use 0.5/99.5 percentiles to filter out flying pixels but preserve true edges)
-                min_x, max_x = np.percentile(pts_base[0], 0.5), np.percentile(pts_base[0], 99.5)
-                min_y, max_y = np.percentile(pts_base[1], 0.5), np.percentile(pts_base[1], 99.5)
-                min_z, max_z = np.percentile(pts_base[2], 0.5), np.percentile(pts_base[2], 99.5)
+                # Compute 3D Bounding Box in link_base (use 0.1/99.9 percentiles to capture almost all points of the object)
+                # Wir geben zusätzlich +1.5cm Puffer, damit keine Punkte "rausstechen"
+                margin_3d = 0.015
+                min_x, max_x = np.percentile(pts_base[0], 0.1) - margin_3d, np.percentile(pts_base[0], 99.9) + margin_3d
+                min_y, max_y = np.percentile(pts_base[1], 0.1) - margin_3d, np.percentile(pts_base[1], 99.9) + margin_3d
+                min_z, max_z = np.percentile(pts_base[2], 0.1) - margin_3d, np.percentile(pts_base[2], 99.9) + margin_3d
                 
                 # Kamera Position im link_base
                 cam_x, cam_y = 0.65, 0.0
@@ -262,13 +282,23 @@ class ZedYolo3DNode(Node):
                     center_z = (min_z + max_z) / 2.0
                     scale_z = dz
                 else:
-                    # Dynamische Rekonstruktion: Wir nehmen symmetrische Objekte an: Tiefe = sichtbare Breite (Y)
-                    width = max(0.02, max_y - min_y)
+                    # Dynamische Rekonstruktion:
+                    # Wir stellen sicher, dass die Box mindestens so groß ist wie die tatsächliche Pointcloud!
+                    pc_len_x = max_x - min_x
+                    pc_len_y = max_y - min_y
                     
-                    center_x = surf_x + ndir_x * (width / 2.0)
-                    center_y = surf_y + ndir_y * (width / 2.0)
+                    # Symmetrie-Annahme (für Tassen etc.): Tiefe sollte mindestens so groß wie Breite sein.
+                    scale_x = max(0.02, max(pc_len_x, pc_len_y))
+                    scale_y = max(0.02, pc_len_y)
                     
-                    scale_x, scale_y = width, width
+                    # Wenn die Pointcloud in der Tiefe künstlich vergrößert wurde (Symmetrie), schieben wir den Mittelpunkt zurück.
+                    # Andernfalls nehmen wir die Mitte der tatsächlich erfassten Pointcloud, damit sie exakt umhüllt wird.
+                    if pc_len_x < pc_len_y - 0.01:
+                        center_x = surf_x + ndir_x * (scale_x / 2.0)
+                        center_y = surf_y + ndir_y * (scale_x / 2.0)
+                    else:
+                        center_x = (min_x + max_x) / 2.0
+                        center_y = (min_y + max_y) / 2.0
                     
                     if min_z < 0.10:
                         min_z = 0.0

@@ -21,10 +21,10 @@ class ZedVisualPublisher(Node):
 
         # =========================================================
         # MARKER 1: V-Slot Aluminum Profile (20x20mm) Stand
-        h = 0.139
-        cx = 0.530
+        h = 0.388
+        cx = 0.705
         cy = 0.0
-        cz = 0.0695
+        cz = 0.194
         
         # Color: Aluminum / Light Grey
         r, g, b, a = 0.8, 0.8, 0.8, 1.0  # Silver (Aluminum)

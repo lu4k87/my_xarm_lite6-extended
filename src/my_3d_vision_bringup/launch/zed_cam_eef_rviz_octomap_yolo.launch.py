@@ -63,6 +63,9 @@ def generate_launch_description():
     tf_yaw_arg = DeclareLaunchArgument('tf_yaw', default_value='0.0',
         description='Kamera Yaw-Winkel [rad]')
 
+    yolo_model_arg = DeclareLaunchArgument('yolo_model', default_value='yolov8l.pt',
+        description='YOLO Modell-Datei (z.B. yolov8l.pt, yolov8s.pt, my_yolo_model.pt)')
+
     # Path to parameter override
     config_override_path = os.path.join(
         get_package_share_directory('my_3d_vision_bringup'),
@@ -183,7 +186,10 @@ def generate_launch_description():
         executable='yolo_3d_bbox_for_zed_m.py',
         name='yolo_3d_bbox_for_zed_m',
         output='screen',
-        parameters=[perception_params_file]
+        parameters=[
+            perception_params_file,
+            {'model_path': LaunchConfiguration('yolo_model')}
+        ]
     )
 
     grasp_action_bridge_node = Node(
@@ -196,6 +202,7 @@ def generate_launch_description():
     return LaunchDescription([
         # Arguments
         camera_model_arg,
+        yolo_model_arg,
         tf_x_arg,
         tf_y_arg,
         tf_z_arg,

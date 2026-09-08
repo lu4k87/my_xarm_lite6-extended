@@ -63,18 +63,21 @@ def generate_launch_description():
 
     # TF: Position der Kamera relativ zu link_base
     # ANPASSEN: Wenn die Kamera physisch eingemessen wird, diese 6 Werte ändern!
-    tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.50',
+    tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.705',
         description='Kamera X-Position relativ zu link_base [m]')
     tf_y_arg = DeclareLaunchArgument('tf_y', default_value='0.0',
         description='Kamera Y-Position relativ zu link_base [m]')
-    tf_z_arg = DeclareLaunchArgument('tf_z', default_value='0.12',
+    tf_z_arg = DeclareLaunchArgument('tf_z', default_value='0.532',
         description='Kamera Z-Position (Höhe) relativ zu link_base [m]')
-    tf_roll_arg = DeclareLaunchArgument('tf_roll', default_value='0.0',
-        description='Kamera Roll-Winkel [rad]')
-    tf_pitch_arg = DeclareLaunchArgument('tf_pitch', default_value='0.401426',
-        description='Kamera Pitch-Winkel [rad] (positiv = nach unten geneigt, 0.401426 = ~23°)')
+    tf_roll_arg = DeclareLaunchArgument('tf_roll', default_value='-0.15708',
+        description='Kamera Roll-Winkel [rad] (-0.15708 = -9.0°)')
+    tf_pitch_arg = DeclareLaunchArgument('tf_pitch', default_value='0.92153',
+        description='Kamera Pitch-Winkel [rad] (positiv = nach unten geneigt, 0.92153 = ~52.8°)')
     tf_yaw_arg = DeclareLaunchArgument('tf_yaw', default_value='3.14159',
         description='Kamera Yaw-Winkel [rad] (3.14159 = 180°, zeigt zum Roboter)')
+
+    yolo_model_arg = DeclareLaunchArgument('yolo_model', default_value='yolov8l.pt',
+        description='YOLO Modell-Datei (z.B. yolov8l.pt, yolov8s.pt, my_yolo_model.pt)')
 
     # Path to parameter override
     config_override_path = os.path.join(
@@ -172,7 +175,10 @@ def generate_launch_description():
         executable='yolo_3d_bbox_for_zed_m.py',
         name='yolo_3d_bbox_for_zed_m',
         output='screen',
-        parameters=[perception_params_file]
+        parameters=[
+            perception_params_file,
+            {'model_path': LaunchConfiguration('yolo_model')}
+        ]
     )
 
     grasp_action_bridge_node = Node(
@@ -186,6 +192,7 @@ def generate_launch_description():
         # Arguments
         camera_model_arg,
         use_zed_hardware_arg,
+        yolo_model_arg,
         tf_x_arg,
         tf_y_arg,
         tf_z_arg,

@@ -33,8 +33,10 @@ try {
 }
 
 ros.on('connection', () => {
-  document.getElementById('connection-status').innerText = 'WS: 9090';
-  document.getElementById('connection-dot').className = 'dot glow-green';
+  const connStatus = document.getElementById('connection-status');
+  if (connStatus) connStatus.innerText = 'ROSBridge :9090';
+  const connDot = document.getElementById('connection-dot');
+  if (connDot) connDot.className = 'dot glow-green';
   logMsg('System', 'Connected to rosbridge_server (ws://localhost:9090)', 'info');
 
   // Node Checker (mit Error-Handling, um Websocket-Crashes zu vermeiden)
@@ -101,16 +103,20 @@ ros.on('connection', () => {
 });
 
 ros.on('error', (error) => {
-  document.getElementById('connection-status').innerText = 'WS Error';
-  document.getElementById('connection-dot').className = 'dot glow-red';
+  const connStatus = document.getElementById('connection-status');
+  if (connStatus) connStatus.innerText = 'ROSBridge :9090';
+  const connDot = document.getElementById('connection-dot');
+  if (connDot) connDot.className = 'dot glow-red';
   logMsg('System', 'Error connecting to websocket server', 'err');
 });
 
 let reconnectTimer = null;
 
 ros.on('close', () => {
-  document.getElementById('connection-status').innerText = 'WS Closed';
-  document.getElementById('connection-dot').className = 'dot glow-red';
+  const connStatus = document.getElementById('connection-status');
+  if (connStatus) connStatus.innerText = 'ROSBridge :9090';
+  const connDot = document.getElementById('connection-dot');
+  if (connDot) connDot.className = 'dot glow-red';
   document.getElementById('mode-dot').className = 'dot glow-red';
   document.getElementById('mode-status').innerText = 'Mode: Offline';
   
@@ -941,20 +947,19 @@ document.addEventListener('click', function(e) {
   const btn = e.target.closest('button');
   if (!btn) return;
   
-  // Play UI click sound
-  uiClickSound.currentTime = 0;
-  uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
-
-  
-  // Allow continuous jogging buttons to be pressed rapidly or held
-  if (btn.classList.contains('btn-z') || btn.classList.contains('btn-rot')) return;
-  
-  // If already clicked, block it
-  if (btn.dataset.clicked) {
+  // Check if button is disabled by motion lock or already clicked
+  if (btn.disabled || btn.dataset.clicked || btn.style.pointerEvents === 'none') {
     e.stopPropagation();
     e.preventDefault();
     return;
   }
+  
+  // Play UI click sound
+  uiClickSound.currentTime = 0;
+  uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
+
+  // Allow continuous jogging buttons to be pressed rapidly or held without getting visually disabled by the debounce
+  if (btn.classList.contains('btn-z') || btn.classList.contains('btn-rot')) return;
   
   // Mark as clicked and visually disable
   btn.dataset.clicked = "true";
@@ -980,29 +985,30 @@ const servoStatusSub = new ROSLIB.Topic({
 });
 
 function updateMoveItBadge() {
-  const dot = document.getElementById('moveit-dot');
-  const text = document.getElementById('moveit-status');
-  if(!dot || !text) return;
-  const pill = dot.parentElement;
-  pill.classList.remove('pill-pulse-green', 'pill-pulse-red', 'pill-pulse-orange');
+  const badge = document.getElementById('moveit-badge');
+  if(!badge) return;
+  
+  badge.className = 'moveit-badge'; // Reset classes
   
   if (currentServoStatus === 0) {
-    dot.className = 'dot glow-green';
-    text.innerText = isRobotMoving ? 'MoveIt: Moving' : 'MoveIt: Ready';
-    pill.classList.add('pill-pulse-green');
+    if (isRobotMoving) {
+      badge.innerText = 'MoveIt: Moving';
+      badge.classList.add('moving');
+    } else {
+      badge.innerText = 'MoveIt: Ready';
+      badge.classList.add('ready');
+    }
   } else if (currentServoStatus === 1 || currentServoStatus === 3 || currentServoStatus === 6) {
-    dot.className = 'dot glow-orange';
-    if (currentServoStatus === 1) text.innerText = 'MoveIt: Sing. Near';
-    else if (currentServoStatus === 3) text.innerText = 'MoveIt: Coll. Near';
-    else text.innerText = 'MoveIt: Leav. Sing.';
-    pill.classList.add('pill-pulse-orange');
+    badge.classList.add('warn');
+    if (currentServoStatus === 1) badge.innerText = 'MoveIt: Sing. Near';
+    else if (currentServoStatus === 3) badge.innerText = 'MoveIt: Coll. Near';
+    else badge.innerText = 'MoveIt: Leav. Sing.';
   } else {
-    dot.className = 'dot glow-red';
-    if (currentServoStatus === 2) text.innerText = 'MoveIt: Sing. Halt';
-    else if (currentServoStatus === 4) text.innerText = 'MoveIt: Coll. Halt';
-    else if (currentServoStatus === 5) text.innerText = 'MoveIt: Limit';
-    else text.innerText = 'MoveIt: Error';
-    pill.classList.add('pill-pulse-red');
+    badge.classList.add('error');
+    if (currentServoStatus === 2) badge.innerText = 'MoveIt: Sing. Halt';
+    else if (currentServoStatus === 4) badge.innerText = 'MoveIt: Coll. Halt';
+    else if (currentServoStatus === 5) badge.innerText = 'MoveIt: Limit';
+    else badge.innerText = 'MoveIt: Error';
   }
 }
 
@@ -1177,8 +1183,124 @@ function initDragAndDrop() {
 
 // Call init once DOM is definitely ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initDragAndDrop);
+  document.addEventListener('DOMContentLoaded', () => {
+    initDragAndDrop();
+    initPortMonitoring();
+  });
 } else {
   initDragAndDrop();
+  initPortMonitoring();
 }
+
+// ── Dynamic Port & Connection Monitoring ──────────────────────────────────
+function initPortMonitoring() {
+  const host = window.location.hostname || 'localhost';
+
+  function checkPort8081() {
+    const dot = document.getElementById('dot-port-8081');
+    if (!dot) return;
+    if (window.location.port === '8081') {
+      dot.className = 'dot glow-green';
+    } else {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2000);
+      fetch('http://' + host + ':8081/index.html', { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+        .then(() => { clearTimeout(timer); dot.className = 'dot glow-green'; })
+        .catch(() => { clearTimeout(timer); dot.className = 'dot glow-red'; });
+    }
+  }
+
+  function checkPort5000() {
+    const dot = document.getElementById('dot-port-5000');
+    if (!dot) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000);
+    fetch('http://' + host + ':5000/api/status', { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+      .then(() => {
+        clearTimeout(timer);
+        dot.className = 'dot glow-green';
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        dot.className = 'dot glow-red';
+      });
+  }
+
+  function checkPort8080() {
+    const dot = document.getElementById('dot-port-8080');
+    if (!dot) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000);
+    fetch('http://' + host + ':8080/dashboard_index.html', { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+      .then(() => {
+        clearTimeout(timer);
+        dot.className = 'dot glow-green';
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        dot.className = 'dot glow-red';
+      });
+  }
+
+  function checkPort8082() {
+    const dot = document.getElementById('dot-port-8082');
+    if (!dot) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000);
+    fetch('http://' + host + ':8082/', { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+      .then(() => {
+        clearTimeout(timer);
+        dot.className = 'dot glow-green';
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        dot.className = 'dot glow-red';
+      });
+  }
+
+  function checkPort9091() {
+    const dot = document.getElementById('dot-port-9091');
+    if (!dot) return;
+    let resolved = false;
+    try {
+      const testWs = new WebSocket('ws://' + host + ':9091');
+      const timer = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          dot.className = 'dot glow-red';
+          try { testWs.close(); } catch(e) {}
+        }
+      }, 1500);
+      testWs.onopen = () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          dot.className = 'dot glow-green';
+          try { testWs.close(); } catch(e) {}
+        }
+      };
+      testWs.onerror = () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          dot.className = 'dot glow-red';
+        }
+      };
+    } catch (e) {
+      dot.className = 'dot glow-red';
+    }
+  }
+
+  function checkAll() {
+    checkPort8081();
+    checkPort5000();
+    checkPort8080();
+    checkPort8082();
+    checkPort9091();
+  }
+
+  checkAll();
+  setInterval(checkAll, 3000);
+}
+
 

@@ -16,15 +16,94 @@ import atexit
 
 import uuid
 import signal
+import re
 
 app     = Flask(__name__)
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-WS_PATH  = os.environ.get("ROS2_WS", "~/dev_ws")
+WS_PATH  = os.environ.get("ROS2_WS", os.path.abspath(os.path.join(BASE_DIR, "..")))
 
 active_processes = {}
 global_logs = []
 log_id_counter = 1
 import time
+
+def ensure_desktop_integration():
+    """Automatische, benutzernamen-unabhängige Registrierung von Desktop-Dateien und Icons."""
+    try:
+        home_dir = os.path.expanduser("~")
+        ws_dir = os.path.abspath(os.path.join(BASE_DIR, ".."))
+        robot_icon_src = os.path.join(ws_dir, "src", "http_robot_control_ui_p8081", "icon.png")
+        desktop_dir = os.path.join(home_dir, ".local", "share", "applications")
+        icons_dir = os.path.join(home_dir, ".local", "share", "icons")
+
+        os.makedirs(desktop_dir, exist_ok=True)
+        os.makedirs(icons_dir, exist_ok=True)
+
+        if os.path.isfile(robot_icon_src):
+            robot_desktop_file = os.path.join(desktop_dir, "robot-control-ui.desktop")
+            robot_icon_dest = os.path.join(icons_dir, "robot-control-ui.png")
+            hicolor_48 = os.path.join(icons_dir, "hicolor", "48x48", "apps", "robot-control-ui.png")
+
+            needs_update = (
+                not os.path.isfile(robot_desktop_file)
+                or not os.path.isfile(robot_icon_dest)
+                or not os.path.isfile(hicolor_48)
+                or os.path.getmtime(robot_icon_src) > os.path.getmtime(robot_desktop_file)
+            )
+
+            if not needs_update:
+                try:
+                    with open(robot_desktop_file, "r") as f:
+                        if "sh -c" not in f.read():
+                            needs_update = True
+                except Exception:
+                    needs_update = True
+
+            if needs_update:
+                import shutil
+                from PIL import Image
+
+                shutil.copy2(robot_icon_src, robot_icon_dest)
+                im = Image.open(robot_icon_src)
+                for s in [16, 24, 32, 48, 64, 128, 256, 512, 1024]:
+                    hicolor_dir = os.path.join(icons_dir, "hicolor", f"{s}x{s}", "apps")
+                    os.makedirs(hicolor_dir, exist_ok=True)
+                    im.resize((s, s), Image.Resampling.LANCZOS).save(
+                        os.path.join(hicolor_dir, "robot-control-ui.png"), format="PNG"
+                    )
+
+                robot_desktop_content = f"""[Desktop Entry]
+Version=1.0
+Name=Robot Control UI
+GenericName=Robot Control Interface
+Comment=xArm Lite6 Web Control Interface
+Exec=sh -c 'google-chrome --user-data-dir="{home_dir}/.robot_control_profile" --class="robot-control-ui" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir="{home_dir}/.robot_control_profile" --class="robot-control-ui" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html'
+Icon=robot-control-ui
+Terminal=false
+Type=Application
+Categories=Development;
+StartupNotify=true
+StartupWMClass=robot-control-ui
+"""
+                with open(robot_desktop_file, "w") as f:
+                    f.write(robot_desktop_content)
+                os.chmod(robot_desktop_file, 0o755)
+
+                subprocess.Popen("update-desktop-database ~/.local/share/applications 2>/dev/null || true", shell=True)
+                subprocess.Popen("gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor 2>/dev/null || true", shell=True)
+    except Exception as e:
+        print(f"[Desktop Integration] Notice: {e}")
+
+# Einmalig im Hintergrund beim Start prüfen und sicherstellen
+threading.Thread(target=ensure_desktop_integration, daemon=True).start()
 
 def _build_ros_script(command: str, ws_path: str) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
@@ -176,6 +255,14 @@ def api_run():
 
     if not command:
         return jsonify({"ok": False, "error": "No command provided"}), 400
+
+    if "linear_axis" not in command and "linear axis" in title.lower():
+        title = re.sub(r'\s*\+\s*Linear\s*Axis', '', title, flags=re.IGNORECASE)
+        title = re.sub(r'\s*\(\s*\+\s*Linear\s*Axis\s*\)', '', title, flags=re.IGNORECASE)
+        title = re.sub(r'\s*-\s*Linear\s*Axis', '', title, flags=re.IGNORECASE).strip()
+
+    if "robot-control-ui" in command or "http_robot_control_ui" in command:
+        ensure_desktop_integration()
 
     cmd_id = "cmd_" + uuid.uuid4().hex[:8]
 
