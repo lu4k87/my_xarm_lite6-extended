@@ -442,7 +442,13 @@
       bottom: 40px;
       right: -32px; /* Centers the line in the 64px gap */
       width: 2px;
-      background: rgba(255, 255, 255, 0.25);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.25) 55%, transparent 100%);
+    }
+
+    .col-divider-h {
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%);
+      margin: 0 40px 30px 40px;
     }
 
     /* ── SECTION ── */
