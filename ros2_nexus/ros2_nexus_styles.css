@@ -508,8 +508,10 @@
 
     .section-title .title-line {
       flex: 1;
+      min-width: 35px;
+      flex-shrink: 0;
       height: 1px;
-      background: linear-gradient(90deg, var(--brd) 0%, transparent 100%);
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.15) 75%, transparent 100%);
     }
 
     .run-all-badge {
