@@ -511,13 +511,13 @@
                     cmdTitle = a.label;
                     cmdSub = "VR Exocentric Camera Mode";
                     cmdDesc = "Meta Quest VR Teleop + Gaze UI (ZED M) — Exocentric";
-                    badgeIcon = "fa-solid fa-vr-cardboard"; badgeText = "VR CONTROL SEQUENCE";
+                    badgeIcon = "fa-solid fa-vr-cardboard"; badgeText = "VR SEQUENCE";
                 } else if (a.type === 'vr_egocentric') {
                     actionFunc = "getExtrasExecLegacyCamActions()";
                     cmdTitle = a.label;
                     cmdSub = "VR Egocentric Camera Mode";
                     cmdDesc = "Meta Quest VR Teleop + Gaze UI (Rpi Cam) — Egocentric";
-                    badgeIcon = "fa-solid fa-vr-cardboard"; badgeText = "VR CONTROL SEQUENCE";
+                    badgeIcon = "fa-solid fa-vr-cardboard"; badgeText = "VR SEQUENCE";
                 }
 
                 let words = badgeText.split(' ');
@@ -529,19 +529,18 @@
             <div class="card-wrapper">
               <div class="action-card" data-type="dev" onclick="openLaunchModal(this.closest('.card-wrapper'), ${actionFunc}, '🚀 ${a.label} gestartet...', '${a.type}')" style="cursor: pointer; border-radius: 14px; background: rgba(0,0,0,0.5); border: 1px solid ${badgeParams.border}; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; --card-accent: linear-gradient(90deg, ${badgeParams.primary} 0%, transparent 50%);">
                 <div style="position: absolute; top: 0; right: 0; width: 5px; height: 100%; background: linear-gradient(270deg, ${badgeParams.primary} 0%, transparent 100%); pointer-events: none; border-top-right-radius: 13px; border-bottom-right-radius: 13px; z-index: 0;"></div>
-                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 12px; position: relative; z-index: 1;">
-                  <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; width: 100%; position: relative;">
+                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; justify-content: center; padding: 14px 24px; position: relative; z-index: 1;">
+                  <div style="display: flex; align-items: center; justify-content: flex-start; gap: 16px; width: 100%; position: relative;">
                     ${cmdBadges.length ? `<div style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">${cmdBadges.map(b => `<span style="background: ${badgeParams.bg1}; border: 1px solid ${badgeParams.border}; border-radius: 6px; padding: ${cmdBadges.length > 1 ? '4px 10px' : '5px 12px'}; font-size: ${cmdBadges.length > 1 ? '11.5px' : '13px'}; font-weight: 800; letter-spacing: 1.5px; color: ${badgeParams.primary}; text-shadow: 0 0 12px ${badgeParams.glow}; white-space: nowrap;">${b}</span>`).join('')}</div>` : ''}
-                    <div style="background: linear-gradient(135deg, ${badgeParams.bg1}, ${badgeParams.bg2}); border: 1px solid ${badgeParams.border}; border-radius: 10px; padding: 8px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${badgeParams.bg1};">
-                      <span style="color: ${badgeParams.primary}; font-size: 10px; font-weight: 800; letter-spacing: 2px;"><i class="${badgeIcon}" style="margin-right: 6px;"></i>${bText1}</span>
-                      <span style="color: #fff; font-size: 13px; font-weight: 900; letter-spacing: 1.5px;">${bText2}</span>
+                    <div style="background: linear-gradient(135deg, ${badgeParams.bg1}, ${badgeParams.bg2}); border: 1px solid ${badgeParams.border}; border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${badgeParams.bg1}; flex-shrink: 0; width: 110px; box-sizing: border-box;">
+                      <span style="color: ${badgeParams.primary}; font-size: 10px; font-weight: 800; letter-spacing: 2px; white-space: nowrap;"><i class="${badgeIcon}" style="margin-right: 6px;"></i>${bText1}</span>
+                      <span style="color: #fff; font-size: 13px; font-weight: 900; letter-spacing: 1.5px; white-space: nowrap;">${bText2}</span>
                     </div>
-                    <div style="display: flex; flex-direction: column; text-align: left;">
+                    <div style="display: flex; flex-direction: column; text-align: left; min-width: 0; flex: 1; padding-right: ${cmdBadges.length ? '90px' : '20px'};">
                       <span style="font-size: 24px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${badgeParams.glow};">${cmdTitle}</span>
                       <span style="font-size: 11px; color: ${badgeParams.primary}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-top: 2px; opacity: 0.9;">${cmdSub}</span>
                     </div>
                   </div>
-
                 </div>
               </div>
               <div class="card-tooltip">
@@ -584,21 +583,20 @@
             <div class="card-wrapper">
               <div class="action-card" data-type="sys" onclick="openLaunchModal(this.closest('.card-wrapper'), TABS[window.currentTab][${secIndex}].actions, '🚀 ${sec.title.replace(/'/g, "\\'")} gestartet...', 'sec_${secIndex}')" style="cursor: pointer; border-radius: 14px; background: rgba(0,0,0,0.5); border: none; box-shadow: inset 0 0 0 1px ${secColor}40; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; --card-accent: linear-gradient(90deg, ${secColor} 0%, transparent 50%);">
                 <div style="position: absolute; top: 0; right: 0; width: 5px; height: 100%; background: linear-gradient(270deg, ${secColor} 0%, transparent 100%); pointer-events: none; border-top-right-radius: 13px; border-bottom-right-radius: 13px; z-index: 0;"></div>
-                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 12px; position: relative; z-index: 1;">
-                   <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; width: 100%; position: relative;">
+                <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; justify-content: center; padding: 14px 24px; position: relative; z-index: 1;">
+                   <div style="display: flex; align-items: center; justify-content: flex-start; gap: 16px; width: 100%; position: relative;">
                     ${sec.badge ? `<span style="position: absolute; right: 24px; top: 50%; transform: translateY(-50%); background: ${secColor}26; border: 1px solid ${secColor}66; border-radius: 6px; padding: 5px 12px; font-size: 13px; font-weight: 800; letter-spacing: 1.5px; color: ${secColor}; text-shadow: 0 0 12px ${secColor}66; white-space: nowrap;">${sec.badge}</span>` : ''}
-                    <div style="background: linear-gradient(135deg, ${secColor}26, ${secColor}0D); border: 1px solid ${secColor}66; border-radius: 10px; padding: 8px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${secColor}26;">
-                      <span style="color: ${secColor}; font-size: 10px; font-weight: 800; letter-spacing: 2px;"><i class="fa-solid fa-layer-group" style="margin-right: 6px;"></i>MODULE</span>
-                      <span style="color: #fff; font-size: 13px; font-weight: 900; letter-spacing: 1.5px;">SEQUENCE</span>
+                    <div style="background: linear-gradient(135deg, ${secColor}26, ${secColor}0D); border: 1px solid ${secColor}66; border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 15px ${secColor}26; flex-shrink: 0; width: 110px; box-sizing: border-box;">
+                      <span style="color: ${secColor}; font-size: 10px; font-weight: 800; letter-spacing: 2px; white-space: nowrap;"><i class="fa-solid fa-layer-group" style="margin-right: 6px;"></i>MODULE</span>
+                      <span style="color: #fff; font-size: 13px; font-weight: 900; letter-spacing: 1.5px; white-space: nowrap;">SEQUENCE</span>
                     </div>
-                    <div style="display: flex; flex-direction: column; text-align: left;">
+                    <div style="display: flex; flex-direction: column; text-align: left; min-width: 0; flex: 1; padding-right: ${sec.badge ? '90px' : '20px'};">
                       ${sec.title === 'CONTROLLERS (INPUT -> MOVEIT SERVO)' ? 
                         `<span style="font-size: 18px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${secColor}33;">Choose: Robot Control MoveIt - Input Device</span>` : 
                         `<span style="font-size: 20px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.1; text-shadow: 0 0 40px ${secColor}33;">${sec.title}</span>`}
                       <span style="font-size: 11px; color: ${secColor}; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-top: 2px; opacity: 0.9;">Contains ${actionCount} Components</span>
                     </div>
                   </div>
-
                 </div>
               </div>
               <div class="card-tooltip">
