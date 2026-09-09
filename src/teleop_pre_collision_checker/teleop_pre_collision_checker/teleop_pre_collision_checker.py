@@ -18,15 +18,23 @@ class Checker(Node):
         super().__init__("checker")
 
         # === GRUNDEINSTELLLUNGEN ===
-        self.Z_LIMIT = 91.0 # Minimale Z-Position (mm)
-        self.CAUTION_ZONE_START = 110.0 # Z-Position, ab der die Geschwindigkeit begrenzt wird (mm)
-        self.CAUTION_ZONE_SPEED = 0.25 # Maximaler Geschwindigkeitsfaktor in der Caution Zone
-        self.DOWN_TRIGGER_AXIS = 5 # Index des rechten Triggers (R2/RT)
+        self.declare_parameter("z_limit", 91.0) # Minimale Z-Position (mm)
+        self.declare_parameter("caution_zone_start", 110.0) # Z-Position, ab der die Geschwindigkeit begrenzt wird (mm)
+        self.declare_parameter("caution_zone_speed", 0.25) # Maximaler Geschwindigkeitsfaktor in der Caution Zone
+        self.declare_parameter("down_trigger_axis", 5) # Index des rechten Triggers (R2/RT)
         
         # === TUNING-PARAMETER ===
-        self.MAX_LINEAR_VELOCITY_MM_S = 75.0 # Maximale Lineargeschw. des Roboters (Basis für Berechnung)
-        self.LOOKAHEAD_TIME = 0.1 # Vorausschau-Zeit für Kollisionsprüfung (Sekunden)
-        self.ACCELERATION_FACTOR = 0.9 # Abschwächungsfaktor für die voraussichtliche Geschwindigkeit
+        self.declare_parameter("max_linear_velocity_mm_s", 75.0) # Maximale Lineargeschw. des Roboters (Basis für Berechnung)
+        self.declare_parameter("lookahead_time", 0.1) # Vorausschau-Zeit für Kollisionsprüfung (Sekunden)
+        self.declare_parameter("acceleration_factor", 0.9) # Abschwächungsfaktor für die voraussichtliche Geschwindigkeit
+
+        self.Z_LIMIT = float(self.get_parameter("z_limit").value)
+        self.CAUTION_ZONE_START = float(self.get_parameter("caution_zone_start").value)
+        self.CAUTION_ZONE_SPEED = float(self.get_parameter("caution_zone_speed").value)
+        self.DOWN_TRIGGER_AXIS = int(self.get_parameter("down_trigger_axis").value)
+        self.MAX_LINEAR_VELOCITY_MM_S = float(self.get_parameter("max_linear_velocity_mm_s").value)
+        self.LOOKAHEAD_TIME = float(self.get_parameter("lookahead_time").value)
+        self.ACCELERATION_FACTOR = float(self.get_parameter("acceleration_factor").value)
 
         # --- ROS2-Setup ---
         self.__sub = self.create_subscription(Joy, "/joy", self.pre_joy_callback, 10)
@@ -92,19 +100,30 @@ class Checker(Node):
             return
         
         # --- Kollisionsprüfung ---
+        z_limit = float(self.get_parameter("z_limit").value)
+        caution_zone_start = float(self.get_parameter("caution_zone_start").value)
+        caution_zone_speed = float(self.get_parameter("caution_zone_speed").value)
+        down_trigger_axis = int(self.get_parameter("down_trigger_axis").value)
+        max_vel = float(self.get_parameter("max_linear_velocity_mm_s").value)
+        lookahead = float(self.get_parameter("lookahead_time").value)
+        accel_factor = float(self.get_parameter("acceleration_factor").value)
         
         # Geschwindigkeitsbegrenzung in der Nähe des Bodens
         effective_speed_factor = self.current_speed_factor_from_joy
-        if self.current_z < self.CAUTION_ZONE_START:
-            effective_speed_factor = min(self.current_speed_factor_from_joy, self.CAUTION_ZONE_SPEED)
+        if self.current_z < caution_zone_start:
+            effective_speed_factor = min(self.current_speed_factor_from_joy, caution_zone_speed)
+
+        if len(self.joy_cmd.axes) <= down_trigger_axis:
+            self.__pub.publish(self.joy_cmd)
+            return
 
         # Der rechte Trigger (DOWN_TRIGGER_AXIS = 5) hat einen Wert von 1.0 (unbetätigt) bis -1.0 (voll betätigt).
-        down_trigger_value = self.joy_cmd.axes[self.DOWN_TRIGGER_AXIS]
+        down_trigger_value = self.joy_cmd.axes[down_trigger_axis]
         is_moving_down = down_trigger_value < 1.0 
         
         block_downward_movement = False
         if is_moving_down:
-            if self.current_z <= self.Z_LIMIT:
+            if self.current_z <= z_limit:
                 # 1. Sofortige Kollision (bereits unter oder auf dem Limit)
                 block_downward_movement = True
             else:
@@ -112,12 +131,12 @@ class Checker(Node):
                 down_intensity = (1.0 - down_trigger_value) / 2.0 
                 
                 # Berechnung der Ziel-Geschwindigkeit
-                target_z_velocity = self.MAX_LINEAR_VELOCITY_MM_S * effective_speed_factor * down_intensity
-                effective_z_velocity = target_z_velocity * self.ACCELERATION_FACTOR
+                target_z_velocity = max_vel * effective_speed_factor * down_intensity
+                effective_z_velocity = target_z_velocity * accel_factor
                 
                 # Vorausschau: Wo wäre der Endeffektor in LOOKAHEAD_TIME Sekunden?
-                predicted_z = self.current_z - (effective_z_velocity * self.LOOKAHEAD_TIME)
-                if predicted_z < self.Z_LIMIT:
+                predicted_z = self.current_z - (effective_z_velocity * lookahead)
+                if predicted_z < z_limit:
                     block_downward_movement = True
 
         # Fall 1: Kollision tritt ein -> Nachricht senden UND drucken
@@ -142,14 +161,14 @@ class Checker(Node):
             
             # KONSOLEN-LÖSCHEN 
             clear_line = ' ' * (len(self.collision_message) + 5)
-            print(f"\r{clear_line}\r", end='', flush=True)
+            print(f"\r{clear_line}\r", end='', flush=True) 
             
             if self.joystick: self.joystick.rumble(0, 0, 0)
             self.is_blocked_state = False
         
         # Abschneiden des Down-Befehls, falls blockiert
         if self.is_blocked_state:
-            self.joy_cmd.axes[self.DOWN_TRIGGER_AXIS] = 1.0 
+            self.joy_cmd.axes[down_trigger_axis] = 1.0 
 
         # Sende den (eventuell modifizierten) Joystick-Befehl
         self.__pub.publish(self.joy_cmd)

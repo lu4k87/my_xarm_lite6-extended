@@ -2437,10 +2437,13 @@ dev_ws/
 │   ├── SS4_pointcloud object det collision off.png                        # Perception/collision visualization
 │   └── SS4_pointcloud object det collision on.png                         # Perception/collision visualization
 ├── _sh/
-│   └── install_zed.sh                                                     # ZED SDK & CUDA installation helper
+│   ├── install_zed.sh                                                     # ZED SDK & CUDA installation helper
+│   └── tune_network.sh                                                    # Linux network buffer tuning script (CycloneDDS UDP)
 ├── certs/                                                                 # SSL/TLS certificates for WebXR HTTPS servers
 │   ├── cert.pem                                                           # HTTPS public certificate
 │   └── key.pem                                                            # HTTPS private key
+├── config/                                                                # DDS and middleware configuration files
+│   └── cyclonedds.xml                                                     # CycloneDDS configuration (10MB UDP socket buffers)
 ├── isaacsim/                                                              # NVIDIA Isaac Sim simulation assets & configurations
 │   ├── lite6_isaac_ros2.usd                                               # USD scene for xArm Lite 6 in Isaac Sim
 │   ├── lite6_with_gripper.urdf                                            # Standalone URDF model with Lite 6 gripper

@@ -83,6 +83,7 @@ class ZedYolo3DNode(Node):
         ])
         
         # Rate Limiting
+        self.declare_parameter('inference_rate_hz', 2.0)
         self.last_inference_time = 0.0
 
         self.get_logger().info('ZED YOLO 3D BBox Node gestartet.')
@@ -97,9 +98,11 @@ class ZedYolo3DNode(Node):
         if self.camera_info is None:
             return
             
-        # Limit Inference to 2 Hz (0.5 seconds)
+        # Limit Inference to configured rate (default 2 Hz / 0.5s)
+        rate_hz = self.get_parameter('inference_rate_hz').value
+        min_interval = 1.0 / max(float(rate_hz), 0.1) if rate_hz > 0 else 0.0
         current_t = self.get_clock().now().nanoseconds / 1e9
-        if (current_t - self.last_inference_time) < 0.5:
+        if (current_t - self.last_inference_time) < min_interval:
             return
         self.last_inference_time = current_t
             
