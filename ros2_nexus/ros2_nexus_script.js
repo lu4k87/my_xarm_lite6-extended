@@ -436,7 +436,7 @@
              <div style="position: absolute; bottom: -250px; left: -250px; width: 600px; height: 600px; background: radial-gradient(circle, ${secBgGradient2} 0%, transparent 60%); pointer-events: none; z-index: 0;"></div>
           </div>
           
-          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: flex-start; gap: 14px; color: #fff; padding-left: 24px;">
+          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: flex-start; gap: 14px; color: #fff; padding-left: 6px;">
              <span style="font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; flex-shrink: 0;"><i class="${sec.icon} section-icon" style="color: ${badgeColors[sec.actions[0]?.type || 'dev_fake']?.primary || 'var(--c-dev)'}; margin-right: 10px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
              <span style="height: 1px; flex: 1; background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, transparent 100%);"></span>
           </div>
@@ -568,7 +568,7 @@
              <div style="position: absolute; bottom: -250px; left: -250px; width: 600px; height: 600px; background: radial-gradient(circle, ${secColor} 0%, transparent 60%); opacity: 0.12; pointer-events: none; z-index: 0;"></div>
           </div>
           
-          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: flex-start; gap: 14px; color: #fff; padding-left: 24px;">
+          <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: flex-start; gap: 14px; color: #fff; padding-left: 6px;">
              <span style="font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; flex-shrink: 0;"><i class="${sec.icon} section-icon" style="color: ${secColor}; margin-right: 10px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
              <span style="height: 1px; flex: 1; background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, transparent 100%);"></span>
           </div>
