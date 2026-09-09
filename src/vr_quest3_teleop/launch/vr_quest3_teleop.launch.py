@@ -1,7 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, TimerAction
-from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, TimerAction
 from launch_ros.actions import Node
 from launch.launch_description_sources import AnyLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
@@ -11,12 +9,6 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('vr_quest3_teleop')
     driver_script_path = os.path.join(pkg_dir, 'https_vr_webxr_p8443', 'https_vr_webxr_p8443.py')
     
-    enable_adb_arg = DeclareLaunchArgument(
-        'enable_adb',
-        default_value='true',
-        description='Enable adb reverse port forwarding for USB wired Quest 3 connection'
-    )
-
     # Kill any existing https_server to avoid port conflicts (8443)
     kill_existing = ExecuteProcess(
         cmd=['bash', '-c', 'pkill -9 -f https_vr_webxr_p8443.py || true'],
@@ -25,14 +17,12 @@ def generate_launch_description():
 
     adb_rev_9091 = ExecuteProcess(
         cmd=['adb', 'reverse', 'tcp:9091', 'tcp:9091'],
-        output='screen',
-        condition=IfCondition(LaunchConfiguration('enable_adb'))
+        output='screen'
     )
     
     adb_rev_8443 = ExecuteProcess(
         cmd=['adb', 'reverse', 'tcp:8443', 'tcp:8443'],
-        output='screen',
-        condition=IfCondition(LaunchConfiguration('enable_adb'))
+        output='screen'
     )
 
     ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
@@ -67,7 +57,6 @@ def generate_launch_description():
     )
     
     return LaunchDescription([
-        enable_adb_arg,
         kill_existing,
         adb_rev_9091,
         adb_rev_8443,

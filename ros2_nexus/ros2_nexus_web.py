@@ -109,8 +109,6 @@ threading.Thread(target=ensure_desktop_integration, daemon=True).start()
 def _build_ros_script(command: str, ws_path: str) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
-    cyclone_cfg = os.path.join(ws_path, "config", "cyclonedds.xml")
-    cyclone_export = f"export CYCLONEDDS_URI=file://{cyclone_cfg}\n" if os.path.exists(cyclone_cfg) else ""
     ros_setup = "source /opt/ros/humble/setup.bash"
     ws_setup  = f"source {ws_path}/install/setup.bash"
 
@@ -127,7 +125,7 @@ def _build_ros_script(command: str, ws_path: str) -> str:
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
 export ROS_LOCALHOST_ONLY=0
-{cyclone_export}source ~/.bashrc 2>/dev/null || true
+source ~/.bashrc 2>/dev/null || true
 {ros_setup} 2>/dev/null || true
 {ws_setup} 2>/dev/null || true
 cd {ws_path} 2>/dev/null || true
@@ -153,9 +151,6 @@ trap 'send_log "stop" &' EXIT
 def _build_interactive_script(command: str) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
-    ws_path   = os.environ.get("ROS2_WS", os.path.expanduser("~/dev_ws"))
-    cyclone_cfg = os.path.join(ws_path, "config", "cyclonedds.xml")
-    cyclone_export = f"export CYCLONEDDS_URI=file://{cyclone_cfg}\n" if os.path.exists(cyclone_cfg) else ""
     ros_setup = "source /opt/ros/humble/setup.bash"
 
     # Identisch mit run_interactive_cmd: CMD-Teile anzeigen
@@ -170,7 +165,7 @@ def _build_interactive_script(command: str) -> str:
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
 export ROS_LOCALHOST_ONLY=0
-{cyclone_export}source ~/.bashrc 2>/dev/null || true
+source ~/.bashrc 2>/dev/null || true
 {ros_setup} 2>/dev/null || true
 clear
 echo -e "\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\033[0m"
@@ -346,30 +341,6 @@ def api_kill_all_ros2():
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
-
-
-@app.route("/api/health", methods=["GET"])
-def api_health():
-    try:
-        domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
-        res = subprocess.run(
-            f"export ROS_DOMAIN_ID={domain_id} && source /opt/ros/humble/setup.bash 2>/dev/null && ros2 node list",
-            shell=True,
-            executable="/bin/bash",
-            capture_output=True,
-            text=True,
-            timeout=3
-        )
-        nodes = [line.strip() for line in res.stdout.splitlines() if line.strip()]
-        return jsonify({
-            "ok": True,
-            "status": "healthy",
-            "ros_domain_id": domain_id,
-            "nodes_count": len(nodes),
-            "nodes": nodes
-        })
-    except Exception as e:
-        return jsonify({"ok": False, "status": "error", "error": str(e)}), 500
 
 
 if __name__ == "__main__":
