@@ -26,10 +26,12 @@ This repository is a continuously evolving research and evaluation platform for 
 
 ## Table of Contents
 1. [📋 Project Overview](#1--project-overview)
+   - [1.1 ⚡ 5-Minute Quickstart (Pure Simulation)](#11--5-minute-quickstart-pure-simulation)
 2. [🔬 Architecture & Guiding Principles](#2--architecture--guiding-principles)
    - [2.1 The System Concept: An Integrated Development, Evaluation, and Validation Platform](#21-the-system-concept-an-integrated-development-evaluation-and-validation-platform)
-3. [⚙️ Core Features & ROS 2 Nodes](#3-️-core-features--ros-2-nodes)
+3. [⚙️ Core Features & ROS 2 Nodes](#3--core-features--ros-2-nodes)
    - [3.1 Operating Modes: FAKE vs. REAL (Hardware Interfaces)](#31-operating-modes-fake-vs-real-hardware-interfaces)
+     - [3.1.1 Simulation (FAKE) vs. Real Hardware (REAL) Matrix](#311--simulation-fake-vs-real-hardware-real-matrix)
    - [3.2 Feature: Gamepad Teleoperation & Hard Collision Protection](#32-feature-gamepad-teleoperation--hard-collision-protection)
    - [3.3 Feature: Autonomous Grasping & 3D Object Detection (YOLO / ZED)](#33-feature-autonomous-grasping--3d-object-detection-yolo--zed)
    - [3.4 Feature: Multimodal Interaction (Voice & Gaze Control)](#34-feature-multimodal-interaction-voice--gaze-control)
@@ -37,7 +39,7 @@ This repository is a continuously evolving research and evaluation platform for 
    - [3.6 Feature: GUI - Graphical Robot Control & Visual Feedback](#36-feature-gui---graphical-robot-control--visual-feedback)
    - [3.7 Feature: Digital Twin & Simulation (NVIDIA Isaac Sim)](#37-feature-digital-twin--simulation-nvidia-isaac-sim)
 
-4. [🕹️ Multimodal Technologies & Interaction Concepts](#4-️-multimodal-technologies--interaction-concepts)
+4. [🕹️ Multimodal Technologies & Interaction Concepts](#4--multimodal-technologies--interaction-concepts)
    - [4.1 Robot Control Methods (Inputs)](#41-robot-control-methods-inputs)
    - [4.2 Perception & Assistance](#42-perception--assistance)
    - [4.3 VLA & Video Action Models (Planned)](#43-vla--video-action-models-planned)
@@ -47,8 +49,9 @@ This repository is a continuously evolving research and evaluation platform for 
    - [5.2 `teleop_pre_collision_checker.py` — Collision Guard (Python Node)](#52-teleop_pre_collision_checkerpy--collision-guard-python-node)
    - [5.3 `xarm_joystick_input.cpp` — Motion Controller (C++ Node)](#53-xarm_joystick_inputcpp--motion-controller-c-node)
 6. [📦 Dependencies & Requirements](#6--dependencies--requirements)
+   - [6.1 Hardware Bill of Materials (BOM) & Physical Wiring](#61--hardware-bill-of-materials-bom--physical-wiring)
 7. [🚀 Execution: How to Run the System](#7--execution-how-to-run-the-system)
-   - [7.1 Step 1: Hardware Preparation](#hardware)
+   - [7.1 Step 1: Hardware Preparation](#71-step-1-hardware-preparation)
    - [7.2 Step 2: Launch the System (ROS 2 Nexus)](#72-step-2-launch-the-system-ros-2-nexus)
    - [7.3 Step 3: Start Nodes via GUI](#73-step-3-start-nodes-via-gui)
    - [7.4 Network & Port Architecture](#74-network--port-architecture)
@@ -58,12 +61,13 @@ This repository is a continuously evolving research and evaluation platform for 
    - [7.6 DDS Multicast Storm Prevention & Loopback Discovery (Critical)](#76-dds-multicast-storm-prevention--loopback-discovery-critical)
    - [7.7 Launcher Configuration (`launcher_config.json`)](#77-launcher-configuration-launcher_configjson)
    - [7.8 CycloneDDS UDP Buffer Overflows (Point Cloud Lag)](#78-cyclonedds-udp-buffer-overflows-point-cloud-lag)
+   - [7.9 Troubleshooting & Frequently Asked Questions (FAQ)](#79--troubleshooting--frequently-asked-questions-faq)
 8. [📊 Monitoring: Dashboard & Workspace Analyzer](#8--monitoring-dashboard--workspace-analyzer)
    - [8.1 Workspace Analyzer Backend (`workspace_analyzer.py`)](#81-workspace-analyzer-backend-workspace_analyzerpy)
    - [8.2 Frontend (`dashboard_index.html`)](#82-frontend-dashboard_indexhtml)
    - [8.3 Launch Commands for UI Components](#83-launch-commands-for-ui-components)
-9. [🗂️ Repository Structure](#9-️-repository-structure)
-10. [🗄️ Archive / Deprecated Concepts](#10-️-archive--deprecated-concepts)
+9. [🗂️ Repository Structure](#9--repository-structure)
+10. [🗄️ Archive / Architectural Decisions & Deprecated Concepts](#10--archive--architectural-decisions--deprecated-concepts)
 
 
 
@@ -114,11 +118,33 @@ A key core and innovative character of the project lies in the scientific analys
 - **Answering the Transformation Question:** Concrete practical assistance on the core question: *“How can processes and workplaces be structured to measurably meet the human-centered requirements of Industry 5.0?”*
 - **Service Potential:** The resulting frameworks and guidelines have the potential to be provided as a validated, monetizable consulting and service offering for industry, accompanying digital and demographic changes in production.
 
+<br>
 
+### 1.1 ⚡ 5-Minute Quickstart (Pure Simulation)
 
+> [!TIP]
+> **No physical robot or hardware required!** You can build, launch, and test the entire software stack (digital twin simulation, RViz2, Web-based Robot Control Panel, and Monitoring Dashboard) immediately on your local PC.
 
+#### 1. Build & Source Workspace
+```bash
+cd ~/dev_ws
+colcon build --symlink-install
+source install/setup.bash
+```
 
+#### 2. Launch the Central Process Cockpit (ROS 2 Nexus)
+```bash
+./ros2_nexus/ros2_nexus_web_start.sh
+```
+*This starts the local process manager daemon and automatically opens the dashboard in your default browser at `http://localhost:5000`.*
 
+#### 3. Run Simulation & Explore Web Panels
+1. Inside the **ROS 2 Nexus Web UI**, click the green button **`RUN DEV Setup (FAKE)`**.
+   * Automatically brings up the simulated xArm Lite 6 `ros2_control` hardware interface, MoveIt 2 Servo, RViz2, and the WebSocket ROS Bridge (`ws://localhost:9090`).
+2. Open the **Robot Control Web Panel** (`http://localhost:8081`):
+   * Test Cartesian XYZ jog controls, toggle the virtual vacuum gripper, or command the initial home pose.
+3. Open the **System Monitoring Dashboard** (`http://localhost:8080/dashboard_index.html`):
+   * Inspect real-time topic communication rates (Hz), visualize node topology graphs, and inspect live parameters.
 
 [⬆️ Back to Top](#table-of-contents)
 
@@ -298,6 +324,26 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 > - **MoveIt Architecture:** The axis is shifted purely via dynamic TF (`world` -> `linear_axis_link`), completely decoupled from the URDF joints. This ensures MoveIt automatically recognizes the new base pose for planning/collision detection without needing a 7-DoF IK solver.
 > - **URDF Modification:** To prevent parsing errors with dynamic `attach_to` arguments, `xarm_description/urdf/xarm_device_macro.xacro` was modified. The `create_attach_link` condition now generates a root link for *any* custom `attach_to` string, rather than being hardcoded to only `"world"`.
 
+<br>
+
+#### 3.1.1 📊 Simulation (FAKE) vs. Real Hardware (REAL) Matrix
+The table below illustrates which project modules can be evaluated in pure software simulation on a standard PC versus which features require physical hardware devices:
+
+| Feature / Subsystem | Pure Simulation (FAKE) | Real Hardware (REAL) | Required Hardware / Peripheral |
+|---|:---:|:---:|---|
+| **Robot Control Web Panel (Port 8081)** | ✅ Functional (RViz Mirror) | ✅ Functional (Hardware Motion) | Host PC & Web Browser |
+| **System Monitoring Dashboard (Port 8080)** | ✅ Functional | ✅ Functional | Host PC & Web Browser |
+| **MoveIt 2 Cartesian Path Planning & IK** | ✅ Functional | ✅ Functional | Host PC |
+| **Virtual Linear Rail Axis** | ✅ Functional | ➖ Simulation Only | Host PC |
+| **Gamepad Teleoperation (MoveIt Servo)** | ✅ Functional | ✅ Functional | Xbox One / Series Controller |
+| **Predictive Hard Collision Guard** | ✅ Functional | ✅ Functional | Host PC |
+| **Acoustic Speech Interaction (Whisper AI)** | ✅ Functional | ✅ Functional | Standard USB / Laptop Microphone |
+| **3D YOLO Object Detection & Clustering** | ❌ *(or via Rosbag replay)* | ✅ Functional | Stereolabs ZED Mini (USB 3.0) |
+| **Dynamic MoveIt Collision Objects** | ❌ *(or via Rosbag replay)* | ✅ Functional | Stereolabs ZED Mini (USB 3.0) |
+| **Autonomous 3D Grasp Routine** | ❌ *(Needs 3D Camera)* | ✅ Functional | xArm Lite 6 & ZED Mini |
+| **Tobii Eye-Tracking Interaction** | ❌ *(Needs Glasses)* | ✅ Functional | Tobii Pro Glasses 3 (Wi-Fi / LAN) |
+| **Meta Quest 3 WebXR Teleoperation** | ❌ *(Needs VR Headset)* | ✅ Functional | Meta Quest 3 (Wi-Fi, Port 8443) |
+
 ---
 <br>
 
@@ -460,7 +506,7 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Reads incoming Cartesian velocity commands.* |
 >> | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Reads the current 3D scene for obstacle avoidance.* |
@@ -468,7 +514,7 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | *Sends safe, collision-free joint trajectories to the arm.* |
 >> | *-* | *-* | *Sends the final joint angles to the robot.* |
@@ -515,7 +561,7 @@ flowchart TD
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed/zed_node/rgb/image_rect_color`** | `sensor_msgs/Image` | *Publishes the color-corrected 2D RGB camera image.* |
 >> | **`/zed/zed_node/depth/depth_registered`** | `sensor_msgs/Image` | *Publishes the registered depth map.* |
@@ -548,7 +594,7 @@ flowchart TD
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed/zed_node/rgb/image_rect_color`** | `sensor_msgs/Image` | *Receives the RGB image for YOLO object detection.* |
 >> | **`/zed/zed_node/depth/depth_registered`** | `sensor_msgs/Image` | *Uses depth values for 3D coordinate projection.* |
@@ -557,7 +603,7 @@ flowchart TD
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` |  |
 >> | *-* | *-* | *Sends the finalized 3D boxes and markers to RViz for visualization and to downstream nodes.* |
@@ -587,14 +633,14 @@ flowchart TD
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | *-* | *-* | *Fetches the HTTP JPEG stream directly (`http://192.168.0.123/...`).* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Publishes exactly the same 3D MarkerArray format as the ZED camera node to maintain UI compatibility.* |
 >
@@ -631,7 +677,7 @@ flowchart TD
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Reads the 3D bounding boxes detected by YOLO.* |
 >> | **`/ui/ignore_collision_object`** | `std_msgs/String` | *Receives names of objects to temporarily ignore.* |
@@ -639,7 +685,7 @@ flowchart TD
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/collision_object`** | `moveit_msgs/CollisionObject` | *Sends the cup-shaped `CollisionObjects` directly to MoveIt.* |
 >> | **`/ui/yolo_collision_toggle`** | `visualization_msgs/MarkerArray` | *Publishes visualization markers and acts as an RViz toggle.* |
@@ -660,18 +706,18 @@ flowchart TD
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed/zed_node/point_cloud/cloud_optimized`** | `sensor_msgs/PointCloud2` | *Reads the point cloud to generate a voxel-based map.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | *-* | *-* | *Integrated natively into the MoveIt `/planning_scene`.* |
 >
-> <img src="_imgs/SS4_pointcloud%20object%20det%20collision%20on.png" width="90%" alt="Pointcloud Collision Detection">
+> <img src="_imgs/SS4_pointcloud object det collision on.png" width="90%" alt="Pointcloud Collision Detection">
 >
 
 
@@ -723,14 +769,14 @@ stateDiagram-v2
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Reads the object coordinates as a target for the grasp path.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | *Publishes joint trajectories to execute the motion.* |
 >> | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Disables temporary object collisions in the MoveIt scene.* |
@@ -1022,7 +1068,7 @@ flowchart TD
 >> |---|---|---|
 >> | **`/voice_cmd/last`** | `std_srvs/srv/Trigger` (Server) | *Returns the last successfully recognized voice command.* |
 >
-> The `whisper_server` is explicitly configured to use `language: "en"` along with a targeted `initial_prompt` inside `whisper.yaml` to guarantee high transcription accuracy for the English commands, rejecting non-english noise.
+> The `whisper_server` is configured to use `language: "auto"` (multilingual) along with a targeted bilingual `initial_prompt` inside `whisper.yaml` for reliable English and German voice recognition.
 >
 >
 
@@ -1208,7 +1254,7 @@ flowchart TD
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) / ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/move_action`** | Action Server | *Provides trajectory planning and execution.* |
 >> | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Maintains the collision environment and robot state.* |
@@ -1228,16 +1274,16 @@ flowchart TD
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
->> | **`/ui/grasp_status`** | `std_msgs/String` |  |
->> | **`/joint_states`** | `sensor_msgs/JointState` |  |
->> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` |  |
+>> | **`/ui/grasp_status`** | `std_msgs/String` | *Receives live status messages from the autonomy pipeline for the console log.* |
+>> | **`/joint_states`** | `sensor_msgs/JointState` | *Reads current joint angles to display in the UI sliders.* |
+>> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Displays the active speed scale index.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Transmits manual jogging commands (D-Pad) to Servo.* |
 >> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Sends target object string for autonomous grasping.* |
@@ -1247,7 +1293,7 @@ flowchart TD
 >
 > ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/ui/execute_initial_pose`** | Client | *Triggers the return to home position sequence.* |
 >> | **`/ui/execute_scan_trajectory`** | Client | *Triggers the vision scan trajectory.* |
@@ -1279,7 +1325,7 @@ flowchart TD
 >
 > **Which scripts use this (Clients of the `/ui/...` Services)?**
 > - **`gaze_grasp_routine_tobii_glasses.py`**: Calls the Move-To-Pose service for scanning modes and exact hovering over targets.
-> - **`http_robot_control_ui_p8081/app.js`**: The Node.js backend of the Web Panel commands Initial Pose, Scans, absolute XYZ movements, and Emergency Stops through this node.
+> - **`http_robot_control_ui_p8081/app.js`**: The browser frontend script (roslibjs) of the Web Panel commands Initial Pose, Scans, absolute XYZ movements, and Emergency Stops through this node.
 > - **`yolo_grasp_executor.py`** & **`yolo_planned_grasp_executor.py`**: Utilize the Move-To-Pose service as a fallback when custom motion planning fails.
 > - **`gaze_ui_node_tobii_glasses.py`** & **`..._zedm.py`**: Use it to trigger the Initial Pose reset.
 > - **`rviz_tab_robot_control_panel.cpp`**: The C++ RViz Plugin sends button clicks for XYZ coordinates, joint angles, and Initial Pose directly to this script.
@@ -1291,11 +1337,10 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Scales the velocity of the Joint movements synchronously with the UI.* |
->> | **`/ui/robot_control/scan_speed`** | `std_msgs/Float32` | *Scales the velocity of scan trajectories.* |
->> | **`/ui/stop_motion_topic`** | `std_msgs/Bool` | *Listens for immediate stop triggers.* |
+>> | **`/ui/scan_speed`** | `std_msgs/Int32` | *Scales the velocity of scan trajectories (0: Slow, 1: Normal, 2: Fast).* |
+>> | **`/ui/emergency_stop_topic`** | `std_msgs/Empty` | *Listens for immediate stop triggers (non-blocking emergency bypass).* |
 >> | **`/joint_states`** | `sensor_msgs/JointState` | *Reads current joint angles.* |
 >> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Receives live dynamic safety zone parameters `[x, y, radius]` to enforce boundaries.* |
->> | **`/ui/motion_safety_override`** | `std_msgs/Bool` | *Listens for safety boundary overrides.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1314,9 +1359,9 @@ flowchart TD
 >> | **`/ui/execute_initial_pose`** | `std_srvs/srv/Trigger` (Server) | *Returns the arm to the home pose.* |
 >> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Server) | *Executes absolute Cartesian IK motions.* |
 >> | **`/ui/execute_move_joint`** | `xarm_msgs/srv/MoveJoint` (Server) | *Executes joint angle motions.* |
->> | **`/ui/execute_scan_trajectory`** | `std_srvs/srv/Trigger` (Server) | *Executes a basic scan sweep.* |
->> | **`/ui/execute_object_scan`** | `xarm_msgs/srv/PlanPose` (Server) | *Executes a precise dome scan centered on a specific object.* |
->> | **`/ui/stop_motion`** | `std_srvs/srv/Trigger` (Server) | *Immediately halts the current trajectory.* |
+>> | **`/ui/start_octomap_scan`** | `std_srvs/srv/Trigger` (Server) | *Executes a basic scan sweep (Alias: `/ui/execute_scan_trajectory`).* |
+>> | **`/ui/start_object_scan`** | `std_srvs/srv/Trigger` (Server) | *Executes a precise dome scan centered on a specific object.* |
+>> | **`/ui/emergency_stop`** | `std_srvs/srv/Trigger` (Server) | *Immediately halts the current trajectory (Alias: `/ui/stop_motion`).* |
 >> | **`/compute_ik`** | `moveit_msgs/srv/GetPositionIK` (Client) | *Uses MoveIt IK to resolve Cartesian targets.* |
 >> | **`/servo_server/stop_servo`** | `std_srvs/srv/Trigger` (Client) | *Pauses MoveIt Servo during trajectory execution.* |
 >> | **`/servo_server/start_servo`** | `std_srvs/srv/Trigger` (Client) | *Resumes MoveIt Servo after trajectory execution.* |
@@ -1421,14 +1466,14 @@ flowchart TD
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Receives safety zone boundary data.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
+>> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Renders virtual markers (safety-zone, tables) in RViz.* |
 >
@@ -1515,6 +1560,8 @@ flowchart TD
 >> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Forwards web gamepad stick signals to the backend.* |
 >> | **`/servo_server/delta_joint_cmds`** | `control_msgs/JointJog` | *Commands precise joint jogs per click.* |
 >> | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | *Saves the speed scale changed via web slider.* |
+>> | **`/ui/scan_speed`** | `std_msgs/Int32` | *Publishes selected scan speed mode (0: Slow, 1: Normal, 2: Fast).* |
+>> | **`/ui/emergency_stop_topic`** | `std_msgs/Empty` | *Publishes immediate non-blocking software emergency stop.* |
 >> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggers autonomy pipeline actions.* |
 >> | **`/ui/voice_listen_trigger`** | `std_msgs/String` | *Signals voice listener node to begin speech recording.* |
 >
@@ -1526,8 +1573,8 @@ flowchart TD
 >> | **`/ui/execute_initial_pose`** | `std_srvs/srv/Trigger` (Client) | *Commands robot to return to home/initial position.* |
 >> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Sends absolute XYZ Cartesian coordinates to motion handler.* |
 >> | **`/ui/execute_move_joint`** | `xarm_msgs/srv/MoveJoint` (Client) | *Sends absolute joint angles to motion handler.* |
->> | **`/ui/execute_scan_trajectory`** | `std_srvs/srv/Trigger` (Client) | *Triggers predefined table scan sweep.* |
->> | **`/ui/stop_motion`** | `std_srvs/srv/Trigger` (Client) | *Sends immediate emergency stop / trajectory cancel.* |
+>> | **`/ui/start_object_scan`** | `std_srvs/srv/Trigger` (Client) | *Triggers predefined object dome scan sweep.* |
+>> | **`/ui/emergency_stop`** | `std_srvs/srv/Trigger` (Client) | *Sends emergency stop service request to motion handler.* |
 >> | **`/ufactory/set_vacuum_gripper`** | `xarm_msgs/srv/VacuumGripperCtrl` (Client) | *Toggles vacuum gripper state directly from the dashboard.* |
 >
 
@@ -1823,9 +1870,9 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 | **Publisher** | `/ui/robot_control/current_frame` | `std_msgs/String` | *Active reference frame (`link_base` or `link_tcp`)* |
 | **Publisher** | `/ui/joy_button_presses` | `std_msgs/String` | *Human-readable button feedback for dashboard* |
 | **Service Client** | `/servo_server/start_servo` | `std_srvs/srv/Trigger` | *Activates MoveIt Servo on startup* |
-| **Service Client** | `/ufactory/open_lite6_gripper` | `std_srvs/srv/Trigger` | *Opens the vacuum gripper* |
-| **Service Client** | `/ufactory/close_lite6_gripper` | `std_srvs/srv/Trigger` | *Closes the vacuum gripper* |
-| **Service Client** | `/ufactory/stop_lite6_gripper` | `std_srvs/srv/Trigger` | *Stops / turns off gripper* |
+| **Service Client** | `/ufactory/open_lite6_gripper` | `xarm_msgs/srv/Call` | *Opens the vacuum gripper* |
+| **Service Client** | `/ufactory/close_lite6_gripper` | `xarm_msgs/srv/Call` | *Closes the vacuum gripper* |
+| **Service Client** | `/ufactory/stop_lite6_gripper` | `xarm_msgs/srv/Call` | *Stops / turns off gripper* |
 | **Service Client** | `/ui/execute_initial_pose` | `std_srvs/srv/Trigger` | *Triggers home position sequence via motion handler* |
 | **Action Client** | `/whisper/inference` | `whisper_idl/action/Inference` | *Starts/cancels Whisper voice recording* |
 
@@ -1952,19 +1999,53 @@ pip install "ultralytics>=8.0.0" # YOLO 3D Object detection
 
 <br>
 
-### Hardware
+### 6.1 🛠️ Hardware Bill of Materials (BOM) & Physical Wiring
 
-| Device | Role |
-|--------|------|
-| UFactory xArm Lite 6 | 6-DOF robot arm |
-| Xbox One Elite Series 2 | Primary teleoperation controller |
-| NVIDIA RTX A5000 | Primary GPU for Computer Vision / CUDA 13.3 |
-| 12th Gen Intel Core i9-12900K | Primary Workstation CPU |
-| Tobii Pro Glasses 3 | Eye-tracking input ![Active](https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square) |
+#### Bill of Materials (BOM)
+| Component | Model / Specification | Interface / Protocol | Primary Role |
+|---|---|---|---|
+| **Robot Manipulator** | UFactory xArm Lite 6 | Ethernet (Modbus TCP) | 6-DOF lightweight collaborative robotic arm |
+| **End-Effector** | xArm Lite 6 Vacuum Gripper | Tool Digital I/O (TGPIO) | Vacuum suction gripper for object pick-and-place |
+| **Laser Guidance** | 5V Red Line/Dot Laser Diode | TGPIO Pin 0 | Automatic optical targeting aid under 50 mm Z-height |
+| **Stereo Depth Sensor** | Stereolabs ZED Mini | USB 3.0 (Type-C) | High-resolution stereoscopic depth & 3D point cloud capture |
+| **Eye-Tracking System** | Tobii Pro Glasses 3 | RTSP (Wi-Fi / Ethernet) | 50/100 Hz binocular eye tracking for intention detection |
+| **Gamepad Controller** | Xbox One Elite Series 2 | USB / Bluetooth | Low-latency manual Cartesian jogging & velocity scaling |
+| **VR Headset** | Meta Quest 3 | HTTPS / WebXR (Wi-Fi) | Immersive 6-DoF stereoscopic remote teleoperation |
+| **Host Workstation** | Intel i9-12900K, RTX A5000 | Ubuntu 22.04 / CUDA | Real-time MoveIt Servo, YOLO inferencing, & ROS 2 Core |
+| **Network Switch** | Unmanaged Gigabit Switch | RJ45 Ethernet | Low-latency local network backplane for controller & PC |
 
-| Stereolabs ZED Mini | Stereo depth camera |
-| Raspberry Pi Camera (×2) | ![Deprecated](https://img.shields.io/badge/Status-Deprecated-red?style=flat-square) 2D object detection via YOLO |
-| Leap Motion Controller | Gesture input ![Planned](https://img.shields.io/badge/Status-Planned-lightgrey?style=flat-square) |
+#### Physical Wiring & Network Topology
+```mermaid
+graph TD
+    subgraph Workstation["Workstation Host PC (Ubuntu 22.04 LTS)"]
+        CORE["ROS 2 Core (Humble) & MoveIt 2"]
+        NEXUS["ROS 2 Nexus Web Daemon (:5000)"]
+        WS["ROSBridge WebSocket Server (:9090)"]
+        YOLO["YOLO 3D Bounding Box Node"]
+    end
+
+    subgraph Network["Local Control Subnet (192.168.1.0/24)"]
+        SWITCH["Gigabit Ethernet Switch"]
+        ROBOT["xArm Lite 6 Controller Box<br/>Static IP: 192.168.1.175"]
+    end
+
+    subgraph Peripherals["Physical Input & Sensory Peripherals"]
+        ZED["Stereolabs ZED Mini Camera"]
+        XBOX["Xbox One Wireless Controller"]
+        TOBII["Tobii Glasses 3 Hub<br/>RTSP: 192.168.75.51:8554"]
+        QUEST["Meta Quest 3 (WebXR Browser)"]
+    end
+
+    SWITCH <-->|Ethernet Cat6 (Static: 192.168.1.50)| Workstation
+    SWITCH <-->|Ethernet Cat6| ROBOT
+    ROBOT ---|Tool Cable| LASER["TCP Laser Pointer"]
+    ROBOT ---|Pneumatic Cable| VACUUM["Vacuum Gripper"]
+
+    ZED -->|USB 3.0 High-Speed Cable| Workstation
+    XBOX -->|USB / Bluetooth Low-Latency| Workstation
+    TOBII -.->|Wi-Fi / RTSP Stream :8554| Workstation
+    QUEST -.->|Wi-Fi / HTTPS WSS :8443 / :9091| Workstation
+```
 
 <br>
 
@@ -2280,11 +2361,19 @@ echo -e "net.core.rmem_max=2147483647\nnet.core.rmem_default=2147483647\nnet.cor
 sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 ```
 
+<br>
 
+### 7.9 🔧 Troubleshooting & Frequently Asked Questions (FAQ)
 
-
-
-
+| Symptom / Error | Likely Root Cause | Recommended Diagnostic & Solution |
+|---|---|---|
+| **Robot does not respond (`Connection refused` / timeout)** | Subnet mismatch or physical controller box powered off. | Verify the xArm controller is switched on. Ensure your workstation network interface is configured with a static IPv4 address in the same subnet (e.g., `192.168.1.50`, netmask `255.255.255.0`). Verify connectivity using `ping 192.168.1.175`. |
+| **Web UI displays "DISCONNECTED" (Red status indicator)** | `rosbridge_server` (Port 9090) is offline or blocked. | Check if the WebSocket bridge is active (`ros2 run rosbridge_server rosbridge_websocket`). Inspect the browser developer console (F12) for WebSocket connection refusals. Ensure no local firewall blocks port 9090. |
+| **Gamepad input does not move the robot arm** | Joy node assigned wrong joystick device or wrong mode. | Check whether the Xbox controller is recognized by Linux (`ls -l /dev/input/js*`). Test stick inputs using `jstest /dev/input/js0`. Verify MoveIt Servo is active (check `/servo_server/status`). |
+| **Point cloud lags or freezes in RViz2** | Linux kernel UDP socket buffer overflow under high DDS throughput. | Execute the kernel buffer expansion commands detailed in [Section 7.8](#78-cyclonedds-udp-buffer-overflows-point-cloud-lag) (`sudo sysctl -w net.core.rmem_max=2147483647`). |
+| **Robot motion stops abruptly / Servo refuses jogging** | Hard table barrier or Singularity collision guard engaged. | Check `/ui/collision_msg` for active boundary alerts. Inspect `/servo_server/status` codes (`1`=Active, `2`=Decelerating, `3`=Halted for collision, `4`=Joint limit reached). Drive the arm upwards using the LT trigger to clear the caution zone. |
+| **Stereolabs ZED Mini camera fails to initialize** | Camera connected to USB 2.0 port or insufficient USB bandwidth. | Plug the ZED Mini strictly into a blue **USB 3.0 / 3.1** port directly on the PC motherboard (avoid unpowered USB extension hubs). Check detection via `lsusb` and `ZED_Diagnostic`. |
+| **Voice command listener fails with missing IDL** | Custom ROS 2 IDL package not sourced in environment. | Execute `source install/setup.bash` in the terminal to expose the `whisper_idl/action/Inference` interface definition. |
 
 [⬆️ Back to Top](#table-of-contents)
 

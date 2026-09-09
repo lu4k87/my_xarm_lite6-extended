@@ -19,7 +19,10 @@ class TobiiYoloToGraspRoutine(Node):
     def __init__(self):
         super().__init__('gaze_grasp_routine_tobii_glasses')
         
-        yolo_path = os.path.expanduser('~/dev_ws/my_yolo_model.pt')
+        ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
+        yolo_path = os.path.join(ws_root, 'my_yolo_model.pt')
+        if not os.path.exists(yolo_path):
+            yolo_path = os.path.expanduser('~/dev_ws/my_yolo_model.pt')
         if not os.path.exists(yolo_path):
             self.get_logger().error(f"YOLO model not found at {yolo_path}")
             return
@@ -28,7 +31,9 @@ class TobiiYoloToGraspRoutine(Node):
         
         try:
             pygame.mixer.init()
-            sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
+            sounds_dir = os.path.join(ws_root, 'sounds')
+            if not os.path.isdir(sounds_dir):
+                sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
             self.click_sound = pygame.mixer.Sound(os.path.join(sounds_dir, 'ui_mouse_click.mp3'))
             
             self.voice_sounds = {

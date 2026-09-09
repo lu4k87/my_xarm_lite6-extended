@@ -28,9 +28,12 @@ class ZedYolo3DNode(Node):
         self.declare_parameter('model_path', 'yolov8l.pt')
         model_name = self.get_parameter('model_path').value
 
-        # Resolve full path if file exists in ~/dev_ws or relative
+        # Resolve full path if file exists in workspace or relative
         if not os.path.isabs(model_name):
-            ws_model = os.path.expanduser(f'~/dev_ws/{model_name}')
+            ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
+            ws_model = os.path.join(ws_root, model_name)
+            if not os.path.exists(ws_model):
+                ws_model = os.path.expanduser(f'~/dev_ws/{model_name}')
             if os.path.exists(ws_model):
                 model_name = ws_model
 

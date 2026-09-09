@@ -25,8 +25,12 @@ def generate_launch_description():
         output='screen'
     )
 
-    cert_path = os.path.expanduser('~/dev_ws/certs/cert.pem')
-    key_path = os.path.expanduser('~/dev_ws/certs/key.pem')
+    ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
+    cert_path = os.path.join(ws_root, 'certs', 'cert.pem')
+    key_path = os.path.join(ws_root, 'certs', 'key.pem')
+    if not os.path.exists(cert_path):
+        cert_path = os.path.expanduser('~/dev_ws/certs/cert.pem')
+        key_path = os.path.expanduser('~/dev_ws/certs/key.pem')
     
     rosbridge = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(

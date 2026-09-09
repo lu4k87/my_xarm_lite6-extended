@@ -1215,7 +1215,7 @@ function initPortMonitoring() {
     if (!dot) return;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2000);
-    fetch('http://' + host + ':5000/api/status', { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+    fetch('http://' + host + ':5000/api/ping', { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: controller.signal })
       .then(() => {
         clearTimeout(timer);
         dot.className = 'dot glow-green';
@@ -1262,15 +1262,36 @@ function initPortMonitoring() {
     const dot = document.getElementById('dot-port-9091');
     if (!dot) return;
     let resolved = false;
+    // Port 9091 runs with SSL (wss://) in vr_quest3_teleop.launch.py
+    const proto = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
     try {
-      const testWs = new WebSocket('ws://' + host + ':9091');
+      const testWs = new WebSocket('wss://' + host + ':9091');
       const timer = setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          dot.className = 'dot glow-red';
+          // Fallback check: probe plain ws:// if wss didn't open
+          try {
+            const fallbackWs = new WebSocket('ws://' + host + ':9091');
+            const fbTimer = setTimeout(() => {
+              dot.className = 'dot glow-red';
+              try { fallbackWs.close(); } catch(e) {}
+            }, 1000);
+            fallbackWs.onopen = () => {
+              clearTimeout(fbTimer);
+              dot.className = 'dot glow-green';
+              try { fallbackWs.close(); } catch(e) {}
+            };
+            fallbackWs.onerror = () => {
+              clearTimeout(fbTimer);
+              dot.className = 'dot glow-red';
+            };
+          } catch(e) {
+            dot.className = 'dot glow-red';
+          }
           try { testWs.close(); } catch(e) {}
         }
       }, 1500);
+
       testWs.onopen = () => {
         if (!resolved) {
           resolved = true;
@@ -1279,11 +1300,30 @@ function initPortMonitoring() {
           try { testWs.close(); } catch(e) {}
         }
       };
+
       testWs.onerror = () => {
         if (!resolved) {
           resolved = true;
           clearTimeout(timer);
-          dot.className = 'dot glow-red';
+          // Try plain ws:// fallback
+          try {
+            const fallbackWs = new WebSocket('ws://' + host + ':9091');
+            const fbTimer = setTimeout(() => {
+              dot.className = 'dot glow-red';
+              try { fallbackWs.close(); } catch(e) {}
+            }, 1000);
+            fallbackWs.onopen = () => {
+              clearTimeout(fbTimer);
+              dot.className = 'dot glow-green';
+              try { fallbackWs.close(); } catch(e) {}
+            };
+            fallbackWs.onerror = () => {
+              clearTimeout(fbTimer);
+              dot.className = 'dot glow-red';
+            };
+          } catch(e) {
+            dot.className = 'dot glow-red';
+          }
         }
       };
     } catch (e) {

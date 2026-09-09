@@ -46,7 +46,10 @@ class RobotMotionHandlerMovegroup(Node):
             import pygame
             import os
             pygame.mixer.init()
-            sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
+            ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
+            sounds_dir = os.path.join(ws_root, 'sounds')
+            if not os.path.isdir(sounds_dir):
+                sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
             self.sound_initial = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_initial_pose.mp3'))
             self.sound_absolute = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_absolute_pose.mp3'))
         except Exception as e:
@@ -108,6 +111,19 @@ class RobotMotionHandlerMovegroup(Node):
         self.stop_srv = self.create_service(
             Trigger, 
             '/ui/emergency_stop', 
+            self.emergency_stop_cb,
+            callback_group=self.stop_cb_group
+        )
+        # Backward-compatible aliases for RViz control panel & legacy clients
+        self.legacy_scan_srv = self.create_service(
+            Trigger,
+            '/ui/execute_scan_trajectory',
+            self.execute_scan_path_cb,
+            callback_group=self.cb_group
+        )
+        self.legacy_stop_srv = self.create_service(
+            Trigger,
+            '/ui/stop_motion',
             self.emergency_stop_cb,
             callback_group=self.stop_cb_group
         )

@@ -43,7 +43,7 @@ class WebcamArucoPoseNode(Node):
     def timer_callback(self):
         ret, frame = self.cap.read()
         if not ret:
-            self.get_logger().warning('Failed to grab frame')
+            self.get_logger().warning('Failed to grab frame from webcam', throttle_duration_sec=2.0)
             return
 
         # Da die Kamera von gegenüber filmt, drehen wir das Bild um 180 Grad

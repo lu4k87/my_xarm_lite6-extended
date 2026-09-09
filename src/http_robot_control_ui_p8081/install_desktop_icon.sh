@@ -20,7 +20,7 @@ for s in sizes:
     d = os.path.expanduser(f'~/.local/share/icons/hicolor/{s}x{s}/apps')
     os.makedirs(d, exist_ok=True)
     im.resize((s, s), Image.Resampling.LANCZOS).save(os.path.join(d, 'robot-control-ui.png'))
-"
+" 2>/dev/null || true
 gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor 2>/dev/null || true
 
 # Desktop entry

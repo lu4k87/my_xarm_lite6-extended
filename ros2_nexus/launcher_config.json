@@ -26,7 +26,8 @@
     },
     "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py": {
       "add_vacuum_gripper:=true": true,
-      "attach_to:=linear_axis_link": false
+      "attach_to:=linear_axis_link": false,
+      "robot_ip:=192.168.1.175": true
     },
     "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link": {
       "add_vacuum_gripper:=true": true,
@@ -55,6 +56,26 @@
     "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082": {
       "--ros-args -r __node:=http_web_video_server_p8082": true,
       "-p port:=8082": true
+    },
+    "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev": {
+      "robot_ip:=192.168.1.175": true,
+      "add_vacuum_gripper:=true": true,
+      "report_type:=dev": true
+    },
+    "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
+      "robot_ip:=192.168.1.175": true,
+      "add_vacuum_gripper:=true": true,
+      "report_type:=dev": true
+    },
+    "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175": {
+      "add_vacuum_gripper:=true": true,
+      "robot_ip:=192.168.1.175": true
+    },
+    "ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm": {
+      "camera_model:=zedm": true
+    },
+    "ros2 launch zed_wrapper zed_camera.launch.py": {
+      "camera_model:=zedm": true
     }
   },
   "__popups": {
@@ -208,6 +229,40 @@
         "yolo_model:=my_yolo_model.pt": false,
         "yolo_model:=yolov8l.pt": true,
         "yolo_model:=yolov8s.pt": false
+      }
+    },
+    "extras_zed": {
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev": {
+        "robot_ip:=192.168.1.175": true,
+        "add_vacuum_gripper:=true": true,
+        "report_type:=dev": true
+      },
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
+        "robot_ip:=192.168.1.175": true,
+        "add_vacuum_gripper:=true": true,
+        "report_type:=dev": true
+      },
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175": {
+        "add_vacuum_gripper:=true": true,
+        "robot_ip:=192.168.1.175": true
+      },
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py": {
+        "add_vacuum_gripper:=true": true,
+        "robot_ip:=192.168.1.175": true
+      },
+      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082": {
+        "--ros-args -r __node:=http_web_video_server_p8082": true,
+        "-p port:=8082": true
+      },
+      "ros2 run web_video_server web_video_server": {
+        "--ros-args -r __node:=http_web_video_server_p8082": true,
+        "-p port:=8082": true
+      },
+      "ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm": {
+        "camera_model:=zedm": true
+      },
+      "ros2 launch zed_wrapper zed_camera.launch.py": {
+        "camera_model:=zedm": true
       }
     }
   },
@@ -713,8 +768,8 @@
         {
           "active": true,
           "args": [],
-          "baseCmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
-          "cmd": "bash /home/mk/dev_ws/isaacsim/start_isaac_sim.sh",
+          "baseCmd": "bash ~/dev_ws/isaacsim/start_isaac_sim.sh",
+          "cmd": "bash ~/dev_ws/isaacsim/start_isaac_sim.sh",
           "label": "Start Isaac Sim (Lite6 Modul)",
           "postCmd": "",
           "type": "launch"

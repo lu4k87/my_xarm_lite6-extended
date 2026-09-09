@@ -112,7 +112,10 @@ class VoiceCommandListener(Node):
             import pygame
             import os
             pygame.mixer.init()
-            sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
+            ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
+            sounds_dir = os.path.join(ws_root, 'sounds')
+            if not os.path.isdir(sounds_dir):
+                sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
             self._sound_initial  = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_initial_pose.mp3'))
             self._sound_absolute = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_absolute_pose.mp3'))
         except Exception as e:

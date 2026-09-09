@@ -33,8 +33,12 @@ def main():
         print("ERROR: Could not bind HTTPServer to port 8443 after 5 attempts.")
         sys.exit(1)
     
-    cert_path = os.path.expanduser('~/dev_ws/certs/cert.pem')
-    key_path = os.path.expanduser('~/dev_ws/certs/key.pem')
+    ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
+    cert_path = os.path.join(ws_root, 'certs', 'cert.pem')
+    key_path = os.path.join(ws_root, 'certs', 'key.pem')
+    if not os.path.exists(cert_path):
+        cert_path = os.path.expanduser('~/dev_ws/certs/cert.pem')
+        key_path = os.path.expanduser('~/dev_ws/certs/key.pem')
     
     if os.path.exists(cert_path) and os.path.exists(key_path):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)

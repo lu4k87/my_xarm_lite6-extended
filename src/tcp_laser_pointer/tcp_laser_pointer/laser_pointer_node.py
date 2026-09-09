@@ -18,9 +18,12 @@ class LaserPointerNode(Node):
         self.laser_on = False
         self.current_state = None  # None means unknown
 
-        # Wait for the service to be available
-        while not self.io_client.wait_for_service(timeout_sec=1.0):
+        # Wait for the service to be available (check rclpy.ok() for safe shutdown)
+        while rclpy.ok() and not self.io_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Warte auf Service /xarm/set_tgpio_digital...')
+            
+        if not rclpy.ok():
+            return
             
         self.get_logger().info('Laser Pointer Node gestartet. Überwache TCP Z-Höhe...')
         

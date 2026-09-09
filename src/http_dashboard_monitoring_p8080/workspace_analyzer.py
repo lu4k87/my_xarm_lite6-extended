@@ -36,8 +36,9 @@ class WorkspaceAnalyzer(Node):
         self.code_pub         = self.create_publisher  (String, '/dashboard/file_content',           10)
         self.explorer_sub     = self.create_subscription(String, '/dashboard/request_open_explorer', self.handle_open_explorer,    10)
 
-        self.workspace_path = os.path.expanduser('~/dev_ws/src')
-        self.base_ws_path   = os.path.expanduser('~/dev_ws')
+        ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
+        self.base_ws_path   = ws_root
+        self.workspace_path = os.path.join(ws_root, 'src')
 
         # Instantiate Parser
         self.parser = WorkspaceParser(self.workspace_path, self.base_ws_path, self.get_logger())

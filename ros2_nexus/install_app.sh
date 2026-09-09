@@ -7,7 +7,7 @@
 # und registriert die App im Ubuntu App-Menü.
 #
 # Usage:
-#   cd ~/dev_ws/_exec && bash install_app.sh
+#   cd ~/dev_ws/ros2_nexus && bash install_app.sh
 # ─────────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

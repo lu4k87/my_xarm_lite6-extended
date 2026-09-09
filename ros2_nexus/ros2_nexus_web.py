@@ -13,6 +13,7 @@ import shlex
 import threading
 import sys
 import atexit
+import json
 
 import uuid
 import signal
@@ -118,8 +119,8 @@ def _build_ros_script(command: str, ws_path: str) -> str:
         f" \033[1;36mCMD:\033[0m \033[1;37m{part}\033[0m" for part in cmd_parts
     )
     safe_disp = formatted_disp.replace('"', '\\"')
-    safe_curl_cmd = command.replace('"', '\\"')
-    payload_template = '{"event": "$1", "pid": $TERMINAL_PID, "command": "' + safe_curl_cmd + '"}'
+    escaped_command_json = json.dumps(command)
+    payload_template = '{"event": "$1", "pid": $TERMINAL_PID, "command": ' + escaped_command_json + '}'
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
@@ -158,8 +159,8 @@ def _build_interactive_script(command: str) -> str:
         f" \033[1;36mCMD:\033[0m \033[1;37m{part}\033[0m" for part in cmd_parts
     )
     safe_disp = formatted_disp.replace('"', '\\"')
-    safe_curl_cmd = command.replace('"', '\\"')
-    payload_template = '{"event": "$1", "pid": $TERMINAL_PID, "command": "' + safe_curl_cmd + '"}'
+    escaped_command_json = json.dumps(command)
+    payload_template = '{"event": "$1", "pid": $TERMINAL_PID, "command": ' + escaped_command_json + '}'
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
@@ -221,8 +222,9 @@ def click_sound():
 
 
 @app.route("/api/ping")
+@app.route("/api/status")
 def ping():
-    return jsonify({"ok": True, "version": "Web Edition 1.0"})
+    return jsonify({"ok": True, "version": "Web Edition 1.0", "status": "running"})
 
 
 @app.route("/api/config", methods=["GET", "POST"])
