@@ -1220,24 +1220,24 @@
        }
        
        const modalHtml = `
-          <div id="launch-modal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.35); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(12px) saturate(0.7); -webkit-backdrop-filter: blur(12px) saturate(0.7); animation: fadeIn 0.3s ease;">
-             <div style="background: linear-gradient(145deg, rgba(20,25,35,0.97), rgba(10,15,25,0.99)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:24px; width:72vw; max-width: 72vw; height:90vh; max-height: 90vh; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.9), 0 0 0 1px rgba(0,255,102,0.08), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; isolation: isolate; filter: none;">
-                
-                <div style="padding:15px 25px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border-radius: 24px 24px 0 0;">
-                   <h2 style="margin:0; font-size:18px; font-weight:800; color:#fff; text-shadow:0 0 15px rgba(0,255,102,0.3); display:flex; align-items:center; gap:12px;">
-                      ${titleHTML.replace('<i', '<i style="color: #00FF66;"')}
-                   </h2>
-                   <button onclick="document.getElementById('launch-modal').remove()" style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='rgba(255,50,50,0.8)'; this.style.transform='rotate(90deg)';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='rotate(0)';"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                
-                <div id="launch-modal-body" style="flex:1; padding:20px; overflow-y:auto; overflow-x:hidden;">
-                </div>
-                
-                <div style="padding:15px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.3); border-radius: 0 0 24px 24px;">
-                   <button id="launch-modal-start-btn" style="background:linear-gradient(135deg, #00FF66, #00CC55); color:#000; font-size:16px; font-weight:900; padding:12px 45px; border-radius:50px; border:none; cursor:pointer; box-shadow:0 10px 30px rgba(0,255,102,0.3); transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); letter-spacing: 2px; text-transform:uppercase; display:flex; align-items:center; gap:10px;">
-                      <i class="fa-solid fa-play"></i> EXECUTE
-                   </button>
-                </div>
+              <div id="launch-modal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.35); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(12px) saturate(0.7); -webkit-backdrop-filter: blur(12px) saturate(0.7); animation: fadeIn 0.3s ease; font-family:var(--font-sans, 'Plus Jakarta Sans', sans-serif);">
+              <div style="background: linear-gradient(145deg, rgba(20,25,35,0.97), rgba(10,15,25,0.99)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:24px; width:72vw; max-width: 72vw; height:90vh; max-height: 90vh; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.9), 0 0 0 1px rgba(0,255,102,0.08), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; isolation: isolate; filter: none;">
+                 
+                 <div style="padding:15px 25px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border-radius: 24px 24px 0 0;">
+                    <h2 style="margin:0; font-size:18px; font-weight:600; letter-spacing:-0.02em; color:#fff; text-shadow:0 0 15px rgba(0,255,102,0.3); display:flex; align-items:center; gap:12px; font-family:var(--font-sans, 'Plus Jakarta Sans', sans-serif);">
+                       ${titleHTML.replace('<i', '<i style="color: #00FF66;"')}
+                    </h2>
+                    <button onclick="document.getElementById('launch-modal').remove()" style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='rgba(255,50,50,0.8)'; this.style.transform='rotate(90deg)';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='rotate(0)';"><i class="fa-solid fa-xmark"></i></button>
+                 </div>
+                 
+                 <div id="launch-modal-body" style="flex:1; padding:20px; overflow-y:auto; overflow-x:hidden; font-family:var(--font-sans, 'Plus Jakarta Sans', sans-serif); font-weight:350; letter-spacing:-0.01em;">
+                 </div>
+                 
+                 <div style="padding:15px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.3); border-radius: 0 0 24px 24px;">
+                    <button id="launch-modal-start-btn" style="background:linear-gradient(135deg, #00FF66, #00CC55); color:#000; font-size:15px; font-weight:700; padding:12px 45px; border-radius:50px; border:none; cursor:pointer; box-shadow:0 10px 30px rgba(0,255,102,0.3); transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); letter-spacing: 1.5px; text-transform:uppercase; display:flex; align-items:center; gap:10px; font-family:var(--font-sans, 'Plus Jakarta Sans', sans-serif);">
+                       <i class="fa-solid fa-play"></i> EXECUTE
+                    </button>
+                 </div>
                 
                 <style>
                   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

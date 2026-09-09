@@ -169,7 +169,7 @@
       "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node"
     ],
     "sec_8": [
-      "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py"
+      "obs"
     ]
   },
   "__popups_args": {
@@ -197,10 +197,10 @@
         "yolo_model:=yolov8s.pt": false
       },
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py": {
-        "yolo_model:=yolov8l.pt": true,
-        "yolo_model:=yolov8s.pt": false,
+        "use_zed_hardware:=false": false,
         "yolo_model:=my_yolo_model.pt": false,
-        "use_zed_hardware:=false": false
+        "yolo_model:=yolov8l.pt": true,
+        "yolo_model:=yolov8s.pt": false
       },
       "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True": {
         "silero_vad_use_cuda:=True": true,
@@ -219,10 +219,10 @@
         "-p port:=8082": true
       },
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=false yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": {
-        "yolo_model:=yolov8l.pt": true,
-        "yolo_model:=yolov8s.pt": false,
+        "use_zed_hardware:=false": false,
         "yolo_model:=my_yolo_model.pt": false,
-        "use_zed_hardware:=false": false
+        "yolo_model:=yolov8l.pt": true,
+        "yolo_model:=yolov8s.pt": false
       },
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=true yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": {
         "use_zed_hardware:=true": false,
@@ -264,7 +264,8 @@
       "ros2 launch zed_wrapper zed_camera.launch.py": {
         "camera_model:=zedm": true
       }
-    }
+    },
+    "sec_8": {}
   },
   "info": [
     {

@@ -1,4 +1,7 @@
     :root {
+      --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
       --bg: #07080f;
       --surf: rgba(13, 17, 23, .4);
       --card: rgba(22, 27, 39, .45);
@@ -48,12 +51,16 @@
       background: linear-gradient(135deg, #0d131f 0%, #0a1829 50%, #082f49 100%);
       background-attachment: fixed;
       color: var(--txt);
-      font-family: 'Outfit', sans-serif;
+      font-family: var(--font-sans);
+      font-weight: 350;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
-      letter-spacing: .15px;
+      letter-spacing: -0.01em;
     }
 
     /* scrollbar */
@@ -106,26 +113,27 @@
 
     .logo-name {
       font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -.3px;
+      font-weight: 700;
+      letter-spacing: -.03em;
       color: var(--txt);
       line-height: 1;
-      font-family: 'Outfit', sans-serif
+      font-family: var(--font-sans);
     }
 
     .logo-sub {
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
       color: var(--mut);
       text-transform: uppercase;
       letter-spacing: 1.5px;
       margin-top: 3px;
-      font-family: 'Outfit', sans-serif
+      font-family: var(--font-sans);
     }
 
     .logo-badge {
       font-size: 10px;
-      font-weight: 800;
+      font-weight: 600;
+      font-family: var(--font-mono);
       background: linear-gradient(135deg, rgba(56, 189, 248, .15), rgba(129, 140, 248, .15));
       color: var(--accent);
       border: 1px solid rgba(56, 189, 248, .3);
@@ -151,9 +159,9 @@
       background: transparent;
       border: none;
       color: var(--mut);
-      font-family: 'Outfit';
-      font-size: 14px;
-      font-weight: 600;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 500;
       padding: 9px 22px;
       border-radius: 8px;
       cursor: pointer;
@@ -264,7 +272,7 @@
       transition: opacity 0.2s, transform 0.2s;
       font-size: 13px;
       line-height: 1.5;
-      font-family: 'Outfit', sans-serif;
+      font-family: var(--font-sans);
     }
     /* Invisible bridge to keep hover active between buttons and tooltip */
     .info-tooltip-content::before {
@@ -340,6 +348,8 @@
       transition: all 0.2s ease-out;
       pointer-events: none;
       text-align: left;
+      font-family: var(--font-sans);
+      font-weight: 350;
     }
     .card-tooltip ul, #launch-modal-body ul {
       list-style: none !important;
@@ -356,19 +366,47 @@
       transform: translateX(-50%) translateY(5px);
     }
     .card-tooltip-title {
+      font-family: var(--font-sans);
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 600;
+      letter-spacing: -0.01em;
       color: var(--txt);
       margin-bottom: 12px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding-bottom: 8px;
     }
     .card-tooltip-cmd {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-mono);
       font-size: 11px;
+      font-weight: 400;
       color: var(--mut);
       white-space: pre-wrap;
       word-wrap: break-word;
+    }
+
+    /* ── POPUP & MODAL TYPOGRAPHY ── */
+    #launch-modal {
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    #launch-modal h2 {
+      font-family: var(--font-sans) !important;
+      font-weight: 600 !important;
+      letter-spacing: -0.02em !important;
+    }
+    #launch-modal-body {
+      font-family: var(--font-sans);
+      font-weight: 350;
+      letter-spacing: -0.01em;
+    }
+    #launch-modal-body b, #launch-modal-body strong {
+      font-weight: 600;
+    }
+    #launch-modal-start-btn {
+      font-family: var(--font-sans) !important;
+      font-weight: 700 !important;
+      letter-spacing: 1.5px !important;
     }
     .action-card:hover .side-icon {
       background: rgba(255, 255, 255, 0.05) !important;
@@ -652,29 +690,29 @@
 
     .label {
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 550;
       color: var(--txt);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-family: 'Outfit', sans-serif;
-      letter-spacing: -.1px
+      font-family: var(--font-sans);
+      letter-spacing: -.01em;
     }
 
     .badge {
-      font-size: 9px;
-      font-weight: 800;
+      font-size: 9.5px;
+      font-weight: 600;
       padding: 3px 8px;
       border-radius: 6px;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: .8px;
       border: 1px solid transparent;
       flex-shrink: 0;
       display: inline-flex;
       vertical-align: middle;
       align-items: center;
       gap: 5px;
-      font-family: 'Outfit', sans-serif;
+      font-family: var(--font-mono);
     }
 
     .badge i {
@@ -804,9 +842,9 @@
       border: 1px solid var(--brd);
       border-radius: 8px;
       padding: 6px 16px;
-      font-family: 'Outfit';
-      font-size: 11px;
-      font-weight: 700;
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      font-weight: 550;
       cursor: pointer;
       transition: all .2s;
       display: flex;
