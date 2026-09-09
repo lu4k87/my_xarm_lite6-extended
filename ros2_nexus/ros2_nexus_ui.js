@@ -705,20 +705,33 @@
           const topLis = Array.from(topUl.children).filter(n => n.tagName === 'LI');
           const matchedCmds = new Set();
           topLis.forEach(li => {
-              const clone = li.cloneNode(true);
-              Array.from(clone.children).forEach(c => { if (c.tagName === 'UL' || c.classList.contains('badge')) c.remove(); });
-              const text = clone.textContent.replace(/\(.*?\)/g, '').trim();
-              if (!text) return;
-              
-              const action = actionsData.find(a => {
-                  if (matchedCmds.has(a.cmd)) return false;
-                  const cmdTokens = a.cmd.split(/\s+/);
-                  if (cmdTokens.some(t => t === text || t.endsWith('/' + text))) return true;
-                  const baseTerm = text.replace(/\.(py|cpp|xml)$/, '');
-                  if (cmdTokens.some(t => t === baseTerm || t === baseTerm + '.py' || t === baseTerm + '.cpp' || t === baseTerm + '.xml')) return true;
-                  if (cmdTokens.some(t => t.replace(/_node$/, '') === baseTerm)) return true;
-                  return false;
-              });
+              let action = null;
+              const actionIndex = li.dataset.actionIndex !== undefined ? parseInt(li.dataset.actionIndex, 10) : -1;
+              if (actionIndex >= 0 && actionIndex < actionsData.length && !matchedCmds.has(actionsData[actionIndex].cmd)) {
+                  action = actionsData[actionIndex];
+              }
+              if (!action && li.dataset.cmd) {
+                  action = actionsData.find(a => a.cmd === li.dataset.cmd && !matchedCmds.has(a.cmd));
+              }
+              if (!action && li.dataset.rawCmd) {
+                  action = actionsData.find(a => a.cmd === li.dataset.rawCmd && !matchedCmds.has(a.cmd));
+              }
+              if (!action) {
+                  const clone = li.cloneNode(true);
+                  Array.from(clone.children).forEach(c => { if (c.tagName === 'UL' || c.classList.contains('badge')) c.remove(); });
+                  const text = clone.textContent.replace(/\(.*?\)/g, '').trim();
+                  if (text) {
+                      action = actionsData.find(a => {
+                          if (matchedCmds.has(a.cmd)) return false;
+                          const cmdTokens = a.cmd.split(/\s+/);
+                          if (cmdTokens.some(t => t === text || t.endsWith('/' + text))) return true;
+                          const baseTerm = text.replace(/\.(py|cpp|xml)$/, '');
+                          if (cmdTokens.some(t => t === baseTerm || t === baseTerm + '.py' || t === baseTerm + '.cpp' || t === baseTerm + '.xml')) return true;
+                          if (cmdTokens.some(t => t.replace(/_node$/, '') === baseTerm)) return true;
+                          return false;
+                      });
+                  }
+              }
               
               if (action) {
                   matchedCmds.add(action.cmd);
@@ -766,7 +779,7 @@
               }
               
               const rawCmdData = li.getAttribute('data-raw-cmd');
-              const cmdToDisplay = rawCmdData ? rawCmdData : (action ? action.cmd : text);
+              const cmdToDisplay = (action && action.cmd) ? action.cmd : (rawCmdData ? rawCmdData : (li.dataset.cmd || ''));
               const isLaunchCard = (action && action.cmd && action.cmd.startsWith('ros2 launch')) || (cmdToDisplay && cmdToDisplay.startsWith('ros2 launch'));
 
               const middleCol = document.createElement('div');
@@ -1254,7 +1267,7 @@
                    animation: 200,
                    ghostClass: 'sortable-ghost',
                    onEnd: async function (evt) {
-                       const newOrder = Array.from(actualTopUl.querySelectorAll('li')).map(li => li.dataset.cmd).filter(c => c);
+                       const newOrder = Array.from(actualTopUl.children).filter(el => el.tagName === 'LI').map(li => li.dataset.cmd).filter(c => c);
                        if (!window.TABS) window.TABS = {};
                        if (!window.TABS['__popups']) window.TABS['__popups'] = {};
                        window.TABS['__popups'][popupId] = newOrder;
