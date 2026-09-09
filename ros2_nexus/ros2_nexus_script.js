@@ -438,7 +438,7 @@
           
           <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: flex-start; gap: 14px; color: #fff; padding-left: 6px;">
              <span style="font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; flex-shrink: 0;"><i class="${sec.icon} section-icon" style="color: ${badgeColors[sec.actions[0]?.type || 'dev_fake']?.primary || 'var(--c-dev)'}; margin-right: 10px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
-             <span style="height: 1px; flex: 1; background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, transparent 100%);"></span>
+             <span style="height: 1px; flex: 1; background: linear-gradient(90deg, rgba(255,255,255,0.45) 0%, transparent 100%);"></span>
           </div>
 
           <div class="actions-grid" data-sec-index="${secIndex}" style="grid-template-columns: 1fr; gap: 10px; position: relative; z-index: 1;">`;
@@ -570,7 +570,7 @@
           
           <div class="section-title" style="position: relative; z-index: 1; margin-bottom: 16px; display: flex; align-items: center; justify-content: flex-start; gap: 14px; color: #fff; padding-left: 6px;">
              <span style="font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, #fff 0%, #a0a5b0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; flex-shrink: 0;"><i class="${sec.icon} section-icon" style="color: ${secColor}; margin-right: 10px; -webkit-text-fill-color: initial;"></i>${sec.title}</span>
-             <span style="height: 1px; flex: 1; background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, transparent 100%);"></span>
+             <span style="height: 1px; flex: 1; background: linear-gradient(90deg, rgba(255,255,255,0.45) 0%, transparent 100%);"></span>
           </div>
 
           <div class="actions-grid" style="grid-template-columns: 1fr; gap: 10px; position: relative; z-index: 1;" data-sec-index="${secIndex}">
