@@ -3,7 +3,7 @@
     "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py": {
       "use_zed_hardware:=false": false,
       "yolo_model:=my_yolo_model.pt": false,
-      "yolo_model:=yolov8l.pt": false,
+      "yolo_model:=yolov8l.pt": true,
       "yolo_model:=yolov8s.pt": false
     },
     "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=false": {
@@ -15,7 +15,7 @@
     "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=false yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": {
       "use_zed_hardware:=false": false,
       "yolo_model:=my_yolo_model.pt": false,
-      "yolo_model:=yolov8l.pt": false,
+      "yolo_model:=yolov8l.pt": true,
       "yolo_model:=yolov8s.pt": false
     },
     "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=true yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": {
@@ -33,6 +33,10 @@
       "add_vacuum_gripper:=true": true,
       "attach_to:=linear_axis_link": false
     },
+    "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175": {
+      "add_vacuum_gripper:=true": true,
+      "robot_ip:=192.168.1.175": true
+    },
     "ros2 launch whisper_bringup bringup.launch.py": {
       "silero_vad_use_cuda:=True": true,
       "use_gpu:=True": true
@@ -49,6 +53,22 @@
       "add_vacuum_gripper:=true": true,
       "attach_to:=linear_axis_link": false
     },
+    "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
+      "robot_ip:=192.168.1.175": true,
+      "add_vacuum_gripper:=true": true,
+      "report_type:=dev": true
+    },
+    "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev": {
+      "robot_ip:=192.168.1.175": true,
+      "add_vacuum_gripper:=true": true,
+      "report_type:=dev": true
+    },
+    "ros2 launch zed_wrapper zed_camera.launch.py": {
+      "camera_model:=zedm": true
+    },
+    "ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm": {
+      "camera_model:=zedm": true
+    },
     "ros2 run web_video_server web_video_server": {
       "--ros-args -r __node:=http_web_video_server_p8082": true,
       "-p port:=8082": true
@@ -56,26 +76,6 @@
     "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082": {
       "--ros-args -r __node:=http_web_video_server_p8082": true,
       "-p port:=8082": true
-    },
-    "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev": {
-      "robot_ip:=192.168.1.175": true,
-      "add_vacuum_gripper:=true": true,
-      "report_type:=dev": true
-    },
-    "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
-      "robot_ip:=192.168.1.175": true,
-      "add_vacuum_gripper:=true": true,
-      "report_type:=dev": true
-    },
-    "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175": {
-      "add_vacuum_gripper:=true": true,
-      "robot_ip:=192.168.1.175": true
-    },
-    "ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm": {
-      "camera_model:=zedm": true
-    },
-    "ros2 launch zed_wrapper zed_camera.launch.py": {
-      "camera_model:=zedm": true
     }
   },
   "__popups": {
@@ -197,7 +197,7 @@
         "yolo_model:=yolov8s.pt": false
       },
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py": {
-        "yolo_model:=yolov8l.pt": false,
+        "yolo_model:=yolov8l.pt": true,
         "yolo_model:=yolov8s.pt": false,
         "yolo_model:=my_yolo_model.pt": false,
         "use_zed_hardware:=false": false
@@ -219,7 +219,7 @@
         "-p port:=8082": true
       },
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=false yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": {
-        "yolo_model:=yolov8l.pt": false,
+        "yolo_model:=yolov8l.pt": true,
         "yolo_model:=yolov8s.pt": false,
         "yolo_model:=my_yolo_model.pt": false,
         "use_zed_hardware:=false": false
@@ -233,14 +233,14 @@
     },
     "extras_zed": {
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev": {
-        "robot_ip:=192.168.1.175": true,
         "add_vacuum_gripper:=true": true,
-        "report_type:=dev": true
+        "report_type:=dev": true,
+        "robot_ip:=192.168.1.175": true
       },
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
-        "robot_ip:=192.168.1.175": true,
         "add_vacuum_gripper:=true": true,
-        "report_type:=dev": true
+        "report_type:=dev": true,
+        "robot_ip:=192.168.1.175": true
       },
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175": {
         "add_vacuum_gripper:=true": true,
