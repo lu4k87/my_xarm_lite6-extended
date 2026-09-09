@@ -79,7 +79,7 @@
     }
 
     header {
-      zoom: 1.5;
+      zoom: 1.65;
       background: linear-gradient(135deg, rgba(13, 17, 23, .6) 0%, rgba(15, 20, 35, .6) 100%);
       border-bottom: 1px solid var(--brd);
       padding: 0 32px;
@@ -417,7 +417,7 @@
 
     /* ── MAIN ── */
     main {
-      zoom: 0.85;
+      zoom: 0.935;
       flex: 1;
       padding: 36px 120px;
       width: 100%;
@@ -829,7 +829,7 @@
 
     /* ── FOOTER ── */
     footer {
-      zoom: 1.5;
+      zoom: 1.65;
       background: var(--surf);
       border-top: 1px solid var(--brd);
       padding: 12px 28px;
@@ -965,5 +965,5 @@
     
     
     #console-popup, .toast, #offline-overlay {
-      zoom: 1.5;
+      zoom: 1.65;
     }

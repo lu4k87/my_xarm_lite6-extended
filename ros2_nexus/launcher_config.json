@@ -155,7 +155,7 @@
     ],
     "sec_0": [],
     "sec_1": [
-      "obs"
+      "rqt_graph"
     ],
     "sec_2": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev & sleep 8 && ros2 run rviz_window_streamer rviz_window_streamer_node & ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses"
@@ -170,6 +170,9 @@
     ],
     "sec_8": [
       "obs"
+    ],
+    "sec_11": [
+      "bash ~/dev_ws/isaacsim/start_isaac_sim.sh"
     ]
   },
   "__popups_args": {
@@ -265,7 +268,9 @@
         "camera_model:=zedm": true
       }
     },
-    "sec_8": {}
+    "sec_8": {},
+    "sec_11": {},
+    "sec_1": {}
   },
   "info": [
     {
@@ -305,17 +310,29 @@
         {
           "cmd": "rviz2",
           "label": "RViz2",
-          "type": "sys"
+          "type": "sys",
+          "active": false,
+          "baseCmd": "rviz2",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "rqt_graph",
           "label": "RQT Graph",
-          "type": "sys"
+          "type": "sys",
+          "active": true,
+          "baseCmd": "rqt_graph",
+          "args": [],
+          "postCmd": ""
         },
         {
           "cmd": "rqt",
           "label": "RQT",
-          "type": "sys"
+          "type": "sys",
+          "active": false,
+          "baseCmd": "rqt",
+          "args": [],
+          "postCmd": ""
         }
       ],
       "col": 1,
