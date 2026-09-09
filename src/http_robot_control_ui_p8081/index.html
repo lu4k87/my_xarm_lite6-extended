@@ -309,21 +309,69 @@
             </div>
           </div>
           <div class="joints-bars">
-            <div class="j-bar" onpointerdown="startJointJog(0, event)"><div class="j-fill" id="j1-fill"></div><span class="j-lbl">J1 <span id="j1-val">0.0</span></span></div>
-            <div class="j-bar" onpointerdown="startJointJog(1, event)"><div class="j-fill" id="j2-fill"></div><span class="j-lbl">J2 <span id="j2-val">0.0</span></span></div>
-            <div class="j-bar" onpointerdown="startJointJog(2, event)"><div class="j-fill" id="j3-fill"></div><span class="j-lbl">J3 <span id="j3-val">0.0</span></span></div>
-            <div class="j-bar" onpointerdown="startJointJog(3, event)"><div class="j-fill" id="j4-fill"></div><span class="j-lbl">J4 <span id="j4-val">0.0</span></span></div>
-            <div class="j-bar" onpointerdown="startJointJog(4, event)"><div class="j-fill" id="j5-fill"></div><span class="j-lbl">J5 <span id="j5-val">0.0</span></span></div>
-            <div class="j-bar" onpointerdown="startJointJog(5, event)"><div class="j-fill" id="j6-fill"></div><span class="j-lbl">J6 <span id="j6-val">0.0</span></span></div>
+            <div class="j-col">
+              <div class="j-header">
+                <span class="j-name">J1</span>
+                <span class="j-val" id="j1-val">0.00</span>
+              </div>
+              <div class="j-bar" onpointerdown="startJointJog(0, event)">
+                <div class="j-fill" id="j1-fill"></div>
+              </div>
+            </div>
+            <div class="j-col">
+              <div class="j-header">
+                <span class="j-name">J2</span>
+                <span class="j-val" id="j2-val">0.00</span>
+              </div>
+              <div class="j-bar" onpointerdown="startJointJog(1, event)">
+                <div class="j-fill" id="j2-fill"></div>
+              </div>
+            </div>
+            <div class="j-col">
+              <div class="j-header">
+                <span class="j-name">J3</span>
+                <span class="j-val" id="j3-val">0.00</span>
+              </div>
+              <div class="j-bar" onpointerdown="startJointJog(2, event)">
+                <div class="j-fill" id="j3-fill"></div>
+              </div>
+            </div>
+            <div class="j-col">
+              <div class="j-header">
+                <span class="j-name">J4</span>
+                <span class="j-val" id="j4-val">0.00</span>
+              </div>
+              <div class="j-bar" onpointerdown="startJointJog(3, event)">
+                <div class="j-fill" id="j4-fill"></div>
+              </div>
+            </div>
+            <div class="j-col">
+              <div class="j-header">
+                <span class="j-name">J5</span>
+                <span class="j-val" id="j5-val">0.00</span>
+              </div>
+              <div class="j-bar" onpointerdown="startJointJog(4, event)">
+                <div class="j-fill" id="j5-fill"></div>
+              </div>
+            </div>
+            <div class="j-col">
+              <div class="j-header">
+                <span class="j-name">J6</span>
+                <span class="j-val" id="j6-val">0.00</span>
+              </div>
+              <div class="j-bar" onpointerdown="startJointJog(5, event)">
+                <div class="j-fill" id="j6-fill"></div>
+              </div>
+            </div>
           </div>
           
-          <div style="margin-top: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="color: var(--mut); font-size: 12px; font-weight: 600; font-family: 'Outfit', sans-serif;">Linear Axis Shift (Y)</span>
-              <span id="linear-axis-val" style="font-family: 'JetBrains Mono'; font-size: 12px; color: var(--rviz-y); font-weight: bold;">0.00 m</span>
+          <div class="linear-axis-box">
+            <div class="linear-axis-header">
+              <span class="linear-axis-title"><i class="fa-solid fa-arrows-left-right"></i> Linear Axis Shift (Y)</span>
+              <span id="linear-axis-val">0.00 m</span>
             </div>
-            <div class="linear-axis-control" style="width: 100%;">
-              <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0.0" oninput="updateLinearAxis(this.value)" style="width: 100%;">
+            <div class="linear-axis-control">
+              <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0.0" oninput="updateLinearAxis(this.value)">
             </div>
           </div>
         </section>

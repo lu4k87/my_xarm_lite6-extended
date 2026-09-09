@@ -343,34 +343,82 @@ header {
 .telem-box.telem-y { border-top: 2px solid var(--rviz-y); }
 .telem-box.telem-z { border-top: 2px solid var(--rviz-z); }
 
+/* Joint Telemetry & Jog Sliders */
 .joints-bars {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px 12px;
+  gap: 14px 24px;
   margin-top: 16px;
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.j-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.j-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.j-name {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.j-val {
+  color: var(--txt);
+  font-weight: 700;
 }
 
 .j-bar {
-  background: rgba(0,0,0,0.4);
-  height: 4px;
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  height: 6px;
+  border-radius: 3px;
   position: relative;
   overflow: visible;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.j-bar:active {
+  cursor: grabbing;
+}
+
+.j-bar::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  left: 0;
+  right: 0;
   cursor: grab;
 }
 
 .j-fill {
   position: absolute;
-  left: 50%;
+  left: 0%;
   top: 0;
   height: 100%;
-  background: rgba(56, 189, 248, 0.5);
-  width: 0%;
-  border-radius: 2px;
-  transition: width 0.1s, left 0.1s;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.35), var(--accent));
+  width: 50%;
+  border-radius: 3px;
+  transition: width 0.08s ease-out;
+  pointer-events: none;
 }
 
-/* Pseudo element to create the "thumb" of the slider */
+/* Pseudo element to create the "thumb" knob of the slider */
 .j-fill::after {
   content: '';
   position: absolute;
@@ -379,22 +427,58 @@ header {
   transform: translateY(-50%);
   width: 12px;
   height: 12px;
-  background: rgba(56, 189, 248, 0.8);
+  background: var(--accent);
   border-radius: 50%;
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
   pointer-events: none;
 }
 
 .j-lbl {
-  position: absolute;
-  top: -20px;
-  left: 0;
-  font-size: 12px;
-  font-family: 'JetBrains Mono', monospace;
+  display: none;
+}
+
+/* Linear Axis Telemetry Box */
+.linear-axis-box {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.linear-axis-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.linear-axis-title {
+  color: var(--mut);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.linear-axis-title i {
+  color: var(--rviz-y);
+}
+
+#linear-axis-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--rviz-y);
+  font-weight: 700;
+}
+
+.linear-axis-control {
   width: 100%;
-  pointer-events: none;
+  display: flex;
+  align-items: center;
 }
 
 /* Joystick Section */
