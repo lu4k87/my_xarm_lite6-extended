@@ -63,16 +63,16 @@ def generate_launch_description():
 
     # TF: Position der Kamera relativ zu link_base
     # ANPASSEN: Wenn die Kamera physisch eingemessen wird, diese 6 Werte ändern!
-    tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.705',
+    tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.870',
         description='Kamera X-Position relativ zu link_base [m]')
     tf_y_arg = DeclareLaunchArgument('tf_y', default_value='0.0',
         description='Kamera Y-Position relativ zu link_base [m]')
-    tf_z_arg = DeclareLaunchArgument('tf_z', default_value='0.532',
+    tf_z_arg = DeclareLaunchArgument('tf_z', default_value='0.520',
         description='Kamera Z-Position (Höhe) relativ zu link_base [m]')
-    tf_roll_arg = DeclareLaunchArgument('tf_roll', default_value='-0.15708',
-        description='Kamera Roll-Winkel [rad] (-0.15708 = -9.0°)')
-    tf_pitch_arg = DeclareLaunchArgument('tf_pitch', default_value='0.92153',
-        description='Kamera Pitch-Winkel [rad] (positiv = nach unten geneigt, 0.92153 = ~52.8°)')
+    tf_roll_arg = DeclareLaunchArgument('tf_roll', default_value='-0.07156',
+        description='Kamera Roll-Winkel [rad] (-0.07156 = -4.1°)')
+    tf_pitch_arg = DeclareLaunchArgument('tf_pitch', default_value='0.63181',
+        description='Kamera Pitch-Winkel [rad] (positiv = nach unten geneigt, 0.63181 = ~36.2°)')
     tf_yaw_arg = DeclareLaunchArgument('tf_yaw', default_value='3.14159',
         description='Kamera Yaw-Winkel [rad] (3.14159 = 180°, zeigt zum Roboter)')
 
