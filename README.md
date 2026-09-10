@@ -570,11 +570,28 @@ flowchart TD
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`)**
 >
->> | Parameter | Default | Description |
+>> | Launch Argument | Default | Description |
 >> |---|---|---|
->> | `depth_mode` | `ULTRA` | *Forces the most dense 3D point cloud for clean edge calculation.* |
->> | `auto_exposure` | `True` | *Allows automatic brightness compensation for robust YOLO detection.* |
->> | `use_zed_hardware` | `True` | *If False, skips launching the real ZED hardware (for fake/sim modes).* |
+>> | `camera_model` | `zedm` | *ZED camera model (Stereolabs ZED Mini).* |
+>> | `use_zed_hardware` | `true` | *If false, skips launching the real ZED driver (for fake/simulation modes).* |
+>> | `tf_x` | `0.870` | *Calibrated camera X position relative to `link_base` [m].* |
+>> | `tf_y` | `0.0` | *Calibrated camera Y position relative to `link_base` [m].* |
+>> | `tf_z` | `0.520` | *Calibrated camera Z height relative to `link_base` [m].* |
+>> | `tf_roll` | `-0.07156` | *Camera roll angle [rad] (-4.1°).* |
+>> | `tf_pitch` | `0.63181` | *Camera pitch angle [rad] (+36.2°, tilted downward toward workspace).* |
+>> | `tf_yaw` | `3.14159` | *Camera yaw angle [rad] (180.0°, facing the robot).* |
+>> | `yolo_model` | `yolov8l.pt` | *YOLO neural network weights file.* |
+>
+> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`config/zed_override.yaml` Parameter Overrides)**
+>
+>> | Parameter | Value | Description |
+>> |---|---|---|
+>> | `depth_mode` | `NEURAL` | *AI-powered neural depth estimation via TensorRT for maximum precision.* |
+>> | `pub_resolution` | `NATIVE` | *Native 1080p full sensor resolution (~2,073,600 points/frame, zero downsampling).* |
+>> | `depth_confidence` | `100` | *100% confidence retention; prevents dropping valid depth pixels.* |
+>> | `depth_texture_conf` | `100` | *Preserves textureless flat surfaces (tabletops, ground plane).* |
+>> | `remove_saturated_areas` | `false` | *Prevents point cloud holes caused by specular floor/table reflections.* |
+>> | `min_depth` / `max_depth` | `0.1` / `10.0` | *Broad 10-meter operational range ensuring full table and floor coverage.* |
 >
 >
 
@@ -886,7 +903,7 @@ stateDiagram-v2
 > ```bash
 > ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node
 > ```
-> *(Launched via Nexus Launcher: Vision Section)*
+> *(Launched via ROS 2 Nexus App: Vision Section)*
 >
 > **Purpose & Task:** Lightweight computer vision node using standard USB webcams (`/dev/video0` or `/dev/video2`, MJPEG format, buffer size 1 for minimum latency). Detects ArUco markers (`DICT_4X4_50`, 3 cm), estimates full 6-DoF spatial pose via OpenCV `solvePnP` (`SOLVEPNP_IPPE_SQUARE`), and calculates the relative Cartesian offset ($x, y, z$ in cm) of all detected markers relative to Marker 0 (origin). Features live onscreen 3D coordinate axes and centered text HUD overlays.
 
@@ -910,6 +927,18 @@ stateDiagram-v2
 >> |---|---|---|
 >> | **`/tf`** | `tf2_msgs/TFMessage` | *Broadcasts live spatial coordinate transforms for calibrated camera and scene frames.* |
 >> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Publishes dynamic safety zone parameters `[x, y, radius]` to the motion handler.* |
+>
+>
+> ![Defaults](https://img.shields.io/badge/Defaults-yellow?style=flat-square) **(Calibrated Camera & Scene Defaults)**
+>
+>> | Element | Frame ID | X [m] | Y [m] | Z [m] | Roll | Pitch | Yaw |
+>> |---|---|---|---|---|---|---|---|
+>> | **Zed M Camera** | `zed_camera_link` | `0.870` | `0.000` | `0.520` | `-4.1°` | `36.2°` | `180.0°` |
+>> | **Blue Cube** | `target_blue_cube` | `0.300` | `0.085` | `0.000` | `0.0°` | `0.0°` | `0.0°` |
+>> | **Red Rectangle** | `target_red_rectangle` | `0.305` | `-0.080` | `0.000` | `0.0°` | `0.0°` | `45.0°` |
+>> | **Green Cylinder** | `target_green_cylinder` | `0.350` | `0.025` | `0.000` | `0.0°` | `0.0°` | `0.0°` |
+>> | **White Plane** | `target_white_plane` | `0.305` | `0.000` | `-0.003` | `0.0°` | `0.0°` | `0.0°` |
+>
 
 ---
 
@@ -1530,6 +1559,9 @@ flowchart TD
 > **Purpose & Task:** A native-feeling, standalone Chrome Web App designed with a modern Glassmorphism aesthetic. It acts as a comprehensive multimodal dashboard directly replicating the RViz control panel features for remote operation. Operates on **Port 8081**.
 > **Native Desktop Integration:** Both the *ROS 2 Nexus Web App* and the *Robot Control Web UI* now launch in dedicated, isolated Chrome `--app` profiles. They start perfectly maximized as standalone applications, completely detached from standard browser windows, and feature their own distinct taskbar icons for a seamless, native OS experience.
 > - ✨ **Core Features:** 
+>   - **Standardized Status Bar & Quick Reload:** Unified navbar with a live refresh button (`fa-arrows-rotate`) on the far left, followed by standardized port badges in `Name: PORT` format (`ROS 2 Bridge: 9090`, `Robot Control UI: 8081`, `Nexus App: 5000`, `Dashboard: 8080`, `Video Streams: 8082`, `VR Teleop: 9091`), USB gamepad connection detection, and real-time hardware mode pills.
+>   - **Harmonized Speed Level Controls:** The Speed Level slider has been visually harmonized with the joint slider controls (6px slim track, translucent backdrop, cyan accent gradient fill, neon glow thumb with active grabbing animation, gauge icon, and dynamic speed level readout e.g. `3/5 (60%)`).
+>   - **Structured Joint Telemetry Grid:** Joints J1–J6 are arranged in an ergonomic 2-column grid with dedicated header labels (`#38bdf8`) and bold monospace angles, paired with a visually separated card for Linear Axis shift commands.
 >   - **Advanced Telemetry:** Live system status pills for network ports (UI, WS, Nexus), active Gamepad connection (USB), and automatic Hardware Mode detection (Fake Arm vs. Real Arm IP, reliably sourced via global `rosapi` endpoints). Features dedicated **EEF Telemetry Live** data display for precise end-effector Cartesian tracking.
 >   - **Camera Livestreams:** Support for up to 3 concurrent video feeds (e.g., standard streams via IP and ZED M live stream via `web_video_server`) directly embedded in the dashboard for complete visual monitoring.
 >   - **MoveIt Servo Monitoring:** Dynamic UI indicators (Green/Orange/Red) with pulsing animations that mirror MoveIt collision/wait states in real-time.
@@ -2174,12 +2206,11 @@ python3 ros2_nexus/ros2_nexus_web.py
 ./ros2_nexus/ros2_nexus_web_start.sh
 ```
 
-**Ubuntu App Integration:** ROS 2 Nexus can be registered as a native Ubuntu application. To make the app available in the Ubuntu Activities menu, copy the provided `.desktop` file to your applications directory:
+**Ubuntu App Integration (One-Click Installer):** Both the **ROS 2 Nexus App** and the **Robot Control UI** can be registered as native Ubuntu applications with custom high-resolution icons and dedicated Chrome `--app` profiles. Simply run the automated installer script:
 ```bash
-cp ~/dev_ws/ros2_nexus/ROS2_Nexus.desktop ~/.local/share/applications/
-update-desktop-database ~/.local/share/applications/
+cd ~/dev_ws/ros2_nexus && bash install_app.sh
 ```
-Afterwards, you can launch the app directly by searching for **"ROS 2 Nexus"** in the menu.
+This automatically configures the paths, copies desktop shortcuts to `~/.local/share/applications/`, and updates the desktop database. Afterwards, you can launch **"ROS 2 Nexus"** and **"Robot Control UI"** directly from the Ubuntu Activities application menu or pin them to the Ubuntu dock.
 
 ---
 <br>
@@ -2472,6 +2503,8 @@ dev_ws/
 │   │   ├── app.js                                                         # Rosbridge WebSocket controller & command client
 │   │   └── roslib.min.js                                                  # ROS 2 web bridge client library
 │   ├── my_3d_vision_bringup/                                              # 🌟 Vision pipeline, TF calibration & grasp execution
+│   │   ├── config/
+│   │   │   └── zed_override.yaml                                          # ZED camera overrides (NEURAL depth, native resolution, 10m range)
 │   │   ├── launch/
 │   │   │   ├── zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py   # Primary all-in-one vision & grasping launcher
 │   │   │   └── zed_cam_eef_rviz_octomap_yolo.launch.py                    # Hand-eye end-effector camera & OctoMap launcher
