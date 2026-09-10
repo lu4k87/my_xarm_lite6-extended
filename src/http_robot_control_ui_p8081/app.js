@@ -427,9 +427,16 @@ function logMsg(source, text, type='info') {
 }
 
 function updateSpeed(val) {
-  speedIndexPub.publish(new ROSLIB.Message({ data: parseInt(val) }));
+  const index = parseInt(val);
+  speedIndexPub.publish(new ROSLIB.Message({ data: index }));
   const slider = document.getElementById('speed-slider');
-  if (slider) slider.style.backgroundSize = (val / 4 * 100) + '% 100%';
+  if (slider) slider.style.backgroundSize = (index / 4 * 100) + '% 100%';
+  const percentages = ["20%", "40%", "60%", "80%", "100%"];
+  const displayLevel = index + 1;
+  const speedValElement = document.getElementById('speed-val');
+  if (speedValElement) {
+    speedValElement.innerText = `${displayLevel}/5 (${percentages[index]})`;
+  }
 }
 
 

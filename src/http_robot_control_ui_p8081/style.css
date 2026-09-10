@@ -704,43 +704,136 @@ button.status-pill.reload-btn i {
 
 .speed-control {
   margin-top: 24px;
-  background: rgba(0,0,0,0.2);
-  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px 16px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.speed-control label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--mut); }
-.speed-control span { color: var(--accent); font-weight: 700; }
+.speed-control label,
+.speed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.2;
+  margin-bottom: 0;
+}
+.speed-title {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.speed-val,
+.speed-control span {
+  color: var(--txt);
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
 input[type=range] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  background-image: linear-gradient(rgba(56, 189, 248, 0.5), rgba(56, 189, 248, 0.5));
+  background: rgba(255, 255, 255, 0.08);
+  background-image: linear-gradient(90deg, rgba(56, 189, 248, 0.35), var(--accent));
   background-repeat: no-repeat;
   background-size: 50% 100%;
-  height: 4px;
-  border-radius: 2px;
+  height: 6px;
+  border-radius: 3px;
   outline: none;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: background-size 0.08s ease-out;
+}
+input[type=range]:active {
+  cursor: grabbing;
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 12px;
-  height: 12px;
-  background: rgba(56, 189, 248, 0.8);
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
   border-radius: 50%;
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
-  cursor: pointer;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+  cursor: grab;
+  box-sizing: border-box;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+input[type=range]:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.9);
+}
+input[type=range]:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.95);
+}
+input[type=range]::-moz-range-track {
+  background: rgba(255, 255, 255, 0.08);
+  height: 6px;
+  border-radius: 3px;
+  border: none;
+}
+input[type=range]::-moz-range-progress {
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.35), var(--accent));
+  height: 6px;
+  border-radius: 3px;
 }
 input[type=range]::-moz-range-thumb {
   width: 12px;
   height: 12px;
-  background: rgba(56, 189, 248, 0.8);
+  background: var(--accent);
   border-radius: 50%;
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
-  cursor: pointer;
-  border: none;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+  cursor: grab;
+  box-sizing: content-box;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+input[type=range]:hover::-moz-range-thumb {
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.9);
+}
+input[type=range]:active::-moz-range-thumb {
+  cursor: grabbing;
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.95);
+}
+
+/* Linear Axis Slider override to match green axis color */
+#linear-axis-slider {
+  background-image: linear-gradient(90deg, rgba(16, 185, 129, 0.35), var(--rviz-y));
+}
+#linear-axis-slider::-webkit-slider-thumb {
+  background: var(--rviz-y);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+}
+#linear-axis-slider:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+}
+#linear-axis-slider:active::-webkit-slider-thumb {
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.95);
+}
+#linear-axis-slider::-moz-range-progress {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.35), var(--rviz-y));
+}
+#linear-axis-slider::-moz-range-thumb {
+  background: var(--rviz-y);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+}
+#linear-axis-slider:hover::-moz-range-thumb {
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+}
+#linear-axis-slider:active::-moz-range-thumb {
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.95);
 }
 
 /* Middle Column MoveTo & Panels */

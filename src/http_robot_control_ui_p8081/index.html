@@ -13,7 +13,7 @@
   <script src="roslib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="shortcut icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
@@ -274,7 +274,10 @@
             <button class="btn frame-btn" style="flex: 1;" id="btn-frame-tcp" onclick="setFrame('link_tcp')">TCP Frame</button>
           </div>
           <div class="speed-control">
-            <label><i class="fa-solid fa-gauge"></i> Speed Level: <span id="speed-val">3/5 (60%)</span></label>
+            <div class="speed-header">
+              <span class="speed-title"><i class="fa-solid fa-gauge"></i> Speed Level</span>
+              <span id="speed-val" class="speed-val">3/5 (60%)</span>
+            </div>
             <input type="range" id="speed-slider" min="0" max="4" value="2" oninput="updateSpeed(this.value)">
           </div>
           
@@ -407,7 +410,7 @@
 
   </div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
   
   <script>
     // ── Live Camera Update Loop ──
