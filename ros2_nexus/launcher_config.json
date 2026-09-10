@@ -157,6 +157,9 @@
     "sec_1": [
       "rqt_graph"
     ],
+    "sec_11": [
+      "bash ~/dev_ws/isaacsim/start_isaac_sim.sh"
+    ],
     "sec_2": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev & sleep 8 && ros2 run rviz_window_streamer rviz_window_streamer_node & ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses"
     ],
@@ -171,8 +174,11 @@
     "sec_8": [
       "obs"
     ],
-    "sec_11": [
-      "bash ~/dev_ws/isaacsim/start_isaac_sim.sh"
+    "sec_7": [
+      "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+      "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
+      "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
+      "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py"
     ]
   },
   "__popups_args": {
@@ -268,9 +274,10 @@
         "camera_model:=zedm": true
       }
     },
-    "sec_8": {},
+    "sec_1": {},
     "sec_11": {},
-    "sec_1": {}
+    "sec_8": {},
+    "sec_7": {}
   },
   "info": [
     {
@@ -308,31 +315,31 @@
     {
       "actions": [
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "rviz2",
           "cmd": "rviz2",
           "label": "RViz2",
-          "type": "sys",
-          "active": false,
-          "baseCmd": "rviz2",
-          "args": [],
-          "postCmd": ""
+          "postCmd": "",
+          "type": "sys"
         },
         {
+          "active": true,
+          "args": [],
+          "baseCmd": "rqt_graph",
           "cmd": "rqt_graph",
           "label": "RQT Graph",
-          "type": "sys",
-          "active": true,
-          "baseCmd": "rqt_graph",
-          "args": [],
-          "postCmd": ""
+          "postCmd": "",
+          "type": "sys"
         },
         {
+          "active": false,
+          "args": [],
+          "baseCmd": "rqt",
           "cmd": "rqt",
           "label": "RQT",
-          "type": "sys",
-          "active": false,
-          "baseCmd": "rqt",
-          "args": [],
-          "postCmd": ""
+          "postCmd": "",
+          "type": "sys"
         }
       ],
       "col": 1,
@@ -435,19 +442,19 @@
     {
       "actions": [
         {
-          "active": true,
+          "active": false,
           "args": [
             {
-              "checked": true,
-              "text": "robot_ip:=192.168.1.175"
+              "text": "robot_ip:=192.168.1.175",
+              "checked": true
             },
             {
-              "checked": true,
-              "text": "add_vacuum_gripper:=true"
+              "text": "add_vacuum_gripper:=true",
+              "checked": true
             },
             {
-              "checked": true,
-              "text": "report_type:=dev"
+              "text": "report_type:=dev",
+              "checked": true
             }
           ],
           "baseCmd": "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py",
@@ -695,7 +702,7 @@
     {
       "actions": [
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
           "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
@@ -704,7 +711,7 @@
           "type": "launch"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
           "cmd": "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
@@ -713,7 +720,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
           "cmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
@@ -722,7 +729,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",
           "cmd": "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py",

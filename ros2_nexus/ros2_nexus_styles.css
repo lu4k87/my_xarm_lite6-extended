@@ -442,7 +442,7 @@
       bottom: 40px;
       right: -32px; /* Centers the line in the 64px gap */
       width: 2px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.25) 55%, transparent 100%);
+      background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.3) 10%, rgba(255, 255, 255, 0.25) 70%, transparent 100%);
     }
 
     .col-divider-h {
