@@ -13,7 +13,7 @@
   <script src="roslib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="shortcut icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
@@ -26,34 +26,34 @@
   <div class="app-container">
     
     <header>
-      <div class="header-title">
-        <h1>xArm Lite6 Web Control</h1>
-      </div>
       <div class="header-status">
         <div class="status-group">
-          <div class="status-pill" id="pill-port-8081" title="Port 8081: Robot Control UI (Webserver HTTP)">
-            <div id="dot-port-8081" class="dot glow-green"></div>
-            <span>Robot Control (8081)</span>
-          </div>
+          <button class="status-pill reload-btn" onclick="location.reload()" title="Web Control neu laden">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </button>
           <div class="status-pill" id="pill-port-9090" title="Port 9090: ROS 2 WebSocket Schnittstelle (rosbridge)">
             <div id="connection-dot" class="dot glow-red"></div>
-            <span id="connection-status">ROS 2 Bridge (9090)</span>
+            <span id="connection-status">ROS 2 Bridge: 9090</span>
           </div>
-          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus Launcher & Web Backend (Flask API)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':5000', '_blank')">
+          <div class="status-pill" id="pill-port-8081" title="Port 8081: Robot Control UI (Webserver HTTP)">
+            <div id="dot-port-8081" class="dot glow-green"></div>
+            <span>Robot Control UI: 8081</span>
+          </div>
+          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus App & Web Backend (Flask API)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':5000', '_blank')">
             <div id="dot-port-5000" class="dot glow-red"></div>
-            <span>Nexus Launcher (5000)</span>
+            <span>Nexus App: 5000</span>
           </div>
           <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node-Topologie (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8080/dashboard_index.html', '_blank')">
             <div id="dot-port-8080" class="dot glow-red"></div>
-            <span>Dashboard (8080)</span>
+            <span>Dashboard: 8080</span>
           </div>
           <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server für Kamera & RViz Streams (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8082', '_blank')">
             <div id="dot-port-8082" class="dot glow-red"></div>
-            <span>Video Streams (8082)</span>
+            <span>Video Streams: 8082</span>
           </div>
           <div class="status-pill" id="pill-port-9091" title="Port 9091: Meta Quest 3 VR Teleoperation (WebSocket)">
             <div id="dot-port-9091" class="dot glow-red"></div>
-            <span>VR Teleop (9091)</span>
+            <span>VR Teleop: 9091</span>
           </div>
         </div>
 
@@ -407,7 +407,7 @@
 
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
   
   <script>
     // ── Live Camera Update Loop ──

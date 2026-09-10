@@ -34,7 +34,7 @@ try {
 
 ros.on('connection', () => {
   const connStatus = document.getElementById('connection-status');
-  if (connStatus) connStatus.innerText = 'ROSBridge :9090';
+  if (connStatus) connStatus.innerText = 'ROS 2 Bridge: 9090';
   const connDot = document.getElementById('connection-dot');
   if (connDot) connDot.className = 'dot glow-green';
   logMsg('System', 'Connected to rosbridge_server (ws://localhost:9090)', 'info');
@@ -104,7 +104,7 @@ ros.on('connection', () => {
 
 ros.on('error', (error) => {
   const connStatus = document.getElementById('connection-status');
-  if (connStatus) connStatus.innerText = 'ROSBridge :9090';
+  if (connStatus) connStatus.innerText = 'ROS 2 Bridge: 9090';
   const connDot = document.getElementById('connection-dot');
   if (connDot) connDot.className = 'dot glow-red';
   logMsg('System', 'Error connecting to websocket server', 'err');
@@ -114,7 +114,7 @@ let reconnectTimer = null;
 
 ros.on('close', () => {
   const connStatus = document.getElementById('connection-status');
-  if (connStatus) connStatus.innerText = 'ROSBridge :9090';
+  if (connStatus) connStatus.innerText = 'ROS 2 Bridge: 9090';
   const connDot = document.getElementById('connection-dot');
   if (connDot) connDot.className = 'dot glow-red';
   document.getElementById('mode-dot').className = 'dot glow-red';

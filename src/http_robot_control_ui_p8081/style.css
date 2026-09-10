@@ -91,13 +91,38 @@ body {
 
 header {
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--brd);
+}
+
+button.status-pill.reload-btn {
+  background: var(--bg-panel);
+  border: 1px solid var(--brd);
+  color: var(--mut);
+  cursor: pointer;
+  padding: 6px 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+button.status-pill.reload-btn:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--txt);
+  transform: translateY(-1px);
+}
+
+button.status-pill.reload-btn:hover i {
+  color: var(--accent, #38bdf8);
+  transform: rotate(180deg);
+}
+
+button.status-pill.reload-btn i {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+  font-size: 13px;
 }
 
 .header-title {
