@@ -702,21 +702,41 @@
               // Build Flex Layout
               const cardLayout = document.createElement('div');
               cardLayout.className = 'modal-card-layout';
-              cardLayout.style.cssText = 'display: flex; width: 100%; justify-content: space-between; align-items: stretch; gap: 24px; flex: 1; min-width: 0;';
+              cardLayout.style.cssText = 'display: flex; width: 100%; justify-content: space-between; align-items: stretch; gap: 20px; flex: 1; min-width: 0;';
               
               const leftCol = document.createElement('div');
               leftCol.className = 'modal-card-left-col';
-              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1; min-width: 0;';
+              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1 1 0%; min-width: 0; overflow: hidden;';
               
               const titleDiv = document.createElement('div');
-              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0;';
+              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0; width: 100%; overflow: hidden;';
               
               const ulNode = Array.from(li.childNodes).find(n => n.tagName === 'UL');
               Array.from(li.childNodes).forEach(node => {
                   if (node !== ulNode) {
-                      if (node.nodeType === 1 && node.style.float === 'right') {
-                          node.style.float = 'none';
-                          node.style.marginLeft = '8px';
+                      if (node.nodeType === 1) {
+                          const textContent = (node.textContent || '').trim();
+                          const isDesc = (node.style.float === 'right') || 
+                                         (textContent.startsWith('(') && textContent.endsWith(')'));
+                          if (isDesc) {
+                              node.style.float = 'none';
+                              node.style.marginLeft = '6px';
+                              node.style.fontSize = '10.5px';
+                              node.style.color = '#64748b';
+                              node.style.whiteSpace = 'nowrap';
+                              node.style.overflow = 'hidden';
+                              node.style.textOverflow = 'ellipsis';
+                              node.style.flexShrink = '2';
+                              node.style.minWidth = '0';
+                          } else if (!node.classList.contains('badge') && !node.classList.contains('modal-cmd-btn')) {
+                              node.style.whiteSpace = 'nowrap';
+                              node.style.overflow = 'hidden';
+                              node.style.textOverflow = 'ellipsis';
+                              node.style.flexShrink = '1';
+                              node.style.minWidth = '0';
+                              node.style.fontSize = '12.5px';
+                              node.style.fontWeight = '600';
+                          }
                       }
                       titleDiv.appendChild(node);
                   }
@@ -724,33 +744,32 @@
               
               leftCol.appendChild(titleDiv);
               if (ulNode) {
-                  ulNode.style.cssText = 'margin-left: 20px; margin-top: 20px; margin-bottom: 2px;';
+                  ulNode.style.cssText = 'margin-left: 18px; margin-top: 20px; margin-bottom: 2px;';
                   leftCol.appendChild(ulNode);
               }
 
               const middleCol = document.createElement('div');
-              middleCol.className = 'modal-card-middle-col';
-              if (isLaunchCard) middleCol.classList.add('has-divider-v');
+              middleCol.className = 'modal-card-middle-col has-divider-v';
               
               const spacer = document.createElement('div');
               spacer.className = 'modal-params-header';
               spacer.style.cssText = 'height: 32px; min-height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 6px;';
-              spacer.innerHTML = `<i class="fa-solid fa-sliders" style="font-size:11px; color:var(--accent);"></i> <span>PARAMETERS &amp; ARGS</span>`;
+              spacer.innerHTML = `<i class="fa-solid fa-sliders" style="font-size:10px; color:var(--accent);"></i> <span>PARAMETERS &amp; ARGS</span>`;
               middleCol.appendChild(spacer);
               
               const argsDiv = createArgsDiv(action);
-              argsDiv.style.marginTop = isLaunchCard ? '20px' : '10px';
+              argsDiv.style.marginTop = '20px';
               middleCol.appendChild(argsDiv);
               
               const badgeContainer = document.createElement('div');
-              badgeContainer.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0;';
+              badgeContainer.style.cssText = 'display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0;';
               titleDiv.appendChild(badgeContainer);
 
               let isRos2 = (action && action.cmd && action.cmd.startsWith('ros2 run')) || (cmdToDisplay && cmdToDisplay.startsWith('ros2 run'));
               if (isRos2) {
                   const ros2Badge = document.createElement('div');
                   ros2Badge.innerHTML = `<i class="fa-solid fa-robot"></i> ROS 2`;
-                  ros2Badge.style.cssText = 'background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); border-radius:5px; padding:3px 7px; font-size:10px; color:#93c5fd; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; flex-shrink:0;';
+                  ros2Badge.style.cssText = 'background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#93c5fd; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
                   badgeContainer.appendChild(ros2Badge);
               }
               
@@ -758,7 +777,7 @@
               if (hasPython3) {
                   const pythonBadge = document.createElement('div');
                   pythonBadge.innerHTML = `<i class="fa-brands fa-python"></i> Python3`;
-                  pythonBadge.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.35); border-radius:5px; padding:3px 7px; font-size:10px; color:#fde047; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; flex-shrink:0;';
+                  pythonBadge.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#fde047; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
                   badgeContainer.appendChild(pythonBadge);
               }
               
@@ -766,13 +785,14 @@
               if (hasChrome) {
                   const chromeBadge = document.createElement('div');
                   chromeBadge.innerHTML = `<i class="fa-brands fa-chrome"></i> +CHROME`;
-                  chromeBadge.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.35); border-radius:5px; padding:3px 7px; font-size:10px; color:#4285F4; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; flex-shrink:0;';
+                  chromeBadge.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#4285F4; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
                   badgeContainer.appendChild(chromeBadge);
               }
               
               const cmdBadge1 = document.createElement('div');
               cmdBadge1.className = 'modal-cmd-btn';
-              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal" style="font-size:10px; color:#38bdf8;"></i> CMD<div class="cmd-tooltip" style="position:absolute; background:rgba(15,23,42,0.96); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:10px 14px; font-size:11px; color:#f8fafc; white-space:pre-wrap; overflow-wrap:break-word; width:360px; text-align:left; pointer-events:none; opacity:0; transition:opacity 0.15s ease; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:999999; font-family:var(--font-mono); letter-spacing:0; line-height:1.4;">${cmdToDisplay.replace(/"/g, '&quot;')}</div>`;
+              cmdBadge1.style.cssText = 'padding: 2px 6px; font-size: 9.5px;';
+              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal" style="font-size:9px; color:#38bdf8;"></i> CMD<div class="cmd-tooltip" style="position:absolute; background:rgba(15,23,42,0.96); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:8px 12px; font-size:10.5px; color:#f8fafc; white-space:pre-wrap; overflow-wrap:break-word; width:340px; text-align:left; pointer-events:none; opacity:0; transition:opacity 0.15s ease; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:999999; font-family:var(--font-mono); letter-spacing:0; line-height:1.4;">${cmdToDisplay.replace(/"/g, '&quot;')}</div>`;
               cmdBadge1.onmouseover = (e) => {
                   const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
                   tooltip.style.opacity = '1';
@@ -872,17 +892,15 @@
               
               li.insertBefore(liInnerWrapper, li.firstChild);
               
-              if (isLaunchCard) {
-                  const hrLine = document.createElement('div');
-                  hrLine.style.position = 'absolute';
-                  hrLine.style.top = '56px';
-                  hrLine.style.left = '52px';
-                  hrLine.style.width = 'calc(100% - 70px)';
-                  hrLine.style.height = '1px';
-                  hrLine.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
-                  hrLine.style.pointerEvents = 'none';
-                  li.appendChild(hrLine);
-              }
+              const hrLine = document.createElement('div');
+              hrLine.style.position = 'absolute';
+              hrLine.style.top = '56px';
+              hrLine.style.left = '48px';
+              hrLine.style.width = 'calc(100% - 64px)';
+              hrLine.style.height = '1px';
+              hrLine.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
+              hrLine.style.pointerEvents = 'none';
+              li.appendChild(hrLine);
           });
           
               // Append any unmatched actions to the bottom to ensure nothing is missing
@@ -907,57 +925,57 @@
               
               const cardLayout = document.createElement('div');
               cardLayout.className = 'modal-card-layout';
-              cardLayout.style.cssText = 'display: flex; width: 100%; justify-content: space-between; align-items: stretch; gap: 24px; flex: 1; min-width: 0;';
+              cardLayout.style.cssText = 'display: flex; width: 100%; justify-content: space-between; align-items: stretch; gap: 20px; flex: 1; min-width: 0;';
               
-               const leftCol = document.createElement('div');
+              const leftCol = document.createElement('div');
               leftCol.className = 'modal-card-left-col';
-              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1; min-width: 0;';
+              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1 1 0%; min-width: 0; overflow: hidden;';
               
               const titleDiv = document.createElement('div');
-              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0;';
-              titleDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: 600; font-size: 14px;">${cmdName}</span> <span style="color: #64748b; font-size: 11px; margin-left: 6px;">(Auto-Added)</span>`;
+              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0; width: 100%; overflow: hidden;';
+              titleDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-shrink: 1;">${cmdName}</span> <span style="color: #64748b; font-size: 10.5px; margin-left: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 2; min-width: 0;">(Auto-Added)</span>`;
               leftCol.appendChild(titleDiv);
               
               const isLaunchCard2 = action.cmd.startsWith('ros2 launch');
               const middleCol = document.createElement('div');
-              middleCol.className = 'modal-card-middle-col';
-              if (isLaunchCard2) middleCol.classList.add('has-divider-v');
+              middleCol.className = 'modal-card-middle-col has-divider-v';
               
               const spacer = document.createElement('div');
               spacer.className = 'modal-params-header';
               spacer.style.cssText = 'height: 32px; min-height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 6px;';
-              spacer.innerHTML = `<i class="fa-solid fa-sliders" style="font-size:11px; color:var(--accent);"></i> <span>PARAMETERS &amp; ARGS</span>`;
+              spacer.innerHTML = `<i class="fa-solid fa-sliders" style="font-size:10px; color:var(--accent);"></i> <span>PARAMETERS &amp; ARGS</span>`;
               middleCol.appendChild(spacer);
               
               const argsDiv = createArgsDiv(action);
-              argsDiv.style.marginTop = isLaunchCard2 ? '20px' : '10px';
+              argsDiv.style.marginTop = '20px';
               middleCol.appendChild(argsDiv);
               
               const badgeContainer = document.createElement('div');
-              badgeContainer.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0;';
+              badgeContainer.style.cssText = 'display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0;';
               
               if (action.cmd.startsWith('ros2 run')) {
                   const ros2Badge2 = document.createElement('div');
                   ros2Badge2.innerHTML = `<i class="fa-solid fa-robot"></i> ROS 2`;
-                  ros2Badge2.style.cssText = 'background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); border-radius:5px; padding:3px 7px; font-size:10px; color:#93c5fd; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; flex-shrink:0;';
+                  ros2Badge2.style.cssText = 'background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#93c5fd; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
                   badgeContainer.appendChild(ros2Badge2);
               }
               if (action.cmd.includes('python3')) {
                   const pythonBadge2 = document.createElement('div');
                   pythonBadge2.innerHTML = `<i class="fa-brands fa-python"></i> Python3`;
-                  pythonBadge2.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.35); border-radius:5px; padding:3px 7px; font-size:10px; color:#fde047; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; flex-shrink:0;';
+                  pythonBadge2.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#fde047; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
                   badgeContainer.appendChild(pythonBadge2);
               }
               if (action.cmd.includes('google-chrome') || action.cmd.includes('chromium-browser')) {
                   const chromeBadge2 = document.createElement('div');
                   chromeBadge2.innerHTML = `<i class="fa-brands fa-chrome"></i> +CHROME`;
-                  chromeBadge2.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.35); border-radius:5px; padding:3px 7px; font-size:10px; color:#4285F4; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; flex-shrink:0;';
+                  chromeBadge2.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#4285F4; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
                   badgeContainer.appendChild(chromeBadge2);
               }
               
               const cmdBadge1 = document.createElement('div');
               cmdBadge1.className = 'modal-cmd-btn';
-              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal" style="font-size:10px; color:#38bdf8;"></i> CMD<div class="cmd-tooltip" style="position:absolute; background:rgba(15,23,42,0.96); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:10px 14px; font-size:11px; color:#f8fafc; white-space:pre-wrap; overflow-wrap:break-word; width:360px; text-align:left; pointer-events:none; opacity:0; transition:opacity 0.15s ease; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:999999; font-family:var(--font-mono); letter-spacing:0; line-height:1.4;">${action.cmd.replace(/"/g, '&quot;')}</div>`;
+              cmdBadge1.style.cssText = 'padding: 2px 6px; font-size: 9.5px;';
+              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal" style="font-size:9px; color:#38bdf8;"></i> CMD<div class="cmd-tooltip" style="position:absolute; background:rgba(15,23,42,0.96); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:8px 12px; font-size:10.5px; color:#f8fafc; white-space:pre-wrap; overflow-wrap:break-word; width:340px; text-align:left; pointer-events:none; opacity:0; transition:opacity 0.15s ease; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:999999; font-family:var(--font-mono); letter-spacing:0; line-height:1.4;">${action.cmd.replace(/"/g, '&quot;')}</div>`;
               cmdBadge1.onmouseover = (e) => {
                   const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
                   tooltip.style.opacity = '1';
@@ -1027,17 +1045,15 @@
               
               li.appendChild(liInnerWrapper);
               
-              if (isLaunchCard2) {
-                  const hrLine2 = document.createElement('div');
-                  hrLine2.style.position = 'absolute';
-                  hrLine2.style.top = '56px';
-                  hrLine2.style.left = '52px';
-                  hrLine2.style.width = 'calc(100% - 70px)';
-                  hrLine2.style.height = '1px';
-                  hrLine2.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
-                  hrLine2.style.pointerEvents = 'none';
-                  li.appendChild(hrLine2);
-              }
+              const hrLine2 = document.createElement('div');
+              hrLine2.style.position = 'absolute';
+              hrLine2.style.top = '56px';
+              hrLine2.style.left = '48px';
+              hrLine2.style.width = 'calc(100% - 64px)';
+              hrLine2.style.height = '1px';
+              hrLine2.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
+              hrLine2.style.pointerEvents = 'none';
+              li.appendChild(hrLine2);
               
               topUl.appendChild(li);
           });

@@ -223,7 +223,7 @@
                    inner = inner.replace(/^<li\b/, `<li ${rawAttr}`);
                    html += inner;
                } else {
-                   html += `<li ${rawAttr}><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd); font-size: 1.7em; font-weight: normal;">${aCmd}</span></li>`;
+                   html += `<li ${rawAttr}><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd); font-size: 12.5px; font-weight: 600;">${aCmd}</span></li>`;
                }
                return;
            }
@@ -252,7 +252,7 @@
                    const colorVar = isLaunch ? 'var(--c-launch)' : 'var(--c-node)';
                    const term = firstCmd.split(' ').slice(2).join(' ') || firstCmd;
                    const lbl = a.title || term;
-                   primaryHtml = `<li><span class="badge ${badgeCls}" style="margin-right: 6px;">${badgeIcon}</span><span style="color: ${colorVar}; font-size: 1.7em; font-weight: normal;"> ${term}</span> <span style="float: right; opacity: 0.7;">(${lbl})</span></li>`;
+                   primaryHtml = `<li><span class="badge ${badgeCls}" style="margin-right: 6px;">${badgeIcon}</span><span style="color: ${colorVar}; font-size: 12.5px; font-weight: 600;"> ${term}</span> <span style="float: right; opacity: 0.7;">(${lbl})</span></li>`;
                }
 
                // Tag the top-level <li>
@@ -278,7 +278,7 @@
                        scColor = 'var(--c-launch)';
                        scTerm = sc.split(' ').slice(2).join(' ') || sc;
                    }
-                   subItemsHtml += `<li>${scBadge}<span style="color: ${scColor}; font-size: 1.7em; font-weight: normal;"> ${scTerm}</span> <span style="float: right; opacity: 0.7;">(${scDesc})</span></li>`;
+                   subItemsHtml += `<li>${scBadge}<span style="color: ${scColor}; font-size: 11.5px; font-weight: 500;"> ${scTerm}</span> <span style="float: right; opacity: 0.7;">(${scDesc})</span></li>`;
                }
 
                if (primaryHtml.includes('</ul>')) {
@@ -335,7 +335,7 @@
                if (aCmd.length > 40) term = a.label || a.title || (aCmd.slice(0, 37) + '...');
            }
 
-           html += `<li ${rawAttr}>${badgeHtml}<span style="color: ${colorVar}; font-size: 1.7em; font-weight: normal;"> ${term}</span> <span style="float: right; opacity: 0.7;">(${desc})</span></li>`;
+           html += `<li ${rawAttr}>${badgeHtml}<span style="color: ${colorVar}; font-size: 12.5px; font-weight: 600;"> ${term}</span> <span style="float: right; opacity: 0.7;">(${desc})</span></li>`;
        });
        html += `</ul>`;
        return html;
