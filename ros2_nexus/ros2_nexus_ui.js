@@ -706,10 +706,10 @@
               
               const leftCol = document.createElement('div');
               leftCol.className = 'modal-card-left-col';
-              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0;';
+              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1; min-width: 0;';
               
               const titleDiv = document.createElement('div');
-              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; min-height: 32px; flex-wrap: wrap;';
+              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0;';
               
               const ulNode = Array.from(li.childNodes).find(n => n.tagName === 'UL');
               Array.from(li.childNodes).forEach(node => {
@@ -724,7 +724,7 @@
               
               leftCol.appendChild(titleDiv);
               if (ulNode) {
-                  ulNode.style.marginLeft = '20px';
+                  ulNode.style.cssText = 'margin-left: 20px; margin-top: 20px; margin-bottom: 2px;';
                   leftCol.appendChild(ulNode);
               }
 
@@ -734,10 +734,12 @@
               
               const spacer = document.createElement('div');
               spacer.className = 'modal-params-header';
+              spacer.style.cssText = 'height: 32px; min-height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 6px;';
               spacer.innerHTML = `<i class="fa-solid fa-sliders" style="font-size:11px; color:var(--accent);"></i> <span>PARAMETERS &amp; ARGS</span>`;
               middleCol.appendChild(spacer);
               
               const argsDiv = createArgsDiv(action);
+              argsDiv.style.marginTop = isLaunchCard ? '20px' : '10px';
               middleCol.appendChild(argsDiv);
               
               const badgeContainer = document.createElement('div');
@@ -873,7 +875,7 @@
               if (isLaunchCard) {
                   const hrLine = document.createElement('div');
                   hrLine.style.position = 'absolute';
-                  hrLine.style.top = '48px';
+                  hrLine.style.top = '56px';
                   hrLine.style.left = '52px';
                   hrLine.style.width = 'calc(100% - 70px)';
                   hrLine.style.height = '1px';
@@ -907,12 +909,12 @@
               cardLayout.className = 'modal-card-layout';
               cardLayout.style.cssText = 'display: flex; width: 100%; justify-content: space-between; align-items: stretch; gap: 24px; flex: 1; min-width: 0;';
               
-              const leftCol = document.createElement('div');
+               const leftCol = document.createElement('div');
               leftCol.className = 'modal-card-left-col';
-              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0;';
+              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1; min-width: 0;';
               
               const titleDiv = document.createElement('div');
-              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; min-height: 32px; flex-wrap: wrap;';
+              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0;';
               titleDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: 600; font-size: 14px;">${cmdName}</span> <span style="color: #64748b; font-size: 11px; margin-left: 6px;">(Auto-Added)</span>`;
               leftCol.appendChild(titleDiv);
               
@@ -923,10 +925,12 @@
               
               const spacer = document.createElement('div');
               spacer.className = 'modal-params-header';
+              spacer.style.cssText = 'height: 32px; min-height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 6px;';
               spacer.innerHTML = `<i class="fa-solid fa-sliders" style="font-size:11px; color:var(--accent);"></i> <span>PARAMETERS &amp; ARGS</span>`;
               middleCol.appendChild(spacer);
               
               const argsDiv = createArgsDiv(action);
+              argsDiv.style.marginTop = isLaunchCard2 ? '20px' : '10px';
               middleCol.appendChild(argsDiv);
               
               const badgeContainer = document.createElement('div');
@@ -1026,7 +1030,7 @@
               if (isLaunchCard2) {
                   const hrLine2 = document.createElement('div');
                   hrLine2.style.position = 'absolute';
-                  hrLine2.style.top = '48px';
+                  hrLine2.style.top = '56px';
                   hrLine2.style.left = '52px';
                   hrLine2.style.width = 'calc(100% - 70px)';
                   hrLine2.style.height = '1px';
