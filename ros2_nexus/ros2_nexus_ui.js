@@ -247,8 +247,10 @@
                 const labelRect = zedHwLabel.getBoundingClientRect();
 
                 if (middleColRect.height > 0 && targetRect.height > 0) {
-                    const targetCenterY = (targetRect.top + targetRect.height / 2) - middleColRect.top;
-                    const labelHeight = labelRect.height || 32;
+                    const modalWindow = document.getElementById('launch-modal-window');
+                    const zoom = (modalWindow ? (parseFloat(getComputedStyle(modalWindow).zoom) || 1) : 1);
+                    const targetCenterY = ((targetRect.top + targetRect.height / 2) - middleColRect.top) / zoom;
+                    const labelHeight = (labelRect.height / zoom) || 32;
                     const desiredTop = targetCenterY - (labelHeight / 2);
 
                     zedHwLabel.style.position = 'absolute';
@@ -800,14 +802,16 @@
                   const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
                   tooltip.style.opacity = '1';
                   const rect = cmdBadge1.getBoundingClientRect();
-                  tooltip.style.left = (e.clientX - rect.left + 15) + 'px';
-                  tooltip.style.top = (e.clientY - rect.top + 15) + 'px';
+                  const zoom = (parseFloat(getComputedStyle(cmdBadge1.closest('#launch-modal-window') || document.body).zoom) || 1);
+                  tooltip.style.left = ((e.clientX - rect.left) / zoom + 15) + 'px';
+                  tooltip.style.top = ((e.clientY - rect.top) / zoom + 15) + 'px';
               };
               cmdBadge1.onmousemove = (e) => {
                   const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
                   const rect = cmdBadge1.getBoundingClientRect();
-                  tooltip.style.left = (e.clientX - rect.left + 15) + 'px';
-                  tooltip.style.top = (e.clientY - rect.top + 15) + 'px';
+                  const zoom = (parseFloat(getComputedStyle(cmdBadge1.closest('#launch-modal-window') || document.body).zoom) || 1);
+                  tooltip.style.left = ((e.clientX - rect.left) / zoom + 15) + 'px';
+                  tooltip.style.top = ((e.clientY - rect.top) / zoom + 15) + 'px';
               };
               cmdBadge1.onmouseout = () => {
                   cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '0';
@@ -987,14 +991,16 @@
                   const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
                   tooltip.style.opacity = '1';
                   const rect = cmdBadge1.getBoundingClientRect();
-                  tooltip.style.left = (e.clientX - rect.left + 15) + 'px';
-                  tooltip.style.top = (e.clientY - rect.top + 15) + 'px';
+                  const zoom = (parseFloat(getComputedStyle(cmdBadge1.closest('#launch-modal-window') || document.body).zoom) || 1);
+                  tooltip.style.left = ((e.clientX - rect.left) / zoom + 15) + 'px';
+                  tooltip.style.top = ((e.clientY - rect.top) / zoom + 15) + 'px';
               };
               cmdBadge1.onmousemove = (e) => {
                   const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
                   const rect = cmdBadge1.getBoundingClientRect();
-                  tooltip.style.left = (e.clientX - rect.left + 15) + 'px';
-                  tooltip.style.top = (e.clientY - rect.top + 15) + 'px';
+                  const zoom = (parseFloat(getComputedStyle(cmdBadge1.closest('#launch-modal-window') || document.body).zoom) || 1);
+                  tooltip.style.left = ((e.clientX - rect.left) / zoom + 15) + 'px';
+                  tooltip.style.top = ((e.clientY - rect.top) / zoom + 15) + 'px';
               };
               cmdBadge1.onmouseout = () => {
                   cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '0';

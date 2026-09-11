@@ -429,9 +429,11 @@
       background: linear-gradient(165deg, rgba(16, 23, 38, 0.98) 0%, rgba(9, 14, 25, 0.99) 100%);
       border: 1px solid rgba(56, 189, 248, 0.25);
       border-radius: 20px;
-      zoom: 1;
-      width: min(78vw, 1320px);
-      height: min(88vh, 920px);
+      zoom: 1.25;
+      width: min(calc(84vw / 1.25), 1320px);
+      max-width: calc(92vw / 1.25);
+      height: min(calc(88vh / 1.25), 920px);
+      max-height: calc(92vh / 1.25);
       display: flex;
       flex-direction: column;
       box-shadow: 0 30px 80px -10px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.12);
