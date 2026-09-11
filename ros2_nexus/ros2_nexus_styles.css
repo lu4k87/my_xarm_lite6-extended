@@ -354,15 +354,15 @@
       font-family: var(--font-sans);
       font-weight: 350;
     }
-    .card-tooltip ul, #launch-modal-body ul {
+    .card-tooltip ul {
       list-style: none !important;
     }
-    .card-tooltip ul ul, #launch-modal-body ul ul {
+    .card-tooltip ul ul {
       list-style-type: '\25B8   ' !important;
       border-left: 1px solid transparent !important;
       border-image: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.35) 10%, rgba(255, 255, 255, 0.35) 90%, transparent 100%) 1 !important;
     }
-    .card-tooltip ul ul li::marker, #launch-modal-body ul ul li::marker {
+    .card-tooltip ul ul li::marker {
       color: rgba(255, 255, 255, 0.3);
     }
     .card-wrapper:hover .card-tooltip {
@@ -602,30 +602,106 @@
       text-overflow: ellipsis !important;
       min-width: 0 !important;
     }
-    /* Tree container inside modal card leftCol */
+    /* ── MODAL CARD TREE HIERARCHY ── */
+    /* Level 1: Root list of components under the Launch card */
     .modal-card-left-col > ul,
     #launch-modal-body .modal-card-left-col > ul {
-      margin: 18px 0 0 16px !important;
+      margin: 18px 0 0 6px !important;
       padding: 0 !important;
+      border: none !important;
+      border-left: none !important;
+      border-image: none !important;
       list-style: none !important;
       display: block !important;
-      width: calc(100% - 16px) !important;
+      width: calc(100% - 6px) !important;
+      position: relative !important;
     }
 
-    /* Sub-levels in tree (e.g. child nodes under a sub-launch) */
+    /* Level 1 Items: Line 1 leads from Launch downwards to direct items & Sub-Launches */
+    .modal-card-left-col > ul > li,
+    #launch-modal-body .modal-card-left-col > ul > li {
+      display: block !important;
+      width: 100% !important;
+      clear: both !important;
+      font-size: 11px !important;
+      line-height: 22px !important;
+      margin: 3px 0 !important;
+      position: relative !important;
+      padding-left: 22px !important;
+      list-style: none !important;
+    }
+
+    /* Line 1 (Vertical): Führt vom Launch vertikal nach unten */
+    .modal-card-left-col > ul > li::before,
+    #launch-modal-body .modal-card-left-col > ul > li::before {
+      content: "" !important;
+      position: absolute !important;
+      left: 8px !important;
+      top: -3px !important;
+      bottom: -3px !important;
+      width: 1px !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+      pointer-events: none !important;
+    }
+
+    /* Erstes Element: Linie reicht nach oben zur Trennlinie */
+    .modal-card-left-col > ul > li:first-child::before,
+    #launch-modal-body .modal-card-left-col > ul > li:first-child::before {
+      top: -16px !important;
+    }
+
+    /* Letztes direktes Element: Linie 1 stoppt exakt am Abzweig (11px) */
+    .modal-card-left-col > ul > li:last-child::before,
+    #launch-modal-body .modal-card-left-col > ul > li:last-child::before {
+      bottom: auto !important;
+      height: 15px !important;
+    }
+
+    /* Einziges Element (sowohl first-child als auch last-child): Von oben bis zum Abzweig (11px) */
+    .modal-card-left-col > ul > li:only-child::before,
+    .modal-card-left-col > ul > li:first-child:last-child::before,
+    #launch-modal-body .modal-card-left-col > ul > li:only-child::before,
+    #launch-modal-body .modal-card-left-col > ul > li:first-child:last-child::before {
+      top: -16px !important;
+      bottom: auto !important;
+      height: 28px !important;
+    }
+
+    /* Horizontaler Abzweig (+--) an Linie 1: Verbindet die Linie mit dem Badge (exakt 12px lang, 14px Abstand) */
+    .modal-card-left-col > ul > li::after,
+    #launch-modal-body .modal-card-left-col > ul > li::after {
+      content: "" !important;
+      position: absolute !important;
+      left: 8px !important;
+      top: 11px !important;
+      width: 12px !important;
+      height: 1px !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+      pointer-events: none !important;
+    }
+
+    /* Level 2: Sub-Launch Trennlinie für Kind-Nodes */
     .modal-card-left-col ul ul,
-    #launch-modal-body .modal-card-left-col ul ul {
-      margin: 4px 0 6px 14px !important;
-      padding-left: 14px !important;
-      border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
+    #launch-modal-body .modal-card-left-col ul ul,
+    .modal-card-left-col .sub-launch-tree,
+    #launch-modal-body .sub-launch-tree {
+      margin: 4px 0 6px 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      border-left: 1px solid rgba(255, 255, 255, 0.28) !important;
+      border-image: none !important;
       list-style: none !important;
       display: block !important;
       clear: both !important;
+      position: relative !important;
+      width: 100% !important;
     }
 
-    /* Tree list items - block flow to allow native float and clean line wrapping */
-    .modal-card-left-col li,
-    #launch-modal-body .modal-card-left-col li {
+    /* Level 2 Items: Kind-Nodes, die an der Sub-Launch-Trennlinie dranhängen */
+    .modal-card-left-col ul ul > li,
+    #launch-modal-body .modal-card-left-col ul ul > li,
+    .modal-card-left-col .sub-launch-tree > li,
+    #launch-modal-body .sub-launch-tree > li {
       display: block !important;
       width: 100% !important;
       clear: both !important;
@@ -633,11 +709,36 @@
       line-height: 22px !important;
       margin: 2px 0 !important;
       position: relative !important;
+      padding-left: 14px !important;
+      list-style: none !important;
+    }
+
+    /* Keine vertikale Linie auf den einzelnen Nodes der Sub-Launches (wird bereits durch ul border-left gezeichnet) */
+    .modal-card-left-col ul ul > li::before,
+    #launch-modal-body .modal-card-left-col ul ul > li::before,
+    .modal-card-left-col .sub-launch-tree > li::before,
+    #launch-modal-body .sub-launch-tree > li::before {
+      display: none !important;
+    }
+
+    /* Horizontaler Abzweig (+--) an Linie 2: Verbindet die Trennlinie mit dem Node (exakt 12px lang, gleicher 14px Abstand!) */
+    .modal-card-left-col ul ul > li::after,
+    #launch-modal-body .modal-card-left-col ul ul > li::after,
+    .modal-card-left-col .sub-launch-tree > li::after,
+    #launch-modal-body .sub-launch-tree > li::after {
+      content: "" !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 11px !important;
+      width: 12px !important;
+      height: 1px !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+      pointer-events: none !important;
     }
 
     /* Badges inside tree */
-    .modal-card-left-col li > .badge,
-    #launch-modal-body .modal-card-left-col li > .badge {
+    .modal-card-left-col li .badge,
+    #launch-modal-body .modal-card-left-col li .badge {
       display: inline-flex !important;
       align-items: center !important;
       vertical-align: middle !important;
@@ -648,15 +749,15 @@
     }
 
     /* Terms/Node names inside tree */
-    .modal-card-left-col li > span:not(.badge):not([style*="float"]) {
+    .modal-card-left-col li span:not(.badge):not([style*="float"]) {
       font-size: 11.5px !important;
       font-weight: 500 !important;
       vertical-align: middle !important;
     }
 
     /* Descriptions with float:right inside tree */
-    .modal-card-left-col li > span[style*="float"],
-    #launch-modal-body .modal-card-left-col li > span[style*="float"] {
+    .modal-card-left-col li span[style*="float"],
+    #launch-modal-body .modal-card-left-col li span[style*="float"] {
       float: right !important;
       font-size: 10.5px !important;
       color: #94a3b8 !important;

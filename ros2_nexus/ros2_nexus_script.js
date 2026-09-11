@@ -286,7 +286,7 @@
                    primaryHtml = primaryHtml.slice(0, lastUlIdx) + subItemsHtml + primaryHtml.slice(lastUlIdx);
                } else {
                    const lastLiIdx = primaryHtml.lastIndexOf('</li>');
-                   const nestedUl = `<ul style="padding-left: 14px; margin: 4px 0 0 0; border-left: 1px solid rgba(255, 255, 255, 0.35);">${subItemsHtml}</ul>`;
+                   const nestedUl = `<ul class="sub-launch-tree" style="padding-left: 14px; margin: 4px 0 0 0; border-left: 1px solid rgba(255, 255, 255, 0.35);">${subItemsHtml}</ul>`;
                    if (lastLiIdx !== -1) {
                        primaryHtml = primaryHtml.slice(0, lastLiIdx) + nestedUl + primaryHtml.slice(lastLiIdx);
                    } else {

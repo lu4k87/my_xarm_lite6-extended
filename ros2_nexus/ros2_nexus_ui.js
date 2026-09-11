@@ -744,7 +744,10 @@
               
               leftCol.appendChild(titleDiv);
               if (ulNode) {
-                  ulNode.style.cssText = 'margin-left: 18px; margin-top: 20px; margin-bottom: 2px;';
+                  ulNode.style.cssText = 'margin-left: 6px; margin-top: 20px; margin-bottom: 2px; border: none; padding: 0;';
+                  ulNode.querySelectorAll('ul').forEach(subUl => {
+                      subUl.classList.add('sub-launch-tree');
+                  });
                   leftCol.appendChild(ulNode);
               }
 
