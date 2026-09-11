@@ -784,10 +784,11 @@
 
               const middleCol = document.createElement('div');
               middleCol.className = 'modal-card-middle-col';
+              if (isLaunchCard) middleCol.classList.add('has-divider-v');
               middleCol.style.flex = '0 0 280px'; // Width for args and parameters
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
-              middleCol.style.borderLeft = isLaunchCard ? '1px solid rgba(255, 255, 255, 0.35)' : 'none';
+              middleCol.style.borderLeft = 'none';
               middleCol.style.padding = '0 20px';
               middleCol.style.minWidth = '0';
               
@@ -942,7 +943,7 @@
                   hrLine.style.left = '55px'; // 15px li padding + 40px cb width
                   hrLine.style.width = 'calc(100% - 110px)';
                   hrLine.style.height = '1px';
-                  hrLine.style.background = 'rgba(255, 255, 255, 0.35)';
+                  hrLine.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%)';
                   hrLine.style.pointerEvents = 'none';
                   li.appendChild(hrLine);
               }
@@ -1026,10 +1027,11 @@
               
               const middleCol = document.createElement('div');
               middleCol.className = 'modal-card-middle-col';
+              if (isLaunchCard2) middleCol.classList.add('has-divider-v');
               middleCol.style.flex = '0 0 280px'; // Width for args and parameters
               middleCol.style.display = 'flex';
               middleCol.style.flexDirection = 'column';
-              middleCol.style.borderLeft = isLaunchCard2 ? '1px solid rgba(255, 255, 255, 0.35)' : 'none';
+              middleCol.style.borderLeft = 'none';
               middleCol.style.padding = '0 20px';
               middleCol.style.minWidth = '0';
               
@@ -1155,7 +1157,7 @@
                   hrLine2.style.left = '15px';
                   hrLine2.style.width = 'calc(100% - 70px)';
                   hrLine2.style.height = '1px';
-                  hrLine2.style.background = 'rgba(255, 255, 255, 0.35)';
+                  hrLine2.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%)';
                   hrLine2.style.pointerEvents = 'none';
                   li.appendChild(hrLine2);
               }
@@ -1223,7 +1225,7 @@
               <div id="launch-modal" style="position:fixed; inset:0; width:100%; height:100%; background:rgba(0,0,0,0.35); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(12px) saturate(0.7); -webkit-backdrop-filter: blur(12px) saturate(0.7); animation: fadeIn 0.3s ease; font-family:var(--font-sans, 'Plus Jakarta Sans', sans-serif);">
               <div style="background: linear-gradient(145deg, rgba(20,25,35,0.97), rgba(10,15,25,0.99)); border:1px solid rgba(0, 255, 102, 0.2); border-radius:24px; zoom: 1.1; width: calc(72vw / 1.1); max-width: calc(72vw / 1.1); height: calc(90vh / 1.1); max-height: calc(90vh / 1.1); display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.9), 0 0 0 1px rgba(0,255,102,0.08), inset 0 0 30px rgba(0,255,102,0.03); transform: translateY(20px); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; isolation: isolate; filter: none;">
                  
-                 <div style="padding:15px 25px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border-radius: 24px 24px 0 0;">
+                 <div id="launch-modal-header" style="position:relative; padding:15px 25px; display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); border-radius: 24px 24px 0 0;">
                     <h2 style="margin:0; font-size:18px; font-weight:600; letter-spacing:-0.02em; color:#fff; text-shadow:0 0 15px rgba(0,255,102,0.3); display:flex; align-items:center; gap:12px; font-family:var(--font-sans, 'Plus Jakarta Sans', sans-serif);">
                        ${titleHTML.replace('<i', '<i style="color: #00FF66;"')}
                     </h2>
@@ -1233,7 +1235,7 @@
                  <div id="launch-modal-body" style="flex:1; padding:20px; overflow-y:auto; overflow-x:hidden; font-family:var(--font-sans, 'Plus Jakarta Sans', sans-serif); font-weight:350; letter-spacing:-0.01em;">
                  </div>
                  
-                 <div style="padding:15px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.3); border-radius: 0 0 24px 24px;">
+                 <div id="launch-modal-footer" style="position:relative; padding:15px; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.3); border-radius: 0 0 24px 24px;">
                     <button id="launch-modal-start-btn" style="background:linear-gradient(135deg, #00FF66, #00CC55); color:#000; font-size:15px; font-weight:700; padding:12px 45px; border-radius:50px; border:none; cursor:pointer; box-shadow:0 10px 30px rgba(0,255,102,0.3); transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); letter-spacing: 1.5px; text-transform:uppercase; display:flex; align-items:center; gap:10px; font-family:var(--font-sans, 'Plus Jakarta Sans', sans-serif);">
                        <i class="fa-solid fa-play"></i> EXECUTE
                     </button>

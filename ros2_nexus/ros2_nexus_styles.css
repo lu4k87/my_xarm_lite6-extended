@@ -359,6 +359,8 @@
     }
     .card-tooltip ul ul, #launch-modal-body ul ul {
       list-style-type: '\25B8   ' !important;
+      border-left: 1px solid transparent !important;
+      border-image: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.35) 10%, rgba(255, 255, 255, 0.35) 90%, transparent 100%) 1 !important;
     }
     .card-tooltip ul ul li::marker, #launch-modal-body ul ul li::marker {
       color: rgba(255, 255, 255, 0.3);
@@ -375,7 +377,8 @@
       letter-spacing: -0.01em;
       color: var(--txt);
       margin-bottom: 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid transparent !important;
+      border-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.18) 15%, rgba(255, 255, 255, 0.18) 85%, transparent 100%) 1 !important;
       padding-bottom: 8px;
     }
     .card-tooltip-cmd {
@@ -387,7 +390,7 @@
       word-wrap: break-word;
     }
 
-    /* ── POPUP & MODAL TYPOGRAPHY ── */
+    /* ── POPUP & MODAL TYPOGRAPHY & DIVIDERS ── */
     #launch-modal {
       font-family: var(--font-sans);
       -webkit-font-smoothing: antialiased;
@@ -413,6 +416,68 @@
     }
     .action-card:hover .side-icon {
       background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Modal Header & Footer horizontal fade lines */
+    #launch-modal-header {
+      position: relative;
+      border-bottom: none !important;
+    }
+    #launch-modal-header::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.18) 15%, rgba(255, 255, 255, 0.18) 85%, transparent 100%);
+      pointer-events: none;
+    }
+    #launch-modal-footer {
+      position: relative;
+      border-top: none !important;
+    }
+    #launch-modal-footer::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.18) 15%, rgba(255, 255, 255, 0.18) 85%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Modal Card Middle Column vertical fade line (top & bottom fade) */
+    .modal-card-middle-col {
+      position: relative;
+      border-left: none !important;
+    }
+    .modal-card-middle-col.has-divider-v::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Console popup header horizontal line fade */
+    #console-popup-header {
+      position: relative;
+      border-bottom: none !important;
+    }
+    #console-popup-header::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.18) 15%, rgba(255, 255, 255, 0.18) 85%, transparent 100%);
+      pointer-events: none;
     }
 
     /* ── MAIN ── */
