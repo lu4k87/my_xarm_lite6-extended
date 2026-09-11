@@ -602,35 +602,69 @@
       text-overflow: ellipsis !important;
       min-width: 0 !important;
     }
-    #launch-modal-body ul ul {
-      margin-top: 4px !important;
-      padding-left: 12px !important;
+    /* Tree container inside modal card leftCol */
+    .modal-card-left-col > ul,
+    #launch-modal-body .modal-card-left-col > ul {
+      margin: 18px 0 0 16px !important;
+      padding: 0 !important;
+      list-style: none !important;
+      display: block !important;
+      width: calc(100% - 16px) !important;
     }
-    #launch-modal-body ul ul li {
-      display: flex !important;
-      align-items: center !important;
-      gap: 6px !important;
-      min-width: 0 !important;
+
+    /* Sub-levels in tree (e.g. child nodes under a sub-launch) */
+    .modal-card-left-col ul ul,
+    #launch-modal-body .modal-card-left-col ul ul {
+      margin: 4px 0 6px 14px !important;
+      padding-left: 14px !important;
+      border-left: 1px solid rgba(255, 255, 255, 0.25) !important;
+      list-style: none !important;
+      display: block !important;
+      clear: both !important;
+    }
+
+    /* Tree list items - block flow to allow native float and clean line wrapping */
+    .modal-card-left-col li,
+    #launch-modal-body .modal-card-left-col li {
+      display: block !important;
       width: 100% !important;
+      clear: both !important;
       font-size: 11px !important;
-      line-height: 1.4 !important;
-      margin-bottom: 2px !important;
+      line-height: 22px !important;
+      margin: 2px 0 !important;
+      position: relative !important;
     }
-    #launch-modal-body ul ul li > span:last-child {
-      margin-left: auto !important;
-      float: none !important;
-      flex-shrink: 0 !important;
-      font-size: 10px !important;
-      opacity: 0.65 !important;
+
+    /* Badges inside tree */
+    .modal-card-left-col li > .badge,
+    #launch-modal-body .modal-card-left-col li > .badge {
+      display: inline-flex !important;
+      align-items: center !important;
+      vertical-align: middle !important;
+      font-size: 9px !important;
+      padding: 1px 5px !important;
+      margin-right: 6px !important;
+      line-height: 14px !important;
     }
-    #launch-modal-body ul ul li > span:not(.badge):not(:last-child) {
+
+    /* Terms/Node names inside tree */
+    .modal-card-left-col li > span:not(.badge):not([style*="float"]) {
       font-size: 11.5px !important;
       font-weight: 500 !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      min-width: 0 !important;
+      vertical-align: middle !important;
     }
+
+    /* Descriptions with float:right inside tree */
+    .modal-card-left-col li > span[style*="float"],
+    #launch-modal-body .modal-card-left-col li > span[style*="float"] {
+      float: right !important;
+      font-size: 10.5px !important;
+      color: #94a3b8 !important;
+      opacity: 0.75 !important;
+      vertical-align: middle !important;
+    }
+
+    /* Force override legacy 1.7em fonts to clean 11.5px */
     #launch-modal-body span[style*="font-size: 1.7em"],
     #launch-modal-body span[style*="font-size:1.7em"] {
       font-size: 11.5px !important;

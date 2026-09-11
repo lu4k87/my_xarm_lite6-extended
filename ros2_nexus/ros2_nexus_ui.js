@@ -892,15 +892,19 @@
               
               li.insertBefore(liInnerWrapper, li.firstChild);
               
-              const hrLine = document.createElement('div');
-              hrLine.style.position = 'absolute';
-              hrLine.style.top = '56px';
-              hrLine.style.left = '48px';
-              hrLine.style.width = 'calc(100% - 64px)';
-              hrLine.style.height = '1px';
-              hrLine.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
-              hrLine.style.pointerEvents = 'none';
-              li.appendChild(hrLine);
+              const hasBodyContent = !!ulNode || (action && action.args && action.args.length > 0);
+              if (hasBodyContent) {
+                  const hrLine = document.createElement('div');
+                  hrLine.className = 'modal-card-divider-h';
+                  hrLine.style.position = 'absolute';
+                  hrLine.style.top = '52px';
+                  hrLine.style.left = '48px';
+                  hrLine.style.width = 'calc(100% - 64px)';
+                  hrLine.style.height = '1px';
+                  hrLine.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
+                  hrLine.style.pointerEvents = 'none';
+                  li.appendChild(hrLine);
+              }
           });
           
               // Append any unmatched actions to the bottom to ensure nothing is missing
@@ -1045,15 +1049,19 @@
               
               li.appendChild(liInnerWrapper);
               
-              const hrLine2 = document.createElement('div');
-              hrLine2.style.position = 'absolute';
-              hrLine2.style.top = '56px';
-              hrLine2.style.left = '48px';
-              hrLine2.style.width = 'calc(100% - 64px)';
-              hrLine2.style.height = '1px';
-              hrLine2.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
-              hrLine2.style.pointerEvents = 'none';
-              li.appendChild(hrLine2);
+              const hasBodyContent2 = action && action.args && action.args.length > 0;
+              if (hasBodyContent2) {
+                  const hrLine2 = document.createElement('div');
+                  hrLine2.className = 'modal-card-divider-h';
+                  hrLine2.style.position = 'absolute';
+                  hrLine2.style.top = '52px';
+                  hrLine2.style.left = '48px';
+                  hrLine2.style.width = 'calc(100% - 64px)';
+                  hrLine2.style.height = '1px';
+                  hrLine2.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
+                  hrLine2.style.pointerEvents = 'none';
+                  li.appendChild(hrLine2);
+              }
               
               topUl.appendChild(li);
           });
