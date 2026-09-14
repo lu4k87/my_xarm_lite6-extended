@@ -423,7 +423,7 @@ class ZedYolo3DNode(Node):
             marker.type = Marker.LINE_LIST
             marker.action = Marker.ADD
             marker.pose.orientation.w = 1.0
-            marker.scale.x = 0.003
+            marker.scale.x = 0.001
             
             e_min_x = center_x - scale_x / 2.0
             e_max_x = center_x + scale_x / 2.0
