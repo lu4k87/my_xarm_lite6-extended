@@ -217,9 +217,6 @@
         if (argText.startsWith('yolo_model:=')) {
             return argText === 'yolo_model:=yolov8l.pt';
         }
-        if (argText === 'use_zed_hardware:=false') {
-            return false;
-        }
         return true;
     }
 
@@ -804,15 +801,15 @@
                action.postCmd = '';
            }
 
-               // Ensure camera selection, ZED M YOLO models and use_zed_hardware args are available for robot_vision_cameras_bringup
+               // Ensure camera selection and ZED M YOLO models args are available for robot_vision_cameras_bringup
             if (action.baseCmd && action.baseCmd.includes('robot_vision_cameras_bringup.launch.py')) {
+                action.args = action.args.filter(a => !a.text.startsWith('use_zed_hardware'));
                 const visionDefaults = [
                     'camera:=zed_m',
                     'camera:=ip_cam',
                     'yolo_model:=yolov8l.pt',
                     'yolo_model:=yolov8s.pt',
-                    'yolo_model:=my_yolo_model.pt',
-                    'use_zed_hardware:=false'
+                    'yolo_model:=my_yolo_model.pt'
                 ];
                 visionDefaults.forEach(defArg => {
                     if (!action.args.some(a => a.text === defArg)) {
@@ -850,20 +847,16 @@
                      checkedYoloModels.forEach(a => { if (a !== preferred) a.checked = false; });
                  }
 
-                 // Put camera args first, yolo_model args next, use_zed_hardware after
+                 // Put camera args first, yolo_model args next
                  action.args.sort((a, b) => {
                      const isCamA = a.text.startsWith('camera:=');
                      const isCamB = b.text.startsWith('camera:=');
                      const isYoloA = a.text.startsWith('yolo_model:=');
                      const isYoloB = b.text.startsWith('yolo_model:=');
-                     const isZedHwA = a.text.startsWith('use_zed_hardware');
-                     const isZedHwB = b.text.startsWith('use_zed_hardware');
                      if (isCamA && !isCamB) return -1;
                      if (!isCamA && isCamB) return 1;
                      if (isYoloA && !isYoloB) return -1;
                      if (!isYoloA && isYoloB) return 1;
-                     if (isZedHwA && !isZedHwB) return 1;
-                     if (!isZedHwA && isZedHwB) return -1;
                      return 0;
                  });
 

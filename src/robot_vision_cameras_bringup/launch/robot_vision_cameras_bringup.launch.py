@@ -4,7 +4,7 @@ robot_vision_cameras_bringup.launch.py — Robot Vision & Cameras Bringup Launch
 Unterstützt zwei Kamera-Modi (wählbar über 'camera:=zed_m' oder 'camera:=ip_cam'):
 
 1. zed_m (Standard):
-   - Startet den Stereolabs ZED M Kameratreiber (zed_wrapper, wenn use_zed_hardware:=true).
+   - Startet den Stereolabs ZED M Kameratreiber (zed_wrapper).
    - Publiziert die statische TF-Transformation (world → zed_camera_link).
    - Startet den PointCloud ROI Optimizer (pointcloud_optimizer.py).
    - Startet die 3D Bounding-Box Erkennung über ZED Punktwolke (yolo_3d_bbox_for_zed_m.py).
@@ -58,12 +58,6 @@ def generate_launch_description():
         description='ZED Kameramodell (zedm, zed, zed2, zed2i, zedx, zedxm)'
     )
 
-    use_zed_hardware_arg = DeclareLaunchArgument(
-        'use_zed_hardware',
-        default_value='true',
-        description='Set to false to prevent loading the actual ZED SDK/wrapper'
-    )
-
     # TF: Position der ZED-Kamera relativ zu link_base / world
     tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.870',
         description='Kamera X-Position relativ zu link_base [m]')
@@ -89,7 +83,7 @@ def generate_launch_description():
     )
 
     # -----------------------------------------------------------------------
-    # ZED Wrapper Launch (Nur aktiv wenn camera==zed_m UND use_zed_hardware==true)
+    # ZED Wrapper Launch (Nur aktiv wenn camera==zed_m)
     # -----------------------------------------------------------------------
     zed_wrapper_launch = None
     try:
@@ -103,12 +97,7 @@ def generate_launch_description():
                 'publish_map_tf': 'false',
                 'ros_params_override_path': config_override_path,
             }.items(),
-            condition=IfCondition(
-                PythonExpression([
-                    "'", LaunchConfiguration('camera'), "' == 'zed_m' and '",
-                    LaunchConfiguration('use_zed_hardware'), "' == 'true'"
-                ])
-            )
+            condition=LaunchConfigurationEquals('camera', 'zed_m')
         )
     except PackageNotFoundError:
         pass  # zed_wrapper is missing, so we just don't add it
@@ -203,7 +192,6 @@ def generate_launch_description():
         # Arguments
         camera_arg,
         camera_model_arg,
-        use_zed_hardware_arg,
         yolo_model_arg,
         tf_x_arg,
         tf_y_arg,

@@ -587,7 +587,6 @@ flowchart TD
 >> |---|---|---|
 >> | `camera` | `zed_m` | *Kamera-Pipeline-Auswahl: `zed_m` (ZED Mini Tiefenkamera) oder `ip_cam` (IP-Webcam Homographie).* |
 >> | `camera_model` | `zedm` | *ZED-Kameramodell (Stereolabs ZED Mini).* |
->> | `use_zed_hardware` | `true` | *Falls false, wird der echte ZED-Treiber übersprungen (für Fake/Simulations-Modi).* |
 >> | `tf_x` | `0.870` | *Kalibrierte Kamera-X-Position relativ zu `link_base` [m] (Stativ-Setup).* |
 >> | `tf_y` | `0.0` | *Kalibrierte Kamera-Y-Position relativ zu `link_base` [m] (Stativ-Setup).* |
 >> | `tf_z` | `0.520` | *Kalibrierte Kamera-Z-Höhe relativ zu `link_base` [m] (Stativ-Setup).* |
