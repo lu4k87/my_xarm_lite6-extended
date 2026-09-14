@@ -11,4 +11,4 @@ yolo_3d_bbox_for_zed_m:
     confidence_threshold: 0.35
     
     # EMA Smoothing factor (alpha). Lower is smoother but slower to update.
-    ema_alpha: 0.2
+    ema_alpha: 0.4

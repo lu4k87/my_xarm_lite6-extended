@@ -4,6 +4,7 @@ import os
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from sensor_msgs.msg import Image, CameraInfo
 from visualization_msgs.msg import Marker, MarkerArray
 from cv_bridge import CvBridge
@@ -24,7 +25,7 @@ class ZedYolo3DNode(Node):
     def __init__(self):
         super().__init__('yolo_3d_bbox_for_zed_m')
         
-        # Declare parameter for model path
+        # Declare parameter for model path — strictly defaults to yolov8l.pt
         self.declare_parameter('model_path', 'yolov8l.pt')
         model_name = self.get_parameter('model_path').value
 
@@ -38,29 +39,44 @@ class ZedYolo3DNode(Node):
                 model_name = ws_model
 
         # Load YOLO model
-        self.get_logger().info(f'Lade {model_name} Modell...')
+        self.get_logger().info(f'Lade YOLO Modell: {model_name}...')
         self.model = YOLO(model_name)
-        self.get_logger().info('Modell erfolgreich geladen (nutzt GPU falls verfügbar).')
+        self.get_logger().info(f'Modell {model_name} erfolgreich geladen.')
         
         self.bridge = CvBridge()
+        
+        # Default camera intrinsics for ZED Mini HD720 (1280x720) as fallback
         self.camera_info = None
+        self.fx = 700.0
+        self.fy = 700.0
+        self.cx = 640.0
+        self.cy = 360.0
+        
+        # Track published marker IDs to delete removed objects cleanly without DELETEALL
+        self.published_marker_ids = set()
+        self.consecutive_empty_frames = 0
         
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         
         # Subscribers
+        cam_info_qos = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10
+        )
         self.sub_cam_info = self.create_subscription(
             CameraInfo,
             '/zed/zed_node/rgb/camera_info',
             self.camera_info_callback,
-            10
+            cam_info_qos
         )
         
         self.sub_rgb = message_filters.Subscriber(self, Image, '/zed/zed_node/rgb/image_rect_color')
         self.sub_depth = message_filters.Subscriber(self, Image, '/zed/zed_node/depth/depth_registered')
         
-        # Approximate time synchronizer for RGB and Depth
-        self.ts = message_filters.ApproximateTimeSynchronizer([self.sub_rgb, self.sub_depth], queue_size=10, slop=0.1)
+        # Approximate time synchronizer for RGB and Depth (generous queue and slop for neural depth)
+        self.ts = message_filters.ApproximateTimeSynchronizer([self.sub_rgb, self.sub_depth], queue_size=30, slop=0.3)
         self.ts.registerCallback(self.sync_callback)
         
         # Publisher for the 3D Markers
@@ -69,11 +85,12 @@ class ZedYolo3DNode(Node):
         # Color mapping for different classes
         self.colors = np.random.uniform(0.3, 1.0, size=(100, 3))
         
-        # EMA Filtering state
-        self.ema_states = {} # maps cls_id -> dict of {obj_id: {'state': np.array, 'last_seen': float}}
+        # EMA Filtering state: maps cls_id -> dict of {obj_id: {'state': np.array, 'last_seen': float}}
+        self.ema_states = {}
+        
         # Declare parameters
         self.declare_parameter('confidence_threshold', 0.35)
-        self.declare_parameter('ema_alpha', 0.2)
+        self.declare_parameter('ema_alpha', 0.4)
         # Default empty: all object dimensions are dynamically measured from 3D point cloud
         self.declare_parameter('class_dimension_overrides', [])
         
@@ -86,26 +103,25 @@ class ZedYolo3DNode(Node):
         ])
         self.last_T = np.array([[0.45806985], [-0.02867600], [0.51550816]])
         self.last_cam_pos = (0.473, 0.0, 0.510)
-        self.consecutive_empty_frames = 0
         
-        # Rate Limiting
+        # Rate Limiting (~2.5 Hz inference)
         self.last_inference_time = 0.0
 
-        self.get_logger().info('ZED YOLO 3D BBox Node gestartet.')
+        self.get_logger().info('ZED YOLO 3D BBox Node bereit und gestartet.')
 
     def camera_info_callback(self, msg):
         self.camera_info = msg
-        # We only need it once
+        self.fx = float(msg.k[0])
+        self.fy = float(msg.k[4])
+        self.cx = float(msg.k[2])
+        self.cy = float(msg.k[5])
+        self.get_logger().info(f'CameraInfo empfangen: fx={self.fx:.1f}, fy={self.fy:.1f}, cx={self.cx:.1f}, cy={self.cy:.1f}')
         self.destroy_subscription(self.sub_cam_info)
-        self.get_logger().info('CameraInfo empfangen.')
 
     def sync_callback(self, rgb_msg, depth_msg):
-        if self.camera_info is None:
-            return
-            
-        # Limit Inference to 2 Hz (0.5 seconds)
+        # Limit Inference to ~2.5 Hz (0.4 seconds)
         current_t = self.get_clock().now().nanoseconds / 1e9
-        if (current_t - self.last_inference_time) < 0.5:
+        if (current_t - self.last_inference_time) < 0.4:
             return
         self.last_inference_time = current_t
             
@@ -115,7 +131,7 @@ class ZedYolo3DNode(Node):
             # Depth map in 32FC1 (meters)
             cv_depth = self.bridge.imgmsg_to_cv2(depth_msg, desired_encoding='32FC1')
         except Exception as e:
-            self.get_logger().error(f'Error converting images: {e}')
+            self.get_logger().error(f'Fehler beim Konvertieren der Bilder: {e}')
             return
 
         # Get parameters
@@ -135,42 +151,51 @@ class ZedYolo3DNode(Node):
                     elif len(dims) == 3:
                         self.dimension_overrides[cls_name.strip()] = (dims[0], dims[1], dims[2])
                     else:
-                        self.get_logger().warn(f"Invalid dimension override format: {override}")
+                        self.get_logger().warn(f"Ungueltiges Dimension Override Format: {override}")
                 except ValueError:
-                    self.get_logger().warn(f"Invalid dimension override: {override}")
+                    self.get_logger().warn(f"Ungueltiges Dimension Override: {override}")
 
-        # We do not crop the image so YOLO can detect the full objects
         # Run YOLO inference (GPU beschleunigt)
         results = self.model.predict(cv_rgb, verbose=False, conf=conf_thresh)
         
-        marker_array = MarkerArray()
-        
-        # Always send a DELETEALL first to clear ghost markers from previous frames
-        clear_marker = Marker()
-        clear_marker.action = Marker.DELETEALL
-        marker_array.markers.append(clear_marker)
-        
+        # Handle empty detections
         if len(results) == 0 or len(results[0].boxes) == 0:
             self.consecutive_empty_frames += 1
-            if self.consecutive_empty_frames >= 3:
-                self.pub_markers.publish(marker_array)
+            if self.consecutive_empty_frames >= 3 and len(self.published_marker_ids) > 0:
+                # Cleanly delete all previously visible markers
+                del_array = MarkerArray()
+                for old_id in self.published_marker_ids:
+                    for ns in ['yolo_bboxes', 'yolo_object_grasp_center_point',
+                               'yolo_labels_class', 'yolo_labels_x', 'yolo_labels_y', 'yolo_labels_z']:
+                        dm = Marker()
+                        dm.header.frame_id = 'world'
+                        dm.header.stamp = self.get_clock().now().to_msg()
+                        dm.ns = ns
+                        dm.id = old_id
+                        dm.action = Marker.DELETE
+                        del_array.markers.append(dm)
+                self.pub_markers.publish(del_array)
+                self.published_marker_ids.clear()
             return
+        
         self.consecutive_empty_frames = 0
-
         boxes = results[0].boxes.xyxy.cpu().numpy()
         classes = results[0].boxes.cls.cpu().numpy().astype(int)
         names = results[0].names
         
-        fx = self.camera_info.k[0]
-        fy = self.camera_info.k[4]
-        cx = self.camera_info.k[2]
-        cy = self.camera_info.k[5]
+        # Camera intrinsics (use live camera_info or fallback)
+        if self.camera_info is not None:
+            fx = float(self.camera_info.k[0])
+            fy = float(self.camera_info.k[4])
+            cx = float(self.camera_info.k[2])
+            cy = float(self.camera_info.k[5])
+        else:
+            fx, fy, cx, cy = self.fx, self.fy, self.cx, self.cy
         
         current_time = self.get_clock().now().to_msg()
         frame_id = rgb_msg.header.frame_id
 
-        # Transform matrix (world -> optical frame)
-        # Uses live TF when available, otherwise falls back gracefully to calibrated static pose
+        # Transform matrix (optical frame -> world)
         R = self.last_R
         T = self.last_T
         cam_x, cam_y, cam_z = self.last_cam_pos
@@ -191,6 +216,9 @@ class ZedYolo3DNode(Node):
             cam_x, cam_y, cam_z = self.last_cam_pos
         except Exception:
             pass
+
+        marker_array = MarkerArray()
+        current_frame_ids = set()
 
         for i, (box, cls_id) in enumerate(zip(boxes, classes)):
             x_min, y_min, x_max, y_max = map(int, box)
@@ -222,16 +250,15 @@ class ZedYolo3DNode(Node):
             x_opt = (u_img - cx) * z_vals / fx
             y_opt = (v_img - cy) * z_vals / fy
             z_opt = z_vals
-            
             pts_opt = np.vstack((x_opt, y_opt, z_opt)) # shape (3, N)
             
-            # Transform to link_base (world)
+            # Transform to world frame (link_base)
             pts_base = R @ pts_opt + T
             
             # Robust workspace filter:
-            # - table height: Z > -0.04 (allow small calibration tolerance below 0) and Z < 0.60
-            # - distance from robot base: radius > 0.08 m
-            # - workspace limits: X in [-0.10, 1.20], Y in [-0.80, 0.80]
+            # Table height: Z > -0.04 (allow small calibration tolerance below 0) and Z < 0.60
+            # Distance from robot base: radius > 0.08 m
+            # Workspace limits: X in [-0.10, 1.20], Y in [-0.80, 0.80]
             dist_from_base = np.sqrt(pts_base[0, :]**2 + pts_base[1, :]**2)
             valid_pts_filter = (
                 (pts_base[2, :] > -0.04) &
@@ -241,33 +268,61 @@ class ZedYolo3DNode(Node):
                 (pts_base[1, :] > -0.80) & (pts_base[1, :] < 0.80)
             )
             if np.sum(valid_pts_filter) < 8:
-                continue # Not enough valid workspace points belonging to object
+                continue
+                
             pts_base = pts_base[:, valid_pts_filter]
+            pts_opt = pts_opt[:, valid_pts_filter]
             
-            # Robuste Unterkante aus der Punktwolke bestimmen
+            # --- Robust Object Height & Point Isolation ---
+            # Distance of each point to the camera
+            dists_cam = np.linalg.norm(pts_opt, axis=0)
+            
+            # Separate table surface (Z <= 0.015 m) from object structure (Z > 0.015 m)
+            above_table_mask = pts_base[2] > 0.015
+            
             bot_z_raw = float(np.percentile(pts_base[2], 2.0))
-            # Wenn das Objekt auf dem Tisch steht (Unterkante < 5 cm über Tischplatte):
-            if bot_z_raw < 0.05:
+            if bot_z_raw < 0.04:
                 bottom_z = 0.0
             else:
                 bottom_z = max(0.0, bot_z_raw)
-                
-            # Filtere Körper-Punkte (untere 1.5 cm verwerfen, um Tischflächenrauschen zu meiden)
-            z_thresh = bottom_z + 0.015
-            body_mask = pts_base[2] > z_thresh
-            if not np.any(body_mask):
-                body_mask = np.ones(pts_base.shape[1], dtype=bool)
-                
-            body_pts_x = pts_base[0][body_mask]
-            body_pts_y = pts_base[1][body_mask]
             
-            # Vorderster Oberflächenpunkt bezogen auf die echte TF-Kameraposition
-            dists_2d = np.sqrt((body_pts_x - cam_x)**2 + (body_pts_y - cam_y)**2)
-            dist_thresh = np.percentile(dists_2d, 5.0)
+            if np.sum(above_table_mask) >= 8:
+                # We have structure rising above the table
+                # Filter out background behind the object by clustering depth of points above table
+                obj_cam_dists = dists_cam[above_table_mask]
+                closest_obj_dist = float(np.percentile(obj_cam_dists, 5.0))
+                # Keep foreground points within 25 cm of the closest object point
+                fg_mask = above_table_mask & (dists_cam <= closest_obj_dist + 0.25)
+                
+                if np.sum(fg_mask) >= 6:
+                    obj_pts = pts_base[:, fg_mask]
+                else:
+                    obj_pts = pts_base[:, above_table_mask]
+                
+                # The top of the object is calculated from the OBJECT'S OWN POINTS (96th percentile)
+                # Immune to how many table points are inside the 2D bounding box
+                top_z = float(np.percentile(obj_pts[2], 96.0))
+                top_z = min(0.60, max(bottom_z + 0.025, top_z))
+            else:
+                # Very flat object on table (e.g. coaster or small item)
+                top_z = max(bottom_z + 0.025, float(np.percentile(pts_base[2], 96.0)))
+                obj_pts = pts_base
+            
+            scale_z = max(0.025, top_z - bottom_z)
+            center_z = bottom_z + (scale_z / 2.0)
+            display_z = top_z
+            
+            # --- Object Horizontal Position & Dimensions ---
+            obj_pts_x = obj_pts[0]
+            obj_pts_y = obj_pts[1]
+            
+            # Vorderster Oberflächenpunkt bezogen auf die Kameraposition
+            dists_2d = np.sqrt((obj_pts_x - cam_x)**2 + (obj_pts_y - cam_y)**2)
+            dist_thresh = np.percentile(dists_2d, 10.0)
             closest_mask = dists_2d <= dist_thresh
             
-            surf_x = float(np.mean(body_pts_x[closest_mask]))
-            surf_y = float(np.mean(body_pts_y[closest_mask]))
+            surf_x = float(np.mean(obj_pts_x[closest_mask]))
+            surf_y = float(np.mean(obj_pts_y[closest_mask]))
             
             # Sichtstrahl von Kamera zu Objekt in XY
             dir_x = surf_x - cam_x
@@ -284,24 +339,15 @@ class ZedYolo3DNode(Node):
             uorth_y = ndir_x
             
             # Sichtbare Breite quer zur Sichtlinie
-            proj_orth = (body_pts_x - surf_x) * uorth_x + (body_pts_y - surf_y) * uorth_y
+            proj_orth = (obj_pts_x - surf_x) * uorth_x + (obj_pts_y - surf_y) * uorth_y
             orth_min = float(np.percentile(proj_orth, 2.0))
             orth_max = float(np.percentile(proj_orth, 98.0))
-            apparent_width = max(0.02, orth_max - orth_min)
+            apparent_width = max(0.03, orth_max - orth_min)
             orth_offset = (orth_min + orth_max) / 2.0
             
             # Sichtbare Tiefe entlang des Sichtstrahls
-            proj_depth = (body_pts_x - surf_x) * ndir_x + (body_pts_y - surf_y) * ndir_y
-            depth_seen = max(0.02, float(np.percentile(proj_depth, 98.0)))
-            
-            # --- Robuste Z-Höhenbestimmung aus Punktwolke ---
-            # 98. Perzentil filtert einzelne Stereo-Ausreißer nach oben
-            top_z = float(np.percentile(pts_base[2], 98.0))
-            top_z = min(0.60, max(bottom_z + 0.02, top_z))
-            
-            scale_z = max(0.02, top_z - bottom_z)
-            center_z = bottom_z + (scale_z / 2.0)
-            display_z = top_z
+            proj_depth = (obj_pts_x - surf_x) * ndir_x + (obj_pts_y - surf_y) * ndir_y
+            depth_seen = max(0.03, float(np.percentile(proj_depth, 98.0)))
             
             cls_name = names[cls_id]
             if cls_name in self.dimension_overrides:
@@ -314,33 +360,27 @@ class ZedYolo3DNode(Node):
                 center_x = surf_x + orth_offset * uorth_x + ndir_x * (dx / 2.0)
                 center_y = surf_y + orth_offset * uorth_y + ndir_y * (dy / 2.0)
             else:
-                # Dynamische Dimensionen aus Punktwolke:
-                # Bei Tassen/Bechern/Dosen entspricht die Tiefe mindestens der Breite
+                # Dynamische Dimensionen aus Punktwolke
                 estimated_depth = max(apparent_width, depth_seen)
-                
-                # Der Objektmittelpunkt liegt einen halben Durchmesser hinter der sichtbaren Vorderfläche
                 center_x = surf_x + orth_offset * uorth_x + ndir_x * (estimated_depth / 2.0)
                 center_y = surf_y + orth_offset * uorth_y + ndir_y * (estimated_depth / 2.0)
                 
-                # Achsparallele Ausdehnung mit kleiner Marge (1 cm) für Bounding-Box
                 margin_xy = 0.01
-                span_x = float(np.percentile(body_pts_x, 98.0) - np.percentile(body_pts_x, 2.0))
-                span_y = float(np.percentile(body_pts_y, 98.0) - np.percentile(body_pts_y, 2.0))
-                
-                scale_x = max(0.03, max(span_x, estimated_depth) + margin_xy)
-                scale_y = max(0.03, max(span_y, apparent_width) + margin_xy)
+                span_x = float(np.percentile(obj_pts_x, 98.0) - np.percentile(obj_pts_x, 2.0))
+                span_y = float(np.percentile(obj_pts_y, 98.0) - np.percentile(obj_pts_y, 2.0))
+                scale_x = max(0.035, max(span_x, estimated_depth) + margin_xy)
+                scale_y = max(0.035, max(span_y, apparent_width) + margin_xy)
                 
             marker_frame = 'world'
             
             # --- Exponential Moving Average (EMA) Smoothing ---
-            # Glättet das Flackern der Bounding Box (unterstützt nun mehrere Objekte pro Klasse)
             current_t = current_time.sec + current_time.nanosec * 1e-9
             state = np.array([center_x, center_y, center_z, scale_x, scale_y, scale_z])
             
             if cls_id not in self.ema_states:
                 self.ema_states[cls_id] = {}
                 
-            # Bereinige alte states
+            # Clean up old states
             expired_ids = [obj_id for obj_id, s in self.ema_states[cls_id].items() if (current_t - s['last_seen']) > 2.0]
             for obj_id in expired_ids:
                 del self.ema_states[cls_id][obj_id]
@@ -350,33 +390,32 @@ class ZedYolo3DNode(Node):
             
             for obj_id, s in self.ema_states[cls_id].items():
                 if s['last_seen'] == current_t:
-                    continue # Wurde in diesem Frame bereits aktualisiert
+                    continue
                 dist = np.linalg.norm(s['state'][:3] - state[:3])
                 if dist < min_dist:
                     min_dist = dist
                     best_match_id = obj_id
             
-            if best_match_id != -1 and min_dist < 0.3: # Max 30cm Abstand für dasselbe Objekt
-                # Bei deutlicher Größenänderung (Objekt getauscht/verändert) sofort anpassen
+            if best_match_id != -1 and min_dist < 0.3:
+                # Adapt quickly if size or height changes noticeably
                 dim_diff = np.linalg.norm(self.ema_states[cls_id][best_match_id]['state'][3:] - state[3:])
-                effective_alpha = 0.8 if dim_diff > 0.03 else self.alpha
-                self.ema_states[cls_id][best_match_id]['state'] = effective_alpha * state + (1.0 - effective_alpha) * self.ema_states[cls_id][best_match_id]['state']
+                effective_alpha = 0.85 if dim_diff > 0.025 else self.alpha
+                self.ema_states[cls_id][best_match_id]['state'] = (
+                    effective_alpha * state + (1.0 - effective_alpha) * self.ema_states[cls_id][best_match_id]['state']
+                )
                 self.ema_states[cls_id][best_match_id]['last_seen'] = current_t
                 center_x, center_y, center_z, scale_x, scale_y, scale_z = self.ema_states[cls_id][best_match_id]['state']
                 assigned_id = best_match_id
             else:
-                # Finde die kleinste freie ID (beginnend bei 1)
                 existing_ids = self.ema_states[cls_id].keys()
                 assigned_id = 1
                 while assigned_id in existing_ids:
                     assigned_id += 1
-                    
                 self.ema_states[cls_id][assigned_id] = {'state': state, 'last_seen': current_t}
                 
             color = self.colors[cls_id % 100]
             class_name = names[cls_id]
             
-            # Index nur anhängen, wenn tatsächlich mehrere Objekte derselben Klasse *jetzt gerade* getrackt werden
             if len(self.ema_states[cls_id]) > 1:
                 class_name = f"{class_name}_{assigned_id}"
             
@@ -388,13 +427,12 @@ class ZedYolo3DNode(Node):
             marker.id = i
             marker.type = Marker.LINE_LIST
             marker.action = Marker.ADD
-            
             marker.pose.orientation.w = 1.0
             
-            # Line thickness (2mm) for clearly visible, crisp edges in RViz
-            marker.scale.x = 0.002
+            # Line thickness (3mm) for clearly visible, crisp edges in RViz
+            marker.scale.x = 0.003
             
-            # 8 corners of the bounding box using EMA smoothed state
+            # 8 corners of the bounding box using smoothed state
             e_min_x = center_x - scale_x / 2.0
             e_max_x = center_x + scale_x / 2.0
             e_min_y = center_y - scale_y / 2.0
@@ -411,7 +449,7 @@ class ZedYolo3DNode(Node):
             p7 = Point(x=float(e_max_x), y=float(e_max_y), z=float(e_max_z))
             p8 = Point(x=float(e_min_x), y=float(e_max_y), z=float(e_max_z))
             
-            # 12 edges (2 points per edge for LINE_LIST)
+            # 12 edges
             marker.points = [
                 # Bottom face
                 p1, p2, p2, p3, p3, p4, p4, p1,
@@ -424,10 +462,9 @@ class ZedYolo3DNode(Node):
             marker.color.r = float(color[0])
             marker.color.g = float(color[1])
             marker.color.b = float(color[2])
-            marker.color.a = 0.85
-            
-            marker.lifetime.sec = 1
-            marker.lifetime.nanosec = int(500 * 1e6) # 1.5s lifetime
+            marker.color.a = 0.90
+            marker.lifetime.sec = 2
+            marker.lifetime.nanosec = 0
             
             marker_array.markers.append(marker)
             
@@ -439,7 +476,7 @@ class ZedYolo3DNode(Node):
             z_mm = int(display_z * 1000)
             safe_class_name = class_name.replace(' ', '_')
             
-            # --- Marker 2: Point (Sphere) at the reported coordinate ---
+            # --- Marker 2: Grasp Center Point (Red Sphere) at the top of the object ---
             point_marker = Marker()
             point_marker.header.stamp = current_time
             point_marker.header.frame_id = marker_frame
@@ -453,19 +490,18 @@ class ZedYolo3DNode(Node):
             point_marker.pose.position.z = float(display_z)
             point_marker.pose.orientation.w = 1.0
             
-            # Make it clearly visible on top of the object (2cm diameter)
-            point_marker.scale.x = 0.02
-            point_marker.scale.y = 0.02
-            point_marker.scale.z = 0.02
+            # Make it clearly visible on top of the object (2.5 cm diameter)
+            point_marker.scale.x = 0.025
+            point_marker.scale.y = 0.025
+            point_marker.scale.z = 0.025
             
-            # Bright color (Red) to stand out
+            # Bright Red color to stand out in RViz
             point_marker.color.r = 1.0
             point_marker.color.g = 0.0
             point_marker.color.b = 0.0
             point_marker.color.a = 1.0
-            
-            point_marker.lifetime.sec = 1
-            point_marker.lifetime.nanosec = int(500 * 1e6)
+            point_marker.lifetime.sec = 2
+            point_marker.lifetime.nanosec = 0
             
             marker_array.markers.append(point_marker)
             
@@ -481,48 +517,50 @@ class ZedYolo3DNode(Node):
                 
                 tm.pose.position.x = float(center_x)
                 tm.pose.position.y = float(center_y)
-                
-                if marker.header.frame_id == 'world':
-                    base_z = float(center_z) + (scale_z / 2.0) + 0.02
-                    tm.pose.position.z = base_z + z_offset
-                else:
-                    tm.pose.position.z = float(center_z)
-                    tm.pose.position.y -= (scale_y / 2.0) + 0.02 + z_offset
-                    
+                tm.pose.position.z = float(display_z) + 0.015 + z_offset
                 tm.pose.orientation.w = 1.0
-                tm.scale.z = 0.010 # Thinner and smaller font
+                
+                tm.scale.z = 0.012
                 tm.color.r = float(r)
                 tm.color.g = float(g)
                 tm.color.b = float(b)
                 tm.color.a = 1.0
                 tm.text = text
-                tm.lifetime.sec = 1
-                tm.lifetime.nanosec = int(500 * 1e6) # 1.5s
+                tm.lifetime.sec = 2
+                tm.lifetime.nanosec = 0
                 return tm
                 
-            # Stack the text vertically (No spaces between values to prevent RViz justification bug, use underscores instead)
-            # Class name in white (Top)
+            # Stack the text vertically above the top of the object
             marker_array.markers.append(create_text_marker('class', i, safe_class_name, 1.0, 1.0, 1.0, 0.036))
-            # X coordinate in red (Axis X)
             marker_array.markers.append(create_text_marker('x', i, f"X:_{x_mm}_mm", 1.0, 0.2, 0.2, 0.024))
-            # Y coordinate in green (Axis Y)
             marker_array.markers.append(create_text_marker('y', i, f"Y:_{y_mm}_mm", 0.2, 1.0, 0.2, 0.012))
-            # Z coordinate in blue (Axis Z)
             marker_array.markers.append(create_text_marker('z', i, f"Z:_{z_mm}_mm", 0.2, 0.5, 1.0, 0.000))
             
-            # Log the coordinates to the terminal so they are neatly listed
+            current_frame_ids.add(i)
+            
+            # Log the coordinates to the terminal
             self.get_logger().info(
                 f"[{class_name}] X: {x_mm} mm | Y: {y_mm} mm | Z: {z_mm} mm | "
-                f"H: {int(scale_z*1000)} mm | bbox_top_z: {e_max_z:.3f}"
+                f"Höhe: {int(scale_z*1000)} mm | Greifpunkt-Z: {display_z*1000:.1f} mm"
             )
             
-            
-        if len(marker_array.markers) > 1:
+        # Cleanly delete markers that disappeared from previous frames (WITHOUT DELETEALL)
+        removed_ids = self.published_marker_ids - current_frame_ids
+        for old_id in removed_ids:
+            for ns in ['yolo_bboxes', 'yolo_object_grasp_center_point',
+                       'yolo_labels_class', 'yolo_labels_x', 'yolo_labels_y', 'yolo_labels_z']:
+                dm = Marker()
+                dm.header.frame_id = 'world'
+                dm.header.stamp = current_time
+                dm.ns = ns
+                dm.id = old_id
+                dm.action = Marker.DELETE
+                marker_array.markers.append(dm)
+                
+        self.published_marker_ids = current_frame_ids
+
+        if len(marker_array.markers) > 0:
             self.pub_markers.publish(marker_array)
-        else:
-            self.consecutive_empty_frames += 1
-            if self.consecutive_empty_frames >= 3:
-                self.pub_markers.publish(marker_array)
 
 def main(args=None):
     rclpy.init(args=args)
