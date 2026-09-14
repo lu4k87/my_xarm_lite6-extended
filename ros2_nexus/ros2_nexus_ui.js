@@ -164,33 +164,21 @@
 
     function getSavedArgState(popupId, cmd, baseCmd, argText) {
         const keysToCheck = [cmd, baseCmd].filter(Boolean);
-        
-        // 1. Check popup-specific args in window.TABS
-        if (popupId && window.TABS && window.TABS['__popups_args'] && window.TABS['__popups_args'][popupId]) {
-            const popupArgs = window.TABS['__popups_args'][popupId];
-            for (const k of keysToCheck) {
-                if (popupArgs[k] && popupArgs[k][argText] !== undefined) {
-                    return popupArgs[k][argText];
-                }
-            }
+        const popupKeys = [popupId];
+        if (popupId && popupId.startsWith('sec_')) {
+            const m = popupId.match(/sec_[^_]+_(\d+)/);
+            if (m) popupKeys.push(`sec_${m[1]}`);
         }
         
-        // 2. Check global __cmd_args in window.TABS
-        if (window.TABS && window.TABS['__cmd_args']) {
-            for (const k of keysToCheck) {
-                if (window.TABS['__cmd_args'][k] && window.TABS['__cmd_args'][k][argText] !== undefined) {
-                    return window.TABS['__cmd_args'][k][argText];
-                }
-            }
-        }
-
-        // 3. Check localStorage
+        // 1. Check localStorage first (user's latest browser interactions)
         try {
             const localPopups = JSON.parse(localStorage.getItem('ros2_nexus_popups_args') || '{}');
-            if (popupId && localPopups[popupId]) {
-                for (const k of keysToCheck) {
-                    if (localPopups[popupId][k] && localPopups[popupId][k][argText] !== undefined) {
-                        return localPopups[popupId][k][argText];
+            for (const pKey of popupKeys) {
+                if (pKey && localPopups[pKey]) {
+                    for (const k of keysToCheck) {
+                        if (localPopups[pKey][k] && localPopups[pKey][k][argText] !== undefined) {
+                            return localPopups[pKey][k][argText];
+                        }
                     }
                 }
             }
@@ -201,6 +189,29 @@
                 }
             }
         } catch (e) {}
+
+        // 2. Check window.TABS popup-specific args
+        if (window.TABS && window.TABS['__popups_args']) {
+            for (const pKey of popupKeys) {
+                if (pKey && window.TABS['__popups_args'][pKey]) {
+                    const popupArgs = window.TABS['__popups_args'][pKey];
+                    for (const k of keysToCheck) {
+                        if (popupArgs[k] && popupArgs[k][argText] !== undefined) {
+                            return popupArgs[k][argText];
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 3. Check global __cmd_args in window.TABS
+        if (window.TABS && window.TABS['__cmd_args']) {
+            for (const k of keysToCheck) {
+                if (window.TABS['__cmd_args'][k] && window.TABS['__cmd_args'][k][argText] !== undefined) {
+                    return window.TABS['__cmd_args'][k][argText];
+                }
+            }
+        }
 
         // Default:
         if (argText.startsWith('yolo_model:=')) {
@@ -493,44 +504,69 @@
        
        const effPopupId = popupId || (actionsData && actionsData[0] && actionsData[0].cmd ? 'cmd_' + actionsData[0].cmd.split(' ')[0] : 'general');
        
+       const popupCandidateKeys = [effPopupId];
+       if (effPopupId && effPopupId.startsWith('sec_')) {
+           const m = effPopupId.match(/sec_[^_]+_(\d+)/);
+           if (m) popupCandidateKeys.push(`sec_${m[1]}`);
+       }
+
        let activeSet = null;
-       if (window.TABS && window.TABS['__popups_active'] && window.TABS['__popups_active'][effPopupId]) {
-           activeSet = new Set(window.TABS['__popups_active'][effPopupId]);
-       } else {
-           try {
-               const localActive = JSON.parse(localStorage.getItem('ros2_nexus_popups_active') || '{}');
-               if (localActive[effPopupId]) {
-                   activeSet = new Set(localActive[effPopupId]);
+       // 1. Try localStorage first (user's latest browser interactions)
+       try {
+           const localActive = JSON.parse(localStorage.getItem('ros2_nexus_popups_active') || '{}');
+           for (const pKey of popupCandidateKeys) {
+               if (pKey && Array.isArray(localActive[pKey])) {
+                   activeSet = new Set(localActive[pKey]);
+                   break;
                }
-           } catch(e) {}
+           }
+       } catch(e) {}
+
+       // 2. Try window.TABS
+       if (!activeSet && window.TABS && window.TABS['__popups_active']) {
+           for (const pKey of popupCandidateKeys) {
+               if (pKey && Array.isArray(window.TABS['__popups_active'][pKey])) {
+                   activeSet = new Set(window.TABS['__popups_active'][pKey]);
+                   break;
+               }
+           }
        }
        
        actionsData.forEach(a => { 
-           if (activeSet) {
-               a.active = activeSet.has(a.cmd); 
-           } else {
-               a.active = true; 
-           }
            a.baseCmd = a.cmd; 
            a.args = []; 
+           if (activeSet) {
+               a.active = activeSet.has(a.cmd) || (a.baseCmd && activeSet.has(a.baseCmd)) || (a.title && activeSet.has(a.title)); 
+           } else {
+               a.active = (a.active !== undefined) ? a.active : true; 
+           }
        });
        
        const saveActiveState = () => {
-           const activeCmds = [];
-           const topUl = document.getElementById('launch-modal-body') ? document.getElementById('launch-modal-body').querySelector('ul') : null;
-           if (topUl) {
-               topUl.querySelectorAll('li').forEach(item => {
-                   const cb = item.querySelector('.main-action-cb');
-                   if (cb && cb.checked && item.dataset.cmd) {
-                       activeCmds.push(item.dataset.cmd);
+           const modalBody = document.getElementById('launch-modal-body');
+           const container = modalBody || contentClone;
+
+           // Sync action.active from DOM checkboxes if available
+           if (container) {
+               container.querySelectorAll('li, .modal-card-row, .modal-action-card').forEach(row => {
+                   const cb = row.querySelector('.main-action-cb');
+                   const cmd = row.dataset.cmd;
+                   if (cb && cmd) {
+                       const matchedAction = actionsData.find(a => a.cmd === cmd || a.baseCmd === cmd);
+                       if (matchedAction) {
+                           matchedAction.active = cb.checked;
+                       }
                    }
                });
            }
-           
-           // Sync with actionsData
+
+           const activeCmds = [];
            actionsData.forEach(a => {
-               if (topUl && a.cmd) {
-                   a.active = activeCmds.includes(a.cmd);
+               if (a.active) {
+                   if (a.cmd && !activeCmds.includes(a.cmd)) activeCmds.push(a.cmd);
+                   if (a.baseCmd && a.baseCmd !== a.cmd && !activeCmds.includes(a.baseCmd)) {
+                       activeCmds.push(a.baseCmd);
+                   }
                }
            });
 
@@ -560,6 +596,14 @@
            window.TABS['__popups_active'][effPopupId] = activeCmds;
            window.TABS['__popups_args'][effPopupId] = Object.assign(window.TABS['__popups_args'][effPopupId] || {}, currentArgsState);
 
+           if (effPopupId.startsWith('sec_')) {
+               const m = effPopupId.match(/sec_[^_]+_(\d+)/);
+               if (m) {
+                   window.TABS['__popups_active'][`sec_${m[1]}`] = activeCmds;
+                   window.TABS['__popups_args'][`sec_${m[1]}`] = Object.assign(window.TABS['__popups_args'][`sec_${m[1]}`] || {}, currentArgsState);
+               }
+           }
+
            Object.keys(currentArgsState).forEach(k => {
                window.TABS['__cmd_args'][k] = Object.assign(window.TABS['__cmd_args'][k] || {}, currentArgsState[k]);
            });
@@ -569,7 +613,9 @@
                localStorage.setItem('ros2_nexus_popups_active', JSON.stringify(window.TABS['__popups_active']));
                localStorage.setItem('ros2_nexus_popups_args', JSON.stringify(window.TABS['__popups_args']));
                localStorage.setItem('ros2_nexus_cmd_args', JSON.stringify(window.TABS['__cmd_args']));
-           } catch (e) {}
+           } catch (e) {
+               console.error('Error saving to localStorage:', e);
+           }
 
            // Save to backend config file
            fetch('/api/config', {
@@ -1041,7 +1087,8 @@
               };
               badgeContainer.appendChild(infoBadge);
               
-              const isChecked = action ? action.active : (activeSet ? activeSet.has(li.dataset.cmd) : false);
+              const isChecked = action ? !!action.active : (activeSet ? (activeSet.has(li.dataset.cmd) || (action && action.baseCmd && activeSet.has(action.baseCmd))) : true);
+              if (action) action.active = isChecked;
 
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
@@ -1140,7 +1187,7 @@
               const li = document.createElement('li');
               li.dataset.cmd = action.cmd;
               parseArgs(action);
-              let isActive = activeSet ? activeSet.has(li.dataset.cmd) : false;
+              let isActive = action ? !!action.active : (activeSet ? (activeSet.has(li.dataset.cmd) || (action && action.baseCmd && activeSet.has(action.baseCmd))) : true);
               action.active = isActive;
               
               li.className = 'modal-action-card ' + (isActive ? 'card-active' : 'card-inactive');
@@ -1208,15 +1255,16 @@
               
               titleDiv.appendChild(badgeContainer);
               
-               const isChecked2 = isActive;
+              const isChecked2 = action ? !!action.active : (activeSet ? (activeSet.has(li.dataset.cmd) || (action && action.baseCmd && activeSet.has(action.baseCmd))) : true);
+              if (action) action.active = isChecked2;
 
-               const mainCb = document.createElement('input');
-               mainCb.type = 'checkbox';
-               mainCb.className = 'main-action-cb';
-               mainCb.checked = isChecked2;
+              const mainCb = document.createElement('input');
+              mainCb.type = 'checkbox';
+              mainCb.className = 'main-action-cb';
+              mainCb.checked = isChecked2;
 
-               cardLayout.appendChild(leftCol);
-               cardLayout.appendChild(middleCol);
+              cardLayout.appendChild(leftCol);
+              cardLayout.appendChild(middleCol);
 
                 const iconMetas2 = getActionIconMeta(action, action.cmd);
                 const isDual2 = iconMetas2.length > 1;
@@ -1411,6 +1459,7 @@
        }
        
        const closeModal = () => {
+           saveActiveState();
            hideGlobalCmdTooltip();
            const m = document.getElementById('launch-modal');
            if (m) m.remove();

@@ -143,22 +143,22 @@
         if (!window.TABS['__popups_args']) window.TABS['__popups_args'] = {};
         if (!window.TABS['__cmd_args']) window.TABS['__cmd_args'] = {};
 
-        // Merge localStorage backup for offline/fast sync
+        // Merge localStorage backup for offline/fast sync (localStorage has precedence as latest user choices)
         try {
             const localActive = JSON.parse(localStorage.getItem('ros2_nexus_popups_active') || '{}');
             const localArgs = JSON.parse(localStorage.getItem('ros2_nexus_popups_args') || '{}');
             const localCmdArgs = JSON.parse(localStorage.getItem('ros2_nexus_cmd_args') || '{}');
 
             Object.keys(localActive).forEach(k => {
-                if (!window.TABS['__popups_active'][k] || window.TABS['__popups_active'][k].length === 0) {
+                if (Array.isArray(localActive[k])) {
                     window.TABS['__popups_active'][k] = localActive[k];
                 }
             });
             Object.keys(localArgs).forEach(k => {
-                window.TABS['__popups_args'][k] = Object.assign({}, localArgs[k], window.TABS['__popups_args'][k] || {});
+                window.TABS['__popups_args'][k] = Object.assign({}, window.TABS['__popups_args'][k] || {}, localArgs[k]);
             });
             Object.keys(localCmdArgs).forEach(k => {
-                window.TABS['__cmd_args'][k] = Object.assign({}, localCmdArgs[k], window.TABS['__cmd_args'][k] || {});
+                window.TABS['__cmd_args'][k] = Object.assign({}, window.TABS['__cmd_args'][k] || {}, localCmdArgs[k]);
             });
         } catch (e) {}
 
@@ -574,8 +574,8 @@
           </div>
 
           <div class="actions-grid" style="grid-template-columns: 1fr; gap: 10px; position: relative; z-index: 1;" data-sec-index="${secIndex}">
-            <div class="card-wrapper">
-              <div class="action-card" data-type="sys" onclick="openLaunchModal(this.closest('.card-wrapper'), TABS[window.currentTab][${secIndex}].actions, '🚀 ${sec.title.replace(/'/g, "\\'")} gestartet...', 'sec_${secIndex}')" style="cursor: pointer; border-radius: 14px; background: rgba(0,0,0,0.5); border: none; box-shadow: inset 0 0 0 1px ${secColor}40; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; --card-accent: linear-gradient(90deg, ${secColor} 0%, transparent 50%);">
+                <div class="card-wrapper">
+              <div class="action-card" data-type="sys" onclick="openLaunchModal(this.closest('.card-wrapper'), TABS[window.currentTab][${secIndex}].actions, '🚀 ${sec.title.replace(/'/g, "\\'")} gestartet...', 'sec_${window.currentTab || 'nodes'}_${secIndex}')" style="cursor: pointer; border-radius: 14px; background: rgba(0,0,0,0.5); border: none; box-shadow: inset 0 0 0 1px ${secColor}40; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; --card-accent: linear-gradient(90deg, ${secColor} 0%, transparent 50%);">
                 <div style="position: absolute; top: 0; right: 0; width: 5px; height: 100%; background: linear-gradient(270deg, ${secColor} 0%, transparent 100%); pointer-events: none; border-top-right-radius: 13px; border-bottom-right-radius: 13px; z-index: 0;"></div>
                 <div class="action-btn" style="pointer-events: none; display: flex; flex-direction: column; justify-content: center; padding: 14px 24px; position: relative; z-index: 1;">
                    <div style="display: flex; align-items: center; justify-content: flex-start; gap: 22px; width: 100%; position: relative;">

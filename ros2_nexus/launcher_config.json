@@ -132,7 +132,6 @@
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py use_zed_hardware:=false yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
-      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
       "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081 & sleep 1 && (google-chrome --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || chromium-browser --user-data-dir=$HOME/.robot_control_profile --class=\"robot-control-ui\" --start-maximized --app=http://127.0.0.2:8081/index.html || xdg-open http://127.0.0.2:8081/index.html) & wait",
       "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
       "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner",
@@ -152,7 +151,10 @@
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175",
       "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082"
     ],
-    "sec_0": [],
+    "sec_0": [
+      "echo -e '\\033[1;32mNetzwerk:\\033[0m'; ip -brief address show; echo ''; read -p 'Enter...'",
+      "read -p \"Dateiname?: \" st; find / -iname \"*${st}*\" 2>/dev/null"
+    ],
     "sec_1": [
       "rqt_graph"
     ],
@@ -166,8 +168,19 @@
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev"
     ],
-    "sec_5": [],
+    "sec_5": [
+      "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",
+      "ros2 run rviz_overlay_servo_status servo_status_overlay"
+    ],
     "sec_6": [
+      "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
+      "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
+      "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
+      "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
+      "ros2 run my_3d_vision_bringup yolo_3d_bbox_for_zed_m.py",
+      "ros2 run tf_control_tuner tf_control_tuner",
+      "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
+      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
       "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node"
     ],
     "sec_7": [
@@ -178,6 +191,100 @@
     ],
     "sec_8": [
       "obs"
+    ],
+    "sec_nodes_2": [
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link & sleep 5 && ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner & ros2 run rviz_window_streamer rviz_window_streamer_node"
+    ],
+    "sec_nodes_3": [
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev & sleep 8 && ros2 run rviz_window_streamer rviz_window_streamer_node & ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses"
+    ],
+    "sec_nodes_4": [
+      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
+      "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
+      "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
+      "ros2 run voice_command_listener listener",
+      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False",
+      "ros2 run whisper_demos whisper_on_key",
+      "ros2 run xarm_moveit_servo xarm_keyboard_input",
+      "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner"
+    ],
+    "sec_4": [
+      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
+      "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
+      "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
+      "ros2 run voice_command_listener listener",
+      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False",
+      "ros2 run whisper_demos whisper_on_key",
+      "ros2 run xarm_moveit_servo xarm_keyboard_input",
+      "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner"
+    ],
+    "sec_nodes_5": [
+      "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",
+      "ros2 run rviz_overlay_servo_status servo_status_overlay"
+    ],
+    "sec_nodes_6": [
+      "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
+      "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
+      "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
+      "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
+      "ros2 run my_3d_vision_bringup yolo_3d_bbox_for_zed_m.py",
+      "ros2 run tf_control_tuner tf_control_tuner",
+      "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
+      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
+      "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node"
+    ],
+    "sec_nodes_7": [
+      "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
+      "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
+      "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
+      "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py"
+    ],
+    "sec_nodes_8": [
+      "obs"
+    ],
+    "sec_nodes_11": [
+      "bash ~/dev_ws/isaacsim/start_isaac_sim.sh"
+    ],
+    "sec_nodes_12": [
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev"
+    ],
+    "sec_12": [
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev"
+    ],
+    "sec_system_0": [
+      "echo -e '\\033[1;32mNetzwerk:\\033[0m'; ip -brief address show; echo ''; read -p 'Enter...'",
+      "read -p \"Dateiname?: \" st; find / -iname \"*${st}*\" 2>/dev/null"
+    ],
+    "sec_system_1": [
+      "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'"
+    ],
+    "sec_system_2": [
+      "source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2",
+      "colcon build --symlink-install"
+    ],
+    "sec_info_0": [
+      "ros2 node list",
+      "ros2 topic list -t",
+      "ros2 service list",
+      "ros2 param list",
+      "ros2 pkg list"
+    ],
+    "sec_info_1": [
+      "rviz2",
+      "rqt_graph",
+      "rqt"
+    ],
+    "sec_info_2": [
+      "read -p \"Topic: \" tp; ros2 topic echo $tp",
+      "read -p \"Topic: \" tp; ros2 topic hz $tp",
+      "read -p \"Message-Typ: \" msg; ros2 interface show $msg; echo \"\"; read -p \"Enter...\"",
+      "ros2 doctor"
+    ],
+    "sec_topic_pubs_0": [
+      "ros2 topic pub --rate 10 /joy sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\"",
+      "ros2 topic pub --rate 10 /joy_check sensor_msgs/msg/Joy \"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'base_link'}, axes: [0.0, 1.0, 0.0, 0.0], buttons: [0, 0, 0, 0]}\""
     ]
   },
   "__popups_args": {
@@ -431,11 +538,13 @@
       "actions": [
         {
           "label": "RUN DEV SETUP (REAL)",
-          "type": "dev_real"
+          "type": "dev_real",
+          "active": true
         },
         {
           "label": "RUN DEV SETUP (FAKE)",
-          "type": "dev_fake"
+          "type": "dev_fake",
+          "active": true
         }
       ],
       "col": 0,
@@ -448,11 +557,13 @@
       "actions": [
         {
           "label": "RUN DEV + Gaze UI (Rpi Cam) - Egocentric",
-          "type": "extras_legacy"
+          "type": "extras_legacy",
+          "active": true
         },
         {
           "label": "RUN DEV + Gaze UI (ZED M) - Exocentric",
-          "type": "extras_zed"
+          "type": "extras_zed",
+          "active": true
         }
       ],
       "col": 0,
@@ -464,7 +575,7 @@
     {
       "actions": [
         {
-          "active": false,
+          "active": true,
           "args": [
             {
               "checked": true,
@@ -491,7 +602,7 @@
     {
       "actions": [
         {
-          "active": false,
+          "active": true,
           "args": [
             {
               "checked": true,
@@ -522,7 +633,7 @@
     {
       "actions": [
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
           "cmd": "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
@@ -531,7 +642,7 @@
           "type": "launch"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
           "cmd": "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
@@ -540,7 +651,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
           "cmd": "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
@@ -549,7 +660,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run voice_command_listener listener",
           "cmd": "ros2 run voice_command_listener listener",
@@ -558,7 +669,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [
             {
               "checked": true,
@@ -576,7 +687,7 @@
           "type": "launch"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run whisper_demos whisper_on_key",
           "cmd": "ros2 run whisper_demos whisper_on_key",
@@ -585,7 +696,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
           "cmd": "ros2 run xarm_moveit_servo xarm_keyboard_input",
@@ -594,7 +705,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner",
           "cmd": "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner",
@@ -611,7 +722,7 @@
     {
       "actions": [
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",
           "cmd": "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",
@@ -620,7 +731,7 @@
           "type": "launch"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run rviz_overlay_servo_status servo_status_overlay",
           "cmd": "ros2 run rviz_overlay_servo_status servo_status_overlay",
@@ -636,7 +747,7 @@
     {
       "actions": [
         {
-          "active": false,
+          "active": true,
           "args": [
             {
               "checked": false,
@@ -662,7 +773,7 @@
           "type": "launch"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
           "cmd": "ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
@@ -671,7 +782,7 @@
           "type": "launch"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
           "cmd": "ros2 run my_3d_vision_bringup pointcloud_optimizer.py",
@@ -680,7 +791,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
           "cmd": "ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py",
@@ -689,7 +800,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run my_3d_vision_bringup yolo_3d_bbox_for_zed_m.py",
           "cmd": "ros2 run my_3d_vision_bringup yolo_3d_bbox_for_zed_m.py",
@@ -698,7 +809,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run tf_control_tuner tf_control_tuner",
           "cmd": "ros2 run tf_control_tuner tf_control_tuner",
@@ -707,7 +818,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [],
           "baseCmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
           "cmd": "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
@@ -716,7 +827,7 @@
           "type": "node"
         },
         {
-          "active": false,
+          "active": true,
           "args": [
             {
               "checked": true,
@@ -811,7 +922,8 @@
       "actions": [
         {
           "label": "RUN CLIENT (Operator Station)",
-          "type": "client"
+          "type": "client",
+          "active": true
         }
       ],
       "col": 2,
@@ -824,11 +936,13 @@
       "actions": [
         {
           "label": "RUN SERVER (REAL)",
-          "type": "server_real"
+          "type": "server_real",
+          "active": true
         },
         {
           "label": "RUN SERVER (FAKE)",
-          "type": "server_fake"
+          "type": "server_fake",
+          "active": true
         }
       ],
       "col": 2,

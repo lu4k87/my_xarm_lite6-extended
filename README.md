@@ -574,13 +574,13 @@ flowchart TD
 >> |---|---|---|
 >> | `camera_model` | `zedm` | *ZED camera model (Stereolabs ZED Mini).* |
 >> | `use_zed_hardware` | `true` | *If false, skips launching the real ZED driver (for fake/simulation modes).* |
->> | `tf_x` | `0.473` | *Calibrated camera X position relative to `link_base` [m].* |
->> | `tf_y` | `0.0` | *Calibrated camera Y position relative to `link_base` [m].* |
->> | `tf_z` | `0.510` | *Calibrated camera Z height relative to `link_base` [m].* |
->> | `tf_roll` | `-0.04363` | *Camera roll angle [rad] (-2.5°).* |
->> | `tf_pitch` | `1.09083` | *Camera pitch angle [rad] (+62.5°, tilted downward toward workspace).* |
->> | `tf_yaw` | `2.99499` | *Camera yaw angle [rad] (171.6°, facing the robot).* |
->> | `yolo_model` | `yolov8l.pt` | *YOLO neural network weights file.* |
+>> | `tf_x` | `0.870` | *Calibrated camera X position relative to `link_base` [m] (Tripod setup).* |
+>> | `tf_y` | `0.0` | *Calibrated camera Y position relative to `link_base` [m] (Tripod setup).* |
+>> | `tf_z` | `0.520` | *Calibrated camera Z height relative to `link_base` [m] (Tripod setup).* |
+>> | `tf_roll` | `-0.07156` | *Camera roll angle [rad] (-4.1°, Tripod calibration).* |
+>> | `tf_pitch` | `0.63181` | *Camera pitch angle [rad] (+36.2°, tilted downward toward workspace).* |
+>> | `tf_yaw` | `3.14159` | *Camera yaw angle [rad] (180.0°, facing the robot).* |
+>> | `yolo_model` | `yolov8l.pt` | *YOLO neural network weights file (default: high-accuracy YOLOv8 Large).* |
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`config/zed_override.yaml` Parameter Overrides)**
 >
@@ -606,7 +606,13 @@ flowchart TD
 > ros2 run my_3d_vision_bringup yolo_3d_bbox_for_zed_m.py
 > ```
 >
-> **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large** model. Isolates objects, filters depth noise, and computes millimeter-accurate 3D bounding boxes grounded to the table plane (including a grasp point marker). Uses a **robust closest-surface projection** algorithm (filtering out the bottom 20% of points to avoid table noise) to perfectly center bounding boxes on the true physical volume of objects, regardless of camera angles. Features a **dictionary-based EMA tracking system** with persistent global IDs and a tight 10cm distance threshold to prevent ID-swapping and bounding box jitter. Multiple objects of the same class are permanently numbered for unambiguous targeting (e.g., `cup_1`, `cup_2`).
+> **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large (`yolov8l.pt`)** model. Isolates objects, filters depth noise, and dynamically calculates millimeter-accurate 3D bounding boxes grounded to the table plane based on real 3D point cloud clusters.
+>
+> **Key Capabilities:**
+> - **Dynamic Object Height Estimation:** Rather than relying on rigid, pre-defined box heights, the node computes the real physical height ($z_{\text{top}} - z_{\text{bottom}}$) directly from the segmented 3D points of each detected object.
+> - **Dynamic Top Grasp Point (`top_z`):** Places a small red grasp sphere marker precisely at the center top of each object ($x_{\text{center}}, y_{\text{center}}, z_{\text{top}}$), automatically scaling with the object's height for safe, collision-free top-down vacuum grasps.
+> - **Robust Surface Projection & Centering:** Filters out ground/table edge artifacts to center bounding boxes squarely on the physical volume of the item.
+> - **EMA Tracking & Multi-Object Disambiguation:** Maintains stable, persistent global IDs using Exponential Moving Average smoothing with a 10 cm proximity threshold, preventing ID swapping or box jitter. Objects of the same class are sequentially numbered (e.g., `apple_1`, `apple_2`).
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -622,13 +628,13 @@ flowchart TD
 >
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
->> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` |  |
->> | *-* | *-* | *Sends the finalized 3D boxes and markers to RViz for visualization and to downstream nodes.* |
+>> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Sends finalized 3D bounding boxes, text labels, and dynamic grasp point markers (`top_z`) to RViz and downstream nodes.* |
 >
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 >
->  * `class_dimension_overrides` – Hardcodes expected metric dimensions (x,y,z) for specific objects to ensure the bounding box perfectly encloses the physical volume, not just the visible point cloud surface.
+>  * `yolo_model` – Neural network model weights file (default: `yolov8l.pt`, customizable via launch argument or Nexus Webapp parameter chip).
+>  * `class_dimension_overrides` – Optional metric overrides (x,y,z) for known fixed objects.
 >  * `percentiles: [0.5, 99.5]` – Hard-clips extreme depth noise pixels ("flying pixels" at object edges) while preserving true boundaries.
 >  * `ema_alpha: 0.2` – Smoothing factor (Exponential Moving Average) to safely eliminate box jittering between frames.
 >
@@ -1625,7 +1631,7 @@ flowchart TD
 #### ![Bash Script](https://img.shields.io/badge/Bash_Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white) `start_isaac_sim.sh`
 > [!NOTE]
 > **Purpose & Task:** Integrates a locally built NVIDIA Isaac Sim environment directly into the ROS 2 Nexus bringup sequence. Instead of actively computing physics or conflicting with hardware controllers, Isaac Sim runs in **Shadow Mode**. It subscribes to the `/joint_states` topic and maps the physical (or fake) robot movements onto an extremely high-fidelity USD asset in real-time.
-> - **Workflow:** 1. The user launches `RUN DEV Setup (FAKE)` or `(REAL)` via the Nexus Dashboard.
+> - **Workflow:** 1. The user launches `RUN DEV Setup (FAKE)` or `(REAL)` via the Nexus Webapp.
 >   2. The user clicks `Start Isaac Sim (Lite6 Modul)` under the Isaac Sim category.
 >   7. The custom script spawns the local `isaac-sim.sh` binary with `--allow-root` and automatically opens the pre-configured Action Graph scene (`lite6_isaac_ros2.usd`).
 > - **OmniGraph Architecture:** The scene uses a minimal footprint Action Graph consisting of an `On Playback Tick` node firing into a `ROS2 Subscribe Joint State` node (listening to `/joint_states`), which pipes directly into the `Articulation Controller` driving the robot asset.
@@ -2365,7 +2371,7 @@ The buttons, categories, and commands in the ROS 2 Nexus web interface are fully
 
 **Interactive Drag & Drop:** The Nexus interface features a highly responsive, persistent 3-column drag & drop system. Individual action buttons can be freely arranged within their sections. Entire category sections can be seamlessly distributed across three vertical columns. Layout changes are immediately saved in the backend.
 
-**Hierarchical Launch Inspection:** Every action button in the Nexus UI features an interactive [CMD] indicator. Clicking the button opens a detailed modal that visually breaks down the exact hierarchical structure of the target launch file. This accurately mirrors deeply nested sub-launches and individual nodes (e.g., `ros2_control_node`, `spawner`, `robot_state_publisher`). A global 'Select All' checkbox enables quick toggling of all main components within the sequence. Dynamic launch arguments are displayed as interactive checkboxes right next to the corresponding launch files, allowing for intuitive, real-time parameterization before execution. **Furthermore, the action cards within these popups support persistent drag-and-drop sorting, allowing users to customize their execution order. By default, all cards are initially deselected; however, any individual checkbox selections are automatically saved and restored the next time the popup is opened.**
+**Hierarchical Launch Inspection:** Every action button in the Nexus UI features an interactive [CMD] indicator. Clicking the button opens a detailed modal that visually breaks down the exact hierarchical structure of the target launch file. This accurately mirrors deeply nested sub-launches and individual nodes (e.g., `ros2_control_node`, `spawner`, `robot_state_publisher`). A global 'Select All' checkbox enables quick toggling of all main components within the sequence. Dynamic launch arguments are displayed as interactive checkboxes right next to the corresponding launch files, allowing for intuitive, real-time parameterization before execution. **Furthermore, the action cards within these popups support persistent drag-and-drop sorting, allowing users to customize their execution order. By default, all actions are enabled (`active: true`). Any user checkbox selections and parameter chip adjustments (such as YOLO model selection or hardware toggles) are automatically and persistently saved per card in both `localStorage` and `launcher_config.json`, and restored every time the popup card is opened or the page is refreshed.**
 
 ![](_imgs/ros2_nexus_web_popup.png)
 
@@ -2483,7 +2489,7 @@ dev_ws/
 │   ├── launcher_config.json                                               # Master process & button configuration for Nexus
 │   ├── ros2_nexus_web_start.sh                                            # Nexus background daemon & browser launcher
 │   ├── ros2_nexus_web.py                                                  # Async HTTP daemon executing subprocesses
-│   ├── ros2_nexus_web.html                                                # Nexus dashboard frontend UI
+│   ├── ros2_nexus_web.html                                                # Nexus Webapp frontend UI
 │   ├── ros2_nexus_styles.css                                              # Nexus responsive stylesheet
 │   ├── ros2_nexus_script.js                                               # Core frontend process manager & log viewer
 │   └── ros2_nexus_ui.js                                                   # UI interaction, modal dialogs & tab handling
