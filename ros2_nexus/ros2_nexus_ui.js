@@ -263,6 +263,221 @@
         });
      }
 
+    let globalCmdTooltipEl = null;
+
+    function getGlobalCmdTooltip() {
+        if (!globalCmdTooltipEl) {
+            globalCmdTooltipEl = document.createElement('div');
+            globalCmdTooltipEl.id = 'global-cmd-tooltip';
+            globalCmdTooltipEl.className = 'global-cmd-floating-tooltip';
+            document.body.appendChild(globalCmdTooltipEl);
+        }
+        return globalCmdTooltipEl;
+    }
+
+    function showGlobalCmdTooltip(targetEl, cmdText) {
+        if (!cmdText) return;
+        const tip = getGlobalCmdTooltip();
+        const safeCmd = String(cmdText)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+
+        tip.innerHTML = `
+            <div class="cmd-tip-header">
+                <span><i class="fa-solid fa-terminal" style="color:#38bdf8; margin-right:5px;"></i>Befehl</span>
+                <span class="cmd-tip-hint"><i class="fa-regular fa-copy"></i> Klick zum Kopieren</span>
+            </div>
+            <div class="cmd-tip-code">${safeCmd}</div>
+        `;
+
+        tip.style.left = '-9999px';
+        tip.style.top = '-9999px';
+        tip.style.display = 'block';
+        tip.classList.add('visible');
+
+        const rect = targetEl.getBoundingClientRect();
+        const tipRect = tip.getBoundingClientRect();
+
+        let left = rect.left + (rect.width / 2) - (tipRect.width / 2);
+        left = Math.max(12, Math.min(left, window.innerWidth - tipRect.width - 12));
+
+        let top = rect.bottom + 8;
+        if (top + tipRect.height > window.innerHeight - 12) {
+            top = Math.max(12, rect.top - tipRect.height - 8);
+        }
+
+        tip.style.left = Math.round(left) + 'px';
+        tip.style.top = Math.round(top) + 'px';
+    }
+
+    function hideGlobalCmdTooltip() {
+        if (globalCmdTooltipEl) {
+            globalCmdTooltipEl.classList.remove('visible');
+        }
+    }
+
+    function createCmdBadge(cmdText) {
+        const btn = document.createElement('div');
+        btn.className = 'modal-cmd-btn';
+        btn.style.cssText = 'padding: 2px 6px; font-size: 9.5px;';
+        btn.innerHTML = `<i class="fa-solid fa-terminal" style="font-size:9px; color:#38bdf8;"></i> CMD`;
+
+        btn.onmouseenter = () => showGlobalCmdTooltip(btn, cmdText);
+        btn.onmouseleave = () => hideGlobalCmdTooltip();
+
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(cmdText).then(() => {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fa-solid fa-check';
+                    icon.style.color = '#10b981';
+                }
+                showToast('✓ Befehl in Zwischenablage kopiert');
+                setTimeout(() => {
+                    if (icon) {
+                        icon.className = 'fa-solid fa-terminal';
+                        icon.style.color = '#38bdf8';
+                    }
+                }, 1500);
+            });
+        };
+        return btn;
+    }
+
+    function getActionIconMeta(action, fallbackCmd) {
+        const rawCmd = (action && (action.baseCmd || action.cmd)) ? (action.baseCmd || action.cmd) : (fallbackCmd || '');
+        const firstCmd = rawCmd.split(/(?:&&|&|;)/)[0].trim().toLowerCase();
+        const title = ((action && (action.title || action.label)) || '').toLowerCase();
+        const type = ((action && action.type) || '').toLowerCase();
+        const combined = (firstCmd + ' ' + title + ' ' + type + ' ' + rawCmd.toLowerCase());
+
+        // 0. Ausdrücklich KEINE Icons für Helper/Tuner/Overlay/Streamer-Nodes (web_video_server & tf_control_tuner ausgenommen!)
+        if (/rviz_linear_axis_tuner|yolo_3d_bbox_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_overlay_servo_status|rviz_window_streamer/.test(firstCmd) ||
+            /linear axis tuner|yolo 3d bbox|rviz marker|servo status warning|rviz streamer/.test(title)) {
+            if (!/lite6_moveit|xarm_moveit|standalone_move_group|zed_cam/.test(firstCmd)) {
+                return [];
+            }
+        }
+
+        // TF Control Tuner Slider-Icon (vom User gewünscht: icon_tf_tuner)
+        if (/tf_control_tuner|tf_tuner|transform tuner/.test(combined)) {
+            return [{ path: '_imgs/icons/icon_tf_tuner.svg', label: 'Transform Tuner (tf_control_tuner)' }];
+        }
+
+        // VR Action Card: BEIDE VR-Icons daneben (Headset & Controller)!
+        if (/vr_quest|quest3|vr_controller|quest teleop|vr teleop/.test(combined)) {
+            return [
+                { path: '_imgs/icons/icon_vr_headsetVR.svg?v=6', label: 'Meta Quest 3 VR Headset' },
+                { path: '_imgs/icons/icon_vr_controller.svg?v=6', label: 'VR Controller Teleoperation' }
+            ];
+        }
+
+        // Web Video Server / Stream Server
+        if (/web_video_server/.test(combined)) {
+            return [{ path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket Video Server' }];
+        }
+
+        // ZED-M Stereo-Kamera mit integrierter YOLO 3D Objekterkennung:
+        // z.B. zed_cam_rviz_pointcloud_tf_yolo_planned_grasp oder zed_cam_eef_rviz_octomap_yolo
+        if ((firstCmd.includes('zed') || /zed_camera|zed_wrapper|zed m camera/.test(combined)) && /yolo/.test(combined)) {
+            return [
+                { path: '_imgs/icons/icon_zed_m.svg?v=6', label: 'ZED-M Stereo-Kamera' },
+                { path: '_imgs/icons/icon_object_detection.svg?v=7', label: 'YOLO 3D Object Detection' }
+            ];
+        }
+
+        // ZED-M Stereo-Kamera Launcher (ohne YOLO)
+        if (/zed_camera|zed_wrapper|zed m camera/.test(combined) || (firstCmd.includes('zed') && !firstCmd.includes('gaze'))) {
+            return [{ path: '_imgs/icons/icon_zed_m.svg?v=6', label: 'ZED-M Stereo-Kamera' }];
+        }
+
+        // xArm Lite 6 Launch mit MoveIt, RViz & Gamepad Controller (lite6_moveit_servo_fake / lite6_moveit_servo_realmove):
+        // Zeigt das passende xArm Lite 6 Icon (Simulation für Fake, Real für Realmove) + MoveIt + RViz + Gamepad Controller
+        if (/lite6_moveit_servo|servo_fake|servo_real/.test(firstCmd) || 
+            (firstCmd.startsWith('ros2 launch') && /lite6/.test(combined) && /moveit|servo/.test(combined))) {
+            const isSim = /fake|sim|mock/.test(combined);
+            return [
+                { 
+                    path: isSim ? '_imgs/icons/icon_robot_lite6_sim.svg?v=6' : '_imgs/icons/icon_robot_lite6_real.svg?v=6', 
+                    label: isSim ? 'xArm Lite 6 (Simulation)' : 'xArm Lite 6 (Physischer Roboter)' 
+                },
+                { path: '_imgs/icons/icon_moveit2.svg', label: 'MoveIt Motion Planning' },
+                { path: '_imgs/icons/icon_rviz.svg', label: 'RViz 3D-Visualisierung' },
+                { path: '_imgs/icons/icon_gamepad.svg?v=6', label: 'Gamepad Roboter-Steuerung' }
+            ];
+        }
+
+        // xArm Lite 6 Roboter (eigenständig)
+        if (/lite6|xarm.*lite/.test(combined)) {
+            const isSim = /fake|sim|mock/.test(combined);
+            return [{
+                path: isSim ? '_imgs/icons/icon_robot_lite6_sim.svg?v=6' : '_imgs/icons/icon_robot_lite6_real.svg?v=6',
+                label: isSim ? 'xArm Lite 6 (Simulation)' : 'xArm Lite 6 (Physischer Roboter)'
+            }];
+        }
+
+        // 1. RViz / RViz2 3D-Visualisierung (eigenes weißes SVG Icon mit 3D Frame & rviz2 Schriftzug)
+        if (/\brviz\b|\brviz2\b/.test(firstCmd) || /\brviz\b|\brviz2\b/.test(title)) {
+            return [{ path: '_imgs/icons/icon_rviz.svg', label: 'RViz 3D-Visualisierung' }];
+        }
+        // 2. MoveIt / Motion Planning (eigenes weißes SVG Icon mit Roboterarm & moveit2 Schriftzug)
+        if (/moveit|move_group|movegroup|moveit_servo|lite6_moveit|xarm_moveit/.test(combined)) {
+            if (/yolo/.test(combined)) {
+                return [
+                    { path: '_imgs/icons/icon_moveit2.svg', label: 'MoveIt Motion Planning' },
+                    { path: '_imgs/icons/icon_object_detection.svg?v=7', label: 'YOLO 3D Object Detection' }
+                ];
+            }
+            return [{ path: '_imgs/icons/icon_moveit2.svg', label: 'MoveIt Motion Planning' }];
+        }
+        // 3. Voice / Whisper / Speech Audio
+        if (/voice|whisper|speech|audio|listener|silero/.test(combined)) {
+            return [{ path: '_imgs/icons/icon_voice.svg?v=6', label: 'Sprachsteuerung & Audio' }];
+        }
+        // 4. Gaze / Tobii Eye Tracking (mit oder ohne YOLO)
+        if (/gaze|tobii|glasses/.test(combined)) {
+            if (/yolo/.test(combined)) {
+                return [
+                    { path: '_imgs/icons/icon_gaze.svg?v=6', label: 'Blickerfassung (Tobii Gaze)' },
+                    { path: '_imgs/icons/icon_object_detection.svg?v=7', label: 'YOLO 3D Object Detection' }
+                ];
+            }
+            return [{ path: '_imgs/icons/icon_gaze.svg?v=6', label: 'Blickerfassung (Tobii Gaze)' }];
+        }
+        // YOLO 3D Objekterkennung (eigenes weißes SVG Icon mit 3D Bounding Box & Sucher-Ecken)
+        if (/yolo|object_detection|detection_3d|bbox_3d/.test(combined)) {
+            return [{ path: '_imgs/icons/icon_object_detection.svg?v=7', label: 'YOLO 3D Object Detection' }];
+        }
+        // 5. VR Headset / Isaac Sim / 3D Simulation
+        if (/isaac|sim_lite6|headset|vr_exo|vr_ego|vr_seq/.test(combined)) {
+            return [{ path: '_imgs/icons/icon_vr_headsetVR.svg?v=6', label: 'VR Headset / Simulation' }];
+        }
+        // 6. Client / Operator Station
+        if (/client|operator_station|operator/.test(combined)) {
+            return [{ path: '_imgs/icons/icon_client.svg', label: 'Client / Operator Station' }];
+        }
+        // 7. Gamepad / Joystick / Keyboard / Collision Checker
+        if (/gamepad|joy|keyboard|linear_axis|collision_check|teleop_pre_collision/.test(combined)) {
+            return [{ path: '_imgs/icons/icon_gamepad.svg?v=6', label: 'Gamepad & Roboter-Steuerung' }];
+        }
+        // 8. Web-UI / Dashboard / Overlays / Streams / OBS
+        if (/robot_control|dashboard|rqt|overlay|streamer|obs|8080|8081|ui_node/.test(combined)) {
+            return [{ path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Web-UI & Visualisierung' }];
+        }
+        // 9. ROS WebSocket / ROS Bridge / Backend
+        if (/rosbridge|websocket|analyzer|vision|pointcloud|aruco|server|kill|pkill/.test(combined)) {
+            return [{ path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket' }];
+        }
+
+        if (firstCmd.startsWith('ros2 launch')) {
+            return [{ path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket Launch' }];
+        }
+        return [{ path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Komponente' }];
+    }
+
     function openLaunchModal(wrapper, actionsData, toastMsg, popupId) {
        const tooltip = wrapper.querySelector('.card-tooltip');
        if (!tooltip) return;
@@ -658,7 +873,8 @@
        const topUls = Array.from(contentClone.children).filter(n => n.tagName === 'UL');
        if (topUls.length > 0) {
           const topUl = topUls[0];
-          topUl.style.cssText = 'width: 100%; max-width: 1220px; margin: 0 auto; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 12px;';
+          topUl.style.cssText = 'width: 100%; max-width: 1380px; margin: 0 auto; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 14px;';
+          let hasAnyDual = false;
           
           const topLis = Array.from(topUl.children).filter(n => n.tagName === 'LI');
           const matchedCmds = new Set();
@@ -708,10 +924,10 @@
               
               const leftCol = document.createElement('div');
               leftCol.className = 'modal-card-left-col';
-              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1 1 0%; min-width: 0; overflow: hidden;';
+              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1 1 0%; min-width: 0; overflow: visible;';
               
               const titleDiv = document.createElement('div');
-              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0; width: 100%; overflow: hidden;';
+              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0; width: 100%; overflow: visible;';
               
               const ulNode = Array.from(li.childNodes).find(n => n.tagName === 'UL');
               Array.from(li.childNodes).forEach(node => {
@@ -794,42 +1010,8 @@
                   badgeContainer.appendChild(chromeBadge);
               }
               
-              const cmdBadge1 = document.createElement('div');
-              cmdBadge1.className = 'modal-cmd-btn';
-              cmdBadge1.style.cssText = 'padding: 2px 6px; font-size: 9.5px;';
-              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal" style="font-size:9px; color:#38bdf8;"></i> CMD<div class="cmd-tooltip" style="position:absolute; background:rgba(15,23,42,0.96); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:8px 12px; font-size:10.5px; color:#f8fafc; white-space:pre-wrap; overflow-wrap:break-word; width:340px; text-align:left; pointer-events:none; opacity:0; transition:opacity 0.15s ease; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:999999; font-family:var(--font-mono); letter-spacing:0; line-height:1.4;">${cmdToDisplay.replace(/"/g, '&quot;')}</div>`;
-              cmdBadge1.onmouseover = (e) => {
-                  const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
-                  tooltip.style.opacity = '1';
-                  const rect = cmdBadge1.getBoundingClientRect();
-                  const zoom = (parseFloat(getComputedStyle(cmdBadge1.closest('#launch-modal-window') || document.body).zoom) || 1);
-                  tooltip.style.left = ((e.clientX - rect.left) / zoom + 15) + 'px';
-                  tooltip.style.top = ((e.clientY - rect.top) / zoom + 15) + 'px';
-              };
-              cmdBadge1.onmousemove = (e) => {
-                  const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
-                  const rect = cmdBadge1.getBoundingClientRect();
-                  const zoom = (parseFloat(getComputedStyle(cmdBadge1.closest('#launch-modal-window') || document.body).zoom) || 1);
-                  tooltip.style.left = ((e.clientX - rect.left) / zoom + 15) + 'px';
-                  tooltip.style.top = ((e.clientY - rect.top) / zoom + 15) + 'px';
-              };
-              cmdBadge1.onmouseout = () => {
-                  cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '0';
-              };
-              cmdBadge1.onclick = (e) => {
-                  e.stopPropagation();
-                  const cmdToCopy = rawCmdData ? rawCmdData : (action ? action.cmd : text);
-                  navigator.clipboard.writeText(cmdToCopy).then(() => {
-                      const icon = cmdBadge1.querySelector('i');
-                      icon.className = 'fa-solid fa-check';
-                      icon.style.color = '#10b981';
-                      showToast('✓ Befehl in Zwischenablage kopiert');
-                      setTimeout(() => {
-                          icon.className = 'fa-solid fa-terminal';
-                          icon.style.color = '#38bdf8';
-                      }, 1500);
-                  });
-              };
+              const cmdToCopy = rawCmdData ? rawCmdData : (action ? action.cmd : text);
+              const cmdBadge1 = createCmdBadge(cmdToCopy);
               badgeContainer.appendChild(cmdBadge1);
 
               let descText = 'Details zur Node / zum Launch-File';
@@ -859,17 +1041,83 @@
               };
               badgeContainer.appendChild(infoBadge);
               
+              const isChecked = action ? action.active : (activeSet ? activeSet.has(li.dataset.cmd) : false);
+
               const mainCb = document.createElement('input');
               mainCb.type = 'checkbox';
               mainCb.className = 'main-action-cb';
-              mainCb.checked = action ? action.active : (activeSet ? activeSet.has(li.dataset.cmd) : false);
+              mainCb.checked = isChecked;
 
-              li.className = 'modal-action-card ' + (mainCb.checked ? 'card-active' : 'card-inactive');
+              cardLayout.appendChild(leftCol);
+              cardLayout.appendChild(middleCol);
+
+              const iconMetas = getActionIconMeta(action, cmdToDisplay);
+              const isDual = iconMetas.length > 1;
+              if (isDual) hasAnyDual = true;
+
+              const iconCol = document.createElement('div');
+              iconCol.className = 'modal-card-icon-col' + (isDual ? ' is-vr-dual is-multiple-icons' : '');
+
+              iconMetas.forEach(meta => {
+                  const iconBadge = document.createElement('div');
+                  iconBadge.className = 'modal-card-icon-badge';
+                  iconBadge.title = meta.label;
+
+                  const img = document.createElement('img');
+                  img.src = meta.path;
+                  img.className = 'modal-card-side-img';
+                  img.alt = meta.label;
+
+                  iconBadge.appendChild(img);
+                  iconCol.appendChild(iconBadge);
+              });
+
+              const cbContainer = document.createElement('div');
+              cbContainer.className = 'modal-cb-wrap';
+              cbContainer.appendChild(mainCb);
+
+              const liInnerWrapper = document.createElement('div');
+              liInnerWrapper.style.cssText = 'display: flex; align-items: stretch; width: 100%; gap: 14px;';
+              liInnerWrapper.appendChild(cbContainer);
+              if (iconMetas.length > 0) {
+                  liInnerWrapper.appendChild(iconCol);
+              }
+              liInnerWrapper.appendChild(cardLayout);
+              
+              const cardDiv = document.createElement('div');
+              cardDiv.className = 'modal-action-card ' + (isChecked ? 'card-active' : 'card-inactive');
+              cardDiv.appendChild(liInnerWrapper);
+              
+              const hasBodyContent = !!ulNode || (action && action.args && action.args.length > 0);
+              if (hasBodyContent) {
+                  const hrLine = document.createElement('div');
+                  hrLine.className = 'modal-card-divider-h';
+                  hrLine.style.position = 'absolute';
+                  hrLine.style.top = '52px';
+                  if (iconMetas.length > 0) {
+                      hrLine.style.left = '142px';
+                      hrLine.style.width = 'calc(100% - 158px)';
+                  } else {
+                      hrLine.style.left = '58px';
+                      hrLine.style.width = 'calc(100% - 74px)';
+                  }
+                  hrLine.style.height = '1px';
+                  hrLine.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
+                  hrLine.style.pointerEvents = 'none';
+                  cardDiv.appendChild(hrLine);
+              }
+
+              li.className = 'modal-card-row ' + (isChecked ? 'row-active' : 'row-inactive');
+              li.innerHTML = '';
+              li.appendChild(cardDiv);
+
               mainCb.onclick = (e) => e.stopPropagation();
               mainCb.onchange = (e) => {
                   if (action) action.active = e.target.checked;
-                  li.classList.toggle('card-active', e.target.checked);
-                  li.classList.toggle('card-inactive', !e.target.checked);
+                  cardDiv.classList.toggle('card-active', e.target.checked);
+                  cardDiv.classList.toggle('card-inactive', !e.target.checked);
+                  li.classList.toggle('row-active', e.target.checked);
+                  li.classList.toggle('row-inactive', !e.target.checked);
                   
                   if (action && (action.cmd.includes('rviz_linear_axis_tuner') || action.cmd.includes('linear_axis'))) {
                       syncLinearAxisState(e.target.checked);
@@ -884,34 +1132,6 @@
                   mainCb.checked = !mainCb.checked;
                   mainCb.dispatchEvent(new Event('change'));
               };
-              
-              cardLayout.appendChild(leftCol);
-              cardLayout.appendChild(middleCol);
-
-              const cbContainer = document.createElement('div');
-              cbContainer.className = 'modal-cb-wrap';
-              cbContainer.appendChild(mainCb);
-
-              const liInnerWrapper = document.createElement('div');
-              liInnerWrapper.style.cssText = 'display: flex; align-items: stretch; width: 100%; gap: 14px;';
-              liInnerWrapper.appendChild(cbContainer);
-              liInnerWrapper.appendChild(cardLayout);
-              
-              li.insertBefore(liInnerWrapper, li.firstChild);
-              
-              const hasBodyContent = !!ulNode || (action && action.args && action.args.length > 0);
-              if (hasBodyContent) {
-                  const hrLine = document.createElement('div');
-                  hrLine.className = 'modal-card-divider-h';
-                  hrLine.style.position = 'absolute';
-                  hrLine.style.top = '52px';
-                  hrLine.style.left = '48px';
-                  hrLine.style.width = 'calc(100% - 64px)';
-                  hrLine.style.height = '1px';
-                  hrLine.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
-                  hrLine.style.pointerEvents = 'none';
-                  li.appendChild(hrLine);
-              }
           });
           
               // Append any unmatched actions to the bottom to ensure nothing is missing
@@ -940,10 +1160,10 @@
               
               const leftCol = document.createElement('div');
               leftCol.className = 'modal-card-left-col';
-              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1 1 0%; min-width: 0; overflow: hidden;';
+              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1 1 0%; min-width: 0; overflow: visible;';
               
               const titleDiv = document.createElement('div');
-              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0; width: 100%; overflow: hidden;';
+              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0; width: 100%; overflow: visible;';
               titleDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-shrink: 1;">${cmdName}</span> <span style="color: #64748b; font-size: 10.5px; margin-left: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 2; min-width: 0;">(Auto-Added)</span>`;
               leftCol.appendChild(titleDiv);
               
@@ -983,110 +1203,152 @@
                   badgeContainer.appendChild(chromeBadge2);
               }
               
-              const cmdBadge1 = document.createElement('div');
-              cmdBadge1.className = 'modal-cmd-btn';
-              cmdBadge1.style.cssText = 'padding: 2px 6px; font-size: 9.5px;';
-              cmdBadge1.innerHTML = `<i class="fa-solid fa-terminal" style="font-size:9px; color:#38bdf8;"></i> CMD<div class="cmd-tooltip" style="position:absolute; background:rgba(15,23,42,0.96); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:8px 12px; font-size:10.5px; color:#f8fafc; white-space:pre-wrap; overflow-wrap:break-word; width:340px; text-align:left; pointer-events:none; opacity:0; transition:opacity 0.15s ease; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:999999; font-family:var(--font-mono); letter-spacing:0; line-height:1.4;">${action.cmd.replace(/"/g, '&quot;')}</div>`;
-              cmdBadge1.onmouseover = (e) => {
-                  const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
-                  tooltip.style.opacity = '1';
-                  const rect = cmdBadge1.getBoundingClientRect();
-                  const zoom = (parseFloat(getComputedStyle(cmdBadge1.closest('#launch-modal-window') || document.body).zoom) || 1);
-                  tooltip.style.left = ((e.clientX - rect.left) / zoom + 15) + 'px';
-                  tooltip.style.top = ((e.clientY - rect.top) / zoom + 15) + 'px';
-              };
-              cmdBadge1.onmousemove = (e) => {
-                  const tooltip = cmdBadge1.querySelector('.cmd-tooltip');
-                  const rect = cmdBadge1.getBoundingClientRect();
-                  const zoom = (parseFloat(getComputedStyle(cmdBadge1.closest('#launch-modal-window') || document.body).zoom) || 1);
-                  tooltip.style.left = ((e.clientX - rect.left) / zoom + 15) + 'px';
-                  tooltip.style.top = ((e.clientY - rect.top) / zoom + 15) + 'px';
-              };
-              cmdBadge1.onmouseout = () => {
-                  cmdBadge1.querySelector('.cmd-tooltip').style.opacity = '0';
-              };
-              cmdBadge1.onclick = (e) => {
-                  e.stopPropagation();
-                  navigator.clipboard.writeText(action.cmd).then(() => {
-                      const icon = cmdBadge1.querySelector('i');
-                      icon.className = 'fa-solid fa-check';
-                      icon.style.color = '#10b981';
-                      showToast('✓ Befehl in Zwischenablage kopiert');
-                      setTimeout(() => {
-                          icon.className = 'fa-solid fa-terminal';
-                          icon.style.color = '#38bdf8';
-                      }, 1500);
-                  });
-              };
+              const cmdBadge1 = createCmdBadge(action.cmd);
               badgeContainer.appendChild(cmdBadge1);
               
               titleDiv.appendChild(badgeContainer);
               
-              const mainCb = document.createElement('input');
-              mainCb.type = 'checkbox';
-              mainCb.className = 'main-action-cb';
-              mainCb.checked = isActive;
-              mainCb.onclick = (e) => e.stopPropagation();
-              mainCb.onchange = (e) => {
-                  action.active = e.target.checked;
-                  li.classList.toggle('card-active', e.target.checked);
-                  li.classList.toggle('card-inactive', !e.target.checked);
-                  if (action && (action.cmd.includes("rviz_linear_axis_tuner") || action.cmd.includes("linear_axis"))) {
-                      syncLinearAxisState(e.target.checked);
-                  }
-                  updateModalStats();
-                  if (!e.simulated) saveActiveState();
-              };
-              
-              li.onclick = (e) => {
-                  if (e.target === mainCb || e.target.closest('label') || e.target.closest('a') || e.target.closest('.modal-cmd-btn') || e.target.closest('button')) return;
-                  mainCb.checked = !mainCb.checked;
-                  mainCb.dispatchEvent(new Event('change'));
-              };
-              
-              const cbContainer = document.createElement('div');
-              cbContainer.className = 'modal-cb-wrap';
-              cbContainer.appendChild(mainCb);
-              
-              cardLayout.appendChild(leftCol);
-              cardLayout.appendChild(middleCol);
-              
-              const liInnerWrapper = document.createElement('div');
-              liInnerWrapper.style.cssText = 'display: flex; align-items: stretch; width: 100%; gap: 14px;';
-              liInnerWrapper.appendChild(cbContainer);
-              liInnerWrapper.appendChild(cardLayout);
-              
-              li.appendChild(liInnerWrapper);
-              
-              const hasBodyContent2 = action && action.args && action.args.length > 0;
-              if (hasBodyContent2) {
-                  const hrLine2 = document.createElement('div');
-                  hrLine2.className = 'modal-card-divider-h';
-                  hrLine2.style.position = 'absolute';
-                  hrLine2.style.top = '52px';
-                  hrLine2.style.left = '48px';
-                  hrLine2.style.width = 'calc(100% - 64px)';
-                  hrLine2.style.height = '1px';
-                  hrLine2.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
-                  hrLine2.style.pointerEvents = 'none';
-                  li.appendChild(hrLine2);
-              }
-              
-              topUl.appendChild(li);
-          });
+               const isChecked2 = isActive;
+
+               const mainCb = document.createElement('input');
+               mainCb.type = 'checkbox';
+               mainCb.className = 'main-action-cb';
+               mainCb.checked = isChecked2;
+
+               cardLayout.appendChild(leftCol);
+               cardLayout.appendChild(middleCol);
+
+                const iconMetas2 = getActionIconMeta(action, action.cmd);
+                const isDual2 = iconMetas2.length > 1;
+                if (isDual2) hasAnyDual = true;
+
+                const iconCol2 = document.createElement('div');
+                iconCol2.className = 'modal-card-icon-col' + (isDual2 ? ' is-vr-dual is-multiple-icons' : '');
+
+                iconMetas2.forEach(meta => {
+                    const iconBadge2 = document.createElement('div');
+                    iconBadge2.className = 'modal-card-icon-badge';
+                    iconBadge2.title = meta.label;
+
+                    const img2 = document.createElement('img');
+                    img2.src = meta.path;
+                    img2.className = 'modal-card-side-img';
+                    img2.alt = meta.label;
+
+                    iconBadge2.appendChild(img2);
+                    iconCol2.appendChild(iconBadge2);
+                });
+
+                const cbContainer = document.createElement('div');
+                cbContainer.className = 'modal-cb-wrap';
+                cbContainer.appendChild(mainCb);
+
+                const liInnerWrapper = document.createElement('div');
+                liInnerWrapper.style.cssText = 'display: flex; align-items: stretch; width: 100%; gap: 14px;';
+                liInnerWrapper.appendChild(cbContainer);
+                if (iconMetas2.length > 0) {
+                    liInnerWrapper.appendChild(iconCol2);
+                }
+                liInnerWrapper.appendChild(cardLayout);
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'modal-action-card ' + (isChecked2 ? 'card-active' : 'card-inactive');
+                cardDiv.appendChild(liInnerWrapper);
+
+                const hasBodyContent2 = action && action.args && action.args.length > 0;
+                if (hasBodyContent2) {
+                    const hrLine2 = document.createElement('div');
+                    hrLine2.className = 'modal-card-divider-h';
+                    hrLine2.style.position = 'absolute';
+                    hrLine2.style.top = '52px';
+                    if (iconMetas2.length > 0) {
+                        hrLine2.style.left = '142px';
+                        hrLine2.style.width = 'calc(100% - 158px)';
+                    } else {
+                        hrLine2.style.left = '58px';
+                        hrLine2.style.width = 'calc(100% - 74px)';
+                    }
+                    hrLine2.style.height = '1px';
+                    hrLine2.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
+                    hrLine2.style.pointerEvents = 'none';
+                    cardDiv.appendChild(hrLine2);
+                }
+
+                li.className = 'modal-card-row ' + (isChecked2 ? 'row-active' : 'row-inactive');
+                li.innerHTML = '';
+                li.appendChild(cardDiv);
+
+               mainCb.onclick = (e) => e.stopPropagation();
+               mainCb.onchange = (e) => {
+                   action.active = e.target.checked;
+                   cardDiv.classList.toggle('card-active', e.target.checked);
+                   cardDiv.classList.toggle('card-inactive', !e.target.checked);
+                   li.classList.toggle('row-active', e.target.checked);
+                   li.classList.toggle('row-inactive', !e.target.checked);
+                   if (action && (action.cmd.includes("rviz_linear_axis_tuner") || action.cmd.includes("linear_axis"))) {
+                       syncLinearAxisState(e.target.checked);
+                   }
+                   updateModalStats();
+                   if (!e.simulated) saveActiveState();
+               };
+               
+               li.onclick = (e) => {
+                   if (e.target === mainCb || e.target.closest('label') || e.target.closest('a') || e.target.closest('.modal-cmd-btn') || e.target.closest('button')) return;
+                   mainCb.checked = !mainCb.checked;
+                   mainCb.dispatchEvent(new Event('change'));
+               };
+
+               topUl.appendChild(li);
+           });
+
+          if (hasAnyDual) {
+              topUl.classList.add('has-dual-icons');
+          }
        } else {
-           contentClone.className = 'modal-action-card card-active';
-           contentClone.style.cssText = 'width: 100%; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding: 18px 24px;';
-           
-           if (actionsData[0]) {
-               parseArgs(actionsData[0]);
-               const argsDiv = createArgsDiv(actionsData[0]);
-               if (actionsData[0].args.length > 0) {
-                   argsDiv.style.marginTop = '10px';
-                   argsDiv.style.justifyContent = 'flex-start';
-                   contentClone.appendChild(argsDiv);
-               }
-           }
+           const action = actionsData[0];
+           const iconMetas = getActionIconMeta(action, action ? action.cmd : '');
+           const isDual = iconMetas.length > 1;
+
+               contentClone.className = 'modal-card-row row-active' + (isDual ? ' has-dual-icons' : '');
+            contentClone.style.cssText = 'width: 100%; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 0; padding: 10px;';
+
+            const iconCol = document.createElement('div');
+            iconCol.className = 'modal-card-icon-col' + (isDual ? ' is-vr-dual is-multiple-icons' : '');
+
+            iconMetas.forEach(meta => {
+                const iconBadge = document.createElement('div');
+                iconBadge.className = 'modal-card-icon-badge';
+                iconBadge.title = meta.label;
+                const img = document.createElement('img');
+                img.src = meta.path;
+                img.className = 'modal-card-side-img';
+                img.alt = meta.label;
+                iconBadge.appendChild(img);
+                iconCol.appendChild(iconBadge);
+            });
+
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'modal-action-card card-active';
+            cardDiv.style.cssText = 'flex: 1; min-width: 0; display: flex; flex-direction: row; align-items: stretch; gap: 14px; padding: 18px 24px;';
+
+            if (iconMetas.length > 0) {
+                cardDiv.appendChild(iconCol);
+            }
+
+            const innerCol = document.createElement('div');
+            innerCol.style.cssText = 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px;';
+
+            if (action) {
+                parseArgs(action);
+                const argsDiv = createArgsDiv(action);
+                if (action.args.length > 0) {
+                    argsDiv.style.marginTop = '10px';
+                    argsDiv.style.justifyContent = 'flex-start';
+                    innerCol.appendChild(argsDiv);
+                }
+            }
+            cardDiv.appendChild(innerCol);
+            contentClone.appendChild(cardDiv);
        }
        
        let headerIconClass = 'fa-solid fa-rocket';
@@ -1142,9 +1404,14 @@
        `;
        
        document.body.insertAdjacentHTML('beforeend', modalHtml);
-       document.getElementById('launch-modal-body').appendChild(contentClone);
+       const modalBodyEl = document.getElementById('launch-modal-body');
+       if (modalBodyEl) {
+           modalBodyEl.appendChild(contentClone);
+           modalBodyEl.addEventListener('scroll', hideGlobalCmdTooltip, { passive: true });
+       }
        
        const closeModal = () => {
+           hideGlobalCmdTooltip();
            const m = document.getElementById('launch-modal');
            if (m) m.remove();
            document.removeEventListener('keydown', handleEsc);

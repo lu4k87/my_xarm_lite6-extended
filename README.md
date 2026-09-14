@@ -574,12 +574,12 @@ flowchart TD
 >> |---|---|---|
 >> | `camera_model` | `zedm` | *ZED camera model (Stereolabs ZED Mini).* |
 >> | `use_zed_hardware` | `true` | *If false, skips launching the real ZED driver (for fake/simulation modes).* |
->> | `tf_x` | `0.870` | *Calibrated camera X position relative to `link_base` [m].* |
+>> | `tf_x` | `0.473` | *Calibrated camera X position relative to `link_base` [m].* |
 >> | `tf_y` | `0.0` | *Calibrated camera Y position relative to `link_base` [m].* |
->> | `tf_z` | `0.520` | *Calibrated camera Z height relative to `link_base` [m].* |
->> | `tf_roll` | `-0.07156` | *Camera roll angle [rad] (-4.1°).* |
->> | `tf_pitch` | `0.63181` | *Camera pitch angle [rad] (+36.2°, tilted downward toward workspace).* |
->> | `tf_yaw` | `3.14159` | *Camera yaw angle [rad] (180.0°, facing the robot).* |
+>> | `tf_z` | `0.510` | *Calibrated camera Z height relative to `link_base` [m].* |
+>> | `tf_roll` | `-0.04363` | *Camera roll angle [rad] (-2.5°).* |
+>> | `tf_pitch` | `1.09083` | *Camera pitch angle [rad] (+62.5°, tilted downward toward workspace).* |
+>> | `tf_yaw` | `2.99499` | *Camera yaw angle [rad] (171.6°, facing the robot).* |
 >> | `yolo_model` | `yolov8l.pt` | *YOLO neural network weights file.* |
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`config/zed_override.yaml` Parameter Overrides)**
@@ -933,7 +933,7 @@ stateDiagram-v2
 >
 >> | Element | Frame ID | X [m] | Y [m] | Z [m] | Roll | Pitch | Yaw |
 >> |---|---|---|---|---|---|---|---|
->> | **Zed M Camera** | `zed_camera_link` | `0.870` | `0.000` | `0.520` | `-4.1°` | `36.2°` | `180.0°` |
+>> | **Zed M Camera** | `zed_camera_link` | `0.473` | `0.000` | `0.510` | `-2.5°` | `62.5°` | `171.6°` |
 >> | **Blue Cube** | `target_blue_cube` | `0.300` | `0.085` | `0.000` | `0.0°` | `0.0°` | `0.0°` |
 >> | **Red Rectangle** | `target_red_rectangle` | `0.305` | `-0.080` | `0.000` | `0.0°` | `0.0°` | `45.0°` |
 >> | **Green Cylinder** | `target_green_cylinder` | `0.350` | `0.025` | `0.000` | `0.0°` | `0.0°` | `0.0°` |

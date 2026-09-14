@@ -221,6 +221,19 @@ def click_sound():
     return send_from_directory(BASE_DIR, "ui_mouse_click.mp3")
 
 
+@app.route("/_imgs/<path:filename>")
+@app.route("/imgs/<path:filename>")
+def serve_imgs(filename):
+    imgs_dir = os.path.join(WS_PATH, "_imgs")
+    return send_from_directory(imgs_dir, filename)
+
+
+@app.route("/icons/<path:filename>")
+def serve_icons(filename):
+    icons_dir = os.path.join(WS_PATH, "_imgs", "icons")
+    return send_from_directory(icons_dir, filename)
+
+
 @app.route("/api/ping")
 @app.route("/api/status")
 def ping():

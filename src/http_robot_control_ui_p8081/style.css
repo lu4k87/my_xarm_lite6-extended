@@ -1126,30 +1126,30 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   background: rgba(0,0,0,0.5);
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.05);
-  padding: 12px;
+  padding: 14px 16px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 15px;
   overflow-y: auto;
   color: #cbd5e1;
   height: 350px;
   max-height: 350px;
 }
-.log-entry { margin-bottom: 4px; word-break: break-word; line-height: 1.6; }
-.log-time { color: #64748b; margin-right: 6px; }
+.log-entry { margin-bottom: 6px; word-break: break-word; line-height: 1.6; font-size: 15px; }
+.log-time { color: #64748b; margin-right: 8px; font-size: 13.5px; }
 
 /* Source Badges */
-.log-src { font-weight: 600; margin-right: 10px; }
+.log-src { font-weight: 700; margin-right: 10px; font-size: 14px; }
 .log-src-ros { color: #c678dd; }      /* Purple */
 .log-src-ui { color: #61afef; }       /* Blue */
 .log-src-sys { color: #e5c07b; }      /* Yellow */
 .log-src-motion { color: #98c379; }   /* Green */
 
 /* Message Types */
-.log-info { color: #abb2bf; }         /* Light Gray */
-.log-success { color: #7ee787; font-weight: 500; }  /* Bright Green */
-.log-action { color: #56b6c2; font-weight: 500; }   /* Cyan */
-.log-warn { color: #d19a66; }         /* Orange */
-.log-err { color: #ff7b72; font-weight: 500; }      /* Red */
+.log-info { color: #abb2bf; font-size: 15px; }         /* Light Gray */
+.log-success { color: #7ee787; font-weight: 600; font-size: 15px; }  /* Bright Green */
+.log-action { color: #56b6c2; font-weight: 600; font-size: 15px; }   /* Cyan */
+.log-warn { color: #d19a66; font-size: 15px; }         /* Orange */
+.log-err { color: #ff7b72; font-weight: 600; font-size: 15px; }      /* Red */
 
 /* YOLO Objects List */
 .yolo-list-container {

@@ -72,15 +72,21 @@ class ZedYolo3DNode(Node):
         # EMA Filtering state
         self.ema_states = {} # maps cls_id -> dict of {obj_id: {'state': np.array, 'last_seen': float}}
         # Declare parameters
-        self.declare_parameter('confidence_threshold', 0.60)
+        self.declare_parameter('confidence_threshold', 0.35)
         self.declare_parameter('ema_alpha', 0.2)
-        self.declare_parameter('class_dimension_overrides', [
-            'sports ball:0.0654', 
-            'cup:0.08,0.08,0.095',
-            'blue_cube:0.03,0.03,0.03',
-            'red_rectangle:0.06,0.03,0.03',
-            'green_cylinder:0.03,0.03,0.03'
+        # Default empty: all object dimensions are dynamically measured from 3D point cloud
+        self.declare_parameter('class_dimension_overrides', [])
+        
+        # Calibrated ZED Mini fallback matrices (world -> zed_left_camera_optical_frame)
+        # Guarantees valid world-frame coordinates even if TF lookup is delayed
+        self.last_R = np.array([
+            [ 0.10766608,  0.88303187, -0.45679615],
+            [ 0.99398310, -0.08630119,  0.06745145],
+            [ 0.02013973, -0.46130989, -0.88701047]
         ])
+        self.last_T = np.array([[0.45806985], [-0.02867600], [0.51550816]])
+        self.last_cam_pos = (0.473, 0.0, 0.510)
+        self.consecutive_empty_frames = 0
         
         # Rate Limiting
         self.last_inference_time = 0.0
@@ -145,8 +151,11 @@ class ZedYolo3DNode(Node):
         marker_array.markers.append(clear_marker)
         
         if len(results) == 0 or len(results[0].boxes) == 0:
-            self.pub_markers.publish(marker_array)
+            self.consecutive_empty_frames += 1
+            if self.consecutive_empty_frames >= 3:
+                self.pub_markers.publish(marker_array)
             return
+        self.consecutive_empty_frames = 0
 
         boxes = results[0].boxes.xyxy.cpu().numpy()
         classes = results[0].boxes.cls.cpu().numpy().astype(int)
@@ -160,49 +169,47 @@ class ZedYolo3DNode(Node):
         current_time = self.get_clock().now().to_msg()
         frame_id = rgb_msg.header.frame_id
 
-        # Lookup TF to map 3D points exactly into link_base
+        # Transform matrix (world -> optical frame)
+        # Uses live TF when available, otherwise falls back gracefully to calibrated static pose
+        R = self.last_R
+        T = self.last_T
+        cam_x, cam_y, cam_z = self.last_cam_pos
         try:
             trans = self.tf_buffer.lookup_transform('world', frame_id, rclpy.time.Time())
             q = trans.transform.rotation
             t = trans.transform.translation
             x_q, y_q, z_q, w_q = q.x, q.y, q.z, q.w
-            # Quaternion to 3x3 Rotation Matrix
             R = np.array([
                 [1 - 2*y_q*y_q - 2*z_q*z_q,     2*x_q*y_q - 2*z_q*w_q,     2*x_q*z_q + 2*y_q*w_q],
                 [    2*x_q*y_q + 2*z_q*w_q, 1 - 2*x_q*x_q - 2*z_q*z_q,     2*y_q*z_q - 2*x_q*w_q],
                 [    2*x_q*z_q - 2*y_q*w_q,     2*y_q*z_q + 2*x_q*w_q, 1 - 2*x_q*x_q - 2*y_q*y_q]
             ])
             T = np.array([[t.x], [t.y], [t.z]])
-            tf_available = True
-        except Exception as e:
-            self.get_logger().warn(f'TF lookup failed: {e}')
-            tf_available = False
+            self.last_R = R
+            self.last_T = T
+            self.last_cam_pos = (float(t.x), float(t.y), float(t.z))
+            cam_x, cam_y, cam_z = self.last_cam_pos
+        except Exception:
+            pass
 
         for i, (box, cls_id) in enumerate(zip(boxes, classes)):
             x_min, y_min, x_max, y_max = map(int, box)
-            
-            # Erweitere die 2D Box um 30 Pixel, um auch Randbereiche der Pointcloud zu erfassen
-            pad = 30
-            x_min -= pad
-            y_min -= pad
-            x_max += pad
-            y_max += pad
             
             # Ensure within bounds
             h, w = cv_depth.shape
             x_min, x_max = max(0, x_min), min(w-1, x_max)
             y_min, y_max = max(0, y_min), min(h-1, y_max)
             
-            if x_max <= x_min or y_max <= y_min:
+            if (x_max - x_min) < 5 or (y_max - y_min) < 5:
                 continue
                 
             # Extract depth ROI
             depth_roi = cv_depth[y_min:y_max, x_min:x_max]
             
-            # Filter out NaNs, zeros, and infinities (all valid points in the bbox)
-            valid_depth_mask = (depth_roi > 0.1) & (depth_roi < 10.0) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi)
+            # Filter out NaNs, zeros, infinities, and invalid distances (< 0.15m or > 2.2m)
+            valid_depth_mask = (depth_roi > 0.15) & (depth_roi < 2.2) & ~np.isnan(depth_roi) & ~np.isinf(depth_roi)
             
-            if not np.any(valid_depth_mask):
+            if np.sum(valid_depth_mask) < 8:
                 continue
                 
             # Extract 2D pixel coordinates for the object
@@ -218,125 +225,112 @@ class ZedYolo3DNode(Node):
             
             pts_opt = np.vstack((x_opt, y_opt, z_opt)) # shape (3, N)
             
-            if tf_available:
-                # Transform to link_base
-                pts_base = R @ pts_opt + T
-                
-                # Robustly filter out table points (Z < 0.005) and robot base (cylinder with radius 12cm)
-                # also filter out points that are too high (Z > 0.4) to avoid grasping the camera stand or robot arm
-                dist_from_base = np.sqrt(pts_base[0, :]**2 + pts_base[1, :]**2)
-                valid_pts_filter = (pts_base[2, :] > 0.005) & (dist_from_base > 0.12) & (pts_base[2, :] < 0.4)
-                if np.sum(valid_pts_filter) < 5:
-                    continue # Not enough points belonging to the object
-                pts_base = pts_base[:, valid_pts_filter]
-                
-                # Compute 3D Bounding Box in link_base (use 0.1/99.9 percentiles to capture almost all points of the object)
-                # Wir geben zusätzlich +1.5cm Puffer, damit keine Punkte "rausstechen"
-                margin_3d = 0.015
-                min_x, max_x = np.percentile(pts_base[0], 0.1) - margin_3d, np.percentile(pts_base[0], 99.9) + margin_3d
-                min_y, max_y = np.percentile(pts_base[1], 0.1) - margin_3d, np.percentile(pts_base[1], 99.9) + margin_3d
-                min_z, max_z = np.percentile(pts_base[2], 0.1) - margin_3d, np.percentile(pts_base[2], 99.9) + margin_3d
-                
-                # Kamera Position im link_base
-                cam_x, cam_y = 0.65, 0.0
-                
-                # Filtere Punkte nahe dem Boden heraus (untere 20%), um sicher den Objektkörper zu treffen und nicht den Tisch!
-                z_thresh = min_z + (max_z - min_z) * 0.2
-                body_mask = pts_base[2] > z_thresh
-                if not np.any(body_mask):
-                    body_mask = np.ones(pts_base.shape[1], dtype=bool)
-                
-                body_pts_x = pts_base[0][body_mask]
-                body_pts_y = pts_base[1][body_mask]
-                
-                # Finde den robusten vordersten Oberflächenpunkt (nächste 2% zur Kamera)
-                dists_2d = np.sqrt((body_pts_x - cam_x)**2 + (body_pts_y - cam_y)**2)
-                dist_thresh = np.percentile(dists_2d, 2.0)
-                closest_mask = dists_2d <= dist_thresh
-                
-                surf_x = np.mean(body_pts_x[closest_mask])
-                surf_y = np.mean(body_pts_y[closest_mask])
-                
-                dir_x = surf_x - cam_x
-                dir_y = surf_y - cam_y
-                length = math.sqrt(dir_x**2 + dir_y**2)
-                if length > 0:
-                    ndir_x = dir_x / length
-                    ndir_y = dir_y / length
-                else:
-                    ndir_x, ndir_y = -1.0, 0.0
-                
-                cls_name = names[cls_id]
-                if cls_name in self.dimension_overrides:
-                    dx, dy, dz = self.dimension_overrides[cls_name]
-                    # Der wahre Mittelpunkt liegt einen halben Radius hinter der vordersten sichtbaren Oberfläche.
-                    center_x = surf_x + ndir_x * (dx / 2.0)
-                    center_y = surf_y + ndir_y * (dy / 2.0)
-                    
-                    scale_x, scale_y = dx, dy
-                    
-                    if min_z < 0.10:
-                        min_z = 0.0
-                        max_z = dz
-                    else:
-                        cz = (min_z + max_z) / 2.0
-                        min_z, max_z = cz - dz/2.0, cz + dz/2.0
-                    
-                    center_z = (min_z + max_z) / 2.0
-                    scale_z = dz
-                else:
-                    # Dynamische Rekonstruktion:
-                    # Wir stellen sicher, dass die Box mindestens so groß ist wie die tatsächliche Pointcloud!
-                    pc_len_x = max_x - min_x
-                    pc_len_y = max_y - min_y
-                    
-                    # Symmetrie-Annahme (für Tassen etc.): Tiefe sollte mindestens so groß wie Breite sein.
-                    scale_x = max(0.02, max(pc_len_x, pc_len_y))
-                    scale_y = max(0.02, pc_len_y)
-                    
-                    # Wenn die Pointcloud in der Tiefe künstlich vergrößert wurde (Symmetrie), schieben wir den Mittelpunkt zurück.
-                    # Andernfalls nehmen wir die Mitte der tatsächlich erfassten Pointcloud, damit sie exakt umhüllt wird.
-                    if pc_len_x < pc_len_y - 0.01:
-                        center_x = surf_x + ndir_x * (scale_x / 2.0)
-                        center_y = surf_y + ndir_y * (scale_x / 2.0)
-                    else:
-                        center_x = (min_x + max_x) / 2.0
-                        center_y = (min_y + max_y) / 2.0
-                    
-                    if min_z < 0.10:
-                        min_z = 0.0
-                
-                    center_z = (min_z + max_z) / 2.0
-                    scale_z = max(0.02, max_z - min_z)
-                
-                marker_frame = 'world'
+            # Transform to link_base (world)
+            pts_base = R @ pts_opt + T
+            
+            # Robust workspace filter:
+            # - table height: Z > -0.04 (allow small calibration tolerance below 0) and Z < 0.60
+            # - distance from robot base: radius > 0.08 m
+            # - workspace limits: X in [-0.10, 1.20], Y in [-0.80, 0.80]
+            dist_from_base = np.sqrt(pts_base[0, :]**2 + pts_base[1, :]**2)
+            valid_pts_filter = (
+                (pts_base[2, :] > -0.04) &
+                (pts_base[2, :] < 0.60) &
+                (dist_from_base > 0.08) &
+                (pts_base[0, :] > -0.10) & (pts_base[0, :] < 1.20) &
+                (pts_base[1, :] > -0.80) & (pts_base[1, :] < 0.80)
+            )
+            if np.sum(valid_pts_filter) < 8:
+                continue # Not enough valid workspace points belonging to object
+            pts_base = pts_base[:, valid_pts_filter]
+            
+            # Robuste Unterkante aus der Punktwolke bestimmen
+            bot_z_raw = float(np.percentile(pts_base[2], 2.0))
+            # Wenn das Objekt auf dem Tisch steht (Unterkante < 5 cm über Tischplatte):
+            if bot_z_raw < 0.05:
+                bottom_z = 0.0
             else:
-                if pts_opt.shape[1] < 10:
-                    continue
-                # Fallback to optical frame bounding box
-                min_x, max_x = np.percentile(pts_opt[0], 0.5), np.percentile(pts_opt[0], 99.5)
-                min_y, max_y = np.percentile(pts_opt[1], 0.5), np.percentile(pts_opt[1], 99.5)
-                min_z, max_z = np.percentile(pts_opt[2], 0.5), np.percentile(pts_opt[2], 99.5)
+                bottom_z = max(0.0, bot_z_raw)
                 
-                cls_name = names[cls_id]
-                if cls_name in self.dimension_overrides:
-                    dx, dy, dz = self.dimension_overrides[cls_name]
-                    cx = max_x - dx / 2.0
-                    cy = (min_y + max_y) / 2.0
-                    cz = (min_z + max_z) / 2.0
-                    min_x, max_x = cx - dx/2.0, cx + dx/2.0
-                    min_y, max_y = cy - dy/2.0, cy + dy/2.0
-                    min_z, max_z = cz - dz/2.0, cz + dz/2.0
+            # Filtere Körper-Punkte (untere 1.5 cm verwerfen, um Tischflächenrauschen zu meiden)
+            z_thresh = bottom_z + 0.015
+            body_mask = pts_base[2] > z_thresh
+            if not np.any(body_mask):
+                body_mask = np.ones(pts_base.shape[1], dtype=bool)
                 
-                center_x = (min_x + max_x) / 2.0
-                center_y = (min_y + max_y) / 2.0
-                center_z = (min_z + max_z) / 2.0
+            body_pts_x = pts_base[0][body_mask]
+            body_pts_y = pts_base[1][body_mask]
+            
+            # Vorderster Oberflächenpunkt bezogen auf die echte TF-Kameraposition
+            dists_2d = np.sqrt((body_pts_x - cam_x)**2 + (body_pts_y - cam_y)**2)
+            dist_thresh = np.percentile(dists_2d, 5.0)
+            closest_mask = dists_2d <= dist_thresh
+            
+            surf_x = float(np.mean(body_pts_x[closest_mask]))
+            surf_y = float(np.mean(body_pts_y[closest_mask]))
+            
+            # Sichtstrahl von Kamera zu Objekt in XY
+            dir_x = surf_x - cam_x
+            dir_y = surf_y - cam_y
+            length = math.sqrt(dir_x**2 + dir_y**2)
+            if length > 0:
+                ndir_x = dir_x / length
+                ndir_y = dir_y / length
+            else:
+                ndir_x, ndir_y = -1.0, 0.0
                 
-                scale_x = max(0.02, max_x - min_x)
-                scale_y = max(0.02, max_y - min_y)
-                scale_z = max(0.02, max_z - min_z)
+            # Orthogonaler Vektor quer zur Sichtlinie
+            uorth_x = -ndir_y
+            uorth_y = ndir_x
+            
+            # Sichtbare Breite quer zur Sichtlinie
+            proj_orth = (body_pts_x - surf_x) * uorth_x + (body_pts_y - surf_y) * uorth_y
+            orth_min = float(np.percentile(proj_orth, 2.0))
+            orth_max = float(np.percentile(proj_orth, 98.0))
+            apparent_width = max(0.02, orth_max - orth_min)
+            orth_offset = (orth_min + orth_max) / 2.0
+            
+            # Sichtbare Tiefe entlang des Sichtstrahls
+            proj_depth = (body_pts_x - surf_x) * ndir_x + (body_pts_y - surf_y) * ndir_y
+            depth_seen = max(0.02, float(np.percentile(proj_depth, 98.0)))
+            
+            # --- Robuste Z-Höhenbestimmung aus Punktwolke ---
+            # 98. Perzentil filtert einzelne Stereo-Ausreißer nach oben
+            top_z = float(np.percentile(pts_base[2], 98.0))
+            top_z = min(0.60, max(bottom_z + 0.02, top_z))
+            
+            scale_z = max(0.02, top_z - bottom_z)
+            center_z = bottom_z + (scale_z / 2.0)
+            display_z = top_z
+            
+            cls_name = names[cls_id]
+            if cls_name in self.dimension_overrides:
+                dx, dy, dz = self.dimension_overrides[cls_name]
+                if dz > 0:
+                    scale_z = dz
+                    center_z = bottom_z + (dz / 2.0)
+                    display_z = bottom_z + dz
+                scale_x, scale_y = dx, dy
+                center_x = surf_x + orth_offset * uorth_x + ndir_x * (dx / 2.0)
+                center_y = surf_y + orth_offset * uorth_y + ndir_y * (dy / 2.0)
+            else:
+                # Dynamische Dimensionen aus Punktwolke:
+                # Bei Tassen/Bechern/Dosen entspricht die Tiefe mindestens der Breite
+                estimated_depth = max(apparent_width, depth_seen)
                 
-                marker_frame = frame_id
+                # Der Objektmittelpunkt liegt einen halben Durchmesser hinter der sichtbaren Vorderfläche
+                center_x = surf_x + orth_offset * uorth_x + ndir_x * (estimated_depth / 2.0)
+                center_y = surf_y + orth_offset * uorth_y + ndir_y * (estimated_depth / 2.0)
+                
+                # Achsparallele Ausdehnung mit kleiner Marge (1 cm) für Bounding-Box
+                margin_xy = 0.01
+                span_x = float(np.percentile(body_pts_x, 98.0) - np.percentile(body_pts_x, 2.0))
+                span_y = float(np.percentile(body_pts_y, 98.0) - np.percentile(body_pts_y, 2.0))
+                
+                scale_x = max(0.03, max(span_x, estimated_depth) + margin_xy)
+                scale_y = max(0.03, max(span_y, apparent_width) + margin_xy)
+                
+            marker_frame = 'world'
             
             # --- Exponential Moving Average (EMA) Smoothing ---
             # Glättet das Flackern der Bounding Box (unterstützt nun mehrere Objekte pro Klasse)
@@ -363,7 +357,10 @@ class ZedYolo3DNode(Node):
                     best_match_id = obj_id
             
             if best_match_id != -1 and min_dist < 0.3: # Max 30cm Abstand für dasselbe Objekt
-                self.ema_states[cls_id][best_match_id]['state'] = self.alpha * state + (1.0 - self.alpha) * self.ema_states[cls_id][best_match_id]['state']
+                # Bei deutlicher Größenänderung (Objekt getauscht/verändert) sofort anpassen
+                dim_diff = np.linalg.norm(self.ema_states[cls_id][best_match_id]['state'][3:] - state[3:])
+                effective_alpha = 0.8 if dim_diff > 0.03 else self.alpha
+                self.ema_states[cls_id][best_match_id]['state'] = effective_alpha * state + (1.0 - effective_alpha) * self.ema_states[cls_id][best_match_id]['state']
                 self.ema_states[cls_id][best_match_id]['last_seen'] = current_t
                 center_x, center_y, center_z, scale_x, scale_y, scale_z = self.ema_states[cls_id][best_match_id]['state']
                 assigned_id = best_match_id
@@ -394,11 +391,10 @@ class ZedYolo3DNode(Node):
             
             marker.pose.orientation.w = 1.0
             
-            # Line thickness (1mm) to match the thin text
-            marker.scale.x = 0.001 
+            # Line thickness (2mm) for clearly visible, crisp edges in RViz
+            marker.scale.x = 0.002
             
             # 8 corners of the bounding box using EMA smoothed state
-            e_min_x, e_max_x = scale_x, scale_x # Dummy if EMA not used
             e_min_x = center_x - scale_x / 2.0
             e_max_x = center_x + scale_x / 2.0
             e_min_y = center_y - scale_y / 2.0
@@ -428,7 +424,7 @@ class ZedYolo3DNode(Node):
             marker.color.r = float(color[0])
             marker.color.g = float(color[1])
             marker.color.b = float(color[2])
-            marker.color.a = 0.8 # More opaque for thin lines
+            marker.color.a = 0.85
             
             marker.lifetime.sec = 1
             marker.lifetime.nanosec = int(500 * 1e6) # 1.5s lifetime
@@ -438,7 +434,7 @@ class ZedYolo3DNode(Node):
             x_mm = int(center_x * 1000)
             y_mm = int(center_y * 1000)
             
-            # The UI / Text should report the TOP surface of the object
+            # The UI / Text / Grasp Point sits precisely at the TOP surface center of the object
             display_z = center_z + (scale_z / 2.0)
             z_mm = int(display_z * 1000)
             safe_class_name = class_name.replace(' ', '_')
@@ -457,10 +453,10 @@ class ZedYolo3DNode(Node):
             point_marker.pose.position.z = float(display_z)
             point_marker.pose.orientation.w = 1.0
             
-            # Make it a small visible dot (1cm diameter)
-            point_marker.scale.x = 0.01
-            point_marker.scale.y = 0.01
-            point_marker.scale.z = 0.01
+            # Make it clearly visible on top of the object (2cm diameter)
+            point_marker.scale.x = 0.02
+            point_marker.scale.y = 0.02
+            point_marker.scale.z = 0.02
             
             # Bright color (Red) to stand out
             point_marker.color.r = 1.0
@@ -515,10 +511,18 @@ class ZedYolo3DNode(Node):
             marker_array.markers.append(create_text_marker('z', i, f"Z:_{z_mm}_mm", 0.2, 0.5, 1.0, 0.000))
             
             # Log the coordinates to the terminal so they are neatly listed
-            self.get_logger().info(f"[{class_name}] X: {x_mm} mm | Y: {y_mm} mm | Z: {z_mm} mm")
+            self.get_logger().info(
+                f"[{class_name}] X: {x_mm} mm | Y: {y_mm} mm | Z: {z_mm} mm | "
+                f"H: {int(scale_z*1000)} mm | bbox_top_z: {e_max_z:.3f}"
+            )
             
             
-        self.pub_markers.publish(marker_array)
+        if len(marker_array.markers) > 1:
+            self.pub_markers.publish(marker_array)
+        else:
+            self.consecutive_empty_frames += 1
+            if self.consecutive_empty_frames >= 3:
+                self.pub_markers.publish(marker_array)
 
 def main(args=None):
     rclpy.init(args=args)

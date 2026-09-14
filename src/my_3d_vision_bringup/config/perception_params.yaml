@@ -3,14 +3,12 @@ yolo_3d_bbox_for_zed_m:
     # Model path for YOLOv8 (default yolov8l.pt)
     model_path: "yolov8l.pt"
 
-    # Overrides for specific object classes (if their BBox is often cropped or needs manual adjustment)
-    # Format: "class_name:size_x,size_y,size_z" or "class_name:size"
-    class_dimension_overrides:
-      - "sports ball:0.0654"
-      - "cup:0.08,0.08,0.095"
+    # Overrides for specific object classes (only for known fixed calibration targets, e.g. blue_cube)
+    # Default is empty so all objects (cups, bottles, boxes, balls) are dynamically measured from the 3D point cloud
+    class_dimension_overrides: []
     
     # Confidence threshold for YOLOv8
-    confidence_threshold: 0.5
+    confidence_threshold: 0.35
     
     # EMA Smoothing factor (alpha). Lower is smoother but slower to update.
     ema_alpha: 0.2

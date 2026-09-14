@@ -7,14 +7,14 @@ und dem ZED-Kamerarahmen.
 
 Physische Konfiguration:
   - Kamera: Stereolabs ZED M, auf einem Stativ befestigt.
-  - Position: 0.50 m in X-Richtung (vor dem Roboter), 0.12 m Höhe.
-  - Ausrichtung: Kamera zeigt zurück zum Roboter (180° Yaw),
-                 leicht nach unten geneigt (23° Pitch), um die
+  - Position: 0.473 m in X-Richtung (vor dem Roboter), 0.510 m Höhe.
+  - Ausrichtung: Kamera zeigt zurück zum Roboter (171.6° Yaw),
+                 nach unten geneigt (62.5° Pitch), um die
                  Tischplatte (Operationsbereich) aufzunehmen.
 
 TF-Parameter (relativ zu link_base):
-  x=0.50, y=0.0, z=0.12
-  roll=0.0, pitch=0.401426 rad (23° nach unten), yaw=3.14159 rad (180°, zurück zum Roboter)
+  x=0.473, y=0.0, z=0.510
+  roll=-0.04363 rad (-2.5°), pitch=1.09083 rad (62.5° nach unten), yaw=2.99499 rad (171.6°, zurück zum Roboter)
 
 Verwendung:
   ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py
@@ -63,18 +63,18 @@ def generate_launch_description():
 
     # TF: Position der Kamera relativ zu link_base
     # ANPASSEN: Wenn die Kamera physisch eingemessen wird, diese 6 Werte ändern!
-    tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.870',
+    tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.473',
         description='Kamera X-Position relativ zu link_base [m]')
     tf_y_arg = DeclareLaunchArgument('tf_y', default_value='0.0',
         description='Kamera Y-Position relativ zu link_base [m]')
-    tf_z_arg = DeclareLaunchArgument('tf_z', default_value='0.520',
+    tf_z_arg = DeclareLaunchArgument('tf_z', default_value='0.510',
         description='Kamera Z-Position (Höhe) relativ zu link_base [m]')
-    tf_roll_arg = DeclareLaunchArgument('tf_roll', default_value='-0.07156',
-        description='Kamera Roll-Winkel [rad] (-0.07156 = -4.1°)')
-    tf_pitch_arg = DeclareLaunchArgument('tf_pitch', default_value='0.63181',
-        description='Kamera Pitch-Winkel [rad] (positiv = nach unten geneigt, 0.63181 = ~36.2°)')
-    tf_yaw_arg = DeclareLaunchArgument('tf_yaw', default_value='3.14159',
-        description='Kamera Yaw-Winkel [rad] (3.14159 = 180°, zeigt zum Roboter)')
+    tf_roll_arg = DeclareLaunchArgument('tf_roll', default_value='-0.04363',
+        description='Kamera Roll-Winkel [rad] (-0.04363 = -2.5°)')
+    tf_pitch_arg = DeclareLaunchArgument('tf_pitch', default_value='1.09083',
+        description='Kamera Pitch-Winkel [rad] (positiv = nach unten geneigt, 1.09083 = 62.5°)')
+    tf_yaw_arg = DeclareLaunchArgument('tf_yaw', default_value='2.99499',
+        description='Kamera Yaw-Winkel [rad] (2.99499 = 171.6°, zeigt zum Roboter)')
 
     yolo_model_arg = DeclareLaunchArgument('yolo_model', default_value='yolov8l.pt',
         description='YOLO Modell-Datei (z.B. yolov8l.pt, yolov8s.pt, my_yolo_model.pt)')

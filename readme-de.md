@@ -582,12 +582,12 @@ flowchart TD
 >> |---|---|---|
 >> | `camera_model` | `zedm` | *ZED-Kameramodell (Stereolabs ZED Mini).* |
 >> | `use_zed_hardware` | `true` | *Falls false, wird der echte ZED-Treiber übersprungen (für Fake/Simulations-Modi).* |
->> | `tf_x` | `0.870` | *Kalibrierte Kamera-X-Position relativ zu `link_base` [m].* |
+>> | `tf_x` | `0.473` | *Kalibrierte Kamera-X-Position relativ zu `link_base` [m].* |
 >> | `tf_y` | `0.0` | *Kalibrierte Kamera-Y-Position relativ zu `link_base` [m].* |
->> | `tf_z` | `0.520` | *Kalibrierte Kamera-Z-Höhe relativ zu `link_base` [m].* |
->> | `tf_roll` | `-0.07156` | *Kamera-Roll-Winkel [rad] (-4,1°).* |
->> | `tf_pitch` | `0.63181` | *Kamera-Pitch-Winkel [rad] (+36,2°, nach unten in den Arbeitsbereich geneigt).* |
->> | `tf_yaw` | `3.14159` | *Kamera-Yaw-Winkel [rad] (180,0°, blickt zum Roboter).* |
+>> | `tf_z` | `0.510` | *Kalibrierte Kamera-Z-Höhe relativ zu `link_base` [m].* |
+>> | `tf_roll` | `-0.04363` | *Kamera-Roll-Winkel [rad] (-2,5°).* |
+>> | `tf_pitch` | `1.09083` | *Kamera-Pitch-Winkel [rad] (+62,5°, nach unten in den Arbeitsbereich geneigt).* |
+>> | `tf_yaw` | `2.99499` | *Kamera-Yaw-Winkel [rad] (171,6°, blickt zum Roboter).* |
 >> | `yolo_model` | `yolov8l.pt` | *YOLO-Neuronales-Netzwerk-Gewichtsdatei.* |
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`config/zed_override.yaml` Parameter-Overrides)**
@@ -970,7 +970,7 @@ stateDiagram-v2
 >
 >> | Element | Frame-ID | X [m] | Y [m] | Z [m] | Roll | Pitch | Yaw |
 >> |---|---|---|---|---|---|---|---|
->> | **Zed M Camera** | `zed_camera_link` | `0.870` | `0.000` | `0.520` | `-4,1°` | `36,2°` | `180,0°` |
+>> | **Zed M Camera** | `zed_camera_link` | `0.473` | `0.000` | `0.510` | `-2,5°` | `62,5°` | `171,6°` |
 >> | **Blue Cube** | `target_blue_cube` | `0.300` | `0.085` | `0.000` | `0,0°` | `0,0°` | `0,0°` |
 >> | **Red Rectangle** | `target_red_rectangle` | `0.305` | `-0.080` | `0.000` | `0,0°` | `0,0°` | `45,0°` |
 >> | **Green Cylinder** | `target_green_cylinder` | `0.350` | `0.025` | `0.000` | `0,0°` | `0,0°` | `0,0°` |
