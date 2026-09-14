@@ -562,6 +562,39 @@ flowchart TD
 
 <br>
 
+#### ![Launch](https://img.shields.io/badge/Launch-orange?style=flat-square) `robot_vision_cameras_bringup.launch.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/launch/robot_vision_cameras_bringup.launch.py`](./src/robot_vision_cameras_bringup/launch/robot_vision_cameras_bringup.launch.py)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> # Standard: ZED Mini 3D Tiefenkamera-Pipeline
+> ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m
+>
+> # Alternative: IP-Kamera Homographie-Pipeline
+> ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=ip_cam
+> ```
+>
+> **Zweck & Aufgabe:** Der zentrale Orchestrator für die gesamte 3D-Vision-, Objekterkennungs- und autonome Greif-Pipeline. Abhängig vom Parameter `camera` startet das Launch-Skript entweder dynamisch den ZED Mini Hardware-Treiber (`zed_wrapper`) zusammen mit `pointcloud_optimizer.py` und `yolo_3d_bbox_for_zed_m.py` oder die netzwerkbasierte `yolo_3d_bbox_for_ip_cam.py`. Parallel dazu werden stets der MoveIt-Kollisionsgenerator (`yolo_moveit_collision.py`), der Trajektorien-Grasp-Server (`yolo_planned_grasp_executor.py`) sowie die UI-Bridge (`grasp_action_bridge.py`) hochgefahren.
+>
+>
+> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
+>
+>> | Launch-Argument | Standardwert | Beschreibung |
+>> |---|---|---|
+>> | `camera` | `zed_m` | *Kamera-Pipeline-Auswahl: `zed_m` (ZED Mini Tiefenkamera) oder `ip_cam` (IP-Webcam Homographie).* |
+>> | `camera_model` | `zedm` | *ZED-Kameramodell (Stereolabs ZED Mini, aktiv bei `camera:=zed_m`).* |
+>> | `tf_x` | `0.870` | *Kalibrierte Kamera-X-Position relativ zu `link_base` [m] (Stativ-Setup).* |
+>> | `tf_y` | `0.0` | *Kalibrierte Kamera-Y-Position relativ zu `link_base` [m] (Stativ-Setup).* |
+>> | `tf_z` | `0.520` | *Kalibrierte Kamera-Z-Höhe relativ zu `link_base` [m] (Stativ-Setup).* |
+>> | `tf_roll` | `-0.07156` | *Kamera-Roll-Winkel [rad] (-4,1°, Stativ-Kalibrierung).* |
+>> | `tf_pitch` | `0.63181` | *Kamera-Pitch-Winkel [rad] (+36,2°, nach unten in den Arbeitsbereich geneigt).* |
+>> | `tf_yaw` | `3.14159` | *Kamera-Yaw-Winkel [rad] (180,0°, blickt zum Roboter).* |
+>> | `yolo_model` | `yolov8l.pt` | *YOLO-Neuronales-Netzwerk-Gewichtsdatei (Standard: hochpräzises YOLOv8 Large).* |
+>
+
+---
+
+<br>
+
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_wrapper` &nbsp;&nbsp; <sub><i>[`/src/zed-ros2-wrapper`](./src/zed-ros2-wrapper)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
@@ -569,7 +602,7 @@ flowchart TD
 > ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm
 > ```
 >
-> **Zweck & Aufgabe:** Der native Hardware-Treiber der Stereolabs ZED Mini Kamera. 
+> **Zweck & Aufgabe:** Der native Hardware-Treiber der Stereolabs ZED Mini Kamera (wird von `robot_vision_cameras_bringup.launch.py` automatisch eingebunden, wenn `camera:=zed_m`). 
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -580,20 +613,6 @@ flowchart TD
 >> | **`/zed/zed_node/depth/depth_registered`** | `sensor_msgs/Image` | *Publiziert die registrierte Tiefenkarte (Depth-Map).* |
 >> | **`/zed/zed_node/point_cloud/cloud_registered`** | `sensor_msgs/PointCloud2` | *Publiziert die dichte 3D-Punktwolke.* |
 >
->
-> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`robot_vision_cameras_bringup.launch.py`)**
->
->> | Launch-Argument | Standardwert | Beschreibung |
->> |---|---|---|
->> | `camera` | `zed_m` | *Kamera-Pipeline-Auswahl: `zed_m` (ZED Mini Tiefenkamera) oder `ip_cam` (IP-Webcam Homographie).* |
->> | `camera_model` | `zedm` | *ZED-Kameramodell (Stereolabs ZED Mini).* |
->> | `tf_x` | `0.870` | *Kalibrierte Kamera-X-Position relativ zu `link_base` [m] (Stativ-Setup).* |
->> | `tf_y` | `0.0` | *Kalibrierte Kamera-Y-Position relativ zu `link_base` [m] (Stativ-Setup).* |
->> | `tf_z` | `0.520` | *Kalibrierte Kamera-Z-Höhe relativ zu `link_base` [m] (Stativ-Setup).* |
->> | `tf_roll` | `-0.07156` | *Kamera-Roll-Winkel [rad] (-4,1°, Stativ-Kalibrierung).* |
->> | `tf_pitch` | `0.63181` | *Kamera-Pitch-Winkel [rad] (+36,2°, nach unten in den Arbeitsbereich geneigt).* |
->> | `tf_yaw` | `3.14159` | *Kamera-Yaw-Winkel [rad] (180,0°, blickt zum Roboter).* |
->> | `yolo_model` | `yolov8l.pt` | *YOLO-Neuronales-Netzwerk-Gewichtsdatei (Standard: hochpräzises YOLOv8 Large).* |
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`config/zed_override.yaml` Parameter-Overrides)**
 >
@@ -668,7 +687,12 @@ flowchart TD
 > ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_ip_cam.py
 > ```
 >
-> **Zweck & Aufgabe:** Eine leichtgewichtige Alternative zu `yolo_3d_bbox_for_zed_m.py` für Setups ohne ZED-Tiefenkamera. Zieht sich einen HTTP-JPEG-Stream (IP Kamera `.123`), erkennt ArUco-Marker auf dem Tisch, um dynamisch eine **Homografie-Matrix** zu berechnen, und führt **YOLOv8** zur Objekterkennung aus. Projiziert die 2D-YOLO-Bounding-Boxen mithilfe der Homografie-Matrix in den 3D-Roboter-Basisrahmen (`link_base`). Generiert und veröffentlicht exakt dasselbe 3D `MarkerArray`-Format auf `/zed/bboxes_3d`, wodurch es zu 100% Plug-and-Play mit dem bestehenden UI und Grasp-Executor ist, ohne echte Tiefen-Hardware zu benötigen.
+> **Zweck & Aufgabe:** Eine leichtgewichtige Alternative zu `yolo_3d_bbox_for_zed_m.py` für Setups ohne ZED-Tiefenkamera. Zieht sich einen HTTP-JPEG-Stream (IP-Kamera `.123`), erkennt ArUco-Marker auf dem Tisch, um dynamisch eine **Homografie-Matrix** zu berechnen, und führt **YOLOv8** zur Objekterkennung aus. Projiziert die 2D-YOLO-Bounding-Boxen mithilfe der Homografie-Matrix in den 3D-Roboter-Basisrahmen (`link_base`). Generiert und veröffentlicht exakt dasselbe 3D `MarkerArray`-Format auf `/zed/bboxes_3d`, wodurch es zu 100% Plug-and-Play mit dem bestehenden UI und Grasp-Executor ist, ohne echte Tiefen-Hardware zu benötigen.
+>
+> **Zentrale Kernfunktionen:**
+> - **ArUco-Tischebenen-Homografie:** Berechnet kontinuierlich die perspektivische Entzerrung zwischen 2D-Pixelkoordinaten und der realen Tisch-Koordinatenebene ($Z \approx 0$).
+> - **Dynamische 3D-Bounding-Boxen & roter Greifpunkt (`top_z`):** Erzeugt vollständige 3D-Begrenzungswürfel und platziert den roten Greifkugel-Marker (`yolo_object_grasp_center_point`) zentriert oben auf jedem erkannten Objekt.
+> - **Nahtlose Pipeline-Integration:** Leitet die Daten direkt an `yolo_moveit_collision.py` (zur Erzeugung von MoveIt-Kollisionsboxen) und `yolo_planned_grasp_executor.py` (zur Ausführung autonomer Pick-and-Place-Trajektorien) weiter.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -682,7 +706,7 @@ flowchart TD
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Publiziert exakt dasselbe 3D MarkerArray-Format wie die ZED-Kamera für UI-Kompatibilität.* |
+>> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Publiziert 3D-Bounding-Boxen, Text-Labels und Greifpunkt-Marker identisch zum ZED-Kamera-Ausgabeformat.* |
 >
 >
 
@@ -2555,7 +2579,11 @@ dev_ws/
 │   │   ├── app.js                                                         # Rosbridge WebSocket-Controller & Befehlsclient
 │   │   └── roslib.min.js                                                  # ROS 2 Web-Bridge Client-Bibliothek
 │   ├── robot_vision_cameras_bringup/                                      # 🌟 Vision-Pipeline, TF-Kalibrierung & Greif-Ausführung
+│   │   ├── action/
+│   │   │   └── GraspObject.action                                         # ROS 2 Action-Definition für autonomes Greifen
 │   │   ├── config/
+│   │   │   ├── grasping_params.yaml                                       # Greif-Planungs-Offsets, Geschwindigkeiten & Timeouts
+│   │   │   ├── perception_params.yaml                                     # YOLO-Schwellenwerte, EMA-Glättung & Filterparameter
 │   │   │   └── zed_override.yaml                                          # ZED-Kamera Overrides (NEURAL Modus, native Auflösung, 10m Reichweite)
 │   │   ├── launch/
 │   │   │   ├── robot_vision_cameras_bringup.launch.py                     # Zentraler All-in-One Vision- & Greif-Launcher (ZED-M / IP-Cam)
