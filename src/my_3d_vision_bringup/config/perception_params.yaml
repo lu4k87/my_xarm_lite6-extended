@@ -5,7 +5,7 @@ yolo_3d_bbox_for_zed_m:
 
     # Overrides for specific object classes (only for known fixed calibration targets, e.g. blue_cube)
     # Default is empty so all objects (cups, bottles, boxes, balls) are dynamically measured from the 3D point cloud
-    class_dimension_overrides: []
+    class_dimension_overrides: [""]
     
     # Confidence threshold for YOLOv8
     confidence_threshold: 0.35
