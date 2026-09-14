@@ -1,39 +1,35 @@
 """
-zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py — 3D Vision Bringup Launch File
-==================================================
-Startet den ZED M Kameratreiber (zed_wrapper) und publiziert gleichzeitig
-die statische Koordinaten-Transformation (TF) zwischen dem Roboter-Basisrahmen
-und dem ZED-Kamerarahmen.
+robot_vision_cameras_bringup.launch.py — Robot Vision & Cameras Bringup Launch File
+===================================================================================
+Unterstützt zwei Kamera-Modi (wählbar über 'camera:=zed_m' oder 'camera:=ip_cam'):
 
-Physische Konfiguration:
-  - Kamera: Stereolabs ZED M, auf einem Stativ befestigt.
-  - Position: 0.473 m in X-Richtung (vor dem Roboter), 0.510 m Höhe.
-  - Ausrichtung: Kamera zeigt zurück zum Roboter (171.6° Yaw),
-                 nach unten geneigt (62.5° Pitch), um die
-                 Tischplatte (Operationsbereich) aufzunehmen.
+1. zed_m (Standard):
+   - Startet den Stereolabs ZED M Kameratreiber (zed_wrapper, wenn use_zed_hardware:=true).
+   - Publiziert die statische TF-Transformation (world → zed_camera_link).
+   - Startet den PointCloud ROI Optimizer (pointcloud_optimizer.py).
+   - Startet die 3D Bounding-Box Erkennung über ZED Punktwolke (yolo_3d_bbox_for_zed_m.py).
 
-TF-Parameter (relativ zu link_base):
-  x=0.473, y=0.0, z=0.510
-  roll=-0.04363 rad (-2.5°), pitch=1.09083 rad (62.5° nach unten), yaw=2.99499 rad (171.6°, zurück zum Roboter)
+2. ip_cam:
+   - Startet die IP-Kamera 3D Bounding-Box Erkennung über ArUco-Homographie (yolo_3d_bbox_for_ip_cam.py).
+   - Benötigt keine ZED-Hardware oder Punktwolke.
+
+Gemeinsame Pipeline (in beiden Modi aktiv):
+   - YOLO MoveIt Collision Node (yolo_moveit_collision.py)
+   - YOLO Planned Grasp Executor Node (yolo_planned_grasp_executor.py)
+   - Grasp Action Bridge Node (grasp_action_bridge.py)
 
 Verwendung:
-  ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py
-
-Kalibrierung:
-  Wenn die Kamera physisch ausgemessen wird, können die TF-Parameter
-  (x, y, z, roll, pitch, yaw) hier zentral angepasst werden.
-  Alle Nodes (RViz2, Nexus etc.) übernehmen die Änderung automatisch.
+   ros2 launch my_3d_vision_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m
+   ros2 launch my_3d_vision_bringup robot_vision_cameras_bringup.launch.py camera:=ip_cam
 """
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.conditions import IfCondition
-from ament_index_python.packages import get_package_share_directory
-from ament_index_python.packages import PackageNotFoundError
+from ament_index_python.packages import get_package_share_directory, PackageNotFoundError
 import os
 
 
@@ -47,8 +43,15 @@ def generate_launch_description():
     perception_params_file = os.path.join(pkg_share, 'config', 'perception_params.yaml')
 
     # -----------------------------------------------------------------------
-    # Launch Arguments (für spätere Kalibrierung leicht anpassbar)
+    # Launch Arguments
     # -----------------------------------------------------------------------
+    camera_arg = DeclareLaunchArgument(
+        'camera',
+        default_value='zed_m',
+        choices=['zed_m', 'ip_cam'],
+        description='Aktive Kameraquelle: zed_m (Stereolabs ZED Mini) oder ip_cam (HTTP IP-Kamera .123)'
+    )
+
     camera_model_arg = DeclareLaunchArgument(
         'camera_model',
         default_value='zedm',
@@ -61,8 +64,7 @@ def generate_launch_description():
         description='Set to false to prevent loading the actual ZED SDK/wrapper'
     )
 
-    # TF: Position der Kamera relativ zu link_base
-    # ANPASSEN: Wenn die Kamera physisch eingemessen wird, diese 6 Werte ändern!
+    # TF: Position der ZED-Kamera relativ zu link_base / world
     tf_x_arg = DeclareLaunchArgument('tf_x', default_value='0.870',
         description='Kamera X-Position relativ zu link_base [m]')
     tf_y_arg = DeclareLaunchArgument('tf_y', default_value='0.0',
@@ -87,7 +89,7 @@ def generate_launch_description():
     )
 
     # -----------------------------------------------------------------------
-    # ZED Wrapper Launch (Safely handled for FAKE mode)
+    # ZED Wrapper Launch (Nur aktiv wenn camera==zed_m UND use_zed_hardware==true)
     # -----------------------------------------------------------------------
     zed_wrapper_launch = None
     try:
@@ -101,14 +103,18 @@ def generate_launch_description():
                 'publish_map_tf': 'false',
                 'ros_params_override_path': config_override_path,
             }.items(),
-            condition=IfCondition(LaunchConfiguration('use_zed_hardware'))
+            condition=IfCondition(
+                PythonExpression([
+                    "'", LaunchConfiguration('camera'), "' == 'zed_m' and '",
+                    LaunchConfiguration('use_zed_hardware'), "' == 'true'"
+                ])
+            )
         )
     except PackageNotFoundError:
         pass  # zed_wrapper is missing, so we just don't add it
 
     # -----------------------------------------------------------------------
-    # Statischer TF Publisher: link_base → zed_camera_link
-    # Verbindet die Kamerawelt mit der Roboterwelt in RViz2 / TF-Baum.
+    # Statischer TF Publisher: world → zed_camera_link (nur für ZED M)
     # -----------------------------------------------------------------------
     static_tf_node = Node(
         package='tf2_ros',
@@ -121,54 +127,26 @@ def generate_launch_description():
             '--yaw', LaunchConfiguration('tf_yaw'),
             '--pitch', LaunchConfiguration('tf_pitch'),
             '--roll', LaunchConfiguration('tf_roll'),
-            '--frame-id', 'world',            # Elternrahmen (Welt)
-            '--child-frame-id', 'zed_camera_link',  # Kindrahmen (ZED-Kamera)
+            '--frame-id', 'world',
+            '--child-frame-id', 'zed_camera_link',
         ],
-        output='screen'
+        output='screen',
+        condition=LaunchConfigurationEquals('camera', 'zed_m')
     )
 
     # -----------------------------------------------------------------------
-    # PointCloud ROI Optimizer (Crops Top 50% Background)
+    # PointCloud ROI Optimizer (Crops Top 50% Background - nur für ZED M)
     # -----------------------------------------------------------------------
     pointcloud_optimizer_node = Node(
         package='my_3d_vision_bringup',
         executable='pointcloud_optimizer.py',
         name='pointcloud_optimizer',
-        output='screen'
-    )
-
-    # -----------------------------------------------------------------------
-    # YOLO MoveIt Collision Node
-    # -----------------------------------------------------------------------
-    yolo_moveit_collision_node = Node(
-        package='my_3d_vision_bringup',
-        executable='yolo_moveit_collision.py',
-        name='yolo_moveit_collision',
-        output='screen'
-    )
-
-
-    # -----------------------------------------------------------------------
-    # YOLO Grasp Executor Node (Planned MoveIt Version)
-    # -----------------------------------------------------------------------
-    # Backup: old servo-based node
-    # yolo_grasp_executor_node = Node(
-    #     package='my_3d_vision_bringup',
-    #     executable='yolo_grasp_executor.py',
-    #     name='yolo_grasp_executor',
-    #     output='screen'
-    # )
-    
-    yolo_planned_grasp_executor_node = Node(
-        package='my_3d_vision_bringup',
-        executable='yolo_planned_grasp_executor.py',
-        name='yolo_planned_grasp_executor',
         output='screen',
-        parameters=[grasping_params_file]
+        condition=LaunchConfigurationEquals('camera', 'zed_m')
     )
 
     # -----------------------------------------------------------------------
-    # YOLO 3D BBox Node
+    # YOLO 3D BBox Node: ZED M (Punktwolken-Clusterung)
     # -----------------------------------------------------------------------
     zed_yolo_3d_bbox_node = Node(
         package='my_3d_vision_bringup',
@@ -178,7 +156,40 @@ def generate_launch_description():
         parameters=[
             perception_params_file,
             {'model_path': LaunchConfiguration('yolo_model')}
-        ]
+        ],
+        condition=LaunchConfigurationEquals('camera', 'zed_m')
+    )
+
+    # -----------------------------------------------------------------------
+    # YOLO 3D BBox Node: IP Camera (Homographie & ArUco-Erkennung)
+    # -----------------------------------------------------------------------
+    ip_cam_yolo_3d_bbox_node = Node(
+        package='my_3d_vision_bringup',
+        executable='yolo_3d_bbox_for_ip_cam.py',
+        name='yolo_3d_bbox_for_ip_cam',
+        output='screen',
+        parameters=[
+            {'model_path': LaunchConfiguration('yolo_model')}
+        ],
+        condition=LaunchConfigurationEquals('camera', 'ip_cam')
+    )
+
+    # -----------------------------------------------------------------------
+    # Gemeinsame Vision- & Grasp-Pipeline (in beiden Modi aktiv)
+    # -----------------------------------------------------------------------
+    yolo_moveit_collision_node = Node(
+        package='my_3d_vision_bringup',
+        executable='yolo_moveit_collision.py',
+        name='yolo_moveit_collision',
+        output='screen'
+    )
+
+    yolo_planned_grasp_executor_node = Node(
+        package='my_3d_vision_bringup',
+        executable='yolo_planned_grasp_executor.py',
+        name='yolo_planned_grasp_executor',
+        output='screen',
+        parameters=[grasping_params_file]
     )
 
     grasp_action_bridge_node = Node(
@@ -190,6 +201,7 @@ def generate_launch_description():
 
     ld = LaunchDescription([
         # Arguments
+        camera_arg,
         camera_model_arg,
         use_zed_hardware_arg,
         yolo_model_arg,
@@ -199,12 +211,14 @@ def generate_launch_description():
         tf_roll_arg,
         tf_pitch_arg,
         tf_yaw_arg,
-        # Nodes
+        # Camera-specific Nodes
         static_tf_node,
         pointcloud_optimizer_node,
+        zed_yolo_3d_bbox_node,
+        ip_cam_yolo_3d_bbox_node,
+        # Common Nodes
         yolo_moveit_collision_node,
         yolo_planned_grasp_executor_node,
-        zed_yolo_3d_bbox_node,
         grasp_action_bridge_node,
     ])
 

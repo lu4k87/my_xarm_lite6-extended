@@ -542,10 +542,15 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 
 ```mermaid
 flowchart TD
-    ZED["ZED-Kamera (RGB-D)"] --> PC["pointcloud_optimizer.py<br/>(Frame-Transformation)"]
-    PC --> YOLO["yolo_3d_bbox_for_zed_m.py<br/>(YOLOv8 3D Cluster)"]
-    YOLO --> COLL["yolo_moveit_collision.py<br/>(Kollisionsobjekte)"]
-    YOLO --> GRASP["yolo_planned_grasp_executor.py<br/>(3-Phasen Greifpfad)"]
+    subgraph Cameras ["Kamera-Quelle (camera:=zed_m | ip_cam)"]
+        ZED["ZED-Kamera (RGB-D)"] --> PC["pointcloud_optimizer.py<br/>(Punktwolken-Transformation)"]
+        PC --> YOLO_ZED["yolo_3d_bbox_for_zed_m.py<br/>(YOLOv8 3D Cluster)"]
+        IP["IP-Cam (JPEG-Stream)"] --> YOLO_IP["yolo_3d_bbox_for_ip_cam.py<br/>(ArUco-Homographie & YOLOv8)"]
+    end
+    YOLO_ZED --> BBOX["/zed/bboxes_3d"]
+    YOLO_IP --> BBOX
+    BBOX --> COLL["yolo_moveit_collision.py<br/>(Kollisionsobjekte)"]
+    BBOX --> GRASP["yolo_planned_grasp_executor.py<br/>(3-Phasen Greifpfad)"]
     COLL --> OCTO["octomap_server<br/>(3D Voxelkarte)"]
     OCTO --> MOVEIT["MoveIt 2<br/>(Bewegungsplanung)"]
     GRASP --> MOVEIT
@@ -576,10 +581,11 @@ flowchart TD
 >> | **`/zed/zed_node/point_cloud/cloud_registered`** | `sensor_msgs/PointCloud2` | *Publiziert die dichte 3D-Punktwolke.* |
 >
 >
-> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py`)**
+> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square) **(`robot_vision_cameras_bringup.launch.py`)**
 >
 >> | Launch-Argument | Standardwert | Beschreibung |
 >> |---|---|---|
+>> | `camera` | `zed_m` | *Kamera-Pipeline-Auswahl: `zed_m` (ZED Mini Tiefenkamera) oder `ip_cam` (IP-Webcam Homographie).* |
 >> | `camera_model` | `zedm` | *ZED-Kameramodell (Stereolabs ZED Mini).* |
 >> | `use_zed_hardware` | `true` | *Falls false, wird der echte ZED-Treiber übersprungen (für Fake/Simulations-Modi).* |
 >> | `tf_x` | `0.870` | *Kalibrierte Kamera-X-Position relativ zu `link_base` [m] (Stativ-Setup).* |
@@ -656,11 +662,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_3d_bbox_ip_cam.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_3d_bbox_ip_cam.py`](./src/my_3d_vision_bringup/scripts/yolo_3d_bbox_ip_cam.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_3d_bbox_for_ip_cam.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_3d_bbox_for_ip_cam.py`](./src/my_3d_vision_bringup/scripts/yolo_3d_bbox_for_ip_cam.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run my_3d_vision_bringup yolo_3d_bbox_ip_cam.py
+> ros2 run my_3d_vision_bringup yolo_3d_bbox_for_ip_cam.py
 > ```
 >
 > **Zweck & Aufgabe:** Eine leichtgewichtige Alternative zu `yolo_3d_bbox_for_zed_m.py` für Setups ohne ZED-Tiefenkamera. Zieht sich einen HTTP-JPEG-Stream (IP Kamera `.123`), erkennt ArUco-Marker auf dem Tisch, um dynamisch eine **Homografie-Matrix** zu berechnen, und führt **YOLOv8** zur Objekterkennung aus. Projiziert die 2D-YOLO-Bounding-Boxen mithilfe der Homografie-Matrix in den 3D-Roboter-Basisrahmen (`link_base`). Generiert und veröffentlicht exakt dasselbe 3D `MarkerArray`-Format auf `/zed/bboxes_3d`, wodurch es zu 100% Plug-and-Play mit dem bestehenden UI und Grasp-Executor ist, ohne echte Tiefen-Hardware zu benötigen.
@@ -2553,12 +2559,12 @@ dev_ws/
 │   │   ├── config/
 │   │   │   └── zed_override.yaml                                          # ZED-Kamera Overrides (NEURAL Modus, native Auflösung, 10m Reichweite)
 │   │   ├── launch/
-│   │   │   ├── zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py   # Zentraler All-in-One Vision- & Greif-Launcher
+│   │   │   ├── robot_vision_cameras_bringup.launch.py                     # Zentraler All-in-One Vision- & Greif-Launcher (ZED-M / IP-Cam)
 │   │   │   └── zed_cam_eef_rviz_octomap_yolo.launch.py                    # Hand-Eye Endeffektor-Kamera & OctoMap-Launcher
 │   │   └── scripts/
 │   │       ├── pointcloud_optimizer.py                                    # Pass-Through & Voxel-Filterung für Punktwolken
 │   │       ├── yolo_3d_bbox_for_zed_m.py                                  # YOLO 2D-Detektionen projiziert auf 3D-Punktwolken-Cluster
-│   │       ├── yolo_3d_bbox_ip_cam.py                                     # IP-Webcam Homographie 3D-Objektlokalisierung
+│   │       ├── yolo_3d_bbox_for_ip_cam.py                                 # IP-Webcam Homographie 3D-Objektlokalisierung
 │   │       ├── yolo_moveit_collision.py                                   # Dynamischer MoveIt Kollisionsobjekt-Publisher
 │   │       ├── yolo_planned_grasp_executor.py                             # 3-Phasen Trajektorienplaner & Fallback-Greif-Server
 │   │       ├── yolo_grasp_executor.py                                     # Direkter kartesischer Greif-Ausführungs-Action-Server

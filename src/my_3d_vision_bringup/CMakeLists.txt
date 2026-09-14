@@ -31,7 +31,7 @@ install(DIRECTORY
 # WICHTIG: Die Skripte müssen zwingend ausführbar sein (chmod +x)
 install(PROGRAMS 
   scripts/yolo_3d_bbox_for_zed_m.py 
-  scripts/yolo_3d_bbox_ip_cam.py
+  scripts/yolo_3d_bbox_for_ip_cam.py
   scripts/pointcloud_optimizer.py 
   scripts/yolo_moveit_collision.py 
   scripts/yolo_grasp_executor.py 

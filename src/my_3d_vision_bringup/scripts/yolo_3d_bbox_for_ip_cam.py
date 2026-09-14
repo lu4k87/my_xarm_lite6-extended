@@ -18,9 +18,19 @@ except ImportError:
 
 class IPCamYolo3DNode(Node):
     def __init__(self):
-        super().__init__('yolo_3d_bbox_ip_cam')
+        super().__init__('yolo_3d_bbox_for_ip_cam')
         
-        yolo_path = os.path.expanduser('~/dev_ws/my_yolo_model.pt')
+        self.declare_parameter('model_path', 'yolov8l.pt')
+        raw_model_path = self.get_parameter('model_path').get_parameter_value().string_value
+        if os.path.exists(raw_model_path):
+            yolo_path = raw_model_path
+        elif os.path.exists(os.path.expanduser(raw_model_path)):
+            yolo_path = os.path.expanduser(raw_model_path)
+        elif os.path.exists(os.path.expanduser(f'~/dev_ws/{raw_model_path}')):
+            yolo_path = os.path.expanduser(f'~/dev_ws/{raw_model_path}')
+        else:
+            yolo_path = raw_model_path
+            
         self.get_logger().info(f'Lade {yolo_path} Modell...')
         self.model = YOLO(yolo_path)
         self.get_logger().info('Modell erfolgreich geladen (nutzt GPU falls verfügbar).')

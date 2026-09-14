@@ -366,9 +366,9 @@
         const combined = (firstCmd + ' ' + title + ' ' + type + ' ' + rawCmd.toLowerCase());
 
         // 0. Ausdrücklich KEINE Icons für Helper/Tuner/Overlay/Streamer-Nodes (web_video_server & tf_control_tuner ausgenommen!)
-        if (/rviz_linear_axis_tuner|yolo_3d_bbox_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_overlay_servo_status|rviz_window_streamer/.test(firstCmd) ||
+        if (/rviz_linear_axis_tuner|yolo_3d_bbox_for_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_overlay_servo_status|rviz_window_streamer/.test(firstCmd) ||
             /linear axis tuner|yolo 3d bbox|rviz marker|servo status warning|rviz streamer/.test(title)) {
-            if (!/lite6_moveit|xarm_moveit|standalone_move_group|zed_cam/.test(firstCmd)) {
+            if (!/lite6_moveit|xarm_moveit|standalone_move_group|zed_cam|robot_vision/.test(firstCmd)) {
                 return [];
             }
         }
@@ -392,8 +392,8 @@
         }
 
         // ZED-M Stereo-Kamera mit integrierter YOLO 3D Objekterkennung:
-        // z.B. zed_cam_rviz_pointcloud_tf_yolo_planned_grasp oder zed_cam_eef_rviz_octomap_yolo
-        if ((firstCmd.includes('zed') || /zed_camera|zed_wrapper|zed m camera/.test(combined)) && /yolo/.test(combined)) {
+        // z.B. robot_vision_cameras_bringup oder zed_cam_eef_rviz_octomap_yolo
+        if ((firstCmd.includes('zed') || firstCmd.includes('robot_vision') || /robot_vision|zed_camera|zed_wrapper|zed m camera/.test(combined)) && (/yolo/.test(combined) || /camera/.test(combined))) {
             return [
                 { path: '_imgs/icons/icon_zed_m.svg?v=6', label: 'ZED-M Stereo-Kamera' },
                 { path: '_imgs/icons/icon_object_detection.svg?v=7', label: 'YOLO 3D Object Detection' }
@@ -804,81 +804,132 @@
                action.postCmd = '';
            }
 
-           // Ensure ZED M YOLO models and use_zed_hardware args are available for zed_cam_rviz_pointcloud_tf_yolo_planned_grasp
-           if (action.baseCmd && action.baseCmd.includes('zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py')) {
-               const zedDefaults = [
-                   'yolo_model:=yolov8l.pt',
-                   'yolo_model:=yolov8s.pt',
-                   'yolo_model:=my_yolo_model.pt',
-                   'use_zed_hardware:=false'
-               ];
-               zedDefaults.forEach(defArg => {
-                   if (!action.args.some(a => a.text === defArg)) {
-                       const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
-                       action.args.push({ text: defArg, checked: isChecked });
-                   }
-               });
-           }
-       }
-       
-           function createArgsDiv(action) {
-            const argsDiv = document.createElement('div');
-            argsDiv.className = 'modal-args-list';
-            argsDiv.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; min-width: 0;';
-            
-            if (action && action.args.length > 0) {
-                // Ensure at most one yolo_model:= arg is checked initially
-                const checkedYoloModels = action.args.filter(a => a.text.startsWith('yolo_model:=') && a.checked);
-                if (checkedYoloModels.length > 1) {
-                    const preferred = checkedYoloModels.find(a => a.text === 'yolo_model:=yolov8l.pt') || checkedYoloModels[0];
-                    checkedYoloModels.forEach(a => { if (a !== preferred) a.checked = false; });
-                }
-
-                // Put yolo_model args first, use_zed_hardware after
-                action.args.sort((a, b) => {
-                    const isYoloA = a.text.startsWith('yolo_model:=');
-                    const isYoloB = b.text.startsWith('yolo_model:=');
-                    const isZedHwA = a.text.startsWith('use_zed_hardware');
-                    const isZedHwB = b.text.startsWith('use_zed_hardware');
-                    if (isYoloA && !isYoloB) return -1;
-                    if (!isYoloA && isYoloB) return 1;
-                    if (isZedHwA && !isZedHwB) return 1;
-                    if (!isZedHwA && isZedHwB) return -1;
-                    return 0;
-                });
-
-                action.args.forEach(argObj => {
-                    const argLbl = document.createElement('label');
-                    argLbl.className = 'param-chip' + (argObj.checked ? '' : ' chip-inactive');
-                    argLbl.dataset.argText = argObj.text;
-                    
-                    const argCb = document.createElement('input');
-                    argCb.type = 'checkbox';
-                    argCb.checked = !!argObj.checked;
-                    
-                    argCb.onclick = (e) => e.stopPropagation();
-                    argCb.onchange = (e) => {
-                        argObj.checked = e.target.checked;
-                        argLbl.classList.toggle('chip-inactive', !e.target.checked);
-                        
-                        // Mutually exclusive yolo_model selection
-                        if (e.target.checked && argObj.text.startsWith('yolo_model:=')) {
-                            action.args.forEach(otherArg => {
-                                if (otherArg !== argObj && otherArg.text.startsWith('yolo_model:=')) {
-                                    otherArg.checked = false;
-                                }
-                            });
-                            argsDiv.querySelectorAll('label.param-chip').forEach(lbl => {
-                                const cb = lbl.querySelector('input');
-                                if (cb && lbl.dataset.argText) {
-                                    const matchArg = action.args.find(a => a.text === lbl.dataset.argText);
-                                    if (matchArg) {
-                                        cb.checked = matchArg.checked;
-                                        lbl.classList.toggle('chip-inactive', !matchArg.checked);
-                                    }
-                                }
-                            });
+               // Ensure camera selection, ZED M YOLO models and use_zed_hardware args are available for robot_vision_cameras_bringup
+            if (action.baseCmd && action.baseCmd.includes('robot_vision_cameras_bringup.launch.py')) {
+                const visionDefaults = [
+                    'camera:=zed_m',
+                    'camera:=ip_cam',
+                    'yolo_model:=yolov8l.pt',
+                    'yolo_model:=yolov8s.pt',
+                    'yolo_model:=my_yolo_model.pt',
+                    'use_zed_hardware:=false'
+                ];
+                visionDefaults.forEach(defArg => {
+                    if (!action.args.some(a => a.text === defArg)) {
+                        let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
+                        if (defArg === 'camera:=zed_m' && isChecked === false) {
+                            const ipSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'camera:=ip_cam');
+                            if (!ipSaved) isChecked = true;
                         }
+                        action.args.push({ text: defArg, checked: isChecked });
+                    }
+                });
+            }
+        }
+        
+            function createArgsDiv(action) {
+             const argsDiv = document.createElement('div');
+             argsDiv.className = 'modal-args-list';
+             argsDiv.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; min-width: 0;';
+             
+             if (action && action.args.length > 0) {
+                 // Ensure exactly one camera:= arg is checked initially
+                 const checkedCams = action.args.filter(a => a.text.startsWith('camera:=') && a.checked);
+                 if (checkedCams.length > 1) {
+                     const preferred = checkedCams.find(a => a.text === 'camera:=zed_m') || checkedCams[0];
+                     checkedCams.forEach(a => { if (a !== preferred) a.checked = false; });
+                 } else if (checkedCams.length === 0 && action.args.some(a => a.text.startsWith('camera:='))) {
+                     const defaultCam = action.args.find(a => a.text === 'camera:=zed_m') || action.args.find(a => a.text.startsWith('camera:='));
+                     if (defaultCam) defaultCam.checked = true;
+                 }
+
+                 // Ensure at most one yolo_model:= arg is checked initially
+                 const checkedYoloModels = action.args.filter(a => a.text.startsWith('yolo_model:=') && a.checked);
+                 if (checkedYoloModels.length > 1) {
+                     const preferred = checkedYoloModels.find(a => a.text === 'yolo_model:=yolov8l.pt') || checkedYoloModels[0];
+                     checkedYoloModels.forEach(a => { if (a !== preferred) a.checked = false; });
+                 }
+
+                 // Put camera args first, yolo_model args next, use_zed_hardware after
+                 action.args.sort((a, b) => {
+                     const isCamA = a.text.startsWith('camera:=');
+                     const isCamB = b.text.startsWith('camera:=');
+                     const isYoloA = a.text.startsWith('yolo_model:=');
+                     const isYoloB = b.text.startsWith('yolo_model:=');
+                     const isZedHwA = a.text.startsWith('use_zed_hardware');
+                     const isZedHwB = b.text.startsWith('use_zed_hardware');
+                     if (isCamA && !isCamB) return -1;
+                     if (!isCamA && isCamB) return 1;
+                     if (isYoloA && !isYoloB) return -1;
+                     if (!isYoloA && isYoloB) return 1;
+                     if (isZedHwA && !isZedHwB) return 1;
+                     if (!isZedHwA && isZedHwB) return -1;
+                     return 0;
+                 });
+
+                 action.args.forEach(argObj => {
+                     const argLbl = document.createElement('label');
+                     argLbl.className = 'param-chip' + (argObj.checked ? '' : ' chip-inactive');
+                     argLbl.dataset.argText = argObj.text;
+                     
+                     const argCb = document.createElement('input');
+                     argCb.type = 'checkbox';
+                     argCb.checked = !!argObj.checked;
+                     
+                     argCb.onclick = (e) => e.stopPropagation();
+                     argCb.onchange = (e) => {
+                         argObj.checked = e.target.checked;
+                         argLbl.classList.toggle('chip-inactive', !e.target.checked);
+                         
+                         // Mutually exclusive camera selection (Toggle between camera:=zed_m and camera:=ip_cam)
+                         if (argObj.text.startsWith('camera:=')) {
+                             if (!e.target.checked) {
+                                 // Toggle to the other camera if unchecking current
+                                 const otherCam = action.args.find(a => a !== argObj && a.text.startsWith('camera:='));
+                                 if (otherCam) {
+                                     otherCam.checked = true;
+                                     argObj.checked = false;
+                                 } else {
+                                     argObj.checked = true;
+                                     e.target.checked = true;
+                                 }
+                             } else {
+                                 action.args.forEach(otherArg => {
+                                     if (otherArg !== argObj && otherArg.text.startsWith('camera:=')) {
+                                         otherArg.checked = false;
+                                     }
+                                 });
+                             }
+                             argsDiv.querySelectorAll('label.param-chip').forEach(lbl => {
+                                 const cb = lbl.querySelector('input');
+                                 if (cb && lbl.dataset.argText) {
+                                     const matchArg = action.args.find(a => a.text === lbl.dataset.argText);
+                                     if (matchArg) {
+                                         cb.checked = matchArg.checked;
+                                         lbl.classList.toggle('chip-inactive', !matchArg.checked);
+                                     }
+                                 }
+                             });
+                         }
+
+                         // Mutually exclusive yolo_model selection
+                         if (e.target.checked && argObj.text.startsWith('yolo_model:=')) {
+                             action.args.forEach(otherArg => {
+                                 if (otherArg !== argObj && otherArg.text.startsWith('yolo_model:=')) {
+                                     otherArg.checked = false;
+                                 }
+                             });
+                             argsDiv.querySelectorAll('label.param-chip').forEach(lbl => {
+                                 const cb = lbl.querySelector('input');
+                                 if (cb && lbl.dataset.argText) {
+                                     const matchArg = action.args.find(a => a.text === lbl.dataset.argText);
+                                     if (matchArg) {
+                                         cb.checked = matchArg.checked;
+                                         lbl.classList.toggle('chip-inactive', !matchArg.checked);
+                                     }
+                                 }
+                             });
+                         }
 
                         // Linear Axis dynamic title and checkbox synchronization
                         if (argObj.text.includes('linear_axis')) {
