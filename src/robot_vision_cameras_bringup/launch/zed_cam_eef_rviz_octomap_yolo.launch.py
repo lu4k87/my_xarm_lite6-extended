@@ -13,7 +13,7 @@ TF-Parameter (relativ zu link_tcp):
   (Standardwerte für Testzwecke: x=0.0, y=0.0, z=0.1)
 
 Verwendung:
-  ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py
+  ros2 launch robot_vision_cameras_bringup zed_cam_eef_rviz_octomap_yolo.launch.py
 
 Kalibrierung:
   Wenn die Kamera physisch ausgemessen wird, können die TF-Parameter
@@ -35,7 +35,7 @@ def generate_launch_description():
     # -----------------------------------------------------------------------
     # Setup Paths
     # -----------------------------------------------------------------------
-    pkg_share = get_package_share_directory('my_3d_vision_bringup')
+    pkg_share = get_package_share_directory('robot_vision_cameras_bringup')
     grasping_params_file = os.path.join(pkg_share, 'config', 'grasping_params.yaml')
     perception_params_file = os.path.join(pkg_share, 'config', 'perception_params.yaml')
 
@@ -68,7 +68,7 @@ def generate_launch_description():
 
     # Path to parameter override
     config_override_path = os.path.join(
-        get_package_share_directory('my_3d_vision_bringup'),
+        get_package_share_directory('robot_vision_cameras_bringup'),
         'config',
         'zed_override.yaml'
     )
@@ -149,7 +149,7 @@ def generate_launch_description():
     # PointCloud ROI Optimizer (Crops Top 50% Background)
     # -----------------------------------------------------------------------
     pointcloud_optimizer_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='pointcloud_optimizer.py',
         name='pointcloud_optimizer',
         output='screen'
@@ -159,7 +159,7 @@ def generate_launch_description():
     # YOLO MoveIt Collision Node
     # -----------------------------------------------------------------------
     yolo_moveit_collision_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='yolo_moveit_collision.py',
         name='yolo_moveit_collision',
         output='screen'
@@ -171,14 +171,14 @@ def generate_launch_description():
     # -----------------------------------------------------------------------
     # Backup: old servo-based node
     # yolo_grasp_executor_node = Node(
-    #     package='my_3d_vision_bringup',
+    #     package='robot_vision_cameras_bringup',
     #     executable='yolo_grasp_executor.py',
     #     name='yolo_grasp_executor',
     #     output='screen'
     # )
     
     yolo_planned_grasp_executor_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='yolo_planned_grasp_executor.py',
         name='yolo_planned_grasp_executor',
         output='screen',
@@ -189,7 +189,7 @@ def generate_launch_description():
     # YOLO 3D BBox Node
     # -----------------------------------------------------------------------
     zed_yolo_3d_bbox_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='yolo_3d_bbox_for_zed_m.py',
         name='yolo_3d_bbox_for_zed_m',
         output='screen',
@@ -200,7 +200,7 @@ def generate_launch_description():
     )
 
     grasp_action_bridge_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='grasp_action_bridge.py',
         name='grasp_action_bridge',
         output='screen'

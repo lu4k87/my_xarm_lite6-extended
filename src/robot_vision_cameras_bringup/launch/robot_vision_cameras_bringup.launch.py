@@ -19,8 +19,8 @@ Gemeinsame Pipeline (in beiden Modi aktiv):
    - Grasp Action Bridge Node (grasp_action_bridge.py)
 
 Verwendung:
-   ros2 launch my_3d_vision_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m
-   ros2 launch my_3d_vision_bringup robot_vision_cameras_bringup.launch.py camera:=ip_cam
+   ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m
+   ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=ip_cam
 """
 
 from launch import LaunchDescription
@@ -38,7 +38,7 @@ def generate_launch_description():
     # -----------------------------------------------------------------------
     # Setup Paths
     # -----------------------------------------------------------------------
-    pkg_share = get_package_share_directory('my_3d_vision_bringup')
+    pkg_share = get_package_share_directory('robot_vision_cameras_bringup')
     grasping_params_file = os.path.join(pkg_share, 'config', 'grasping_params.yaml')
     perception_params_file = os.path.join(pkg_share, 'config', 'perception_params.yaml')
 
@@ -83,7 +83,7 @@ def generate_launch_description():
 
     # Path to parameter override
     config_override_path = os.path.join(
-        get_package_share_directory('my_3d_vision_bringup'),
+        get_package_share_directory('robot_vision_cameras_bringup'),
         'config',
         'zed_override.yaml'
     )
@@ -138,7 +138,7 @@ def generate_launch_description():
     # PointCloud ROI Optimizer (Crops Top 50% Background - nur für ZED M)
     # -----------------------------------------------------------------------
     pointcloud_optimizer_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='pointcloud_optimizer.py',
         name='pointcloud_optimizer',
         output='screen',
@@ -149,7 +149,7 @@ def generate_launch_description():
     # YOLO 3D BBox Node: ZED M (Punktwolken-Clusterung)
     # -----------------------------------------------------------------------
     zed_yolo_3d_bbox_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='yolo_3d_bbox_for_zed_m.py',
         name='yolo_3d_bbox_for_zed_m',
         output='screen',
@@ -164,7 +164,7 @@ def generate_launch_description():
     # YOLO 3D BBox Node: IP Camera (Homographie & ArUco-Erkennung)
     # -----------------------------------------------------------------------
     ip_cam_yolo_3d_bbox_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='yolo_3d_bbox_for_ip_cam.py',
         name='yolo_3d_bbox_for_ip_cam',
         output='screen',
@@ -178,14 +178,14 @@ def generate_launch_description():
     # Gemeinsame Vision- & Grasp-Pipeline (in beiden Modi aktiv)
     # -----------------------------------------------------------------------
     yolo_moveit_collision_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='yolo_moveit_collision.py',
         name='yolo_moveit_collision',
         output='screen'
     )
 
     yolo_planned_grasp_executor_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='yolo_planned_grasp_executor.py',
         name='yolo_planned_grasp_executor',
         output='screen',
@@ -193,7 +193,7 @@ def generate_launch_description():
     )
 
     grasp_action_bridge_node = Node(
-        package='my_3d_vision_bringup',
+        package='robot_vision_cameras_bringup',
         executable='grasp_action_bridge.py',
         name='grasp_action_bridge',
         output='screen'

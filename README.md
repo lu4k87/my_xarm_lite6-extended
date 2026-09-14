@@ -605,11 +605,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_3d_bbox_for_zed_m.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_3d_bbox_for_zed_m.py`](./src/my_3d_vision_bringup/scripts/yolo_3d_bbox_for_zed_m.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_3d_bbox_for_zed_m.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_3d_bbox_for_zed_m.py`](./src/robot_vision_cameras_bringup/scripts/yolo_3d_bbox_for_zed_m.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run my_3d_vision_bringup yolo_3d_bbox_for_zed_m.py
+> ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_zed_m.py
 > ```
 >
 > **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large (`yolov8l.pt`)** model. Isolates objects, filters depth noise, and dynamically calculates millimeter-accurate 3D bounding boxes grounded to the table plane based on real 3D point cloud clusters.
@@ -650,11 +650,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_3d_bbox_for_ip_cam.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_3d_bbox_for_ip_cam.py`](./src/my_3d_vision_bringup/scripts/yolo_3d_bbox_for_ip_cam.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_3d_bbox_for_ip_cam.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_3d_bbox_for_ip_cam.py`](./src/robot_vision_cameras_bringup/scripts/yolo_3d_bbox_for_ip_cam.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run my_3d_vision_bringup yolo_3d_bbox_for_ip_cam.py
+> ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_ip_cam.py
 > ```
 >
 > **Purpose & Task:** A lightweight alternative to `yolo_3d_bbox_for_zed_m.py` for setups without a ZED depth camera. Fetches an HTTP JPEG stream (`.123` IP Camera), detects ArUco markers on the table to dynamically compute a **Homography Matrix**, and runs **YOLOv8** to detect objects. Projects the 2D YOLO bounding boxes into the 3D robot base frame (`link_base`) using the homography matrix. Generates and publishes the exact same 3D `MarkerArray` format to `/zed/bboxes_3d`, making it 100% plug-and-play with the existing UI and grasp executor without requiring actual depth hardware.
@@ -679,11 +679,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py`](./src/my_3d_vision_bringup/scripts/pointcloud_optimizer.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/pointcloud_optimizer.py`](./src/robot_vision_cameras_bringup/scripts/pointcloud_optimizer.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run my_3d_vision_bringup pointcloud_optimizer.py
+> ros2 run robot_vision_cameras_bringup pointcloud_optimizer.py
 > ```
 >
 > **Purpose & Task:** Actively runs in the background during the 3D Vision Bringup. It intercepts the raw ZED point cloud and transforms the coordinate system from the optical frame (`Z=forward`) to the standard ROS frame (`X=forward`) while preserving RGB data.
@@ -694,11 +694,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py`](./src/my_3d_vision_bringup/scripts/yolo_moveit_collision.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_moveit_collision.py`](./src/robot_vision_cameras_bringup/scripts/yolo_moveit_collision.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run my_3d_vision_bringup yolo_moveit_collision.py
+> ros2 run robot_vision_cameras_bringup yolo_moveit_collision.py
 > ```
 >
 > **Purpose & Task:** Seamlessly converts the detected 3D boxes into dynamic MoveIt `CollisionObject` messages. Instead of a solid block, it generates an **open-top cup shape** (5 ultra-thin 1mm walls). This allows the gripper to safely penetrate the bounding box from above for top-down grasps, while securely blocking lateral collisions.
@@ -754,11 +754,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py`](./src/my_3d_vision_bringup/scripts/yolo_planned_grasp_executor.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_planned_grasp_executor.py`](./src/robot_vision_cameras_bringup/scripts/yolo_planned_grasp_executor.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run my_3d_vision_bringup yolo_planned_grasp_executor.py
+> ros2 run robot_vision_cameras_bringup yolo_planned_grasp_executor.py
 > ```
 >
 > **Purpose & Task:** The central control logic of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the YOLO coordinates, and coordinates a robust **3-Phase Collision-Free Grasping Sequence**:
@@ -817,7 +817,7 @@ stateDiagram-v2
 >
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
->> | **`/ui/grasp_object`** | `my_3d_vision_bringup/action/GraspObject` | *Non-blocking action endpoint to initiate the grasp sequence.* |
+>> | **`/ui/grasp_object`** | `robot_vision_cameras_bringup/action/GraspObject` | *Non-blocking action endpoint to initiate the grasp sequence.* |
 >
 >
 > ![Action Client](https://img.shields.io/badge/Action_Client-00BCD4?style=flat-square)
@@ -841,14 +841,14 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/grasp_action_bridge.py`](./src/my_3d_vision_bringup/scripts/grasp_action_bridge.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/grasp_action_bridge.py`](./src/robot_vision_cameras_bringup/scripts/grasp_action_bridge.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run my_3d_vision_bringup grasp_action_bridge.py
+> ros2 run robot_vision_cameras_bringup grasp_action_bridge.py
 > ```
 >
-> **Purpose & Task:** Acts as a translator node between the RViz Control Panel / Web UI and the Action Server. Receives the simple target object string from the UI and converts it into a non-blocking ROS 2 Action Goal (`my_3d_vision_bringup/action/GraspObject`).
+> **Purpose & Task:** Acts as a translator node between the RViz Control Panel / Web UI and the Action Server. Receives the simple target object string from the UI and converts it into a non-blocking ROS 2 Action Goal (`robot_vision_cameras_bringup/action/GraspObject`).
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -862,17 +862,17 @@ stateDiagram-v2
 >
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
->> | **`/ui/grasp_object`** | `my_3d_vision_bringup/action/GraspObject` | *Calls the Grasp Action Server.* |
+>> | **`/ui/grasp_object`** | `robot_vision_cameras_bringup/action/GraspObject` | *Calls the Grasp Action Server.* |
 
 ---
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_grasp_executor.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/scripts/yolo_grasp_executor.py`](./src/my_3d_vision_bringup/scripts/yolo_grasp_executor.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_grasp_executor.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_grasp_executor.py`](./src/robot_vision_cameras_bringup/scripts/yolo_grasp_executor.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run my_3d_vision_bringup yolo_grasp_executor.py
+> ros2 run robot_vision_cameras_bringup yolo_grasp_executor.py
 > ```
 >
 > **Purpose & Task:** Direct Cartesian grasping fallback executor. Listens for target object names on `/ui/grasp_object_cmd`, retrieves the latest 3D coordinates from `/zed/bboxes_3d`, and drives the arm directly to the calculated grasp pose by calling the `/ui/execute_move_to_pose` Cartesian service provided by `robot_motion_handler_movegroup`.
@@ -896,11 +896,11 @@ stateDiagram-v2
 
 <br>
 
-#### ![Launch](https://img.shields.io/badge/Launch-Skript-FF9900?style=flat-square) `zed_cam_eef_rviz_octomap_yolo.launch.py` &nbsp;&nbsp; <sub><i>[`/src/my_3d_vision_bringup/launch/zed_cam_eef_rviz_octomap_yolo.launch.py`](./src/my_3d_vision_bringup/launch/zed_cam_eef_rviz_octomap_yolo.launch.py)</i></sub>
+#### ![Launch](https://img.shields.io/badge/Launch-Skript-FF9900?style=flat-square) `zed_cam_eef_rviz_octomap_yolo.launch.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/launch/zed_cam_eef_rviz_octomap_yolo.launch.py`](./src/robot_vision_cameras_bringup/launch/zed_cam_eef_rviz_octomap_yolo.launch.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 launch my_3d_vision_bringup zed_cam_eef_rviz_octomap_yolo.launch.py
+> ros2 launch robot_vision_cameras_bringup zed_cam_eef_rviz_octomap_yolo.launch.py
 > ```
 >
 > **Purpose & Task:** Dedicated bringup launch file for setups where the Stereolabs ZED Mini camera is mounted directly on the robot's end effector (EEF / `link_tcp`). Broadcasts static TF relative to `link_tcp`, runs pointcloud filtering, builds real-time 3D OctoMaps, and starts YOLOv8 detection tailored for eye-in-hand visual inspection.
@@ -2132,11 +2132,11 @@ The ZED Mini camera requires the official ZED SDK and a matching CUDA toolkit ve
  cd ~/dev_ws
  rm -rf build/zed_* install/zed_* # Clean old artifacts first!
  source /opt/ros/humble/setup.bash
- colcon build --packages-select zed_interfaces zed_components zed_wrapper my_3d_vision_bringup --symlink-install
+ colcon build --packages-select zed_interfaces zed_components zed_wrapper robot_vision_cameras_bringup --symlink-install
  ```
 4. **Execution Workflow & RViz Integration**:
  * First, launch the robot base (e.g., **Fake Arm** or **Real Arm**) via the ROS 2 Nexus WebApp. This automatically opens **RViz** with the pre-configured layout (`servo.rviz`).
- * Next, launch the **3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)** via Nexus. This executes the `my_3d_vision_bringup` package, which simultaneously initializes the ZED wrapper, broadcasts the static TF (aligning the camera to the robot's `link_base`), and publishes the dynamically generated 3D tripod visualization.
+ * Next, launch the **3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)** via Nexus. This executes the `robot_vision_cameras_bringup` package, which simultaneously initializes the ZED wrapper, broadcasts the static TF (aligning the camera to the robot's `link_base`), and publishes the dynamically generated 3D tripod visualization.
  * The live Point Cloud (`PointCloud2`) and the camera axes will instantly and automatically appear in the already running RViz instance without any manual configuration.
 
 <br>
@@ -2514,7 +2514,7 @@ dev_ws/
 │   │   ├── index.html                                                     # Robot control interface (Port 8081)
 │   │   ├── app.js                                                         # Rosbridge WebSocket controller & command client
 │   │   └── roslib.min.js                                                  # ROS 2 web bridge client library
-│   ├── my_3d_vision_bringup/                                              # 🌟 Vision pipeline, TF calibration & grasp execution
+│   ├── robot_vision_cameras_bringup/                                      # 🌟 Vision pipeline, TF calibration & grasp execution
 │   │   ├── config/
 │   │   │   └── zed_override.yaml                                          # ZED camera overrides (NEURAL depth, native resolution, 10m range)
 │   │   ├── launch/

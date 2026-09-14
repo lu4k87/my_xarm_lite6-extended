@@ -1,13 +1,12 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>my_3d_vision_bringup</name>
+  <name>robot_vision_cameras_bringup</name>
   <version>0.1.0</version>
   <description>
-    Bringup package for the Stereolabs ZED M depth camera.
-    Starts the ZED ROS 2 wrapper together with a static TF transform
-    that positions the camera relative to the robot base (link_base).
-    Works independently from whether the robot runs in fake or real mode.
+    Bringup package for robot vision cameras (Stereolabs ZED Mini depth camera &amp; IP webcam).
+    Provides static TF transforms, YOLOv8 3D object detection, MoveIt collision objects,
+    pointcloud optimization, and planned grasp action execution.
   </description>
   <maintainer email="mk@example.com">mk</maintainer>
   <license>MIT</license>

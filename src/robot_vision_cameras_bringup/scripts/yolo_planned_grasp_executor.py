@@ -9,7 +9,7 @@ import pygame
 from rclpy.node import Node
 from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
 from std_srvs.srv import Trigger
-from my_3d_vision_bringup.action import GraspObject
+from robot_vision_cameras_bringup.action import GraspObject
 from std_msgs.msg import String
 from visualization_msgs.msg import MarkerArray, Marker
 from moveit_msgs.action import MoveGroup

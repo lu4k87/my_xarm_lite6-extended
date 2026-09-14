@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(my_3d_vision_bringup)
+project(robot_vision_cameras_bringup)
 
 # ==========================================
 # 1. Abhängigkeiten finden

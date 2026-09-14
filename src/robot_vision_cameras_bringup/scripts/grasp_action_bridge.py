@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from std_msgs.msg import String
-from my_3d_vision_bringup.action import GraspObject
+from robot_vision_cameras_bringup.action import GraspObject
 
 class GraspActionBridge(Node):
     def __init__(self):
