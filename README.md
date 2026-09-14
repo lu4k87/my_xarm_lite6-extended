@@ -574,11 +574,11 @@ flowchart TD
 >> |---|---|---|
 >> | `camera` | `zed_m` | *Camera pipeline selection: `zed_m` (ZED Mini depth camera) or `ip_cam` (IP webcam homography).* |
 >> | `camera_model` | `zedm` | *ZED camera model (Stereolabs ZED Mini, used when `camera:=zed_m`).* |
->> | `tf_x` | `0.870` | *Calibrated camera X position relative to `link_base` [m] (Tripod setup).* |
+>> | `tf_x` | `0.473` | *Calibrated camera X position relative to `link_base` [m] (Tripod setup).* |
 >> | `tf_y` | `0.0` | *Calibrated camera Y position relative to `link_base` [m] (Tripod setup).* |
->> | `tf_z` | `0.520` | *Calibrated camera Z height relative to `link_base` [m] (Tripod setup).* |
->> | `tf_roll` | `-0.07156` | *Camera roll angle [rad] (-4.1°, Tripod calibration).* |
->> | `tf_pitch` | `0.63181` | *Camera pitch angle [rad] (+36.2°, tilted downward toward workspace).* |
+>> | `tf_z` | `0.368` | *Calibrated camera Z height relative to `link_base` [m] (Tripod setup).* |
+>> | `tf_roll` | `0.0` | *Camera roll angle [rad] (0.0°, Tripod calibration).* |
+>> | `tf_pitch` | `1.00356` | *Camera pitch angle [rad] (+57.5°, tilted downward toward workspace).* |
 >> | `tf_yaw` | `3.14159` | *Camera yaw angle [rad] (180.0°, facing the robot).* |
 >> | `yolo_model` | `yolov8l.pt` | *YOLO neural network weights file (default: high-accuracy YOLOv8 Large).* |
 >

@@ -108,10 +108,10 @@ class ZedYolo3DNode(Node):
         
         self.dimension_overrides = {}
         
-        # Calibrated ZED Mini fallback matrices (X=0.870, Z=0.520, pitch=36.2 deg)
+        # Calibrated ZED Mini fallback matrices (X=0.473, Z=0.368, pitch=57.5 deg)
         self.last_R = None
         self.last_T = None
-        self.last_cam_pos = (0.870, 0.0, 0.520)
+        self.last_cam_pos = (0.473, 0.0, 0.368)
         
         # Rate Limiting (~2.5 Hz inference)
         self.last_inference_time = 0.0
@@ -473,9 +473,9 @@ class ZedYolo3DNode(Node):
             point_marker.pose.position.y = float(center_y)
             point_marker.pose.position.z = float(display_z)
             point_marker.pose.orientation.w = 1.0
-            point_marker.scale.x = 0.025
-            point_marker.scale.y = 0.025
-            point_marker.scale.z = 0.025
+            point_marker.scale.x = 0.0125
+            point_marker.scale.y = 0.0125
+            point_marker.scale.z = 0.0125
             point_marker.color.r = 1.0
             point_marker.color.g = 0.0
             point_marker.color.b = 0.0

@@ -18,8 +18,8 @@ class TFTunerGUI(QWidget):
         self.elements = {
             'Zed M Camera': {
                 'frame_id': 'zed_camera_link',
-                'x': 473, 'y': 0, 'z': 510,
-                'roll': -25, 'pitch': 625, 'yaw': 1716
+                'x': 473, 'y': 0, 'z': 368,
+                'roll': 0, 'pitch': 575, 'yaw': 1800
             },
             'Blue Cube': {
                 'frame_id': 'target_blue_cube',

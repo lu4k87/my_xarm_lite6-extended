@@ -354,9 +354,9 @@ class IPCamYolo3DNode(Node):
             point_marker.pose.position.y = float(center_y)
             point_marker.pose.position.z = float(display_z)
             point_marker.pose.orientation.w = 1.0
-            point_marker.scale.x = 0.015
-            point_marker.scale.y = 0.015
-            point_marker.scale.z = 0.015
+            point_marker.scale.x = 0.0125
+            point_marker.scale.y = 0.0125
+            point_marker.scale.z = 0.0125
             point_marker.color.r = 1.0
             point_marker.color.a = 1.0
             point_marker.lifetime.sec = 1
