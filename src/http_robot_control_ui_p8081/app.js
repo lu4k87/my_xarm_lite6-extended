@@ -281,46 +281,90 @@ const yoloSub = new ROSLIB.Topic({
   messageType: 'visualization_msgs/MarkerArray'
 });
 
+function createYoloItem(item) {
+  const el = document.createElement('div');
+  el.className = 'yolo-item';
+  el.setAttribute('data-id', item.name);
+  el.onclick = () => {
+    logMsg('UI', `Clicked on YOLO object: ${item.name}`);
+    document.getElementById('inp-grasp-obj').value = item.name;
+    executeGrasp();
+  };
+  el.innerHTML = `
+    <i class="fa-solid fa-cube" style="color: var(--accent); font-size: 16px;"></i>
+    <div class="yolo-details">
+      <span class="yolo-class">${item.name}</span>
+      <span class="yolo-coords">
+        <span class="coord-x" style="color: var(--rviz-x);">X:${item.x}</span>
+        <span class="coord-y" style="color: var(--rviz-y); margin-left:6px;">Y:${item.y}</span>
+        <span class="coord-z" style="color: var(--rviz-z); margin-left:6px;">Z:${item.z}</span>
+        <span style="color: var(--mut); margin-left:6px;">[mm]</span>
+      </span>
+    </div>
+  `;
+  return el;
+}
+
 yoloSub.subscribe((msg) => {
   const container = document.getElementById('yolo-container');
   if (!container) return;
   
-  container.innerHTML = '';
-  if(!msg.markers || msg.markers.length === 0) {
-    container.innerHTML = '<div class="yolo-empty">No objects detected.</div>';
+  const detected = [];
+  if (msg.markers && msg.markers.length > 0) {
+    msg.markers.forEach(m => {
+      if (m.type !== 9) return;
+      
+      const objName = m.text || 'Unknown';
+      if (objName.startsWith('X:') || objName.startsWith('Y:') || objName.startsWith('Z:')) return;
+      
+      detected.push({
+        name: objName,
+        x: (m.pose.position.x * 1000).toFixed(0),
+        y: (m.pose.position.y * 1000).toFixed(0),
+        z: (m.pose.position.z * 1000).toFixed(0)
+      });
+    });
+  }
+
+  // Deterministisch stabil sortieren (alphabetisch & numerisch sortiert, z.B. sports_ball_1 vor sports_ball_2)
+  detected.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+  if (detected.length === 0) {
+    if (!container.querySelector('.yolo-empty')) {
+      container.innerHTML = '<div class="yolo-empty">No objects detected.</div>';
+    }
     return;
   }
-  
-  msg.markers.forEach(m => {
-    if(m.type !== 9) return;
-    
-    const objName = m.text || 'Unknown';
-    if(objName.startsWith('X:') || objName.startsWith('Y:') || objName.startsWith('Z:')) return;
-    
-    const x = (m.pose.position.x * 1000).toFixed(1);
-    const y = (m.pose.position.y * 1000).toFixed(1);
-    const z = (m.pose.position.z * 1000).toFixed(1);
-    
-    const item = document.createElement('div');
-    item.className = 'yolo-item';
-    item.onclick = () => {
-      logMsg('UI', `Clicked on YOLO object: ${objName}`);
-      document.getElementById('inp-grasp-obj').value = objName;
-      executeGrasp();
-    };
-    item.innerHTML = `
-      <i class="fa-solid fa-cube" style="color: var(--accent); font-size: 16px;"></i>
-      <div class="yolo-details">
-        <span class="yolo-class">${objName}</span>
-        <span class="yolo-coords">
-          <span style="color: var(--rviz-x);">X:${x}</span>
-          <span style="color: var(--rviz-y); margin-left:6px;">Y:${y}</span>
-          <span style="color: var(--rviz-z); margin-left:6px;">Z:${z}</span>
-          <span style="color: var(--mut); margin-left:6px;">[mm]</span>
-        </span>
-      </div>
-    `;
-    container.appendChild(item);
+
+  // "No objects detected" entfernen, falls vorhanden
+  const emptyEl = container.querySelector('.yolo-empty');
+  if (emptyEl) emptyEl.remove();
+
+  // Nicht mehr vorhandene Objekte entfernen
+  const detectedNames = new Set(detected.map(d => d.name));
+  container.querySelectorAll('.yolo-item').forEach(el => {
+    if (!detectedNames.has(el.getAttribute('data-id'))) {
+      el.remove();
+    }
+  });
+
+  // In-Place Update & geordnete DOM-Platzierung ohne Springen
+  detected.forEach((item, index) => {
+    let el = container.querySelector(`.yolo-item[data-id="${item.name}"]`);
+    if (el) {
+      const xSpan = el.querySelector('.coord-x');
+      const ySpan = el.querySelector('.coord-y');
+      const zSpan = el.querySelector('.coord-z');
+      if (xSpan && xSpan.textContent !== `X:${item.x}`) xSpan.textContent = `X:${item.x}`;
+      if (ySpan && ySpan.textContent !== `Y:${item.y}`) ySpan.textContent = `Y:${item.y}`;
+      if (zSpan && zSpan.textContent !== `Z:${item.z}`) zSpan.textContent = `Z:${item.z}`;
+    } else {
+      el = createYoloItem(item);
+    }
+
+    if (container.children[index] !== el) {
+      container.insertBefore(el, container.children[index] || null);
+    }
   });
 });
 
