@@ -217,6 +217,15 @@
         if (argText.startsWith('yolo_model:=')) {
             return argText === 'yolo_model:=yolov8l.pt';
         }
+        if (argText === 'add_gripper:=true') {
+            return false;
+        }
+        if (argText === 'add_vacuum_gripper:=true') {
+            return true;
+        }
+        if (argText.startsWith('report_type:=')) {
+            return argText === 'report_type:=dev';
+        }
         return true;
     }
 
@@ -707,6 +716,60 @@
             }
             updateModalStats();
         }
+
+        function syncGripperState(selectedGripperText) {
+            const isVacuum = (selectedGripperText === 'add_vacuum_gripper:=true');
+            actionsData.forEach(act => {
+                const isMoveIt = (act.baseCmd && (act.baseCmd.includes('lite6_moveit_servo') || act.baseCmd.includes('standalone_move_group'))) ||
+                                 (act.cmd && (act.cmd.includes('lite6_moveit_servo') || act.cmd.includes('standalone_move_group')));
+                if (isMoveIt && act.args) {
+                    act.args.forEach(a => {
+                        if (a.text === 'add_vacuum_gripper:=true') a.checked = isVacuum;
+                        if (a.text === 'add_gripper:=true') a.checked = !isVacuum;
+                    });
+                }
+            });
+            const modalBody = document.getElementById('launch-modal-body');
+            if (modalBody) {
+                modalBody.querySelectorAll('label.param-chip').forEach(lbl => {
+                    const cb = lbl.querySelector('input');
+                    if (cb && lbl.dataset.argText) {
+                        if (lbl.dataset.argText === 'add_vacuum_gripper:=true') {
+                            cb.checked = isVacuum;
+                            lbl.classList.toggle('chip-inactive', !isVacuum);
+                        } else if (lbl.dataset.argText === 'add_gripper:=true') {
+                            cb.checked = !isVacuum;
+                            lbl.classList.toggle('chip-inactive', isVacuum);
+                        }
+                    }
+                });
+            }
+        }
+
+        function syncReportTypeState(selectedReportType) {
+            actionsData.forEach(act => {
+                const isRealMove = (act.baseCmd && (act.baseCmd.includes('lite6_moveit_servo_realmove') || act.baseCmd.includes('standalone_move_group') || act.baseCmd.includes('report_type'))) ||
+                                   (act.cmd && (act.cmd.includes('lite6_moveit_servo_realmove') || act.cmd.includes('standalone_move_group') || act.cmd.includes('report_type')));
+                if (isRealMove && act.args) {
+                    act.args.forEach(a => {
+                        if (a.text.startsWith('report_type:=')) {
+                            a.checked = (a.text === selectedReportType);
+                        }
+                    });
+                }
+            });
+            const modalBody = document.getElementById('launch-modal-body');
+            if (modalBody) {
+                modalBody.querySelectorAll('label.param-chip').forEach(lbl => {
+                    const cb = lbl.querySelector('input');
+                    if (cb && lbl.dataset.argText && lbl.dataset.argText.startsWith('report_type:=')) {
+                        const isSelected = (lbl.dataset.argText === selectedReportType);
+                        cb.checked = isSelected;
+                        lbl.classList.toggle('chip-inactive', !isSelected);
+                    }
+                });
+            }
+        }
         
         function parseArgs(action) {
            if (!action.cmd.startsWith('ros2 launch') && !action.cmd.startsWith('ros2 run') && !action.cmd.startsWith('ros2 topic pub')) {
@@ -829,6 +892,62 @@
                     }
                 });
             }
+
+            // Ensure gripper selection args (add_vacuum_gripper and add_gripper) are available for Lite6 MoveIt Servo / MoveGroup
+            const isMoveItGripperCmd = (action.baseCmd && (
+                action.baseCmd.includes('lite6_moveit_servo') || 
+                action.baseCmd.includes('standalone_move_group')
+            )) || (action.cmd && (
+                action.cmd.includes('lite6_moveit_servo') || 
+                action.cmd.includes('standalone_move_group')
+            ));
+
+            if (isMoveItGripperCmd) {
+                const gripperDefaults = [
+                    'add_vacuum_gripper:=true',
+                    'add_gripper:=true'
+                ];
+                gripperDefaults.forEach(defArg => {
+                    if (!action.args.some(a => a.text === defArg)) {
+                        let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
+                        if (defArg === 'add_vacuum_gripper:=true' && isChecked === false) {
+                            const gripSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'add_gripper:=true');
+                            if (!gripSaved) isChecked = true;
+                        }
+                        action.args.push({ text: defArg, checked: isChecked });
+                    }
+                });
+            }
+
+            // Ensure report_type selection args (dev, normal, rich) are available for Real Move commands
+            const isRealMoveReportCmd = (action.baseCmd && (
+                action.baseCmd.includes('lite6_moveit_servo_realmove') || 
+                (action.baseCmd.includes('standalone_move_group') && (action.baseCmd.includes('robot_ip') || (action.cmd && action.cmd.includes('robot_ip')))) ||
+                action.baseCmd.includes('report_type')
+            )) || (action.cmd && (
+                action.cmd.includes('lite6_moveit_servo_realmove') || 
+                (action.cmd.includes('standalone_move_group') && action.cmd.includes('robot_ip')) ||
+                action.cmd.includes('report_type')
+            ));
+
+            if (isRealMoveReportCmd) {
+                const reportDefaults = [
+                    'report_type:=dev',
+                    'report_type:=normal',
+                    'report_type:=rich'
+                ];
+                reportDefaults.forEach(defArg => {
+                    if (!action.args.some(a => a.text === defArg)) {
+                        let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
+                        if (defArg === 'report_type:=dev' && isChecked === false) {
+                            const normalSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'report_type:=normal');
+                            const richSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'report_type:=rich');
+                            if (!normalSaved && !richSaved) isChecked = true;
+                        }
+                        action.args.push({ text: defArg, checked: isChecked });
+                    }
+                });
+            }
         }
         
             function createArgsDiv(action) {
@@ -854,7 +973,33 @@
                      checkedYoloModels.forEach(a => { if (a !== preferred) a.checked = false; });
                  }
 
-                 // Put camera args first, yolo_model args next
+                 // Ensure exactly one gripper arg is checked initially
+                 const gripperArgs = action.args.filter(a => a.text === 'add_vacuum_gripper:=true' || a.text === 'add_gripper:=true');
+                 if (gripperArgs.length > 0) {
+                     const checkedGrippers = gripperArgs.filter(a => a.checked);
+                     if (checkedGrippers.length > 1) {
+                         const preferred = checkedGrippers.find(a => a.text === 'add_vacuum_gripper:=true') || checkedGrippers[0];
+                         checkedGrippers.forEach(a => { if (a !== preferred) a.checked = false; });
+                     } else if (checkedGrippers.length === 0) {
+                         const defaultGripper = gripperArgs.find(a => a.text === 'add_vacuum_gripper:=true') || gripperArgs[0];
+                         if (defaultGripper) defaultGripper.checked = true;
+                     }
+                 }
+
+                 // Ensure exactly one report_type:= arg is checked initially
+                 const reportTypeArgs = action.args.filter(a => a.text.startsWith('report_type:='));
+                 if (reportTypeArgs.length > 0) {
+                     const checkedReports = reportTypeArgs.filter(a => a.checked);
+                     if (checkedReports.length > 1) {
+                         const preferred = checkedReports.find(a => a.text === 'report_type:=dev') || checkedReports[0];
+                         checkedReports.forEach(a => { if (a !== preferred) a.checked = false; });
+                     } else if (checkedReports.length === 0) {
+                         const defaultReport = reportTypeArgs.find(a => a.text === 'report_type:=dev') || reportTypeArgs[0];
+                         if (defaultReport) defaultReport.checked = true;
+                     }
+                 }
+
+                 // Put camera args first, yolo_model args next, gripper args grouped together, report_type args grouped together
                  action.args.sort((a, b) => {
                      const isCamA = a.text.startsWith('camera:=');
                      const isCamB = b.text.startsWith('camera:=');
@@ -864,6 +1009,27 @@
                      if (!isCamA && isCamB) return 1;
                      if (isYoloA && !isYoloB) return -1;
                      if (!isYoloA && isYoloB) return 1;
+
+                     const isGripA = (a.text === 'add_vacuum_gripper:=true' || a.text === 'add_gripper:=true');
+                     const isGripB = (b.text === 'add_vacuum_gripper:=true' || b.text === 'add_gripper:=true');
+                     if (isGripA && isGripB) {
+                         if (a.text === 'add_vacuum_gripper:=true') return -1;
+                         if (b.text === 'add_vacuum_gripper:=true') return 1;
+                     }
+                     if (isGripA && !isGripB) return -1;
+                     if (!isGripA && isGripB) return 1;
+
+                     const isRepA = a.text.startsWith('report_type:=');
+                     const isRepB = b.text.startsWith('report_type:=');
+                     if (isRepA && isRepB) {
+                         const repOrder = ['report_type:=dev', 'report_type:=normal', 'report_type:=rich'];
+                         const idxA = repOrder.indexOf(a.text);
+                         const idxB = repOrder.indexOf(b.text);
+                         return (idxA !== -1 && idxB !== -1) ? idxA - idxB : 0;
+                     }
+                     if (isRepA && !isRepB) return -1;
+                     if (!isRepA && isRepB) return 1;
+
                      return 0;
                  });
 
@@ -929,6 +1095,20 @@
                                      }
                                  }
                              });
+                         }
+
+                         // Mutually exclusive gripper selection (Toggle between add_vacuum_gripper:=true and add_gripper:=true)
+                         if (argObj.text === 'add_vacuum_gripper:=true' || argObj.text === 'add_gripper:=true') {
+                             const targetGripper = (!e.target.checked) ? 
+                                 ((argObj.text === 'add_vacuum_gripper:=true') ? 'add_gripper:=true' : 'add_vacuum_gripper:=true') : 
+                                 argObj.text;
+                             syncGripperState(targetGripper);
+                         }
+
+                         // Mutually exclusive report_type selection (Toggle between dev, normal, rich)
+                         if (argObj.text.startsWith('report_type:=')) {
+                             const targetReportType = (!e.target.checked) ? 'report_type:=dev' : argObj.text;
+                             syncReportTypeState(targetReportType);
                          }
 
                         // Linear Axis dynamic title and checkbox synchronization

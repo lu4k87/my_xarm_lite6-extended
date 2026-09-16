@@ -5,6 +5,14 @@
             actions.sort((a, b) => {
                 let idxA = order.indexOf(a.cmd);
                 let idxB = order.indexOf(b.cmd);
+                if (idxA === -1) {
+                    const normA = (a.cmd || '').replace(/\s+add_gripper:=true/g, '').replace(/\s+add_vacuum_gripper:=true/g, '').replace(/\s+report_type:=[^\s]+/g, '');
+                    idxA = order.findIndex(c => c === a.cmd || (c && (c.replace(/\s+add_gripper:=true/g, '').replace(/\s+add_vacuum_gripper:=true/g, '').replace(/\s+report_type:=[^\s]+/g, '') === normA || c.startsWith(normA))));
+                }
+                if (idxB === -1) {
+                    const normB = (b.cmd || '').replace(/\s+add_gripper:=true/g, '').replace(/\s+add_vacuum_gripper:=true/g, '').replace(/\s+report_type:=[^\s]+/g, '');
+                    idxB = order.findIndex(c => c === b.cmd || (c && (c.replace(/\s+add_gripper:=true/g, '').replace(/\s+add_vacuum_gripper:=true/g, '').replace(/\s+report_type:=[^\s]+/g, '') === normB || c.startsWith(normB))));
+                }
                 if (idxA === -1) idxA = 999;
                 if (idxB === -1) idxB = 999;
                 return idxA - idxB;
@@ -14,12 +22,12 @@
     }
 
     function getDevSetupActions(mode) {
-      let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link";
+      let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py attach_to:=linear_axis_link add_vacuum_gripper:=true add_gripper:=true";
       let servoTitle = "MoveIt Servo & MoveGroup (Fake) + Linear Axis";
       let zedBringupCmd = "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt";
 
       if (mode === "real") {
-        servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev";
+        servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich";
         servoTitle = "MoveIt Servo & MoveGroup (Real)";
       }
 
@@ -48,16 +56,16 @@
     }
 
     function getServerSetupActions(mode) {
-      let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true joystick_and_checker:=false";
+      let servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true add_gripper:=true joystick_and_checker:=false";
       let servoTitle = "MoveIt Servo (Fake) [Server]";
-      let moveGroupCmd = "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true";
+      let moveGroupCmd = "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true add_gripper:=true";
       let moveGroupTitle = "MoveIt MoveGroup (Standalone/Fake)";
       let zedBringupCmd = "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt";
 
       if (mode === "real") {
-        servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev joystick_and_checker:=false";
+        servoCmd = "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich joystick_and_checker:=false";
         servoTitle = "MoveIt Servo (Real) [Server]";
-        moveGroupCmd = "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175";
+        moveGroupCmd = "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true add_gripper:=true robot_ip:=192.168.1.175 report_type:=dev report_type:=normal report_type:=rich";
         moveGroupTitle = "MoveIt MoveGroup (Standalone/Real)";
       }
 
@@ -92,8 +100,8 @@
     function getExtrasExecActions() {
       // Alles was runDevSetup('real') startet + Gaze UI Glasses Node
       const actions = [
-        { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev", title: "MoveIt Servo (Real)" },
-        { cmd: "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175", title: "MoveIt MoveGroup (Standalone/Real)" },
+        { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich", title: "MoveIt Servo (Real)" },
+        { cmd: "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true add_gripper:=true robot_ip:=192.168.1.175 report_type:=dev report_type:=normal report_type:=rich", title: "MoveIt MoveGroup (Standalone/Real)" },
         { cmd: "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py", title: "Robot Control UI & WebSocket Server (Port 8081 / 9090)" },
         { cmd: "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082", title: "http_web_video_server_p8082" },
         { cmd: "ros2 run gaze_control_ui_tobii_glasses gaze_ui_zedm", title: "Gaze UI Node ZED M (Glasses 3 Pro)" },
@@ -105,8 +113,8 @@
 
     function getExtrasExecLegacyCamActions() {
       const actions = [
-        { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev", title: "MoveIt Servo (Real)" },
-        { cmd: "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175", title: "MoveIt MoveGroup (Standalone/Real)" },
+        { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich", title: "MoveIt Servo (Real)" },
+        { cmd: "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true add_gripper:=true robot_ip:=192.168.1.175 report_type:=dev report_type:=normal report_type:=rich", title: "MoveIt MoveGroup (Standalone/Real)" },
         { cmd: "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py", title: "Robot Control UI & WebSocket Server (Port 8081 / 9090)" },
         { cmd: "ros2 run gaze_control_ui_tobii_glasses gaze_ui --legacy-cam", title: "Gaze UI Node (Legacy IP Cam .124)" }
       ];
@@ -191,38 +199,54 @@
            const rawAttr = `data-cmd="${escapedCmd}" data-action-index="${aIdx}" data-raw-cmd="${escapedCmd}"`;
 
            // 1. Direct or prefix lookup in CMD_DETAILS
-           let expanded = CMD_DETAILS[aCmd];
-           if (!expanded) {
-               const matchedKey = Object.keys(CMD_DETAILS)
-                                  .sort((k1, k2) => k2.length - k1.length)
-                                  .find(k => aCmd.startsWith(k) || k.startsWith(aCmd) || aCmd.includes(k));
-               if (matchedKey) expanded = CMD_DETAILS[matchedKey];
-           }
+            let expanded = CMD_DETAILS[aCmd];
+            if (!expanded) {
+                const normCmd = aCmd.replace(/\s+add_gripper:=true/g, '').replace(/\s+add_vacuum_gripper:=true/g, '').replace(/\s+report_type:=[^\s]+/g, '');
+                expanded = CMD_DETAILS[normCmd];
+                if (!expanded) {
+                    const matchedKey = Object.keys(CMD_DETAILS)
+                                       .sort((k1, k2) => k2.length - k1.length)
+                                       .find(k => {
+                                           const normK = k.replace(/\s+add_gripper:=true/g, '').replace(/\s+add_vacuum_gripper:=true/g, '').replace(/\s+report_type:=[^\s]+/g, '');
+                                           return aCmd.startsWith(k) || k.startsWith(aCmd) || aCmd.includes(k) ||
+                                                  normCmd.startsWith(normK) || normK.startsWith(normCmd) || normCmd.includes(normK);
+                                       });
+                    if (matchedKey) expanded = CMD_DETAILS[matchedKey];
+                }
+            }
 
-           if (expanded) {
-               let match = expanded.match(/<ul[^>]*>([\s\S]*?)<\/ul>$/);
-               if (match) {
-                   let inner = match[1].trim();
-                   // Inject data attributes into the top-level <li>
-                   inner = inner.replace(/^<li\b/, `<li ${rawAttr}`);
-                   html += inner;
-               } else {
-                   html += `<li ${rawAttr}><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd); font-size: 12.5px; font-weight: 600;">${aCmd}</span></li>`;
-               }
-               return;
-           }
+            if (expanded) {
+                let match = expanded.match(/<ul[^>]*>([\s\S]*?)<\/ul>$/);
+                if (match) {
+                    let inner = match[1].trim();
+                    // Inject data attributes into the top-level <li>
+                    inner = inner.replace(/^<li\b/, `<li ${rawAttr}`);
+                    html += inner;
+                } else {
+                    html += `<li ${rawAttr}><span class="badge badge-sys" style="margin-right: 6px;">CMD</span><span style="color: var(--c-cmd); font-size: 12.5px; font-weight: 600;">${aCmd}</span></li>`;
+                }
+                return;
+            }
 
-           // 2. Compound command with & or &&
-           let subCmds = aCmd.split(/(?:&&|&)/).map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('sleep') && !s.startsWith('wait'));
-           if (subCmds.length > 1) {
-               const firstCmd = subCmds[0];
-               let firstExp = CMD_DETAILS[firstCmd];
-               if (!firstExp) {
-                   const matchedKey = Object.keys(CMD_DETAILS)
-                                      .sort((k1, k2) => k2.length - k1.length)
-                                      .find(k => firstCmd.startsWith(k) || k.startsWith(firstCmd) || firstCmd.includes(k));
-                   if (matchedKey) firstExp = CMD_DETAILS[matchedKey];
-               }
+            // 2. Compound command with & or &&
+            let subCmds = aCmd.split(/(?:&&|&)/).map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('sleep') && !s.startsWith('wait'));
+            if (subCmds.length > 1) {
+                const firstCmd = subCmds[0];
+                let firstExp = CMD_DETAILS[firstCmd];
+                if (!firstExp) {
+                    const normFirst = firstCmd.replace(/\s+add_gripper:=true/g, '').replace(/\s+add_vacuum_gripper:=true/g, '').replace(/\s+report_type:=[^\s]+/g, '');
+                    firstExp = CMD_DETAILS[normFirst];
+                    if (!firstExp) {
+                        const matchedKey = Object.keys(CMD_DETAILS)
+                                           .sort((k1, k2) => k2.length - k1.length)
+                                           .find(k => {
+                                               const normK = k.replace(/\s+add_gripper:=true/g, '').replace(/\s+add_vacuum_gripper:=true/g, '').replace(/\s+report_type:=[^\s]+/g, '');
+                                               return firstCmd.startsWith(k) || k.startsWith(firstCmd) || firstCmd.includes(k) ||
+                                                      normFirst.startsWith(normK) || normK.startsWith(normFirst) || normFirst.includes(normK);
+                                           });
+                        if (matchedKey) firstExp = CMD_DETAILS[matchedKey];
+                    }
+                }
 
                let primaryHtml = "";
                if (firstExp) {
