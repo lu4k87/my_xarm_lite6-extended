@@ -41,6 +41,24 @@ def generate_launch_description():
         }.items(),
     )
     
+    # standalone move_group launch (MoveIt Planning Server)
+    standalone_move_group_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([FindPackageShare('robot_motion_handler_movegroup'), 'launch', 'standalone_move_group.launch.py'])),
+        launch_arguments={
+            'dof': '6',
+            'robot_type': 'lite',
+            'prefix': prefix,
+            'hw_ns': hw_ns,
+            'limited': limited,
+            'effort_control': effort_control,
+            'velocity_control': velocity_control,
+            'add_gripper': add_gripper,
+            'add_vacuum_gripper': add_vacuum_gripper,
+            'attach_to': attach_to,
+        }.items(),
+    )
+
     return LaunchDescription([
-        robot_moveit_servo_launch
+        robot_moveit_servo_launch,
+        standalone_move_group_launch,
     ])

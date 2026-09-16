@@ -218,7 +218,14 @@ def icon():
 
 @app.route("/ui_mouse_click.mp3")
 def click_sound():
-    return send_from_directory(BASE_DIR, "ui_mouse_click.mp3")
+    sounds_dir = os.path.join(WS_PATH, "sounds")
+    return send_from_directory(sounds_dir, "ui_mouse_click.mp3")
+
+
+@app.route("/sounds/<path:filename>")
+def serve_sounds(filename):
+    sounds_dir = os.path.join(WS_PATH, "sounds")
+    return send_from_directory(sounds_dir, filename)
 
 
 @app.route("/_imgs/<path:filename>")

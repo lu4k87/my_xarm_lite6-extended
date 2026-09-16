@@ -412,7 +412,7 @@
                     path: isSim ? '_imgs/icons/icon_robot_lite6_sim.svg?v=6' : '_imgs/icons/icon_robot_lite6_real.svg?v=6', 
                     label: isSim ? 'xArm Lite 6 (Simulation)' : 'xArm Lite 6 (Physischer Roboter)' 
                 },
-                { path: '_imgs/icons/icon_moveit2.svg', label: 'MoveIt Motion Planning' },
+                { path: '_imgs/icons/icon_moveit2.svg?v=2', label: 'MoveIt Motion Planning' },
                 { path: '_imgs/icons/icon_rviz.svg', label: 'RViz 3D-Visualisierung' },
                 { path: '_imgs/icons/icon_gamepad.svg?v=6', label: 'Gamepad Roboter-Steuerung' }
             ];
@@ -435,11 +435,11 @@
         if (/moveit|move_group|movegroup|moveit_servo|lite6_moveit|xarm_moveit/.test(combined)) {
             if (/yolo/.test(combined)) {
                 return [
-                    { path: '_imgs/icons/icon_moveit2.svg', label: 'MoveIt Motion Planning' },
+                    { path: '_imgs/icons/icon_moveit2.svg?v=2', label: 'MoveIt Motion Planning' },
                     { path: '_imgs/icons/icon_object_detection.svg?v=7', label: 'YOLO 3D Object Detection' }
                 ];
             }
-            return [{ path: '_imgs/icons/icon_moveit2.svg', label: 'MoveIt Motion Planning' }];
+            return [{ path: '_imgs/icons/icon_moveit2.svg?v=2', label: 'MoveIt Motion Planning' }];
         }
         // 3. Voice / Whisper / Speech Audio
         if (/voice|whisper|speech|audio|listener|silero/.test(combined)) {
@@ -470,6 +470,13 @@
         // 7. Gamepad / Joystick / Keyboard / Collision Checker
         if (/gamepad|joy|keyboard|linear_axis|collision_check|teleop_pre_collision/.test(combined)) {
             return [{ path: '_imgs/icons/icon_gamepad.svg?v=6', label: 'Gamepad & Roboter-Steuerung' }];
+        }
+        // Robot Control UI + WebSocket Server (kombinierte Action Card mit BEIDEN Icons)
+        if (/http_robot_control_ui/.test(combined) || ((/robot_control|8081/.test(combined)) && (/websocket|rosbridge|9090/.test(combined)))) {
+            return [
+                { path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Robot Control UI' },
+                { path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket' }
+            ];
         }
         // 8. Web-UI / Dashboard / Overlays / Streams / OBS
         if (/robot_control|dashboard|rqt|overlay|streamer|obs|8080|8081|ui_node/.test(combined)) {

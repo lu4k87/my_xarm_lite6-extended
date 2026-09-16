@@ -990,8 +990,8 @@ window.addEventListener("gamepaddisconnected", (e) => {
 });
 
 // ── Global Sound Setup ──────────────────────────────────────────────────
-const uiClickSound = new Audio('ui_mouse_click.mp3');
-const scanPosSound = new Audio('_voice_robot_moves_to_scan_pos.mp3');
+const uiClickSound = new Audio('sounds/ui_mouse_click.mp3');
+const scanPosSound = new Audio('sounds/_voice_robot_moves_to_scan_pos.mp3');
 
 // ── Global Button Debounce (Anti-Double-Click) ──────────────────────────
 document.addEventListener('click', function(e) {
