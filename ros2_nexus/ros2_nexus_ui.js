@@ -372,8 +372,8 @@
         const combined = (firstCmd + ' ' + title + ' ' + type + ' ' + rawCmd.toLowerCase());
 
         // 0. Ausdrücklich KEINE Icons für Helper/Tuner/Overlay/Streamer-Nodes (web_video_server & tf_control_tuner ausgenommen!)
-        if (/rviz_linear_axis_tuner|yolo_3d_bbox_for_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_overlay_servo_status|rviz_window_streamer/.test(firstCmd) ||
-            /linear axis tuner|yolo 3d bbox|rviz marker|servo status warning|rviz streamer/.test(title)) {
+        if (!/web_video_server/.test(combined) && (/rviz_linear_axis_tuner|yolo_3d_bbox_for_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_overlay_servo_status|rviz_window_streamer/.test(firstCmd) ||
+            /linear axis tuner|yolo 3d bbox|rviz marker|servo status warning|rviz streamer/.test(title))) {
             if (!/lite6_moveit|xarm_moveit|standalone_move_group|zed_cam|robot_vision/.test(firstCmd)) {
                 return [];
             }
@@ -1334,7 +1334,7 @@
               if (isDual) hasAnyDual = true;
 
               const iconCol = document.createElement('div');
-              iconCol.className = 'modal-card-icon-col' + (isDual ? ' is-vr-dual is-multiple-icons' : '');
+              iconCol.className = 'modal-card-icon-col' + (isDual ? ' is-vr-dual is-multiple-icons' : '') + (iconMetas.length === 0 ? ' is-empty-spacer' : '');
 
               iconMetas.forEach(meta => {
                   const iconBadge = document.createElement('div');
@@ -1357,9 +1357,7 @@
               const liInnerWrapper = document.createElement('div');
               liInnerWrapper.style.cssText = 'display: flex; align-items: stretch; width: 100%; gap: 14px;';
               liInnerWrapper.appendChild(cbContainer);
-              if (iconMetas.length > 0) {
-                  liInnerWrapper.appendChild(iconCol);
-              }
+              liInnerWrapper.appendChild(iconCol);
               liInnerWrapper.appendChild(cardLayout);
               
               const cardDiv = document.createElement('div');
@@ -1372,13 +1370,8 @@
                   hrLine.className = 'modal-card-divider-h';
                   hrLine.style.position = 'absolute';
                   hrLine.style.top = '52px';
-                  if (iconMetas.length > 0) {
-                      hrLine.style.left = '142px';
-                      hrLine.style.width = 'calc(100% - 158px)';
-                  } else {
-                      hrLine.style.left = '58px';
-                      hrLine.style.width = 'calc(100% - 74px)';
-                  }
+                  hrLine.style.left = '142px';
+                  hrLine.style.width = 'calc(100% - 158px)';
                   hrLine.style.height = '1px';
                   hrLine.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
                   hrLine.style.pointerEvents = 'none';
@@ -1502,7 +1495,7 @@
                 if (isDual2) hasAnyDual = true;
 
                 const iconCol2 = document.createElement('div');
-                iconCol2.className = 'modal-card-icon-col' + (isDual2 ? ' is-vr-dual is-multiple-icons' : '');
+                iconCol2.className = 'modal-card-icon-col' + (isDual2 ? ' is-vr-dual is-multiple-icons' : '') + (iconMetas2.length === 0 ? ' is-empty-spacer' : '');
 
                 iconMetas2.forEach(meta => {
                     const iconBadge2 = document.createElement('div');
@@ -1525,9 +1518,7 @@
                 const liInnerWrapper = document.createElement('div');
                 liInnerWrapper.style.cssText = 'display: flex; align-items: stretch; width: 100%; gap: 14px;';
                 liInnerWrapper.appendChild(cbContainer);
-                if (iconMetas2.length > 0) {
-                    liInnerWrapper.appendChild(iconCol2);
-                }
+                liInnerWrapper.appendChild(iconCol2);
                 liInnerWrapper.appendChild(cardLayout);
 
                 const cardDiv = document.createElement('div');
@@ -1540,13 +1531,8 @@
                     hrLine2.className = 'modal-card-divider-h';
                     hrLine2.style.position = 'absolute';
                     hrLine2.style.top = '52px';
-                    if (iconMetas2.length > 0) {
-                        hrLine2.style.left = '142px';
-                        hrLine2.style.width = 'calc(100% - 158px)';
-                    } else {
-                        hrLine2.style.left = '58px';
-                        hrLine2.style.width = 'calc(100% - 74px)';
-                    }
+                    hrLine2.style.left = '142px';
+                    hrLine2.style.width = 'calc(100% - 158px)';
                     hrLine2.style.height = '1px';
                     hrLine2.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
                     hrLine2.style.pointerEvents = 'none';
@@ -1592,7 +1578,7 @@
             contentClone.style.cssText = 'width: 100%; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 0; padding: 10px;';
 
             const iconCol = document.createElement('div');
-            iconCol.className = 'modal-card-icon-col' + (isDual ? ' is-vr-dual is-multiple-icons' : '');
+            iconCol.className = 'modal-card-icon-col' + (isDual ? ' is-vr-dual is-multiple-icons' : '') + (iconMetas.length === 0 ? ' is-empty-spacer' : '');
 
             iconMetas.forEach(meta => {
                 const iconBadge = document.createElement('div');
@@ -1610,9 +1596,7 @@
             cardDiv.className = 'modal-action-card card-active';
             cardDiv.style.cssText = 'flex: 1; min-width: 0; display: flex; flex-direction: row; align-items: stretch; gap: 14px; padding: 18px 24px;';
 
-            if (iconMetas.length > 0) {
-                cardDiv.appendChild(iconCol);
-            }
+            cardDiv.appendChild(iconCol);
 
             const innerCol = document.createElement('div');
             innerCol.style.cssText = 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px;';

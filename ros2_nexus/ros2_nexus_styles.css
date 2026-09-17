@@ -22,6 +22,8 @@
       /* Badge-Farben — nach Wunsch angepasst */
       --c-node: #06b6d4;
       /* Türkis/Blau      — ros2 run Node      */
+      --c-opt: #38bdf8;
+      /* Sky Blue         — /opt/ ros2 Node    */
       --c-launch: #f97316;
       /* Orange           — ros2 launch File   */
       --c-pub: #10b981;
@@ -787,6 +789,8 @@
 
     .modal-card-icon-col {
       width: 70px;
+      min-width: 70px;
+      max-width: 70px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -797,11 +801,22 @@
       transition: all 0.25s ease;
     }
 
+    .modal-card-icon-col.is-empty-spacer {
+      width: 70px;
+      min-width: 70px;
+      max-width: 70px;
+      height: 1px;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
     /* Einheitliche Spaltenbreite von 70px für alle Karten, da mehrere Icons untereinander gestapelt werden */
     .has-dual-icons .modal-card-icon-col,
     .modal-card-icon-col.is-vr-dual,
     .modal-card-icon-col.is-multiple-icons {
       width: 70px;
+      min-width: 70px;
+      max-width: 70px;
       flex-direction: column;
       justify-content: center;
       align-items: center;
@@ -1567,9 +1582,11 @@
     }
 
     .badge-opt {
-      background: rgba(148, 163, 184, .12);
-      color: #94a3b8;
-      border-color: rgba(148, 163, 184, .25)
+      background: rgba(56, 189, 248, .12);
+      color: var(--c-opt, #38bdf8);
+      border-color: rgba(56, 189, 248, .28);
+      font-weight: 700;
+      letter-spacing: .5px;
     }
 
     .badge-xarm {

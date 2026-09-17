@@ -100,6 +100,12 @@
       "yolo_model:=yolov8l.pt": true,
       "yolo_model:=yolov8s.pt": false
     },
+    "ros2 launch web_video_server web_video_server.launch.py": {
+      "port:=8082": true
+    },
+    "ros2 launch web_video_server web_video_server.launch.py port:=8082": {
+      "port:=8082": true
+    },
     "ros2 launch whisper_bringup bringup.launch.py": {
       "silero_vad_use_cuda:=True": true,
       "use_gpu:=True": true
@@ -177,8 +183,7 @@
       "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True",
       "ros2 run voice_command_listener voice_command_listener",
       "ros2 run tf_control_tuner tf_control_tuner",
-      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
-      "ros2 run rviz_window_streamer rviz_window_streamer_node"
+      "ros2 launch web_video_server web_video_server.launch.py port:=8082"
     ],
     "dev_real": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich",
@@ -189,8 +194,7 @@
       "ros2 run voice_command_listener voice_command_listener",
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
       "ros2 run tf_control_tuner tf_control_tuner",
-      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
-      "ros2 run rviz_window_streamer rviz_window_streamer_node",
+      "ros2 launch web_video_server web_video_server.launch.py port:=8082",
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses",
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py"
     ],
@@ -422,6 +426,12 @@
         "yolo_model:=yolov8s.pt": false,
         "yolo_model:=my_yolo_model.pt": false
       },
+      "ros2 launch web_video_server web_video_server.launch.py": {
+        "port:=8082": true
+      },
+      "ros2 launch web_video_server web_video_server.launch.py port:=8082": {
+        "port:=8082": true
+      },
       "ros2 launch whisper_bringup bringup.launch.py": {
         "silero_vad_use_cuda:=True": true,
         "use_gpu:=True": true
@@ -517,6 +527,12 @@
         "yolo_model:=yolov8s.pt": false,
         "yolo_model:=my_yolo_model.pt": false
       },
+      "ros2 launch web_video_server web_video_server.launch.py": {
+        "port:=8082": true
+      },
+      "ros2 launch web_video_server web_video_server.launch.py port:=8082": {
+        "port:=8082": true
+      },
       "ros2 launch whisper_bringup bringup.launch.py": {
         "silero_vad_use_cuda:=True": true,
         "use_gpu:=True": true
@@ -569,6 +585,12 @@
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175": {
         "add_vacuum_gripper:=true": true,
         "robot_ip:=192.168.1.175": true
+      },
+      "ros2 launch web_video_server web_video_server.launch.py": {
+        "port:=8082": true
+      },
+      "ros2 launch web_video_server web_video_server.launch.py port:=8082": {
+        "port:=8082": true
       },
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
         "add_vacuum_gripper:=true": true,
@@ -640,7 +662,7 @@
           "args": [],
           "baseCmd": "rviz2",
           "cmd": "rviz2",
-          "label": "RViz2",
+          "label": "RViz2 (/opt/)",
           "postCmd": "",
           "type": "sys"
         },
@@ -649,7 +671,7 @@
           "args": [],
           "baseCmd": "rqt_graph",
           "cmd": "rqt_graph",
-          "label": "RQT Graph",
+          "label": "RQT Graph (/opt/)",
           "postCmd": "",
           "type": "sys"
         },
@@ -658,7 +680,7 @@
           "args": [],
           "baseCmd": "rqt",
           "cmd": "rqt",
-          "label": "RQT",
+          "label": "RQT (/opt/)",
           "postCmd": "",
           "type": "sys"
         }
@@ -1000,18 +1022,14 @@
           "args": [
             {
               "checked": true,
-              "text": "--ros-args -r __node:=http_web_video_server_p8082"
-            },
-            {
-              "checked": true,
-              "text": "-p port:=8082"
+              "text": "port:=8082"
             }
           ],
-          "baseCmd": "ros2 run web_video_server web_video_server",
-          "cmd": "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
-          "label": "Web Video Server (Port 8082)",
+          "baseCmd": "ros2 launch web_video_server web_video_server.launch.py",
+          "cmd": "ros2 launch web_video_server web_video_server.launch.py port:=8082",
+          "label": "Web Video Server (/opt/) & RViz Streamer (Port 8082)",
           "postCmd": "",
-          "type": "node"
+          "type": "launch"
         },
         {
           "active": true,
@@ -1035,7 +1053,7 @@
           "args": [],
           "baseCmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
           "cmd": "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
-          "label": "ROS Bridge Websocket Launch (Port 9090)",
+          "label": "ROS Bridge Websocket Launch (/opt/ · Port 9090)",
           "postCmd": "",
           "type": "launch"
         },
@@ -1153,7 +1171,7 @@
           ],
           "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
           "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link",
-          "label": "MoveGroup Server (FAKE)",
+          "label": "MoveGroup Server (/opt/ OMPL Server - FAKE)",
           "postCmd": "",
           "type": "launch"
         },
@@ -1175,7 +1193,7 @@
           ],
           "baseCmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py",
           "cmd": "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
-          "label": "MoveGroup Server (REAL)",
+          "label": "MoveGroup Server (/opt/ OMPL Server - REAL)",
           "postCmd": "",
           "type": "launch"
         }
