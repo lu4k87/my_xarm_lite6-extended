@@ -24,6 +24,8 @@
       /* Türkis/Blau      — ros2 run Node      */
       --c-opt: #38bdf8;
       /* Sky Blue         — /opt/ ros2 Node    */
+      --c-exec: #60a5fa;
+      /* Royal Blue       — Shell / Script Exec */
       --c-launch: #f97316;
       /* Orange           — ros2 launch File   */
       --c-pub: #10b981;
@@ -1585,6 +1587,14 @@
       background: rgba(56, 189, 248, .12);
       color: var(--c-opt, #38bdf8);
       border-color: rgba(56, 189, 248, .28);
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    .badge-exec {
+      background: rgba(96, 165, 250, .14);
+      color: var(--c-exec, #60a5fa);
+      border-color: rgba(96, 165, 250, .32);
       font-weight: 700;
       letter-spacing: .5px;
     }
