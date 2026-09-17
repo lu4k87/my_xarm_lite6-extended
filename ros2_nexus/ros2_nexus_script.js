@@ -40,7 +40,7 @@
         { cmd: "ros2 run voice_command_listener voice_command_listener", title: "Voice Command Listener" },
         { cmd: "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py", title: "Robot Control UI & WebSocket Server (Port 8081 / 9090)" },
         { cmd: "ros2 run tf_control_tuner tf_control_tuner", title: "Transform Tuner (tf_control_tuner)" },
-        { cmd: "ros2 launch web_video_server web_video_server.launch.py port:=8082", title: "Web Video Server (/opt/) & RViz Streamer (Port 8082)" },
+        { cmd: "ros2 launch web_video_server web_video_server.launch.py", title: "Web Video Server (/opt/) & RViz Streamer (Port 8082)" },
         { cmd: "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses", title: "Tobii Gaze Grasp Node" },
         { cmd: "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py", title: "VR Quest 3 Teleop (Port 9091 / 8443)" }
       ];
@@ -102,7 +102,7 @@
         { cmd: "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich", title: "MoveIt Servo (Real)" },
         { cmd: "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true add_gripper:=true robot_ip:=192.168.1.175 report_type:=dev report_type:=normal report_type:=rich", title: "MoveIt MoveGroup (/opt/ Standalone/Real)" },
         { cmd: "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py", title: "Robot Control UI & WebSocket Server (Port 8081 / 9090)" },
-        { cmd: "ros2 launch web_video_server web_video_server.launch.py port:=8082", title: "Web Video Server (/opt/) & RViz Streamer (Port 8082)" },
+        { cmd: "ros2 launch web_video_server web_video_server.launch.py", title: "Web Video Server (/opt/) & RViz Streamer (Port 8082)" },
         { cmd: "ros2 run gaze_control_ui_tobii_glasses gaze_ui_zedm", title: "Gaze UI Node ZED M (Glasses 3 Pro)" },
         { cmd: "ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm", title: "ZED M Camera Node" }
       ];
