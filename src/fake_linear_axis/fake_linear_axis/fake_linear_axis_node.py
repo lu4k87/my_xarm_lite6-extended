@@ -9,7 +9,7 @@ from std_msgs.msg import Float64
 
 class LinearAxisTuner(Node):
     def __init__(self):
-        super().__init__('rviz_linear_axis_tuner')
+        super().__init__('fake_linear_axis')
         self.tf_broadcaster = TransformBroadcaster(self)
         self.marker_pub = self.create_publisher(MarkerArray, '/visualization_marker_array', 10)
         
@@ -153,3 +153,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+

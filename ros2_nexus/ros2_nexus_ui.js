@@ -372,7 +372,7 @@
         const combined = (firstCmd + ' ' + title + ' ' + type + ' ' + rawCmd.toLowerCase());
 
         // 0. Ausdrücklich KEINE Icons für Helper/Tuner/Overlay/Streamer-Nodes (web_video_server & tf_control_tuner ausgenommen!)
-        if (!/web_video_server/.test(combined) && (/rviz_linear_axis_tuner|yolo_3d_bbox_for_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_overlay_servo_status|rviz_window_streamer/.test(firstCmd) ||
+        if (!/web_video_server/.test(combined) && (/fake_linear_axis|yolo_3d_bbox_for_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_overlay_servo_status|rviz_windows_streamer/.test(firstCmd) ||
             /linear axis tuner|yolo 3d bbox|rviz marker|servo status warning|rviz streamer/.test(title))) {
             if (!/lite6_moveit|xarm_moveit|standalone_move_group|zed_cam|robot_vision/.test(firstCmd)) {
                 return [];
@@ -688,7 +688,7 @@
                 }
             });
 
-            const tunerAction = actionsData.find(act => act.cmd && act.cmd.includes('rviz_linear_axis_tuner'));
+            const tunerAction = actionsData.find(act => act.cmd && act.cmd.includes('fake_linear_axis'));
             if (tunerAction) {
                 tunerAction.active = isLinearAxisActive;
             }
@@ -696,7 +696,7 @@
             const modalBody = document.getElementById('launch-modal-body');
             if (modalBody) {
                 modalBody.querySelectorAll('li').forEach(liEl => {
-                    if (liEl.dataset.cmd && liEl.dataset.cmd.includes('rviz_linear_axis_tuner')) {
+                    if (liEl.dataset.cmd && liEl.dataset.cmd.includes('fake_linear_axis')) {
                         const cb = liEl.querySelector('.main-action-cb');
                         if (cb && cb.checked !== isLinearAxisActive) {
                             cb.checked = isLinearAxisActive;
@@ -857,7 +857,7 @@
                 const hasLinearAxisArg = action.args.some(a => a.text.includes('linear_axis'));
                 if ((hasLinearAxisArg || (action.title && action.title.toLowerCase().includes('linear axis'))) && action.title) {
                     const isLinearAxisChecked = action.args.some(a => a.text.includes('linear_axis') && a.checked);
-                    const tunerNode = actionsData.find(a => a.cmd && a.cmd.includes('rviz_linear_axis_tuner'));
+                    const tunerNode = actionsData.find(a => a.cmd && a.cmd.includes('fake_linear_axis'));
                     const isTunerActive = tunerNode ? tunerNode.active : true;
                     if (!isLinearAxisChecked || !isTunerActive) {
                         action.title = action.title.replace(/\s*\+\s*Linear\s*Axis/gi, '')
@@ -1126,7 +1126,7 @@
                     
                     if (argObj.text.includes(':=')) {
                         const parts = argObj.text.split(':=');
-                        txtSpan.innerHTML = `<span style="color:#38bdf8;opacity:0.9;">${parts[0]}:=</span><span style="color:#f8fafc;font-weight:600;">${parts.slice(1).join(':=')}</span>`;
+                        txtSpan.innerHTML = (argObj.text.includes('attach_to:=') ? '<span style="color:var(--mut);margin-right:4px;font-size:0.9em;">[URDF]</span>' : '') + `<span style="color:#38bdf8;opacity:0.9;">${parts[0]}:=</span><span style="color:#f8fafc;font-weight:600;">${parts.slice(1).join(':=')}</span>`;
                     } else if (argObj.text.includes('=')) {
                         const parts = argObj.text.split('=');
                         txtSpan.innerHTML = `<span style="color:#38bdf8;opacity:0.9;">${parts[0]}=</span><span style="color:#f8fafc;font-weight:600;">${parts.slice(1).join('=')}</span>`;
@@ -1390,7 +1390,7 @@
                   li.classList.toggle('row-active', e.target.checked);
                   li.classList.toggle('row-inactive', !e.target.checked);
                   
-                  if (action && (action.cmd.includes('rviz_linear_axis_tuner') || action.cmd.includes('linear_axis'))) {
+                  if (action && (action.cmd.includes('fake_linear_axis') || action.cmd.includes('linear_axis'))) {
                       syncLinearAxisState(e.target.checked);
                   }
                   
@@ -1550,7 +1550,7 @@
                    cardDiv.classList.toggle('card-inactive', !e.target.checked);
                    li.classList.toggle('row-active', e.target.checked);
                    li.classList.toggle('row-inactive', !e.target.checked);
-                   if (action && (action.cmd.includes("rviz_linear_axis_tuner") || action.cmd.includes("linear_axis"))) {
+                   if (action && (action.cmd.includes("fake_linear_axis") || action.cmd.includes("linear_axis"))) {
                        syncLinearAxisState(e.target.checked);
                    }
                    updateModalStats();
@@ -1763,7 +1763,7 @@
           closeModal();
           if (toastMsg) showToast(toastMsg);
 
-          const linearAxisNode = actionsData.find(a => a.cmd && a.cmd.includes('rviz_linear_axis_tuner'));
+          const linearAxisNode = actionsData.find(a => a.cmd && a.cmd.includes('fake_linear_axis'));
           const isLinearAxisNodeActive = linearAxisNode ? linearAxisNode.active : true;
           
           for (const action of actionsData) {

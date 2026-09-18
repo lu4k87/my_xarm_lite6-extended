@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'rviz_window_streamer'
+package_name = 'rviz_windows_streamer'
 
 setup(
     name=package_name,
@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'rviz_window_streamer_node = rviz_window_streamer.rviz_window_streamer_node:main'
+            'rviz_windows_streamer_node = rviz_windows_streamer.rviz_windows_streamer_node:main'
         ],
     },
 )

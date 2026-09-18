@@ -323,7 +323,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 > [!NOTE]
 > **Virtuelle Linearachse (Nur Simulation):** Im FAKE-Modus kann der Roboter auf einer simulierten Linearachse bewegt werden, ohne die MoveIt-Planungsgruppe (`lite6`) zu beeinflussen.
 > - **Aktivierung:** Die Nexus Web App startet die Linearachse beim Klick auf den Button **RUN DEV Setup (FAKE)** automatisch mit. Bei manuellem Start muss der Parameter `attach_to:=linear_axis_link` an den Launch-Befehl angehängt werden.
-> - **Steuerung:** Der Headless-Node `rviz_linear_axis_tuner_node.py` (`rviz_linear_axis_tuner`) empfängt Schieberegler-Werte über das Topic `/ui/linear_axis_position` (oder über interaktive RViz-Marker) und transformiert `linear_axis_link` dynamisch per TF. Das Schieberegler-UI ist direkt in das Robot Control Web Interface (`http://localhost:8081`) integriert.
+> - **Steuerung:** Der Headless-Node `fake_linear_axis_node.py (`fake_linear_axis`) empfängt Schieberegler-Werte über das Topic `/ui/linear_axis_position` (oder über interaktive RViz-Marker) und transformiert `linear_axis_link` dynamisch per TF. Das Schieberegler-UI ist direkt in das Robot Control Web Interface (`http://localhost:8081`) integriert.
 > - **MoveIt-Architektur:** Die Achse wird rein über dynamisches TF (`world` -> `linear_axis_link`) verschoben und nicht als URDF-Joint in die Kinematik aufgenommen. Dadurch weiß MoveIt (dank TF) automatisch, wo der Roboter steht, ohne dass ein 7-DoF IK-Solver benötigt wird.
 > - **URDF Modifikation:** Um Fehler beim Parsen von dynamischen `attach_to`-Argumenten zu vermeiden, wurde `xarm_description/urdf/xarm_device_macro.xacro` angepasst. Die Bedingung für `create_attach_link` generiert nun einen Root-Link für *jeden* übergebenen String und nicht mehr exklusiv nur für `"world"`.
 
@@ -1015,11 +1015,11 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_linear_axis_tuner_node.py` (`rviz_linear_axis_tuner`) &nbsp;&nbsp; <sub><i>[`/src/rviz_linear_axis_tuner/rviz_linear_axis_tuner/rviz_linear_axis_tuner_node.py`](./src/rviz_linear_axis_tuner/rviz_linear_axis_tuner/rviz_linear_axis_tuner_node.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `fake_linear_axis_node.py (`fake_linear_axis`) &nbsp;&nbsp; <sub><i>[`/src/fake_linear_axis/fake_linear_axis/fake_linear_axis_node.py`](./src/fake_linear_axis/fake_linear_axis/fake_linear_axis_node.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner
+> ros2 run fake_linear_axis fake_linear_axis
 > ```
 >
 > **Zweck & Aufgabe:** Headless ROS 2 Node zur Transformation der virtuellen Linearachse. Abonniert `/ui/linear_axis_position` (`std_msgs/Float64`) und publiziert den dynamischen TF-Frame `linear_axis_link` relativ zu `world` entlang der horizontalen Achse. Bietet zudem einen interaktiven 3D-Marker (`visualization_msgs/InteractiveMarkerUpdate`) in RViz für direkte Manipulation per Mauszeiger.
@@ -1037,7 +1037,7 @@ stateDiagram-v2
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
 >> | **`/tf`** | `tf2_msgs/TFMessage` | *Sendet die dynamische Transformation `world` ➔ `linear_axis_link`.* |
->> | **`/rviz_linear_axis_tuner/update`** | `visualization_msgs/InteractiveMarkerUpdate` | *Publiziert interaktive 3D-Marker zur Steuerung in RViz.* |
+>> | **`/fake_linear_axis/update`** | `visualization_msgs/InteractiveMarkerUpdate` | *Publiziert interaktive 3D-Marker zur Steuerung in RViz.* |
 
 
 
@@ -1527,11 +1527,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_window_streamer_node.py` (`rviz_window_streamer`) &nbsp;&nbsp; <sub><i>[`/src/rviz_window_streamer/rviz_window_streamer/rviz_window_streamer_node.py`](./src/rviz_window_streamer/rviz_window_streamer/rviz_window_streamer_node.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_windows_streamer_node.py` (`rviz_windows_streamer`) &nbsp;&nbsp; <sub><i>[`/src/rviz_windows_streamer/rviz_windows_streamer/rviz_windows_streamer_node.py`](./src/rviz_windows_streamer/rviz_windows_streamer/rviz_windows_streamer_node.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run rviz_window_streamer rviz_window_streamer_node
+> ros2 run rviz_windows_streamer rviz_windows_streamer_node
 > ```
 > *(Wird automatisch über das Nexus Web Bringup gestartet)*
 >
@@ -2598,8 +2598,8 @@ dev_ws/
 │   │       └── grasp_action_bridge.py                                     # Interaktive RViz-Marker-Bridge zur Grasp Action
 │   ├── robot_motion_handler_movegroup/                                    # 🤖 Python: Zentraler MoveGroup kartesischer & Gelenkplaner
 │   ├── ros2_whisper/                                                      # 🎙️ Whisper AI Sprache-zu-Text Inferenzknoten
-│   ├── rviz_linear_axis_tuner/                                            # 🎚️ Python: Headless TF-Publisher & interaktiver Marker
-│   │   └── rviz_linear_axis_tuner/rviz_linear_axis_tuner_node.py
+│   ├── fake_linear_axis/                                            # 🎚️ Python: Headless TF-Publisher & interaktiver Marker
+│   │   └── fake_linear_axis/fake_linear_axis_node.py
 │   ├── rviz_marker_3d_scene_objects/                                      # 📍 Python: RViz2-Marker für Schutzzonen & Arbeitsbereichsgrenzen
 │   │   ├── launch/rviz_marker_3d_scene_objects.launch.py
 │   │   └── rviz_marker_3d_scene_objects/
@@ -2610,8 +2610,8 @@ dev_ws/
 │   │       ├── rviz_overlay.py                                            # Echtzeit kartesisches TCP-Koordinaten-Overlay
 │   │       └── servo_status_overlay.py                                    # MoveIt Servo-Status & Warn-HUD Overlay
 │   ├── rviz_tab_robot_control_panel/                                      # 🖥️ C++: Benutzerdefiniertes RViz2 Control Panel Plugin (rviz_common)
-│   ├── rviz_window_streamer/                                              # 📹 Python/FFmpeg: X11 RViz-Fenstererfassung zu MJPEG-Stream
-│   │   └── rviz_window_streamer/rviz_window_streamer_node.py
+│   ├── rviz_windows_streamer/                                              # 📹 Python/FFmpeg: X11 RViz-Fenstererfassung zu MJPEG-Stream
+│   │   └── rviz_windows_streamer/rviz_windows_streamer_node.py
 │   ├── tcp_laser_pointer/                                                 # 🔴 Python: Automatische Steuerung des TCP-Laserpointers
 │   │   └── tcp_laser_pointer/laser_pointer_node.py
 │   ├── teleop_pre_collision_checker/                                      # 🛡️ Python: Prädiktiver Kollisionswächter & Geschwindigkeitsskalierer

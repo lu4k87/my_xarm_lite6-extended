@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'rviz_linear_axis_tuner'
+package_name = 'fake_linear_axis'
 
 setup(
     name=package_name,
@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='mk',
     maintainer_email='lu4k87@live.de',
-    description='TODO: Package description',
+    description='Fake linear axis TF broadcaster and RViz marker visualizer',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -24,7 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'rviz_linear_axis_tuner = rviz_linear_axis_tuner.rviz_linear_axis_tuner_node:main'
+            'fake_linear_axis = fake_linear_axis.fake_linear_axis_node:main'
         ],
     },
 )
+
