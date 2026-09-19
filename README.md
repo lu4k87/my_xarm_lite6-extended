@@ -565,7 +565,7 @@ flowchart TD
 > ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=ip_cam
 > ```
 >
-> **Purpose & Task:** The central orchestrator for the entire 3D vision, object detection, and autonomous grasping pipeline. Depending on the `camera` argument, it dynamically launches either the ZED Mini hardware driver (`zed_wrapper`) alongside `pointcloud_optimizer.py` and `yolo_3d_bbox_for_zed_m.py`, or the network-based `yolo_3d_bbox_for_ip_cam.py`. It simultaneously starts the MoveIt collision generator (`yolo_moveit_collision.py`), the trajectory grasp server (`yolo_planned_grasp_executor.py`), and the UI bridge (`grasp_action_bridge.py`).
+> **Purpose & Task:** The central orchestrator for the entire 3D vision, object detection, and autonomous grasping pipeline. Depending on the `camera` argument, it dynamically launches either the ZED Mini hardware driver (`zed_wrapper`) alongside `pointcloud_optimizer.py` and `yolo_3d_bbox_for_zed_m.py`, or the network-based `yolo_3d_bbox_for_ip_cam.py`. It simultaneously starts the MoveIt collision generator (`yolo_moveit_collision.py`), the trajectory grasp server (`yolo_planned_grasp_executor.py`), and the UI bridge (`grasp_action_bridge.py`), and the RViz distance visualizer (`rviz_object_distance_visualizer.py`).
 >
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
@@ -1494,6 +1494,42 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/ui/rviz_overlay_warning`** | `rviz_2d_overlay_msgs/OverlayText` | *Publishes color-coded warning banner overlays in RViz.* |
+
+---
+
+<br>
+
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_object_distance_visualizer.py` (`rviz_object_distance_visualizer`) &nbsp;&nbsp; <sub><i>[`/src/rviz_object_distance_visualizer/scripts/rviz_object_distance_visualizer.py`](./src/rviz_object_distance_visualizer/scripts/rviz_object_distance_visualizer.py)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 run rviz_object_distance_visualizer rviz_object_distance_visualizer.py
+> ```
+> *(Automatically started via `robot_vision_cameras_bringup.launch.py`)*
+>
+> **Purpose & Task:** Computes the live distance from the robot Tool Center Point (`link_tcp`) to the nearest detected YOLO object (`/zed/bboxes_3d`). Dynamically renders a thin, semi-transparent dashed 3D green marker line in RViz connecting `link_tcp` to the object grasp center, while simultaneously displaying a formatted 2D HUD text overlay in the top-left corner of the RViz viewport with millimeter precision (X, Y, Z, D) and color-coded coordinates, with the detected object label displayed in purple.
+>
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Receives 3D bounding boxes and centroids of detected objects from YOLO.* |
+>
+>
+> ![TF2](https://img.shields.io/badge/TF2-yellow?style=flat-square)
+>
+>> | Frame / Transformation | Description |
+>> |---|---|
+>> | **`world` ➔ `link_tcp`** | *Resolves current TCP position at runtime for distance computation.* |
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/rviz/gripper_object_distance`** | `visualization_msgs/MarkerArray` | *Publishes the thin dashed green 3D marker line between TCP and nearest object.* |
+>> | **`/rviz/gripper_object_distance_overlay`** | `rviz_2d_overlay_msgs/OverlayText` | *Publishes the 2D HUD overlay displaying object name and aligned millimeter coordinates.* |
 
 ---
 
@@ -2564,6 +2600,11 @@ dev_ws/
 │   │   └── rviz_marker_3d_scene_objects/
 │   │       ├── rviz_marker_3d_scene_objects.py                            # Publishes table boundary & exclusion zone markers
 │   │       └── zed_stand_publisher.py                                     # Publishes physical camera stand collision mesh
+│   ├── rviz_object_distance_visualizer/                                   # 📏 Python: Dynamic gripper-to-object distance line & 2D HUD
+│   │   ├── CMakeLists.txt
+│   │   ├── package.xml
+│   │   └── scripts/
+│   │       └── rviz_object_distance_visualizer.py
 │   ├── rviz_overlay_servo_status/                                         # 🖥️ Python: RViz2 2D text overlay HUDs
 │   │   └── rviz_overlay_servo_status/
 │   │       ├── rviz_overlay.py                                            # Real-time Cartesian TCP coordinates overlay

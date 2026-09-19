@@ -188,6 +188,13 @@ def generate_launch_description():
         output='screen'
     )
 
+    rviz_object_distance_visualizer_node = Node(
+        package='rviz_object_distance_visualizer',
+        executable='rviz_object_distance_visualizer.py',
+        name='rviz_object_distance_visualizer',
+        output='screen'
+    )
+
     ld = LaunchDescription([
         # Arguments
         camera_arg,
@@ -208,6 +215,7 @@ def generate_launch_description():
         yolo_moveit_collision_node,
         yolo_planned_grasp_executor_node,
         grasp_action_bridge_node,
+        rviz_object_distance_visualizer_node,
     ])
 
     if zed_wrapper_launch is not None:

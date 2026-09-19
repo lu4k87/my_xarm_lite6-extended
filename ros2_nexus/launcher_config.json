@@ -54,8 +54,20 @@
       "yolo_model:=yolov8s.pt": false
     },
     "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py": {
+      "add_gripper:=true": false,
       "add_vacuum_gripper:=true": true,
       "attach_to:=linear_axis_link": true,
+      "report_type:=dev": true,
+      "report_type:=normal": false,
+      "report_type:=rich": false,
+      "robot_ip:=192.168.1.175": true
+    },
+    "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true add_gripper:=true robot_ip:=192.168.1.175 report_type:=dev report_type:=normal report_type:=rich": {
+      "add_gripper:=true": false,
+      "add_vacuum_gripper:=true": true,
+      "report_type:=dev": true,
+      "report_type:=normal": false,
+      "report_type:=rich": false,
       "robot_ip:=192.168.1.175": true
     },
     "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link": {
@@ -139,12 +151,12 @@
       "attach_to:=linear_axis_link": true
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
-      "add_gripper:=true": true,
-      "add_vacuum_gripper:=true": false,
+      "add_gripper:=true": false,
+      "add_vacuum_gripper:=true": true,
       "report_type:=dev": true,
       "report_type:=normal": false,
       "report_type:=rich": false,
-      "robot_ip:=192.168.1.175": false
+      "robot_ip:=192.168.1.175": true
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev": {
       "add_gripper:=true": false,
@@ -153,12 +165,12 @@
       "robot_ip:=192.168.1.175": true
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich": {
-      "add_gripper:=true": true,
-      "add_vacuum_gripper:=true": false,
+      "add_gripper:=true": false,
+      "add_vacuum_gripper:=true": true,
       "report_type:=dev": true,
       "report_type:=normal": false,
       "report_type:=rich": false,
-      "robot_ip:=192.168.1.175": false
+      "robot_ip:=192.168.1.175": true
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev": {
       "add_vacuum_gripper:=true": true,
@@ -237,11 +249,7 @@
       "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
       "ros2 run web_video_server web_video_server"
     ],
-    "extras_zed": [
-      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev",
-      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175",
-      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082"
-    ],
+    "extras_zed": [],
     "sec_0": [],
     "sec_1": [
       "rqt_graph"
@@ -598,6 +606,18 @@
     "extras_zed": {
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py": {
         "add_vacuum_gripper:=true": true,
+        "add_gripper:=true": false,
+        "report_type:=dev": true,
+        "report_type:=normal": false,
+        "report_type:=rich": false,
+        "robot_ip:=192.168.1.175": true
+      },
+      "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true add_gripper:=true robot_ip:=192.168.1.175 report_type:=dev report_type:=normal report_type:=rich": {
+        "add_vacuum_gripper:=true": true,
+        "add_gripper:=true": false,
+        "report_type:=dev": true,
+        "report_type:=normal": false,
+        "report_type:=rich": false,
         "robot_ip:=192.168.1.175": true
       },
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py add_vacuum_gripper:=true robot_ip:=192.168.1.175": {
@@ -612,7 +632,18 @@
       },
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
         "add_vacuum_gripper:=true": true,
+        "add_gripper:=true": false,
         "report_type:=dev": true,
+        "report_type:=normal": false,
+        "report_type:=rich": false,
+        "robot_ip:=192.168.1.175": true
+      },
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich": {
+        "add_vacuum_gripper:=true": true,
+        "add_gripper:=true": false,
+        "report_type:=dev": true,
+        "report_type:=normal": false,
+        "report_type:=rich": false,
         "robot_ip:=192.168.1.175": true
       },
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev": {
@@ -1014,6 +1045,15 @@
           "baseCmd": "ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_zed_m.py",
           "cmd": "ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_zed_m.py",
           "label": "YOLO 3D BBox Node (ZED M)",
+          "postCmd": "",
+          "type": "node"
+        },
+        {
+          "active": true,
+          "args": [],
+          "baseCmd": "ros2 run rviz_object_distance_visualizer rviz_object_distance_visualizer.py",
+          "cmd": "ros2 run rviz_object_distance_visualizer rviz_object_distance_visualizer.py",
+          "label": "Distance Line: Gripper -> Object",
           "postCmd": "",
           "type": "node"
         },
