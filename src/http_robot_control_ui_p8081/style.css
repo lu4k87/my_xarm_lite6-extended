@@ -516,16 +516,30 @@ button.status-pill.reload-btn i {
 
 .jogging-container {
   display: flex;
-  gap: 24px;
+  gap: 12px;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 8px;
+}
+
+.z-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-z {
+  height: 70px;
+  width: 52px;
+  font-size: 13px;
+  font-weight: 700;
+  border-left: 3px solid var(--rviz-z);
 }
 
 .joystick-wrapper {
   position: relative;
-  width: 170px;
-  height: 170px;
+  width: 176px;
+  height: 176px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -533,8 +547,8 @@ button.status-pill.reload-btn i {
 }
 
 #joystick-zone {
-  width: 126px;
-  height: 126px;
+  width: 136px;
+  height: 136px;
   border-radius: 50%;
   background: radial-gradient(circle at center, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.9) 100%);
   border: 2px solid rgba(255, 255, 255, 0.08);
@@ -547,8 +561,8 @@ button.status-pill.reload-btn i {
 }
 
 #joystick-stick {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -558,8 +572,8 @@ button.status-pill.reload-btn i {
   position: absolute;
   top: 50%;
   left: 50%;
-  margin-top: -26px;
-  margin-left: -26px;
+  margin-top: -28px;
+  margin-left: -28px;
   transition: transform 0.1s;
   cursor: grab;
 }
@@ -586,17 +600,79 @@ button.status-pill.reload-btn i {
 
 /* X-Achsen Labels vertikal anordnen (Pfeil über/unter Text) */
 .joy-label.top { 
-  bottom: calc(50% + 66px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
+  bottom: calc(50% + 71px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
   flex-direction: column; gap: 0px; 
 }
 .joy-label.bottom { 
-  top: calc(50% + 66px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
+  top: calc(50% + 71px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
   flex-direction: column; gap: 0px; 
 }
 
 /* Y-Achsen Labels horizontal belassen */
-.joy-label.left { right: calc(50% + 68px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
-.joy-label.right { left: calc(50% + 68px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
+.joy-label.left { right: calc(50% + 72px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
+.joy-label.right { left: calc(50% + 72px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
+
+.rot-and-frame-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 155px;
+}
+
+.rot-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.btn-rot {
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--txt);
+}
+
+.frame-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.frame-btn {
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.jog-divider {
+  width: 1px;
+  height: 154px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gripper-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gripper-controls .btn {
+  height: 46px;
+  width: 58px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 11px;
+}
+.gripper-controls .btn i {
+  font-size: 15px;
+}
 
 .joy-active {
   animation: joy-pulse 0.8s ease-in-out infinite;
@@ -700,12 +776,6 @@ button.status-pill.reload-btn i {
 .btn-rot:active {
   background: rgba(255, 255, 255, 0.15);
   transform: scale(0.96);
-}
-
-.frame-toggles {
-  display: flex;
-  gap: 12px;
-  margin-top: 16px;
 }
 
 .speed-control {
@@ -1349,26 +1419,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     padding: 10px 12px;
   }
   #panel-jogging .jogging-container {
-    gap: 8px;
-  }
-  #panel-jogging .btn-z {
-    height: 60px !important;
-    width: 48px !important;
-  }
-  #panel-jogging .rot-controls .btn-rot {
-    padding: 5px 8px;
-    font-size: 11px;
-  }
-  #panel-jogging .gripper-controls {
-    gap: 6px;
-  }
-  #panel-jogging .gripper-controls .btn {
-    height: 40px !important;
-    width: 54px !important;
-    font-size: 10px;
-  }
-  #panel-jogging .frame-toggles {
-    margin-top: 12px;
+    gap: 10px;
   }
   #panel-telemetry {
     padding: 8px 12px;
