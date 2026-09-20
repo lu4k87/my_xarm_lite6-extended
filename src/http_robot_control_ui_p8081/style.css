@@ -125,6 +125,51 @@ button.status-pill.reload-btn i {
   font-size: 13px;
 }
 
+button.status-pill.sound-btn {
+  background: var(--bg-panel);
+  border: 1px solid var(--brd);
+  color: var(--accent, #38bdf8);
+  cursor: pointer;
+  padding: 6px 13px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button.status-pill.sound-btn:hover {
+  border-color: rgba(56, 189, 248, 0.6);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+button.status-pill.sound-btn i {
+  font-size: 13px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+button.status-pill.sound-btn:hover i {
+  transform: scale(1.15);
+}
+
+button.status-pill.sound-btn.sound-muted {
+  color: var(--mut);
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+button.status-pill.sound-btn.sound-muted i {
+  color: #f87171;
+}
+
+button.status-pill.sound-btn.sound-muted:hover {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+}
+
 .header-title {
   display: flex;
   align-items: center;

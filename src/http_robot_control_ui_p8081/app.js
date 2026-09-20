@@ -859,9 +859,42 @@ function stopJointJog() {
   document.removeEventListener('pointerup', stopJointJog);
 }
 
-// ── Web Audio UI Click Sound Effect ──────────────────────────────────────
+// ── Web Audio UI Click Sound Effect & Sound Toggle ───────────────────────
+let soundEnabled = localStorage.getItem('robot_control_sound_enabled') !== 'false';
+
+function updateSoundUI() {
+  const btn = document.getElementById('btn-sound-toggle');
+  const icon = document.getElementById('sound-toggle-icon');
+  if (!btn || !icon) return;
+
+  if (soundEnabled) {
+    btn.classList.add('sound-active');
+    btn.classList.remove('sound-muted');
+    btn.title = "Sound-Effekte: Aktiviert (Klicken zum Stummschalten)";
+    icon.className = "fa-solid fa-volume-high";
+  } else {
+    btn.classList.remove('sound-active');
+    btn.classList.add('sound-muted');
+    btn.title = "Sound-Effekte: Stummgeschaltet (Klicken zum Aktivieren)";
+    icon.className = "fa-solid fa-volume-xmark";
+  }
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('robot_control_sound_enabled', soundEnabled ? 'true' : 'false');
+  updateSoundUI();
+  if (soundEnabled) {
+    playUiClickSound();
+  }
+  logMsg('AUDIO', soundEnabled ? '🔊 Sound-Effekte aktiviert' : '🔇 Sound-Effekte stummgeschaltet', 'info');
+}
+window.toggleSound = toggleSound;
+window.updateSoundUI = updateSoundUI;
+
 let audioCtx = null;
 function playUiClickSound() {
+  if (!soundEnabled) return;
   try {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -891,6 +924,13 @@ function playUiClickSound() {
   }
 }
 window.playUiClickSound = playUiClickSound;
+
+// Initialize sound button UI on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', updateSoundUI);
+} else {
+  updateSoundUI();
+}
 
 // ── Analog Joystick Implementation ──────────────────────────────────────
 const zone = document.getElementById('joystick-zone');
@@ -1174,8 +1214,10 @@ function setInitialPose() {
 
 function showScene() {
   setButtonsLocked(true);
-  scanPosSound.currentTime = 0;
-  scanPosSound.play().catch(err => console.warn('Audio play failed:', err));
+  if (soundEnabled) {
+    scanPosSound.currentTime = 0;
+    scanPosSound.play().catch(err => console.warn('Audio play failed:', err));
+  }
 
   const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
   const x = 300.0;
@@ -1318,6 +1360,9 @@ document.addEventListener('click', function(e) {
   const btn = e.target.closest('button');
   if (!btn) return;
   
+  // Skip debounce for sound toggle button
+  if (btn.id === 'btn-sound-toggle') return;
+
   // Check if button is disabled by motion lock or already clicked
   if (btn.disabled || btn.dataset.clicked || btn.style.pointerEvents === 'none') {
     e.stopPropagation();
@@ -1326,8 +1371,10 @@ document.addEventListener('click', function(e) {
   }
   
   // Play UI click sound
-  uiClickSound.currentTime = 0;
-  uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
+  if (soundEnabled) {
+    uiClickSound.currentTime = 0;
+    uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
+  }
 
   // Allow continuous jogging buttons to be pressed rapidly or held without getting visually disabled by the debounce
   if (btn.classList.contains('btn-z') || btn.classList.contains('btn-rot')) return;
@@ -2087,6 +2134,10 @@ document.addEventListener('keydown', (e) => {
     if (typeof window.syncTCPGizmoToRobot === 'function') {
       window.syncTCPGizmoToRobot();
       logMsg('GIZMO', '⌨️ Gizmo auf aktuellen Roboter-TCP zurückgesetzt [Taste: Esc]', 'info');
+    }
+  } else if (key === 'm') {
+    if (typeof window.toggleSound === 'function') {
+      window.toggleSound();
     }
   }
 });

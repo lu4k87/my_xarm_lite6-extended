@@ -28,6 +28,9 @@
           <button class="status-pill reload-btn" onclick="location.reload()" title="Web Control neu laden">
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
+          <button class="status-pill sound-btn sound-active" id="btn-sound-toggle" onclick="toggleSound()" title="Sound-Effekte: Aktiviert (Klicken zum Stummschalten)">
+            <i class="fa-solid fa-volume-high" id="sound-toggle-icon"></i>
+          </button>
           <div class="status-pill" id="pill-port-9090" title="Port 9090: ROS 2 WebSocket Schnittstelle (rosbridge)">
             <div id="connection-dot" class="dot glow-red"></div>
             <span id="connection-status">ROS 2 Bridge: 9090</span>
