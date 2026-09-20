@@ -585,19 +585,19 @@ function setGripper(state) {
   
   if(!btnOpen || !btnClose || !btnOff) return;
 
-  btnOpen.classList.remove('grip-flash-open');
-  btnClose.classList.remove('grip-flash-close');
-  btnOff.classList.remove('grip-off-active');
+  btnOpen.classList.remove('grip-flash-open', 'gripper-active');
+  btnClose.classList.remove('grip-flash-close', 'gripper-active');
+  btnOff.classList.remove('grip-off-active', 'gripper-active');
 
   void btnOpen.offsetWidth;
   void btnClose.offsetWidth;
 
   if (state === 'open') {
-    btnOpen.classList.add('grip-flash-open');
+    btnOpen.classList.add('grip-flash-open', 'gripper-active');
   } else if (state === 'close') {
-    btnClose.classList.add('grip-flash-close');
+    btnClose.classList.add('grip-flash-close', 'gripper-active');
   } else if (state === 'off') {
-    btnOff.classList.add('grip-off-active');
+    btnOff.classList.add('grip-off-active', 'gripper-active');
   }
 }
 
@@ -1219,7 +1219,7 @@ function initDragAndDrop() {
   const colRight = document.getElementById('col-right');
   if (!colLeft || !colMiddle || !colRight || typeof Sortable === 'undefined') return;
 
-  const layoutKey = 'robot_control_layout_v2';
+  const layoutKey = 'robot_control_layout_v3';
 
   // 1. Load saved layout if available
   try {
@@ -1458,5 +1458,32 @@ function initPortMonitoring() {
   checkAll();
   setInterval(checkAll, 3000);
 }
+
+// ── 3D Viewport Tab Switcher (Digital Twin WebGL vs RViz Stream) ───────────
+function switch3DTab(tab) {
+  const btnTwin = document.getElementById('tab-twin');
+  const btnRviz = document.getElementById('tab-rviz');
+  const twinViewport = document.getElementById('digital-twin-viewport');
+  const rvizContainer = document.getElementById('rviz-container');
+  const twinToolbar = document.querySelector('.twin-toolbar');
+
+  if (tab === 'twin') {
+    if (btnTwin) btnTwin.classList.add('active');
+    if (btnRviz) btnRviz.classList.remove('active');
+    if (twinViewport) twinViewport.style.display = 'block';
+    if (rvizContainer) rvizContainer.style.display = 'none';
+    if (twinToolbar) twinToolbar.style.display = 'flex';
+    if (window.resizeDigitalTwin) {
+      window.resizeDigitalTwin();
+    }
+  } else {
+    if (btnRviz) btnRviz.classList.add('active');
+    if (btnTwin) btnTwin.classList.remove('active');
+    if (twinViewport) twinViewport.style.display = 'none';
+    if (rvizContainer) rvizContainer.style.display = 'flex';
+    if (twinToolbar) twinToolbar.style.display = 'none';
+  }
+}
+window.switch3DTab = switch3DTab;
 
 

@@ -262,6 +262,10 @@
     }
   };
 
+  window.resizeDigitalTwin = function () {
+    handleResize();
+  };
+
   window.toggleDigitalTwinSection = function () {
     const content = document.getElementById('digital-twin-content');
     const icon = document.getElementById('btn-twin-collapse-icon');

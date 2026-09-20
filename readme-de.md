@@ -1504,7 +1504,7 @@ flowchart TD
 > ```
 > *(Wird auch automatisch über `robot_vision_cameras_bringup.launch.py` gestartet)*
 >
-> **Zweck & Aufgabe:** Zeigt ein minimalistisches 2D-HUD-Status-Overlay oben rechts im RViz-Viewport an, das live den Status von Singularity- und Kollisions-Warnungen (`On` / `Off`) überwacht, farbcodiert mit bündiger Monospace-Typografie im einheitlichen Stil des Distanz-Overlays oben links.
+> **Zweck & Aufgabe:** Zeigt ein minimalistisches 2D-HUD-Status-Overlay oben rechts im RViz-Viewport an, das live den Status von Singularity- und Kollisions-Warnungen (`On` / `Off`) überwacht, sowie ein markantes zentrales Pop-up-Warnbanner (`/ui/rviz_overlay_warning_banner`) für sofortige visuelle Warnmeldungen bei Singularitäten oder Kollisionen.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1519,7 +1519,8 @@ flowchart TD
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/ui/rviz_overlay_warning`** | `rviz_2d_overlay_msgs/OverlayText` | *Publiziert formatiertes 2D-HUD-Status-Overlay (Singularity & Collision On/Off) für RViz2.* |
+>> | **`/ui/rviz_overlay_warning`** | `rviz_2d_overlay_msgs/OverlayText` | *Publiziert formatiertes 2D-HUD-Status-Overlay (Singularity & Collision On/Off) oben rechts in RViz2.* |
+>> | **`/ui/rviz_overlay_warning_banner`** | `rviz_2d_overlay_msgs/OverlayText` | *Publiziert großes zentrales Pop-up-Warnbanner in RViz2 mit 2,0s Auto-Hide bei Kollisions- oder Singularitäts-Events.* |
 
 ---
 
@@ -1658,16 +1659,16 @@ flowchart TD
 > **Zweck & Aufgabe:** Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorphism-Designsprache. Fungiert als multimodales Dashboard und spiegelt das RViz Control Panel für die Remote-Bedienung. Läuft auf **Port 8081**.
 > **Native Desktop Integration:** Sowohl die *ROS 2 Nexus Web App* als auch die *Robot Control Web UI* starten nun in dedizierten, isolierten Chrome `--app` Profilen. Sie öffnen sich automatisch maximiert als eigenständige Anwendungen, völlig losgelöst von Standard-Browserfenstern, und verfügen über eigene, unverwechselbare Taskleisten-Icons für ein perfektes, natives Desktop-Erlebnis.
 > - ✨ **Core Features:** 
->   - **Standardisierte Statusleiste & Schnell-Reload:** Vereinheitlichte Navbar mit Live-Refresh-Button (`fa-arrows-rotate`) ganz links, gefolgt von standardisierten Port-Badges im Format `Name: PORT` (`ROS 2 Bridge: 9090`, `Robot Control UI: 8081`, `Nexus App: 5000`, `Dashboard: 8080`, `Video Streams: 8082`, `VR Teleop: 9091`), USB-Gamepad-Verbindungserkennung, Live-ROS-Umgebungsparametern (`ROS_DOMAIN_ID: 66`, `RMW: rmw_cyclonedds_cpp`, `Localhost Only: On/Off`) und Echtzeit-Hardware-Modus-Badges.
+>   - **Standardisierte Statusleiste & Schnell-Reload:** Vereinheitlichte Navbar mit Live-Refresh-Button (`fa-arrows-rotate`) ganz links, gefolgt von standardisierten Port-Badges im Format `Name: PORT` (`ROS 2 Bridge: 9090`, `Robot Control UI: 8081`, `Nexus Webapp: 5000`, `Dashboard: 8080`, `Video Streams: 8082`, `VR Teleop: 9091`), USB-Gamepad-Verbindungserkennung, Live-ROS-Umgebungsparametern (`ROS_DOMAIN_ID: 66`, `RMW: rmw_cyclonedds_cpp`, `Localhost Only: On/Off`) und Echtzeit-Hardware-Modus-Badges.
 >   - **Harmonisierte Geschwindigkeitsregelung (Speed Level):** Der Speed-Slider wurde optisch vollständig an die Gelenk-Regler angeglichen (schlanker 6px Glassmorphism-Track, halbtransparenter Hintergrund, cyanfarbener Akzent-Verlauf, Neon-Glow-Thumb mit aktivem Greif-/Verschiebe-Feedback, Tacho-Icon sowie dynamische Stufenanzeige z. B. `3/5 (60%)`).
 >   - **Strukturiertes Joint-Telemetrie-Grid:** Die Gelenke J1–J6 sind in einem ergonomischen 2-Spalten-Grid mit klaren Headern (`#38bdf8`) und fetten Monospace-Werten angeordnet, ergänzt durch eine optisch separierte Karte für die Verfahrwege der virtuellen Linearachse.
 >   - **Erweiterte Telemetrie:** Live-Status-Badges für Netzwerkports (UI, WS, Nexus), Gamepad-Verbindung (USB) und automatische Hardware-Modus-Erkennung (Fake Arm vs. Real Arm IP, stabil dargestellt über globale `rosapi` Endpunkte). Beinhaltet eine dedizierte **EEF Telemetry Live** Datenanzeige zur präzisen kartesischen Verfolgung des Endeffektors.
 >   - **Kamera-Livestreams:** Unterstützung für bis zu 3 gleichzeitige Video-Feeds (z. B. Standard-Streams über IP und ZED M Livestream via `web_video_server`), die für eine vollständige visuelle Überwachung direkt in das Dashboard eingebettet sind.
->   - **MoveIt Servo Monitoring:** Dynamische UI-Indikatoren (Grün/Orange/Rot) mit Puls-Animationen, die MoveIt-Kollisions- und Wait-States in Echtzeit spiegeln.
->   - **Virtuelle Teleoperation:** Integrierter 2D-Analogstick für kartesisches Jogging sowie 6-DoF absolute Gelenkwinkel-Slider und Geschwindigkeitsstufen. Die Geschwindigkeitsskalierung für kartesisches Jogging wurde mit dem physischen Gamepad harmonisiert. Die Geschwindigkeitsstufen nutzen nun ein optimiertes Limit von `0.1` bis `0.5` m/s, was für flüssige Bewegungen ohne Ruckeln selbst bei 100% Geschwindigkeit sorgt.
->   - **Interaktives UI & Layout-Optimierung:** Die Benutzeroberfläche ist logisch strukturiert (Cartesian Jogging oben, Telemetrie darunter) und passt sich lückenlos an den Inhalt an. Sie beinhaltet dynamische, interaktive Elemente wie den Whisper AI "Start Listening"-Button, der nun vollständig ins Backend integriert ist und beim Auslösen über einen Action Client eine 5-sekündige Echtzeit-Sprachaufnahme startet. Das finale erkannte Transkript wird zur direkten Ausführung an das ROS-Backend übermittelt, was externe Whisper-Testskripte vollständig überflüssig macht.
+>   - **MoveIt Servo Monitoring & Greifer-Glow:** Dynamische UI-Indikatoren (Grün/Orange/Rot) mit Puls-Animationen, die MoveIt-Kollisions- und Wait-States in Echtzeit spiegeln, sowie persistentes Leucht-Feedback für die Greifer-Zustände (`Open`, `Close`, `Off`).
+>   - **Virtuelle Teleoperation & Ergonomischer 1080p-Fit:** Integrierter 2D-Analogstick für kartesisches Jogging sowie 6-DoF absolute Gelenkwinkel-Slider und Geschwindigkeitsstufen (`0.1` bis `0.5` m/s). Das gesamte Interface ist ergonomisch optimiert, sodass alle Steuerelemente auf Standard-1080p-Monitoren ohne jegliches vertikales Scrollen Platz finden.
+>   - **Interaktives UI & Layout-Optimierung:** Die Benutzeroberfläche behält 100% aller funktionellen Panels (MoveTo, YOLO 3D, Cartesian Jogging, Telemetrie, Whisper AI, Konsole) lückenlos bei. Beinhaltet dynamische Elemente wie den Whisper AI "Start Listening"-Button mit Echtzeit-Sprachaufnahme sowie farbcodierte RViz-Achsenmarkierungen (X Rot, Y Grün, Z Blau) an den Koordinatenfeldern.
 >   - **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
->   - **WebGL 3D Digital Twin (Live-Viewport ohne RViz2):** Direkt in die UI integrierter interaktiver 3D-WebGL-Viewport (Three.js & URDFLoader) mit photorealistischem xArm Lite 6 Modell und Vacuum Gripper. Spiegelt die Gelenkwinkel aus `/joint_states` sowie den virtuellen Linearachsen-Shift (`/linear_axis_shift`) in Echtzeit, inklusive intuitiver Orbit-Kamerasteuerung (Drehen, Zoomen, Panning), Reset-Button, Draufsicht (Top-Down) und einblendbarem Cyber-Bodenraster. Vollständig offline-fähig gebündelt ohne externe CDN-Abhängigkeiten.
+>   - **3D-Centerpiece mit Tab-Umschalter (WebGL Digital Twin & RViz-Stream):** Zentral integrierter 3D-Hauptbereich mit schnellem Umschalt-Tab zwischen dem offline-fähigen 3D WebGL Digital Twin (Three.js & URDFLoader mit Live-Spiegelung von `/joint_states` und `/linear_axis_shift`, Orbit-Kamera, Reset, Draufsicht und Cyber-Grid) und dem Live-Stream aus RViz2 (`/rviz_video/image_raw` auf Port 8082) ohne vertikalen Platzverlust.
 >   - **Farbkodiertes Konsolen-Log:** Ein live scrollbares Konsolen-Log mit detailliertem Feedback für alle Bewegungsbefehle — inklusive Koordinatenanzeige (`X`, `Y`, `Z`) bei MoveTo-Befehlen und expliziten Erfolgs- (✓) / Fehler- (❌) Statusanzeigen mit Fehlercodes.
 >
 >

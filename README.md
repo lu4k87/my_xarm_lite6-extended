@@ -1476,7 +1476,7 @@ flowchart TD
 > ```
 > *(Also automatically started via `robot_vision_cameras_bringup.launch.py`)*
 >
-> **Purpose & Task:** Displays a clean, elegant 2D HUD status overlay in the top-right corner of the RViz viewport monitoring live Singularity and Collision warnings (`On` / `Off`), color-coded with millimeter-aligned monospace typography matching the top-left distance overlay.
+> **Purpose & Task:** Displays a clean, elegant 2D HUD status overlay in the top-right corner of the RViz viewport monitoring live Singularity and Collision warnings (`On` / `Off`), as well as a prominent central warning pop-up banner (`/ui/rviz_overlay_warning_banner`) for immediate visual alerts during singularities or collisions.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1491,7 +1491,8 @@ flowchart TD
 >
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
->> | **`/ui/rviz_overlay_warning`** | `rviz_2d_overlay_msgs/OverlayText` | *Publishes formatted 2D HUD warnings status overlay (Singularity & Collision On/Off) for RViz2.* |
+>> | **`/ui/rviz_overlay_warning`** | `rviz_2d_overlay_msgs/OverlayText` | *Publishes formatted 2D HUD warnings status overlay (Singularity & Collision On/Off) in top-right corner of RViz2.* |
+>> | **`/ui/rviz_overlay_warning_banner`** | `rviz_2d_overlay_msgs/OverlayText` | *Publishes large, centered warning banner popup in RViz2 with 2.0s auto-hide during collision/singularity events.* |
 
 ---
 
@@ -1628,16 +1629,16 @@ flowchart TD
 > **Purpose & Task:** A native-feeling, standalone Chrome Web App designed with a modern Glassmorphism aesthetic. It acts as a comprehensive multimodal dashboard directly replicating the RViz control panel features for remote operation. Operates on **Port 8081**.
 > **Native Desktop Integration:** Both the *ROS 2 Nexus Web App* and the *Robot Control Web UI* now launch in dedicated, isolated Chrome `--app` profiles. They start perfectly maximized as standalone applications, completely detached from standard browser windows, and feature their own distinct taskbar icons for a seamless, native OS experience.
 > - ✨ **Core Features:** 
->   - **Standardized Status Bar & Quick Reload:** Unified navbar with a live refresh button (`fa-arrows-rotate`) on the far left, followed by standardized port badges in `Name: PORT` format (`ROS 2 Bridge: 9090`, `Robot Control UI: 8081`, `Nexus App: 5000`, `Dashboard: 8080`, `Video Streams: 8082`, `VR Teleop: 9091`), USB gamepad connection detection, live ROS environment parameters (`ROS_DOMAIN_ID: 66`, `RMW: rmw_cyclonedds_cpp`, `Localhost Only: On/Off`), and real-time hardware mode pills.
+>   - **Standardized Status Bar & Quick Reload:** Unified navbar with a live refresh button (`fa-arrows-rotate`) on the far left, followed by standardized port badges in `Name: PORT` format (`ROS 2 Bridge: 9090`, `Robot Control UI: 8081`, `Nexus Webapp: 5000`, `Dashboard: 8080`, `Video Streams: 8082`, `VR Teleop: 9091`), USB gamepad connection detection, live ROS environment parameters (`ROS_DOMAIN_ID: 66`, `RMW: rmw_cyclonedds_cpp`, `Localhost Only: On/Off`), and real-time hardware mode pills.
 >   - **Harmonized Speed Level Controls:** The Speed Level slider has been visually harmonized with the joint slider controls (6px slim track, translucent backdrop, cyan accent gradient fill, neon glow thumb with active grabbing animation, gauge icon, and dynamic speed level readout e.g. `3/5 (60%)`).
 >   - **Structured Joint Telemetry Grid:** Joints J1–J6 are arranged in an ergonomic 2-column grid with dedicated header labels (`#38bdf8`) and bold monospace angles, paired with a visually separated card for Linear Axis shift commands.
 >   - **Advanced Telemetry:** Live system status pills for network ports (UI, WS, Nexus), active Gamepad connection (USB), and automatic Hardware Mode detection (Fake Arm vs. Real Arm IP, reliably sourced via global `rosapi` endpoints). Features dedicated **EEF Telemetry Live** data display for precise end-effector Cartesian tracking.
 >   - **Camera Livestreams:** Support for up to 3 concurrent video feeds (e.g., standard streams via IP and ZED M live stream via `web_video_server`) directly embedded in the dashboard for complete visual monitoring.
->   - **MoveIt Servo Monitoring:** Dynamic UI indicators (Green/Orange/Red) with pulsing animations that mirror MoveIt collision/wait states in real-time.
->   - **Virtual Teleoperation:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments. Movement speed and Cartesian jogging have been perfectly synchronized with the physical Gamepad controllers, utilizing a `0.1` to `0.5` m/s range and dynamic trajectory recalculations to ensure 100% stutter-free and fast robotic movement at any speed.
->   - **Interactive UI & Layout Optimization:** The layout is intelligently structured (Cartesian Jogging top, Telemetry below) with zero wasted whitespace. Features dynamic, pulsing UI elements like the "Start Listening" Whisper AI button which now fully integrates with the backend, triggering a 5-second real-time speech recording via an Action Client upon activation. The final recognized transcription is published back to the ROS backend to be processed by the voice listener, replacing the need for standalone Whisper debug scripts.
+>   - **MoveIt Servo Monitoring & Gripper Glow:** Dynamic UI indicators (Green/Orange/Red) with pulsing animations that mirror MoveIt collision/wait states in real-time, plus persistent glowing active state highlights for the gripper controls (`Open`, `Close`, `Off`).
+>   - **Virtual Teleoperation & Ergonomic 1080p Fit:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments. Movement speed and Cartesian jogging have been perfectly synchronized with physical Gamepad controllers (`0.1` to `0.5` m/s). The entire UI layout is ergonomically optimized to fit standard 1080p screens with zero vertical scrolling required.
+>   - **Interactive UI & Layout Optimization:** The layout is intelligently structured with all functional panels (MoveTo, YOLO 3D, Cartesian Jogging, Telemetry, Whisper AI, and Console) preserved. Features dynamic elements like the "Start Listening" Whisper AI button with real-time speech recording and color-coded RViz axis indicators (X Red, Y Green, Z Blue) on input fields.
 >   - **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
->   - **WebGL 3D Digital Twin (Live Viewport without RViz2):** Interactive 3D WebGL viewport (powered by Three.js & URDFLoader) directly embedded into the UI featuring a realistic xArm Lite 6 model and Vacuum Gripper. Mirrors joint states from `/joint_states` and virtual linear axis shifts (`/linear_axis_shift`) in real-time with intuitive orbit controls (rotate, zoom, pan), view reset, top-down view, and toggleable cyber grid floor. 100% offline-capable with local bundled assets.
+>   - **3D Centerpiece Tab Switcher (WebGL Digital Twin & RViz Stream):** An integrated 3D centerpiece featuring quick tab switching between the offline WebGL 3D Digital Twin (powered by Three.js & URDFLoader with live `/joint_states` and `/linear_axis_shift` mirroring, orbit controls, reset, top-down view, and cyber grid floor) and the live RViz2 stream (`/rviz_video/image_raw` on Port 8082) without wasting vertical screen space.
 >   - **Color-Coded Console Log:** A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
 >
 >

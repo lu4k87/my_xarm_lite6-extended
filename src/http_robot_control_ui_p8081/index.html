@@ -36,9 +36,9 @@
             <div id="dot-port-8081" class="dot glow-green"></div>
             <span>Robot Control UI: 8081</span>
           </div>
-          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus App & Web Backend (Flask API)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':5000', '_blank')">
+          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus Webapp & Web Backend (Flask API)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':5000', '_blank')">
             <div id="dot-port-5000" class="dot glow-red"></div>
-            <span>Nexus App: 5000</span>
+            <span>Nexus Webapp: 5000</span>
           </div>
           <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node-Topologie (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8080/dashboard_index.html', '_blank')">
             <div id="dot-port-8080" class="dot glow-red"></div>
@@ -141,12 +141,12 @@
         <section id="panel-moveto" class="glass-panel">
           <h2><i class="fa-solid fa-location-crosshairs"></i> Absolute Pose (MoveTo)</h2>
           <div class="input-grid">
-            <div class="input-group"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
-            <div class="input-group"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span> [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
-            <div class="input-group"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span> [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
-            <div class="input-group"><label>Roll [rad] (<span style="color: var(--rviz-x); font-weight: 700;">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-            <div class="input-group"><label>Pitch [rad] (<span style="color: var(--rviz-y); font-weight: 700;">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-            <div class="input-group"><label>Yaw [rad] (<span style="color: var(--rviz-z); font-weight: 700;">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
+            <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
+            <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span> [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
+            <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span> [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
+            <div class="input-group x"><label>Roll [rad] (<span style="color: var(--rviz-x); font-weight: 700;">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
+            <div class="input-group y"><label>Pitch [rad] (<span style="color: var(--rviz-y); font-weight: 700;">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
+            <div class="input-group z"><label>Yaw [rad] (<span style="color: var(--rviz-z); font-weight: 700;">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
           </div>
           
           <div class="motion-btn-grid row-1">
@@ -204,50 +204,49 @@
         </section>
 
 
-        <section id="panel-rviz" class="glass-panel" style="padding-bottom: 10px;">
-          <h2 style="cursor: grab;"><i class="fa-solid fa-cube"></i> RViz 3D View</h2>
-          <div style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
-            <div id="rviz-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
-              <i class="fa-solid fa-video-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
-              Stream Disconnected
-            </div>
-            <img id="rviz-stream" src="http://127.0.0.1:8082/stream?topic=/rviz_video/image_raw&type=mjpeg&width=800&height=450" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="RViz Stream" onload="this.style.display='block'; document.getElementById('rviz-stream-err').style.display='none';">
-          </div>
-        </section>
-
-        <!-- 3D Digital Twin Viewport (WebGL / Three.js) -->
-        <section id="panel-digital-twin" class="glass-panel" style="padding-bottom: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;" onclick="toggleDigitalTwinSection()">
-            <h2 style="margin-bottom: 0; cursor: pointer;"><i class="fa-solid fa-cubes-stacked" style="color: #38bdf8;"></i> 3D Digital Twin (WebGL)</h2>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="badge badge-node" id="twin-status-badge" style="font-size: 11px; padding: 2px 8px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
-              <button class="btn btn-icon-small" style="background: transparent; border: none; color: var(--mut); padding: 4px;" title="Auf-/Zuklappen">
-                <i class="fa-solid fa-chevron-up" id="btn-twin-collapse-icon"></i>
+        <!-- 3D Centerpiece (Tab Switcher for 3D Digital Twin WebGL & RViz 3D View) -->
+        <section id="panel-3d-centerpiece" class="glass-panel" style="padding-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div class="viewport-tabs">
+              <button class="v-tab-btn active" id="tab-twin" onclick="switch3DTab('twin')">
+                <i class="fa-solid fa-cubes-stacked" style="color: #38bdf8;"></i> 3D Digital Twin (WebGL)
+              </button>
+              <button class="v-tab-btn" id="tab-rviz" onclick="switch3DTab('rviz')">
+                <i class="fa-solid fa-cube" style="color: #a855f7;"></i> RViz 3D View (Port 8082)
               </button>
             </div>
-          </div>
-          
-          <div id="digital-twin-content" style="margin-top: 12px;">
-            <div style="position: relative; width: 100%; height: 280px; background: #0a0e17; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08);">
-              <!-- Three.js Canvas Container -->
-              <div id="digital-twin-viewport" style="width: 100%; height: 100%; cursor: grab;"></div>
-              
-              <!-- Floating Overlay Controls -->
-              <div class="twin-toolbar" style="position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 10; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 4px;">
-                <button class="btn btn-icon-small" onclick="resetDigitalTwinView()" title="Kameraansicht zurücksetzen (Isometrie)" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+            
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="badge badge-node" id="twin-status-badge" style="font-size: 11px; padding: 2px 8px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
+              <div class="twin-toolbar" style="display: flex; gap: 4px;">
+                <button class="btn btn-icon-small" onclick="resetDigitalTwinView()" title="Kameraansicht zurücksetzen (Isometrie)" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
                   <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
-                <button class="btn btn-icon-small" onclick="setDigitalTwinTopView()" title="Draufsicht (Top-Down)" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                <button class="btn btn-icon-small" onclick="setDigitalTwinTopView()" title="Draufsicht (Top-Down)" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-grid" onclick="toggleDigitalTwinGrid()" title="Bodenraster ein-/ausblenden" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-grid" onclick="toggleDigitalTwinGrid()" title="Bodenraster ein-/ausblenden" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--cyan);">
                   <i class="fa-solid fa-border-all"></i>
                 </button>
               </div>
-
-              <div style="position: absolute; bottom: 6px; left: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255, 255, 255, 0.4); pointer-events: none; z-index: 5;">
-                xArm Lite 6 · Live Synchronized
+            </div>
+          </div>
+          
+          <div class="viewport-container" style="position: relative; width: 100%; flex: 1; min-height: 240px; background: #0a0e17; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <!-- Three.js Canvas Container -->
+            <div id="digital-twin-viewport" style="width: 100%; height: 100%; cursor: grab;"></div>
+            
+            <!-- RViz Stream Container -->
+            <div id="rviz-container" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; align-items: center; justify-content: center;">
+              <div id="rviz-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
+                <i class="fa-solid fa-video-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
+                Stream Disconnected
               </div>
+              <img id="rviz-stream" src="http://127.0.0.1:8082/stream?topic=/rviz_video/image_raw&type=mjpeg&width=800&height=450" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="RViz Stream" onload="this.style.display='block'; document.getElementById('rviz-stream-err').style.display='none';">
+            </div>
+
+            <div style="position: absolute; bottom: 6px; left: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255, 255, 255, 0.4); pointer-events: none; z-index: 5;">
+              xArm Lite 6 · Live Synchronized
             </div>
           </div>
         </section>

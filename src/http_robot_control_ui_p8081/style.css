@@ -1246,4 +1246,169 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   transform: translateY(-1px);
 }
 
+/* Gripper Active Glow Highlight */
+.gripper-active {
+  box-shadow: 0 0 12px var(--accent) !important;
+  border: 2px solid #fff !important;
+}
+#btn-grip-open.gripper-active {
+  box-shadow: 0 0 12px var(--accent) !important;
+  border-color: #38bdf8 !important;
+}
+#btn-grip-close.gripper-active {
+  box-shadow: 0 0 12px var(--orange) !important;
+  border-color: #f59e0b !important;
+}
+#btn-grip-off.gripper-active {
+  box-shadow: 0 0 12px var(--red) !important;
+  border-color: #ef4444 !important;
+}
+
+/* 3D Viewport Tabs */
+.viewport-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 3px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.v-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--mut);
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.v-tab-btn:hover {
+  color: var(--txt);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.v-tab-btn.active {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  font-weight: 600;
+}
+
+/* Coordinate Input RViz Axis Styling */
+.input-group.x input { border-bottom: 2px solid var(--rviz-x); }
+.input-group.y input { border-bottom: 2px solid var(--rviz-y); }
+.input-group.z input { border-bottom: 2px solid var(--rviz-z); }
+
+/* Ergonomic 1080p Layout Fit (Eliminates vertical scrolling) */
+@media (min-height: 800px) {
+  body {
+    height: 100vh;
+    overflow-y: hidden;
+  }
+  .app-container {
+    height: 100vh;
+    padding: 10px 16px;
+    box-sizing: border-box;
+  }
+  header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+  .grid-layout {
+    height: calc(100vh - 85px);
+    flex: 1;
+    min-height: 0;
+  }
+  .col-left, .col-middle, .col-right {
+    height: 100%;
+    min-height: 0;
+  }
+  .col-left .glass-panel {
+    flex: 1;
+    min-height: 0;
+    height: auto !important;
+  }
+  #panel-moveto, #panel-yolo, #panel-jogging, #panel-telemetry, #panel-whisper {
+    flex: 0 0 auto;
+  }
+  #panel-jogging {
+    padding: 10px 12px;
+  }
+  #panel-jogging .jogging-container {
+    gap: 6px;
+  }
+  #panel-jogging .btn-z {
+    height: 60px !important;
+    width: 50px !important;
+  }
+  #panel-jogging .joystick-wrapper {
+    width: 140px;
+    height: 140px;
+  }
+  #panel-jogging #joystick-zone {
+    width: 124px;
+    height: 124px;
+  }
+  #panel-jogging .rot-controls .btn-rot {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  #panel-jogging .gripper-controls {
+    gap: 6px;
+  }
+  #panel-jogging .gripper-controls .btn {
+    height: 40px !important;
+    width: 56px !important;
+    font-size: 10px;
+  }
+  #panel-telemetry {
+    padding: 8px 12px;
+  }
+  #panel-telemetry .telemetry-grid {
+    margin-bottom: 8px;
+    gap: 6px;
+  }
+  #panel-telemetry .telem-box {
+    padding: 4px 6px;
+  }
+  #panel-telemetry .telem-box span[style*="font-size: 22px"] {
+    font-size: 18px !important;
+  }
+  #panel-telemetry .telem-box .t-value {
+    font-size: 18px !important;
+  }
+  #panel-telemetry .linear-axis-box {
+    margin-top: 6px;
+  }
+  #panel-whisper {
+    padding: 8px 12px;
+  }
+  #panel-whisper #btn-start-listening {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  #panel-3d-centerpiece, #panel-console {
+    flex: 1;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+  }
+  #panel-console {
+    padding: 8px 12px;
+  }
+  #panel-console #log-window {
+    flex: 1;
+    min-height: 60px;
+    max-height: none;
+  }
+}
+
 
