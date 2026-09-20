@@ -859,6 +859,39 @@ function stopJointJog() {
   document.removeEventListener('pointerup', stopJointJog);
 }
 
+// ── Web Audio UI Click Sound Effect ──────────────────────────────────────
+let audioCtx = null;
+function playUiClickSound() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    // Crisp tactile mechanical click
+    osc.type = 'sine';
+    const now = audioCtx.currentTime;
+    osc.frequency.setValueAtTime(1400, now);
+    osc.frequency.exponentialRampToValueAtTime(320, now + 0.035);
+    
+    gain.gain.setValueAtTime(0.28, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start(now);
+    osc.stop(now + 0.04);
+  } catch (err) {
+    // Graceful fallback
+  }
+}
+window.playUiClickSound = playUiClickSound;
+
 // ── Analog Joystick Implementation ──────────────────────────────────────
 const zone = document.getElementById('joystick-zone');
 const stick = document.getElementById('joystick-stick');
@@ -866,6 +899,43 @@ const joyLabelTop = document.querySelector('.joy-label.top');
 const joyLabelBottom = document.querySelector('.joy-label.bottom');
 const joyLabelLeft = document.querySelector('.joy-label.left');
 const joyLabelRight = document.querySelector('.joy-label.right');
+
+// ── Clickable Arrow Buttons Jogging (with sound & stick feedback) ────────
+function startArrowJog(lx, ly, e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  playUiClickSound();
+
+  // Deflect stick knob slightly towards pressed direction for tactile visual feedback
+  if (stick) {
+    const deflectX = -ly * 30;
+    const deflectY = -lx * 30;
+    stick.style.transform = `translate(${deflectX}px, ${deflectY}px)`;
+  }
+
+  // Highlight active direction
+  if (joyLabelTop) joyLabelTop.classList.toggle('joy-active', lx > 0.2);
+  if (joyLabelBottom) joyLabelBottom.classList.toggle('joy-active', lx < -0.2);
+  if (joyLabelLeft) joyLabelLeft.classList.toggle('joy-active', ly > 0.2);
+  if (joyLabelRight) joyLabelRight.classList.toggle('joy-active', ly < -0.2);
+
+  startJog(lx, ly, 0, 0, 0, 0);
+}
+window.startArrowJog = startArrowJog;
+
+function stopArrowJog() {
+  if (stick && !joyActive) {
+    stick.style.transform = 'translate(0px, 0px)';
+  }
+  if (joyLabelTop) joyLabelTop.classList.remove('joy-active');
+  if (joyLabelBottom) joyLabelBottom.classList.remove('joy-active');
+  if (joyLabelLeft) joyLabelLeft.classList.remove('joy-active');
+  if (joyLabelRight) joyLabelRight.classList.remove('joy-active');
+  stopJog();
+}
+window.stopArrowJog = stopArrowJog;
 
 // Subscribe to hardware gamepad
 const hardwareJoySub = new ROSLIB.Topic({
@@ -904,7 +974,7 @@ hardwareJoySub.subscribe(function(msg) {
 });
 
 let joyActive = false;
-const maxRadius = 40;
+const maxRadius = 45;
 let joyCenterX = 0, joyCenterY = 0;
 
 if(zone && stick) {
