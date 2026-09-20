@@ -109,6 +109,7 @@ threading.Thread(target=ensure_desktop_integration, daemon=True).start()
 def _build_ros_script(command: str, ws_path: str) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
+    localhost_only = os.environ.get("ROS_LOCALHOST_ONLY", "0")
     ros_setup = "source /opt/ros/humble/setup.bash"
     ws_setup  = f"source {ws_path}/install/setup.bash"
 
@@ -124,13 +125,13 @@ def _build_ros_script(command: str, ws_path: str) -> str:
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
-export ROS_LOCALHOST_ONLY=0
+export ROS_LOCALHOST_ONLY={localhost_only}
 source ~/.bashrc 2>/dev/null || true
 {ros_setup} 2>/dev/null || true
 {ws_setup} 2>/dev/null || true
 cd {ws_path} 2>/dev/null || true
 clear
-echo -e "\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\033[0m"
+echo -e "\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl}, Localhost: {localhost_only})\033[0m"
 echo -e "\033[36m[Terminal: $(tty) PID: $$]\033[0m"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m"
 echo -e "{safe_disp}"
@@ -151,6 +152,7 @@ trap 'send_log "stop" &' EXIT
 def _build_interactive_script(command: str) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
+    localhost_only = os.environ.get("ROS_LOCALHOST_ONLY", "0")
     ros_setup = "source /opt/ros/humble/setup.bash"
 
     # Identisch mit run_interactive_cmd: CMD-Teile anzeigen
@@ -164,11 +166,11 @@ def _build_interactive_script(command: str) -> str:
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
-export ROS_LOCALHOST_ONLY=0
+export ROS_LOCALHOST_ONLY={localhost_only}
 source ~/.bashrc 2>/dev/null || true
 {ros_setup} 2>/dev/null || true
 clear
-echo -e "\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl})\033[0m"
+echo -e "\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl}, Localhost: {localhost_only})\033[0m"
 echo -e "\033[36m[Terminal: $(tty)  PID: $$]\033[0m"
 echo -e "\033[1;33m═══════════════════════════════════════════════════════════\033[0m"
 echo -e "{safe_disp}"
@@ -244,7 +246,17 @@ def serve_icons(filename):
 @app.route("/api/ping")
 @app.route("/api/status")
 def ping():
-    return jsonify({"ok": True, "version": "Web Edition 1.0", "status": "running"})
+    domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
+    rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
+    localhost_only = os.environ.get("ROS_LOCALHOST_ONLY", "0")
+    return jsonify({
+        "ok": True,
+        "version": "Web Edition 1.0",
+        "status": "running",
+        "ros_domain_id": domain_id,
+        "rmw_implementation": rmw_impl,
+        "localhost_only": localhost_only
+    })
 
 
 @app.route("/api/config", methods=["GET", "POST"])

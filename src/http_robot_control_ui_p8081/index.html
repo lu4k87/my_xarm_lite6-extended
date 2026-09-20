@@ -73,13 +73,17 @@
         <div class="status-divider"></div>
 
         <div class="status-group">
-          <div class="status-pill">
+          <div class="status-pill" title="ROS 2 Domain ID">
             <div class="dot glow-blue"></div>
-            <span>ROS_DOMAIN_ID: <span style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">66</span></span>
+            <span>ROS_DOMAIN_ID: <span id="val-domain-id" style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">66</span></span>
           </div>
-          <div class="status-pill">
+          <div class="status-pill" title="ROS 2 DDS Middleware">
             <div class="dot glow-blue"></div>
-            <span>RMW: <span style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">rmw_cyclonedds_cpp</span></span>
+            <span>RMW: <span id="val-rmw-impl" style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">rmw_cyclonedds_cpp</span></span>
+          </div>
+          <div class="status-pill" id="pill-localhost-only" title="ROS_LOCALHOST_ONLY (0: Off / 1: On)">
+            <div class="dot glow-blue" id="dot-localhost-only"></div>
+            <span>Localhost Only: <span id="val-localhost-only" style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">Off</span></span>
           </div>
         </div>
 

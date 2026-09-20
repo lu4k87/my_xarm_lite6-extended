@@ -100,6 +100,39 @@ ros.on('connection', () => {
       });
     }
   }, 5000);
+
+  // Live ROS Environment Metadata (Topic: /dashboard/workspace_metadata)
+  try {
+    const metaTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/dashboard/workspace_metadata',
+      messageType: 'std_msgs/String'
+    });
+    metaTopic.subscribe((msg) => {
+      try {
+        const data = JSON.parse(msg.data);
+        if (data) {
+          if (data.ros_domain_id) {
+            const el = document.getElementById('val-domain-id');
+            if (el) el.innerText = data.ros_domain_id;
+          }
+          if (data.rmw_impl) {
+            const el = document.getElementById('val-rmw-impl');
+            if (el) el.innerText = data.rmw_impl;
+          }
+          if (data.localhost_only !== undefined) {
+            const el = document.getElementById('val-localhost-only');
+            const dot = document.getElementById('dot-localhost-only');
+            const isOn = data.localhost_only === '1' || data.localhost_only === 1;
+            if (el) el.innerText = isOn ? 'On' : 'Off';
+            if (dot) dot.className = isOn ? 'dot glow-orange' : 'dot glow-blue';
+          }
+        }
+      } catch (err) {}
+    });
+  } catch (e) {
+    console.warn("Could not subscribe to /dashboard/workspace_metadata", e);
+  }
 });
 
 ros.on('error', (error) => {
@@ -1266,10 +1299,30 @@ function initPortMonitoring() {
     if (!dot) return;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2000);
-    fetch('http://' + host + ':5000/api/ping', { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: controller.signal })
-      .then(() => {
+    fetch('http://' + host + ':5000/api/status', { method: 'GET', cache: 'no-store', signal: controller.signal })
+      .then((res) => {
         clearTimeout(timer);
         dot.className = 'dot glow-green';
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          if (data.localhost_only !== undefined) {
+            const el = document.getElementById('val-localhost-only');
+            const dotLh = document.getElementById('dot-localhost-only');
+            const isOn = data.localhost_only === '1' || data.localhost_only === 1;
+            if (el) el.innerText = isOn ? 'On' : 'Off';
+            if (dotLh) dotLh.className = isOn ? 'dot glow-orange' : 'dot glow-blue';
+          }
+          if (data.ros_domain_id) {
+            const el = document.getElementById('val-domain-id');
+            if (el) el.innerText = data.ros_domain_id;
+          }
+          if (data.rmw_implementation) {
+            const el = document.getElementById('val-rmw-impl');
+            if (el) el.innerText = data.rmw_implementation;
+          }
+        }
       })
       .catch(() => {
         clearTimeout(timer);
