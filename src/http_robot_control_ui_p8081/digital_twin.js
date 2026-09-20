@@ -387,6 +387,108 @@
     handleResize();
   };
 
+  // ── 3D Scene Objects for TF Control Tuner ────────────────────────────────
+  let tunerSceneObjects = {};
+
+  function initTunerSceneObjects() {
+    if (!scene || Object.keys(tunerSceneObjects).length > 0) return;
+
+    // 1. Blue Cube (30mm x 30mm x 30mm)
+    const blueGeo = new THREE.BoxGeometry(0.03, 0.03, 0.03);
+    const blueMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.2, roughness: 0.3 });
+    const blueMesh = new THREE.Mesh(blueGeo, blueMat);
+    blueMesh.castShadow = true;
+    blueMesh.receiveShadow = true;
+    scene.add(blueMesh);
+    tunerSceneObjects['Blue Cube'] = blueMesh;
+
+    // 2. Red Rectangle (60mm x 30mm x 30mm)
+    const redGeo = new THREE.BoxGeometry(0.06, 0.03, 0.03);
+    const redMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.2, roughness: 0.3 });
+    const redMesh = new THREE.Mesh(redGeo, redMat);
+    redMesh.castShadow = true;
+    redMesh.receiveShadow = true;
+    scene.add(redMesh);
+    tunerSceneObjects['Red Rectangle'] = redMesh;
+
+    // 3. Green Cylinder (diameter: 30mm, height: 30mm)
+    const greenGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.03, 24);
+    greenGeo.rotateX(Math.PI / 2); // ROS Z is UP
+    const greenMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, metalness: 0.2, roughness: 0.3 });
+    const greenMesh = new THREE.Mesh(greenGeo, greenMat);
+    greenMesh.castShadow = true;
+    greenMesh.receiveShadow = true;
+    scene.add(greenMesh);
+    tunerSceneObjects['Green Cylinder'] = greenMesh;
+
+    // 4. White Plane (210mm x 300mm x 2mm)
+    const planeGeo = new THREE.BoxGeometry(0.21, 0.30, 0.002);
+    const planeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.85, roughness: 0.6 });
+    const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+    planeMesh.receiveShadow = true;
+    scene.add(planeMesh);
+    tunerSceneObjects['White Plane'] = planeMesh;
+
+    // 5. Safety Zone (Ring on ground)
+    const safetyGeo = new THREE.RingGeometry(0.197, 0.203, 48);
+    const safetyMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide });
+    const safetyMesh = new THREE.Mesh(safetyGeo, safetyMat);
+    safetyMesh.position.z = 0.0005;
+    scene.add(safetyMesh);
+    tunerSceneObjects['Safety Zone'] = safetyMesh;
+
+    // 6. Zed M Camera
+    const camGroup = new THREE.Group();
+    const camBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.032, 0.124, 0.03),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7, roughness: 0.3 })
+    );
+    camBody.castShadow = true;
+    camGroup.add(camBody);
+    const camAxes = new THREE.AxesHelper(0.06);
+    camGroup.add(camAxes);
+    scene.add(camGroup);
+    tunerSceneObjects['Zed M Camera'] = camGroup;
+  }
+
+  window.updateTunerSceneObjects = function (elements) {
+    if (!elements || !scene) return;
+    if (Object.keys(tunerSceneObjects).length === 0) {
+      initTunerSceneObjects();
+    }
+
+    for (const [name, data] of Object.entries(elements)) {
+      const obj = tunerSceneObjects[name];
+      if (!obj) continue;
+
+      obj.position.set(Number(data.x), Number(data.y), Number(data.z));
+
+      // Euler (deg) to Quaternion
+      const rollRad = (Number(data.roll) * Math.PI) / 180.0;
+      const pitchRad = (Number(data.pitch) * Math.PI) / 180.0;
+      const yawRad = (Number(data.yaw) * Math.PI) / 180.0;
+
+      const cy = Math.cos(yawRad * 0.5);
+      const sy = Math.sin(yawRad * 0.5);
+      const cp = Math.cos(pitchRad * 0.5);
+      const sp = Math.sin(pitchRad * 0.5);
+      const cr = Math.cos(rollRad * 0.5);
+      const sr = Math.sin(rollRad * 0.5);
+
+      const qw = cr * cp * cy + sr * sp * sy;
+      const qx = sr * cp * cy - cr * sp * sy;
+      const qy = cr * sp * cy + sr * cp * sy;
+      const qz = cr * cp * sy - sr * sp * cy;
+
+      obj.quaternion.set(qx, qy, qz, qw);
+
+      if (name === 'Safety Zone' && data.radius) {
+        const scale = Number(data.radius) / 0.200;
+        obj.scale.set(scale, scale, 1);
+      }
+    }
+  };
+
   window.toggleDigitalTwinSection = function () {
     const content = document.getElementById('digital-twin-content');
     const icon = document.getElementById('btn-twin-collapse-icon');

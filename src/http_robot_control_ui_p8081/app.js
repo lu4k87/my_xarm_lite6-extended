@@ -1486,4 +1486,278 @@ function switch3DTab(tab) {
 }
 window.switch3DTab = switch3DTab;
 
+// ── TF Control Tuner (Built-in Web Transform Broadcaster & Tuner) ────────────
+const TF_TUNER_ELEMENTS = {
+  'Zed M Camera': {
+    frame_id: 'zed_camera_link',
+    x: 0.473, y: 0.0, z: 0.368,
+    roll: 0.0, pitch: 57.5, yaw: 180.0,
+    minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
+    default: { x: 0.473, y: 0.0, z: 0.368, roll: 0.0, pitch: 57.5, yaw: 180.0 }
+  },
+  'Blue Cube': {
+    frame_id: 'target_blue_cube',
+    x: 0.300, y: 0.085, z: 0.0,
+    roll: 0.0, pitch: 0.0, yaw: 0.0,
+    minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
+    default: { x: 0.300, y: 0.085, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0 }
+  },
+  'Red Rectangle': {
+    frame_id: 'target_red_rectangle',
+    x: 0.305, y: -0.080, z: 0.0,
+    roll: 0.0, pitch: 0.0, yaw: 45.0,
+    minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
+    default: { x: 0.305, y: -0.080, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 45.0 }
+  },
+  'Green Cylinder': {
+    frame_id: 'target_green_cylinder',
+    x: 0.350, y: 0.025, z: 0.0,
+    roll: 0.0, pitch: 0.0, yaw: 0.0,
+    minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
+    default: { x: 0.350, y: 0.025, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0 }
+  },
+  'White Plane': {
+    frame_id: 'target_white_plane',
+    x: 0.305, y: 0.0, z: -0.003,
+    roll: 0.0, pitch: 0.0, yaw: 0.0,
+    minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
+    default: { x: 0.305, y: 0.0, z: -0.003, roll: 0.0, pitch: 0.0, yaw: 0.0 }
+  },
+  'Safety Zone': {
+    frame_id: 'target_safety_zone',
+    x: 0.0, y: 0.0, z: 0.0,
+    roll: 0.0, pitch: 0.0, yaw: 0.0,
+    radius: 0.200,
+    minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
+    default: { x: 0.0, y: 0.0, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0, radius: 0.200 }
+  }
+};
+
+let currentTFTunerElement = 'Zed M Camera';
+let isTFBroadcastActive = true;
+let tfBroadcasterInterval = null;
+
+// ROS Topics for TF and Safety Zone
+const tfTunerPub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/tf',
+  messageType: 'tf2_msgs/TFMessage'
+});
+
+const safetyZoneParamsPub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/ui/safety_zone_params',
+  messageType: 'std_msgs/Float32MultiArray'
+});
+
+function eulerDegToQuat(rollDeg, pitchDeg, yawDeg) {
+  const rollRad = (rollDeg * Math.PI) / 180.0;
+  const pitchRad = (pitchDeg * Math.PI) / 180.0;
+  const yawRad = (yawDeg * Math.PI) / 180.0;
+
+  const cy = Math.cos(yawRad * 0.5);
+  const sy = Math.sin(yawRad * 0.5);
+  const cp = Math.cos(pitchRad * 0.5);
+  const sp = Math.sin(pitchRad * 0.5);
+  const cr = Math.cos(rollRad * 0.5);
+  const sr = Math.sin(rollRad * 0.5);
+
+  return {
+    w: cr * cp * cy + sr * sp * sy,
+    x: sr * cp * cy - cr * sp * sy,
+    y: cr * sp * cy + sr * cp * sy,
+    z: cr * cp * sy - sr * sp * cy
+  };
+}
+
+function broadcastAllTFTunerTransforms() {
+  if (!isTFBroadcastActive || !ros || !ros.isConnected) return;
+
+  const now = Date.now();
+  const sec = Math.floor(now / 1000);
+  const nanosec = (now % 1000) * 1000000;
+
+  const transforms = [];
+
+  for (const [name, data] of Object.entries(TF_TUNER_ELEMENTS)) {
+    const q = eulerDegToQuat(data.roll, data.pitch, data.yaw);
+    transforms.push({
+      header: {
+        stamp: { sec: sec, nanosec: nanosec },
+        frame_id: 'world'
+      },
+      child_frame_id: data.frame_id,
+      transform: {
+        translation: {
+          x: Number(data.x),
+          y: Number(data.y),
+          z: Number(data.z)
+        },
+        rotation: {
+          x: q.x,
+          y: q.y,
+          z: q.z,
+          w: q.w
+        }
+      }
+    });
+
+    if (name === 'Safety Zone') {
+      const arrMsg = new ROSLIB.Message({
+        data: [Number(data.x), Number(data.y), Number(data.radius || 0.200)]
+      });
+      safetyZoneParamsPub.publish(arrMsg);
+    }
+  }
+
+  const tfMsg = new ROSLIB.Message({
+    transforms: transforms
+  });
+  tfTunerPub.publish(tfMsg);
+
+  // Synchronize 3D Digital Twin Viewport meshes in real time
+  if (window.updateTunerSceneObjects) {
+    window.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
+  }
+}
+
+function updateTunerUI() {
+  const data = TF_TUNER_ELEMENTS[currentTFTunerElement];
+  if (!data) return;
+
+  const sliderX = document.getElementById('tuner-slider-x');
+  const numX = document.getElementById('tuner-num-x');
+  const sliderY = document.getElementById('tuner-slider-y');
+  const numY = document.getElementById('tuner-num-y');
+  const sliderZ = document.getElementById('tuner-slider-z');
+  const numZ = document.getElementById('tuner-num-z');
+
+  const sliderRoll = document.getElementById('tuner-slider-roll');
+  const numRoll = document.getElementById('tuner-num-roll');
+  const sliderPitch = document.getElementById('tuner-slider-pitch');
+  const numPitch = document.getElementById('tuner-num-pitch');
+  const sliderYaw = document.getElementById('tuner-slider-yaw');
+  const numYaw = document.getElementById('tuner-num-yaw');
+
+  const radContainer = document.getElementById('tuner-radius-container');
+  const sliderRadius = document.getElementById('tuner-slider-radius');
+  const numRadius = document.getElementById('tuner-num-radius');
+
+  const frameInfo = document.getElementById('tuner-frame-info');
+
+  if (sliderX) sliderX.value = data.x;
+  if (numX) numX.value = Number(data.x).toFixed(3);
+  if (sliderY) sliderY.value = data.y;
+  if (numY) numY.value = Number(data.y).toFixed(3);
+  if (sliderZ) sliderZ.value = data.z;
+  if (numZ) numZ.value = Number(data.z).toFixed(3);
+
+  if (sliderRoll) sliderRoll.value = data.roll;
+  if (numRoll) numRoll.value = Number(data.roll).toFixed(1);
+  if (sliderPitch) sliderPitch.value = data.pitch;
+  if (numPitch) numPitch.value = Number(data.pitch).toFixed(1);
+  if (sliderYaw) sliderYaw.value = data.yaw;
+  if (numYaw) numYaw.value = Number(data.yaw).toFixed(1);
+
+  if (radContainer) {
+    radContainer.style.display = (currentTFTunerElement === 'Safety Zone') ? 'block' : 'none';
+  }
+  if (sliderRadius && data.radius !== undefined) sliderRadius.value = data.radius;
+  if (numRadius && data.radius !== undefined) numRadius.value = Number(data.radius).toFixed(3);
+
+  if (frameInfo) {
+    frameInfo.textContent = `Frame: ${data.frame_id} → world`;
+  }
+}
+
+function onTunerElementChange(name) {
+  if (TF_TUNER_ELEMENTS[name]) {
+    currentTFTunerElement = name;
+    updateTunerUI();
+    logMsg('TF-Tuner', `Selected element: ${name} (${TF_TUNER_ELEMENTS[name].frame_id})`, 'info');
+  }
+}
+
+function onTunerSliderInput(axis, val) {
+  const data = TF_TUNER_ELEMENTS[currentTFTunerElement];
+  if (!data) return;
+
+  const numVal = parseFloat(val);
+  data[axis] = numVal;
+
+  const numInput = document.getElementById(`tuner-num-${axis}`);
+  if (numInput) {
+    numInput.value = (axis === 'roll' || axis === 'pitch' || axis === 'yaw') ? numVal.toFixed(1) : numVal.toFixed(3);
+  }
+
+  broadcastAllTFTunerTransforms();
+}
+
+function onTunerNumChange(axis, val) {
+  const data = TF_TUNER_ELEMENTS[currentTFTunerElement];
+  if (!data) return;
+
+  const numVal = parseFloat(val);
+  data[axis] = numVal;
+
+  const slider = document.getElementById(`tuner-slider-${axis}`);
+  if (slider) {
+    slider.value = numVal;
+  }
+
+  broadcastAllTFTunerTransforms();
+}
+
+function resetCurrentTFElement() {
+  const data = TF_TUNER_ELEMENTS[currentTFTunerElement];
+  if (!data || !data.default) return;
+
+  Object.assign(data, data.default);
+  updateTunerUI();
+  broadcastAllTFTunerTransforms();
+  logMsg('TF-Tuner', `Reset ${currentTFTunerElement} to factory defaults`, 'action');
+}
+
+function toggleTFBroadcast() {
+  isTFBroadcastActive = !isTFBroadcastActive;
+  const btn = document.getElementById('btn-tuner-broadcast');
+  const label = document.getElementById('tuner-broadcast-label');
+  const rateInfo = document.getElementById('tuner-rate-info');
+
+  if (btn) {
+    if (isTFBroadcastActive) {
+      btn.className = 'btn-toggle-broadcast active';
+      if (label) label.textContent = 'Live TF';
+      if (rateInfo) rateInfo.textContent = '10 Hz Active';
+      logMsg('TF-Tuner', 'Live TF broadcasting enabled (10 Hz)', 'success');
+      broadcastAllTFTunerTransforms();
+    } else {
+      btn.className = 'btn-toggle-broadcast inactive';
+      if (label) label.textContent = 'TF Paused';
+      if (rateInfo) rateInfo.textContent = 'Broadcast Off';
+      logMsg('TF-Tuner', 'Live TF broadcasting paused', 'warn');
+    }
+  }
+}
+
+// Global exports
+window.onTunerElementChange = onTunerElementChange;
+window.onTunerSliderInput = onTunerSliderInput;
+window.onTunerNumChange = onTunerNumChange;
+window.resetCurrentTFElement = resetCurrentTFElement;
+window.toggleTFBroadcast = toggleTFBroadcast;
+
+// Start TF Broadcast Loop (10 Hz)
+if (tfBroadcasterInterval) clearInterval(tfBroadcasterInterval);
+tfBroadcasterInterval = setInterval(broadcastAllTFTunerTransforms, 100);
+
+// Initialize Tuner UI on ready
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    updateTunerUI();
+    broadcastAllTFTunerTransforms();
+  }, 300);
+});
+
+
 
