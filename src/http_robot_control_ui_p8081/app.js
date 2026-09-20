@@ -1011,6 +1011,83 @@ function moveToPose() {
   });
 }
 
+// ── Interactive 3D TCP Gizmo Execution ───────────────────────────────────────
+let isExecutingGizmoMove = false;
+
+window.executeMoveToPoseFromGizmo = function () {
+  if (isExecutingGizmoMove) {
+    console.warn('[Gizmo] Motion execution already in progress.');
+    return;
+  }
+
+  // Retrieve pose from 3D Gizmo or fallback to numeric inputs
+  let poseData = null;
+  if (typeof window.getTCPGizmoPose === 'function') {
+    poseData = window.getTCPGizmoPose();
+  }
+
+  const x = poseData ? poseData.x : parseFloat(document.getElementById('inp-x').value);
+  const y = poseData ? poseData.y : parseFloat(document.getElementById('inp-y').value);
+  const z = poseData ? poseData.z : parseFloat(document.getElementById('inp-z').value);
+  const r = poseData ? poseData.roll : parseFloat(document.getElementById('inp-r').value);
+  const p = poseData ? poseData.pitch : parseFloat(document.getElementById('inp-p').value);
+  const yw = poseData ? poseData.yaw : parseFloat(document.getElementById('inp-yw').value);
+
+  if (isNaN(x) || isNaN(y) || isNaN(z)) {
+    logMsg('GIZMO', '❌ Ungültige Gizmo-Zielkoordinaten.', 'err');
+    return;
+  }
+
+  isExecutingGizmoMove = true;
+  setButtonsLocked(true);
+
+  // Update floating HUD button in 3D viewport
+  const btnGo = document.getElementById('btn-gizmo-execute');
+  if (btnGo) {
+    btnGo.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Fährt...';
+    btnGo.style.opacity = '0.7';
+    btnGo.disabled = true;
+  }
+
+  const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
+  const req = new ROSLIB.ServiceRequest({
+    pose: [x, y, z, r, p, yw],
+    speed: 100.0,
+    acc: 1000.0,
+    mvtime: 0.0
+  });
+
+  logMsg('GIZMO', `🎯 TCP-Gizmo Fahrt: X=${x} Y=${y} Z=${z} mm (R=${r} P=${p} Yw=${yw})`, 'action');
+
+  srv.callService(req, (res) => {
+    isExecutingGizmoMove = false;
+    setButtonsLocked(false);
+    if (btnGo) {
+      btnGo.innerHTML = '<i class="fa-solid fa-play"></i> Anfahren';
+      btnGo.style.opacity = '1.0';
+      btnGo.disabled = false;
+    }
+
+    if (res.ret === 0) {
+      logMsg('GIZMO', '✓ Zielpose über IK erfolgreich angefahren.', 'success');
+      if (typeof window.syncTCPGizmoToRobot === 'function') {
+        window.syncTCPGizmoToRobot();
+      }
+    } else {
+      logMsg('GIZMO', `❌ IK/Fahrt fehlgeschlagen (ret=${res.ret}): ${res.message || 'Ziel unerreichbar oder in Kollision'}`, 'err');
+    }
+  }, (err) => {
+    isExecutingGizmoMove = false;
+    setButtonsLocked(false);
+    if (btnGo) {
+      btnGo.innerHTML = '<i class="fa-solid fa-play"></i> Anfahren';
+      btnGo.style.opacity = '1.0';
+      btnGo.disabled = false;
+    }
+    logMsg('GIZMO', `❌ Service-Fehler bei Gizmo-Fahrt: ${err}`, 'err');
+  });
+};
+
 function setInitialPose() {
   setButtonsLocked(true);
   const srv = createSrv('/ui/execute_initial_pose', 'std_srvs/Trigger');
@@ -1910,6 +1987,38 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
     broadcastAllTFTunerTransforms();
   }, 300);
+});
+
+// ── Keyboard Shortcuts for 3D TCP Gizmo ──────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  // Ignore keystrokes when typing in an input field or text area
+  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)) {
+    return;
+  }
+
+  const key = e.key ? e.key.toLowerCase() : '';
+  if (key === 't') {
+    if (typeof window.setTCPGizmoMode === 'function') {
+      window.setTCPGizmoMode('translate');
+      logMsg('GIZMO', '⌨️ Modus: Translation (Pfeile) aktiv [Taste: T]', 'info');
+    }
+  } else if (key === 'r') {
+    if (typeof window.setTCPGizmoMode === 'function') {
+      window.setTCPGizmoMode('rotate');
+      logMsg('GIZMO', '⌨️ Modus: Rotation (Ringe) aktiv [Taste: R]', 'info');
+    }
+  } else if (key === 'g') {
+    if (typeof window.toggleTCPGizmo === 'function') {
+      window.toggleTCPGizmo();
+      logMsg('GIZMO', '⌨️ 3D TCP-Gizmo umgeschaltet [Taste: G]', 'info');
+    }
+  } else if (e.key === 'Escape') {
+    if (typeof window.syncTCPGizmoToRobot === 'function') {
+      window.syncTCPGizmoToRobot();
+      logMsg('GIZMO', '⌨️ Gizmo auf aktuellen Roboter-TCP zurückgesetzt [Taste: Esc]', 'info');
+    }
+  }
 });
 
 

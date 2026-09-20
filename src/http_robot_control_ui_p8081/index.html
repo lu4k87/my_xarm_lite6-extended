@@ -234,6 +234,16 @@
                 <button class="btn btn-icon-small" id="btn-twin-edges" onclick="toggleDigitalTwinEdges()" title="CAD-Kantenkonturen ein-/ausblenden" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--cyan);">
                   <i class="fa-solid fa-shapes"></i>
                 </button>
+                <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.15); margin: 0 2px;"></div>
+                <button class="btn btn-icon-small active" id="btn-twin-gizmo" onclick="toggleTCPGizmo()" title="3D TCP-Gizmo ein-/ausblenden (Taste: G)" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--cyan);">
+                  <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-gizmo-mode" onclick="cycleTCPGizmoMode()" title="Modus: Translation (Pfeile) / Rotation (Ringe) [Tasten: T / R]" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--cyan);">
+                  <i class="fa-solid fa-arrows-to-circle"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-gizmo-sync" onclick="syncTCPGizmoToRobot()" title="Gizmo auf aktuellen Roboter-TCP zurücksetzen (Taste: Esc)" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--mut);">
+                  <i class="fa-solid fa-crosshairs"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -241,6 +251,24 @@
           <div class="viewport-container" id="digital-twin-container" style="position: relative; width: 100%; flex: 1; min-height: 240px; background: #0a0e17; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08);">
             <!-- Three.js Canvas Container -->
             <div id="digital-twin-viewport" style="width: 100%; height: 100%; cursor: grab;"></div>
+
+            <!-- Floating TCP Gizmo Target HUD -->
+            <div id="twin-gizmo-hud" class="twin-gizmo-hud">
+              <div class="gizmo-hud-info">
+                <span class="gizmo-hud-title"><i class="fa-solid fa-arrows-up-down-left-right"></i> TCP GIZMO:</span>
+                <span id="gizmo-hud-coords" class="gizmo-hud-val">X: 300 Y: 0 Z: 200</span>
+                <span id="gizmo-hud-delta" class="gizmo-hud-delta">Δ 0 mm</span>
+              </div>
+              <div class="gizmo-hud-actions">
+                <label class="gizmo-auto-toggle" title="Roboter fährt Zielpose automatisch an, sobald der Gizmo per Maus losgelassen wird">
+                  <input type="checkbox" id="chk-gizmo-auto-drop" checked>
+                  <span>Auto-Fahrt</span>
+                </label>
+                <button id="btn-gizmo-execute" class="btn btn-gizmo-go" onclick="executeMoveToPoseFromGizmo()" title="Roboter zur Gizmo-Zielpose fahren">
+                  <i class="fa-solid fa-play"></i> Anfahren
+                </button>
+              </div>
+            </div>
             
             <!-- Safety & Warning HUD Banner -->
             <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
@@ -575,11 +603,12 @@
   <!-- WebGL 3D Digital Twin Libraries (Offline-capable) -->
   <script src="lib/three.min.js"></script>
   <script src="lib/OrbitControls.js"></script>
+  <script src="lib/TransformControls.js"></script>
   <script src="lib/STLLoader.js"></script>
   <script src="lib/URDFLoader.js"></script>
-  <script src="digital_twin.js?v=4"></script>
+  <script src="digital_twin.js?v=5"></script>
 
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
   
   <script>
     // ── Live Camera Update Loop ──

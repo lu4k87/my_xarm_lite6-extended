@@ -15,6 +15,16 @@
   let isEdgesVisible = true;
   let edgeLines = [];
 
+  // ── Interactive 3D TCP Gizmo State ──
+  let transformControls = null;
+  let gizmoTarget = null;
+  let ghostTCPGroup = null;
+  let dashedLine = null;
+  let isGizmoActive = true;
+  let gizmoMode = 'translate'; // 'translate' | 'rotate'
+  let isDraggingGizmo = false;
+  let hasUserTargetOffset = false;
+
   // Safety & Warning State
   let allRobotMeshes = [];
   let linkMeshes = {};
@@ -152,14 +162,18 @@
     shadowPlane.receiveShadow = true;
     scene.add(shadowPlane);
 
-    // 7. Load URDF
+    // 7. Interactive 3D TCP Gizmo (TransformControls)
+    initTCPGizmo();
+
+    // 8. Load URDF
     loadURDFModel();
 
-    // 8. Animation Loop
+    // 9. Animation Loop
     function animate() {
       animId = requestAnimationFrame(animate);
       if (controls) controls.update();
       updateSafetyVisuals();
+      updateConnectingLine();
       renderer.render(scene, camera);
     }
     animate();
@@ -337,6 +351,7 @@
 
         // Apply any cached joints or linear axis
         applyJointValues();
+        syncTCPGizmoToRobot(true);
 
         if (badge) {
           badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Live Digital Twin';
@@ -368,6 +383,13 @@
     // Update linear axis translation along Y axis
     if (robotModel.position) {
       robotModel.position.y = linearShiftY;
+    }
+
+    // Keep TCP Gizmo in sync if user is not actively dragging it
+    if (isGizmoActive && !isDraggingGizmo && !hasUserTargetOffset) {
+      syncTCPGizmoToRobot(false);
+    } else {
+      updateConnectingLine();
     }
   }
 
@@ -413,6 +435,250 @@
           mesh.material = mesh.userData.originalMaterial;
         }
       });
+    }
+  }
+
+  // ── Interactive 3D TCP Gizmo (TransformControls & Target Proxy) ─────────────
+  function initTCPGizmo() {
+    if (typeof THREE.TransformControls === 'undefined') {
+      console.warn('[DigitalTwin] THREE.TransformControls is not loaded. Skipping TCP Gizmo.');
+      return;
+    }
+    if (!scene || !camera || !renderer) return;
+
+    try {
+      transformControls = new THREE.TransformControls(camera, renderer.domElement);
+      transformControls.size = 0.65;
+      transformControls.setSpace('world');
+      transformControls.setMode(gizmoMode);
+
+      // Dummy target proxy object
+      gizmoTarget = new THREE.Object3D();
+      gizmoTarget.position.set(0.3, 0.0, 0.2);
+      scene.add(gizmoTarget);
+
+      // Ghost TCP Marker attached to gizmoTarget
+      ghostTCPGroup = new THREE.Group();
+
+      // Ghost Axes
+      const ghostAxes = new THREE.AxesHelper(0.065);
+      ghostAxes.material.depthTest = false;
+      ghostAxes.material.transparent = true;
+      ghostAxes.material.opacity = 0.85;
+      ghostAxes.renderOrder = 999;
+      ghostTCPGroup.add(ghostAxes);
+
+      // Ghost suction cup / end flange disc (glowing cyan)
+      const ghostDiscGeo = new THREE.CylinderGeometry(0.016, 0.016, 0.005, 24);
+      ghostDiscGeo.rotateX(Math.PI / 2);
+      const ghostDiscMat = new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.6,
+        transparent: true,
+        opacity: 0.55,
+        metalness: 0.3,
+        roughness: 0.25
+      });
+      const ghostDiscMesh = new THREE.Mesh(ghostDiscGeo, ghostDiscMat);
+      ghostDiscMesh.renderOrder = 999;
+      ghostTCPGroup.add(ghostDiscMesh);
+
+      gizmoTarget.add(ghostTCPGroup);
+      transformControls.attach(gizmoTarget);
+      scene.add(transformControls);
+
+      // Dashed connecting line
+      const lineGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, 0)
+      ]);
+      const lineMat = new THREE.LineDashedMaterial({
+        color: 0x38bdf8,
+        dashSize: 0.012,
+        gapSize: 0.008,
+        transparent: true,
+        opacity: 0.8
+      });
+      dashedLine = new THREE.Line(lineGeo, lineMat);
+      dashedLine.computeLineDistances();
+      dashedLine.visible = false;
+      scene.add(dashedLine);
+
+      // Dragging events
+      transformControls.addEventListener('dragging-changed', function (event) {
+        isDraggingGizmo = Boolean(event.value);
+        if (controls) controls.enabled = !isDraggingGizmo;
+
+        if (isDraggingGizmo) {
+          hasUserTargetOffset = true;
+        } else {
+          handleGizmoDragEnd();
+        }
+      });
+
+      transformControls.addEventListener('change', function () {
+        if (isDraggingGizmo) {
+          handleGizmoChange(true);
+        }
+      });
+
+      updateGizmoVisibility();
+      console.log('[DigitalTwin] 3D TCP TransformControls initialized.');
+    } catch (e) {
+      console.error('[DigitalTwin] Error initializing TCP Gizmo:', e);
+    }
+  }
+
+  function getRealRobotTCPPose() {
+    if (!robotModel) return null;
+    const linkTCP = robotModel.getObjectByName('link_tcp') ||
+                     robotModel.getObjectByName('uflite_vacuum_gripper_link') ||
+                     robotModel.getObjectByName('link6');
+    if (!linkTCP) return null;
+
+    robotModel.updateMatrixWorld(true);
+    const pos = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+    linkTCP.getWorldPosition(pos);
+    linkTCP.getWorldQuaternion(quat);
+    return { position: pos, quaternion: quat };
+  }
+
+  function syncTCPGizmoToRobot(resetOffset = true) {
+    const realTCP = getRealRobotTCPPose();
+    if (!realTCP || !gizmoTarget) return;
+
+    if (resetOffset) {
+      hasUserTargetOffset = false;
+    }
+
+    gizmoTarget.position.copy(realTCP.position);
+    gizmoTarget.quaternion.copy(realTCP.quaternion);
+    if (transformControls) transformControls.updateMatrixWorld();
+
+    handleGizmoChange(resetOffset);
+    if (dashedLine && !hasUserTargetOffset) dashedLine.visible = false;
+  }
+
+  function handleGizmoChange(updateInputs = true) {
+    if (!gizmoTarget) return;
+
+    // Convert to robot base frame coordinates (mm)
+    const posX_mm = Math.round(gizmoTarget.position.x * 1000.0);
+    const posY_mm = Math.round((gizmoTarget.position.y - linearShiftY) * 1000.0);
+    const posZ_mm = Math.round(gizmoTarget.position.z * 1000.0);
+
+    const euler = new THREE.Euler().setFromQuaternion(gizmoTarget.quaternion, 'XYZ');
+    const roll = Number(euler.x.toFixed(2));
+    const pitch = Number(euler.y.toFixed(2));
+    const yaw = Number(euler.z.toFixed(2));
+
+    if (updateInputs) {
+      const inpX = document.getElementById('inp-x');
+      const inpY = document.getElementById('inp-y');
+      const inpZ = document.getElementById('inp-z');
+      const inpR = document.getElementById('inp-r');
+      const inpP = document.getElementById('inp-p');
+      const inpYw = document.getElementById('inp-yw');
+
+      if (inpX) inpX.value = posX_mm;
+      if (inpY) inpY.value = posY_mm;
+      if (inpZ) inpZ.value = posZ_mm;
+      if (inpR) inpR.value = roll.toFixed(2);
+      if (inpP) inpP.value = pitch.toFixed(2);
+      if (inpYw) inpYw.value = yaw.toFixed(2);
+    }
+
+    // Distance delta to real robot TCP
+    const realTCP = getRealRobotTCPPose();
+    let deltaDist_mm = 0;
+    if (realTCP) {
+      deltaDist_mm = Math.round(gizmoTarget.position.distanceTo(realTCP.position) * 1000.0);
+    }
+
+    // Update floating HUD in viewport
+    const hudCoords = document.getElementById('gizmo-hud-coords');
+    const hudDelta = document.getElementById('gizmo-hud-delta');
+    if (hudCoords) {
+      hudCoords.innerText = `X: ${posX_mm} Y: ${posY_mm} Z: ${posZ_mm}`;
+    }
+    if (hudDelta) {
+      hudDelta.innerText = `Δ ${deltaDist_mm} mm`;
+      if (deltaDist_mm > 4) {
+        hudDelta.style.color = '#38bdf8';
+        hudDelta.style.background = 'rgba(56, 189, 248, 0.2)';
+      } else {
+        hudDelta.style.color = 'var(--mut)';
+        hudDelta.style.background = 'rgba(255, 255, 255, 0.06)';
+      }
+    }
+
+    updateConnectingLine();
+  }
+
+  function handleGizmoDragEnd() {
+    handleGizmoChange(true);
+
+    const autoDrop = document.getElementById('chk-gizmo-auto-drop');
+    const shouldAutoExecute = autoDrop ? autoDrop.checked : true;
+
+    const realTCP = getRealRobotTCPPose();
+    let deltaDist_mm = realTCP ? (gizmoTarget.position.distanceTo(realTCP.position) * 1000.0) : 999;
+
+    // Trigger auto-move if offset is greater than 3 mm or orientation adjusted
+    if (shouldAutoExecute && deltaDist_mm > 3.0) {
+      if (typeof window.executeMoveToPoseFromGizmo === 'function') {
+        window.executeMoveToPoseFromGizmo();
+      }
+    }
+  }
+
+  function updateConnectingLine() {
+    if (!dashedLine || !gizmoTarget || !isGizmoActive) {
+      if (dashedLine) dashedLine.visible = false;
+      return;
+    }
+    const realTCP = getRealRobotTCPPose();
+    if (!realTCP || !hasUserTargetOffset) {
+      dashedLine.visible = false;
+      return;
+    }
+
+    const dist = gizmoTarget.position.distanceTo(realTCP.position);
+    if (dist > 0.003) {
+      dashedLine.visible = true;
+      const positions = dashedLine.geometry.attributes.position.array;
+      positions[0] = realTCP.position.x;
+      positions[1] = realTCP.position.y;
+      positions[2] = realTCP.position.z;
+      positions[3] = gizmoTarget.position.x;
+      positions[4] = gizmoTarget.position.y;
+      positions[5] = gizmoTarget.position.z;
+      dashedLine.geometry.attributes.position.needsUpdate = true;
+      dashedLine.computeLineDistances();
+    } else {
+      dashedLine.visible = false;
+    }
+  }
+
+  function updateGizmoVisibility() {
+    if (!transformControls) return;
+    transformControls.visible = isGizmoActive;
+    transformControls.enabled = isGizmoActive;
+    if (ghostTCPGroup) ghostTCPGroup.visible = isGizmoActive;
+    if (dashedLine) dashedLine.visible = isGizmoActive && hasUserTargetOffset;
+
+    const btnGizmo = document.getElementById('btn-twin-gizmo');
+    if (btnGizmo) {
+      btnGizmo.style.color = isGizmoActive ? 'var(--cyan)' : 'var(--mut)';
+      btnGizmo.classList.toggle('active', isGizmoActive);
+    }
+
+    const hud = document.getElementById('twin-gizmo-hud');
+    if (hud) {
+      if (isGizmoActive) hud.classList.remove('gizmo-hud-hidden');
+      else hud.classList.add('gizmo-hud-hidden');
     }
   }
 
@@ -600,6 +866,70 @@
 
   window.resizeDigitalTwin = function () {
     handleResize();
+  };
+
+  // ── Public TCP Gizmo APIs ──
+  window.toggleTCPGizmo = function (forceState) {
+    if (typeof forceState === 'boolean') isGizmoActive = forceState;
+    else isGizmoActive = !isGizmoActive;
+    updateGizmoVisibility();
+    if (isGizmoActive && !hasUserTargetOffset) {
+      syncTCPGizmoToRobot(false);
+    }
+  };
+
+  window.cycleTCPGizmoMode = function () {
+    if (gizmoMode === 'translate') {
+      window.setTCPGizmoMode('rotate');
+    } else {
+      window.setTCPGizmoMode('translate');
+    }
+  };
+
+  window.setTCPGizmoMode = function (mode) {
+    if (mode !== 'translate' && mode !== 'rotate') return;
+    gizmoMode = mode;
+    if (transformControls) transformControls.setMode(gizmoMode);
+
+    const btnMode = document.getElementById('btn-twin-gizmo-mode');
+    if (btnMode) {
+      if (gizmoMode === 'translate') {
+        btnMode.innerHTML = '<i class="fa-solid fa-arrows-up-down-left-right"></i>';
+        btnMode.title = 'Modus: Translation (X, Y, Z Pfeile) aktiv [Tasten: T / R]';
+      } else {
+        btnMode.innerHTML = '<i class="fa-solid fa-rotate"></i>';
+        btnMode.title = 'Modus: Rotation (Roll, Pitch, Yaw Ringe) aktiv [Tasten: T / R]';
+      }
+    }
+  };
+
+  window.syncTCPGizmoToRobot = function () {
+    hasUserTargetOffset = false;
+    syncTCPGizmoToRobot(true);
+    if (typeof logMsg === 'function') {
+      logMsg('GIZMO', '🎯 Gizmo auf aktuellen Roboter-TCP synchronisiert.', 'info');
+    }
+  };
+
+  window.getTCPGizmoPose = function () {
+    if (!gizmoTarget) return null;
+    const posX_mm = Math.round(gizmoTarget.position.x * 1000.0);
+    const posY_mm = Math.round((gizmoTarget.position.y - linearShiftY) * 1000.0);
+    const posZ_mm = Math.round(gizmoTarget.position.z * 1000.0);
+    const euler = new THREE.Euler().setFromQuaternion(gizmoTarget.quaternion, 'XYZ');
+    return {
+      x: posX_mm,
+      y: posY_mm,
+      z: posZ_mm,
+      roll: Number(euler.x.toFixed(2)),
+      pitch: Number(euler.y.toFixed(2)),
+      yaw: Number(euler.z.toFixed(2))
+    };
+  };
+
+  window.resetGizmoTargetOffset = function () {
+    hasUserTargetOffset = false;
+    syncTCPGizmoToRobot(false);
   };
 
   // ── 3D Scene Objects for TF Control Tuner ────────────────────────────────
