@@ -312,11 +312,9 @@
       <div class="col-right" id="col-right">
 
         <section id="panel-jogging" class="glass-panel joystick-section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h2 style="margin-bottom: 0;"><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
-            <div id="moveit-badge" class="moveit-badge">
-              MoveIt: Off
-            </div>
+          <h2 style="cursor: grab;"><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
+          <div id="moveit-badge" class="moveit-badge" style="margin-bottom: 12px;">
+            MoveIt: Off
           </div>
           
           <div class="jogging-container">
@@ -377,21 +375,23 @@
               </div>
             </div>
 
-            <div class="jog-divider"></div>
-            
-            <div class="gripper-controls">
-              <button id="btn-grip-open" class="btn btn-primary" onclick="playUiClickSound(); setGripper('open')">
-                <i class="fa-solid fa-hand"></i>
-                <span>Open</span>
-              </button>
-              <button id="btn-grip-close" class="btn btn-orange" onclick="playUiClickSound(); setGripper('close')">
-                <i class="fa-solid fa-hand-fist"></i>
-                <span>Close</span>
-              </button>
-              <button id="btn-grip-off" class="btn btn-danger" onclick="playUiClickSound(); setGripper('off')">
-                <i class="fa-solid fa-power-off"></i>
-                <span>Off</span>
-              </button>
+            <div class="gripper-area">
+              <div class="jog-divider"></div>
+              
+              <div class="gripper-controls">
+                <button id="btn-grip-open" class="btn btn-primary" onclick="playUiClickSound(); setGripper('open')">
+                  <i class="fa-solid fa-hand"></i>
+                  <span>Open</span>
+                </button>
+                <button id="btn-grip-close" class="btn btn-orange" onclick="playUiClickSound(); setGripper('close')">
+                  <i class="fa-solid fa-hand-fist"></i>
+                  <span>Close</span>
+                </button>
+                <button id="btn-grip-off" class="btn btn-danger" onclick="playUiClickSound(); setGripper('off')">
+                  <i class="fa-solid fa-power-off"></i>
+                  <span>Off</span>
+                </button>
+              </div>
             </div>
           </div>
           <div class="speed-control">
