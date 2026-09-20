@@ -222,50 +222,58 @@ button.status-pill.sound-btn.sound-muted:hover {
   color: var(--txt);
 }
 
-.moveit-badge {
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  border: 1px solid var(--brd);
-  background: var(--bg-panel);
+.moveit-status {
+  display: block;
+  font-family: 'JetBrains Mono', 'Plus Jakarta Sans', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   color: var(--mut);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin-bottom: 10px;
+  padding: 0;
+  transition: color 0.4s ease, text-shadow 0.4s ease;
+  user-select: none;
 }
 
-.moveit-badge.ready {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
+.moveit-status.ready {
   color: #10b981;
+  text-shadow: 0 0 6px rgba(16, 185, 129, 0.5), 0 0 14px rgba(16, 185, 129, 0.2);
 }
 
-.moveit-badge.moving {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  animation: moveit-pulse 1.5s infinite;
+.moveit-status.moving {
+  color: #34d399;
+  animation: moveit-text-pulse 1.2s ease-in-out infinite;
 }
 
-.moveit-badge.warn {
-  border-color: #fbbf24;
-  background: rgba(251, 191, 36, 0.1);
+.moveit-status.warn {
   color: #fbbf24;
+  text-shadow: 0 0 6px rgba(251, 191, 36, 0.5), 0 0 14px rgba(251, 191, 36, 0.2);
 }
 
-.moveit-badge.error {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
+.moveit-status.error {
   color: #ef4444;
+  text-shadow: 0 0 6px rgba(239, 68, 68, 0.5), 0 0 14px rgba(239, 68, 68, 0.25);
+  animation: moveit-text-pulse-red 1s ease-in-out infinite;
 }
 
-@keyframes moveit-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-  70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+@keyframes moveit-text-pulse {
+  0%, 100% {
+    text-shadow: 0 0 6px rgba(16, 185, 129, 0.4), 0 0 14px rgba(16, 185, 129, 0.15);
+    opacity: 1;
+  }
+  50% {
+    text-shadow: 0 0 14px rgba(16, 185, 129, 0.8), 0 0 28px rgba(16, 185, 129, 0.4), 0 0 42px rgba(16, 185, 129, 0.15);
+    opacity: 0.85;
+  }
+}
+
+@keyframes moveit-text-pulse-red {
+  0%, 100% {
+    text-shadow: 0 0 6px rgba(239, 68, 68, 0.4), 0 0 14px rgba(239, 68, 68, 0.15);
+  }
+  50% {
+    text-shadow: 0 0 14px rgba(239, 68, 68, 0.8), 0 0 28px rgba(239, 68, 68, 0.4);
+  }
 }
 
 .dot {

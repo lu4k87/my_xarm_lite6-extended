@@ -1406,7 +1406,7 @@ function updateMoveItBadge() {
   const badge = document.getElementById('moveit-badge');
   if(!badge) return;
   
-  badge.className = 'moveit-badge'; // Reset classes
+  badge.className = 'moveit-status'; // Reset classes
   
   if (currentServoStatus === 0) {
     if (isRobotMoving) {
