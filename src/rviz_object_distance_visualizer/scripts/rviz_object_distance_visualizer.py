@@ -56,6 +56,9 @@ class RvizObjectDistanceVisualizer(Node):
         self.last_detection_time = self.get_clock().now()
         self.is_active = False
 
+        # Configurable parameters
+        self.declare_parameter('line_width', 0.0009)  # 0.9 mm, thinner subtle dashed line
+
         # Timeout timer (check every 0.5s if detections timed out)
         self.timer = self.create_timer(0.5, self.check_timeout)
 
@@ -138,8 +141,9 @@ class RvizObjectDistanceVisualizer(Node):
         line_marker.type = Marker.LINE_LIST
         line_marker.action = Marker.ADD
 
-        # Thin and transparent
-        line_marker.scale.x = 0.0018  # very thin
+        # Thinner and transparent (default: 0.9 mm)
+        line_width = self.get_parameter('line_width').value
+        line_marker.scale.x = float(line_width)
         line_marker.color.r = 0.0
         line_marker.color.g = 1.0
         line_marker.color.b = 0.0
