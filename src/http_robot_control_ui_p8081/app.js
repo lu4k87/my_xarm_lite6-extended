@@ -441,6 +441,8 @@ jointStateSub.subscribe((msg) => {
   if (typeof window.updateDigitalTwinJoints === 'function' && currentJointVals.length === 6) {
     window.updateDigitalTwinJoints(currentJointVals);
   }
+  latestJointVals = currentJointVals;
+  evaluateRobotSafety();
   
   if (moving) {
     if (!isRobotMoving) {
@@ -469,6 +471,8 @@ eefSub.subscribe((msg) => {
     if(tx) tx.innerText = msg.data[0].toFixed(1);
     if(ty) ty.innerText = msg.data[1].toFixed(1);
     if(tz) tz.innerText = msg.data[2].toFixed(1);
+    latestEEF_Z = msg.data[2];
+    evaluateRobotSafety();
   }
   if (msg.data.length >= 7) {
     const qx = msg.data[3], qy = msg.data[4], qz = msg.data[5], qw = msg.data[6];
@@ -491,6 +495,130 @@ eefSub.subscribe((msg) => {
     if(tyaw) tyaw.innerText = yaw.toFixed(2);
   }
 });
+
+// ── Live MoveIt Servo & Collision Warning Integration ──────────────────────
+let latestJointVals = [0, 0, 0, 0, 0, 0];
+let latestEEF_Z = null;
+let lastServoStatus = 0;
+let activeCollisionText = '';
+let collisionTextClearTimer = null;
+let lastReportedSafetyState = 'normal'; // 'normal', 'singularity', 'collision'
+
+// 1. MoveIt Servo Status Topic
+const servoStatusTopic = new ROSLIB.Topic({
+  ros: ros,
+  name: '/servo_server/status',
+  messageType: 'std_msgs/Int8'
+});
+
+servoStatusTopic.subscribe((msg) => {
+  lastServoStatus = Number(msg.data) || 0;
+  evaluateRobotSafety();
+});
+
+// 2. Pre-Collision Checker Topic
+const collisionMsgTopic = new ROSLIB.Topic({
+  ros: ros,
+  name: '/ui/collision_msg',
+  messageType: 'std_msgs/String'
+});
+
+collisionMsgTopic.subscribe((msg) => {
+  const text = (msg.data || '').trim();
+  if (text) {
+    activeCollisionText = text;
+    if (collisionTextClearTimer) clearTimeout(collisionTextClearTimer);
+    collisionTextClearTimer = setTimeout(() => {
+      activeCollisionText = '';
+      evaluateRobotSafety();
+    }, 1200);
+  } else {
+    activeCollisionText = '';
+  }
+  evaluateRobotSafety();
+});
+
+function evaluateRobotSafety() {
+  let isCollision = false;
+  let isSingularity = false;
+  let message = '';
+  let collidingLinks = [];
+  let singularityJoints = [];
+
+  // A. Check Live MoveIt Servo Status
+  // 1: DECELERATING_FOR_SINGULARITY, 2: HALT_FOR_SINGULARITY
+  // 3: DECELERATING_FOR_COLLISION, 4: HALT_FOR_COLLISION, 5: JOINT_BOUND
+  if (lastServoStatus === 3 || lastServoStatus === 4 || activeCollisionText) {
+    isCollision = true;
+    collidingLinks = ['link6', 'vacuum', 'gripper'];
+    if (activeCollisionText) {
+      message = activeCollisionText.toUpperCase();
+    } else if (lastServoStatus === 4) {
+      message = 'MOVEIT COLLISION HALT';
+    } else {
+      message = 'APPROACHING COLLISION (MOVEIT)';
+    }
+  } else if (lastServoStatus === 1 || lastServoStatus === 2) {
+    isSingularity = true;
+    singularityJoints = ['link5', 'link4'];
+    message = (lastServoStatus === 2) ? 'MOVEIT SINGULARITY HALT' : 'APPROACHING SINGULARITY (MOVEIT)';
+  }
+
+  // B. Ground / Table Plane Clearance (Z <= 91.5 mm is table limit)
+  if (latestEEF_Z !== null && !isNaN(latestEEF_Z)) {
+    if (latestEEF_Z <= 91.5) {
+      isCollision = true;
+      collidingLinks = ['link6', 'vacuum', 'gripper'];
+      message = `PLANE COLLISION (Z: ${latestEEF_Z.toFixed(1)} mm ≤ 91 mm)`;
+    }
+  }
+
+  // C. Geometric Wrist Singularity Analysis (Joint 5 near 0°)
+  let manipPct = 100;
+  if (latestJointVals && latestJointVals.length >= 5) {
+    const j5 = latestJointVals[4]; // Joint 5
+    const j5Deg = Math.abs(j5 * 180 / Math.PI);
+    manipPct = Math.min(100, Math.max(0, Math.round((j5Deg / 28.0) * 100)));
+
+    if (!isCollision && !isSingularity) {
+      if (j5Deg < 5.0) {
+        isSingularity = true;
+        singularityJoints = ['link5', 'link4'];
+        message = `WRIST SINGULARITY (J5 = ${j5Deg.toFixed(1)}° ≈ 0°)`;
+      } else if (j5Deg < 9.5) {
+        isSingularity = true;
+        singularityJoints = ['link5'];
+        message = `NEAR WRIST SINGULARITY (J5 = ${j5Deg.toFixed(1)}°)`;
+      }
+    }
+  }
+
+  // Dispatch live state to WebGL Digital Twin
+  if (typeof window.updateDigitalTwinSafety === 'function') {
+    window.updateDigitalTwinSafety({
+      collision: isCollision,
+      singularity: isSingularity,
+      message: message,
+      collidingLinks: collidingLinks,
+      singularityJoints: singularityJoints,
+      manipPct: manipPct,
+      floorClearanceZ: latestEEF_Z
+    });
+  }
+
+  // State Transition Logging in Log Output
+  const currentState = isCollision ? 'collision' : (isSingularity ? 'singularity' : 'normal');
+  if (currentState !== lastReportedSafetyState) {
+    if (currentState === 'collision') {
+      logMsg('Motion', `⚠ ${message}`, 'err');
+    } else if (currentState === 'singularity') {
+      logMsg('Motion', `⚡ ${message}`, 'warn');
+    } else if (lastReportedSafetyState !== 'normal') {
+      logMsg('Motion', '✓ Safety state cleared. Motion nominal.', 'success');
+    }
+    lastReportedSafetyState = currentState;
+  }
+}
 
 // ── UI Actions ──────────────────────────────────────────────────────────
 function logMsg(source, text, type='info') {

@@ -1539,6 +1539,137 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   font-weight: 600;
 }
 
+/* ── Digital Twin 3D Viewport HUD Overlays ── */
+.twin-hud-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  z-index: 10;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+.twin-hud-banner.banner-collision {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.8);
+  color: #fecaca;
+  animation: banner-pulse-red 0.9s infinite alternate ease-in-out;
+}
+
+.twin-hud-banner.banner-singularity {
+  background: rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.8);
+  color: #fef08a;
+  animation: banner-pulse-amber 1.1s infinite alternate ease-in-out;
+}
+
+.twin-hud-banner.banner-hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-12px);
+  pointer-events: none;
+}
+
+@keyframes banner-pulse-red {
+  0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3), inset 0 0 6px rgba(239, 68, 68, 0.2); }
+  100% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.8), inset 0 0 12px rgba(239, 68, 68, 0.45); }
+}
+
+@keyframes banner-pulse-amber {
+  0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3), inset 0 0 6px rgba(245, 158, 11, 0.2); }
+  100% { box-shadow: 0 0 24px rgba(245, 158, 11, 0.8), inset 0 0 12px rgba(245, 158, 11, 0.45); }
+}
+
+/* Viewport Vignette Glows */
+.viewport-container.vignette-collision {
+  border-color: rgba(239, 68, 68, 0.85) !important;
+  box-shadow: inset 0 0 45px rgba(239, 68, 68, 0.45), 0 0 18px rgba(239, 68, 68, 0.35) !important;
+  animation: vignette-pulse-red 0.9s infinite alternate ease-in-out;
+}
+
+.viewport-container.vignette-singularity {
+  border-color: rgba(245, 158, 11, 0.85) !important;
+  box-shadow: inset 0 0 40px rgba(245, 158, 11, 0.4), 0 0 16px rgba(245, 158, 11, 0.3) !important;
+  animation: vignette-pulse-amber 1.1s infinite alternate ease-in-out;
+}
+
+@keyframes vignette-pulse-red {
+  0% { box-shadow: inset 0 0 25px rgba(239, 68, 68, 0.25); }
+  100% { box-shadow: inset 0 0 55px rgba(239, 68, 68, 0.55), 0 0 22px rgba(239, 68, 68, 0.4); }
+}
+
+@keyframes vignette-pulse-amber {
+  0% { box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.2); }
+  100% { box-shadow: inset 0 0 48px rgba(245, 158, 11, 0.45), 0 0 18px rgba(245, 158, 11, 0.3); }
+}
+
+/* Mini Safety Telemetry HUD (Manipulability & Floor Clearance) */
+.twin-hud-safety {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.hud-safety-item {
+  background: rgba(10, 14, 23, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 3px 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.hud-safety-item .hud-lbl {
+  color: var(--mut);
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+
+.hud-safety-item .hud-val {
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.hud-safety-item .hud-bar-bg {
+  width: 34px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hud-safety-item .hud-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: #10b981;
+  border-radius: 2px;
+  transition: width 0.15s ease-out, background-color 0.2s ease-out;
+}
+
 /* Coordinate Input RViz Axis Styling */
 .input-group.x input { border-bottom: 2px solid var(--rviz-x); }
 .input-group.y input { border-bottom: 2px solid var(--rviz-y); }

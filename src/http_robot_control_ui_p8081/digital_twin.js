@@ -15,6 +15,35 @@
   let isEdgesVisible = true;
   let edgeLines = [];
 
+  // Safety & Warning State
+  let allRobotMeshes = [];
+  let linkMeshes = {};
+  let safetyState = {
+    collision: false,
+    singularity: false,
+    message: '',
+    collidingLinks: [],
+    singularityJoints: [],
+    manipPct: 100,
+    floorClearanceZ: null
+  };
+
+  const collisionMaterial = new THREE.MeshStandardMaterial({
+    color: 0xef4444,
+    emissive: 0xdc2626,
+    emissiveIntensity: 0.8,
+    metalness: 0.35,
+    roughness: 0.25
+  });
+
+  const singularityMaterial = new THREE.MeshStandardMaterial({
+    color: 0xf59e0b,
+    emissive: 0xd97706,
+    emissiveIntensity: 0.7,
+    metalness: 0.45,
+    roughness: 0.25
+  });
+
   // Initial camera perspective (ROS coordinates: Z is UP)
   const DEFAULT_CAM_POS = { x: 0.72, y: -0.82, z: 0.52 };
   const DEFAULT_TARGET = { x: 0.0, y: 0.0, z: 0.22 };
@@ -130,6 +159,7 @@
     function animate() {
       animId = requestAnimationFrame(animate);
       if (controls) controls.update();
+      updateSafetyVisuals();
       renderer.render(scene, camera);
     }
     animate();
@@ -181,6 +211,8 @@
       (robot) => {
         robotModel = robot;
         edgeLines = [];
+        allRobotMeshes = [];
+        linkMeshes = {};
 
         // Helper to resolve link name for each mesh by walking hierarchy
         function getLinkName(mesh) {
@@ -274,6 +306,11 @@
             }
 
             child.material = material;
+            child.userData.linkName = linkName;
+            child.userData.originalMaterial = material;
+            allRobotMeshes.push(child);
+            if (!linkMeshes[linkName]) linkMeshes[linkName] = [];
+            linkMeshes[linkName].push(child);
 
             // CAD Edge Contour Geometry (Edges > 26 deg get crisp architectural lines)
             if (child.geometry) {
@@ -334,7 +371,185 @@
     }
   }
 
+  // ── Safety & Warning Visual Loop (Collision: Red Glow, Singularity: Amber Glow)
+  function updateSafetyVisuals() {
+    if (!robotModel || allRobotMeshes.length === 0) return;
+    const now = Date.now();
+
+    if (safetyState.collision) {
+      // Dynamic pulsating emissive red highlight
+      const pulse = 0.55 + 0.45 * Math.sin(now * 0.012);
+      collisionMaterial.emissiveIntensity = 0.5 + 0.6 * pulse;
+
+      allRobotMeshes.forEach((mesh) => {
+        const name = mesh.userData.linkName || '';
+        const isTarget = safetyState.collidingLinks.length === 0 ||
+                         safetyState.collidingLinks.some((l) => name.includes(l));
+        if (isTarget) {
+          mesh.material = collisionMaterial;
+        } else {
+          mesh.material = mesh.userData.originalMaterial;
+        }
+      });
+    } else if (safetyState.singularity) {
+      // Dynamic pulsating amber/gold highlight
+      const pulse = 0.55 + 0.45 * Math.sin(now * 0.008);
+      singularityMaterial.emissiveIntensity = 0.4 + 0.5 * pulse;
+
+      allRobotMeshes.forEach((mesh) => {
+        const name = mesh.userData.linkName || '';
+        const isTarget = safetyState.singularityJoints.length === 0 ||
+                         safetyState.singularityJoints.some((j) => name.includes(j));
+        if (isTarget) {
+          mesh.material = singularityMaterial;
+        } else {
+          mesh.material = mesh.userData.originalMaterial;
+        }
+      });
+    } else {
+      // Nominal: cleanly restore industrial two-tone materials
+      allRobotMeshes.forEach((mesh) => {
+        if (mesh.material !== mesh.userData.originalMaterial) {
+          mesh.material = mesh.userData.originalMaterial;
+        }
+      });
+    }
+  }
+
   // ── Public Global API ───────────────────────────────────────────────────────
+  window.updateDigitalTwinSafety = function (state) {
+    if (!state) return;
+    safetyState.collision = Boolean(state.collision);
+    safetyState.singularity = Boolean(state.singularity);
+    safetyState.message = state.message || '';
+    safetyState.collidingLinks = Array.isArray(state.collidingLinks) ? state.collidingLinks : [];
+    safetyState.singularityJoints = Array.isArray(state.singularityJoints) ? state.singularityJoints : [];
+    if (typeof state.manipPct === 'number') safetyState.manipPct = state.manipPct;
+    if (state.floorClearanceZ !== undefined) safetyState.floorClearanceZ = state.floorClearanceZ;
+
+    // 1. Update Warning Banner DOM in Viewport
+    const banner = document.getElementById('twin-warning-banner');
+    const bannerText = document.getElementById('twin-warning-text');
+    const bannerIcon = document.getElementById('twin-warning-icon');
+    const container = document.getElementById('digital-twin-container');
+
+    if (banner && bannerText && bannerIcon) {
+      if (safetyState.collision) {
+        banner.className = 'twin-hud-banner banner-collision';
+        bannerIcon.className = 'fa-solid fa-triangle-exclamation';
+        bannerText.innerText = safetyState.message || 'COLLISION DETECTED';
+        if (container) {
+          container.classList.add('vignette-collision');
+          container.classList.remove('vignette-singularity');
+        }
+      } else if (safetyState.singularity) {
+        banner.className = 'twin-hud-banner banner-singularity';
+        bannerIcon.className = 'fa-solid fa-bolt';
+        bannerText.innerText = safetyState.message || 'SINGULARITY WARNING';
+        if (container) {
+          container.classList.add('vignette-singularity');
+          container.classList.remove('vignette-collision');
+        }
+      } else {
+        banner.className = 'twin-hud-banner banner-hidden';
+        if (container) {
+          container.classList.remove('vignette-collision', 'vignette-singularity');
+        }
+      }
+    }
+
+    // 2. Update Mini HUD Telemetry (Manipulability & Floor Clearance)
+    const manipBar = document.getElementById('hud-manip-bar');
+    const manipVal = document.getElementById('hud-manip-val');
+    if (manipBar && manipVal) {
+      const pct = Math.max(0, Math.min(100, Math.round(safetyState.manipPct)));
+      manipBar.style.width = pct + '%';
+      manipVal.innerText = pct + '%';
+      if (pct > 50) {
+        manipBar.style.backgroundColor = '#10b981';
+        manipVal.style.color = '#38bdf8';
+      } else if (pct > 20) {
+        manipBar.style.backgroundColor = '#f59e0b';
+        manipVal.style.color = '#f59e0b';
+      } else {
+        manipBar.style.backgroundColor = '#ef4444';
+        manipVal.style.color = '#ef4444';
+      }
+    }
+
+    const floorVal = document.getElementById('hud-floor-val');
+    if (floorVal) {
+      if (safetyState.floorClearanceZ !== null && !isNaN(safetyState.floorClearanceZ)) {
+        const fz = safetyState.floorClearanceZ;
+        floorVal.innerText = fz.toFixed(0) + ' mm';
+        if (fz <= 91.5) {
+          floorVal.style.color = '#ef4444';
+        } else if (fz < 110) {
+          floorVal.style.color = '#f59e0b';
+        } else {
+          floorVal.style.color = '#38bdf8';
+        }
+      } else {
+        floorVal.innerText = '-- mm';
+        floorVal.style.color = 'var(--mut)';
+      }
+    }
+  };
+
+  // Interactive Test & Demo Cycle
+  let demoSafetyStep = 0;
+  window.testDigitalTwinSafetyCycle = function () {
+    demoSafetyStep = (demoSafetyStep + 1) % 4;
+    const testBtn = document.getElementById('btn-twin-safety-test');
+    if (demoSafetyStep === 1) {
+      // 1. Singularity Warning: Wrist J5 alignment
+      window.updateDigitalTwinSafety({
+        collision: false,
+        singularity: true,
+        message: 'WRIST SINGULARITY (J5 = 1.8° ≈ 0°)',
+        singularityJoints: ['link5', 'link4'],
+        manipPct: 6,
+        floorClearanceZ: 145
+      });
+      if (testBtn) testBtn.style.color = '#f59e0b';
+      if (typeof logMsg === 'function') logMsg('Motion', '⚡ [DEMO] Singularity Warning active: Wrist alignment (J5 ≈ 0°)', 'warn');
+    } else if (demoSafetyStep === 2) {
+      // 2. Table / Plane Collision
+      window.updateDigitalTwinSafety({
+        collision: true,
+        singularity: false,
+        message: 'PLANE COLLISION (Z: 89.2 mm ≤ 91 mm)',
+        collidingLinks: ['link6', 'vacuum', 'gripper'],
+        manipPct: 84,
+        floorClearanceZ: 89.2
+      });
+      if (testBtn) testBtn.style.color = '#ef4444';
+      if (typeof logMsg === 'function') logMsg('Motion', '⚠ [DEMO] Collision Warning active: Ground limit exceeded (Z ≤ 91mm)', 'err');
+    } else if (demoSafetyStep === 3) {
+      // 3. MoveIt 3D Obstacle Collision
+      window.updateDigitalTwinSafety({
+        collision: true,
+        singularity: false,
+        message: 'MOVEIT COLLISION (link5 with obstacle)',
+        collidingLinks: ['link5', 'link6'],
+        manipPct: 45,
+        floorClearanceZ: 180
+      });
+      if (testBtn) testBtn.style.color = '#ef4444';
+      if (typeof logMsg === 'function') logMsg('Motion', '⚠ [DEMO] MoveIt 3D Obstacle Collision halt', 'err');
+    } else {
+      // 0. Nominal / Cleared
+      window.updateDigitalTwinSafety({
+        collision: false,
+        singularity: false,
+        message: '',
+        manipPct: 100,
+        floorClearanceZ: 185
+      });
+      if (testBtn) testBtn.style.color = 'var(--mut)';
+      if (typeof logMsg === 'function') logMsg('Motion', '✓ [DEMO] Safety state cleared. Normal operation.', 'success');
+    }
+  };
   window.updateDigitalTwinJoints = function (jointVals, axisY) {
     if (Array.isArray(jointVals)) {
       for (let i = 0; i < Math.min(jointVals.length, 6); i++) {

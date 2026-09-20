@@ -219,6 +219,9 @@
             <div style="display: flex; align-items: center; gap: 6px;">
               <span class="badge badge-node" id="twin-status-badge" style="font-size: 11px; padding: 2px 8px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
               <div class="twin-toolbar" style="display: flex; gap: 4px;">
+                <button class="btn btn-icon-small" id="btn-twin-safety-test" onclick="testDigitalTwinSafetyCycle()" title="Safety-Warnungen testen (Collision & Singularity Visuals)" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--mut);">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </button>
                 <button class="btn btn-icon-small" onclick="resetDigitalTwinView()" title="Kameraansicht zurücksetzen (Isometrie)" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
                   <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
@@ -235,9 +238,28 @@
             </div>
           </div>
           
-          <div class="viewport-container" style="position: relative; width: 100%; flex: 1; min-height: 240px; background: #0a0e17; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08);">
+          <div class="viewport-container" id="digital-twin-container" style="position: relative; width: 100%; flex: 1; min-height: 240px; background: #0a0e17; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08);">
             <!-- Three.js Canvas Container -->
             <div id="digital-twin-viewport" style="width: 100%; height: 100%; cursor: grab;"></div>
+            
+            <!-- Safety & Warning HUD Banner -->
+            <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
+              <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
+              <span id="twin-warning-text">COLLISION DETECTED</span>
+            </div>
+
+            <!-- Mini Safety Telemetry HUD (Manipulability & Clearance) -->
+            <div id="twin-hud-safety" class="twin-hud-safety">
+              <div class="hud-safety-item" id="hud-manip-item" title="Manipulierbarkeit (Abstand zur Handgelenk-Singularität J5)">
+                <span class="hud-lbl">MANIP</span>
+                <div class="hud-bar-bg"><div id="hud-manip-bar" class="hud-bar-fill" style="width: 100%;"></div></div>
+                <span id="hud-manip-val" class="hud-val">100%</span>
+              </div>
+              <div class="hud-safety-item" id="hud-floor-item" title="Abstand zur Tischplatte (Bodenlimit: 91 mm)">
+                <span class="hud-lbl">FLOOR</span>
+                <span id="hud-floor-val" class="hud-val">-- mm</span>
+              </div>
+            </div>
             
             <!-- RViz Stream Container -->
             <div id="rviz-container" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; align-items: center; justify-content: center;">
