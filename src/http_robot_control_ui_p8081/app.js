@@ -776,7 +776,7 @@ hardwareJoySub.subscribe(function(msg) {
 });
 
 let joyActive = false;
-const maxRadius = 50;
+const maxRadius = 36;
 let joyCenterX = 0, joyCenterY = 0;
 
 if(zone && stick) {

@@ -524,17 +524,20 @@ button.status-pill.reload-btn i {
 
 .joystick-wrapper {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 170px;
+  height: 170px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #joystick-zone {
-  width: 160px;
-  height: 160px;
+  width: 126px;
+  height: 126px;
   border-radius: 50%;
   background: radial-gradient(circle at center, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.9) 100%);
-  border: 2px solid rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.3);
   position: absolute;
   top: 50%;
@@ -544,17 +547,19 @@ button.status-pill.reload-btn i {
 }
 
 #joystick-stick {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.4);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.4);
   position: absolute;
-  top: 50px;
-  left: 50px;
+  top: 50%;
+  left: 50%;
+  margin-top: -26px;
+  margin-left: -26px;
   transition: transform 0.1s;
   cursor: grab;
 }
@@ -565,32 +570,33 @@ button.status-pill.reload-btn i {
 
 .joy-label {
   position: absolute;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 700;
-  opacity: 0.6;
+  opacity: 0.75;
   pointer-events: none;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .joy-label i {
-  color: rgba(255, 255, 255, 0.4); /* Dezentes, leicht transparentes Grau */
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
 }
 
 /* X-Achsen Labels vertikal anordnen (Pfeil über/unter Text) */
 .joy-label.top { 
-  bottom: calc(50% + 85px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
+  bottom: calc(50% + 66px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
   flex-direction: column; gap: 0px; 
 }
 .joy-label.bottom { 
-  top: calc(50% + 85px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
+  top: calc(50% + 66px); left: 50%; transform: translateX(-50%); color: var(--rviz-x);
   flex-direction: column; gap: 0px; 
 }
 
 /* Y-Achsen Labels horizontal belassen */
-.joy-label.left { right: calc(50% + 85px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
-.joy-label.right { left: calc(50% + 85px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
+.joy-label.left { right: calc(50% + 68px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
+.joy-label.right { left: calc(50% + 68px); top: 50%; transform: translateY(-50%); color: var(--rviz-y); }
 
 .joy-active {
   animation: joy-pulse 0.8s ease-in-out infinite;
@@ -699,7 +705,7 @@ button.status-pill.reload-btn i {
 .frame-toggles {
   display: flex;
   gap: 12px;
-  margin-top: 32px;
+  margin-top: 16px;
 }
 
 .speed-control {
@@ -1343,22 +1349,14 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     padding: 10px 12px;
   }
   #panel-jogging .jogging-container {
-    gap: 6px;
+    gap: 8px;
   }
   #panel-jogging .btn-z {
     height: 60px !important;
-    width: 50px !important;
-  }
-  #panel-jogging .joystick-wrapper {
-    width: 140px;
-    height: 140px;
-  }
-  #panel-jogging #joystick-zone {
-    width: 124px;
-    height: 124px;
+    width: 48px !important;
   }
   #panel-jogging .rot-controls .btn-rot {
-    padding: 6px 8px;
+    padding: 5px 8px;
     font-size: 11px;
   }
   #panel-jogging .gripper-controls {
@@ -1366,8 +1364,11 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   }
   #panel-jogging .gripper-controls .btn {
     height: 40px !important;
-    width: 56px !important;
+    width: 54px !important;
     font-size: 10px;
+  }
+  #panel-jogging .frame-toggles {
+    margin-top: 12px;
   }
   #panel-telemetry {
     padding: 8px 12px;
