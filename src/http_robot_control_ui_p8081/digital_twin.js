@@ -6,12 +6,14 @@
 (function () {
   let scene, camera, renderer, controls;
   let robotModel = null;
-  let gridHelper, axesHelper;
+  let gridHelper, axesHelper, shadowPlane;
   let container = null;
   let animId = null;
   let currentJoints = [0, 0, 0, 0, 0, 0];
   let linearShiftY = 0.0;
   let isGridVisible = true;
+  let isEdgesVisible = true;
+  let edgeLines = [];
 
   // Initial camera perspective (ROS coordinates: Z is UP)
   const DEFAULT_CAM_POS = { x: 0.72, y: -0.82, z: 0.52 };
@@ -71,31 +73,55 @@
       controls.update();
     }
 
-    // 5. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
-    scene.add(ambientLight);
+    // 5. Lighting Setup (Enhanced Ambient Occlusion & Dynamic Soft Shadows)
+    // Hemisphere Light: Natural vertical shading gradient (cool bright sky to deep slate ground)
+    const hemiLight = new THREE.HemisphereLight(0xf8fafc, 0x090d16, 0.45);
+    scene.add(hemiLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.85);
-    dirLight1.position.set(1.2, -1.0, 2.0);
-    scene.add(dirLight1);
+    // Key Directional Light: Generates crisp highlights and soft dynamic drop shadows
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.95);
+    keyLight.position.set(1.2, -1.0, 2.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
+    keyLight.shadow.camera.near = 0.1;
+    keyLight.shadow.camera.far = 4.5;
+    keyLight.shadow.camera.left = -0.6;
+    keyLight.shadow.camera.right = 0.6;
+    keyLight.shadow.camera.top = 0.6;
+    keyLight.shadow.camera.bottom = -0.6;
+    keyLight.shadow.bias = -0.0005;
+    keyLight.shadow.normalBias = 0.02; // Prevents shadow acne on curved cylinders
+    keyLight.shadow.radius = 2.0;
+    scene.add(keyLight);
 
-    const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.35); // cyan accent rim light
-    dirLight2.position.set(-1.0, 1.2, 0.8);
-    scene.add(dirLight2);
+    // Rim Light (Cyan): Highlights silhouettes of arm cylinders against dark viewport
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.45);
+    rimLight.position.set(-1.2, 1.2, 1.0);
+    scene.add(rimLight);
 
-    const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.25); // bottom fill
-    dirLight3.position.set(0, 0, -1.0);
-    scene.add(dirLight3);
+    // Fill Light: Soft front-fill so shaded sides remain clearly readable
+    const fillLight = new THREE.DirectionalLight(0x94a3b8, 0.25);
+    fillLight.position.set(0.6, 1.0, 0.5);
+    scene.add(fillLight);
 
-    // 6. Grid & Helpers (Grid in XY plane: rotate from XZ to XY)
+    // 6. Grid, Helpers & Ground Shadow Receiver Plane
     gridHelper = new THREE.GridHelper(1.2, 24, 0x38bdf8, 0x1e293b);
     gridHelper.rotation.x = Math.PI / 2;
-    gridHelper.position.z = -0.001; // slightly below 0
+    gridHelper.position.z = -0.001;
     scene.add(gridHelper);
 
     axesHelper = new THREE.AxesHelper(0.12);
     axesHelper.position.set(0, 0, 0.001);
     scene.add(axesHelper);
+
+    // Soft ground contact shadow plane
+    const shadowPlaneGeo = new THREE.PlaneGeometry(1.6, 1.6);
+    const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.4 });
+    shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
+    shadowPlane.position.z = -0.0005;
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
 
     // 7. Load URDF
     loadURDFModel();
@@ -154,34 +180,117 @@
       'models/lite6.urdf',
       (robot) => {
         robotModel = robot;
+        edgeLines = [];
 
-        // Custom aesthetic material pass for robot links
+        // Helper to resolve link name for each mesh by walking hierarchy
+        function getLinkName(mesh) {
+          let curr = mesh;
+          while (curr && curr !== robot) {
+            if (curr.isURDFLink || curr.urdfNode) {
+              return (curr.name || (curr.urdfNode ? curr.urdfNode.getAttribute('name') : '')).toLowerCase();
+            }
+            if (curr.name && (curr.name.startsWith('link') || curr.name.includes('base') || curr.name.includes('gripper') || curr.name.includes('vacuum'))) {
+              return curr.name.toLowerCase();
+            }
+            curr = curr.parent;
+          }
+          return (mesh.name || '').toLowerCase();
+        }
+
+        // Custom aesthetic material pass: Industrial Two-Tone Joint Contrast & CAD Edges
         robotModel.traverse((child) => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-            
-            const isGripper = child.name && (child.name.includes('gripper') || child.name.includes('vacuum'));
-            const isWrist = child.name && (child.name.includes('link6') || child.name.includes('link5'));
-            
-            if (isGripper) {
-              child.material = new THREE.MeshStandardMaterial({
-                color: 0x1e293b,
-                metalness: 0.6,
-                roughness: 0.35
+
+            const linkName = getLinkName(child);
+            let material;
+            let edgeColor = 0x334155;
+            let edgeOpacity = 0.45;
+
+            if (linkName.includes('gripper') || linkName.includes('vacuum')) {
+              // Vacuum Gripper: Matte Dark Graphite
+              material = new THREE.MeshStandardMaterial({
+                color: 0x0f172a,
+                metalness: 0.4,
+                roughness: 0.45
               });
-            } else if (isWrist) {
-              child.material = new THREE.MeshStandardMaterial({
+              edgeColor = 0x64748b;
+              edgeOpacity = 0.6;
+            } else if (linkName.includes('link6')) {
+              // Tool Flange: Precision Machined Steel / Silver
+              material = new THREE.MeshStandardMaterial({
                 color: 0x94a3b8,
-                metalness: 0.5,
+                metalness: 0.85,
+                roughness: 0.2
+              });
+              edgeColor = 0x475569;
+              edgeOpacity = 0.5;
+            } else if (linkName.includes('link5')) {
+              // Wrist Pitch Housing: Gunmetal Slate
+              material = new THREE.MeshStandardMaterial({
+                color: 0x475569,
+                metalness: 0.6,
                 roughness: 0.3
               });
-            } else {
-              child.material = new THREE.MeshStandardMaterial({
-                color: 0xf1f5f9,
-                metalness: 0.15,
-                roughness: 0.4
+              edgeColor = 0x94a3b8;
+              edgeOpacity = 0.5;
+            } else if (linkName.includes('link3')) {
+              // Elbow Joint Housing: High-contrast Dark Gunmetal (clearly delineates elbow bending!)
+              material = new THREE.MeshStandardMaterial({
+                color: 0x334155,
+                metalness: 0.55,
+                roughness: 0.3
               });
+              edgeColor = 0x94a3b8;
+              edgeOpacity = 0.55;
+            } else if (linkName.includes('base')) {
+              // Base Link: Sturdy Technical Slate / Cast Iron Foundation
+              material = new THREE.MeshStandardMaterial({
+                color: 0x1e293b,
+                metalness: 0.55,
+                roughness: 0.35
+              });
+              edgeColor = 0x64748b;
+              edgeOpacity = 0.5;
+            } else if (linkName.includes('link1')) {
+              // Joint 1 Turret: Titanium Light Grey / Silver (contrasts with dark base below)
+              material = new THREE.MeshStandardMaterial({
+                color: 0xe2e8f0,
+                metalness: 0.35,
+                roughness: 0.28
+              });
+              edgeColor = 0x334155;
+              edgeOpacity = 0.45;
+            } else {
+              // Link 2 & Link 4 (Main Arm Tubes): Brilliant Gloss Robot White
+              material = new THREE.MeshStandardMaterial({
+                color: 0xf8fafc,
+                metalness: 0.15,
+                roughness: 0.25
+              });
+              edgeColor = 0x334155;
+              edgeOpacity = 0.45;
+            }
+
+            child.material = material;
+
+            // CAD Edge Contour Geometry (Edges > 26 deg get crisp architectural lines)
+            if (child.geometry) {
+              try {
+                const edgeGeo = new THREE.EdgesGeometry(child.geometry, 26);
+                const edgeMat = new THREE.LineBasicMaterial({
+                  color: edgeColor,
+                  transparent: true,
+                  opacity: edgeOpacity
+                });
+                const edgeLineMesh = new THREE.LineSegments(edgeGeo, edgeMat);
+                edgeLineMesh.visible = isEdgesVisible;
+                child.add(edgeLineMesh);
+                edgeLines.push(edgeLineMesh);
+              } catch (err) {
+                console.warn('[DigitalTwin] Error generating edge contours for mesh:', err);
+              }
             }
           }
         });
@@ -196,7 +305,7 @@
           badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Live Digital Twin';
           badge.className = 'badge badge-node';
         }
-        console.log('[DigitalTwin] xArm Lite 6 URDF successfully loaded.');
+        console.log('[DigitalTwin] xArm Lite 6 URDF successfully loaded with enhanced shading.');
       },
       (progress) => {
         // loading progress
@@ -256,9 +365,21 @@
     isGridVisible = !isGridVisible;
     if (gridHelper) gridHelper.visible = isGridVisible;
     if (axesHelper) axesHelper.visible = isGridVisible;
+    if (shadowPlane) shadowPlane.visible = isGridVisible;
     const btn = document.getElementById('btn-twin-grid');
     if (btn) {
       btn.style.color = isGridVisible ? 'var(--cyan)' : 'var(--mut)';
+    }
+  };
+
+  window.toggleDigitalTwinEdges = function () {
+    isEdgesVisible = !isEdgesVisible;
+    edgeLines.forEach((l) => {
+      if (l) l.visible = isEdgesVisible;
+    });
+    const btn = document.getElementById('btn-twin-edges');
+    if (btn) {
+      btn.style.color = isEdgesVisible ? 'var(--cyan)' : 'var(--mut)';
     }
   };
 
