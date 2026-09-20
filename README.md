@@ -1437,14 +1437,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_overlay.py` (`rviz_overlay_servo_status`) &nbsp;&nbsp; <sub><i>[`/src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_overlay.py`](./src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_overlay.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-grey?style=flat-square) `rviz_overlay.py` *(Archived)* &nbsp;&nbsp; <sub><i>[`/src/rviz_overlay_servo_status/_archive/rviz_overlay.py`](./src/rviz_overlay_servo_status/_archive/rviz_overlay.py)</i></sub>
 > [!NOTE]
-> 💻 **Run Command:**
-> ```bash
-> ros2 run rviz_overlay_servo_status rviz_overlay
-> ```
+> *(Archived legacy script — replaced by active HUD node `rviz_servo_status.py`)*
 >
-> **Purpose & Task:** Computes the live Tool Center Point (TCP) coordinates via TF2 (`link_base` -> `link_tcp`) and renders a clean 2D text overlay banner in the top-right corner of the RViz viewport displaying the active reference frame and real-time XYZ coordinates in millimeters.
+> **Purpose & Task:** Early test overlay that computed live Tool Center Point (TCP) coordinates via TF2 (`link_base` -> `link_tcp`) for a 2D text overlay banner in the RViz viewport.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -2607,9 +2604,10 @@ dev_ws/
 │   │   └── scripts/
 │   │       └── rviz_object_distance_visualizer.py
 │   ├── rviz_overlay_servo_status/                                         # 🖥️ Python: RViz2 2D text overlay HUDs
+│   │   ├── _archive/
+│   │   │   └── rviz_overlay.py                                            # Archived: Early Cartesian TCP coordinates overlay
 │   │   └── rviz_overlay_servo_status/
-│   │       ├── rviz_overlay.py                                            # Real-time Cartesian TCP coordinates overlay
-│   │       └── rviz_servo_status.py                                    # MoveIt Servo status & warning HUD overlay
+│   │       └── rviz_servo_status.py                                       # MoveIt Servo status & warning HUD overlay
 │   ├── rviz_tab_robot_control_panel/                                      # 🖥️ C++: Custom RViz2 control panel plugin (rviz_common)
 │   ├── rviz_windows_streamer/                                              # 📹 Python/FFmpeg: X11 RViz window capture to MJPEG stream
 │   │   └── rviz_windows_streamer/rviz_windows_streamer_node.py
