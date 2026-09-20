@@ -1008,7 +1008,7 @@
           ],
           "baseCmd": "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py",
           "cmd": "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m yolo_model:=yolov8l.pt",
-          "label": "Robot Vision Bringup (ZED M / IP Cam, YOLO3D, Collision, Grasp)",
+          "label": "Robot Vision Bringup (ZED M / IP Cam, YOLO3D, Collision, Grasp, Overlays)",
           "postCmd": "",
           "type": "launch"
         },

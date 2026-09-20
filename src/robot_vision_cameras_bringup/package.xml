@@ -16,6 +16,8 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>rviz_object_distance_visualizer</exec_depend>
+  <exec_depend>rviz_overlay_servo_status</exec_depend>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>

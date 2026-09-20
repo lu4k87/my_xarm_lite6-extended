@@ -195,6 +195,13 @@ def generate_launch_description():
         output='screen'
     )
 
+    servo_status_overlay_node = Node(
+        package='rviz_overlay_servo_status',
+        executable='servo_status_overlay',
+        name='rviz_overlay_servo_status_node',
+        output='screen'
+    )
+
     ld = LaunchDescription([
         # Arguments
         camera_arg,
@@ -216,6 +223,7 @@ def generate_launch_description():
         yolo_planned_grasp_executor_node,
         grasp_action_bridge_node,
         rviz_object_distance_visualizer_node,
+        servo_status_overlay_node,
     ])
 
     if zed_wrapper_launch is not None:
