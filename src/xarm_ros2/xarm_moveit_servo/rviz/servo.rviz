@@ -460,15 +460,15 @@ Visualization Manager:
         Value: /ui/yolo_collision_toggle
       Value: true
     - Align Bottom: false
-      Background Alpha: 0.800000011920929
+      Background Alpha: 0.0
       Background Color: 0; 0; 0
       Class: rviz_2d_overlay_plugins/TextOverlay
       Enabled: true
-      Foreground Alpha: 0.800000011920929
-      Foreground Color: 25; 255; 240
+      Foreground Alpha: 1.0
+      Foreground Color: 255; 255; 255
       Invert Shadow: false
-      Name: TextOverlay - rviz_overlay_servo_status
-      Overtake BG Color Properties: true
+      Name: TextOverlay - Warning Popup
+      Overtake BG Color Properties: false
       Overtake FG Color Properties: false
       Overtake Position Properties: false
       Topic:
@@ -476,17 +476,17 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /ui/rviz_overlay
+        Value: /ui/rviz_overlay_warning_banner
       Value: true
       font: DejaVu Sans Mono
-      height: 128
-      hor_alignment: left
+      height: 60
+      hor_alignment: center
       hor_dist: 0
-      line width: 2
-      text size: 12
-      ver_alignment: top
+      line width: 1
+      text size: 14
+      ver_alignment: center
       ver_dist: 0
-      width: 128
+      width: 600
     - Align Bottom: false
       Background Alpha: 0.0
       Background Color: 0; 0; 0

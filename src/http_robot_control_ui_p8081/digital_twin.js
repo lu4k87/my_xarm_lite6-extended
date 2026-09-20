@@ -34,7 +34,22 @@
     camera.position.set(DEFAULT_CAM_POS.x, DEFAULT_CAM_POS.y, DEFAULT_CAM_POS.z);
 
     // 3. Renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    } catch (e) {
+      console.warn('[DigitalTwin] WebGL init fallback:', e);
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: false });
+      } catch (e2) {
+        console.error('[DigitalTwin] WebGL completely unavailable:', e2);
+        const badge = document.getElementById('twin-status-badge');
+        if (badge) {
+          badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> No WebGL';
+          badge.className = 'badge badge-kill';
+        }
+        return;
+      }
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
     renderer.outputEncoding = THREE.sRGBEncoding;

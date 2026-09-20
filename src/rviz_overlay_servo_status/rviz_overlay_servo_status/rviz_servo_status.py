@@ -34,6 +34,9 @@ class RvizServoStatusOverlayNode(Node):
         self.last_singularity_time = 0.0
         self.last_servo_collision_time = 0.0
         
+        self.warning_msg = ""
+        self.warning_time = 0.0
+        
         # 10 Hz Update Rate
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.get_logger().info('RViz Servo Status Warning Overlay Node gestartet.')
@@ -46,12 +49,26 @@ class RvizServoStatusOverlayNode(Node):
         # 4: HALT: COLLISION
         # 5: HALT: JOINT BOUND
         now = time.time()
+        status_map = {
+            1: "APPROACHING SINGULARITY",
+            2: "HALT: SINGULARITY",
+            3: "APPROACHING COLLISION",
+            4: "HALT: COLLISION",
+            5: "HALT: JOINT BOUND"
+        }
         if msg.data in (1, 2):
             self.singularity_active = True
             self.last_singularity_time = now
+            self.warning_msg = status_map[msg.data]
+            self.warning_time = now
         elif msg.data in (3, 4):
             self.servo_collision_active = True
             self.last_servo_collision_time = now
+            self.warning_msg = status_map[msg.data]
+            self.warning_time = now
+        elif msg.data == 5:
+            self.warning_msg = status_map[msg.data]
+            self.warning_time = now
         elif msg.data == 0:
             self.singularity_active = False
             self.servo_collision_active = False
@@ -60,6 +77,15 @@ class RvizServoStatusOverlayNode(Node):
 
     def plane_collision_callback(self, msg):
         self.plane_collision_active = bool(msg.data and msg.data.strip())
+        if self.plane_collision_active:
+            self.warning_msg = msg.data.upper() # e.g. "PLANE COLLISION!"
+            self.warning_time = time.time()
+        else:
+            if "PLANE" in self.warning_msg:
+                self.warning_msg = ""
+                del_msg = OverlayText()
+                del_msg.action = OverlayText.DELETE
+                self.banner_publisher.publish(del_msg)
 
     def timer_callback(self):
         try:
@@ -110,6 +136,43 @@ class RvizServoStatusOverlayNode(Node):
             )
 
             self.warning_publisher.publish(warn_msg)
+
+            # 2. Central Popup Warning Banner (Großes Pop-up in der Bildschirmmitte)
+            if self.warning_msg:
+                time_since_warning = now - self.warning_time
+                if time_since_warning < 2.0:
+                    banner = OverlayText()
+                    banner.action = OverlayText.ADD
+                    banner.horizontal_alignment = OverlayText.CENTER
+                    banner.vertical_alignment = OverlayText.CENTER
+                    banner.horizontal_distance = 0
+                    banner.vertical_distance = 0
+                    banner.width = 600
+                    banner.height = 60
+
+                    if "HALT" in self.warning_msg or "PLANE" in self.warning_msg or "APPROACHING COLLISION" in self.warning_msg:
+                        banner.bg_color = ColorRGBA(r=1.0, g=0.0, b=0.0, a=0.8) # Rot
+                        banner.fg_color = ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)
+                    else:
+                        banner.bg_color = ColorRGBA(r=1.0, g=0.5, b=0.0, a=0.8) # Orange
+                        banner.fg_color = ColorRGBA(r=0.0, g=0.0, b=0.0, a=1.0)
+
+                    banner.text_size = 14.0
+                    banner.font = "monospace"
+                    banner.line_width = 1
+
+                    html_text = (
+                        f'<div align="center" style="margin-top: 10px;">'
+                        f'<b><span style="font-size: 16pt;">⚠️ WARNING: {self.warning_msg} ⚠️</span></b>'
+                        f'</div>'
+                    )
+                    banner.text = html_text
+                    self.banner_publisher.publish(banner)
+                else:
+                    del_msg = OverlayText()
+                    del_msg.action = OverlayText.DELETE
+                    self.banner_publisher.publish(del_msg)
+                    self.warning_msg = ""
 
         except Exception:
             pass
