@@ -1621,6 +1621,23 @@ function broadcastAllTFTunerTransforms() {
   }
 }
 
+function updateRangeProgress(slider) {
+  if (!slider || slider.type !== 'range') return;
+  const min = parseFloat(slider.min) !== undefined && !isNaN(parseFloat(slider.min)) ? parseFloat(slider.min) : 0;
+  const max = parseFloat(slider.max) !== undefined && !isNaN(parseFloat(slider.max)) ? parseFloat(slider.max) : 100;
+  const val = parseFloat(slider.value) !== undefined && !isNaN(parseFloat(slider.value)) ? parseFloat(slider.value) : 0;
+  const pct = max > min ? Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100)) : 0;
+  slider.style.backgroundSize = `${pct}% 100%`;
+}
+window.updateRangeProgress = updateRangeProgress;
+
+// Global real-time listener: every slider track updates smoothly as user drags
+document.addEventListener('input', (e) => {
+  if (e.target && e.target.type === 'range') {
+    updateRangeProgress(e.target);
+  }
+});
+
 function updateTunerUI() {
   const data = TF_TUNER_ELEMENTS[currentTFTunerElement];
   if (!data) return;
@@ -1645,24 +1662,27 @@ function updateTunerUI() {
 
   const frameInfo = document.getElementById('tuner-frame-info');
 
-  if (sliderX) sliderX.value = data.x;
+  if (sliderX) { sliderX.value = data.x; updateRangeProgress(sliderX); }
   if (numX) numX.value = Number(data.x).toFixed(3);
-  if (sliderY) sliderY.value = data.y;
+  if (sliderY) { sliderY.value = data.y; updateRangeProgress(sliderY); }
   if (numY) numY.value = Number(data.y).toFixed(3);
-  if (sliderZ) sliderZ.value = data.z;
+  if (sliderZ) { sliderZ.value = data.z; updateRangeProgress(sliderZ); }
   if (numZ) numZ.value = Number(data.z).toFixed(3);
 
-  if (sliderRoll) sliderRoll.value = data.roll;
+  if (sliderRoll) { sliderRoll.value = data.roll; updateRangeProgress(sliderRoll); }
   if (numRoll) numRoll.value = Number(data.roll).toFixed(1);
-  if (sliderPitch) sliderPitch.value = data.pitch;
+  if (sliderPitch) { sliderPitch.value = data.pitch; updateRangeProgress(sliderPitch); }
   if (numPitch) numPitch.value = Number(data.pitch).toFixed(1);
-  if (sliderYaw) sliderYaw.value = data.yaw;
+  if (sliderYaw) { sliderYaw.value = data.yaw; updateRangeProgress(sliderYaw); }
   if (numYaw) numYaw.value = Number(data.yaw).toFixed(1);
 
   if (radContainer) {
     radContainer.style.display = (currentTFTunerElement === 'Safety Zone') ? 'block' : 'none';
   }
-  if (sliderRadius && data.radius !== undefined) sliderRadius.value = data.radius;
+  if (sliderRadius && data.radius !== undefined) {
+    sliderRadius.value = data.radius;
+    updateRangeProgress(sliderRadius);
+  }
   if (numRadius && data.radius !== undefined) numRadius.value = Number(data.radius).toFixed(3);
 
   if (frameInfo) {
@@ -1690,6 +1710,9 @@ function onTunerSliderInput(axis, val) {
     numInput.value = (axis === 'roll' || axis === 'pitch' || axis === 'yaw') ? numVal.toFixed(1) : numVal.toFixed(3);
   }
 
+  const slider = document.getElementById(`tuner-slider-${axis}`);
+  if (slider) updateRangeProgress(slider);
+
   broadcastAllTFTunerTransforms();
 }
 
@@ -1703,6 +1726,7 @@ function onTunerNumChange(axis, val) {
   const slider = document.getElementById(`tuner-slider-${axis}`);
   if (slider) {
     slider.value = numVal;
+    updateRangeProgress(slider);
   }
 
   broadcastAllTFTunerTransforms();
@@ -1755,6 +1779,7 @@ tfBroadcasterInterval = setInterval(broadcastAllTFTunerTransforms, 100);
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     updateTunerUI();
+    document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
     broadcastAllTFTunerTransforms();
   }, 300);
 });
