@@ -305,6 +305,11 @@ function updateLinearAxis(val) {
   
   // Publish to ROS 2
   linearAxisPub.publish(new ROSLIB.Message({ data: numVal }));
+
+  // Update 3D Digital Twin
+  if (typeof window.updateDigitalTwinJoints === 'function') {
+    window.updateDigitalTwinJoints(null, numVal);
+  }
 }
 
 // ── YOLO 3D Objects ─────────────────────────────────────────────────────
@@ -409,11 +414,13 @@ const jointStateSub = new ROSLIB.Topic({
 
 jointStateSub.subscribe((msg) => {
   const jointNames = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6'];
+  const currentJointVals = [];
   let moving = false;
   for (let i=0; i<6; i++) {
     const idx = msg.name.indexOf(jointNames[i]);
     if (idx !== -1) {
       let val = msg.position[idx];
+      currentJointVals.push(val);
       const valEl = document.getElementById(`j${i+1}-val`);
       const fillEl = document.getElementById(`j${i+1}-fill`);
       if(valEl) valEl.innerText = val.toFixed(2);
@@ -428,6 +435,11 @@ jointStateSub.subscribe((msg) => {
         }
       }
     }
+  }
+
+  // Update 3D WebGL Digital Twin
+  if (typeof window.updateDigitalTwinJoints === 'function' && currentJointVals.length === 6) {
+    window.updateDigitalTwinJoints(currentJointVals);
   }
   
   if (moving) {

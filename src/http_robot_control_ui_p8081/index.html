@@ -218,6 +218,43 @@
           </div>
         </section>
 
+        <!-- 3D Digital Twin Viewport (WebGL / Three.js) -->
+        <section id="panel-digital-twin" class="glass-panel" style="padding-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;" onclick="toggleDigitalTwinSection()">
+            <h2 style="margin-bottom: 0; cursor: pointer;"><i class="fa-solid fa-cubes-stacked" style="color: #38bdf8;"></i> 3D Digital Twin (WebGL)</h2>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge badge-node" id="twin-status-badge" style="font-size: 11px; padding: 2px 8px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
+              <button class="btn btn-icon-small" style="background: transparent; border: none; color: var(--mut); padding: 4px;" title="Auf-/Zuklappen">
+                <i class="fa-solid fa-chevron-up" id="btn-twin-collapse-icon"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div id="digital-twin-content" style="margin-top: 12px;">
+            <div style="position: relative; width: 100%; height: 280px; background: #0a0e17; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08);">
+              <!-- Three.js Canvas Container -->
+              <div id="digital-twin-viewport" style="width: 100%; height: 100%; cursor: grab;"></div>
+              
+              <!-- Floating Overlay Controls -->
+              <div class="twin-toolbar" style="position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 10; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 4px;">
+                <button class="btn btn-icon-small" onclick="resetDigitalTwinView()" title="Kameraansicht zurücksetzen (Isometrie)" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                  <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+                <button class="btn btn-icon-small" onclick="setDigitalTwinTopView()" title="Draufsicht (Top-Down)" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-grid" onclick="toggleDigitalTwinGrid()" title="Bodenraster ein-/ausblenden" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--cyan);">
+                  <i class="fa-solid fa-border-all"></i>
+                </button>
+              </div>
+
+              <div style="position: absolute; bottom: 6px; left: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255, 255, 255, 0.4); pointer-events: none; z-index: 5;">
+                xArm Lite 6 · Live Synchronized
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
 
       <div class="col-right" id="col-right">
@@ -412,9 +449,14 @@
       </div>
     </main>
 
-  </div>
+  <!-- WebGL 3D Digital Twin Libraries (Offline-capable) -->
+  <script src="lib/three.min.js"></script>
+  <script src="lib/OrbitControls.js"></script>
+  <script src="lib/STLLoader.js"></script>
+  <script src="lib/URDFLoader.js"></script>
+  <script src="digital_twin.js?v=1"></script>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
   
   <script>
     // ── Live Camera Update Loop ──

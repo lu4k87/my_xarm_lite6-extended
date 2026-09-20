@@ -1225,3 +1225,25 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   background: rgba(56, 189, 248, 0.05) !important;
 }
 
+/* 3D Digital Twin Viewport Styles */
+#digital-twin-viewport:active {
+  cursor: grabbing !important;
+}
+
+.twin-toolbar button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--mut);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.twin-toolbar button:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: var(--txt);
+  transform: translateY(-1px);
+}
+
+
