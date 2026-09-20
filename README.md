@@ -565,7 +565,7 @@ flowchart TD
 > ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=ip_cam
 > ```
 >
-> **Purpose & Task:** The central orchestrator for the entire 3D vision, object detection, and autonomous grasping pipeline. Depending on the `camera` argument, it dynamically launches either the ZED Mini hardware driver (`zed_wrapper`) alongside `pointcloud_optimizer.py` and `yolo_3d_bbox_for_zed_m.py`, or the network-based `yolo_3d_bbox_for_ip_cam.py`. It simultaneously starts the MoveIt collision generator (`yolo_moveit_collision.py`), the trajectory grasp server (`yolo_planned_grasp_executor.py`), the UI bridge (`grasp_action_bridge.py`), the RViz distance visualizer (`rviz_object_distance_visualizer.py`), and the MoveIt Servo warnings status overlay (`servo_status_overlay.py`).
+> **Purpose & Task:** The central orchestrator for the entire 3D vision, object detection, and autonomous grasping pipeline. Depending on the `camera` argument, it dynamically launches either the ZED Mini hardware driver (`zed_wrapper`) alongside `pointcloud_optimizer.py` and `yolo_3d_bbox_for_zed_m.py`, or the network-based `yolo_3d_bbox_for_ip_cam.py`. It simultaneously starts the MoveIt collision generator (`yolo_moveit_collision.py`), the trajectory grasp server (`yolo_planned_grasp_executor.py`), the UI bridge (`grasp_action_bridge.py`), the RViz distance visualizer (`rviz_object_distance_visualizer.py`), and the MoveIt Servo warnings status overlay (`rviz_servo_status.py`).
 >
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
@@ -1471,11 +1471,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `servo_status_overlay.py` (`rviz_overlay_servo_status`) &nbsp;&nbsp; <sub><i>[`/src/rviz_overlay_servo_status/rviz_overlay_servo_status/servo_status_overlay.py`](./src/rviz_overlay_servo_status/rviz_overlay_servo_status/servo_status_overlay.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_servo_status.py` (`rviz_overlay_servo_status`) &nbsp;&nbsp; <sub><i>[`/src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_servo_status.py`](./src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_servo_status.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run rviz_overlay_servo_status servo_status_overlay
+> ros2 run rviz_overlay_servo_status rviz_servo_status
 > ```
 > *(Also automatically started via `robot_vision_cameras_bringup.launch.py`)*
 >
@@ -2609,7 +2609,7 @@ dev_ws/
 │   ├── rviz_overlay_servo_status/                                         # 🖥️ Python: RViz2 2D text overlay HUDs
 │   │   └── rviz_overlay_servo_status/
 │   │       ├── rviz_overlay.py                                            # Real-time Cartesian TCP coordinates overlay
-│   │       └── servo_status_overlay.py                                    # MoveIt Servo status & warning HUD overlay
+│   │       └── rviz_servo_status.py                                    # MoveIt Servo status & warning HUD overlay
 │   ├── rviz_tab_robot_control_panel/                                      # 🖥️ C++: Custom RViz2 control panel plugin (rviz_common)
 │   ├── rviz_windows_streamer/                                              # 📹 Python/FFmpeg: X11 RViz window capture to MJPEG stream
 │   │   └── rviz_windows_streamer/rviz_windows_streamer_node.py

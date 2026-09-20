@@ -195,10 +195,10 @@ def generate_launch_description():
         output='screen'
     )
 
-    servo_status_overlay_node = Node(
+    rviz_servo_status_node = Node(
         package='rviz_overlay_servo_status',
-        executable='servo_status_overlay',
-        name='rviz_overlay_servo_status_node',
+        executable='rviz_servo_status',
+        name='rviz_servo_status',
         output='screen'
     )
 
@@ -223,7 +223,7 @@ def generate_launch_description():
         yolo_planned_grasp_executor_node,
         grasp_action_bridge_node,
         rviz_object_distance_visualizer_node,
-        servo_status_overlay_node,
+        rviz_servo_status_node,
     ])
 
     if zed_wrapper_launch is not None:

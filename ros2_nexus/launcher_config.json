@@ -201,7 +201,7 @@
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses",
       "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner",
       "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",
-      "ros2 run rviz_overlay_servo_status servo_status_overlay",
+      "ros2 run rviz_overlay_servo_status rviz_servo_status",
       "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True",
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=True use_gpu:=True",
       "ros2 run tf_control_tuner tf_control_tuner",
@@ -210,7 +210,7 @@
     "dev_real": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich",
       "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",
-      "ros2 run rviz_overlay_servo_status servo_status_overlay",
+      "ros2 run rviz_overlay_servo_status rviz_servo_status",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
       "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True",
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=True use_gpu:=True",
@@ -245,7 +245,7 @@
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich",
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py",
       "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",
-      "ros2 run rviz_overlay_servo_status servo_status_overlay",
+      "ros2 run rviz_overlay_servo_status rviz_servo_status",
       "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
       "ros2 run web_video_server web_video_server"
     ],
@@ -334,7 +334,7 @@
     ],
     "sec_nodes_5": [
       "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",
-      "ros2 run rviz_overlay_servo_status servo_status_overlay"
+      "ros2 run rviz_overlay_servo_status rviz_servo_status"
     ],
     "sec_nodes_6": [
       "ros2 launch my_3d_vision_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
@@ -969,8 +969,8 @@
         {
           "active": true,
           "args": [],
-          "baseCmd": "ros2 run rviz_overlay_servo_status servo_status_overlay",
-          "cmd": "ros2 run rviz_overlay_servo_status servo_status_overlay",
+          "baseCmd": "ros2 run rviz_overlay_servo_status rviz_servo_status",
+          "cmd": "ros2 run rviz_overlay_servo_status rviz_servo_status",
           "label": "Rviz2 - Overlay: MoveIt Servo Status Warning",
           "postCmd": "",
           "type": "node"
@@ -1008,7 +1008,7 @@
           ],
           "baseCmd": "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py",
           "cmd": "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m yolo_model:=yolov8l.pt",
-          "label": "Robot Vision Bringup (ZED M / IP Cam, YOLO3D, Collision, Grasp, Overlays)",
+          "label": "Robot Vision Bringup (ZED M / IP Cam, YOLO3D, Collision, Grasp)",
           "postCmd": "",
           "type": "launch"
         },
