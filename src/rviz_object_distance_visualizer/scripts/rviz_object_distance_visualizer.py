@@ -200,11 +200,11 @@ class RvizObjectDistanceVisualizer(Node):
         overlay_msg.horizontal_distance = 15  # margin left
         overlay_msg.vertical_distance = 15    # margin top
 
-        overlay_msg.width = 180
-        overlay_msg.height = 112
+        overlay_msg.width = 168
+        overlay_msg.height = 104
         overlay_msg.bg_color = ColorRGBA(r=0.0, g=0.0, b=0.0, a=0.35)
         overlay_msg.fg_color = ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)
-        overlay_msg.text_size = 10.0
+        overlay_msg.text_size = 9.5
         overlay_msg.font = "DejaVu Sans Mono"
         overlay_msg.line_width = 1
 
@@ -214,22 +214,22 @@ class RvizObjectDistanceVisualizer(Node):
         z_str = f"{dz_mm:>4d}".replace(' ', '&nbsp;')
         d_str = f"{d_mm:>4d}".replace(' ', '&nbsp;')
 
-        # Formatted with clean table padding (top & left) and right-aligned measurements:
-        # Distance to Object: (White)
-        # <Object Name> (Purple / Lila: #d070ff)
+        # Formatted with thin typography, clean table padding and right-aligned measurements:
+        # Distance to Object: (White, light/thin weight)
+        # <Object Name> (Purple / Lila: #d070ff, light/thin weight)
         # X: Red (#ff4444)
         # Y: Green (#44ff44)
         # Z: Blue (#44aaff)
         # D: Yellow (#ffff44)
         overlay_msg.text = (
-            '<table border="0" cellpadding="0" cellspacing="0" style="font-family: monospace; font-size: 10pt; line-height: 125%;">'
-            '<tr><td style="padding-top: 7px; padding-left: 9px; padding-right: 9px; padding-bottom: 7px;">'
-            f'<nobr><b style="color: #ffffff;">Distance to Object:</b></nobr><br>'
-            f'<nobr><b style="color: #d070ff;">{obj_name}</b></nobr><br>'
-            f'<nobr><span style="color: #ff4444;">X:&nbsp;{x_str}&nbsp;mm</span></nobr><br>'
-            f'<nobr><span style="color: #44ff44;">Y:&nbsp;{y_str}&nbsp;mm</span></nobr><br>'
-            f'<nobr><span style="color: #44aaff;">Z:&nbsp;{z_str}&nbsp;mm</span></nobr><br>'
-            f'<nobr><span style="color: #ffff44;">D:&nbsp;{d_str}&nbsp;mm</span></nobr>'
+            '<table border="0" cellpadding="0" cellspacing="0" style="font-family: \'DejaVu Sans Mono\', monospace; font-size: 9.5pt; font-weight: 300; line-height: 125%;">'
+            '<tr><td style="padding-top: 6px; padding-left: 8px; padding-right: 8px; padding-bottom: 6px;">'
+            f'<nobr><span style="color: #ffffff; font-weight: 300;">Distance to Object:</span></nobr><br>'
+            f'<nobr><span style="color: #d070ff; font-weight: 300;">{obj_name}</span></nobr><br>'
+            f'<nobr><span style="color: #ff4444; font-weight: 300;">X:&nbsp;{x_str}&nbsp;mm</span></nobr><br>'
+            f'<nobr><span style="color: #44ff44; font-weight: 300;">Y:&nbsp;{y_str}&nbsp;mm</span></nobr><br>'
+            f'<nobr><span style="color: #44aaff; font-weight: 300;">Z:&nbsp;{z_str}&nbsp;mm</span></nobr><br>'
+            f'<nobr><span style="color: #ffff44; font-weight: 300;">D:&nbsp;{d_str}&nbsp;mm</span></nobr>'
             '</td></tr></table>'
         )
 

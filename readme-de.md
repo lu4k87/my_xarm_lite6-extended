@@ -1506,7 +1506,7 @@ flowchart TD
 > ros2 run rviz_overlay_servo_status servo_status_overlay
 > ```
 >
-> **Zweck & Aufgabe:** Projiziert farbkodierte Warn-Banner direkt in das RViz-Sichtfeld bei Annäherung an Singularitäten, Gelenkgrenzen oder Kollisionszonen (aus MoveIt Servo-Statuscodes oder Tischkollisionswarnungen).
+> **Zweck & Aufgabe:** Zeigt ein minimalistisches 2D-HUD-Status-Overlay oben rechts im RViz-Viewport an, das live den Status von Singularity- und Kollisions-Warnungen (`On` / `Off`) überwacht, farbcodiert mit bündiger Monospace-Typografie im einheitlichen Stil des Distanz-Overlays oben links.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1521,7 +1521,7 @@ flowchart TD
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/ui/rviz_overlay_warning`** | `rviz_2d_overlay_msgs/OverlayText` | *Publiziert farbkodierte Warn-Banner als Overlay in RViz.* |
+>> | **`/ui/rviz_overlay_warning`** | `rviz_2d_overlay_msgs/OverlayText` | *Publiziert formatiertes 2D-HUD-Status-Overlay (Singularity & Collision On/Off) für RViz2.* |
 
 ---
 
