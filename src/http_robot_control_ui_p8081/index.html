@@ -322,26 +322,40 @@
               <button class="btn btn-z" onmousedown="playUiClickSound(); startJog(0,0,-1,0,0,0)" onmouseup="stopJog()">⇊<br>Z-</button>
             </div>
 
-            <div class="joystick-wrapper">
-              <div id="joystick-zone">
-                <div id="joystick-stick"></div>
+            <div class="joystick-assembly">
+              <div class="joy-grid-cell joy-top">
+                <button type="button" class="joy-arrow-btn joy-label top" id="btn-arrow-x-plus" onpointerdown="startArrowJog(1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X+ (Vorwärts)">
+                  <i class="fa-solid fa-caret-up"></i>
+                  <span>X+</span>
+                </button>
               </div>
-              <button type="button" class="joy-arrow-btn joy-label top" id="btn-arrow-x-plus" onpointerdown="startArrowJog(1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X+ (Vorwärts)">
-                <i class="fa-solid fa-caret-up"></i>
-                <span>X+</span>
-              </button>
-              <button type="button" class="joy-arrow-btn joy-label bottom" id="btn-arrow-x-minus" onpointerdown="startArrowJog(-1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X- (Rückwärts)">
-                <span>X-</span>
-                <i class="fa-solid fa-caret-down"></i>
-              </button>
-              <button type="button" class="joy-arrow-btn joy-label left" id="btn-arrow-y-plus" onpointerdown="startArrowJog(0, 1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y+ (Links)">
-                <i class="fa-solid fa-caret-left"></i>
-                <span>Y+</span>
-              </button>
-              <button type="button" class="joy-arrow-btn joy-label right" id="btn-arrow-y-minus" onpointerdown="startArrowJog(0, -1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y- (Rechts)">
-                <span>Y-</span>
-                <i class="fa-solid fa-caret-right"></i>
-              </button>
+
+              <div class="joy-grid-cell joy-left">
+                <button type="button" class="joy-arrow-btn joy-label left" id="btn-arrow-y-plus" onpointerdown="startArrowJog(0, 1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y+ (Links)">
+                  <i class="fa-solid fa-caret-left"></i>
+                  <span>Y+</span>
+                </button>
+              </div>
+
+              <div class="joy-grid-cell joy-center">
+                <div id="joystick-zone">
+                  <div id="joystick-stick"></div>
+                </div>
+              </div>
+
+              <div class="joy-grid-cell joy-right">
+                <button type="button" class="joy-arrow-btn joy-label right" id="btn-arrow-y-minus" onpointerdown="startArrowJog(0, -1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y- (Rechts)">
+                  <span>Y-</span>
+                  <i class="fa-solid fa-caret-right"></i>
+                </button>
+              </div>
+
+              <div class="joy-grid-cell joy-bottom">
+                <button type="button" class="joy-arrow-btn joy-label bottom" id="btn-arrow-x-minus" onpointerdown="startArrowJog(-1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X- (Rückwärts)">
+                  <span>X-</span>
+                  <i class="fa-solid fa-caret-down"></i>
+                </button>
+              </div>
             </div>
             
             <div class="rot-and-frame-group">

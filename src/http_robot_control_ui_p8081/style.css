@@ -547,71 +547,111 @@ button.status-pill.reload-btn i {
   transform: scale(0.96);
 }
 
-.joystick-wrapper {
-  position: relative;
-  width: 196px;
-  height: 196px;
+/* ── Discrete CSS Grid Joystick Assembly (Zero Overlap Guaranteed) ── */
+.joystick-assembly {
+  display: grid;
+  grid-template-areas:
+    ".       top     ."
+    "left   center  right"
+    ".     bottom    .";
+  grid-template-columns: auto 130px auto;
+  grid-template-rows: auto 130px auto;
+  align-items: center;
+  justify-items: center;
+  gap: 8px 10px;
   flex-shrink: 0;
+  user-select: none;
+}
+
+.joy-grid-cell.joy-top {
+  grid-area: top;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.joy-grid-cell.joy-left {
+  grid-area: left;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.joy-grid-cell.joy-center {
+  grid-area: center;
+  position: relative;
+  width: 130px;
+  height: 130px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.joy-grid-cell.joy-right {
+  grid-area: right;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.joy-grid-cell.joy-bottom {
+  grid-area: bottom;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 #joystick-zone {
-  width: 148px;
-  height: 148px;
+  width: 130px;
+  height: 130px;
   border-radius: 50%;
   background: radial-gradient(circle at center, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.95) 100%);
   border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 0 24px rgba(0,0,0,0.6), 0 8px 32px rgba(0,0,0,0.35);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.6), 0 6px 24px rgba(0,0,0,0.35);
+  position: relative;
   touch-action: none;
+  cursor: grab;
 }
 
 #joystick-stick {
-  width: 62px;
-  height: 62px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 100%);
   border: 1.5px solid rgba(255, 255, 255, 0.28);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 1px 2px rgba(255,255,255,0.45);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.45), inset 0 1px 2px rgba(255,255,255,0.45);
   position: absolute;
   top: 50%;
   left: 50%;
-  margin-top: -31px;
-  margin-left: -31px;
+  margin-top: -28px;
+  margin-left: -28px;
   transition: transform 0.1s ease-out;
   cursor: grab;
+  pointer-events: none;
 }
 
-#joystick-stick:active {
+#joystick-zone:active #joystick-stick {
   cursor: grabbing;
 }
 
-/* ── Interactive Direction Arrow Buttons around Joystick ── */
+/* ── Direction Arrow Buttons around Joystick ── */
 .joy-arrow-btn {
-  position: absolute;
-  background: rgba(15, 23, 42, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 6px;
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13.5px;
   font-weight: 800;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   user-select: none;
   touch-action: none;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   transition: all 0.15s ease;
-  z-index: 5;
+  white-space: nowrap;
 }
 
 .joy-arrow-btn i {
@@ -619,84 +659,53 @@ button.status-pill.reload-btn i {
 }
 
 .joy-arrow-btn:active {
-  transform: scale(0.94);
+  transform: scale(0.95);
 }
 
 /* X-Achse (Rot) */
-.joy-arrow-btn.top { 
-  bottom: calc(50% + 78px);
-  left: 50%;
-  transform: translateX(-50%);
+.joy-arrow-btn.top,
+.joy-arrow-btn.bottom {
   color: var(--rviz-x);
   flex-direction: column;
-  padding: 3px 10px;
-  gap: 1px;
+  padding: 4px 16px;
+  gap: 2px;
 }
 
-.joy-arrow-btn.top:hover {
-  background: rgba(30, 41, 59, 0.95);
-  border-color: rgba(239, 68, 68, 0.5);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
-}
-
-.joy-arrow-btn.bottom { 
-  top: calc(50% + 78px);
-  left: 50%;
-  transform: translateX(-50%);
-  color: var(--rviz-x);
-  flex-direction: column;
-  padding: 3px 10px;
-  gap: 1px;
-}
-
+.joy-arrow-btn.top:hover,
 .joy-arrow-btn.bottom:hover {
   background: rgba(30, 41, 59, 0.95);
-  border-color: rgba(239, 68, 68, 0.5);
+  border-color: rgba(239, 68, 68, 0.6);
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
 }
 
 .joy-arrow-btn.top.joy-active,
 .joy-arrow-btn.bottom.joy-active {
-  background: rgba(239, 68, 68, 0.3) !important;
+  background: rgba(239, 68, 68, 0.35) !important;
   border-color: var(--rviz-x) !important;
   box-shadow: 0 0 16px rgba(239, 68, 68, 0.7) !important;
   color: #ffffff !important;
 }
 
 /* Y-Achse (Grün) */
-.joy-arrow-btn.left {
-  right: calc(50% + 78px);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--rviz-y);
-  padding: 6px 8px;
-  gap: 4px;
-}
-
-.joy-arrow-btn.left:hover {
-  background: rgba(30, 41, 59, 0.95);
-  border-color: rgba(16, 185, 129, 0.5);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
-}
-
+.joy-arrow-btn.left,
 .joy-arrow-btn.right {
-  left: calc(50% + 78px);
-  top: 50%;
-  transform: translateY(-50%);
   color: var(--rviz-y);
-  padding: 6px 8px;
-  gap: 4px;
+  padding: 8px 12px;
+  gap: 5px;
 }
 
+.joy-arrow-btn.left:hover,
 .joy-arrow-btn.right:hover {
   background: rgba(30, 41, 59, 0.95);
-  border-color: rgba(16, 185, 129, 0.5);
+  border-color: rgba(16, 185, 129, 0.6);
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
 }
 
 .joy-arrow-btn.left.joy-active,
 .joy-arrow-btn.right.joy-active {
-  background: rgba(16, 185, 129, 0.3) !important;
+  background: rgba(16, 185, 129, 0.35) !important;
   border-color: var(--rviz-y) !important;
   box-shadow: 0 0 16px rgba(16, 185, 129, 0.7) !important;
   color: #ffffff !important;

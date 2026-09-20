@@ -910,8 +910,8 @@ function startArrowJog(lx, ly, e) {
 
   // Deflect stick knob slightly towards pressed direction for tactile visual feedback
   if (stick) {
-    const deflectX = -ly * 30;
-    const deflectY = -lx * 30;
+    const deflectX = -ly * 24;
+    const deflectY = -lx * 24;
     stick.style.transform = `translate(${deflectX}px, ${deflectY}px)`;
   }
 
@@ -974,7 +974,7 @@ hardwareJoySub.subscribe(function(msg) {
 });
 
 let joyActive = false;
-const maxRadius = 45;
+const maxRadius = 37;
 let joyCenterX = 0, joyCenterY = 0;
 
 if(zone && stick) {
