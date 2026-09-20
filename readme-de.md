@@ -968,11 +968,11 @@ stateDiagram-v2
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `webcam_aruco_6_pose_node.py` (`webcam_aruco_6_pose`) &nbsp;&nbsp; <sub><i>[`/src/webcam_aruco_6_pose/webcam_aruco_6_pose/webcam_aruco_6_pose_node.py`](./src/webcam_aruco_6_pose/webcam_aruco_6_pose/webcam_aruco_6_pose_node.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ip_cam_aruco_6pose_tf_coord.py` (`ip_cam_aruco_6pose_tf_coord`) &nbsp;&nbsp; <sub><i>[`/src/ip_cam_aruco_6pose_tf_coord/ip_cam_aruco_6pose_tf_coord/ip_cam_aruco_6pose_tf_coord.py`](./src/ip_cam_aruco_6pose_tf_coord/ip_cam_aruco_6pose_tf_coord/ip_cam_aruco_6pose_tf_coord.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node
+> ros2 run ip_cam_aruco_6pose_tf_coord ip_cam_aruco_6pose_tf_coord
 > ```
 > *(Startbar über die ROS 2 Nexus App: Vision-Kategorie)*
 >
@@ -2663,7 +2663,7 @@ dev_ws/
 │   ├── vr_quest3_teleop/                                                  # 🥽 Meta Quest 3 WebXR Teleoperations-Bridge
 │   │   ├── https_vr_webxr_p8443/                                          # Sichere WebXR Browser-Oberfläche & 3D-Controller
 │   │   └── vr_quest3_teleop_node.py                                       # VR 6-DoF Controller-Pose zu MoveIt Servo Bridge
-│   ├── webcam_aruco_6_pose/                                               # 🏷️ Python: 6-DoF ArUco-Marker-Erkennung & TF-Publisher
+│   ├── ip_cam_aruco_6pose_tf_coord/                                       # 🏷️ Python: 6-DoF ArUco-Marker-Erkennung & TF-Publisher
 │   ├── xarm_ros2/                                                         # 🤖 Offizieller xArm ROS 2 Stack (Submodul/Erweitert)
 │   │   └── xarm_moveit_servo/src/xarm_joystick_input.cpp                  # Gamepad-Eingabeknoten mit Kollisionsbremsen-Integration
 │   ├── zed-ros2-interfaces/                                               # 📷 Benutzerdefinierte ROS 2 Interfaces für Stereolabs ZED Kameras

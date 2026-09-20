@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'webcam_aruco_6_pose'
+package_name = 'ip_cam_aruco_6pose_tf_coord'
 
 setup(
     name=package_name,
@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='mk',
     maintainer_email='lu4k87@live.de',
-    description='TODO: Package description',
+    description='IP Cam ArUco 6-Pose TF Coordinate Node',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -24,7 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'webcam_aruco_6_pose_node = webcam_aruco_6_pose.webcam_aruco_6_pose_node:main'
+            'ip_cam_aruco_6pose_tf_coord = ip_cam_aruco_6pose_tf_coord.ip_cam_aruco_6pose_tf_coord:main',
+            'ip_cam_aruco_6pose_tf_coord_node = ip_cam_aruco_6pose_tf_coord.ip_cam_aruco_6pose_tf_coord:main',
         ],
     },
 )

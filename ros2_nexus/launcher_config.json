@@ -278,7 +278,7 @@
     ],
     "sec_5": [],
     "sec_6": [
-      "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node"
+      "ros2 run ip_cam_aruco_6pose_tf_coord ip_cam_aruco_6pose_tf_coord"
     ],
     "sec_7": [
       "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
@@ -343,7 +343,7 @@
       "ros2 run tf_control_tuner tf_control_tuner",
       "ros2 run my_3d_vision_bringup yolo_grasp_executor.py",
       "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
-      "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node"
+      "ros2 run ip_cam_aruco_6pose_tf_coord ip_cam_aruco_6pose_tf_coord"
     ],
     "sec_nodes_7": [
       "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
@@ -1085,9 +1085,9 @@
         {
           "active": true,
           "args": [],
-          "baseCmd": "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node",
-          "cmd": "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node",
-          "label": "Webcam ArUco 6D Pose Node",
+          "baseCmd": "ros2 run ip_cam_aruco_6pose_tf_coord ip_cam_aruco_6pose_tf_coord",
+          "cmd": "ros2 run ip_cam_aruco_6pose_tf_coord ip_cam_aruco_6pose_tf_coord",
+          "label": "IP Cam ArUco 6-Pose TF Coord",
           "postCmd": "",
           "type": "node"
         }

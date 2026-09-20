@@ -5,10 +5,10 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 
-class WebcamArucoPoseNode(Node):
+class IpCamArucoPoseNode(Node):
     def __init__(self):
-        super().__init__('webcam_aruco_6_pose_node')
-        self.get_logger().info('Initializing Webcam ArUco 6D Pose Node...')
+        super().__init__('ip_cam_aruco_6pose_tf_coord')
+        self.get_logger().info('Initializing IP Cam ArUco 6-Pose TF Coord Node...')
         
         # Initialize video capture (try /dev/video0 or /dev/video2)
         # Often webcams might be video0 or video2. We will start with 0.
@@ -17,7 +17,7 @@ class WebcamArucoPoseNode(Node):
             self.cap = cv2.VideoCapture(2)
         
         if not self.cap.isOpened():
-            self.get_logger().error('Could not open webcam!')
+            self.get_logger().error('Could not open camera!')
             return
             
         # Optimize capture to reduce latency
@@ -38,7 +38,7 @@ class WebcamArucoPoseNode(Node):
         
         # Timer for capture loop (30 FPS)
         self.timer = self.create_timer(1.0 / 30.0, self.timer_callback)
-        self.get_logger().info('Webcam ArUco Node started. Press "q" in the window to close.')
+        self.get_logger().info('IP Cam ArUco 6-Pose TF Coord Node started. Press "q" in the window to close.')
 
     def timer_callback(self):
         ret, frame = self.cap.read()
@@ -165,9 +165,9 @@ class WebcamArucoPoseNode(Node):
                     cv2.putText(frame, part_z, (org_x + tw_id + tw_x + tw_y, org_y), font, scale, color_z, thick, cv2.LINE_AA)
                     
         # Display the frame in a large window
-        cv2.namedWindow('Webcam ArUco 6D Pose', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('Webcam ArUco 6D Pose', 1280, 720)
-        cv2.imshow('Webcam ArUco 6D Pose', frame)
+        cv2.namedWindow('IP Cam ArUco 6-Pose TF Coord', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('IP Cam ArUco 6-Pose TF Coord', 1280, 720)
+        cv2.imshow('IP Cam ArUco 6-Pose TF Coord', frame)
         
         # Handle key events
         key = cv2.waitKey(1) & 0xFF
@@ -180,7 +180,7 @@ class WebcamArucoPoseNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = WebcamArucoPoseNode()
+    node = IpCamArucoPoseNode()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
