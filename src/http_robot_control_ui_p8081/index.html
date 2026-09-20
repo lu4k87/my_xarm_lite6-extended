@@ -206,7 +206,7 @@
 
         <!-- 3D Centerpiece (Tab Switcher for 3D Digital Twin WebGL & RViz 3D View) -->
         <section id="panel-3d-centerpiece" class="glass-panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <div class="viewport-tabs">
               <button class="v-tab-btn active" id="tab-twin" onclick="switch3DTab('twin')">
                 <i class="fa-solid fa-cubes-stacked" style="color: #38bdf8;"></i> 3D Digital Twin (WebGL)
@@ -216,32 +216,32 @@
               </button>
             </div>
             
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span class="badge badge-node" id="twin-status-badge" style="font-size: 11px; padding: 2px 8px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
-              <div class="twin-toolbar" style="display: flex; gap: 4px;">
-                <button class="btn btn-icon-small" id="btn-twin-safety-test" onclick="testDigitalTwinSafetyCycle()" title="Safety-Warnungen testen (Collision & Singularity Visuals)" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--mut);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge badge-node" id="twin-status-badge"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
+              <div class="twin-toolbar">
+                <button class="btn btn-icon-small" id="btn-twin-safety-test" onclick="testDigitalTwinSafetyCycle()" title="Safety-Warnungen testen (Collision & Singularity Visuals)" style="color: var(--mut);">
                   <i class="fa-solid fa-shield-halved"></i>
                 </button>
-                <button class="btn btn-icon-small" onclick="resetDigitalTwinView()" title="Kameraansicht zurücksetzen (Isometrie)" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                <button class="btn btn-icon-small" onclick="resetDigitalTwinView()" title="Kameraansicht zurücksetzen (Isometrie)">
                   <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
-                <button class="btn btn-icon-small" onclick="setDigitalTwinTopView()" title="Draufsicht (Top-Down)" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                <button class="btn btn-icon-small" onclick="setDigitalTwinTopView()" title="Draufsicht (Top-Down)">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-grid" onclick="toggleDigitalTwinGrid()" title="Bodenraster ein-/ausblenden" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-grid" onclick="toggleDigitalTwinGrid()" title="Bodenraster ein-/ausblenden" style="color: var(--cyan);">
                   <i class="fa-solid fa-border-all"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-edges" onclick="toggleDigitalTwinEdges()" title="CAD-Kantenkonturen ein-/ausblenden" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-edges" onclick="toggleDigitalTwinEdges()" title="CAD-Kantenkonturen ein-/ausblenden" style="color: var(--cyan);">
                   <i class="fa-solid fa-shapes"></i>
                 </button>
-                <div style="width: 1px; height: 18px; background: rgba(255,255,255,0.15); margin: 0 3px;"></div>
-                <button class="btn btn-icon-small active" id="btn-twin-gizmo" onclick="toggleTCPGizmo()" title="3D TCP-Gizmo ein-/ausblenden (Taste: G)" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--cyan);">
+                <div class="twin-toolbar-divider"></div>
+                <button class="btn btn-icon-small active" id="btn-twin-gizmo" onclick="toggleTCPGizmo()" title="3D TCP-Gizmo ein-/ausblenden (Taste: G)" style="color: var(--cyan);">
                   <i class="fa-solid fa-arrows-up-down-left-right"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-gizmo-mode" onclick="cycleTCPGizmoMode()" title="Modus: Translation (Pfeile) / Rotation (Ringe) [Tasten: T / R]" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-gizmo-mode" onclick="cycleTCPGizmoMode()" title="Modus: Translation (Pfeile) / Rotation (Ringe) [Tasten: T / R]" style="color: var(--cyan);">
                   <i class="fa-solid fa-arrows-to-circle"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-gizmo-sync" onclick="syncTCPGizmoToRobot()" title="Gizmo auf aktuellen Roboter-TCP zurücksetzen (Taste: Esc)" style="width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--mut);">
+                <button class="btn btn-icon-small" id="btn-twin-gizmo-sync" onclick="syncTCPGizmoToRobot()" title="Gizmo auf aktuellen Roboter-TCP zurücksetzen (Taste: Esc)" style="color: var(--mut);">
                   <i class="fa-solid fa-crosshairs"></i>
                 </button>
               </div>
