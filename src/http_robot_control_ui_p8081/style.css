@@ -308,7 +308,7 @@ button.status-pill.reload-btn i {
   background: var(--bg-panel);
   border: 1px solid var(--brd);
   border-radius: 4px;
-  padding: 14px;
+  padding: 12px 14px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.05);
@@ -321,7 +321,7 @@ button.status-pill.reload-btn i {
 .tf-tuner-header h2 {
   font-size: 13.5px !important;
   color: var(--mut);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1205,22 +1205,21 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   background: rgba(0,0,0,0.5);
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.05);
-  padding: 10px 14px;
+  padding: 8px 10px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13.5px;
+  font-size: 12px;
   overflow-y: auto;
   color: #cbd5e1;
-  height: 160px;
-  max-height: 160px;
+  flex: 1;
+  min-height: 80px;
 }
-.log-entry { margin-bottom: 5px; word-break: break-word; line-height: 1.5; font-size: 13.5px; }
-.log-time { color: #64748b; margin-right: 8px; font-size: 12.5px; }
+.log-entry { margin-bottom: 5px; word-break: break-word; line-height: 1.5; font-size: 12.5px; }
+.log-time { color: #64748b; margin-right: 8px; font-size: 12px; }
 
 /* ── TF Control Tuner Section ── */
 .tf-tuner-section {
   display: flex;
   flex-direction: column;
-  padding: 10px 14px;
 }
 
 .tf-tuner-header {
@@ -1575,15 +1574,16 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     min-height: 0;
     height: auto !important;
   }
-  #panel-moveto, #panel-yolo, #panel-jogging, #panel-telemetry, #panel-whisper, #panel-tf-tuner, #panel-console {
+  .glass-panel {
+    padding: 12px 14px !important;
+  }
+  .glass-panel h2,
+  .glass-panel > h2,
+  .tf-tuner-header h2 {
+    margin-bottom: 8px !important;
+  }
+  #panel-moveto, #panel-yolo, #panel-jogging, #panel-telemetry, #panel-whisper, #panel-tf-tuner {
     flex: 0 0 auto;
-  }
-  #panel-jogging {
-    padding: 6px 10px;
-  }
-  #panel-jogging h2 {
-    font-size: 13px;
-    margin-bottom: 8px;
   }
   #panel-jogging .jogging-container {
     gap: 8px;
@@ -1594,57 +1594,74 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     padding: 4px 10px !important;
     gap: 2px !important;
   }
-  #panel-telemetry {
-    padding: 5px 10px;
-  }
-  #panel-telemetry h2 {
-    margin-bottom: 3px;
+  .col-right {
+    gap: 5px !important;
   }
   #panel-telemetry .telemetry-grid {
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     gap: 4px;
   }
   #panel-telemetry .telem-box {
-    padding: 2px 4px;
+    padding: 2px 5px;
   }
   #panel-telemetry .telem-box span[style*="font-size: 22px"] {
-    font-size: 14px !important;
+    font-size: 13px !important;
   }
   #panel-telemetry .telem-box .t-value {
-    font-size: 14px !important;
+    font-size: 13px !important;
   }
-  #panel-telemetry .joint-grid {
-    gap: 2px 6px;
-  }
-  #panel-telemetry .joint-control {
-    margin-bottom: 0;
-  }
-  #panel-telemetry .joint-slider {
-    height: 3px;
-  }
-  #panel-telemetry .linear-axis-box {
+  #panel-telemetry .joints-bars {
+    gap: 2px 10px;
     margin-top: 3px;
     padding: 3px 8px;
   }
-  #panel-whisper {
-    padding: 12px 14px !important;
+  #panel-telemetry .j-col {
+    gap: 2px;
   }
-  #panel-whisper h2 {
-    margin-bottom: 4px;
+  #panel-telemetry .j-header {
+    font-size: 10.5px;
+  }
+  #panel-telemetry .j-bar {
+    height: 4px;
+  }
+  #panel-telemetry .linear-axis-box {
+    margin-top: 3px;
+    padding: 2px 6px;
+  }
+  #panel-yolo .yolo-container {
+    min-height: 20px;
+    margin-bottom: 3px;
+  }
+  #panel-yolo .yolo-empty {
+    padding: 2px 0;
+    font-size: 11px;
+  }
+  #panel-yolo h2:nth-of-type(2) {
+    margin-top: 4px !important;
+    margin-bottom: 2px !important;
+  }
+  #panel-yolo input[type="text"] {
+    height: 28px;
+    font-size: 11.5px;
+  }
+  #panel-yolo button.btn-orange {
+    height: 28px !important;
+    font-size: 11.5px !important;
+    padding: 0 10px !important;
   }
   #panel-whisper > div {
-    margin-top: 8px !important;
-    gap: 14px !important;
+    margin-top: 4px !important;
+    gap: 10px !important;
   }
   #panel-whisper #btn-start-listening {
-    width: 42px !important;
-    height: 42px !important;
+    width: 34px !important;
+    height: 34px !important;
   }
   #panel-whisper #btn-start-listening i {
-    font-size: 18px !important;
+    font-size: 14px !important;
   }
   #panel-whisper #btn-listen-text {
-    font-size: 13.5px !important;
+    font-size: 12.5px !important;
     font-weight: 600 !important;
     color: var(--txt) !important;
   }
@@ -1654,38 +1671,51 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     display: flex;
     flex-direction: column;
   }
-  #panel-tf-tuner {
-    padding: 6px 10px;
-  }
   #panel-tf-tuner .tf-tuner-header {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   #panel-tf-tuner .tuner-selector-row {
-    margin-bottom: 4px;
+    margin-bottom: 3px;
+  }
+  #panel-tf-tuner .tuner-select {
+    height: 22px;
+    font-size: 10.5px;
+    padding: 1px 5px;
   }
   #panel-tf-tuner .tuner-grid {
     gap: 4px;
   }
   #panel-tf-tuner .tuner-col {
-    padding: 4px 6px;
-    gap: 2px;
+    padding: 2px 5px;
+    gap: 1px;
+  }
+  #panel-tf-tuner .tuner-input-row {
+    margin-bottom: 1px;
+  }
+  #panel-tf-tuner .tuner-num {
+    height: 19px;
+    font-size: 10.5px;
+    padding: 0 3px;
   }
   #panel-tf-tuner .tuner-status-bar {
-    margin-top: 3px;
-    padding-top: 2px;
+    margin-top: 2px;
+    padding-top: 1px;
+    font-size: 9px;
   }
   #panel-console {
-    padding: 5px 10px;
-  }
-  #panel-console h2 {
-    margin-bottom: 2px;
+    flex: 1 1 0;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
   }
   #panel-console #log-window {
-    height: 110px !important;
-    max-height: 110px !important;
-    min-height: 110px !important;
+    flex: 1 1 auto;
+    height: 100% !important;
+    max-height: none !important;
+    min-height: 70px !important;
     padding: 6px 8px;
-    font-size: 11.5px;
+    font-size: 11px;
+    box-sizing: border-box;
   }
 }
 

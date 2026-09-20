@@ -99,7 +99,7 @@
 
       <div class="col-left" id="col-left">
         
-        <section id="panel-camera" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+        <section id="panel-camera" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px;">
           <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream</h2>
           <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <div id="cam-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
@@ -110,7 +110,7 @@
           </div>
         </section>
 
-        <section id="panel-camera-2" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+        <section id="panel-camera-2" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px;">
           <h2 style="cursor: grab;"><i class="fa-solid fa-video"></i> Live Stream 2</h2>
           <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <div id="cam-stream-2-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
@@ -121,7 +121,7 @@
           </div>
         </section>
 
-        <section id="panel-zed-camera" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px; padding-bottom: 10px;">
+        <section id="panel-zed-camera" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px;">
           <h2 style="cursor: grab;"><i class="fa-solid fa-camera"></i> ZED M Live Stream</h2>
           <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <div id="zed-cam-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
@@ -205,7 +205,7 @@
 
 
         <!-- 3D Centerpiece (Tab Switcher for 3D Digital Twin WebGL & RViz 3D View) -->
-        <section id="panel-3d-centerpiece" class="glass-panel" style="padding-bottom: 8px;">
+        <section id="panel-3d-centerpiece" class="glass-panel">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <div class="viewport-tabs">
               <button class="v-tab-btn active" id="tab-twin" onclick="switch3DTab('twin')">
