@@ -132,18 +132,18 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-#### 2. Launch the Central Process Cockpit (ROS 2 Nexus)
+#### 2. Launch the Central Process Cockpit (Nexus Webapp)
 ```bash
 ./ros2_nexus/ros2_nexus_web_start.sh
 ```
-*This starts the local process manager daemon and automatically opens the dashboard in your default browser at `http://localhost:5000`.*
+*This starts the local process manager daemon and automatically opens the Nexus Webapp in your default browser at `http://localhost:5000`.*
 
 #### 3. Run Simulation & Explore Web Panels
-1. Inside the **ROS 2 Nexus Web UI**, click the green button **`RUN DEV Setup (FAKE)`**.
+1. Inside the **Nexus Webapp**, click the green button **`RUN DEV Setup (FAKE)`**.
    * Automatically brings up the simulated xArm Lite 6 `ros2_control` hardware interface, MoveIt 2 Servo, RViz2, and the WebSocket ROS Bridge (`ws://localhost:9090`).
-2. Open the **Robot Control Web Panel** (`http://localhost:8081`):
+2. Open the **Robot Control UI** (`http://localhost:8081`):
    * Test Cartesian XYZ jog controls, toggle the virtual vacuum gripper, or command the initial home pose.
-3. Open the **System Monitoring Dashboard** (`http://localhost:8080/dashboard_index.html`):
+3. Open the **Dashboard Monitoring UI** (`http://localhost:8080/dashboard_index.html`):
    * Inspect real-time topic communication rates (Hz), visualize node topology graphs, and inspect live parameters.
 
 [⬆️ Back to Top](#table-of-contents)
@@ -359,7 +359,11 @@ The table below illustrates which project modules can be evaluated in pure softw
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev
+> # Real Hardware MoveIt Servo (with vacuum gripper & 3D scene objects):
+> ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev static_objects:=true
+>
+> # Simulation / Fake Hardware (with virtual linear axis & 3D scene objects):
+> ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link static_objects:=true
 > ```
 > *(Loaded natively as Component inside the MoveIt Servo bringup)*
 >
@@ -565,7 +569,7 @@ flowchart TD
 > ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=ip_cam
 > ```
 >
-> **Purpose & Task:** The central orchestrator for the entire 3D vision, object detection, and autonomous grasping pipeline. Depending on the `camera` argument, it dynamically launches either the ZED Mini hardware driver (`zed_wrapper`) alongside `pointcloud_optimizer.py` and `yolo_3d_bbox_for_zed_m.py`, or the network-based `yolo_3d_bbox_for_ip_cam.py`. It simultaneously starts the MoveIt collision generator (`yolo_moveit_collision.py`), the trajectory grasp server (`yolo_planned_grasp_executor.py`), the UI bridge (`grasp_action_bridge.py`), the RViz distance visualizer (`rviz_object_distance_visualizer.py`), and the MoveIt Servo warnings status overlay (`rviz_servo_status.py`).
+> **Purpose & Task:** The central orchestrator for the entire 3D vision, object detection, and autonomous grasping pipeline. Depending on the `camera` argument, it dynamically launches either the ZED Mini hardware driver (`zed_wrapper`) alongside `pointcloud_optimizer.py` and `yolo_3d_bbox_for_zed_m.py`, or the network-based `yolo_3d_bbox_for_ip_cam.py` together with `ip_cam_aruco_6pose_tf_coord.py` (ArUco 6-Pose TF coordinates). It simultaneously starts the MoveIt collision generator (`yolo_moveit_collision.py`), the trajectory grasp server (`yolo_planned_grasp_executor.py`), the UI bridge (`grasp_action_bridge.py`), the RViz distance visualizer (`rviz_object_distance_visualizer.py`), and the MoveIt Servo warnings status overlay (`rviz_servo_status.py`).
 >
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
@@ -1638,7 +1642,7 @@ flowchart TD
 >   - **Virtual Teleoperation & Ergonomic 1080p Fit:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments. Movement speed and Cartesian jogging have been perfectly synchronized with physical Gamepad controllers (`0.1` to `0.5` m/s). The entire UI layout is ergonomically optimized to fit standard 1080p screens with zero vertical scrolling required.
 >   - **Interactive UI & Layout Optimization:** The layout is intelligently structured with all functional panels (MoveTo, YOLO 3D, Cartesian Jogging, Telemetry, Whisper AI, and Console) preserved. Features dynamic elements like the "Start Listening" Whisper AI button with real-time speech recording and color-coded RViz axis indicators (X Red, Y Green, Z Blue) on input fields.
 >   - **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
->   - **3D Centerpiece Tab Switcher (WebGL Digital Twin & RViz Stream):** An integrated 3D centerpiece featuring quick tab switching between the offline WebGL 3D Digital Twin (powered by Three.js & URDFLoader with live `/joint_states` and `/linear_axis_shift` mirroring, orbit controls, reset, top-down view, and cyber grid floor) and the live RViz2 stream (`/rviz_video/image_raw` on Port 8082) without wasting vertical screen space.
+>   - **3D Centerpiece Tab Switcher (WebGL Digital Twin & RViz Stream):** An integrated 3D centerpiece featuring quick tab switching between the offline WebGL 3D Digital Twin (powered by Three.js & URDFLoader with live `/joint_states` and `/linear_axis_shift` mirroring, orbit controls, reset, top-down view, cyber grid floor, and an interactive 3D Scene Objects Toggle Button `fa-cubes` to show/hide the physical table, shelf, and camera stands dynamically only when `rviz_marker_3d_scene_objects` is active) and the live RViz2 stream (`/rviz_video/image_raw` on Port 8082) without wasting vertical screen space.
 >   - **Color-Coded Console Log:** A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
 >
 >
@@ -2572,7 +2576,12 @@ dev_ws/
 │   ├── http_robot_control_ui_p8081/                                       # 🎮 HTML/JS: Standalone Robot Control & Jogging Web UI
 │   │   ├── index.html                                                     # Robot control interface (Port 8081)
 │   │   ├── app.js                                                         # Rosbridge WebSocket controller & command client
+│   │   ├── digital_twin.js                                                # Three.js 3D WebGL Digital Twin & scene objects
 │   │   └── roslib.min.js                                                  # ROS 2 web bridge client library
+│   ├── web_video_server/                                                  # 📹 ROS 2 HTTP/MJPEG streaming bridge (Port 8082)
+│   │   ├── CMakeLists.txt
+│   │   ├── package.xml
+│   │   └── launch/web_video_server.launch.py                              # Launches web_video_server & rviz_windows_streamer
 │   ├── robot_vision_cameras_bringup/                                      # 🌟 Vision pipeline, TF calibration & grasp execution
 │   │   ├── action/
 │   │   │   └── GraspObject.action                                         # ROS 2 action definition for autonomous grasping

@@ -133,18 +133,18 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-#### 2. Zentrales Prozess-Cockpit starten (ROS 2 Nexus)
+#### 2. Zentrales Prozess-Cockpit starten (Nexus Webapp)
 ```bash
 ./ros2_nexus/ros2_nexus_web_start.sh
 ```
-*Dies startet den lokalen Prozess-Manager-Daemon und öffnet das Dashboard automatisch im Standardbrowser unter `http://localhost:5000`.*
+*Dies startet den lokalen Prozess-Manager-Daemon und öffnet die Nexus Webapp automatisch im Standardbrowser unter `http://localhost:5000`.*
 
 #### 3. Simulation starten & Web-Panels erkunden
-1. Klicke in der **ROS 2 Nexus Web-UI** auf den grünen Button **`RUN DEV Setup (FAKE)`**.
+1. Klicke in der **Nexus Webapp** auf den grünen Button **`RUN DEV Setup (FAKE)`**.
    * Startet automatisch das simulierte xArm Lite 6 `ros2_control` Hardware-Interface, MoveIt 2 Servo, RViz2 und die WebSocket ROS Bridge (`ws://localhost:9090`).
-2. Öffne das **Robot Control Web Panel** (`http://localhost:8081`):
+2. Öffne die **Robot Control UI** (`http://localhost:8081`):
    * Teste kartesische XYZ-Jog-Steuerung, schalte den virtuellen Vakuumgreifer oder fahre die Home-Initialpose an.
-3. Öffne das **System Monitoring Dashboard** (`http://localhost:8080/dashboard_index.html`):
+3. Öffne das **Dashboard Monitoring UI** (`http://localhost:8080/dashboard_index.html`):
    * Überwache Echtzeit-Topic-Frequenzen (Hz), visualisiere Node-Topologiegraphen und inspiziere Live-Parameter.
 
 [⬆️ Zurück zum Inhaltsverzeichnis](#inhaltsverzeichnis)
@@ -363,9 +363,13 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 launch xarm_moveit_servo _robot_moveit_servo_realmove.launch.py
+> # Echte Hardware (REAL) MoveIt Servo (mit Vakuumgreifer & 3D-Szenenobjekten):
+> ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev static_objects:=true
+>
+> # Simulation (FAKE) (mit virtueller Linearachse & 3D-Szenenobjekten):
+> ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link static_objects:=true
 > ```
-> *(Loaded natively as Component)*
+> *(Nativ als Component im MoveIt Servo Bringup geladen)*
 >
 > **Zweck & Aufgabe:** Übersetzt die bereinigten Gamepad-Signale (Analog-Sticks & Trigger) in kartesische Geschwindigkeitsbefehle (`TwistStamped`) für MoveIt Servo. Wendet exponentielles Smoothing an und steuert alle Button-Mappings.
 >
@@ -1668,7 +1672,7 @@ flowchart TD
 >   - **Virtuelle Teleoperation & Ergonomischer 1080p-Fit:** Integrierter 2D-Analogstick für kartesisches Jogging sowie 6-DoF absolute Gelenkwinkel-Slider und Geschwindigkeitsstufen (`0.1` bis `0.5` m/s). Das gesamte Interface ist ergonomisch optimiert, sodass alle Steuerelemente auf Standard-1080p-Monitoren ohne jegliches vertikales Scrollen Platz finden.
 >   - **Interaktives UI & Layout-Optimierung:** Die Benutzeroberfläche behält 100% aller funktionellen Panels (MoveTo, YOLO 3D, Cartesian Jogging, Telemetrie, Whisper AI, Konsole) lückenlos bei. Beinhaltet dynamische Elemente wie den Whisper AI "Start Listening"-Button mit Echtzeit-Sprachaufnahme sowie farbcodierte RViz-Achsenmarkierungen (X Rot, Y Grün, Z Blau) an den Koordinatenfeldern.
 >   - **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
->   - **3D-Centerpiece mit Tab-Umschalter (WebGL Digital Twin & RViz-Stream):** Zentral integrierter 3D-Hauptbereich mit schnellem Umschalt-Tab zwischen dem offline-fähigen 3D WebGL Digital Twin (Three.js & URDFLoader mit Live-Spiegelung von `/joint_states` und `/linear_axis_shift`, Orbit-Kamera, Reset, Draufsicht und Cyber-Grid) und dem Live-Stream aus RViz2 (`/rviz_video/image_raw` auf Port 8082) ohne vertikalen Platzverlust.
+>   - **3D-Centerpiece mit Tab-Umschalter (WebGL Digital Twin & RViz-Stream):** Zentral integrierter 3D-Hauptbereich mit schnellem Umschalt-Tab zwischen dem offline-fähigen 3D WebGL Digital Twin (Three.js & URDFLoader mit Live-Spiegelung von `/joint_states` und `/linear_axis_shift`, Orbit-Kamera, Reset, Draufsicht, Cyber-Grid sowie interaktivem 3D-Szenenobjekte-Toggle-Button `fa-cubes` zum Ein-/Ausblenden von Tisch, Regal und Kamerastativ, die sich bei aktivem `rviz_marker_3d_scene_objects`-Node automatisch zuschalten) und dem Live-Stream aus RViz2 (`/rviz_video/image_raw` auf Port 8082) ohne vertikalen Platzverlust.
 >   - **Farbkodiertes Konsolen-Log:** Ein live scrollbares Konsolen-Log mit detailliertem Feedback für alle Bewegungsbefehle — inklusive Koordinatenanzeige (`X`, `Y`, `Z`) bei MoveTo-Befehlen und expliziten Erfolgs- (✓) / Fehler- (❌) Statusanzeigen mit Fehlercodes.
 >
 >
@@ -2613,7 +2617,12 @@ dev_ws/
 │   ├── http_robot_control_ui_p8081/                                       # 🎮 HTML/JS: Eigenständiges Roboter-Steuerungs- & Jogging-Webpanel
 │   │   ├── index.html                                                     # Roboter-Steuerungsoberfläche (Port 8081)
 │   │   ├── app.js                                                         # Rosbridge WebSocket-Controller & Befehlsclient
+│   │   ├── digital_twin.js                                                # Three.js 3D WebGL Digital Twin & Szenenobjekte
 │   │   └── roslib.min.js                                                  # ROS 2 Web-Bridge Client-Bibliothek
+│   ├── web_video_server/                                                  # 📹 ROS 2 HTTP/MJPEG Streaming-Bridge (Port 8082)
+│   │   ├── CMakeLists.txt
+│   │   ├── package.xml
+│   │   └── launch/web_video_server.launch.py                              # Startet web_video_server & rviz_windows_streamer
 │   ├── robot_vision_cameras_bringup/                                      # 🌟 Vision-Pipeline, TF-Kalibrierung & Greif-Ausführung
 │   │   ├── action/
 │   │   │   └── GraspObject.action                                         # ROS 2 Action-Definition für autonomes Greifen
