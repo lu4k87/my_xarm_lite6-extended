@@ -346,7 +346,7 @@ button.status-pill.sound-btn.sound-muted:hover {
 
 .grid-layout {
   display: grid;
-  grid-template-columns: 1fr 2.5fr 0.8fr;
+  grid-template-columns: 1fr 2.2fr 1fr;
   gap: 8px;
   flex: 1;
 }
@@ -1544,7 +1544,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   flex: 1;
   min-height: 80px;
 }
-.log-entry { margin-bottom: 5px; word-break: break-word; line-height: 1.5; font-size: 12.5px; }
+.log-entry { margin-bottom: 4px; word-break: break-word; line-height: 1.45; font-size: 10.5px; }
 .log-time { color: #64748b; margin-right: 8px; font-size: 12px; }
 
 /* ── TF Control Tuner Section ── */
