@@ -583,6 +583,8 @@ button.status-pill.sound-btn.sound-muted:hover {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-left: 10px;
+  flex-shrink: 0;
 }
 
 .btn-z {
@@ -799,28 +801,41 @@ button.status-pill.sound-btn.sound-muted:hover {
   width: 100%;
 }
 
+.gripper-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
 .jog-divider {
   width: 1px;
-  height: 154px;
-  background: rgba(255, 255, 255, 0.1);
+  height: 162px;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
 }
 
 .gripper-controls {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 .gripper-controls .btn {
   height: 46px;
-  width: 58px;
+  width: 60px;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  font-size: 11px;
+  gap: 4px;
+  font-size: 11.5px;
 }
 .gripper-controls .btn i {
   font-size: 15px;
