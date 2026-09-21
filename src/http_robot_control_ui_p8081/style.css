@@ -781,7 +781,7 @@ button.status-pill.sound-btn.sound-muted:hover {
 
 .btn-rot {
   padding: 6px 8px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--txt);
 }
 
@@ -794,7 +794,7 @@ button.status-pill.sound-btn.sound-muted:hover {
 
 .frame-btn {
   padding: 5px 8px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   text-align: center;
   border-radius: 4px;
@@ -1106,7 +1106,7 @@ input[type=range]:active::-moz-range-thumb {
 
 .input-row-inline .input-group label {
   width: auto;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .input-row-inline .input-group input {
@@ -1544,8 +1544,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   flex: 1;
   min-height: 80px;
 }
-.log-entry { margin-bottom: 3px; word-break: break-word; line-height: 1.4; font-size: 11px; }
-.log-time { color: #64748b; margin-right: 6px; font-size: 11px; }
+.log-entry { margin-bottom: 3px; word-break: break-word; line-height: 1.4; font-size: 13px; }
+.log-time { color: #64748b; margin-right: 6px; font-size: 13px; }
 
 /* ── TF Control Tuner Section ── */
 .tf-tuner-section {
@@ -1580,7 +1580,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   color: #10b981;
   padding: 2px 8px;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
@@ -1665,7 +1665,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .tuner-axis-lbl {
   font-weight: 700;
-  font-size: 11px;
+  font-size: 13px;
   width: 16px;
   text-align: center;
   flex-shrink: 0;
@@ -1684,7 +1684,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .tuner-num {
   width: 54px;
-  font-size: 11px;
+  font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
   text-align: right;
   padding: 2px 4px;
@@ -1720,18 +1720,18 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 /* Source Badges */
-.log-src { font-weight: 700; margin-right: 6px; font-size: 11px; }
+.log-src { font-weight: 700; margin-right: 6px; font-size: 13px; }
 .log-src-ros { color: #c678dd; }      /* Purple */
 .log-src-ui { color: #61afef; }       /* Blue */
 .log-src-sys { color: #e5c07b; }      /* Yellow */
 .log-src-motion { color: #98c379; }   /* Green */
 
 /* Message Types */
-.log-info { color: #abb2bf; font-size: 11px; }         /* Light Gray */
-.log-success { color: #7ee787; font-weight: 600; font-size: 11px; }  /* Bright Green */
-.log-action { color: #56b6c2; font-weight: 600; font-size: 11px; }   /* Cyan */
-.log-warn { color: #d19a66; font-size: 11px; }         /* Orange */
-.log-err { color: #ff7b72; font-weight: 600; font-size: 11px; }      /* Red */
+.log-info { color: #abb2bf; font-size: 13px; }         /* Light Gray */
+.log-success { color: #7ee787; font-weight: 600; font-size: 13px; }  /* Bright Green */
+.log-action { color: #56b6c2; font-weight: 600; font-size: 13px; }   /* Cyan */
+.log-warn { color: #d19a66; font-size: 13px; }         /* Orange */
+.log-err { color: #ff7b72; font-weight: 600; font-size: 13px; }      /* Red */
 
 /* YOLO Objects List */
 .yolo-list-container {
@@ -2062,7 +2062,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .hud-safety-item .hud-lbl {
   color: var(--mut);
   font-weight: 800;
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.5px;
 }
 
@@ -2323,7 +2323,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     gap: 4px;
   }
   #panel-telemetry .j-header {
-    font-size: 11px;
+    font-size: 13px;
   }
   #panel-telemetry .j-bar {
     height: 6px;
@@ -2398,7 +2398,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     gap: 5px;
   }
   #panel-tf-tuner .tuner-col-title {
-    font-size: 11px;
+    font-size: 13px;
     margin-bottom: 4px;
   }
   #panel-tf-tuner .tuner-input-row {
@@ -2435,7 +2435,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     max-height: none !important;
     min-height: 80px !important;
     padding: 8px 10px;
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.45;
     box-sizing: border-box;
   }
