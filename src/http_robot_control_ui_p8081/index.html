@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=16">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -141,15 +141,7 @@
 
       <div class="col-middle" id="col-middle">
         
-        <!-- Hidden inputs for moveToPose() JS compatibility -->
-        <div style="display:none;">
-          <input type="number" id="inp-x" value="300">
-          <input type="number" id="inp-y" value="0">
-          <input type="number" id="inp-z" value="200">
-          <input type="number" id="inp-r" value="3.14">
-          <input type="number" id="inp-p" value="0.00">
-          <input type="number" id="inp-yw" value="0.00">
-        </div>
+
 
         <section id="panel-yolo" class="glass-panel">
           <h2><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO 3D)</h2>
@@ -283,6 +275,22 @@
                 </label>
               </div>
             </div>
+
+            <!-- Floating Absolute Pose Inputs (bottom of viewport) -->
+            <div id="twin-pose-overlay" class="twin-pose-overlay">
+              <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
+              <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
+              <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span></label><input type="number" id="inp-z" step="1" value="200"></div>
+              <div class="input-row-divider"></div>
+              <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">R</span></label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
+              <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
+              <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
+              <div class="input-row-divider"></div>
+              <button class="btn btn-action motion-lockable" onclick="moveToPose()" title="Zur eingegebenen Pose fahren">
+                <i class="fa-solid fa-crosshairs"></i> Go
+              </button>
+            </div>
+
             <!-- Safety & Warning HUD Banner -->
             <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
               <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
