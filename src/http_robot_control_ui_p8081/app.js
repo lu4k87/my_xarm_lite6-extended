@@ -2024,73 +2024,94 @@ window.checkSceneObjectsNodeState = checkSceneObjectsNodeState;
 
 let isSceneObjectsUserVisible = true;
 
-function updateSceneObjectsToolbarBtn(isNodeRunning, isUserVisible) {
-  const btn = document.getElementById('btn-twin-static-objects');
+// Per-group user-visible state (independent toggles per node)
+const sceneGroupUserVisible = { objects: true, plane: true, safety: true, zedm: true };
+const sceneGroupBtnIds = {
+  objects: 'btn-twin-scene-objects',
+  plane:   'btn-twin-scene-plane',
+  safety:  'btn-twin-scene-safety',
+  zedm:    'btn-twin-scene-zedm'
+};
+const sceneGroupLabels = {
+  objects: 'Hohlkörper & Workspace',
+  plane:   'DIN-A4-Schablone',
+  safety:  'Safety Zone',
+  zedm:    'ZED-M Kamerastativ'
+};
+
+function updateSceneNodeBtn(groupKey, isNodeRunning) {
+  const btn = document.getElementById(sceneGroupBtnIds[groupKey]);
   if (!btn) return;
+  const isUserVisible = sceneGroupUserVisible[groupKey];
   if (!isNodeRunning) {
     btn.classList.remove('active');
     btn.style.color = 'var(--dim)';
     btn.style.opacity = '0.45';
-    btn.title = 'Statische 3D-Szenenobjekte (Node inaktiv)';
+    btn.title = `${sceneGroupLabels[groupKey]} (Node inaktiv)`;
   } else if (isUserVisible) {
     btn.classList.add('active');
     btn.style.color = 'var(--cyan)';
     btn.style.opacity = '1.0';
-    btn.title = 'Statische 3D-Szenenobjekte im WebGL ausblenden (Node aktiv)';
+    btn.title = `${sceneGroupLabels[groupKey]} ausblenden (Node aktiv)`;
   } else {
     btn.classList.remove('active');
     btn.style.color = 'var(--mut)';
     btn.style.opacity = '0.8';
-    btn.title = 'Statische 3D-Szenenobjekte im WebGL einblenden (Node aktiv)';
+    btn.title = `${sceneGroupLabels[groupKey]} einblenden (Node aktiv)`;
   }
 }
 
-function toggleSceneObjectsUserVisibility() {
-  isSceneObjectsUserVisible = !isSceneObjectsUserVisible;
+function updateAllSceneNodeBtns(isNodeRunning) {
+  for (const key of Object.keys(sceneGroupBtnIds)) {
+    updateSceneNodeBtn(key, isNodeRunning);
+  }
+}
+
+function toggleSceneNode(groupKey) {
+  sceneGroupUserVisible[groupKey] = !sceneGroupUserVisible[groupKey];
+  const vis = sceneGroupUserVisible[groupKey];
 
   if (isSceneObjectsNodeRunning) {
-    if (window.setTunerSceneObjectsVisibility) {
-      window.setTunerSceneObjectsVisibility(isSceneObjectsUserVisible);
+    if (window.setSceneGroupVisibility) {
+      window.setSceneGroupVisibility(groupKey, vis);
     }
-    if (isSceneObjectsUserVisible && window.updateTunerSceneObjects) {
+    if (vis && window.updateTunerSceneObjects) {
       window.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
     }
-    updateSceneObjectsToolbarBtn(true, isSceneObjectsUserVisible);
-    if (isSceneObjectsUserVisible) {
-      logMsg('WebGL 3D', '🟢 Statische 3D-Objekte im WebGL eingeblendet', 'info');
-    } else {
-      logMsg('WebGL 3D', '⚪ Statische 3D-Objekte im WebGL ausgeblendet', 'warn');
-    }
+    updateSceneNodeBtn(groupKey, true);
+    logMsg('WebGL 3D', `${vis ? '🟢' : '⚪'} ${sceneGroupLabels[groupKey]} ${vis ? 'eingeblendet' : 'ausgeblendet'}`, vis ? 'info' : 'warn');
   } else {
-    // Node is not running
-    if (window.setTunerSceneObjectsVisibility) {
-      window.setTunerSceneObjectsVisibility(false);
+    if (window.setSceneGroupVisibility) {
+      window.setSceneGroupVisibility(groupKey, false);
     }
-    updateSceneObjectsToolbarBtn(false, isSceneObjectsUserVisible);
-    logMsg('WebGL 3D', `ℹ️ Statische 3D-Objekte: ${isSceneObjectsUserVisible ? 'Vorgemerkt (Aktiv)' : 'Deaktiviert'} (Node 'rviz_marker_3d_scene_objects' läuft aktuell nicht)`, 'warn');
+    updateSceneNodeBtn(groupKey, false);
+    logMsg('WebGL 3D', `ℹ️ ${sceneGroupLabels[groupKey]}: ${vis ? 'Vorgemerkt' : 'Deaktiviert'} (Szenen-Nodes laufen nicht)`, 'warn');
   }
+
+  // Update global flag
+  isSceneObjectsUserVisible = Object.values(sceneGroupUserVisible).some(v => v);
 }
-window.toggleSceneObjectsUserVisibility = toggleSceneObjectsUserVisibility;
-window.toggleDigitalTwinStaticObjects = toggleSceneObjectsUserVisibility;
+window.toggleSceneNode = toggleSceneNode;
 
 function applySceneObjectsActiveState(isActive, reason) {
   const wasRunning = isSceneObjectsNodeRunning;
   isSceneObjectsNodeRunning = isActive;
 
-  const effectiveVisibility = isActive && isSceneObjectsUserVisible;
-
   if (isActive) {
     isTFBroadcastActive = true;
-    if (window.setTunerSceneObjectsVisibility) {
-      window.setTunerSceneObjectsVisibility(effectiveVisibility);
+    // Apply per-group visibility
+    for (const key of Object.keys(sceneGroupUserVisible)) {
+      if (window.setSceneGroupVisibility) {
+        window.setSceneGroupVisibility(key, sceneGroupUserVisible[key]);
+      }
     }
-    if (effectiveVisibility && window.updateTunerSceneObjects) {
+    if (window.updateTunerSceneObjects) {
       window.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
     }
     updateTunerUI();
-    updateSceneObjectsToolbarBtn(true, isSceneObjectsUserVisible);
+    updateAllSceneNodeBtns(true);
     if (!wasRunning) {
-      logMsg('TF-Tuner', `🟢 3D-Szenenobjekte Node aktiv (${reason || 'Node aktiv'})${effectiveVisibility ? ' (WebGL sichtbar)' : ' (im WebGL ausgeblendet)'}`, 'info');
+      logMsg('TF-Tuner', `🟢 3D-Szenenobjekte Node aktiv (${reason || 'Node aktiv'})`, 'info');
     }
   } else {
     isTFBroadcastActive = false;
@@ -2098,7 +2119,7 @@ function applySceneObjectsActiveState(isActive, reason) {
       window.setTunerSceneObjectsVisibility(false);
     }
     updateTunerUI();
-    updateSceneObjectsToolbarBtn(false, isSceneObjectsUserVisible);
+    updateAllSceneNodeBtns(false);
     if (wasRunning) {
       logMsg('TF-Tuner', '⚪ 3D-Szenenobjekte ausgeblendet (Node inaktiv)', 'warn');
     }
@@ -2358,7 +2379,7 @@ tfBroadcasterInterval = setInterval(broadcastAllTFTunerTransforms, 100);
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     updateTunerUI();
-    updateSceneObjectsToolbarBtn(isSceneObjectsNodeRunning, isSceneObjectsUserVisible);
+    updateAllSceneNodeBtns(isSceneObjectsNodeRunning);
     document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
   }, 300);
 });

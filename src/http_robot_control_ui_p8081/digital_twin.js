@@ -906,18 +906,6 @@
     }
   };
 
-  window.toggleDigitalTwinStaticObjects = function () {
-    if (typeof window.toggleSceneObjectsUserVisibility === 'function') {
-      window.toggleSceneObjectsUserVisibility();
-    } else {
-      const current = window.getTunerSceneObjectsVisibility();
-      window.setTunerSceneObjectsVisibility(!current);
-      const btn = document.getElementById('btn-twin-static-objects');
-      if (btn) {
-        btn.style.color = !current ? 'var(--cyan)' : 'var(--mut)';
-      }
-    }
-  };
 
   window.resizeDigitalTwin = function () {
     handleResize();
@@ -1058,14 +1046,46 @@
     tunerSceneObjects['Zed M Camera'] = camGroup;
   }
 
+  // Mapping: node group key -> WebGL object names
+  const sceneNodeGroups = {
+    objects: ['Blue Cube', 'Red Rectangle', 'Green Cylinder'],
+    plane:   ['White Plane'],
+    safety:  ['Safety Zone'],
+    zedm:    ['Zed M Camera']
+  };
+  // Per-group visibility state
+  let sceneGroupVisible = { objects: false, plane: false, safety: false, zedm: false };
+
   window.setTunerSceneObjectsVisibility = function (visible) {
     areTunerSceneObjectsVisible = !!visible;
     if (areTunerSceneObjectsVisible && Object.keys(tunerSceneObjects).length === 0) {
       initTunerSceneObjects();
     }
+    // When toggling ALL, set every group to the same state
+    for (const key of Object.keys(sceneGroupVisible)) {
+      sceneGroupVisible[key] = areTunerSceneObjectsVisible;
+    }
     for (const obj of Object.values(tunerSceneObjects)) {
       if (obj) obj.visible = areTunerSceneObjectsVisible;
     }
+  };
+
+  window.setSceneGroupVisibility = function (groupKey, visible) {
+    if (Object.keys(tunerSceneObjects).length === 0) {
+      initTunerSceneObjects();
+    }
+    sceneGroupVisible[groupKey] = !!visible;
+    const names = sceneNodeGroups[groupKey] || [];
+    for (const name of names) {
+      const obj = tunerSceneObjects[name];
+      if (obj) obj.visible = !!visible;
+    }
+    // Update global flag: true if ANY group is visible
+    areTunerSceneObjectsVisible = Object.values(sceneGroupVisible).some(v => v);
+  };
+
+  window.getSceneGroupVisibility = function (groupKey) {
+    return !!sceneGroupVisible[groupKey];
   };
 
   window.getTunerSceneObjectsVisibility = function () {
@@ -1074,7 +1094,6 @@
 
   window.updateTunerSceneObjects = function (elements) {
     if (!elements || !scene) return;
-    if (!areTunerSceneObjectsVisible) return; // Nur aktualisieren, wenn Objekte sichtbar geschaltet sind!
 
     if (Object.keys(tunerSceneObjects).length === 0) {
       initTunerSceneObjects();

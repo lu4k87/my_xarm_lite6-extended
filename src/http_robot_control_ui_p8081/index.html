@@ -240,8 +240,18 @@
                 <button class="btn btn-icon-small" id="btn-twin-edges" onclick="toggleDigitalTwinEdges()" title="CAD-Kantenkonturen ein-/ausblenden" style="color: var(--cyan);">
                   <i class="fa-solid fa-shapes"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-static-objects" onclick="toggleDigitalTwinStaticObjects()" title="Statische 3D-Szenenobjekte ein-/ausblenden (Node aktiv vorausgesetzt)" style="color: var(--dim); opacity: 0.5;">
+                <div class="twin-toolbar-divider"></div>
+                <button class="btn btn-icon-small" id="btn-twin-scene-objects" onclick="toggleSceneNode('objects')" title="Interaktive Hohlkörper & Workspace-Kreis (rviz_marker_3d_scene_objects)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-cubes"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-scene-plane" onclick="toggleSceneNode('plane')" title="Weiße DIN-A4-Schablone (rviz_marker_3d_scene_plane)" style="color: var(--dim); opacity: 0.5;">
+                  <i class="fa-solid fa-square"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-scene-safety" onclick="toggleSceneNode('safety')" title="Safety Zone (rviz_marker_3d_scene_safety_zone)" style="color: var(--dim); opacity: 0.5;">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-scene-zedm" onclick="toggleSceneNode('zedm')" title="ZED-M Kamerastativ (rviz_marker_3d_scene_zedm_stand)" style="color: var(--dim); opacity: 0.5;">
+                  <i class="fa-solid fa-video"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
                 <button class="btn btn-icon-small active" id="btn-twin-gizmo" onclick="toggleTCPGizmo()" title="3D TCP-Gizmo ein-/ausblenden (Taste: G)" style="color: var(--cyan);">
