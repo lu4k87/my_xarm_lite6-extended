@@ -1152,12 +1152,11 @@ input[type=range]:active::-moz-range-thumb {
   font-size: 15px;
 }
 
-/* Floating Speed Toggle (bottom center inside viewport) */
+/* Floating Speed Toggle (top-left inside viewport) */
 .twin-speed-overlay {
   position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 10px;
+  left: 10px;
   z-index: 10;
   background: rgba(10, 14, 23, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1191,7 +1190,7 @@ input[type=number], input[type=text] {
   font-size: 13px;
   font-weight: 600;
   padding: 6px 8px;
-  border-radius: 6px;
+  border-radius: 0;
   outline: none;
   text-align: center;
   transition: border 0.2s, box-shadow 0.2s;
