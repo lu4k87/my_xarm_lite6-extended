@@ -564,12 +564,12 @@ function evaluateRobotSafety() {
     message = (lastServoStatus === 2) ? 'MOVEIT SINGULARITY HALT' : 'APPROACHING SINGULARITY (MOVEIT)';
   }
 
-  // B. Ground / Table Plane Clearance (Z <= 91.5 mm is table limit)
+  // B. Ground / Table Plane Clearance (Z <= 15.0 mm is table limit)
   if (latestEEF_Z !== null && !isNaN(latestEEF_Z)) {
-    if (latestEEF_Z <= 91.5) {
+    if (latestEEF_Z <= 15.0) {
       isCollision = true;
       collidingLinks = ['link6', 'vacuum', 'gripper'];
-      message = `PLANE COLLISION (Z: ${latestEEF_Z.toFixed(1)} mm ≤ 91 mm)`;
+      message = `PLANE COLLISION (Z: ${latestEEF_Z.toFixed(1)} mm ≤ 15 mm)`;
     }
   }
 
@@ -1589,9 +1589,17 @@ function initDragAndDrop() {
   const sortableOpts = {
     group: 'panels',
     animation: 200,
-    handle: 'h2', // Only drag by the header
+    handle: 'h2, .panel-drag-handle, .centerpiece-header, .panel-drag-grip',
+    filter: 'button, input, select, a, .twin-toolbar, .viewport-tabs, .v-tab-btn',
+    preventOnFilter: false,
     ghostClass: 'sortable-ghost',
-    onEnd: saveLayout
+    onEnd: () => {
+      saveLayout();
+      if (typeof window.resizeDigitalTwin === 'function') {
+        setTimeout(window.resizeDigitalTwin, 50);
+        setTimeout(window.resizeDigitalTwin, 250);
+      }
+    }
   };
 
   new Sortable(colLeft, sortableOpts);

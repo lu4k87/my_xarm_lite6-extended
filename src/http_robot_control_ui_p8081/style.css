@@ -1665,6 +1665,28 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   align-items: center;
   margin-bottom: 8px;
   gap: 8px;
+  cursor: grab;
+  user-select: none;
+}
+.centerpiece-header:active {
+  cursor: grabbing;
+}
+.panel-drag-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mut);
+  cursor: grab;
+  padding: 4px;
+  font-size: 13px;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.panel-drag-grip:hover {
+  color: var(--accent);
+  transform: scale(1.1);
+}
+.panel-drag-grip:active {
+  cursor: grabbing;
 }
 
 .twin-toolbar {

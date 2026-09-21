@@ -209,14 +209,17 @@
 
         <!-- 3D Centerpiece (Tab Switcher for 3D Digital Twin WebGL & RViz 3D View) -->
         <section id="panel-3d-centerpiece" class="glass-panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div class="viewport-tabs">
-              <button class="v-tab-btn active" id="tab-twin" onclick="switch3DTab('twin')">
-                <i class="fa-solid fa-cubes-stacked" style="color: #38bdf8;"></i> 3D Digital Twin (WebGL)
-              </button>
-              <button class="v-tab-btn" id="tab-rviz" onclick="switch3DTab('rviz')">
-                <i class="fa-solid fa-cube" style="color: #a855f7;"></i> RViz 3D View (Port 8082)
-              </button>
+          <div class="centerpiece-header panel-drag-handle">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="panel-drag-grip" title="3D Viewport verschieben"><i class="fa-solid fa-grip-vertical"></i></span>
+              <div class="viewport-tabs">
+                <button class="v-tab-btn active" id="tab-twin" onclick="switch3DTab('twin')">
+                  <i class="fa-solid fa-cubes-stacked" style="color: #38bdf8;"></i> 3D Digital Twin (WebGL)
+                </button>
+                <button class="v-tab-btn" id="tab-rviz" onclick="switch3DTab('rviz')">
+                  <i class="fa-solid fa-cube" style="color: #a855f7;"></i> RViz 3D View (Port 8082)
+                </button>
+              </div>
             </div>
             
             <div style="display: flex; align-items: center; gap: 8px;">

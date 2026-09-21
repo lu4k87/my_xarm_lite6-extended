@@ -748,9 +748,9 @@
       if (safetyState.floorClearanceZ !== null && !isNaN(safetyState.floorClearanceZ)) {
         const fz = safetyState.floorClearanceZ;
         floorVal.innerText = fz.toFixed(0) + ' mm';
-        if (fz <= 91.5) {
+        if (fz <= 15.0) {
           floorVal.style.color = '#ef4444';
-        } else if (fz < 110) {
+        } else if (fz < 35.0) {
           floorVal.style.color = '#f59e0b';
         } else {
           floorVal.style.color = '#38bdf8';
