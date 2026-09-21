@@ -55,6 +55,7 @@ ros.on('connection', () => {
   const connDot = document.getElementById('connection-dot');
   if (connDot) connDot.className = 'dot glow-green';
   logMsg('System', 'Connected to rosbridge_server (ws://localhost:9090)', 'info');
+  if (typeof publishSoundState === 'function') publishSoundState();
 
   // Node Checker (mit Error-Handling, um Websocket-Crashes zu vermeiden)
   setInterval(() => {
@@ -900,9 +901,43 @@ function stopJointJog() {
 // ── Web Audio UI Click Sound Effect & Sound Toggle ───────────────────────
 let soundEnabled = localStorage.getItem('robot_control_sound_enabled') !== 'false';
 
+// ROS Publisher for Sound State (Synchronizes sound toggle with backend robot motion nodes)
+const soundStatePub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/ui/sound_enabled',
+  messageType: 'std_msgs/Bool'
+});
+
+function publishSoundState() {
+  if (ros && ros.isConnected) {
+    soundStatePub.publish(new ROSLIB.Message({ data: Boolean(soundEnabled) }));
+  }
+}
+setInterval(publishSoundState, 2000);
+
+function syncAudioElements() {
+  if (uiClickSound) {
+    uiClickSound.muted = !soundEnabled;
+    uiClickSound.volume = soundEnabled ? 1.0 : 0.0;
+    if (!soundEnabled) {
+      uiClickSound.pause();
+      uiClickSound.currentTime = 0;
+    }
+  }
+  if (scanPosSound) {
+    scanPosSound.muted = !soundEnabled;
+    scanPosSound.volume = soundEnabled ? 1.0 : 0.0;
+    if (!soundEnabled) {
+      scanPosSound.pause();
+      scanPosSound.currentTime = 0;
+    }
+  }
+}
+
 function updateSoundUI() {
   const btn = document.getElementById('btn-sound-toggle');
   const icon = document.getElementById('sound-toggle-icon');
+  syncAudioElements();
   if (!btn || !icon) return;
 
   if (soundEnabled) {
@@ -922,13 +957,15 @@ function toggleSound() {
   soundEnabled = !soundEnabled;
   localStorage.setItem('robot_control_sound_enabled', soundEnabled ? 'true' : 'false');
   updateSoundUI();
+  publishSoundState();
   if (soundEnabled) {
     playUiClickSound();
   }
-  logMsg('AUDIO', soundEnabled ? '🔊 Sound-Effekte aktiviert' : '🔇 Sound-Effekte stummgeschaltet', 'info');
+  logMsg('AUDIO', soundEnabled ? '🔊 Sound-Effekte aktiviert (Web & Roboter-Audio AN)' : '🔇 Sound-Effekte stummgeschaltet (Web & Roboter-Audio AUS)', 'info');
 }
 window.toggleSound = toggleSound;
 window.updateSoundUI = updateSoundUI;
+window.publishSoundState = publishSoundState;
 
 let audioCtx = null;
 function playUiClickSound() {

@@ -59,6 +59,15 @@ class RobotMotionHandlerMovegroup(Node):
 
 
         
+        from std_msgs.msg import Bool
+        self.sound_enabled = True
+        self.sound_sub = self.create_subscription(
+            Bool,
+            '/ui/sound_enabled',
+            self._sound_enabled_cb,
+            10
+        )
+
         self.publisher_ = self.create_publisher(
             JointTrajectory, 
             '/lite6_traj_controller/joint_trajectory', 
@@ -233,6 +242,17 @@ class RobotMotionHandlerMovegroup(Node):
         if self.xarm_state_client.service_is_ready():
             self.xarm_state_client.call_async(req)
 
+    def _sound_enabled_cb(self, msg):
+        self.sound_enabled = bool(msg.data)
+        if not self.sound_enabled:
+            try:
+                import pygame
+                if pygame.mixer.get_init():
+                    pygame.mixer.stop()
+            except Exception:
+                pass
+        self.get_logger().info(f"UI Sound State received: enabled={self.sound_enabled}")
+
     def execute_initial_pose_cb(self, request, response):
         if self.is_executing:
             response.success = False
@@ -243,7 +263,7 @@ class RobotMotionHandlerMovegroup(Node):
         self.is_executing = True
         self.stop_requested = False
         
-        if self.sound_initial:
+        if self.sound_enabled and self.sound_initial:
             self.sound_initial.play()
         
         def _task():
@@ -1007,7 +1027,7 @@ class RobotMotionHandlerMovegroup(Node):
             is_scan_pos = (abs(target_x - 0.3) < 0.001 and abs(target_y - 0.0) < 0.001 and abs(target_z - 0.4) < 0.001)
             is_hover_pos = (abs(target_z - 0.04) < 0.001)
             
-            if self.sound_absolute and not is_scan_pos and not is_hover_pos:
+            if self.sound_enabled and self.sound_absolute and not is_scan_pos and not is_hover_pos:
                 self.sound_absolute.play()
             
             self.ui_log(f"MoveTo started (IK mode): X={target_x:.3f}, Y={target_y:.3f}, Z={target_z:.3f}", 'action')

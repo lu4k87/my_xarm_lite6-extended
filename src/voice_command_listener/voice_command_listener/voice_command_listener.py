@@ -21,7 +21,7 @@ try:
 except Exception:
     HAS_WHISPER_IDL = False
 
-from std_msgs.msg import String as StringMsg
+from std_msgs.msg import String as StringMsg, Bool as BoolMsg
 from std_srvs.srv import Trigger
 from rclpy.action import ActionClient
 
@@ -122,6 +122,14 @@ class VoiceCommandListener(Node):
             self.get_logger().warning(f'Audio init failed (sounds disabled): {e}')
             self._sound_initial  = None
             self._sound_absolute = None
+
+        self.sound_enabled = True
+        self.sound_sub = self.create_subscription(
+            BoolMsg,
+            '/ui/sound_enabled',
+            self._sound_enabled_cb,
+            10
+        )
 
         self.word_buffer = deque(maxlen=50)                     
         self.last_trigger_ts = 0.0                          
@@ -369,10 +377,11 @@ class VoiceCommandListener(Node):
         
         # Sound-Feedback sofort bei Erkennung abspielen
         try:
-            if cmd == 'MoveTo: initial' and self._sound_initial:
-                self._sound_initial.play()
-            elif cmd == 'MoveTo: pose' and self._sound_absolute:
-                self._sound_absolute.play()
+            if self.sound_enabled:
+                if cmd == 'MoveTo: initial' and self._sound_initial:
+                    self._sound_initial.play()
+                elif cmd == 'MoveTo: pose' and self._sound_absolute:
+                    self._sound_absolute.play()
         except Exception as e:
             self.get_logger().warning(f'Sound playback error: {e}')
         
@@ -380,6 +389,17 @@ class VoiceCommandListener(Node):
             self.feedback_pub.publish(StringMsg(data=cmd))
         except Exception as e:
             self.get_logger().error(f"Error publishing voice feedback: {e}")
+
+    def _sound_enabled_cb(self, msg):
+        self.sound_enabled = bool(msg.data)
+        if not self.sound_enabled:
+            try:
+                import pygame
+                if pygame.mixer.get_init():
+                    pygame.mixer.stop()
+            except Exception:
+                pass
+        self.get_logger().info(f"UI Sound State received: enabled={self.sound_enabled}")
 
     # -------------------------------------------------------------------------
     # Service Callback

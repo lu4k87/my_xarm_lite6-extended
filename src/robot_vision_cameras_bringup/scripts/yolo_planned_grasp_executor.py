@@ -10,7 +10,7 @@ from rclpy.node import Node
 from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
 from std_srvs.srv import Trigger
 from robot_vision_cameras_bringup.action import GraspObject
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from visualization_msgs.msg import MarkerArray, Marker
 from moveit_msgs.action import MoveGroup
 from moveit_msgs.msg import MotionPlanRequest, Constraints, PositionConstraint, OrientationConstraint, BoundingVolume, PlanningScene, AllowedCollisionMatrix, AllowedCollisionEntry
@@ -55,6 +55,15 @@ class YoloPlannedGraspExecutor(Node):
         except Exception as e:
             self.get_logger().warning(f"Could not initialize audio: {e}")
             self.sound_moves_to_obj = None
+
+        self.sound_enabled = True
+        self.sound_sub = self.create_subscription(
+            Bool,
+            '/ui/sound_enabled',
+            self._sound_enabled_cb,
+            10,
+            callback_group=self.cb_group
+        )
 
         # End effector links that are allowed to collide with the objects
         self.eef_links = [
@@ -126,6 +135,17 @@ class YoloPlannedGraspExecutor(Node):
         # Lock to prevent race conditions from duplicate web UI commands
         import threading
         self.exec_lock = threading.Lock()
+
+    def _sound_enabled_cb(self, msg):
+        self.sound_enabled = bool(msg.data)
+        if not self.sound_enabled:
+            try:
+                import pygame
+                if pygame.mixer.get_init():
+                    pygame.mixer.stop()
+            except Exception:
+                pass
+        self.get_logger().info(f"UI Sound State received: enabled={self.sound_enabled}")
 
     def publish_status(self, msg_str: str, goal_handle=None):
         self.get_logger().info(msg_str)
@@ -281,7 +301,7 @@ class YoloPlannedGraspExecutor(Node):
             # --- PHASE 1: RETRACT (UP) ---
             if check_cancel(): return GraspObject.Result(success=False, message="Cancelled")
             self.publish_status("➤ Phase 1: Lifting arm to avoid collisions.", goal_handle)
-            if self.sound_moves_to_obj:
+            if self.sound_enabled and self.sound_moves_to_obj:
                 self.sound_moves_to_obj.play()
             ik_valid_0 = self._check_ik(cur_x, cur_y, retract_z, target_quat)
             if not ik_valid_0:

@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from std_srvs.srv import Trigger
 from xarm_msgs.srv import MoveCartesian
 import cv2
@@ -55,6 +55,14 @@ class TobiiYoloToGraspRoutine(Node):
             self.sound_moves_to_obj = None
             self.sound_moves_to_init = None
             
+        self.sound_enabled = True
+        self.sound_sub = self.create_subscription(
+            Bool,
+            '/ui/sound_enabled',
+            self._sound_enabled_cb,
+            10
+        )
+
         self.move_client = self.create_client(MoveCartesian, '/ui/execute_move_to_pose')
         
         self.state = 0  # 0: wait for dwell, 1: moving to scene, 2: capturing eef & localizing, 3: moving to hover, 4: done/cooldown
@@ -122,9 +130,24 @@ class TobiiYoloToGraspRoutine(Node):
         if callback:
             future.add_done_callback(callback)
 
+    def _sound_enabled_cb(self, msg):
+        self.sound_enabled = bool(msg.data)
+        if not self.sound_enabled:
+            try:
+                import pygame
+                if pygame.mixer.get_init():
+                    pygame.mixer.stop()
+            except Exception:
+                pass
+        self.get_logger().info(f"UI Sound State received: enabled={self.sound_enabled}")
+
     def play_sounds_sequentially(self, sounds):
+        if not self.sound_enabled:
+            return
         def _play():
             for s in sounds:
+                if not self.sound_enabled:
+                    break
                 if s:
                     s.play()
                     time.sleep(s.get_length() + 0.1)
@@ -528,7 +551,7 @@ class TobiiYoloToGraspRoutine(Node):
         self.target_y = target_y
         self.frozen_eef_frame = big_debug_img.copy()
         
-        if self.sound_obj_detected:
+        if self.sound_enabled and self.sound_obj_detected:
             self.sound_obj_detected.play()
             
         self.state = 3
@@ -545,7 +568,7 @@ class TobiiYoloToGraspRoutine(Node):
         self.state = 4
         self.get_logger().info("Executing move to object!")
         
-        if self.sound_moves_to_obj:
+        if self.sound_enabled and self.sound_moves_to_obj:
             self.sound_moves_to_obj.play()
         
         self.move_to_pose(target_x, target_y, target_z, 3.14, 0.0, 0.0, self.on_hover_reached)
