@@ -597,21 +597,47 @@
       deltaDist_mm = Math.round(gizmoTarget.position.distanceTo(realTCP.position) * 1000.0);
     }
 
+    // Safety check on current gizmo coordinates
+    const r_xy = Math.sqrt(posX_mm * posX_mm + posY_mm * posY_mm);
+    const isInsideDeadzone = (r_xy < 125.0 && posZ_mm < 280.0);
+    const isBelowFloor = (posZ_mm <= 15.0);
+
     // Update floating HUD in viewport
     const hudCoords = document.getElementById('gizmo-hud-coords');
     const hudDelta = document.getElementById('gizmo-hud-delta');
+    const btnExecute = document.getElementById('btn-gizmo-execute');
     if (hudCoords) {
       hudCoords.innerText = `X: ${posX_mm} Y: ${posY_mm} Z: ${posZ_mm}`;
+      if (isInsideDeadzone || isBelowFloor) {
+        hudCoords.style.color = '#ef4444';
+      } else if (r_xy < 140.0 || posZ_mm < 35.0) {
+        hudCoords.style.color = '#f59e0b';
+      } else {
+        hudCoords.style.color = 'inherit';
+      }
     }
     if (hudDelta) {
-      hudDelta.innerText = `Δ ${deltaDist_mm} mm`;
-      if (deltaDist_mm > 4) {
-        hudDelta.style.color = '#38bdf8';
-        hudDelta.style.background = 'rgba(56, 189, 248, 0.2)';
+      if (isInsideDeadzone) {
+        hudDelta.innerText = `⚠️ R: ${Math.round(r_xy)} < 125 mm`;
+        hudDelta.style.color = '#ef4444';
+        hudDelta.style.background = 'rgba(239, 68, 68, 0.25)';
+      } else if (isBelowFloor) {
+        hudDelta.innerText = `⚠️ Z: ${posZ_mm} ≤ 15 mm`;
+        hudDelta.style.color = '#ef4444';
+        hudDelta.style.background = 'rgba(239, 68, 68, 0.25)';
       } else {
-        hudDelta.style.color = 'var(--mut)';
-        hudDelta.style.background = 'rgba(255, 255, 255, 0.06)';
+        hudDelta.innerText = `Δ ${deltaDist_mm} mm`;
+        if (deltaDist_mm > 4) {
+          hudDelta.style.color = '#38bdf8';
+          hudDelta.style.background = 'rgba(56, 189, 248, 0.2)';
+        } else {
+          hudDelta.style.color = 'var(--mut)';
+          hudDelta.style.background = 'rgba(255, 255, 255, 0.06)';
+        }
       }
+    }
+    if (btnExecute) {
+      btnExecute.disabled = (isInsideDeadzone || isBelowFloor);
     }
 
     updateConnectingLine();
@@ -622,6 +648,22 @@
 
     const autoDrop = document.getElementById('chk-gizmo-auto-drop');
     const shouldAutoExecute = autoDrop ? autoDrop.checked : true;
+
+    const posX_mm = Math.round(gizmoTarget.position.x * 1000.0);
+    const posY_mm = Math.round((gizmoTarget.position.y - linearShiftY) * 1000.0);
+    const posZ_mm = Math.round(gizmoTarget.position.z * 1000.0);
+    const r_xy = Math.sqrt(posX_mm * posX_mm + posY_mm * posY_mm);
+    const isInsideDeadzone = (r_xy < 125.0 && posZ_mm < 280.0);
+    const isBelowFloor = (posZ_mm <= 15.0);
+
+    if (isInsideDeadzone || isBelowFloor) {
+      if (typeof logMsg === 'function') {
+        logMsg('GIZMO', isInsideDeadzone 
+          ? `⚠️ Ziel liegt im inneren Singularitäts-/Kollisionsbereich (r=${Math.round(r_xy)} mm < 125 mm). Auto-Fahrt blockiert!`
+          : `⚠️ Ziel liegt in der Tischplatte (Z=${posZ_mm} mm). Auto-Fahrt blockiert!`, 'err');
+      }
+      return;
+    }
 
     const realTCP = getRealRobotTCPPose();
     let deltaDist_mm = realTCP ? (gizmoTarget.position.distanceTo(realTCP.position) * 1000.0) : 999;

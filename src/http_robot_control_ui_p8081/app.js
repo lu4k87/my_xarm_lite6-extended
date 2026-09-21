@@ -471,6 +471,8 @@ eefSub.subscribe((msg) => {
     if(tx) tx.innerText = msg.data[0].toFixed(1);
     if(ty) ty.innerText = msg.data[1].toFixed(1);
     if(tz) tz.innerText = msg.data[2].toFixed(1);
+    latestEEF_X = msg.data[0];
+    latestEEF_Y = msg.data[1];
     latestEEF_Z = msg.data[2];
     evaluateRobotSafety();
   }
@@ -498,6 +500,8 @@ eefSub.subscribe((msg) => {
 
 // ── Live MoveIt Servo & Collision Warning Integration ──────────────────────
 let latestJointVals = [0, 0, 0, 0, 0, 0];
+let latestEEF_X = null;
+let latestEEF_Y = null;
 let latestEEF_Z = null;
 let lastServoStatus = 0;
 let activeCollisionText = '';
@@ -573,23 +577,49 @@ function evaluateRobotSafety() {
     }
   }
 
-  // C. Geometric Wrist Singularity Analysis (Joint 5 near 0°)
+  // C. Inner Workspace Boundary & Self-Collision Deadzone (r = sqrt(x^2 + y^2))
+  if (latestEEF_X !== null && latestEEF_Y !== null && !isNaN(latestEEF_X) && !isNaN(latestEEF_Y)) {
+    const r_xy = Math.sqrt(latestEEF_X * latestEEF_X + latestEEF_Y * latestEEF_Y);
+    const isLowZ = (latestEEF_Z !== null && latestEEF_Z < 280.0);
+    if (r_xy < 118.0 && isLowZ) {
+      isCollision = true;
+      collidingLinks = ['link6', 'link5', 'link2', 'link1'];
+      message = `SELF-COLLISION / INNER CYLINDER (r: ${r_xy.toFixed(0)} mm < 118 mm)`;
+    } else if (r_xy < 138.0 && isLowZ) {
+      if (!isCollision) {
+        isSingularity = true;
+        singularityJoints = ['link5', 'link4', 'link2'];
+        message = `INNER BOUNDARY SINGULARITY (r: ${r_xy.toFixed(0)} mm < 138 mm)`;
+      }
+    }
+  }
+
+  // D. Geometric Wrist Singularity Analysis (Joint 5 near 0°)
   let manipPct = 100;
   if (latestJointVals && latestJointVals.length >= 5) {
     const j5 = latestJointVals[4]; // Joint 5
     const j5Deg = Math.abs(j5 * 180 / Math.PI);
-    manipPct = Math.min(100, Math.max(0, Math.round((j5Deg / 28.0) * 100)));
+    manipPct = Math.min(100, Math.max(0, Math.round((j5Deg / 25.0) * 100)));
 
     if (!isCollision && !isSingularity) {
-      if (j5Deg < 5.0) {
+      if (j5Deg < 3.0) {
         isSingularity = true;
         singularityJoints = ['link5', 'link4'];
         message = `WRIST SINGULARITY (J5 = ${j5Deg.toFixed(1)}° ≈ 0°)`;
-      } else if (j5Deg < 9.5) {
+      } else if (j5Deg < 5.5) {
         isSingularity = true;
         singularityJoints = ['link5'];
         message = `NEAR WRIST SINGULARITY (J5 = ${j5Deg.toFixed(1)}°)`;
       }
+    }
+  }
+
+  // Factor in inner deadzone to manipulability indicator
+  if (latestEEF_X !== null && latestEEF_Y !== null) {
+    const r_xy = Math.sqrt(latestEEF_X * latestEEF_X + latestEEF_Y * latestEEF_Y);
+    if (r_xy < 180.0 && latestEEF_Z !== null && latestEEF_Z < 280.0) {
+      const rPct = Math.min(100, Math.max(0, Math.round(((r_xy - 118.0) / 62.0) * 100)));
+      manipPct = Math.min(manipPct, rPct);
     }
   }
 
@@ -1145,6 +1175,24 @@ window.executeMoveToPoseFromGizmo = function () {
 
   if (isNaN(x) || isNaN(y) || isNaN(z)) {
     logMsg('GIZMO', '❌ Ungültige Gizmo-Zielkoordinaten.', 'err');
+    return;
+  }
+
+  // Safety Validation: Prevent driving into inner singularity & self-collision
+  const r_xy = Math.sqrt(x * x + y * y);
+  if (r_xy < 125.0 && z < 280.0) {
+    logMsg('GIZMO', `❌ FAHRT BLOCKIERT: Ziel liegt in der inneren Singularitätszone (r=${r_xy.toFixed(0)} mm < 125 mm). Kollisionsgefahr mit eigenem Sockel!`, 'err');
+    if (typeof window.updateDigitalTwinSafety === 'function') {
+      window.updateDigitalTwinSafety({
+        collision: true,
+        message: `SELF-COLLISION ZONE (r: ${r_xy.toFixed(0)} mm < 125 mm)`,
+        collidingLinks: ['link6', 'link5', 'link2', 'link1']
+      });
+    }
+    return;
+  }
+  if (z <= 15.0) {
+    logMsg('GIZMO', `❌ FAHRT BLOCKIERT: Ziel liegt in der Tischplatte (Z=${z.toFixed(0)} mm ≤ 15 mm).`, 'err');
     return;
   }
 

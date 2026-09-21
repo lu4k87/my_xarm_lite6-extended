@@ -1016,9 +1016,15 @@ class RobotMotionHandlerMovegroup(Node):
             target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
             q = target_rot.as_quat() # [x, y, z, w]
             
-            # 2. IK Request aufbauen
+            # 2. Safety boundary check (Inner workspace singularity & self-collision radius)
+            r_xy = (target_x**2 + target_y**2)**0.5
+            if r_xy < 0.125 and target_z < 0.28:
+                raise Exception(f"Ziel liegt in der inneren Singularitätszone (r={r_xy*1000:.0f} mm < 125 mm). Kollisionsgefahr mit eigenem Sockel!")
+
+            # 3. IK Request aufbauen mit aktiver Kollisionsprüfung (avoid_collisions = True)
             ik_req = GetPositionIK.Request()
             ik_req.ik_request.group_name = "lite6"
+            ik_req.ik_request.avoid_collisions = True
             ik_req.ik_request.pose_stamped = PoseStamped()
             ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
             ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
