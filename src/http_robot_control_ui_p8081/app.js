@@ -67,6 +67,11 @@ ros.on('connection', () => {
       });
       
       getNodesClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
+        // ── 3D Scene Objects Node Detection ──
+        if (typeof checkSceneObjectsNodeState === 'function') {
+          checkSceneObjectsNodeState(result ? result.nodes : null);
+        }
+
         const dot = document.getElementById('mode-dot');
         const text = document.getElementById('mode-status');
         if (!dot || !text) return;
@@ -117,7 +122,7 @@ ros.on('connection', () => {
         // Verhindert das "Verschmutzen" der WebSocket-Verbindung.
       });
     }
-  }, 5000);
+  }, 2500);
 
   // Live ROS Environment Metadata (Topic: /dashboard/workspace_metadata)
   try {
@@ -1953,7 +1958,9 @@ const TF_TUNER_ELEMENTS = {
 };
 
 let currentTFTunerElement = 'Zed M Camera';
-let isTFBroadcastActive = true;
+let isTFBroadcastActive = false; // Standardmäßig AUS: Nur aktiv wenn Node läuft oder manuell eingeschaltet
+let isSceneObjectsNodeRunning = false;
+let lastSceneMarkerTime = 0;
 let tfBroadcasterInterval = null;
 
 // ROS Topics for TF and Safety Zone
@@ -1968,6 +1975,76 @@ const safetyZoneParamsPub = new ROSLIB.Topic({
   name: '/ui/safety_zone_params',
   messageType: 'std_msgs/Float32MultiArray'
 });
+
+// ── ROS Topics zur Erkennung aktiver Szenenobjekt-Nodes ──
+const sceneMarkersSub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/visualization_marker_array',
+  messageType: 'visualization_msgs/MarkerArray'
+});
+
+sceneMarkersSub.subscribe((msg) => {
+  if (msg && msg.markers && msg.markers.length > 0) {
+    const hasTargetMarkers = msg.markers.some(m =>
+      (m.ns && (m.ns.includes('dynamic_overlays') || m.ns.includes('static_scene') || m.ns.includes('zed_visuals'))) ||
+      [1, 2, 3, 10, 14].includes(m.id)
+    );
+    if (hasTargetMarkers) {
+      lastSceneMarkerTime = Date.now();
+      applySceneObjectsActiveState(true, 'Marker-Stream');
+    }
+  }
+});
+
+const zedVisualMarkersSub = new ROSLIB.Topic({
+  ros: ros,
+  name: '/zed_visual_markers',
+  messageType: 'visualization_msgs/MarkerArray'
+});
+
+zedVisualMarkersSub.subscribe((msg) => {
+  if (msg && msg.markers && msg.markers.length > 0) {
+    lastSceneMarkerTime = Date.now();
+    applySceneObjectsActiveState(true, 'ZED Visual Markers');
+  }
+});
+
+function checkSceneObjectsNodeState(nodesList) {
+  const sceneNodes = ['rviz_marker_3d_scene_objects', 'fixed_marker_publisher', 'tf_control_tuner', 'zed_stand_publisher'];
+  const hasSceneNode = Array.isArray(nodesList) && nodesList.some(n => sceneNodes.some(sn => n.includes(sn)));
+  const recentMarkers = (Date.now() - lastSceneMarkerTime < 4500);
+
+  if (hasSceneNode || recentMarkers) {
+    applySceneObjectsActiveState(true, hasSceneNode ? 'ROS-Knoten' : 'Marker-Stream');
+  } else {
+    applySceneObjectsActiveState(false);
+  }
+}
+window.checkSceneObjectsNodeState = checkSceneObjectsNodeState;
+
+function applySceneObjectsActiveState(isActive, reason) {
+  if (isSceneObjectsNodeRunning === isActive) return;
+  isSceneObjectsNodeRunning = isActive;
+
+  if (isActive) {
+    isTFBroadcastActive = true;
+    if (window.setTunerSceneObjectsVisibility) {
+      window.setTunerSceneObjectsVisibility(true);
+    }
+    if (window.updateTunerSceneObjects) {
+      window.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
+    }
+    updateTunerUI();
+    logMsg('TF-Tuner', `🟢 3D-Szenenobjekte eingeblendet (${reason || 'Node aktiv'})`, 'info');
+  } else {
+    isTFBroadcastActive = false;
+    if (window.setTunerSceneObjectsVisibility) {
+      window.setTunerSceneObjectsVisibility(false);
+    }
+    updateTunerUI();
+    logMsg('TF-Tuner', '⚪ 3D-Szenenobjekte ausgeblendet (Node inaktiv)', 'warn');
+  }
+}
 
 function eulerDegToQuat(rollDeg, pitchDeg, yawDeg) {
   const rollRad = (rollDeg * Math.PI) / 180.0;
@@ -2107,6 +2184,21 @@ function updateTunerUI() {
   if (frameInfo) {
     frameInfo.textContent = `Frame: ${data.frame_id} → world`;
   }
+
+  const btn = document.getElementById('btn-tuner-broadcast');
+  const label = document.getElementById('tuner-broadcast-label');
+  const rateInfo = document.getElementById('tuner-rate-info');
+  if (btn && label && rateInfo) {
+    if (isTFBroadcastActive) {
+      btn.className = 'btn-toggle-broadcast active';
+      label.textContent = 'Live TF';
+      rateInfo.textContent = isSceneObjectsNodeRunning ? '10 Hz (Node aktiv)' : '10 Hz (Manuell)';
+    } else {
+      btn.className = 'btn-toggle-broadcast inactive';
+      label.textContent = 'TF Inaktiv';
+      rateInfo.textContent = 'Warte auf Node...';
+    }
+  }
 }
 
 function onTunerElementChange(name) {
@@ -2171,14 +2263,23 @@ function toggleTFBroadcast() {
     if (isTFBroadcastActive) {
       btn.className = 'btn-toggle-broadcast active';
       if (label) label.textContent = 'Live TF';
-      if (rateInfo) rateInfo.textContent = '10 Hz Active';
-      logMsg('TF-Tuner', 'Live TF broadcasting enabled (10 Hz)', 'success');
+      if (rateInfo) rateInfo.textContent = isSceneObjectsNodeRunning ? '10 Hz (Node aktiv)' : '10 Hz (Manuell)';
+      if (window.setTunerSceneObjectsVisibility) {
+        window.setTunerSceneObjectsVisibility(true);
+      }
+      if (window.updateTunerSceneObjects) {
+        window.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
+      }
+      logMsg('TF-Tuner', 'Live TF-Broadcasting & Szenenobjekte aktiviert', 'success');
       broadcastAllTFTunerTransforms();
     } else {
       btn.className = 'btn-toggle-broadcast inactive';
-      if (label) label.textContent = 'TF Paused';
-      if (rateInfo) rateInfo.textContent = 'Broadcast Off';
-      logMsg('TF-Tuner', 'Live TF broadcasting paused', 'warn');
+      if (label) label.textContent = 'TF Inaktiv';
+      if (rateInfo) rateInfo.textContent = 'Warte auf Node...';
+      if (window.setTunerSceneObjectsVisibility) {
+        window.setTunerSceneObjectsVisibility(false);
+      }
+      logMsg('TF-Tuner', 'Live TF-Broadcasting & Szenenobjekte deaktiviert', 'warn');
     }
   }
 }
@@ -2199,7 +2300,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     updateTunerUI();
     document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
-    broadcastAllTFTunerTransforms();
   }, 300);
 });
 

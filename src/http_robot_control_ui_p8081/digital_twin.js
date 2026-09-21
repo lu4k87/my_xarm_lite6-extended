@@ -976,6 +976,7 @@
 
   // ── 3D Scene Objects for TF Control Tuner ────────────────────────────────
   let tunerSceneObjects = {};
+  let areTunerSceneObjectsVisible = false;
 
   function initTunerSceneObjects() {
     if (!scene || Object.keys(tunerSceneObjects).length > 0) return;
@@ -986,6 +987,7 @@
     const blueMesh = new THREE.Mesh(blueGeo, blueMat);
     blueMesh.castShadow = true;
     blueMesh.receiveShadow = true;
+    blueMesh.visible = areTunerSceneObjectsVisible;
     scene.add(blueMesh);
     tunerSceneObjects['Blue Cube'] = blueMesh;
 
@@ -995,6 +997,7 @@
     const redMesh = new THREE.Mesh(redGeo, redMat);
     redMesh.castShadow = true;
     redMesh.receiveShadow = true;
+    redMesh.visible = areTunerSceneObjectsVisible;
     scene.add(redMesh);
     tunerSceneObjects['Red Rectangle'] = redMesh;
 
@@ -1005,6 +1008,7 @@
     const greenMesh = new THREE.Mesh(greenGeo, greenMat);
     greenMesh.castShadow = true;
     greenMesh.receiveShadow = true;
+    greenMesh.visible = areTunerSceneObjectsVisible;
     scene.add(greenMesh);
     tunerSceneObjects['Green Cylinder'] = greenMesh;
 
@@ -1013,6 +1017,7 @@
     const planeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.85, roughness: 0.6 });
     const planeMesh = new THREE.Mesh(planeGeo, planeMat);
     planeMesh.receiveShadow = true;
+    planeMesh.visible = areTunerSceneObjectsVisible;
     scene.add(planeMesh);
     tunerSceneObjects['White Plane'] = planeMesh;
 
@@ -1021,6 +1026,7 @@
     const safetyMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide });
     const safetyMesh = new THREE.Mesh(safetyGeo, safetyMat);
     safetyMesh.position.z = 0.0005;
+    safetyMesh.visible = areTunerSceneObjectsVisible;
     scene.add(safetyMesh);
     tunerSceneObjects['Safety Zone'] = safetyMesh;
 
@@ -1034,12 +1040,29 @@
     camGroup.add(camBody);
     const camAxes = new THREE.AxesHelper(0.06);
     camGroup.add(camAxes);
+    camGroup.visible = areTunerSceneObjectsVisible;
     scene.add(camGroup);
     tunerSceneObjects['Zed M Camera'] = camGroup;
   }
 
+  window.setTunerSceneObjectsVisibility = function (visible) {
+    areTunerSceneObjectsVisible = !!visible;
+    if (areTunerSceneObjectsVisible && Object.keys(tunerSceneObjects).length === 0) {
+      initTunerSceneObjects();
+    }
+    for (const obj of Object.values(tunerSceneObjects)) {
+      if (obj) obj.visible = areTunerSceneObjectsVisible;
+    }
+  };
+
+  window.getTunerSceneObjectsVisibility = function () {
+    return areTunerSceneObjectsVisible;
+  };
+
   window.updateTunerSceneObjects = function (elements) {
     if (!elements || !scene) return;
+    if (!areTunerSceneObjectsVisible) return; // Nur aktualisieren, wenn Objekte sichtbar geschaltet sind!
+
     if (Object.keys(tunerSceneObjects).length === 0) {
       initTunerSceneObjects();
     }
