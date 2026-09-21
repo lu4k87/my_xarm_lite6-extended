@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -550,8 +550,12 @@
               <button class="btn btn-icon-small" onclick="resetCurrentTFElement()" title="Aktuelles Element auf Standardwerte zurücksetzen" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
                 <i class="fa-solid fa-rotate-left"></i>
               </button>
+              <button class="btn btn-icon-small" id="btn-tf-collapse" onclick="toggleTFTunerCollapse()" title="TF Control Tuner ein-/ausklappen" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
+                <i class="fa-solid fa-chevron-up" id="tf-collapse-icon"></i>
+              </button>
             </div>
           </div>
+          <div id="tf-tuner-body" class="tf-tuner-body">
 
           <div class="tuner-selector-row">
             <label for="tuner-element-select" style="font-size: 11px; font-weight: 600; color: var(--mut); text-transform: uppercase; letter-spacing: 0.5px;">Element:</label>
@@ -633,6 +637,7 @@
             <span id="tuner-frame-info">Frame: zed_camera_link → world</span>
             <span id="tuner-rate-info">10 Hz Active</span>
           </div>
+          </div>
         </section>
 
         <section id="panel-console" class="glass-panel console-section">
@@ -653,7 +658,7 @@
   <script src="lib/URDFLoader.js"></script>
   <script src="digital_twin.js?v=9"></script>
 
-  <script src="app.js?v=11"></script>
+  <script src="app.js?v=12"></script>
   
   <script>
     // ── Live Camera Update Loop ──

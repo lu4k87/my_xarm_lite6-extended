@@ -2376,11 +2376,32 @@ if (tfBroadcasterInterval) clearInterval(tfBroadcasterInterval);
 tfBroadcasterInterval = setInterval(broadcastAllTFTunerTransforms, 100);
 
 // Initialize Tuner UI on ready
+// ── TF Tuner Collapse Toggle ──
+function toggleTFTunerCollapse() {
+  const body = document.getElementById('tf-tuner-body');
+  const icon = document.getElementById('tf-collapse-icon');
+  if (!body || !icon) return;
+  const isCollapsed = body.classList.toggle('collapsed');
+  icon.className = isCollapsed ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
+  localStorage.setItem('tf_tuner_collapsed', isCollapsed ? '1' : '0');
+}
+
+function restoreTFTunerCollapse() {
+  const saved = localStorage.getItem('tf_tuner_collapsed');
+  if (saved === '1') {
+    const body = document.getElementById('tf-tuner-body');
+    const icon = document.getElementById('tf-collapse-icon');
+    if (body) body.classList.add('collapsed');
+    if (icon) icon.className = 'fa-solid fa-chevron-down';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     updateTunerUI();
     updateAllSceneNodeBtns(isSceneObjectsNodeRunning);
     document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
+    restoreTFTunerCollapse();
   }, 300);
 });
 
