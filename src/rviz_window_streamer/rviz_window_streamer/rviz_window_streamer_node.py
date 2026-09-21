@@ -11,7 +11,7 @@ import numpy as np
 
 class RVizStreamerNode(Node):
     def __init__(self):
-        super().__init__('rviz_windows_streamer_node')
+        super().__init__('rviz_window_streamer_node')
         
         self.publisher_ = self.create_publisher(Image, '/rviz_video/image_raw', 10)
         self.timer = self.create_timer(1.0 / 15.0, self.timer_callback) # 15 FPS

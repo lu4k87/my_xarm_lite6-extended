@@ -1465,40 +1465,6 @@ flowchart TD
 >> | **`/xarm/set_state`** | `xarm_msgs/srv/SetInt16` (Client) | *Setzt Hardware-Zustände auf dem xArm-Controller.* |
 >
 
----
-
-<br>
-
-#### ![Node](https://img.shields.io/badge/Node-grey?style=flat-square) `rviz_overlay.py` *(Archiviert)* &nbsp;&nbsp; <sub><i>[`/src/rviz_overlay_servo_status/_archive/rviz_overlay.py`](./src/rviz_overlay_servo_status/_archive/rviz_overlay.py)</i></sub>
-> [!NOTE]
-> *(Archiviertes Legacy-Skript — ersetzt durch das aktive HUD-System `rviz_servo_status.py`)*
->
-> **Zweck & Aufgabe:** Früheres Test-Overlay zur Berechnung der Live-Koordinaten des Tool Center Points (TCP) via TF2 (`link_base` -> `link_tcp`) für ein 2D-Text-Overlay-Banner im RViz-Sichtfeld.
->
->
-> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
->
->> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
->> | **`/ui/robot_control/current_frame`** | `std_msgs/String` | *Empfängt das aktive Koordinatensystem (`link_base` oder `link_tcp`).* |
->
->
-> ![TF2](https://img.shields.io/badge/TF2-yellow?style=flat-square)
->
->> | Frame / Transformation | Beschreibung |
->> |---|---|
->> | **`link_base` ➔ `link_tcp`** | *Liest die aktuelle TCP-Transformation bei 10 Hz für die Live-Koordinatenanzeige aus.* |
->
->
-> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
->
->> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
->> | **`/ui/rviz_overlay`** | `rviz_2d_overlay_msgs/OverlayText` | *Publiziert den formatierten HUD-Overlay-Text für RViz2.* |
-
----
-
-<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_servo_status.py` (`rviz_overlay_servo_status`) &nbsp;&nbsp; <sub><i>[`/src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_servo_status.py`](./src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_servo_status.py)</i></sub>
 > [!NOTE]
@@ -1566,11 +1532,11 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_windows_streamer_node.py` (`rviz_windows_streamer`) &nbsp;&nbsp; <sub><i>[`/src/rviz_windows_streamer/rviz_windows_streamer/rviz_windows_streamer_node.py`](./src/rviz_windows_streamer/rviz_windows_streamer/rviz_windows_streamer_node.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_window_streamer_node.py` (`rviz_window_streamer`) &nbsp;&nbsp; <sub><i>[`/src/rviz_window_streamer/rviz_window_streamer/rviz_window_streamer_node.py`](./src/rviz_window_streamer/rviz_window_streamer/rviz_window_streamer_node.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run rviz_windows_streamer rviz_windows_streamer_node
+> ros2 run rviz_window_streamer rviz_window_streamer_node
 > ```
 > *(Wird automatisch über das Nexus Web Bringup gestartet)*
 >
@@ -2622,7 +2588,7 @@ dev_ws/
 │   ├── web_video_server/                                                  # 📹 ROS 2 HTTP/MJPEG Streaming-Bridge (Port 8082)
 │   │   ├── CMakeLists.txt
 │   │   ├── package.xml
-│   │   └── launch/web_video_server.launch.py                              # Startet web_video_server & rviz_windows_streamer
+│   │   └── launch/web_video_server.launch.py                              # Startet web_video_server & rviz_window_streamer
 │   ├── robot_vision_cameras_bringup/                                      # 🌟 Vision-Pipeline, TF-Kalibrierung & Greif-Ausführung
 │   │   ├── action/
 │   │   │   └── GraspObject.action                                         # ROS 2 Action-Definition für autonomes Greifen
@@ -2656,13 +2622,11 @@ dev_ws/
 │   │   └── scripts/
 │   │       └── rviz_object_distance_visualizer.py
 │   ├── rviz_overlay_servo_status/                                         # 🖥️ Python: RViz2 2D-Text-Overlay HUDs
-│   │   ├── _archive/
-│   │   │   └── rviz_overlay.py                                            # Archiviert: Früheres kartesisches TCP-Koordinaten-Overlay
 │   │   └── rviz_overlay_servo_status/
 │   │       └── rviz_servo_status.py                                       # MoveIt Servo-Status & Warn-HUD Overlay
 │   ├── rviz_tab_robot_control_panel/                                      # 🖥️ C++: Benutzerdefiniertes RViz2 Control Panel Plugin (rviz_common)
-│   ├── rviz_windows_streamer/                                              # 📹 Python/FFmpeg: X11 RViz-Fenstererfassung zu MJPEG-Stream
-│   │   └── rviz_windows_streamer/rviz_windows_streamer_node.py
+│   ├── rviz_window_streamer/                                               # 📹 Python/FFmpeg: X11 RViz-Fenstererfassung zu MJPEG-Stream
+│   │   └── rviz_window_streamer/rviz_window_streamer_node.py
 │   ├── tcp_laser_pointer/                                                 # 🔴 Python: Automatische Steuerung des TCP-Laserpointers
 │   │   └── tcp_laser_pointer/laser_pointer_node.py
 │   ├── teleop_pre_collision_checker/                                      # 🛡️ Python: Prädiktiver Kollisionswächter & Geschwindigkeitsskalierer
