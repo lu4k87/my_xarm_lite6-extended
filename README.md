@@ -1530,21 +1530,14 @@ flowchart TD
 > ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py
 > ```
 >
-> **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., visual table edges, interactive target boxes, and a dynamic transparent **Safety Zone**). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
->
->
-> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
->
->> | Topic / Interface | Msg Type | Description |
->> |---|---|---|
->> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Receives safety zone boundary data.* |
+> **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., workspace circle boundary and interactive hollow-body target boxes). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
->> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Renders virtual markers (safety-zone, tables) in RViz.* |
+>> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Renders virtual markers (workspace circle, interactive target boxes) in RViz.* |
 >
 >
 
@@ -1575,11 +1568,41 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_stand_publisher.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/zed_stand_publisher.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/zed_stand_publisher.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_3d_scene_safety_zone.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_safety_zone.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_safety_zone.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run rviz_marker_3d_scene_objects zed_stand_publisher
+> ros2 run rviz_marker_3d_scene_objects rviz_marker_3d_scene_safety_zone
+> ```
+> *(Automatically started via `rviz_marker_3d_scene_objects.launch.py`)*
+>
+> **Purpose & Task:** Publishes a dynamic, transparent green cylinder marker representing the **Safety Zone** in the RViz2 3D scene. Subscribes to `/ui/safety_zone_params` to receive position and radius from the Robot Control UI.
+>
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Receives safety zone boundary data (x, y, radius).* |
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Renders the dynamic safety zone cylinder marker in RViz.* |
+>
+>
+
+---
+
+<br>
+
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_3d_scene_zedm_stand.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_zedm_stand.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_zedm_stand.py)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 run rviz_marker_3d_scene_objects rviz_marker_3d_scene_zedm_stand
 > ```
 > *(Automatically started via `rviz_marker_3d_scene_objects.launch.py`)*
 >
@@ -2598,7 +2621,8 @@ dev_ws/
 │   │   └── rviz_marker_3d_scene_objects/
 │   │       ├── rviz_marker_3d_scene_objects.py                            # Publishes table boundary & exclusion zone markers
 │   │       ├── rviz_marker_3d_scene_plane.py                              # Publishes white DIN A4 plane template marker
-│   │       └── zed_stand_publisher.py                                     # Publishes physical camera stand collision mesh
+│   │       ├── rviz_marker_3d_scene_safety_zone.py                        # Publishes dynamic safety zone cylinder marker
+│   │       └── rviz_marker_3d_scene_zedm_stand.py                         # Publishes physical camera stand & ZED M mesh
 │   ├── rviz_object_distance_visualizer/                                   # 📏 Python: Dynamic gripper-to-object distance line & 2D HUD
 │   │   ├── CMakeLists.txt
 │   │   ├── package.xml
