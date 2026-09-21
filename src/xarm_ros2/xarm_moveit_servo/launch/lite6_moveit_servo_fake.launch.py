@@ -11,6 +11,7 @@ from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -70,12 +71,26 @@ def generate_launch_description():
         condition=static_objects_condition
     )
 
+    # Fake linear axis node (broadcasts world -> linear_axis_link TF and rail markers when attach_to:=linear_axis_link)
+    linear_axis_condition = IfCondition(
+        PythonExpression(["'", attach_to, "' == 'linear_axis_link'"])
+    )
+    linear_axis_node = Node(
+        package='fake_linear_axis',
+        executable='fake_linear_axis',
+        name='fake_linear_axis',
+        output='screen',
+        condition=linear_axis_condition,
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument('add_gripper', default_value='false', description='Whether to add xArm gripper'),
         DeclareLaunchArgument('add_vacuum_gripper', default_value='false', description='Whether to add vacuum gripper'),
+        DeclareLaunchArgument('attach_to', default_value='world', description='Root link to attach robot to (e.g. world or linear_axis_link)'),
         DeclareLaunchArgument('static_objects', default_value='false', description='Whether to launch rviz_marker_3d_scene_objects (3D scene calibration objects)'),
         DeclareLaunchArgument('static_onjects', default_value='false', description='Alias for static_objects'),
         robot_moveit_servo_launch,
         standalone_move_group_launch,
         rviz_marker_launch,
+        linear_axis_node,
     ])

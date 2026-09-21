@@ -700,8 +700,9 @@
             }
 
             const modalBody = document.getElementById('launch-modal-body');
-            if (modalBody) {
-                modalBody.querySelectorAll('li').forEach(liEl => {
+            const targetContainer = modalBody || contentClone;
+            if (targetContainer) {
+                targetContainer.querySelectorAll('li').forEach(liEl => {
                     if (liEl.dataset.cmd && liEl.dataset.cmd.includes('fake_linear_axis')) {
                         const cb = liEl.querySelector('.main-action-cb');
                         if (cb && cb.checked !== isLinearAxisActive) {
@@ -711,7 +712,7 @@
                         }
                     }
                 });
-                modalBody.querySelectorAll('label.param-chip, label').forEach(lbl => {
+                targetContainer.querySelectorAll('label.param-chip, label').forEach(lbl => {
                     const span = lbl.querySelector('span');
                     const cb = lbl.querySelector('input');
                     if (span && span.textContent.includes('linear_axis') && cb) {
@@ -719,6 +720,8 @@
                         lbl.classList.toggle('chip-inactive', !isLinearAxisActive);
                     }
                 });
+
+                updateLinearAxisTreeNodes(targetContainer, isLinearAxisActive);
             }
             updateModalStats();
         }
@@ -845,6 +848,45 @@
             });
         }
 
+        function isNodeLinearAxis(item) {
+            const selfSpan = item.querySelector('span:not(.badge):not([style*="float"])');
+            const selfName = selfSpan ? selfSpan.textContent.trim().toLowerCase() : '';
+            if (selfName.includes('fake_linear_axis') || selfName === 'linear_axis') {
+                return true;
+            }
+            const descSpan = Array.from(item.querySelectorAll('span')).find(s => s.style.float === 'right');
+            const desc = descSpan ? descSpan.textContent.toLowerCase() : '';
+            if (desc.includes('linearachse tf') || desc.includes('fake_linear_axis')) {
+                return true;
+            }
+            return false;
+        }
+
+        function updateLinearAxisTreeNodes(container, isLinearAxisActive) {
+            if (!container) return;
+
+            if (typeof isLinearAxisActive !== 'boolean') {
+                const axisCb = container.querySelector('label.param-chip[data-arg-text*="linear_axis"] input') ||
+                               document.querySelector('#launch-modal-body label.param-chip[data-arg-text*="linear_axis"] input');
+                isLinearAxisActive = axisCb ? axisCb.checked : false;
+            }
+
+            const rows = container.querySelectorAll('.modal-card-row, .modal-action-card, li');
+            rows.forEach(row => {
+                const cmd = row.dataset.cmd || row.getAttribute('data-raw-cmd') || '';
+                const text = row.textContent || '';
+                if (cmd.includes('lite6_moveit_servo') || text.includes('lite6_moveit_servo')) {
+                    const leftCol = row.querySelector('.modal-card-left-col') || row;
+                    const subItems = leftCol.querySelectorAll('li');
+                    subItems.forEach(item => {
+                        if (isNodeLinearAxis(item)) {
+                            setNodeState(item, isLinearAxisActive, 'linear_axis');
+                        }
+                    });
+                }
+            });
+        }
+
         function syncStaticObjectsState(isStaticObjectsActive) {
             actionsData.forEach(act => {
                 const isServoLaunch = (act.baseCmd && act.baseCmd.includes('lite6_moveit_servo')) ||
@@ -918,7 +960,7 @@
                 item.classList.add('camera-node-inactive');
                 item.classList.remove('camera-node-active');
                 item.setAttribute('aria-disabled', 'true');
-                item.title = "Inaktiv im aktuellen Kamera-Modus (wird nicht gestartet)";
+                item.title = (type === 'zed' || type === 'ip') ? "Inaktiv im aktuellen Kamera-Modus (wird nicht gestartet)" : "Inaktiv (wird nicht gestartet)";
                 
                 const descSpan = Array.from(item.querySelectorAll('span')).find(s => 
                     s.style.float === 'right' || s.textContent.includes('camera:=') || s.textContent.includes('inaktiv') || s.textContent.includes('aktiv')
@@ -1979,34 +2021,38 @@
 
        updateModalStats();
        
-       // Initial visual sync for camera-dependent vision nodes
-       // Initial visual sync for camera-dependent vision nodes and static objects
-       const visionAct = actionsData.find(a => (a.baseCmd && a.baseCmd.includes('robot_vision_cameras_bringup')) || (a.cmd && a.cmd.includes('robot_vision_cameras_bringup')));
-       const initialIsIpCam = visionAct && visionAct.args ? visionAct.args.some(a => a.text === 'camera:=ip_cam' && a.checked) : false;
-       const servoAct = actionsData.find(a => (a.baseCmd && a.baseCmd.includes('lite6_moveit_servo')) || (a.cmd && a.cmd.includes('lite6_moveit_servo')));
-       const initialIsStaticObjects = servoAct && servoAct.args ? servoAct.args.some(a => (a.text === 'static_objects:=true' || a.text === 'static_onjects:=true') && a.checked) : true;
-       const currentModalBody = document.getElementById('launch-modal-body') || contentClone;
-       updateVisionTreeNodes(currentModalBody, initialIsIpCam);
-       updateStaticObjectsTreeNodes(currentModalBody, initialIsStaticObjects);
-       
-       requestAnimationFrame(() => {
-           const mBody = document.getElementById('launch-modal-body') || contentClone;
-           alignModalArgs(mBody);
-           updateVisionTreeNodes(mBody, initialIsIpCam);
-           updateStaticObjectsTreeNodes(mBody, initialIsStaticObjects);
-           setTimeout(() => {
-               const mb = document.getElementById('launch-modal-body') || contentClone;
-               alignModalArgs(mb);
-               updateVisionTreeNodes(mb, initialIsIpCam);
-               updateStaticObjectsTreeNodes(mb, initialIsStaticObjects);
-           }, 100);
-           setTimeout(() => {
-               const mb = document.getElementById('launch-modal-body') || contentClone;
-               alignModalArgs(mb);
-               updateVisionTreeNodes(mb, initialIsIpCam);
-               updateStaticObjectsTreeNodes(mb, initialIsStaticObjects);
-           }, 300);
-       });
+       // Initial visual sync for camera-dependent vision nodes, static objects, and linear axis
+        const visionAct = actionsData.find(a => (a.baseCmd && a.baseCmd.includes('robot_vision_cameras_bringup')) || (a.cmd && a.cmd.includes('robot_vision_cameras_bringup')));
+        const initialIsIpCam = visionAct && visionAct.args ? visionAct.args.some(a => a.text === 'camera:=ip_cam' && a.checked) : false;
+        const servoAct = actionsData.find(a => (a.baseCmd && a.baseCmd.includes('lite6_moveit_servo')) || (a.cmd && a.cmd.includes('lite6_moveit_servo')));
+        const initialIsStaticObjects = servoAct && servoAct.args ? servoAct.args.some(a => (a.text === 'static_objects:=true' || a.text === 'static_onjects:=true') && a.checked) : true;
+        const initialIsLinearAxis = servoAct && servoAct.args ? servoAct.args.some(a => a.text.includes('linear_axis') && a.checked) : (servoAct ? (servoAct.cmd.includes('linear_axis') || (servoAct.baseCmd && servoAct.baseCmd.includes('linear_axis'))) : false);
+        const currentModalBody = document.getElementById('launch-modal-body') || contentClone;
+        updateVisionTreeNodes(currentModalBody, initialIsIpCam);
+        updateStaticObjectsTreeNodes(currentModalBody, initialIsStaticObjects);
+        updateLinearAxisTreeNodes(currentModalBody, initialIsLinearAxis);
+        
+        requestAnimationFrame(() => {
+            const mBody = document.getElementById('launch-modal-body') || contentClone;
+            alignModalArgs(mBody);
+            updateVisionTreeNodes(mBody, initialIsIpCam);
+            updateStaticObjectsTreeNodes(mBody, initialIsStaticObjects);
+            updateLinearAxisTreeNodes(mBody, initialIsLinearAxis);
+            setTimeout(() => {
+                const mb = document.getElementById('launch-modal-body') || contentClone;
+                alignModalArgs(mb);
+                updateVisionTreeNodes(mb, initialIsIpCam);
+                updateStaticObjectsTreeNodes(mb, initialIsStaticObjects);
+                updateLinearAxisTreeNodes(mb, initialIsLinearAxis);
+            }, 100);
+            setTimeout(() => {
+                const mb = document.getElementById('launch-modal-body') || contentClone;
+                alignModalArgs(mb);
+                updateVisionTreeNodes(mb, initialIsIpCam);
+                updateStaticObjectsTreeNodes(mb, initialIsStaticObjects);
+                updateLinearAxisTreeNodes(mb, initialIsLinearAxis);
+            }, 300);
+        });
        
        if (popupId) {
            const actualTopUl = contentClone.querySelector('ul');
