@@ -1544,8 +1544,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   flex: 1;
   min-height: 80px;
 }
-.log-entry { margin-bottom: 3px; word-break: break-word; line-height: 1.4; font-size: 9px; }
-.log-time { color: #64748b; margin-right: 6px; font-size: 9px; }
+.log-entry { margin-bottom: 3px; word-break: break-word; line-height: 1.4; font-size: 11px; }
+.log-time { color: #64748b; margin-right: 6px; font-size: 11px; }
 
 /* ── TF Control Tuner Section ── */
 .tf-tuner-section {
@@ -1706,18 +1706,18 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 /* Source Badges */
-.log-src { font-weight: 700; margin-right: 6px; font-size: 9px; }
+.log-src { font-weight: 700; margin-right: 6px; font-size: 11px; }
 .log-src-ros { color: #c678dd; }      /* Purple */
 .log-src-ui { color: #61afef; }       /* Blue */
 .log-src-sys { color: #e5c07b; }      /* Yellow */
 .log-src-motion { color: #98c379; }   /* Green */
 
 /* Message Types */
-.log-info { color: #abb2bf; font-size: 9px; }         /* Light Gray */
-.log-success { color: #7ee787; font-weight: 600; font-size: 9px; }  /* Bright Green */
-.log-action { color: #56b6c2; font-weight: 600; font-size: 9px; }   /* Cyan */
-.log-warn { color: #d19a66; font-size: 9px; }         /* Orange */
-.log-err { color: #ff7b72; font-weight: 600; font-size: 9px; }      /* Red */
+.log-info { color: #abb2bf; font-size: 11px; }         /* Light Gray */
+.log-success { color: #7ee787; font-weight: 600; font-size: 11px; }  /* Bright Green */
+.log-action { color: #56b6c2; font-weight: 600; font-size: 11px; }   /* Cyan */
+.log-warn { color: #d19a66; font-size: 11px; }         /* Orange */
+.log-err { color: #ff7b72; font-weight: 600; font-size: 11px; }      /* Red */
 
 /* YOLO Objects List */
 .yolo-list-container {

@@ -246,8 +246,7 @@
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py",
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
-      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py",
-      "ros2 run tf_control_tuner tf_control_tuner"
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py"
     ],
     "dev_real": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich",
