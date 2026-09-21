@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=12">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -213,12 +213,9 @@
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="panel-drag-grip" title="3D Viewport verschieben"><i class="fa-solid fa-grip-vertical"></i></span>
               <div class="viewport-tabs">
-                <button class="v-tab-btn active" id="tab-twin" onclick="switch3DTab('twin')">
-                  <i class="fa-solid fa-cubes-stacked" style="color: #38bdf8;"></i> 3D Digital Twin (WebGL)
-                </button>
-                <button class="v-tab-btn" id="tab-rviz" onclick="switch3DTab('rviz')">
-                  <i class="fa-solid fa-cube" style="color: #a855f7;"></i> RViz 3D View (Port 8082)
-                </button>
+                <span class="v-tab-btn active" style="cursor: default;">
+                  <i class="fa-solid fa-circle" style="color: #22c55e; font-size: 8px;"></i> Live Digital Twin
+                </span>
               </div>
             </div>
             
