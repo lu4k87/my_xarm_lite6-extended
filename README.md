@@ -1552,6 +1552,29 @@ flowchart TD
 
 <br>
 
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_3d_scene_plane.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_plane.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_plane.py)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 run rviz_marker_3d_scene_objects rviz_marker_3d_scene_plane
+> ```
+> *(Automatically started via `rviz_marker_3d_scene_objects.launch.py`)*
+>
+> **Purpose & Task:** Publishes a flat white DIN A4 plane marker (0.21 × 0.30 × 0.001 m) at the `target_white_plane` TF frame into the RViz2 3D scene. Serves as a visual template/stencil for pick-and-place operations.
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Renders the white plane template marker in RViz.* |
+>
+>
+
+---
+
+<br>
+
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_stand_publisher.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/zed_stand_publisher.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/zed_stand_publisher.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
@@ -2574,6 +2597,7 @@ dev_ws/
 │   │   ├── launch/rviz_marker_3d_scene_objects.launch.py
 │   │   └── rviz_marker_3d_scene_objects/
 │   │       ├── rviz_marker_3d_scene_objects.py                            # Publishes table boundary & exclusion zone markers
+│   │       ├── rviz_marker_3d_scene_plane.py                              # Publishes white DIN A4 plane template marker
 │   │       └── zed_stand_publisher.py                                     # Publishes physical camera stand collision mesh
 │   ├── rviz_object_distance_visualizer/                                   # 📏 Python: Dynamic gripper-to-object distance line & 2D HUD
 │   │   ├── CMakeLists.txt

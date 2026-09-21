@@ -13,15 +13,23 @@ def generate_launch_description():
         name='rviz_marker_3d_scene_objects'
     )
 
-    # 5. Node 3: ZED Stand + Mesh Publisher
+    # 5. Node 3: Template Plane Marker Publisher (DIN A4 Tisch-Schablone)
+    plane_node = Node(
+        package='rviz_marker_3d_scene_objects',
+        executable='rviz_marker_3d_scene_plane',
+        name='rviz_marker_3d_scene_plane'
+    )
+
+    # 6. Node 4: ZED Stand + Mesh Publisher
     zed_stand_publisher_node = Node(
         package='rviz_marker_3d_scene_objects',
         executable='zed_stand_publisher',
         name='zed_stand_publisher'
     )
 
-    # 6. Nodes starten
+    # 7. Nodes starten
     return LaunchDescription([
         marker_node,
+        plane_node,
         zed_stand_publisher_node
     ])

@@ -1582,6 +1582,29 @@ flowchart TD
 
 <br>
 
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_3d_scene_plane.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_plane.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_plane.py)</i></sub>
+> [!NOTE]
+> 💻 **Start-Befehl:**
+> ```bash
+> ros2 run rviz_marker_3d_scene_objects rviz_marker_3d_scene_plane
+> ```
+> *(Wird automatisch gestartet über `rviz_marker_3d_scene_objects.launch.py`)*
+>
+> **Zweck & Aufgabe:** Publiziert einen flachen, weißen DIN-A4-Ebenen-Marker (0,21 × 0,30 × 0,001 m) am `target_white_plane`-TF-Frame in die RViz2-3D-Szene. Dient als visuelle Schablone für Pick-and-Place-Operationen.
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Rendert den weißen Ebenen-Schablonen-Marker in RViz.* |
+>
+>
+
+---
+
+<br>
+
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_stand_publisher.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/zed_stand_publisher.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/zed_stand_publisher.py)</i></sub>
 > [!NOTE]
 > 💻 **Start-Befehl:**
@@ -2615,6 +2638,7 @@ dev_ws/
 │   │   ├── launch/rviz_marker_3d_scene_objects.launch.py
 │   │   └── rviz_marker_3d_scene_objects/
 │   │       ├── rviz_marker_3d_scene_objects.py                            # Publiziert Tischgrenzen & Sperrzonen-Marker
+│   │       ├── rviz_marker_3d_scene_plane.py                              # Publiziert weißen DIN-A4-Ebenen-Schablonen-Marker
 │   │       └── zed_stand_publisher.py                                     # Publiziert physisches Kamerastativ als Kollisionsmesh
 │   ├── rviz_object_distance_visualizer/                                   # 📏 Python: Dynamische Greifer-zu-Objekt Distanzlinie & 2D-HUD
 │   │   ├── CMakeLists.txt

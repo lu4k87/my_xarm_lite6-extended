@@ -813,11 +813,12 @@
             const selfSpan = item.querySelector('span:not(.badge):not([style*="float"])');
             const selfName = selfSpan ? selfSpan.textContent.trim().toLowerCase() : '';
             if (selfName.includes('rviz_marker_3d_scene_objects') ||
+                selfName.includes('rviz_marker_3d_scene_plane') ||
                 selfName.includes('zed_stand_publisher')) {
                 return true;
             }
             const text = (item.textContent || '').toLowerCase();
-            if (text.includes('rviz_marker_3d_scene_objects') || text.includes('zed_stand_publisher') || text.includes('3d szene marker')) {
+            if (text.includes('rviz_marker_3d_scene_objects') || text.includes('rviz_marker_3d_scene_plane') || text.includes('zed_stand_publisher') || text.includes('3d szene marker')) {
                 return true;
             }
             return false;

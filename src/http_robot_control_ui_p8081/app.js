@@ -2010,7 +2010,7 @@ zedVisualMarkersSub.subscribe((msg) => {
 });
 
 function checkSceneObjectsNodeState(nodesList) {
-  const sceneNodes = ['rviz_marker_3d_scene_objects', 'fixed_marker_publisher', 'tf_control_tuner', 'zed_stand_publisher'];
+  const sceneNodes = ['rviz_marker_3d_scene_objects', 'fixed_marker_publisher', 'tf_control_tuner', 'zed_stand_publisher', 'rviz_marker_3d_scene_plane'];
   const hasSceneNode = Array.isArray(nodesList) && nodesList.some(n => sceneNodes.some(sn => n.includes(sn)));
   const recentMarkers = (Date.now() - lastSceneMarkerTime < 4500);
 

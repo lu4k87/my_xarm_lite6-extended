@@ -28,9 +28,7 @@ CONFIG = {
 # Dimensions für Zylinder in Rviz: (Durchmesser_X, Durchmesser_Y, Höhe_Z)
 SCENE_MARKERS = [
     # Arbeitsbereich als weiße Kreislinie (Radius 0.44)
-    {"id": 10, "type": Marker.LINE_LIST, "radius": 0.44, "pos": (0.0, 0.0, -0.004), "dims": (0.001, 0.0, 0.0), "color": [1.0, 1.0, 1.0, 1.0]}, 
-    # Template Plane (Weiß, gesteuert über TF Tuner, mit statischem Fallback)
-    {"id": 14, "type": Marker.CUBE, "tf_frame": "target_white_plane", "default_pos": (0.305, 0.0, -0.003), "default_yaw": 0.0, "dims": (0.21, 0.3, 0.001), "color": [1.0, 1.0, 1.0, 1.0]}
+    {"id": 10, "type": Marker.LINE_LIST, "radius": 0.44, "pos": (0.0, 0.0, -0.004), "dims": (0.001, 0.0, 0.0), "color": [1.0, 1.0, 1.0, 1.0]}
 ]
 
 # =========================================================
