@@ -141,22 +141,15 @@
 
       <div class="col-middle" id="col-middle">
         
-        <section id="panel-moveto" class="glass-panel">
-          <h2><i class="fa-solid fa-location-crosshairs"></i> Absolute Pose (MoveTo)</h2>
-          <div class="input-row-inline">
-            <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
-            <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span> [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
-            <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span> [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
-            <div class="input-row-divider"></div>
-            <div class="input-group x"><label>Roll (<span style="color: var(--rviz-x); font-weight: 700;">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-            <div class="input-group y"><label>Pitch (<span style="color: var(--rviz-y); font-weight: 700;">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-            <div class="input-group z"><label>Yaw (<span style="color: var(--rviz-z); font-weight: 700;">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
-            <div class="input-row-divider"></div>
-            <button class="btn btn-action motion-lockable" onclick="moveToPose()" title="Zur eingegebenen Pose fahren">
-              <i class="fa-solid fa-crosshairs"></i> Absolute Pose
-            </button>
-          </div>
-        </section>
+        <!-- Hidden inputs for moveToPose() JS compatibility -->
+        <div style="display:none;">
+          <input type="number" id="inp-x" value="300">
+          <input type="number" id="inp-y" value="0">
+          <input type="number" id="inp-z" value="200">
+          <input type="number" id="inp-r" value="3.14">
+          <input type="number" id="inp-p" value="0.00">
+          <input type="number" id="inp-yw" value="0.00">
+        </div>
 
         <section id="panel-yolo" class="glass-panel">
           <h2><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO 3D)</h2>
