@@ -1951,10 +1951,33 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   transition: width 0.15s ease-out, background-color 0.2s ease-out;
 }
 
+/* ── Floating Scene Node Toggle Overlay (top-right inside viewport) ── */
+.twin-scene-node-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  z-index: 10;
+  background: rgba(10, 14, 23, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 4px 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.twin-scene-node-overlay .btn-icon-small {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 12px !important;
+}
+
 /* ── Floating TCP Gizmo HUD (Interactive Target & Auto-Move Bar) ── */
 .twin-gizmo-hud {
   position: absolute;
-  bottom: 14px;
+  top: 14px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1975,7 +1998,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .twin-gizmo-hud.gizmo-hud-hidden {
   opacity: 0;
-  transform: translateX(-50%) translateY(10px);
+  transform: translateX(-50%) translateY(-10px);
   pointer-events: none;
 }
 
