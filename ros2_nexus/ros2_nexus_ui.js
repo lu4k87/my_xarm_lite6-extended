@@ -226,6 +226,9 @@
         if (argText.startsWith('report_type:=')) {
             return argText === 'report_type:=dev';
         }
+        if (argText.startsWith('robot_ip:=')) {
+            return true;
+        }
         return true;
     }
 
@@ -770,6 +773,168 @@
                 });
             }
         }
+
+        function isNodeZedOnly(item) {
+            const selfSpan = item.querySelector('span:not(.badge):not([style*="float"])');
+            const selfName = selfSpan ? selfSpan.textContent.trim().toLowerCase() : '';
+            if (selfName.includes('yolo_3d_bbox_for_zed_m') ||
+                selfName.includes('pointcloud_optimizer') ||
+                selfName.includes('static_transform_publisher') ||
+                selfName.includes('zed_camera.launch.py') ||
+                selfName.includes('zed_wrapper') ||
+                selfName.includes('robot_state_publisher')) {
+                return true;
+            }
+            const text = (item.textContent || '').toLowerCase();
+            if (text.includes('camera:=zed_m')) return true;
+            if (item.closest('.sub-launch-tree')) return true;
+            return false;
+        }
+
+        function isNodeIpCamOnly(item) {
+            const selfSpan = item.querySelector('span:not(.badge):not([style*="float"])');
+            const selfName = selfSpan ? selfSpan.textContent.trim().toLowerCase() : '';
+            if (selfName.includes('yolo_3d_bbox_for_ip_cam') ||
+                selfName.includes('ip_cam_aruco_6pose_tf_coord')) {
+                return true;
+            }
+            const text = (item.textContent || '').toLowerCase();
+            if (text.includes('camera:=ip_cam')) return true;
+            return false;
+        }
+
+        function setNodeState(item, isActive, type) {
+            if (isActive) {
+                item.classList.remove('camera-node-inactive');
+                item.classList.add('camera-node-active');
+                item.removeAttribute('aria-disabled');
+                item.title = (type === 'common') ? "Aktiv (wird in beiden Modi gestartet)" : "Aktiv (wird gestartet)";
+                
+                const descSpan = Array.from(item.querySelectorAll('span')).find(s => 
+                    s.style.float === 'right' || s.textContent.includes('camera:=') || s.textContent.includes('inaktiv') || s.textContent.includes('aktiv')
+                );
+                if (descSpan) {
+                    if (!descSpan.dataset.origText) descSpan.dataset.origText = descSpan.textContent;
+                    let clean = descSpan.dataset.origText
+                        .replace(/\s*·\s*inaktiv/gi, '')
+                        .replace(/\s*·\s*aktiv/gi, '')
+                        .replace(/\s*·\s*wird nicht gestartet/gi, '')
+                        .replace(/\s*·\s*wird gestartet/gi, '')
+                        .trim();
+                    if (type !== 'common' && !clean.includes('aktiv')) {
+                        clean = clean.replace(/\)$/, ' · aktiv)');
+                    }
+                    descSpan.textContent = clean;
+                    descSpan.style.removeProperty('color');
+                    descSpan.style.removeProperty('opacity');
+                }
+            } else {
+                item.classList.add('camera-node-inactive');
+                item.classList.remove('camera-node-active');
+                item.setAttribute('aria-disabled', 'true');
+                item.title = "Inaktiv im aktuellen Kamera-Modus (wird nicht gestartet)";
+                
+                const descSpan = Array.from(item.querySelectorAll('span')).find(s => 
+                    s.style.float === 'right' || s.textContent.includes('camera:=') || s.textContent.includes('inaktiv') || s.textContent.includes('aktiv')
+                );
+                if (descSpan) {
+                    if (!descSpan.dataset.origText) descSpan.dataset.origText = descSpan.textContent;
+                    let clean = descSpan.dataset.origText
+                        .replace(/\s*·\s*inaktiv/gi, '')
+                        .replace(/\s*·\s*aktiv/gi, '')
+                        .replace(/\s*·\s*wird nicht gestartet/gi, '')
+                        .replace(/\s*·\s*wird gestartet/gi, '')
+                        .trim();
+                    clean = clean.replace(/\)$/, ' · inaktiv)');
+                    descSpan.textContent = clean;
+                    descSpan.style.setProperty('color', '#64748b', 'important');
+                    descSpan.style.setProperty('opacity', '0.6', 'important');
+                }
+            }
+        }
+
+        function updateVisionTreeNodes(container, isIpCam) {
+            if (!container) return;
+
+            // Determine isIpCam from DOM if not passed as boolean
+            if (typeof isIpCam !== 'boolean') {
+                const ipCb = container.querySelector('label.param-chip[data-arg-text="camera:=ip_cam"] input') ||
+                             document.querySelector('#launch-modal-body label.param-chip[data-arg-text="camera:=ip_cam"] input');
+                isIpCam = ipCb ? ipCb.checked : false;
+            }
+
+            const rows = container.querySelectorAll('.modal-card-row, .modal-action-card, li');
+            rows.forEach(row => {
+                const cmd = row.dataset.cmd || row.getAttribute('data-raw-cmd') || '';
+                const text = row.textContent || '';
+                if (cmd.includes('robot_vision_cameras_bringup') || text.includes('robot_vision_cameras_bringup.launch.py')) {
+                    const leftCol = row.querySelector('.modal-card-left-col') || row;
+                    const subItems = leftCol.querySelectorAll('li');
+                    subItems.forEach(item => {
+                        const isZed = isNodeZedOnly(item);
+                        const isIp = isNodeIpCamOnly(item);
+
+                        if (isZed) {
+                            setNodeState(item, !isIpCam, 'zed');
+                        } else if (isIp) {
+                            setNodeState(item, isIpCam, 'ip');
+                        } else {
+                            setNodeState(item, true, 'common');
+                        }
+                    });
+                }
+            });
+        }
+
+        function syncCameraVisionState(selectedCameraArg) {
+            const isIpCam = (selectedCameraArg === 'camera:=ip_cam');
+            actionsData.forEach(act => {
+                const isVisionBringup = (act.baseCmd && act.baseCmd.includes('robot_vision_cameras_bringup.launch.py')) ||
+                                        (act.cmd && act.cmd.includes('robot_vision_cameras_bringup.launch.py'));
+                if (isVisionBringup && act.args) {
+                    act.args.forEach(a => {
+                        if (a.text === 'camera:=ip_cam') a.checked = isIpCam;
+                        if (a.text === 'camera:=zed_m') a.checked = !isIpCam;
+                    });
+                }
+            });
+            const modalBody = document.getElementById('launch-modal-body');
+            const targetContainer = modalBody || contentClone;
+            if (targetContainer) {
+                targetContainer.querySelectorAll('label.param-chip').forEach(lbl => {
+                    const cb = lbl.querySelector('input');
+                    if (cb && lbl.dataset.argText) {
+                        if (lbl.dataset.argText === 'camera:=ip_cam') {
+                            cb.checked = isIpCam;
+                            lbl.classList.toggle('chip-inactive', !isIpCam);
+                        } else if (lbl.dataset.argText === 'camera:=zed_m') {
+                            cb.checked = !isIpCam;
+                            lbl.classList.toggle('chip-inactive', isIpCam);
+                        }
+                    }
+                });
+
+                // Also sync standalone ZED-specific action cards in the same modal if present
+                targetContainer.querySelectorAll('.modal-card-row, .modal-action-card, li').forEach(row => {
+                    const rowCmd = row.dataset.cmd || row.getAttribute('data-raw-cmd') || '';
+                    if (rowCmd.includes('yolo_3d_bbox_for_zed_m.py')) {
+                        const cb = row.querySelector('.main-action-cb');
+                        if (cb) {
+                            cb.checked = !isIpCam;
+                            row.classList.toggle('card-active', !isIpCam);
+                            row.classList.toggle('row-active', !isIpCam);
+                            row.classList.toggle('card-inactive', isIpCam);
+                            row.classList.toggle('row-inactive', isIpCam);
+                            const matchedAct = actionsData.find(a => a.cmd === rowCmd || a.baseCmd === rowCmd);
+                            if (matchedAct) matchedAct.active = !isIpCam;
+                        }
+                    }
+                });
+
+                updateVisionTreeNodes(targetContainer, isIpCam);
+                updateModalStats();
+            }
+        }
         
         function parseArgs(action) {
            if (!action.cmd.startsWith('ros2 launch') && !action.cmd.startsWith('ros2 run') && !action.cmd.startsWith('ros2 topic pub')) {
@@ -931,6 +1096,19 @@
             ));
 
             if (isRealMoveReportCmd) {
+                // Ensure robot_ip:=192.168.1.175 is available and checked by default for realmove
+                const defaultIp = 'robot_ip:=192.168.1.175';
+                if (!action.args.some(a => a.text.startsWith('robot_ip:='))) {
+                    let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defaultIp);
+                    if (isChecked === undefined || isChecked === false) isChecked = true;
+                    action.args.push({ text: defaultIp, checked: isChecked });
+                } else {
+                    const ipArg = action.args.find(a => a.text.startsWith('robot_ip:='));
+                    if (ipArg && !ipArg.checked) {
+                        ipArg.checked = true;
+                    }
+                }
+
                 const reportDefaults = [
                     'report_type:=dev',
                     'report_type:=normal',
@@ -999,8 +1177,13 @@
                      }
                  }
 
-                 // Put camera args first, yolo_model args next, gripper args grouped together, report_type args grouped together
+                 // Put robot_ip args first, camera args next, yolo_model args next, gripper args grouped together, report_type args grouped together
                  action.args.sort((a, b) => {
+                     const isIpA = a.text.startsWith('robot_ip:=');
+                     const isIpB = b.text.startsWith('robot_ip:=');
+                     if (isIpA && !isIpB) return -1;
+                     if (!isIpA && isIpB) return 1;
+
                      const isCamA = a.text.startsWith('camera:=');
                      const isCamB = b.text.startsWith('camera:=');
                      const isYoloA = a.text.startsWith('yolo_model:=');
@@ -1049,33 +1232,10 @@
                          
                          // Mutually exclusive camera selection (Toggle between camera:=zed_m and camera:=ip_cam)
                          if (argObj.text.startsWith('camera:=')) {
-                             if (!e.target.checked) {
-                                 // Toggle to the other camera if unchecking current
-                                 const otherCam = action.args.find(a => a !== argObj && a.text.startsWith('camera:='));
-                                 if (otherCam) {
-                                     otherCam.checked = true;
-                                     argObj.checked = false;
-                                 } else {
-                                     argObj.checked = true;
-                                     e.target.checked = true;
-                                 }
-                             } else {
-                                 action.args.forEach(otherArg => {
-                                     if (otherArg !== argObj && otherArg.text.startsWith('camera:=')) {
-                                         otherArg.checked = false;
-                                     }
-                                 });
-                             }
-                             argsDiv.querySelectorAll('label.param-chip').forEach(lbl => {
-                                 const cb = lbl.querySelector('input');
-                                 if (cb && lbl.dataset.argText) {
-                                     const matchArg = action.args.find(a => a.text === lbl.dataset.argText);
-                                     if (matchArg) {
-                                         cb.checked = matchArg.checked;
-                                         lbl.classList.toggle('chip-inactive', !matchArg.checked);
-                                     }
-                                 }
-                             });
+                             const targetCam = (!e.target.checked) ? 
+                                 ((argObj.text === 'camera:=zed_m') ? 'camera:=ip_cam' : 'camera:=zed_m') : 
+                                 argObj.text;
+                             syncCameraVisionState(targetCam);
                          }
 
                          // Mutually exclusive yolo_model selection
@@ -1719,10 +1879,26 @@
 
        updateModalStats();
        
+       // Initial visual sync for camera-dependent vision nodes
+       const visionAct = actionsData.find(a => (a.baseCmd && a.baseCmd.includes('robot_vision_cameras_bringup')) || (a.cmd && a.cmd.includes('robot_vision_cameras_bringup')));
+       const initialIsIpCam = visionAct && visionAct.args ? visionAct.args.some(a => a.text === 'camera:=ip_cam' && a.checked) : false;
+       const currentModalBody = document.getElementById('launch-modal-body') || contentClone;
+       updateVisionTreeNodes(currentModalBody, initialIsIpCam);
+       
        requestAnimationFrame(() => {
-           alignModalArgs(contentClone);
-           setTimeout(() => alignModalArgs(contentClone), 100);
-           setTimeout(() => alignModalArgs(contentClone), 300);
+           const mBody = document.getElementById('launch-modal-body') || contentClone;
+           alignModalArgs(mBody);
+           updateVisionTreeNodes(mBody, initialIsIpCam);
+           setTimeout(() => {
+               const mb = document.getElementById('launch-modal-body') || contentClone;
+               alignModalArgs(mb);
+               updateVisionTreeNodes(mb, initialIsIpCam);
+           }, 100);
+           setTimeout(() => {
+               const mb = document.getElementById('launch-modal-body') || contentClone;
+               alignModalArgs(mb);
+               updateVisionTreeNodes(mb, initialIsIpCam);
+           }, 300);
        });
        
        if (popupId) {

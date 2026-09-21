@@ -778,6 +778,54 @@
       font-weight: 500 !important;
     }
 
+    /* Dynamische Kamera-Node Zustände (ZED M vs. IP Cam) */
+    .modal-card-left-col li.camera-node-inactive,
+    #launch-modal-body .modal-card-left-col li.camera-node-inactive {
+      opacity: 0.32 !important;
+      filter: grayscale(100%) !important;
+      transition: all 0.25s ease !important;
+      pointer-events: none !important;
+    }
+
+    .modal-card-left-col li.camera-node-inactive *,
+    #launch-modal-body .modal-card-left-col li.camera-node-inactive * {
+      color: #64748b !important;
+      border-color: rgba(100, 116, 139, 0.25) !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+
+    .modal-card-left-col li.camera-node-inactive .badge,
+    #launch-modal-body .modal-card-left-col li.camera-node-inactive .badge {
+      background: rgba(100, 116, 139, 0.12) !important;
+      border: 1px solid rgba(100, 116, 139, 0.3) !important;
+      color: #64748b !important;
+    }
+
+    .modal-card-left-col li.camera-node-inactive svg,
+    #launch-modal-body .modal-card-left-col li.camera-node-inactive svg,
+    .modal-card-left-col li.camera-node-inactive i,
+    #launch-modal-body .modal-card-left-col li.camera-node-inactive i {
+      color: #64748b !important;
+      fill: #64748b !important;
+      stroke: #64748b !important;
+    }
+
+    .modal-card-left-col li.camera-node-inactive::before,
+    .modal-card-left-col li.camera-node-inactive::after,
+    #launch-modal-body .modal-card-left-col li.camera-node-inactive::before,
+    #launch-modal-body .modal-card-left-col li.camera-node-inactive::after {
+      background: rgba(100, 116, 139, 0.25) !important;
+    }
+
+    .modal-card-left-col li.camera-node-active,
+    #launch-modal-body .modal-card-left-col li.camera-node-active {
+      opacity: 1.0 !important;
+      filter: none !important;
+      transition: all 0.25s ease !important;
+      pointer-events: auto !important;
+    }
+
     /* Modal Card Row & Left Side Icon */
     .modal-card-row {
       display: flex;
@@ -915,14 +963,15 @@
     }
 
     .modal-action-card.card-inactive {
-      opacity: 0.52;
-      background: rgba(12, 17, 28, 0.4);
-      border-color: rgba(255, 255, 255, 0.04);
+      opacity: 0.38 !important;
+      filter: grayscale(85%) !important;
+      background: rgba(12, 17, 28, 0.35) !important;
+      border-color: rgba(255, 255, 255, 0.04) !important;
     }
 
     .modal-action-card.card-inactive:hover {
-      opacity: 0.78;
-      border-color: rgba(255, 255, 255, 0.15);
+      opacity: 0.55 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
     }
 
     .modal-cb-wrap {

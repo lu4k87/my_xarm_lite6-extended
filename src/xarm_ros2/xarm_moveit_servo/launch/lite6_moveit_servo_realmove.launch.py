@@ -7,14 +7,14 @@
 # Author: Vinman <vinman.wen@ufactory.cc> <vinman.cub@gmail.com>
 
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    robot_ip = LaunchConfiguration('robot_ip')
+    robot_ip = LaunchConfiguration('robot_ip', default='192.168.1.175')
     report_type = LaunchConfiguration('report_type', default='dev')
     prefix = LaunchConfiguration('prefix', default='')
     hw_ns = LaunchConfiguration('hw_ns', default='ufactory')
@@ -89,6 +89,10 @@ def generate_launch_description():
     # )
     
     return LaunchDescription([
+        DeclareLaunchArgument('robot_ip', default_value='192.168.1.175', description='IP address of the real xArm Lite 6 robot'),
+        DeclareLaunchArgument('report_type', default_value='dev', description='Report type (dev, normal, rich)'),
+        DeclareLaunchArgument('add_gripper', default_value='false', description='Whether to add xArm gripper'),
+        DeclareLaunchArgument('add_vacuum_gripper', default_value='false', description='Whether to add vacuum gripper'),
         robot_moveit_servo_launch,
         standalone_move_group_launch,
         # robot_driver_launch,

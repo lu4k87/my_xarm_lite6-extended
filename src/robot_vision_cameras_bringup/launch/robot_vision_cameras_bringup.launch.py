@@ -11,6 +11,7 @@ Unterstützt zwei Kamera-Modi (wählbar über 'camera:=zed_m' oder 'camera:=ip_c
 
 2. ip_cam:
    - Startet die IP-Kamera 3D Bounding-Box Erkennung über ArUco-Homographie (yolo_3d_bbox_for_ip_cam.py).
+   - Startet den ArUco 6-Pose TF Coordinate Node (ip_cam_aruco_6pose_tf_coord).
    - Benötigt keine ZED-Hardware oder Punktwolke.
 
 Gemeinsame Pipeline (in beiden Modi aktiv):
@@ -164,6 +165,17 @@ def generate_launch_description():
     )
 
     # -----------------------------------------------------------------------
+    # ArUco 6-Pose TF Coord Node: IP Camera (nur für IP Cam Modus)
+    # -----------------------------------------------------------------------
+    ip_cam_aruco_node = Node(
+        package='ip_cam_aruco_6pose_tf_coord',
+        executable='ip_cam_aruco_6pose_tf_coord',
+        name='ip_cam_aruco_6pose_tf_coord',
+        output='screen',
+        condition=LaunchConfigurationEquals('camera', 'ip_cam')
+    )
+
+    # -----------------------------------------------------------------------
     # Gemeinsame Vision- & Grasp-Pipeline (in beiden Modi aktiv)
     # -----------------------------------------------------------------------
     yolo_moveit_collision_node = Node(
@@ -218,6 +230,7 @@ def generate_launch_description():
         pointcloud_optimizer_node,
         zed_yolo_3d_bbox_node,
         ip_cam_yolo_3d_bbox_node,
+        ip_cam_aruco_node,
         # Common Nodes
         yolo_moveit_collision_node,
         yolo_planned_grasp_executor_node,
