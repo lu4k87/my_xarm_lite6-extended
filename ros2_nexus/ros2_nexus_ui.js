@@ -1428,7 +1428,7 @@
                     
                     if (argObj.text.includes(':=')) {
                         const parts = argObj.text.split(':=');
-                        txtSpan.innerHTML = (argObj.text.includes('attach_to:=') ? '<span style="color:var(--mut);margin-right:4px;font-size:0.9em;">[URDF]</span>' : '') + `<span style="color:#38bdf8;opacity:0.9;">${parts[0]}:=</span><span style="color:#f8fafc;font-weight:600;">${parts.slice(1).join(':=')}</span>`;
+                        txtSpan.innerHTML = `<span style="color:#38bdf8;opacity:0.9;">${parts[0]}:=</span><span style="color:#f8fafc;font-weight:600;">${parts.slice(1).join(':=')}</span>`;
                     } else if (argObj.text.includes('=')) {
                         const parts = argObj.text.split('=');
                         txtSpan.innerHTML = `<span style="color:#38bdf8;opacity:0.9;">${parts[0]}=</span><span style="color:#f8fafc;font-weight:600;">${parts.slice(1).join('=')}</span>`;
