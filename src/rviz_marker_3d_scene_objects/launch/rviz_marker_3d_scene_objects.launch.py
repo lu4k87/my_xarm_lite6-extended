@@ -6,30 +6,38 @@ from launch_ros.parameter_descriptions import ParameterValue
 from launch.substitutions import Command
 
 def generate_launch_description():
-    # 4. Node 2: Der Marker Publisher für das Liniennetz und die Hohlkörper
+    # Node 1: Marker Publisher für Liniennetz und Hohlkörper
     marker_node = Node(
         package='rviz_marker_3d_scene_objects',
         executable='rviz_marker_3d_scene_objects',
         name='rviz_marker_3d_scene_objects'
     )
 
-    # 5. Node 3: Template Plane Marker Publisher (DIN A4 Tisch-Schablone)
+    # Node 2: Template Plane Marker Publisher (DIN A4 Tisch-Schablone)
     plane_node = Node(
         package='rviz_marker_3d_scene_objects',
         executable='rviz_marker_3d_scene_plane',
         name='rviz_marker_3d_scene_plane'
     )
 
-    # 6. Node 4: ZED Stand + Mesh Publisher
-    zed_stand_publisher_node = Node(
+    # Node 3: Safety Zone Marker Publisher
+    safety_zone_node = Node(
         package='rviz_marker_3d_scene_objects',
-        executable='zed_stand_publisher',
-        name='zed_stand_publisher'
+        executable='rviz_marker_3d_scene_safety_zone',
+        name='rviz_marker_3d_scene_safety_zone'
     )
 
-    # 7. Nodes starten
+    # Node 4: ZED Stand + Mesh Publisher
+    zedm_stand_node = Node(
+        package='rviz_marker_3d_scene_objects',
+        executable='rviz_marker_3d_scene_zedm_stand',
+        name='rviz_marker_3d_scene_zedm_stand'
+    )
+
+    # Nodes starten
     return LaunchDescription([
         marker_node,
         plane_node,
-        zed_stand_publisher_node
+        safety_zone_node,
+        zedm_stand_node
     ])

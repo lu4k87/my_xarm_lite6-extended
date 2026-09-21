@@ -814,11 +814,12 @@
             const selfName = selfSpan ? selfSpan.textContent.trim().toLowerCase() : '';
             if (selfName.includes('rviz_marker_3d_scene_objects') ||
                 selfName.includes('rviz_marker_3d_scene_plane') ||
-                selfName.includes('zed_stand_publisher')) {
+                selfName.includes('rviz_marker_3d_scene_safety_zone') ||
+                selfName.includes('rviz_marker_3d_scene_zedm_stand')) {
                 return true;
             }
             const text = (item.textContent || '').toLowerCase();
-            if (text.includes('rviz_marker_3d_scene_objects') || text.includes('rviz_marker_3d_scene_plane') || text.includes('zed_stand_publisher') || text.includes('3d szene marker')) {
+            if (text.includes('rviz_marker_3d_scene_objects') || text.includes('rviz_marker_3d_scene_plane') || text.includes('rviz_marker_3d_scene_safety_zone') || text.includes('rviz_marker_3d_scene_zedm_stand') || text.includes('3d szene marker')) {
                 return true;
             }
             return false;

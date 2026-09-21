@@ -30,7 +30,8 @@ setup(
         'console_scripts': [
             'rviz_marker_3d_scene_objects = rviz_marker_3d_scene_objects.rviz_marker_3d_scene_objects:main',
             'rviz_marker_3d_scene_plane = rviz_marker_3d_scene_objects.rviz_marker_3d_scene_plane:main',
-            'zed_stand_publisher = rviz_marker_3d_scene_objects.zed_stand_publisher:main',
+            'rviz_marker_3d_scene_safety_zone = rviz_marker_3d_scene_objects.rviz_marker_3d_scene_safety_zone:main',
+            'rviz_marker_3d_scene_zedm_stand = rviz_marker_3d_scene_objects.rviz_marker_3d_scene_zedm_stand:main',
         ],
     },
 )

@@ -7,7 +7,7 @@ import os
 
 class ZedVisualPublisher(Node):
     def __init__(self):
-        super().__init__('zed_stand_publisher')
+        super().__init__('rviz_marker_3d_scene_zedm_stand')
         # We publish a MarkerArray to easily combine multiple 3D elements
         self.publisher_ = self.create_publisher(MarkerArray, 'zed_visual_markers', 10)
         self.timer_ = self.create_timer(1.0, self.publish_markers)
