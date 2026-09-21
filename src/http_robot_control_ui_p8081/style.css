@@ -1152,10 +1152,10 @@ input[type=range]:active::-moz-range-thumb {
   font-size: 15px;
 }
 
-/* Floating Speed Toggle (top-left inside viewport) */
+/* Floating Speed Toggle (bottom-left inside viewport, above REACH/FLOOR) */
 .twin-speed-overlay {
   position: absolute;
-  top: 10px;
+  bottom: 58px;
   left: 10px;
   z-index: 10;
   background: rgba(10, 14, 23, 0.8);
