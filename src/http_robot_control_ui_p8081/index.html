@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=25">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -28,9 +28,8 @@
           <button class="status-pill reload-btn" onclick="location.reload()" title="Web Control neu laden">
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
-          <button class="status-pill sound-btn sound-active" id="btn-sound-toggle" onclick="toggleSound()" title="Sound-Effekte: Aktiviert (Klicken zum Stummschalten)">
-            <i class="fa-solid fa-volume-high" id="sound-toggle-icon"></i>
-          </button>
+
+
           <div class="status-pill" id="pill-port-9090" title="Port 9090: ROS 2 WebSocket Schnittstelle (rosbridge)">
             <div id="connection-dot" class="dot glow-red"></div>
             <span id="connection-status">ROS 2 Bridge: 9090</span>
@@ -198,6 +197,10 @@
                 </button>
                 <button class="btn btn-icon-small" id="btn-twin-gizmo-sync" onclick="syncTCPGizmoToRobot()" title="Gizmo auf aktuellen Roboter-TCP zurücksetzen (Taste: Esc)" style="color: var(--mut);">
                   <i class="fa-solid fa-crosshairs"></i>
+                </button>
+                <div class="twin-toolbar-divider"></div>
+                <button class="btn btn-icon-small" id="btn-sound-toggle" onclick="toggleSound()" title="Sound-Effekte ein-/ausschalten" style="color: var(--cyan);">
+                  <i class="fa-solid fa-volume-high" id="sound-toggle-icon"></i>
                 </button>
               </div>
             </div>
@@ -658,7 +661,7 @@
   <script src="lib/URDFLoader.js"></script>
   <script src="digital_twin.js?v=9"></script>
 
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
   
   <script>
     // ── Live Camera Update Loop ──

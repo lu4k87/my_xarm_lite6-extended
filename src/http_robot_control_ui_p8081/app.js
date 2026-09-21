@@ -946,13 +946,13 @@ function updateSoundUI() {
   if (!btn || !icon) return;
 
   if (soundEnabled) {
-    btn.classList.add('sound-active');
-    btn.classList.remove('sound-muted');
+    btn.style.color = 'var(--cyan)';
+    btn.style.opacity = '1';
     btn.title = "Sound-Effekte: Aktiviert (Klicken zum Stummschalten)";
     icon.className = "fa-solid fa-volume-high";
   } else {
-    btn.classList.remove('sound-active');
-    btn.classList.add('sound-muted');
+    btn.style.color = 'var(--mut)';
+    btn.style.opacity = '0.5';
     btn.title = "Sound-Effekte: Stummgeschaltet (Klicken zum Aktivieren)";
     icon.className = "fa-solid fa-volume-xmark";
   }
