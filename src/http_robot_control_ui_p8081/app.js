@@ -4,6 +4,7 @@ let currentFrame = 'link_base';
 let speedScale = 0.3;
 let lastSpeedIndex = -1;
 let jogActive = false;
+let joyActive = false;
 let jogTimer = null;
 let jogZeroCount = 0;
 let targetTwist = { lx: 0, ly: 0, lz: 0, ax: 0, ay: 0, az: 0 };
@@ -19,6 +20,22 @@ let jointJogTimer = null;
 let currentServoStatus = 0;
 let isRobotMoving = false;
 let movingTimeout = null;
+
+let latestJointVals = [0, 0, 0, 0, 0, 0];
+let latestEEF_X = null;
+let latestEEF_Y = null;
+let latestEEF_Z = null;
+let lastServoStatus = 0;
+let activeCollisionText = '';
+let collisionTextClearTimer = null;
+let lastReportedSafetyState = 'normal'; // 'normal', 'singularity', 'collision'
+
+let uiClickSound = null;
+let scanPosSound = null;
+try {
+  uiClickSound = new Audio('sounds/ui_mouse_click.mp3');
+  scanPosSound = new Audio('sounds/_voice_robot_moves_to_scan_pos.mp3');
+} catch (e) {}
 
 // ── ROS Connection ────────────────────────────────────────────────────────
 try {
@@ -499,15 +516,6 @@ eefSub.subscribe((msg) => {
 });
 
 // ── Live MoveIt Servo & Collision Warning Integration ──────────────────────
-let latestJointVals = [0, 0, 0, 0, 0, 0];
-let latestEEF_X = null;
-let latestEEF_Y = null;
-let latestEEF_Z = null;
-let lastServoStatus = 0;
-let activeCollisionText = '';
-let collisionTextClearTimer = null;
-let lastReportedSafetyState = 'normal'; // 'normal', 'singularity', 'collision'
-
 // 1. MoveIt Servo Status Topic
 const servoStatusTopic = new ROSLIB.Topic({
   ros: ros,
@@ -1043,7 +1051,6 @@ hardwareJoySub.subscribe(function(msg) {
   }
 });
 
-let joyActive = false;
 const maxRadius = 37;
 let joyCenterX = 0, joyCenterY = 0;
 
@@ -1399,9 +1406,6 @@ window.addEventListener("gamepaddisconnected", (e) => {
   }
 });
 
-// ── Global Sound Setup ──────────────────────────────────────────────────
-const uiClickSound = new Audio('sounds/ui_mouse_click.mp3');
-const scanPosSound = new Audio('sounds/_voice_robot_moves_to_scan_pos.mp3');
 
 // ── Global Button Debounce (Anti-Double-Click) ──────────────────────────
 document.addEventListener('click', function(e) {

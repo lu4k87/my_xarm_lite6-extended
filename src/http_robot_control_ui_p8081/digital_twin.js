@@ -605,7 +605,7 @@
     // Update floating HUD in viewport
     const hudCoords = document.getElementById('gizmo-hud-coords');
     const hudDelta = document.getElementById('gizmo-hud-delta');
-    const btnExecute = document.getElementById('btn-gizmo-execute');
+    const btnExecute = /** @type {HTMLButtonElement|null} */ (document.getElementById('btn-gizmo-execute'));
     if (hudCoords) {
       hudCoords.innerText = `X: ${posX_mm} Y: ${posY_mm} Z: ${posZ_mm}`;
       if (isInsideDeadzone || isBelowFloor) {
@@ -646,8 +646,8 @@
   function handleGizmoDragEnd() {
     handleGizmoChange(true);
 
-    const autoDrop = document.getElementById('chk-gizmo-auto-drop');
-    const shouldAutoExecute = autoDrop ? autoDrop.checked : true;
+    const autoDrop = /** @type {HTMLInputElement|null} */ (document.getElementById('chk-gizmo-auto-drop'));
+    const shouldAutoExecute = autoDrop ? Boolean(autoDrop.checked) : true;
 
     const posX_mm = Math.round(gizmoTarget.position.x * 1000.0);
     const posY_mm = Math.round((gizmoTarget.position.y - linearShiftY) * 1000.0);
@@ -657,8 +657,8 @@
     const isBelowFloor = (posZ_mm <= 15.0);
 
     if (isInsideDeadzone || isBelowFloor) {
-      if (typeof logMsg === 'function') {
-        logMsg('GIZMO', isInsideDeadzone 
+      if (typeof window.logMsg === 'function') {
+        window.logMsg('GIZMO', isInsideDeadzone 
           ? `⚠️ Ziel liegt im inneren Singularitäts-/Kollisionsbereich (r=${Math.round(r_xy)} mm < 125 mm). Auto-Fahrt blockiert!`
           : `⚠️ Ziel liegt in der Tischplatte (Z=${posZ_mm} mm). Auto-Fahrt blockiert!`, 'err');
       }
@@ -739,29 +739,29 @@
     const banner = document.getElementById('twin-warning-banner');
     const bannerText = document.getElementById('twin-warning-text');
     const bannerIcon = document.getElementById('twin-warning-icon');
-    const container = document.getElementById('digital-twin-container');
+    const twinContainer = document.getElementById('digital-twin-container');
 
     if (banner && bannerText && bannerIcon) {
       if (safetyState.collision) {
         banner.className = 'twin-hud-banner banner-collision';
         bannerIcon.className = 'fa-solid fa-triangle-exclamation';
         bannerText.innerText = safetyState.message || 'COLLISION DETECTED';
-        if (container) {
-          container.classList.add('vignette-collision');
-          container.classList.remove('vignette-singularity');
+        if (twinContainer) {
+          twinContainer.classList.add('vignette-collision');
+          twinContainer.classList.remove('vignette-singularity');
         }
       } else if (safetyState.singularity) {
         banner.className = 'twin-hud-banner banner-singularity';
         bannerIcon.className = 'fa-solid fa-bolt';
         bannerText.innerText = safetyState.message || 'SINGULARITY WARNING';
-        if (container) {
-          container.classList.add('vignette-singularity');
-          container.classList.remove('vignette-collision');
+        if (twinContainer) {
+          twinContainer.classList.add('vignette-singularity');
+          twinContainer.classList.remove('vignette-collision');
         }
       } else {
         banner.className = 'twin-hud-banner banner-hidden';
-        if (container) {
-          container.classList.remove('vignette-collision', 'vignette-singularity');
+        if (twinContainer) {
+          twinContainer.classList.remove('vignette-collision', 'vignette-singularity');
         }
       }
     }
@@ -789,10 +789,10 @@
     if (floorVal) {
       if (safetyState.floorClearanceZ !== null && !isNaN(safetyState.floorClearanceZ)) {
         const fz = safetyState.floorClearanceZ;
-        floorVal.innerText = fz.toFixed(0) + ' mm';
-        if (fz <= 15.0) {
+        floorVal.innerText = Number(fz).toFixed(0) + ' mm';
+        if (Number(fz) <= 15.0) {
           floorVal.style.color = '#ef4444';
-        } else if (fz < 35.0) {
+        } else if (Number(fz) < 35.0) {
           floorVal.style.color = '#f59e0b';
         } else {
           floorVal.style.color = '#38bdf8';
@@ -820,7 +820,7 @@
         floorClearanceZ: 145
       });
       if (testBtn) testBtn.style.color = '#f59e0b';
-      if (typeof logMsg === 'function') logMsg('Motion', '⚡ [DEMO] Singularity Warning active: Wrist alignment (J5 ≈ 0°)', 'warn');
+      if (typeof window.logMsg === 'function') window.logMsg('Motion', '⚡ [DEMO] Singularity Warning active: Wrist alignment (J5 ≈ 0°)', 'warn');
     } else if (demoSafetyStep === 2) {
       // 2. Table / Plane Collision
       window.updateDigitalTwinSafety({
@@ -832,7 +832,7 @@
         floorClearanceZ: 89.2
       });
       if (testBtn) testBtn.style.color = '#ef4444';
-      if (typeof logMsg === 'function') logMsg('Motion', '⚠ [DEMO] Collision Warning active: Ground limit exceeded (Z ≤ 91mm)', 'err');
+      if (typeof window.logMsg === 'function') window.logMsg('Motion', '⚠ [DEMO] Collision Warning active: Ground limit exceeded (Z ≤ 91mm)', 'err');
     } else if (demoSafetyStep === 3) {
       // 3. MoveIt 3D Obstacle Collision
       window.updateDigitalTwinSafety({
@@ -844,7 +844,7 @@
         floorClearanceZ: 180
       });
       if (testBtn) testBtn.style.color = '#ef4444';
-      if (typeof logMsg === 'function') logMsg('Motion', '⚠ [DEMO] MoveIt 3D Obstacle Collision halt', 'err');
+      if (typeof window.logMsg === 'function') window.logMsg('Motion', '⚠ [DEMO] MoveIt 3D Obstacle Collision halt', 'err');
     } else {
       // 0. Nominal / Cleared
       window.updateDigitalTwinSafety({
@@ -855,7 +855,7 @@
         floorClearanceZ: 185
       });
       if (testBtn) testBtn.style.color = 'var(--mut)';
-      if (typeof logMsg === 'function') logMsg('Motion', '✓ [DEMO] Safety state cleared. Normal operation.', 'success');
+      if (typeof window.logMsg === 'function') window.logMsg('Motion', '✓ [DEMO] Safety state cleared. Normal operation.', 'success');
     }
   };
   window.updateDigitalTwinJoints = function (jointVals, axisY) {
@@ -948,8 +948,8 @@
   window.syncTCPGizmoToRobot = function () {
     hasUserTargetOffset = false;
     syncTCPGizmoToRobot(true);
-    if (typeof logMsg === 'function') {
-      logMsg('GIZMO', '🎯 Gizmo auf aktuellen Roboter-TCP synchronisiert.', 'info');
+    if (typeof window.logMsg === 'function') {
+      window.logMsg('GIZMO', '🎯 Gizmo auf aktuellen Roboter-TCP synchronisiert.', 'info');
     }
   };
 
