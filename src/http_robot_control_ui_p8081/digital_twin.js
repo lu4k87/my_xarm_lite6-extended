@@ -448,7 +448,7 @@
 
     try {
       transformControls = new THREE.TransformControls(camera, renderer.domElement);
-      transformControls.size = 0.65;
+      transformControls.size = 1.0;
       transformControls.setSpace('world');
       transformControls.setMode(gizmoMode);
 
