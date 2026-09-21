@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -143,51 +143,14 @@
         
         <section id="panel-moveto" class="glass-panel">
           <h2><i class="fa-solid fa-location-crosshairs"></i> Absolute Pose (MoveTo)</h2>
-          <div class="input-grid">
+          <div class="input-row-inline">
             <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span> [mm]</label><input type="number" id="inp-x" step="1" value="300"></div>
             <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span> [mm]</label><input type="number" id="inp-y" step="1" value="0"></div>
             <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span> [mm]</label><input type="number" id="inp-z" step="1" value="200"></div>
-            <div class="input-group x"><label>Roll [rad] (<span style="color: var(--rviz-x); font-weight: 700;">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-            <div class="input-group y"><label>Pitch [rad] (<span style="color: var(--rviz-y); font-weight: 700;">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-            <div class="input-group z"><label>Yaw [rad] (<span style="color: var(--rviz-z); font-weight: 700;">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
-          </div>
-          
-          <div class="motion-btn-grid row-1">
-            <button class="btn btn-action motion-lockable" onclick="moveToPose()">
-              <i class="fa-solid fa-crosshairs"></i> Absolute Pose
-            </button>
-            <button class="btn btn-action motion-lockable" onclick="setInitialPose()">
-              <i class="fa-solid fa-house"></i> Initial Pose
-            </button>
-            <button id="btn-show-scene" class="btn btn-action motion-lockable" onclick="showScene()">
-              <i class="fa-solid fa-eye"></i> Scan Position
-            </button>
-          </div>
-
-          <div class="motion-btn-grid row-2">
-            <button id="btn-scan-objects" class="btn btn-action motion-lockable" onclick="startObjectScan()">
-              <i class="fa-solid fa-cube"></i> Create OctoMap of Objects
-            </button>
-            
-            <div class="speed-toggle-group">
-              <span class="speed-toggle-label"><i class="fa-solid fa-gauge"></i> Speed:</span>
-              <label class="speed-opt">
-                <input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()">
-                <span>Slow</span>
-              </label>
-              <label class="speed-opt">
-                <input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()">
-                <span>Normal</span>
-              </label>
-              <label class="speed-opt">
-                <input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()">
-                <span>Fast</span>
-              </label>
-            </div>
-
-            <button id="btn-emergency-stop" class="btn btn-danger" onclick="emergencyStop()">
-              <i class="fa-solid fa-hand"></i> STOP
-            </button>
+            <div class="input-row-divider"></div>
+            <div class="input-group x"><label>Roll (<span style="color: var(--rviz-x); font-weight: 700;">X</span>)</label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
+            <div class="input-group y"><label>Pitch (<span style="color: var(--rviz-y); font-weight: 700;">Y</span>)</label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
+            <div class="input-group z"><label>Yaw (<span style="color: var(--rviz-z); font-weight: 700;">Z</span>)</label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
           </div>
         </section>
 
@@ -287,6 +250,44 @@
               <button class="btn btn-icon-small" id="btn-twin-scene-zedm" onclick="toggleSceneNode('zedm')" title="ZED-M Kamerastativ (rviz_marker_3d_scene_zedm_stand)" style="color: var(--dim); opacity: 0.5;">
                 <i class="fa-solid fa-video"></i>
               </button>
+            </div>
+
+            <!-- Floating Motion Action Buttons (left side) -->
+            <div id="twin-motion-overlay" class="twin-motion-overlay">
+              <button class="btn btn-action motion-lockable" onclick="moveToPose()" title="Absolute Pose anfahren">
+                <i class="fa-solid fa-crosshairs"></i>
+              </button>
+              <button class="btn btn-action motion-lockable" onclick="setInitialPose()" title="Initial Pose anfahren">
+                <i class="fa-solid fa-house"></i>
+              </button>
+              <button id="btn-show-scene" class="btn btn-action motion-lockable" onclick="showScene()" title="Scan Position anfahren">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+              <button id="btn-scan-objects" class="btn btn-action motion-lockable" onclick="startObjectScan()" title="Create OctoMap of Objects">
+                <i class="fa-solid fa-cube"></i>
+              </button>
+              <button id="btn-emergency-stop" class="btn btn-danger" onclick="emergencyStop()" title="Sofort-Stopp">
+                <i class="fa-solid fa-hand"></i>
+              </button>
+            </div>
+
+            <!-- Floating Speed Toggle (bottom center) -->
+            <div id="twin-speed-overlay" class="twin-speed-overlay">
+              <div class="speed-toggle-group">
+                <span class="speed-toggle-label"><i class="fa-solid fa-gauge"></i> Speed:</span>
+                <label class="speed-opt">
+                  <input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()">
+                  <span>Slow</span>
+                </label>
+                <label class="speed-opt">
+                  <input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()">
+                  <span>Normal</span>
+                </label>
+                <label class="speed-opt">
+                  <input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()">
+                  <span>Fast</span>
+                </label>
+              </div>
             </div>
             <!-- Safety & Warning HUD Banner -->
             <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
