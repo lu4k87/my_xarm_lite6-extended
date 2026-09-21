@@ -2022,27 +2022,86 @@ function checkSceneObjectsNodeState(nodesList) {
 }
 window.checkSceneObjectsNodeState = checkSceneObjectsNodeState;
 
+let isSceneObjectsUserVisible = true;
+
+function updateSceneObjectsToolbarBtn(isNodeRunning, isUserVisible) {
+  const btn = document.getElementById('btn-twin-static-objects');
+  if (!btn) return;
+  if (!isNodeRunning) {
+    btn.classList.remove('active');
+    btn.style.color = 'var(--dim)';
+    btn.style.opacity = '0.45';
+    btn.title = 'Statische 3D-Szenenobjekte (Node inaktiv)';
+  } else if (isUserVisible) {
+    btn.classList.add('active');
+    btn.style.color = 'var(--cyan)';
+    btn.style.opacity = '1.0';
+    btn.title = 'Statische 3D-Szenenobjekte im WebGL ausblenden (Node aktiv)';
+  } else {
+    btn.classList.remove('active');
+    btn.style.color = 'var(--mut)';
+    btn.style.opacity = '0.8';
+    btn.title = 'Statische 3D-Szenenobjekte im WebGL einblenden (Node aktiv)';
+  }
+}
+
+function toggleSceneObjectsUserVisibility() {
+  isSceneObjectsUserVisible = !isSceneObjectsUserVisible;
+
+  if (isSceneObjectsNodeRunning) {
+    if (window.setTunerSceneObjectsVisibility) {
+      window.setTunerSceneObjectsVisibility(isSceneObjectsUserVisible);
+    }
+    if (isSceneObjectsUserVisible && window.updateTunerSceneObjects) {
+      window.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
+    }
+    updateSceneObjectsToolbarBtn(true, isSceneObjectsUserVisible);
+    if (isSceneObjectsUserVisible) {
+      logMsg('WebGL 3D', '🟢 Statische 3D-Objekte im WebGL eingeblendet', 'info');
+    } else {
+      logMsg('WebGL 3D', '⚪ Statische 3D-Objekte im WebGL ausgeblendet', 'warn');
+    }
+  } else {
+    // Node is not running
+    if (window.setTunerSceneObjectsVisibility) {
+      window.setTunerSceneObjectsVisibility(false);
+    }
+    updateSceneObjectsToolbarBtn(false, isSceneObjectsUserVisible);
+    logMsg('WebGL 3D', `ℹ️ Statische 3D-Objekte: ${isSceneObjectsUserVisible ? 'Vorgemerkt (Aktiv)' : 'Deaktiviert'} (Node 'rviz_marker_3d_scene_objects' läuft aktuell nicht)`, 'warn');
+  }
+}
+window.toggleSceneObjectsUserVisibility = toggleSceneObjectsUserVisibility;
+window.toggleDigitalTwinStaticObjects = toggleSceneObjectsUserVisibility;
+
 function applySceneObjectsActiveState(isActive, reason) {
-  if (isSceneObjectsNodeRunning === isActive) return;
+  const wasRunning = isSceneObjectsNodeRunning;
   isSceneObjectsNodeRunning = isActive;
+
+  const effectiveVisibility = isActive && isSceneObjectsUserVisible;
 
   if (isActive) {
     isTFBroadcastActive = true;
     if (window.setTunerSceneObjectsVisibility) {
-      window.setTunerSceneObjectsVisibility(true);
+      window.setTunerSceneObjectsVisibility(effectiveVisibility);
     }
-    if (window.updateTunerSceneObjects) {
+    if (effectiveVisibility && window.updateTunerSceneObjects) {
       window.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
     }
     updateTunerUI();
-    logMsg('TF-Tuner', `🟢 3D-Szenenobjekte eingeblendet (${reason || 'Node aktiv'})`, 'info');
+    updateSceneObjectsToolbarBtn(true, isSceneObjectsUserVisible);
+    if (!wasRunning) {
+      logMsg('TF-Tuner', `🟢 3D-Szenenobjekte Node aktiv (${reason || 'Node aktiv'})${effectiveVisibility ? ' (WebGL sichtbar)' : ' (im WebGL ausgeblendet)'}`, 'info');
+    }
   } else {
     isTFBroadcastActive = false;
     if (window.setTunerSceneObjectsVisibility) {
       window.setTunerSceneObjectsVisibility(false);
     }
     updateTunerUI();
-    logMsg('TF-Tuner', '⚪ 3D-Szenenobjekte ausgeblendet (Node inaktiv)', 'warn');
+    updateSceneObjectsToolbarBtn(false, isSceneObjectsUserVisible);
+    if (wasRunning) {
+      logMsg('TF-Tuner', '⚪ 3D-Szenenobjekte ausgeblendet (Node inaktiv)', 'warn');
+    }
   }
 }
 
@@ -2299,6 +2358,7 @@ tfBroadcasterInterval = setInterval(broadcastAllTFTunerTransforms, 100);
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     updateTunerUI();
+    updateSceneObjectsToolbarBtn(isSceneObjectsNodeRunning, isSceneObjectsUserVisible);
     document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
   }, 300);
 });

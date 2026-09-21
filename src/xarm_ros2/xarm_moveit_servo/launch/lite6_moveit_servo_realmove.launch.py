@@ -8,8 +8,9 @@
 
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -26,6 +27,8 @@ def generate_launch_description():
     attach_to = LaunchConfiguration('attach_to', default='world')
     baud_checkset = LaunchConfiguration('baud_checkset', default=True)
     default_gripper_baud = LaunchConfiguration('default_gripper_baud', default=2000000)
+    static_objects = LaunchConfiguration('static_objects', default='false')
+    static_onjects = LaunchConfiguration('static_onjects', default='false')
 
     # robot moveit servo launch
     # xarm_moveit_servo/launch/_robot_moveit_servo.launch.py
@@ -71,29 +74,24 @@ def generate_launch_description():
         }.items(),
     )
 
-    # # robot driver launch
-    # # xarm_api/launch/_robot_driver.launch.py
-    # robot_driver_launch = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(PathJoinSubstitution([FindPackageShare('xarm_api'), 'launch', '_robot_driver.launch.py'])),
-    #     launch_arguments={
-    #         'robot_ip': robot_ip,
-    #         'report_type': report_type,
-    #         'dof': '6',
-    #         'hw_ns': hw_ns,
-    #         'add_gripper': add_gripper,
-    #         'prefix': prefix,
-    #         'baud_checkset': baud_checkset,
-    #         'default_gripper_baud': default_gripper_baud,
-    #         'robot_type': 'lite',
-    #     }.items(),
-    # )
-    
+    # 3D Scene Marker Objects Launch (rviz_marker_3d_scene_objects)
+    static_objects_condition = IfCondition(
+        PythonExpression(["'", static_objects, "' == 'true' or '", static_onjects, "' == 'true'"])
+    )
+    rviz_marker_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([FindPackageShare('rviz_marker_3d_scene_objects'), 'launch', 'rviz_marker_3d_scene_objects.launch.py'])),
+        condition=static_objects_condition
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument('robot_ip', default_value='192.168.1.175', description='IP address of the real xArm Lite 6 robot'),
         DeclareLaunchArgument('report_type', default_value='dev', description='Report type (dev, normal, rich)'),
         DeclareLaunchArgument('add_gripper', default_value='false', description='Whether to add xArm gripper'),
         DeclareLaunchArgument('add_vacuum_gripper', default_value='false', description='Whether to add vacuum gripper'),
+        DeclareLaunchArgument('static_objects', default_value='false', description='Whether to launch rviz_marker_3d_scene_objects (3D scene calibration objects)'),
+        DeclareLaunchArgument('static_onjects', default_value='false', description='Alias for static_objects'),
         robot_moveit_servo_launch,
         standalone_move_group_launch,
+        rviz_marker_launch,
         # robot_driver_launch,
     ])

@@ -217,6 +217,9 @@
         if (argText.startsWith('yolo_model:=')) {
             return argText === 'yolo_model:=yolov8l.pt';
         }
+        if (argText === 'static_objects:=true' || argText === 'static_onjects:=true') {
+            return true;
+        }
         if (argText === 'add_gripper:=true') {
             return false;
         }
@@ -803,6 +806,89 @@
             return false;
         }
 
+        function isNodeStaticObjects(item) {
+            const selfSpan = item.querySelector('span:not(.badge):not([style*="float"])');
+            const selfName = selfSpan ? selfSpan.textContent.trim().toLowerCase() : '';
+            if (selfName.includes('rviz_marker_3d_scene_objects') ||
+                selfName.includes('zed_stand_publisher')) {
+                return true;
+            }
+            const text = (item.textContent || '').toLowerCase();
+            if (text.includes('rviz_marker_3d_scene_objects') || text.includes('zed_stand_publisher') || text.includes('3d szene marker')) {
+                return true;
+            }
+            return false;
+        }
+
+        function updateStaticObjectsTreeNodes(container, isStaticObjectsActive) {
+            if (!container) return;
+
+            if (typeof isStaticObjectsActive !== 'boolean') {
+                const staticCb = container.querySelector('label.param-chip[data-arg-text="static_objects:=true"] input, label.param-chip[data-arg-text="static_onjects:=true"] input') ||
+                                 document.querySelector('#launch-modal-body label.param-chip[data-arg-text="static_objects:=true"] input, #launch-modal-body label.param-chip[data-arg-text="static_onjects:=true"] input');
+                isStaticObjectsActive = staticCb ? staticCb.checked : true;
+            }
+
+            const rows = container.querySelectorAll('.modal-card-row, .modal-action-card, li');
+            rows.forEach(row => {
+                const cmd = row.dataset.cmd || row.getAttribute('data-raw-cmd') || '';
+                const text = row.textContent || '';
+                if (cmd.includes('lite6_moveit_servo') || text.includes('lite6_moveit_servo')) {
+                    const leftCol = row.querySelector('.modal-card-left-col') || row;
+                    const subItems = leftCol.querySelectorAll('li');
+                    subItems.forEach(item => {
+                        if (isNodeStaticObjects(item)) {
+                            setNodeState(item, isStaticObjectsActive, 'static_objects');
+                        }
+                    });
+                }
+            });
+        }
+
+        function syncStaticObjectsState(isStaticObjectsActive) {
+            actionsData.forEach(act => {
+                const isServoLaunch = (act.baseCmd && act.baseCmd.includes('lite6_moveit_servo')) ||
+                                      (act.cmd && act.cmd.includes('lite6_moveit_servo'));
+                if (isServoLaunch && act.args) {
+                    act.args.forEach(a => {
+                        if (a.text === 'static_objects:=true' || a.text === 'static_onjects:=true') {
+                            a.checked = isStaticObjectsActive;
+                        }
+                    });
+                }
+            });
+
+            const modalBody = document.getElementById('launch-modal-body');
+            const targetContainer = modalBody || contentClone;
+            if (targetContainer) {
+                targetContainer.querySelectorAll('label.param-chip').forEach(lbl => {
+                    const cb = lbl.querySelector('input');
+                    if (cb && lbl.dataset.argText && (lbl.dataset.argText === 'static_objects:=true' || lbl.dataset.argText === 'static_onjects:=true')) {
+                        cb.checked = isStaticObjectsActive;
+                        lbl.classList.toggle('chip-inactive', !isStaticObjectsActive);
+                    }
+                });
+
+                targetContainer.querySelectorAll('.modal-card-row, .modal-action-card, li').forEach(row => {
+                    const rowCmd = row.dataset.cmd || row.getAttribute('data-raw-cmd') || '';
+                    if (rowCmd.includes('rviz_marker_3d_scene_objects.launch.py')) {
+                        const cb = row.querySelector('.main-action-cb');
+                        if (cb) {
+                            cb.checked = isStaticObjectsActive;
+                            row.classList.toggle('card-active', isStaticObjectsActive);
+                            row.classList.toggle('row-active', isStaticObjectsActive);
+                            row.classList.toggle('card-inactive', !isStaticObjectsActive);
+                            row.classList.toggle('row-inactive', !isStaticObjectsActive);
+                            const matchedAct = actionsData.find(a => a.cmd === rowCmd || a.baseCmd === rowCmd);
+                            if (matchedAct) matchedAct.active = isStaticObjectsActive;
+                        }
+                    }
+                });
+
+                updateStaticObjectsTreeNodes(targetContainer, isStaticObjectsActive);
+            }
+        }
+
         function setNodeState(item, isActive, type) {
             if (isActive) {
                 item.classList.remove('camera-node-inactive');
@@ -1036,7 +1122,16 @@
                action.postCmd = '';
            }
 
-               // Ensure camera selection and ZED M YOLO models args are available for robot_vision_cameras_bringup
+               // Ensure static_objects:=true is available for lite6_moveit_servo
+            if (action.baseCmd && (action.baseCmd.includes('lite6_moveit_servo_realmove.launch.py') || action.baseCmd.includes('lite6_moveit_servo_fake.launch.py'))) {
+                const staticArgText = 'static_objects:=true';
+                if (!action.args.some(a => a.text === staticArgText || a.text === 'static_onjects:=true')) {
+                    const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, staticArgText);
+                    action.args.push({ text: staticArgText, checked: isChecked });
+                }
+            }
+
+            // Ensure camera selection and ZED M YOLO models args are available for robot_vision_cameras_bringup
             if (action.baseCmd && action.baseCmd.includes('robot_vision_cameras_bringup.launch.py')) {
                 action.args = action.args.filter(a => !a.text.startsWith('use_zed_hardware'));
                 const visionDefaults = [
@@ -1270,6 +1365,11 @@
                              const targetReportType = (!e.target.checked) ? 'report_type:=dev' : argObj.text;
                              syncReportTypeState(targetReportType);
                          }
+
+                        // Static Objects sync
+                        if (argObj.text === 'static_objects:=true' || argObj.text === 'static_onjects:=true') {
+                            syncStaticObjectsState(e.target.checked);
+                        }
 
                         // Linear Axis dynamic title and checkbox synchronization
                         if (argObj.text.includes('linear_axis')) {
@@ -1880,24 +1980,31 @@
        updateModalStats();
        
        // Initial visual sync for camera-dependent vision nodes
+       // Initial visual sync for camera-dependent vision nodes and static objects
        const visionAct = actionsData.find(a => (a.baseCmd && a.baseCmd.includes('robot_vision_cameras_bringup')) || (a.cmd && a.cmd.includes('robot_vision_cameras_bringup')));
        const initialIsIpCam = visionAct && visionAct.args ? visionAct.args.some(a => a.text === 'camera:=ip_cam' && a.checked) : false;
+       const servoAct = actionsData.find(a => (a.baseCmd && a.baseCmd.includes('lite6_moveit_servo')) || (a.cmd && a.cmd.includes('lite6_moveit_servo')));
+       const initialIsStaticObjects = servoAct && servoAct.args ? servoAct.args.some(a => (a.text === 'static_objects:=true' || a.text === 'static_onjects:=true') && a.checked) : true;
        const currentModalBody = document.getElementById('launch-modal-body') || contentClone;
        updateVisionTreeNodes(currentModalBody, initialIsIpCam);
+       updateStaticObjectsTreeNodes(currentModalBody, initialIsStaticObjects);
        
        requestAnimationFrame(() => {
            const mBody = document.getElementById('launch-modal-body') || contentClone;
            alignModalArgs(mBody);
            updateVisionTreeNodes(mBody, initialIsIpCam);
+           updateStaticObjectsTreeNodes(mBody, initialIsStaticObjects);
            setTimeout(() => {
                const mb = document.getElementById('launch-modal-body') || contentClone;
                alignModalArgs(mb);
                updateVisionTreeNodes(mb, initialIsIpCam);
+               updateStaticObjectsTreeNodes(mb, initialIsStaticObjects);
            }, 100);
            setTimeout(() => {
                const mb = document.getElementById('launch-modal-body') || contentClone;
                alignModalArgs(mb);
                updateVisionTreeNodes(mb, initialIsIpCam);
+               updateStaticObjectsTreeNodes(mb, initialIsStaticObjects);
            }, 300);
        });
        

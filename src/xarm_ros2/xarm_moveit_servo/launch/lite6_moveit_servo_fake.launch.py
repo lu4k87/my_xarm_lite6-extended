@@ -7,9 +7,10 @@
 # Author: Vinman <vinman.wen@ufactory.cc> <vinman.cub@gmail.com>
 
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -22,6 +23,8 @@ def generate_launch_description():
     add_gripper = LaunchConfiguration('add_gripper', default=False)
     add_vacuum_gripper = LaunchConfiguration('add_vacuum_gripper', default=False)
     attach_to = LaunchConfiguration('attach_to', default='world')
+    static_objects = LaunchConfiguration('static_objects', default='false')
+    static_onjects = LaunchConfiguration('static_onjects', default='false')
 
     # robot moveit servo launch
     # xarm_moveit_servo/launch/_robot_moveit_servo.launch.py
@@ -58,7 +61,21 @@ def generate_launch_description():
         }.items(),
     )
 
+    # 3D Scene Marker Objects Launch (rviz_marker_3d_scene_objects)
+    static_objects_condition = IfCondition(
+        PythonExpression(["'", static_objects, "' == 'true' or '", static_onjects, "' == 'true'"])
+    )
+    rviz_marker_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([FindPackageShare('rviz_marker_3d_scene_objects'), 'launch', 'rviz_marker_3d_scene_objects.launch.py'])),
+        condition=static_objects_condition
+    )
+
     return LaunchDescription([
+        DeclareLaunchArgument('add_gripper', default_value='false', description='Whether to add xArm gripper'),
+        DeclareLaunchArgument('add_vacuum_gripper', default_value='false', description='Whether to add vacuum gripper'),
+        DeclareLaunchArgument('static_objects', default_value='false', description='Whether to launch rviz_marker_3d_scene_objects (3D scene calibration objects)'),
+        DeclareLaunchArgument('static_onjects', default_value='false', description='Alias for static_objects'),
         robot_moveit_servo_launch,
         standalone_move_group_launch,
+        rviz_marker_launch,
     ])

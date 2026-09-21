@@ -906,6 +906,19 @@
     }
   };
 
+  window.toggleDigitalTwinStaticObjects = function () {
+    if (typeof window.toggleSceneObjectsUserVisibility === 'function') {
+      window.toggleSceneObjectsUserVisibility();
+    } else {
+      const current = window.getTunerSceneObjectsVisibility();
+      window.setTunerSceneObjectsVisibility(!current);
+      const btn = document.getElementById('btn-twin-static-objects');
+      if (btn) {
+        btn.style.color = !current ? 'var(--cyan)' : 'var(--mut)';
+      }
+    }
+  };
+
   window.resizeDigitalTwin = function () {
     handleResize();
   };
