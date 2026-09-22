@@ -30,7 +30,9 @@ class SceneSafetyZonePublisher(Node):
         # Safety Zone Parameter (Defaults)
         self.safe_x = 0.0
         self.safe_y = 0.0
-        self.safe_radius = 0.20
+        # 125 mm = Bereich um die Base, der wegen Handgelenk-Singularitaet
+        # nicht anfahrbar ist (identisch zu DEADZONE_RADIUS_MM in der Web-UI).
+        self.safe_radius = 0.125
 
         # Subscriber für Safety Zone Parameter vom UI
         self.safety_sub = self.create_subscription(

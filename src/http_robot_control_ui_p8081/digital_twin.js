@@ -23,6 +23,14 @@
   let isGizmoActive = true;
   let gizmoMode = 'translate'; // 'translate' | 'rotate'
   let isDraggingGizmo = false;
+
+  // Nicht anfahrbarer Bereich um die Roboterbasis (Handgelenk-Singularitaet).
+  // Wird fuer die Pruefung der Gizmo-Position UND fuer den Safety-Zone-Ring
+  // benutzt, damit beide nicht auseinanderlaufen koennen - genau das war der
+  // Fall: Ring bei 200 mm, Pruefung bei 125 mm.
+  const DEADZONE_RADIUS_MM = 125.0;
+  const DEADZONE_RADIUS_M = DEADZONE_RADIUS_MM / 1000.0;
+  const CAUTION_RADIUS_MM = 140.0;
   let hasUserTargetOffset = false;
 
   // ── Viewport Navigation Gizmo State (Blender-style axis ball widget) ──
@@ -940,7 +948,7 @@
 
     // Safety check on current gizmo coordinates
     const r_xy = Math.sqrt(posX_mm * posX_mm + posY_mm * posY_mm);
-    const isInsideDeadzone = (r_xy < 125.0 && posZ_mm < 280.0);
+    const isInsideDeadzone = (r_xy < DEADZONE_RADIUS_MM && posZ_mm < 280.0);
     const isBelowFloor = (posZ_mm <= 15.0);
 
     // Update floating HUD in viewport
@@ -961,7 +969,7 @@
       if (isInsideDeadzone || isBelowFloor) {
         hudCoords.style.color = '#ef4444';
         hudCoords.classList.add('coords-alert');
-      } else if (r_xy < 140.0 || posZ_mm < 35.0) {
+      } else if (r_xy < CAUTION_RADIUS_MM || posZ_mm < 35.0) {
         hudCoords.style.color = '#f59e0b';
         hudCoords.classList.add('coords-alert');
       } else {
@@ -971,7 +979,7 @@
     }
     if (hudDelta) {
       if (isInsideDeadzone) {
-        hudDelta.innerText = `⚠️ R: ${Math.round(r_xy)} < 125 mm`;
+        hudDelta.innerText = `⚠️ R: ${Math.round(r_xy)} < ${DEADZONE_RADIUS_MM} mm`;
         hudDelta.style.color = '#ef4444';
         hudDelta.style.background = 'rgba(239, 68, 68, 0.25)';
       } else if (isBelowFloor) {
@@ -1006,13 +1014,13 @@
     const posY_mm = Math.round((gizmoTarget.position.y - linearShiftY) * 1000.0);
     const posZ_mm = Math.round(gizmoTarget.position.z * 1000.0);
     const r_xy = Math.sqrt(posX_mm * posX_mm + posY_mm * posY_mm);
-    const isInsideDeadzone = (r_xy < 125.0 && posZ_mm < 280.0);
+    const isInsideDeadzone = (r_xy < DEADZONE_RADIUS_MM && posZ_mm < 280.0);
     const isBelowFloor = (posZ_mm <= 15.0);
 
     if (isInsideDeadzone || isBelowFloor) {
       if (typeof window.logMsg === 'function') {
         window.logMsg('GIZMO', isInsideDeadzone 
-          ? `⚠️ Target lies inside the inner singularity / collision zone (r=${Math.round(r_xy)} mm < 125 mm). Auto-move blocked!`
+          ? `⚠️ Target lies inside the inner singularity / collision zone (r=${Math.round(r_xy)} mm < ${DEADZONE_RADIUS_MM} mm). Auto-move blocked!`
           : `⚠️ Target lies inside the table surface (Z=${posZ_mm} mm). Auto-move blocked!`, 'err');
       }
       return;
@@ -1378,7 +1386,10 @@
     tunerSceneObjects['White Plane'] = planeMesh;
 
     // 5. Safety Zone (Ring on ground)
-    const safetyGeo = new THREE.RingGeometry(0.197, 0.203, 48);
+    // Markiert den Bereich um die Base, der wegen Handgelenk-Singularitaet
+    // NICHT anfahrbar ist. Radius aus derselben Konstante wie die Pruefung.
+    const safetyGeo = new THREE.RingGeometry(
+      DEADZONE_RADIUS_M - 0.003, DEADZONE_RADIUS_M + 0.003, 48);
     const safetyMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide });
     const safetyMesh = new THREE.Mesh(safetyGeo, safetyMat);
     safetyMesh.position.z = 0.0005;
