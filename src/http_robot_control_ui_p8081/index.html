@@ -747,8 +747,9 @@
       if (!rvizImg) return;
 
       const rvizHost = window.location.hostname || 'localhost';
+      // Ebenfalls ungekodiert - siehe Begruendung bei streamUrl() weiter unten.
       const rvizUrl = () =>
-        `http://${rvizHost}:8082/stream?topic=${encodeURIComponent('/rviz_video/image_raw')}` +
+        `http://${rvizHost}:8082/stream?topic=/rviz_video/image_raw` +
         `&type=mjpeg&qos_profile=sensor_data&width=800&height=450&_t=${Date.now()}`;
 
       let watch = null;
@@ -827,7 +828,14 @@
         // weil man die Reliability dort pro Display auf Best Effort stellt.
         // BEST_EFFORT-Subscriber matchen auch RELIABLE-Publisher, der Wert ist
         // also fuer alle Topics sicher.
-        return `http://${host}:8082/stream?topic=${encodeURIComponent(topic)}&type=mjpeg&qos_profile=sensor_data${extra}${t}`;
+        // Der Topic-Name wird NICHT kodiert. web_video_server dekodiert den
+        // Query-Parameter nicht und bekommt sonst "%2Fzed%2F..." zu sehen;
+        // es lehnt das ab ("Invalid topic name: must not contain characters
+        // other than alphanumerics, '_', '~', '{', or '}'") und liefert eine
+        // leere Multipart-Antwort - Verbindung steht, Bild kommt nie.
+        // Die Index-Seite des Servers verlinkt die Streams selbst ungekodiert.
+        // Gueltige ROS-Topicnamen enthalten ohnehin nur [A-Za-z0-9_~{}/].
+        return `http://${host}:8082/stream?topic=${topic}&type=mjpeg&qos_profile=sensor_data${extra}${t}`;
       }
 
       let savedTopic = null;
