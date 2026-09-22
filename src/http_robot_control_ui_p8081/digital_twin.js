@@ -25,6 +25,37 @@
   let isDraggingGizmo = false;
   let hasUserTargetOffset = false;
 
+  // ── Viewport Navigation Gizmo State (Blender-style axis ball widget) ──
+  let navCanvas = null;
+  let navCtx = null;
+  let navHoverAxis = -1;
+  let navPressAxis = -1;
+  let navPointerId = null;
+  let navIsOrbiting = false;
+  let navDownX = 0;
+  let navDownY = 0;
+  let navLastX = 0;
+  let navLastY = 0;
+  let navSnap = null; // { from, to, t0, dur } while an axis snap animates
+
+  const NAV_ORBIT_SPEED = 0.011;   // radians per dragged pixel
+  const NAV_ZOOM_STEP = 0.9;       // wheel dolly factor per notch
+  const NAV_CLICK_SLOP = 4;        // px of movement still counted as a click
+  const NAV_UP_Y = new THREE.Vector3(0, 1, 0);
+
+  // ROS frame convention: X forward (red), Y left (green), Z up (blue)
+  const NAV_AXES = [
+    { label: 'X', rgb: '239, 68, 68',  positive: true,  dir: new THREE.Vector3(1, 0, 0) },
+    { label: 'Y', rgb: '16, 185, 129', positive: true,  dir: new THREE.Vector3(0, 1, 0) },
+    { label: 'Z', rgb: '56, 189, 248', positive: true,  dir: new THREE.Vector3(0, 0, 1) },
+    { label: 'X', rgb: '239, 68, 68',  positive: false, dir: new THREE.Vector3(-1, 0, 0) },
+    { label: 'Y', rgb: '16, 185, 129', positive: false, dir: new THREE.Vector3(0, -1, 0) },
+    { label: 'Z', rgb: '56, 189, 248', positive: false, dir: new THREE.Vector3(0, 0, -1) }
+  ];
+
+  const navTmpQuat = new THREE.Quaternion();
+  const navTmpVec = new THREE.Vector3();
+
   // Safety & Warning State
   let allRobotMeshes = [];
   let linkMeshes = {};
@@ -165,12 +196,16 @@
     // 7. Interactive 3D TCP Gizmo (TransformControls)
     initTCPGizmo();
 
-    // 8. Load URDF
+    // 8. Viewport Navigation Gizmo (Blender-style axis ball widget)
+    initNavGizmo();
+
+    // 9. Load URDF
     loadURDFModel();
 
-    // 9. Animation Loop
+    // 10. Animation Loop
     function animate() {
       animId = requestAnimationFrame(animate);
+      updateNavGizmo();
       if (controls) controls.update();
       updateSafetyVisuals();
       updateConnectingLine();
@@ -178,7 +213,7 @@
     }
     animate();
 
-    // 9. Resize Observer
+    // 11. Resize Observer
     if (window.ResizeObserver) {
       const ro = new ResizeObserver(() => handleResize());
       ro.observe(container);
@@ -195,7 +230,313 @@
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      // Keep the nav gizmo from ever squeezing the other viewport HUDs
+      const hudHost = container.closest('.viewport-container');
+      if (hudHost) {
+        hudHost.classList.toggle('twin-viewport-short', h < 430);
+        hudHost.classList.toggle('twin-viewport-tiny', h < 340);
+      }
     }
+  }
+
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     Viewport Navigation Gizmo (Blender-style)
+     Small canvas widget in the top-left corner of the 3D viewport:
+       • drag anywhere on it      → orbit the camera around the current pivot
+       • click an axis ball       → animated snap to that axis view
+       • mouse wheel              → dolly in / out
+     Purely 2D-projected from the live camera orientation, so it stays in sync
+     with OrbitControls and the TCP gizmo without touching the WebGL scene.
+     ────────────────────────────────────────────────────────────────────────── */
+
+  function initNavGizmo() {
+    navCanvas = document.getElementById('twin-nav-gizmo');
+    if (!navCanvas) return;
+
+    navCtx = navCanvas.getContext('2d');
+    if (!navCtx) {
+      navCanvas = null;
+      return;
+    }
+
+    navCanvas.addEventListener('pointerdown', onNavPointerDown);
+    navCanvas.addEventListener('pointermove', onNavPointerMove);
+    navCanvas.addEventListener('pointerup', onNavPointerUp);
+    navCanvas.addEventListener('pointercancel', onNavPointerUp);
+    navCanvas.addEventListener('pointerleave', onNavPointerLeave);
+    navCanvas.addEventListener('wheel', onNavWheel, { passive: false });
+    navCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // A drag inside the 3D view takes over: drop any running snap animation
+    if (controls) controls.addEventListener('start', () => { navSnap = null; });
+  }
+
+  // Projects the six world axes into the gizmo's 2D disc (camera space).
+  function computeNavAxisPoints(size) {
+    const center = size / 2;
+    const radius = size * 0.335;
+    navTmpQuat.copy(camera.quaternion).invert();
+
+    return NAV_AXES.map((axis, index) => {
+      navTmpVec.copy(axis.dir).applyQuaternion(navTmpQuat);
+      return {
+        index: index,
+        axis: axis,
+        x: center + navTmpVec.x * radius,
+        y: center - navTmpVec.y * radius,
+        depth: navTmpVec.z // camera looks down -Z: bigger means closer to the viewer
+      };
+    });
+  }
+
+  function navBallRadius(size) {
+    return size * 0.105;
+  }
+
+  function navHitTest(px, py, size) {
+    const points = computeNavAxisPoints(size);
+    const grab = navBallRadius(size) * 1.25;
+    let hit = -1;
+    let hitDepth = -Infinity;
+
+    for (const point of points) {
+      const dx = px - point.x;
+      const dy = py - point.y;
+      if (dx * dx + dy * dy <= grab * grab && point.depth > hitDepth) {
+        hit = point.index;
+        hitDepth = point.depth;
+      }
+    }
+    return hit;
+  }
+
+  function drawNavGizmo() {
+    if (!navCanvas || !navCtx || !camera) return;
+
+    const size = navCanvas.clientWidth;
+    if (!size) return; // hidden (short viewport) — nothing to draw
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const backing = Math.round(size * dpr);
+    if (navCanvas.width !== backing || navCanvas.height !== backing) {
+      navCanvas.width = backing;
+      navCanvas.height = backing;
+    }
+
+    const ctx = navCtx;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, size, size);
+
+    const center = size / 2;
+    const ballR = navBallRadius(size);
+    const points = computeNavAxisPoints(size).sort((a, b) => a.depth - b.depth);
+
+    ctx.lineCap = 'round';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `700 ${Math.round(size * 0.135)}px 'JetBrains Mono', monospace`;
+
+    for (const point of points) {
+      const axis = point.axis;
+      const hovered = (point.index === navHoverAxis);
+      // Balls pointing away from the viewer fade out slightly (depth cue)
+      const fade = 0.45 + 0.55 * ((point.depth + 1) / 2);
+
+      if (axis.positive) {
+        ctx.strokeStyle = `rgba(${axis.rgb}, ${(0.85 * fade).toFixed(3)})`;
+        ctx.lineWidth = Math.max(1.5, size * 0.023);
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, ballR, 0, Math.PI * 2);
+      if (axis.positive || hovered) {
+        ctx.fillStyle = `rgba(${axis.rgb}, ${Math.min(1, 0.55 + 0.45 * fade).toFixed(3)})`;
+        ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(10, 14, 23, 0.88)';
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${axis.rgb}, ${(0.8 * fade).toFixed(3)})`;
+        ctx.lineWidth = Math.max(1.2, size * 0.017);
+        ctx.stroke();
+      }
+
+      if (hovered) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = Math.max(1.2, size * 0.018);
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, ballR + ctx.lineWidth, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Positive axes are always labelled, negative ones only while hovered
+      if (axis.positive || hovered) {
+        ctx.fillStyle = '#0a0e17';
+        ctx.fillText(axis.label, point.x, point.y + size * 0.005);
+      }
+    }
+  }
+
+  // Clamps an orbit offset to the OrbitControls polar/distance limits so a
+  // snap always lands exactly where the camera is allowed to stay.
+  function clampNavOffset(offset) {
+    const upQuat = new THREE.Quaternion().setFromUnitVectors(camera.up, NAV_UP_Y);
+    offset.applyQuaternion(upQuat);
+
+    const spherical = new THREE.Spherical().setFromVector3(offset);
+    const minPhi = Math.max(1e-4, controls ? controls.minPolarAngle : 0);
+    const maxPhi = Math.min(Math.PI - 1e-4, controls ? controls.maxPolarAngle : Math.PI);
+    spherical.phi = Math.min(maxPhi, Math.max(minPhi, spherical.phi));
+    if (controls) {
+      spherical.radius = Math.min(controls.maxDistance, Math.max(controls.minDistance, spherical.radius));
+    }
+    spherical.makeSafe();
+
+    offset.setFromSpherical(spherical).applyQuaternion(upQuat.invert());
+    return offset;
+  }
+
+  function orbitNavGizmo(dxPx, dyPx) {
+    if (!camera || !controls) return;
+
+    const offset = camera.position.clone().sub(controls.target);
+    const upQuat = new THREE.Quaternion().setFromUnitVectors(camera.up, NAV_UP_Y);
+    offset.applyQuaternion(upQuat);
+
+    const spherical = new THREE.Spherical().setFromVector3(offset);
+    spherical.theta -= dxPx * NAV_ORBIT_SPEED;
+    spherical.phi -= dyPx * NAV_ORBIT_SPEED;
+    const minPhi = Math.max(1e-4, controls.minPolarAngle);
+    const maxPhi = Math.min(Math.PI - 1e-4, controls.maxPolarAngle);
+    spherical.phi = Math.min(maxPhi, Math.max(minPhi, spherical.phi));
+    spherical.makeSafe();
+
+    offset.setFromSpherical(spherical).applyQuaternion(upQuat.invert());
+    camera.position.copy(controls.target).add(offset);
+    camera.lookAt(controls.target);
+    controls.update();
+  }
+
+  function snapNavViewToAxis(index) {
+    if (!camera || !controls || !NAV_AXES[index]) return;
+
+    const distance = camera.position.distanceTo(controls.target) || 1.0;
+    const dir = NAV_AXES[index].dir.clone();
+    // Pure top/bottom views are degenerate with a Z-up camera: nudge them
+    if (Math.abs(dir.z) > 0.99) dir.x += 0.0015;
+
+    const offset = clampNavOffset(dir.normalize().multiplyScalar(distance));
+    navSnap = {
+      from: camera.position.clone(),
+      to: controls.target.clone().add(offset),
+      t0: performance.now(),
+      dur: 420
+    };
+  }
+
+  function onNavPointerDown(e) {
+    if (!camera || !controls) return;
+    e.preventDefault();
+
+    const rect = navCanvas.getBoundingClientRect();
+    navPressAxis = navHitTest(e.clientX - rect.left, e.clientY - rect.top, rect.width);
+    navPointerId = e.pointerId;
+    navIsOrbiting = false;
+    navDownX = navLastX = e.clientX;
+    navDownY = navLastY = e.clientY;
+    navSnap = null;
+
+    if (navCanvas.setPointerCapture) navCanvas.setPointerCapture(e.pointerId);
+  }
+
+  function onNavPointerMove(e) {
+    if (!navCanvas) return;
+    const rect = navCanvas.getBoundingClientRect();
+
+    if (navPointerId === null) {
+      const hover = navHitTest(e.clientX - rect.left, e.clientY - rect.top, rect.width);
+      if (hover !== navHoverAxis) {
+        navHoverAxis = hover;
+        navCanvas.style.cursor = (hover >= 0) ? 'pointer' : 'grab';
+      }
+      return;
+    }
+
+    if (navPointerId !== e.pointerId) return;
+    e.preventDefault();
+
+    if (!navIsOrbiting) {
+      const movedX = Math.abs(e.clientX - navDownX);
+      const movedY = Math.abs(e.clientY - navDownY);
+      if (movedX > NAV_CLICK_SLOP || movedY > NAV_CLICK_SLOP) {
+        navIsOrbiting = true;
+        navHoverAxis = -1;
+        navCanvas.style.cursor = 'grabbing';
+      }
+    }
+
+    if (navIsOrbiting) {
+      orbitNavGizmo(e.clientX - navLastX, e.clientY - navLastY);
+      navLastX = e.clientX;
+      navLastY = e.clientY;
+    }
+  }
+
+  function onNavPointerUp(e) {
+    if (navPointerId === null || (e && e.pointerId !== navPointerId)) return;
+
+    if (!navIsOrbiting && navPressAxis >= 0) {
+      snapNavViewToAxis(navPressAxis);
+    }
+
+    if (navCanvas) {
+      if (navCanvas.releasePointerCapture && navCanvas.hasPointerCapture && navCanvas.hasPointerCapture(navPointerId)) {
+        navCanvas.releasePointerCapture(navPointerId);
+      }
+      navCanvas.style.cursor = 'grab';
+    }
+    navPointerId = null;
+    navPressAxis = -1;
+    navIsOrbiting = false;
+  }
+
+  function onNavPointerLeave() {
+    if (navPointerId !== null) return; // keep the highlight while dragging
+    if (navHoverAxis !== -1) {
+      navHoverAxis = -1;
+      if (navCanvas) navCanvas.style.cursor = 'grab';
+    }
+  }
+
+  function onNavWheel(e) {
+    e.preventDefault();
+    if (!camera || !controls) return;
+
+    navSnap = null;
+    const offset = camera.position.clone().sub(controls.target);
+    const factor = (e.deltaY > 0) ? (1 / NAV_ZOOM_STEP) : NAV_ZOOM_STEP;
+    const length = Math.min(controls.maxDistance, Math.max(controls.minDistance, offset.length() * factor));
+    camera.position.copy(controls.target).add(offset.setLength(length));
+    controls.update();
+  }
+
+  function updateNavGizmo() {
+    if (!navCanvas) return;
+
+    if (navSnap && camera && controls) {
+      const t = Math.min(1, (performance.now() - navSnap.t0) / navSnap.dur);
+      const eased = (t < 0.5) ? (4 * t * t * t) : (1 - Math.pow(-2 * t + 2, 3) / 2);
+      camera.position.lerpVectors(navSnap.from, navSnap.to, eased);
+      camera.lookAt(controls.target);
+      controls.update();
+      if (t >= 1) navSnap = null;
+    }
+
+    drawNavGizmo();
   }
 
   function loadURDFModel() {
@@ -659,8 +1000,8 @@
     if (isInsideDeadzone || isBelowFloor) {
       if (typeof window.logMsg === 'function') {
         window.logMsg('GIZMO', isInsideDeadzone 
-          ? `⚠️ Ziel liegt im inneren Singularitäts-/Kollisionsbereich (r=${Math.round(r_xy)} mm < 125 mm). Auto-Fahrt blockiert!`
-          : `⚠️ Ziel liegt in der Tischplatte (Z=${posZ_mm} mm). Auto-Fahrt blockiert!`, 'err');
+          ? `⚠️ Target lies inside the inner singularity / collision zone (r=${Math.round(r_xy)} mm < 125 mm). Auto-move blocked!`
+          : `⚠️ Target lies inside the table surface (Z=${posZ_mm} mm). Auto-move blocked!`, 'err');
       }
       return;
     }
@@ -872,6 +1213,7 @@
 
   window.resetDigitalTwinView = function () {
     if (!camera || !controls) return;
+    navSnap = null;
     controls.target.set(DEFAULT_TARGET.x, DEFAULT_TARGET.y, DEFAULT_TARGET.z);
     camera.position.set(DEFAULT_CAM_POS.x, DEFAULT_CAM_POS.y, DEFAULT_CAM_POS.z);
     controls.update();
@@ -879,6 +1221,7 @@
 
   window.setDigitalTwinTopView = function () {
     if (!camera || !controls) return;
+    navSnap = null;
     controls.target.set(0, 0, 0.20);
     camera.position.set(0.001, 0, 1.15);
     controls.update();
@@ -938,10 +1281,10 @@
     if (btnMode) {
       if (gizmoMode === 'translate') {
         btnMode.innerHTML = '<i class="fa-solid fa-arrows-up-down-left-right"></i>';
-        btnMode.title = 'Modus: Translation (X, Y, Z Pfeile) aktiv [Tasten: T / R]';
+        btnMode.title = 'Mode: Translation (X, Y, Z arrows) active [Keys: T / R]';
       } else {
         btnMode.innerHTML = '<i class="fa-solid fa-rotate"></i>';
-        btnMode.title = 'Modus: Rotation (Roll, Pitch, Yaw Ringe) aktiv [Tasten: T / R]';
+        btnMode.title = 'Mode: Rotation (Roll, Pitch, Yaw rings) active [Keys: T / R]';
       }
     }
   };
@@ -950,7 +1293,7 @@
     hasUserTargetOffset = false;
     syncTCPGizmoToRobot(true);
     if (typeof window.logMsg === 'function') {
-      window.logMsg('GIZMO', '🎯 Gizmo auf aktuellen Roboter-TCP synchronisiert.', 'info');
+      window.logMsg('GIZMO', '🎯 Gizmo synchronized to current robot TCP.', 'info');
     }
   };
 

@@ -717,7 +717,7 @@ button.status-pill.sound-btn.sound-muted:hover {
   transform: scale(0.95);
 }
 
-/* X-Achse (Rot) */
+/* X axis (red) */
 .joy-arrow-btn.top,
 .joy-arrow-btn.bottom {
   color: var(--rviz-x);
@@ -742,7 +742,7 @@ button.status-pill.sound-btn.sound-muted:hover {
   color: #ffffff !important;
 }
 
-/* Y-Achse (Grün) */
+/* Y axis (green) */
 .joy-arrow-btn.left,
 .joy-arrow-btn.right {
   color: var(--rviz-y);
@@ -1116,15 +1116,147 @@ input[type=range]:active::-moz-range-thumb {
 }
 
 /* Floating Motion Action Buttons (left side inside viewport) */
-.twin-motion-overlay {
+/* ── Viewport HUD Overlay Grid ─────────────────────────────────────────────
+   One 3x3 flow layout (grid + gap) across the whole viewport. Each floating
+   HUD sits in its own cell, so no two overlays can ever overlap, no matter
+   how the viewport is resized or which column the panel is dragged into. */
+.twin-overlay-grid {
   position: absolute;
-  top: 50%;
-  left: 12px;
-  transform: translateY(-50%);
+  inset: 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "tl tc tr"
+    "ml ml mr"
+    "bl bl br"
+    "bc bc bc";
+  gap: 10px;
+  z-index: 10;
+  pointer-events: none; /* only the HUDs themselves are interactive */
+}
+
+.twin-overlay-grid > * {
+  pointer-events: auto;
+  min-width: 0;
+}
+
+.twin-ov-top-center {
+  grid-area: tc;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-self: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  pointer-events: none;
+}
+
+.twin-ov-top-center > * {
+  pointer-events: auto;
+  max-width: 100%;
+}
+
+.twin-ov-bottom-left {
+  grid-area: bl;
+  align-self: end;
+  justify-self: start;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 100%;
+  pointer-events: none;
+}
+
+.twin-ov-bottom-left > * {
+  pointer-events: auto;
+}
+
+.twin-ov-watermark {
+  grid-area: br;
+  align-self: end;
+  justify-self: end;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Viewport Navigation Gizmo (Blender-style axis ball widget) ── */
+.twin-nav-gizmo {
+  grid-area: tl;
+  align-self: start;
+  justify-self: start;
+  width: var(--nav-gizmo-size, 96px);
+  height: var(--nav-gizmo-size, 96px);
+  border-radius: 50%;
+  background: rgba(10, 14, 23, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+  touch-action: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.twin-nav-gizmo:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(56, 189, 248, 0.18);
+}
+
+.twin-nav-gizmo:active {
+  cursor: grabbing;
+}
+
+/* Short viewports: shrink the gizmo, then drop it entirely so the
+   motion action buttons always keep their full space. */
+.viewport-container.twin-viewport-short .twin-nav-gizmo {
+  --nav-gizmo-size: 76px;
+}
+
+.viewport-container.twin-viewport-tiny .twin-nav-gizmo {
+  display: none;
+}
+
+/* Very short viewports also need compact motion buttons so the overlay
+   rows still fit without pushing into each other. */
+.viewport-container.twin-viewport-tiny .twin-motion-overlay .btn-action,
+.viewport-container.twin-viewport-tiny .twin-motion-overlay .btn-danger {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  font-size: 13px !important;
+}
+
+/* ... and the speed toggle moves next to the telemetry HUD instead of above it,
+   while the decorative watermark steps aside completely. */
+.viewport-container.twin-viewport-tiny .twin-ov-bottom-left {
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.viewport-container.twin-viewport-tiny .twin-ov-watermark {
+  display: none;
+}
+
+.twin-motion-overlay {
+  grid-area: ml;
+  align-self: center;
+  justify-self: start;
+  display: flex;
+  flex-direction: column;
+  /* When the free height shrinks, the buttons wrap into a second column
+     instead of spilling over the HUDs above and below; below that the row is
+     clipped rather than allowed to overlap its neighbours. */
+  flex-wrap: wrap;
+  max-height: 100%;
+  overflow: hidden;
   gap: 5px;
-  z-index: 10;
   background: rgba(10, 14, 23, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
@@ -1154,10 +1286,6 @@ input[type=range]:active::-moz-range-thumb {
 
 /* Floating Speed Toggle (bottom-left inside viewport, above REACH/FLOOR) */
 .twin-speed-overlay {
-  position: absolute;
-  bottom: 58px;
-  left: 10px;
-  z-index: 10;
   background: rgba(10, 14, 23, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
@@ -1166,23 +1294,22 @@ input[type=range]:active::-moz-range-thumb {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Floating Absolute Pose Inputs (bottom of viewport) */
+/* Floating Absolute Pose Inputs (bottom-center of viewport) */
 .twin-pose-overlay {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  grid-area: bc;
+  align-self: end;
+  justify-self: center;
   display: flex;
+  flex-wrap: wrap; /* narrow viewports: break into rows instead of overflowing */
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  z-index: 10;
   background: rgba(10, 14, 23, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   padding: 6px 12px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  white-space: nowrap;
 }
 
 .twin-pose-overlay .input-group {
@@ -1538,14 +1665,14 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   border: 1px solid rgba(255,255,255,0.05);
   padding: 8px 10px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 13.5px;
   overflow-y: auto;
   color: #cbd5e1;
   flex: 1;
   min-height: 80px;
 }
-.log-entry { margin-bottom: 3px; word-break: break-word; line-height: 1.4; font-size: 13px; }
-.log-time { color: #64748b; margin-right: 6px; font-size: 13px; }
+.log-entry { margin-bottom: 3px; word-break: break-word; line-height: 1.4; font-size: 14.5px; }
+.log-time { color: #64748b; margin-right: 6px; font-size: 14.5px; }
 
 /* ── TF Control Tuner Section ── */
 .tf-tuner-section {
@@ -1720,18 +1847,18 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 /* Source Badges */
-.log-src { font-weight: 700; margin-right: 6px; font-size: 13px; }
+.log-src { font-weight: 700; margin-right: 6px; font-size: 14.5px; }
 .log-src-ros { color: #c678dd; }      /* Purple */
 .log-src-ui { color: #61afef; }       /* Blue */
 .log-src-sys { color: #e5c07b; }      /* Yellow */
 .log-src-motion { color: #98c379; }   /* Green */
 
 /* Message Types */
-.log-info { color: #abb2bf; font-size: 13px; }         /* Light Gray */
-.log-success { color: #7ee787; font-weight: 600; font-size: 13px; }  /* Bright Green */
-.log-action { color: #56b6c2; font-weight: 600; font-size: 13px; }   /* Cyan */
-.log-warn { color: #d19a66; font-size: 13px; }         /* Orange */
-.log-err { color: #ff7b72; font-weight: 600; font-size: 13px; }      /* Red */
+.log-info { color: #abb2bf; font-size: 14.5px; }         /* Light Gray */
+.log-success { color: #7ee787; font-weight: 600; font-size: 14.5px; }  /* Bright Green */
+.log-action { color: #56b6c2; font-weight: 600; font-size: 14.5px; }   /* Cyan */
+.log-warn { color: #d19a66; font-size: 14.5px; }         /* Orange */
+.log-err { color: #ff7b72; font-weight: 600; font-size: 14.5px; }      /* Red */
 
 /* YOLO Objects List */
 .yolo-list-container {
@@ -1958,10 +2085,6 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 /* ── Digital Twin 3D Viewport HUD Overlays ── */
 .twin-hud-banner {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1995,9 +2118,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .twin-hud-banner.banner-hidden {
-  opacity: 0;
-  transform: translateX(-50%) translateY(-12px);
-  pointer-events: none;
+  display: none; /* removed from the flow so the TCP HUD moves back up */
 }
 
 @keyframes banner-pulse-red {
@@ -2035,12 +2156,9 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 /* Mini Safety Telemetry HUD (Manipulability & Floor Clearance) */
 .twin-hud-safety {
-  position: absolute;
-  bottom: 24px;
-  left: 10px;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  z-index: 5;
   pointer-events: none;
 }
 
@@ -2088,15 +2206,14 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   transition: width 0.15s ease-out, background-color 0.2s ease-out;
 }
 
-/* ── Floating Scene Node Toggle Overlay (right side inside viewport) ── */
+/* ── Floating Scene Node Toggle Overlay (top-right inside viewport) ── */
 .twin-scene-node-overlay {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+  grid-area: tr;
+  align-self: start;
+  justify-self: end;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  z-index: 10;
   background: rgba(10, 14, 23, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
@@ -2120,14 +2237,11 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 /* ── Floating TCP Gizmo HUD (Interactive Target & Auto-Move Bar) ── */
 .twin-gizmo-hud {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
+  flex-wrap: wrap; /* narrow viewports: break into rows instead of overflowing */
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  justify-content: center;
+  gap: 10px 20px;
   padding: 9px 18px;
   background: rgba(10, 14, 23, 0.92);
   border: 1.5px solid rgba(56, 189, 248, 0.45);
@@ -2142,7 +2256,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .twin-gizmo-hud.gizmo-hud-hidden {
   opacity: 0;
-  transform: translateX(-50%) translateY(-10px);
+  transform: translateY(-10px);
   pointer-events: none;
 }
 
@@ -2435,7 +2549,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     max-height: none !important;
     min-height: 80px !important;
     padding: 8px 10px;
-    font-size: 13px;
+    font-size: 14.5px;
     line-height: 1.45;
     box-sizing: border-box;
   }

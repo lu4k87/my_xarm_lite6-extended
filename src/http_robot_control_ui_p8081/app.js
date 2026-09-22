@@ -57,7 +57,7 @@ ros.on('connection', () => {
   logMsg('System', 'Connected to rosbridge_server (ws://localhost:9090)', 'info');
   if (typeof publishSoundState === 'function') publishSoundState();
 
-  // Node Checker (mit Error-Handling, um Websocket-Crashes zu vermeiden)
+  // Node checker (with error handling to avoid websocket crashes)
   setInterval(() => {
     if (ros && ros.isConnected) {
       const getNodesClient = new ROSLIB.Service({
@@ -118,8 +118,8 @@ ros.on('connection', () => {
           text.innerText = 'Mode: Fake Arm';
         }
       }, (err) => {
-        // Fehler stumm abfangen, falls /rosapi/nodes noch nicht existiert.
-        // Verhindert das "Verschmutzen" der WebSocket-Verbindung.
+        // Swallow errors silently in case /rosapi/nodes does not exist yet.
+        // Prevents "polluting" the WebSocket connection.
       });
     }
   }, 2500);
@@ -387,7 +387,7 @@ yoloSub.subscribe((msg) => {
     });
   }
 
-  // Deterministisch stabil sortieren (alphabetisch & numerisch sortiert, z.B. sports_ball_1 vor sports_ball_2)
+  // Deterministic stable sort (alphabetical & numerical, e.g. sports_ball_1 before sports_ball_2)
   detected.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
   if (detected.length === 0) {
@@ -397,11 +397,11 @@ yoloSub.subscribe((msg) => {
     return;
   }
 
-  // "No objects detected" entfernen, falls vorhanden
+  // Remove "No objects detected" placeholder if present
   const emptyEl = container.querySelector('.yolo-empty');
   if (emptyEl) emptyEl.remove();
 
-  // Nicht mehr vorhandene Objekte entfernen
+  // Remove objects that no longer exist
   const detectedNames = new Set(detected.map(d => d.name));
   container.querySelectorAll('.yolo-item').forEach(el => {
     if (!detectedNames.has(el.getAttribute('data-id'))) {
@@ -948,12 +948,12 @@ function updateSoundUI() {
   if (soundEnabled) {
     btn.style.color = 'var(--cyan)';
     btn.style.opacity = '1';
-    btn.title = "Sound-Effekte: Aktiviert (Klicken zum Stummschalten)";
+    btn.title = "Sound Effects: Enabled (Click to mute)";
     icon.className = "fa-solid fa-volume-high";
   } else {
     btn.style.color = 'var(--mut)';
     btn.style.opacity = '0.5';
-    btn.title = "Sound-Effekte: Stummgeschaltet (Klicken zum Aktivieren)";
+    btn.title = "Sound Effects: Muted (Click to enable)";
     icon.className = "fa-solid fa-volume-xmark";
   }
 }
@@ -966,7 +966,7 @@ function toggleSound() {
   if (soundEnabled) {
     playUiClickSound();
   }
-  logMsg('AUDIO', soundEnabled ? '🔊 Sound-Effekte aktiviert (Web & Roboter-Audio AN)' : '🔇 Sound-Effekte stummgeschaltet (Web & Roboter-Audio AUS)', 'info');
+  logMsg('AUDIO', soundEnabled ? '🔊 Sound effects enabled (web & robot audio ON)' : '🔇 Sound effects muted (web & robot audio OFF)', 'info');
 }
 window.toggleSound = toggleSound;
 window.updateSoundUI = updateSoundUI;
@@ -1223,14 +1223,14 @@ window.executeMoveToPoseFromGizmo = function () {
   const yw = poseData ? poseData.yaw : parseFloat(document.getElementById('inp-yw').value);
 
   if (isNaN(x) || isNaN(y) || isNaN(z)) {
-    logMsg('GIZMO', '❌ Ungültige Gizmo-Zielkoordinaten.', 'err');
+    logMsg('GIZMO', '❌ Invalid gizmo target coordinates.', 'err');
     return;
   }
 
   // Safety Validation: Prevent driving into inner singularity & self-collision
   const r_xy = Math.sqrt(x * x + y * y);
   if (r_xy < 125.0 && z < 280.0) {
-    logMsg('GIZMO', `❌ FAHRT BLOCKIERT: Ziel liegt in der inneren Singularitätszone (r=${r_xy.toFixed(0)} mm < 125 mm). Kollisionsgefahr mit eigenem Sockel!`, 'err');
+    logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the inner singularity zone (r=${r_xy.toFixed(0)} mm < 125 mm). Risk of collision with its own base!`, 'err');
     if (typeof window.updateDigitalTwinSafety === 'function') {
       window.updateDigitalTwinSafety({
         collision: true,
@@ -1241,7 +1241,7 @@ window.executeMoveToPoseFromGizmo = function () {
     return;
   }
   if (z <= 15.0) {
-    logMsg('GIZMO', `❌ FAHRT BLOCKIERT: Ziel liegt in der Tischplatte (Z=${z.toFixed(0)} mm ≤ 15 mm).`, 'err');
+    logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the table surface (Z=${z.toFixed(0)} mm ≤ 15 mm).`, 'err');
     return;
   }
 
@@ -1251,7 +1251,7 @@ window.executeMoveToPoseFromGizmo = function () {
   // Update floating HUD button in 3D viewport
   const btnGo = document.getElementById('btn-gizmo-execute');
   if (btnGo) {
-    btnGo.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Fährt...';
+    btnGo.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Moving...';
     btnGo.style.opacity = '0.7';
     btnGo.disabled = true;
   }
@@ -1264,34 +1264,34 @@ window.executeMoveToPoseFromGizmo = function () {
     mvtime: 0.0
   });
 
-  logMsg('GIZMO', `🎯 TCP-Gizmo Fahrt: X=${x} Y=${y} Z=${z} mm (R=${r} P=${p} Yw=${yw})`, 'action');
+  logMsg('GIZMO', `🎯 TCP gizmo move: X=${x} Y=${y} Z=${z} mm (R=${r} P=${p} Yw=${yw})`, 'action');
 
   srv.callService(req, (res) => {
     isExecutingGizmoMove = false;
     setButtonsLocked(false);
     if (btnGo) {
-      btnGo.innerHTML = '<i class="fa-solid fa-play"></i> Anfahren';
+      btnGo.innerHTML = '<i class="fa-solid fa-play"></i> Execute';
       btnGo.style.opacity = '1.0';
       btnGo.disabled = false;
     }
 
     if (res.ret === 0) {
-      logMsg('GIZMO', '✓ Zielpose über IK erfolgreich angefahren.', 'success');
+      logMsg('GIZMO', '✓ Target pose reached successfully via IK.', 'success');
       if (typeof window.syncTCPGizmoToRobot === 'function') {
         window.syncTCPGizmoToRobot();
       }
     } else {
-      logMsg('GIZMO', `❌ IK/Fahrt fehlgeschlagen (ret=${res.ret}): ${res.message || 'Ziel unerreichbar oder in Kollision'}`, 'err');
+      logMsg('GIZMO', `❌ IK / move failed (ret=${res.ret}): ${res.message || 'Target unreachable or in collision'}`, 'err');
     }
   }, (err) => {
     isExecutingGizmoMove = false;
     setButtonsLocked(false);
     if (btnGo) {
-      btnGo.innerHTML = '<i class="fa-solid fa-play"></i> Anfahren';
+      btnGo.innerHTML = '<i class="fa-solid fa-play"></i> Execute';
       btnGo.style.opacity = '1.0';
       btnGo.disabled = false;
     }
-    logMsg('GIZMO', `❌ Service-Fehler bei Gizmo-Fahrt: ${err}`, 'err');
+    logMsg('GIZMO', `❌ Service error during gizmo move: ${err}`, 'err');
   });
 };
 
@@ -1958,7 +1958,7 @@ const TF_TUNER_ELEMENTS = {
 };
 
 let currentTFTunerElement = 'Zed M Camera';
-let isTFBroadcastActive = false; // Standardmäßig AUS: Nur aktiv wenn Node läuft oder manuell eingeschaltet
+let isTFBroadcastActive = false; // OFF by default: only active when the node runs or it is switched on manually
 let isSceneObjectsNodeRunning = false;
 let lastSceneMarkerTime = 0;
 let tfBroadcasterInterval = null;
@@ -1976,7 +1976,7 @@ const safetyZoneParamsPub = new ROSLIB.Topic({
   messageType: 'std_msgs/Float32MultiArray'
 });
 
-// ── ROS Topics zur Erkennung aktiver Szenenobjekt-Nodes ──
+// ── ROS topics used to detect active scene object nodes ──
 const sceneMarkersSub = new ROSLIB.Topic({
   ros: ros,
   name: '/visualization_marker_array',
@@ -2033,10 +2033,10 @@ const sceneGroupBtnIds = {
   zedm:    'btn-twin-scene-zedm'
 };
 const sceneGroupLabels = {
-  objects: 'Hohlkörper & Workspace',
-  plane:   'DIN-A4-Schablone',
+  objects: 'Hollow bodies & workspace',
+  plane:   'DIN A4 template',
   safety:  'Safety Zone',
-  zedm:    'ZED-M Kamerastativ'
+  zedm:    'ZED-M camera stand'
 };
 
 function updateSceneNodeBtn(groupKey, isNodeRunning) {
@@ -2047,17 +2047,17 @@ function updateSceneNodeBtn(groupKey, isNodeRunning) {
     btn.classList.remove('active');
     btn.style.color = 'var(--dim)';
     btn.style.opacity = '0.45';
-    btn.title = `${sceneGroupLabels[groupKey]} (Node inaktiv)`;
+    btn.title = `${sceneGroupLabels[groupKey]} (node inactive)`;
   } else if (isUserVisible) {
     btn.classList.add('active');
     btn.style.color = 'var(--cyan)';
     btn.style.opacity = '1.0';
-    btn.title = `${sceneGroupLabels[groupKey]} ausblenden (Node aktiv)`;
+    btn.title = `Hide ${sceneGroupLabels[groupKey]} (node active)`;
   } else {
     btn.classList.remove('active');
     btn.style.color = 'var(--mut)';
     btn.style.opacity = '0.8';
-    btn.title = `${sceneGroupLabels[groupKey]} einblenden (Node aktiv)`;
+    btn.title = `Show ${sceneGroupLabels[groupKey]} (node active)`;
   }
 }
 
@@ -2079,13 +2079,13 @@ function toggleSceneNode(groupKey) {
       window.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
     }
     updateSceneNodeBtn(groupKey, true);
-    logMsg('WebGL 3D', `${vis ? '🟢' : '⚪'} ${sceneGroupLabels[groupKey]} ${vis ? 'eingeblendet' : 'ausgeblendet'}`, vis ? 'info' : 'warn');
+    logMsg('WebGL 3D', `${vis ? '🟢' : '⚪'} ${sceneGroupLabels[groupKey]} ${vis ? 'shown' : 'hidden'}`, vis ? 'info' : 'warn');
   } else {
     if (window.setSceneGroupVisibility) {
       window.setSceneGroupVisibility(groupKey, false);
     }
     updateSceneNodeBtn(groupKey, false);
-    logMsg('WebGL 3D', `ℹ️ ${sceneGroupLabels[groupKey]}: ${vis ? 'Vorgemerkt' : 'Deaktiviert'} (Szenen-Nodes laufen nicht)`, 'warn');
+    logMsg('WebGL 3D', `ℹ️ ${sceneGroupLabels[groupKey]}: ${vis ? 'Queued' : 'Disabled'} (scene nodes are not running)`, 'warn');
   }
 
   // Update global flag
@@ -2111,7 +2111,7 @@ function applySceneObjectsActiveState(isActive, reason) {
     updateTunerUI();
     updateAllSceneNodeBtns(true);
     if (!wasRunning) {
-      logMsg('TF-Tuner', `🟢 3D-Szenenobjekte Node aktiv (${reason || 'Node aktiv'})`, 'info');
+      logMsg('TF-Tuner', `🟢 3D scene objects node active (${reason || 'node active'})`, 'info');
     }
   } else {
     isTFBroadcastActive = false;
@@ -2121,7 +2121,7 @@ function applySceneObjectsActiveState(isActive, reason) {
     updateTunerUI();
     updateAllSceneNodeBtns(false);
     if (wasRunning) {
-      logMsg('TF-Tuner', '⚪ 3D-Szenenobjekte ausgeblendet (Node inaktiv)', 'warn');
+      logMsg('TF-Tuner', '⚪ 3D scene objects hidden (node inactive)', 'warn');
     }
   }
 }
@@ -2272,11 +2272,11 @@ function updateTunerUI() {
     if (isTFBroadcastActive) {
       btn.className = 'btn-toggle-broadcast active';
       label.textContent = 'Live TF';
-      rateInfo.textContent = isSceneObjectsNodeRunning ? '10 Hz (Node aktiv)' : '10 Hz (Manuell)';
+      rateInfo.textContent = isSceneObjectsNodeRunning ? '10 Hz (node active)' : '10 Hz (manual)';
     } else {
       btn.className = 'btn-toggle-broadcast inactive';
-      label.textContent = 'TF Inaktiv';
-      rateInfo.textContent = 'Warte auf Node...';
+      label.textContent = 'TF Inactive';
+      rateInfo.textContent = 'Waiting for node...';
     }
   }
 }
@@ -2343,23 +2343,23 @@ function toggleTFBroadcast() {
     if (isTFBroadcastActive) {
       btn.className = 'btn-toggle-broadcast active';
       if (label) label.textContent = 'Live TF';
-      if (rateInfo) rateInfo.textContent = isSceneObjectsNodeRunning ? '10 Hz (Node aktiv)' : '10 Hz (Manuell)';
+      if (rateInfo) rateInfo.textContent = isSceneObjectsNodeRunning ? '10 Hz (node active)' : '10 Hz (manual)';
       if (window.setTunerSceneObjectsVisibility) {
         window.setTunerSceneObjectsVisibility(true);
       }
       if (window.updateTunerSceneObjects) {
         window.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
       }
-      logMsg('TF-Tuner', 'Live TF-Broadcasting & Szenenobjekte aktiviert', 'success');
+      logMsg('TF-Tuner', 'Live TF broadcasting & scene objects enabled', 'success');
       broadcastAllTFTunerTransforms();
     } else {
       btn.className = 'btn-toggle-broadcast inactive';
-      if (label) label.textContent = 'TF Inaktiv';
-      if (rateInfo) rateInfo.textContent = 'Warte auf Node...';
+      if (label) label.textContent = 'TF Inactive';
+      if (rateInfo) rateInfo.textContent = 'Waiting for node...';
       if (window.setTunerSceneObjectsVisibility) {
         window.setTunerSceneObjectsVisibility(false);
       }
-      logMsg('TF-Tuner', 'Live TF-Broadcasting & Szenenobjekte deaktiviert', 'warn');
+      logMsg('TF-Tuner', 'Live TF broadcasting & scene objects disabled', 'warn');
     }
   }
 }
@@ -2417,22 +2417,22 @@ document.addEventListener('keydown', (e) => {
   if (key === 't') {
     if (typeof window.setTCPGizmoMode === 'function') {
       window.setTCPGizmoMode('translate');
-      logMsg('GIZMO', '⌨️ Modus: Translation (Pfeile) aktiv [Taste: T]', 'info');
+      logMsg('GIZMO', '⌨️ Mode: Translation (arrows) active [Key: T]', 'info');
     }
   } else if (key === 'r') {
     if (typeof window.setTCPGizmoMode === 'function') {
       window.setTCPGizmoMode('rotate');
-      logMsg('GIZMO', '⌨️ Modus: Rotation (Ringe) aktiv [Taste: R]', 'info');
+      logMsg('GIZMO', '⌨️ Mode: Rotation (rings) active [Key: R]', 'info');
     }
   } else if (key === 'g') {
     if (typeof window.toggleTCPGizmo === 'function') {
       window.toggleTCPGizmo();
-      logMsg('GIZMO', '⌨️ 3D TCP-Gizmo umgeschaltet [Taste: G]', 'info');
+      logMsg('GIZMO', '⌨️ 3D TCP gizmo toggled [Key: G]', 'info');
     }
   } else if (e.key === 'Escape') {
     if (typeof window.syncTCPGizmoToRobot === 'function') {
       window.syncTCPGizmoToRobot();
-      logMsg('GIZMO', '⌨️ Gizmo auf aktuellen Roboter-TCP zurückgesetzt [Taste: Esc]', 'info');
+      logMsg('GIZMO', '⌨️ Gizmo reset to current robot TCP [Key: Esc]', 'info');
     }
   } else if (key === 'm') {
     if (typeof window.toggleSound === 'function') {

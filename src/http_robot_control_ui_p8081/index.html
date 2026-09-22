@@ -25,12 +25,12 @@
     <header>
       <div class="header-status">
         <div class="status-group">
-          <button class="status-pill reload-btn" onclick="location.reload()" title="Web Control neu laden">
+          <button class="status-pill reload-btn" onclick="location.reload()" title="Reload Web Control">
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
 
 
-          <div class="status-pill" id="pill-port-9090" title="Port 9090: ROS 2 WebSocket Schnittstelle (rosbridge)">
+          <div class="status-pill" id="pill-port-9090" title="Port 9090: ROS 2 WebSocket Interface (rosbridge)">
             <div id="connection-dot" class="dot glow-red"></div>
             <span id="connection-status">ROS 2 Bridge: 9090</span>
           </div>
@@ -42,11 +42,11 @@
             <div id="dot-port-5000" class="dot glow-red"></div>
             <span>Nexus Webapp: 5000</span>
           </div>
-          <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node-Topologie (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8080/dashboard_index.html', '_blank')">
+          <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node Topology (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8080/dashboard_index.html', '_blank')">
             <div id="dot-port-8080" class="dot glow-red"></div>
             <span>Dashboard: 8080</span>
           </div>
-          <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server für Kamera & RViz Streams (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8082', '_blank')">
+          <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server for Camera & RViz Streams (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8082', '_blank')">
             <div id="dot-port-8082" class="dot glow-red"></div>
             <span>Video Streams: 8082</span>
           </div>
@@ -162,7 +162,7 @@
         <section id="panel-3d-centerpiece" class="glass-panel">
           <div class="centerpiece-header panel-drag-handle">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="panel-drag-grip" title="3D Viewport verschieben"><i class="fa-solid fa-grip-vertical"></i></span>
+              <span class="panel-drag-grip" title="Drag to reorder 3D Viewport"><i class="fa-solid fa-grip-vertical"></i></span>
               <div class="viewport-tabs">
                 <span class="v-tab-btn active" style="cursor: default;">
                   <i class="fa-solid fa-circle" style="color: #22c55e; font-size: 8px;"></i> Live Digital Twin
@@ -173,33 +173,33 @@
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="badge badge-node" id="twin-status-badge"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
               <div class="twin-toolbar">
-                <button class="btn btn-icon-small" id="btn-twin-safety-test" onclick="testDigitalTwinSafetyCycle()" title="Safety-Warnungen testen (Collision & Singularity Visuals)" style="color: var(--mut);">
+                <button class="btn btn-icon-small" id="btn-twin-safety-test" onclick="testDigitalTwinSafetyCycle()" title="Test safety warnings (Collision & Singularity Visuals)" style="color: var(--mut);">
                   <i class="fa-solid fa-shield-halved"></i>
                 </button>
-                <button class="btn btn-icon-small" onclick="resetDigitalTwinView()" title="Kameraansicht zurücksetzen (Isometrie)">
+                <button class="btn btn-icon-small" onclick="resetDigitalTwinView()" title="Reset camera view (Isometric)">
                   <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
-                <button class="btn btn-icon-small" onclick="setDigitalTwinTopView()" title="Draufsicht (Top-Down)">
+                <button class="btn btn-icon-small" onclick="setDigitalTwinTopView()" title="Top-down view">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-grid" onclick="toggleDigitalTwinGrid()" title="Bodenraster ein-/ausblenden" style="color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-grid" onclick="toggleDigitalTwinGrid()" title="Toggle ground grid" style="color: var(--cyan);">
                   <i class="fa-solid fa-border-all"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-edges" onclick="toggleDigitalTwinEdges()" title="CAD-Kantenkonturen ein-/ausblenden" style="color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-edges" onclick="toggleDigitalTwinEdges()" title="Toggle CAD edge outlines" style="color: var(--cyan);">
                   <i class="fa-solid fa-shapes"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
-                <button class="btn btn-icon-small active" id="btn-twin-gizmo" onclick="toggleTCPGizmo()" title="3D TCP-Gizmo ein-/ausblenden (Taste: G)" style="color: var(--cyan);">
+                <button class="btn btn-icon-small active" id="btn-twin-gizmo" onclick="toggleTCPGizmo()" title="Toggle 3D TCP Gizmo (Key: G)" style="color: var(--cyan);">
                   <i class="fa-solid fa-arrows-up-down-left-right"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-gizmo-mode" onclick="cycleTCPGizmoMode()" title="Modus: Translation (Pfeile) / Rotation (Ringe) [Tasten: T / R]" style="color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-gizmo-mode" onclick="cycleTCPGizmoMode()" title="Mode: Translation (Arrows) / Rotation (Rings) [Keys: T / R]" style="color: var(--cyan);">
                   <i class="fa-solid fa-arrows-to-circle"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-gizmo-sync" onclick="syncTCPGizmoToRobot()" title="Gizmo auf aktuellen Roboter-TCP zurücksetzen (Taste: Esc)" style="color: var(--mut);">
+                <button class="btn btn-icon-small" id="btn-twin-gizmo-sync" onclick="syncTCPGizmoToRobot()" title="Sync Gizmo to current robot TCP (Key: Esc)" style="color: var(--mut);">
                   <i class="fa-solid fa-crosshairs"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
-                <button class="btn btn-icon-small" id="btn-sound-toggle" onclick="toggleSound()" title="Sound-Effekte ein-/ausschalten" style="color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-sound-toggle" onclick="toggleSound()" title="Toggle sound effects" style="color: var(--cyan);">
                   <i class="fa-solid fa-volume-high" id="sound-toggle-icon"></i>
                 </button>
               </div>
@@ -210,109 +210,124 @@
             <!-- Three.js Canvas Container -->
             <div id="digital-twin-viewport" style="width: 100%; height: 100%; cursor: grab;"></div>
 
-            <!-- Floating TCP Gizmo Target HUD -->
-            <div id="twin-gizmo-hud" class="twin-gizmo-hud">
-              <div class="gizmo-hud-info">
-                <span class="gizmo-hud-title"><i class="fa-solid fa-arrows-up-down-left-right"></i> TCP GIZMO:</span>
-                <span id="gizmo-hud-coords" class="gizmo-hud-val">X: 300 Y: 0 Z: 200</span>
-                <span id="gizmo-hud-delta" class="gizmo-hud-delta">Δ 0 mm</span>
+            <!-- ── Floating HUD Overlay Grid ─────────────────────────────────────
+                 3x3 flow layout (CSS grid + gap) spanning the whole viewport.
+                 Every floating overlay lives in its own cell, so the HUDs can
+                 never overlap each other at any viewport size. -->
+            <div class="twin-overlay-grid">
+
+              <!-- top-left: Viewport Navigation Gizmo (Blender style) -->
+              <canvas id="twin-nav-gizmo" class="twin-nav-gizmo" title="Viewport gizmo: drag to orbit the view, click an axis ball to align it (X / Y / Z, ROS frame: Z is up), scroll to zoom"></canvas>
+
+              <!-- top-center: Safety Warning Banner + Floating TCP Gizmo Target HUD -->
+              <div class="twin-ov-top-center">
+                <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
+                  <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
+                  <span id="twin-warning-text">COLLISION DETECTED</span>
+                </div>
+
+                <div id="twin-gizmo-hud" class="twin-gizmo-hud">
+                  <div class="gizmo-hud-info">
+                    <span class="gizmo-hud-title"><i class="fa-solid fa-arrows-up-down-left-right"></i> TCP GIZMO:</span>
+                    <span id="gizmo-hud-coords" class="gizmo-hud-val">X: 300 Y: 0 Z: 200</span>
+                    <span id="gizmo-hud-delta" class="gizmo-hud-delta">Δ 0 mm</span>
+                  </div>
+                  <div class="gizmo-hud-actions">
+                    <label class="gizmo-auto-toggle" title="Robot automatically moves to target pose when gizmo is released">
+                      <input type="checkbox" id="chk-gizmo-auto-drop" checked>
+                      <span>Auto-Move</span>
+                    </label>
+                    <button id="btn-gizmo-execute" class="btn btn-gizmo-go" onclick="executeMoveToPoseFromGizmo()" title="Move robot to gizmo target pose">
+                      <i class="fa-solid fa-play"></i> Execute
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div class="gizmo-hud-actions">
-                <label class="gizmo-auto-toggle" title="Roboter fährt Zielpose automatisch an, sobald der Gizmo per Maus losgelassen wird">
-                  <input type="checkbox" id="chk-gizmo-auto-drop" checked>
-                  <span>Auto-Fahrt</span>
-                </label>
-                <button id="btn-gizmo-execute" class="btn btn-gizmo-go" onclick="executeMoveToPoseFromGizmo()" title="Roboter zur Gizmo-Zielpose fahren">
-                  <i class="fa-solid fa-play"></i> Anfahren
+
+              <!-- top-right: Scene Node Toggle Icons -->
+              <div id="twin-scene-node-overlay" class="twin-scene-node-overlay">
+                <button class="btn btn-icon-small" id="btn-twin-scene-objects" onclick="toggleSceneNode('objects')" title="Interactive objects &amp; workspace circle (rviz_marker_3d_scene_objects)" style="color: var(--dim); opacity: 0.5;">
+                  <i class="fa-solid fa-cubes"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-scene-plane" onclick="toggleSceneNode('plane')" title="White reference plane (rviz_marker_3d_scene_plane)" style="color: var(--dim); opacity: 0.5;">
+                  <i class="fa-solid fa-square"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-scene-safety" onclick="toggleSceneNode('safety')" title="Safety Zone (rviz_marker_3d_scene_safety_zone)" style="color: var(--dim); opacity: 0.5;">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-scene-zedm" onclick="toggleSceneNode('zedm')" title="ZED-M camera stand (rviz_marker_3d_scene_zedm_stand)" style="color: var(--dim); opacity: 0.5;">
+                  <i class="fa-solid fa-video"></i>
                 </button>
               </div>
-            </div>
-            
-            <!-- Floating Scene Node Toggle Icons (top-right) -->
-            <div id="twin-scene-node-overlay" class="twin-scene-node-overlay">
-              <button class="btn btn-icon-small" id="btn-twin-scene-objects" onclick="toggleSceneNode('objects')" title="Interaktive Hohlkörper &amp; Workspace-Kreis (rviz_marker_3d_scene_objects)" style="color: var(--dim); opacity: 0.5;">
-                <i class="fa-solid fa-cubes"></i>
-              </button>
-              <button class="btn btn-icon-small" id="btn-twin-scene-plane" onclick="toggleSceneNode('plane')" title="Weiße DIN-A4-Schablone (rviz_marker_3d_scene_plane)" style="color: var(--dim); opacity: 0.5;">
-                <i class="fa-solid fa-square"></i>
-              </button>
-              <button class="btn btn-icon-small" id="btn-twin-scene-safety" onclick="toggleSceneNode('safety')" title="Safety Zone (rviz_marker_3d_scene_safety_zone)" style="color: var(--dim); opacity: 0.5;">
-                <i class="fa-solid fa-shield-halved"></i>
-              </button>
-              <button class="btn btn-icon-small" id="btn-twin-scene-zedm" onclick="toggleSceneNode('zedm')" title="ZED-M Kamerastativ (rviz_marker_3d_scene_zedm_stand)" style="color: var(--dim); opacity: 0.5;">
-                <i class="fa-solid fa-video"></i>
-              </button>
-            </div>
 
-            <!-- Floating Motion Action Buttons (left side) -->
-            <div id="twin-motion-overlay" class="twin-motion-overlay">
-              <button class="btn btn-action motion-lockable" onclick="setInitialPose()" title="Initial Pose anfahren">
-                <i class="fa-solid fa-house"></i>
-              </button>
-              <button id="btn-show-scene" class="btn btn-action motion-lockable" onclick="showScene()" title="Scan Position anfahren">
-                <i class="fa-solid fa-eye"></i>
-              </button>
-              <button id="btn-scan-objects" class="btn btn-action motion-lockable" onclick="startObjectScan()" title="Create OctoMap of Objects">
-                <i class="fa-solid fa-cube"></i>
-              </button>
-              <button id="btn-emergency-stop" class="btn btn-danger" onclick="emergencyStop()" title="Sofort-Stopp">
-                <i class="fa-solid fa-hand"></i>
-              </button>
-            </div>
-
-            <!-- Floating Speed Toggle (bottom center) -->
-            <div id="twin-speed-overlay" class="twin-speed-overlay">
-              <div class="speed-toggle-group">
-                <span class="speed-toggle-label"><i class="fa-solid fa-gauge"></i> Speed:</span>
-                <label class="speed-opt">
-                  <input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()">
-                  <span>Slow</span>
-                </label>
-                <label class="speed-opt">
-                  <input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()">
-                  <span>Normal</span>
-                </label>
-                <label class="speed-opt">
-                  <input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()">
-                  <span>Fast</span>
-                </label>
+              <!-- middle-left: Motion Action Buttons -->
+              <div id="twin-motion-overlay" class="twin-motion-overlay">
+                <button class="btn btn-action motion-lockable" onclick="setInitialPose()" title="Move to Initial Pose">
+                  <i class="fa-solid fa-house"></i>
+                </button>
+                <button id="btn-show-scene" class="btn btn-action motion-lockable" onclick="showScene()" title="Move to Scan Position">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button id="btn-scan-objects" class="btn btn-action motion-lockable" onclick="startObjectScan()" title="Create OctoMap of Objects">
+                  <i class="fa-solid fa-cube"></i>
+                </button>
+                <button id="btn-emergency-stop" class="btn btn-danger" onclick="emergencyStop()" title="Emergency Stop">
+                  <i class="fa-solid fa-hand"></i>
+                </button>
               </div>
-            </div>
 
-            <!-- Floating Absolute Pose Inputs (bottom of viewport) -->
-            <div id="twin-pose-overlay" class="twin-pose-overlay">
-              <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
-              <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
-              <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span></label><input type="number" id="inp-z" step="1" value="200"></div>
-              <div class="input-row-divider"></div>
-              <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">R</span></label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-              <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-              <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
-              <div class="input-row-divider"></div>
-              <button class="btn btn-action motion-lockable" onclick="moveToPose()" title="Zur eingegebenen Pose fahren">
-                <i class="fa-solid fa-crosshairs"></i> Go
-              </button>
-            </div>
+              <!-- bottom-left: Speed Toggle + Mini Safety Telemetry HUD -->
+              <div class="twin-ov-bottom-left">
+                <div id="twin-speed-overlay" class="twin-speed-overlay">
+                  <div class="speed-toggle-group">
+                    <span class="speed-toggle-label"><i class="fa-solid fa-gauge"></i> Speed:</span>
+                    <label class="speed-opt">
+                      <input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()">
+                      <span>Slow</span>
+                    </label>
+                    <label class="speed-opt">
+                      <input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()">
+                      <span>Normal</span>
+                    </label>
+                    <label class="speed-opt">
+                      <input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()">
+                      <span>Fast</span>
+                    </label>
+                  </div>
+                </div>
 
-            <!-- Safety & Warning HUD Banner -->
-            <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
-              <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
-              <span id="twin-warning-text">COLLISION DETECTED</span>
-            </div>
-
-            <!-- Mini Safety Telemetry HUD (Manipulability & Clearance) -->
-            <div id="twin-hud-safety" class="twin-hud-safety">
-              <div class="hud-safety-item" id="hud-manip-item" title="Manipulierbarkeit (Abstand zur Handgelenk-Singularität J5)">
-                <span class="hud-lbl">REACH</span>
-                <div class="hud-bar-bg"><div id="hud-manip-bar" class="hud-bar-fill" style="width: 100%;"></div></div>
-                <span id="hud-manip-val" class="hud-val">100%</span>
+                <div id="twin-hud-safety" class="twin-hud-safety">
+                  <div class="hud-safety-item" id="hud-manip-item" title="Reachability (distance to wrist singularity J5)">
+                    <span class="hud-lbl">REACH</span>
+                    <div class="hud-bar-bg"><div id="hud-manip-bar" class="hud-bar-fill" style="width: 100%;"></div></div>
+                    <span id="hud-manip-val" class="hud-val">100%</span>
+                  </div>
+                  <div class="hud-safety-item" id="hud-floor-item" title="Distance to table surface (floor limit: 91 mm)">
+                    <span class="hud-lbl">FLOOR</span>
+                    <span id="hud-floor-val" class="hud-val">-- mm</span>
+                  </div>
+                </div>
               </div>
-              <div class="hud-safety-item" id="hud-floor-item" title="Abstand zur Tischplatte (Bodenlimit: 91 mm)">
-                <span class="hud-lbl">FLOOR</span>
-                <span id="hud-floor-val" class="hud-val">-- mm</span>
+
+              <!-- bottom-center: Absolute Pose Inputs -->
+              <div id="twin-pose-overlay" class="twin-pose-overlay">
+                <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
+                <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
+                <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span></label><input type="number" id="inp-z" step="1" value="200"></div>
+                <div class="input-row-divider"></div>
+                <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">R</span></label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
+                <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
+                <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
+                <div class="input-row-divider"></div>
+                <button class="btn btn-action motion-lockable" onclick="moveToPose()" title="Move to entered pose">
+                  <i class="fa-solid fa-crosshairs"></i> Go
+                </button>
               </div>
+
+              <!-- bottom-right: Viewport Watermark -->
+              <div class="twin-ov-watermark">xArm Lite 6 · Live Synchronized</div>
             </div>
-            
+
             <!-- RViz Stream Container -->
             <div id="rviz-container" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; align-items: center; justify-content: center;">
               <div id="rviz-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
@@ -322,9 +337,6 @@
               <img id="rviz-stream" src="http://127.0.0.1:8082/stream?topic=/rviz_video/image_raw&type=mjpeg&width=800&height=450" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="RViz Stream" onload="this.style.display='block'; document.getElementById('rviz-stream-err').style.display='none';">
             </div>
 
-            <div style="position: absolute; bottom: 6px; right: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255, 255, 255, 0.4); pointer-events: none; z-index: 5;">
-              xArm Lite 6 · Live Synchronized
-            </div>
           </div>
         </section>
 
@@ -344,14 +356,14 @@
 
             <div class="joystick-assembly">
               <div class="joy-grid-cell joy-top">
-                <button type="button" class="joy-arrow-btn joy-label top" id="btn-arrow-x-plus" onpointerdown="startArrowJog(1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X+ (Vorwärts)">
+                <button type="button" class="joy-arrow-btn joy-label top" id="btn-arrow-x-plus" onpointerdown="startArrowJog(1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X+ (Forward)">
                   <i class="fa-solid fa-caret-up"></i>
                   <span>X+</span>
                 </button>
               </div>
 
               <div class="joy-grid-cell joy-left">
-                <button type="button" class="joy-arrow-btn joy-label left" id="btn-arrow-y-plus" onpointerdown="startArrowJog(0, 1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y+ (Links)">
+                <button type="button" class="joy-arrow-btn joy-label left" id="btn-arrow-y-plus" onpointerdown="startArrowJog(0, 1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y+ (Left)">
                   <i class="fa-solid fa-caret-left"></i>
                   <span>Y+</span>
                 </button>
@@ -364,14 +376,14 @@
               </div>
 
               <div class="joy-grid-cell joy-right">
-                <button type="button" class="joy-arrow-btn joy-label right" id="btn-arrow-y-minus" onpointerdown="startArrowJog(0, -1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y- (Rechts)">
+                <button type="button" class="joy-arrow-btn joy-label right" id="btn-arrow-y-minus" onpointerdown="startArrowJog(0, -1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y- (Right)">
                   <span>Y-</span>
                   <i class="fa-solid fa-caret-right"></i>
                 </button>
               </div>
 
               <div class="joy-grid-cell joy-bottom">
-                <button type="button" class="joy-arrow-btn joy-label bottom" id="btn-arrow-x-minus" onpointerdown="startArrowJog(-1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X- (Rückwärts)">
+                <button type="button" class="joy-arrow-btn joy-label bottom" id="btn-arrow-x-minus" onpointerdown="startArrowJog(-1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X- (Backward)">
                   <span>X-</span>
                   <i class="fa-solid fa-caret-down"></i>
                 </button>
@@ -545,15 +557,15 @@
           <div class="tf-tuner-header">
             <div style="display: flex; align-items: center; gap: 8px;">
               <h2 style="margin: 0;"><i class="fa-solid fa-sliders" style="color: var(--cyan);"></i> TF Control Tuner</h2>
-              <button id="btn-tuner-broadcast" class="btn-toggle-broadcast" onclick="toggleTFBroadcast()" title="Live TF-Broadcasting über rosbridge (10 Hz) ein-/ausschalten">
+              <button id="btn-tuner-broadcast" class="btn-toggle-broadcast" onclick="toggleTFBroadcast()" title="Toggle Live TF broadcasting via rosbridge (10 Hz)">
                 <i class="fa-solid fa-satellite-dish"></i> <span id="tuner-broadcast-label">Live TF</span>
               </button>
             </div>
             <div style="display: flex; align-items: center; gap: 6px;">
-              <button class="btn btn-icon-small" onclick="resetCurrentTFElement()" title="Aktuelles Element auf Standardwerte zurücksetzen" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
+              <button class="btn btn-icon-small" onclick="resetCurrentTFElement()" title="Reset current element to defaults" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
                 <i class="fa-solid fa-rotate-left"></i>
               </button>
-              <button class="btn btn-icon-small" id="btn-tf-collapse" onclick="toggleTFTunerCollapse()" title="TF Control Tuner ein-/ausklappen" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
+              <button class="btn btn-icon-small" id="btn-tf-collapse" onclick="toggleTFTunerCollapse()" title="Collapse / expand TF Control Tuner" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
                 <i class="fa-solid fa-chevron-up" id="tf-collapse-icon"></i>
               </button>
             </div>
