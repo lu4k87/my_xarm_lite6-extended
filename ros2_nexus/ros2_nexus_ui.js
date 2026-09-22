@@ -428,17 +428,12 @@
         const type = ((action && action.type) || '').toLowerCase();
         const combined = (firstCmd + ' ' + title + ' ' + type + ' ' + rawCmd.toLowerCase());
 
-        // 0. Ausdrücklich KEINE Icons für Helper/Tuner/Overlay/Streamer-Nodes (web_video_server & tf_control_tuner ausgenommen!)
+        // 0. Ausdrücklich KEINE Icons für Helper/Tuner/Overlay/Streamer-Nodes (web_video_server ausgenommen!)
         if (!/web_video_server/.test(combined) && (/fake_linear_axis|yolo_3d_bbox_for_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_servo_status|rviz_overlay_servo_status|rviz_window_streamer/.test(firstCmd) ||
             /linear axis tuner|yolo 3d bbox|rviz marker|servo status warning|rviz streamer/.test(title))) {
             if (!/lite6_moveit|xarm_moveit|standalone_move_group|zed_cam|robot_vision/.test(firstCmd)) {
                 return [];
             }
-        }
-
-        // TF Control Tuner Slider-Icon (vom User gewünscht: icon_tf_tuner)
-        if (/tf_control_tuner|tf_tuner|transform tuner/.test(combined)) {
-            return [{ path: '_imgs/icons/icon_tf_tuner.svg', label: 'Transform Tuner (tf_control_tuner)' }];
         }
 
         // VR Action Card: BEIDE VR-Icons daneben (Headset & Controller)!
