@@ -24,22 +24,27 @@
   let gizmoMode = 'translate'; // 'translate' | 'rotate'
   let isDraggingGizmo = false;
 
+  // Grenzwerte kommen aus robot_limits.js, damit UI und Twin nicht
+  // auseinanderlaufen. Der Fallback greift nur, falls die Datei fehlt.
+  const LIM = window.ROBOT_LIMITS || {
+    HARD_BLOCK_MM: 125.0, CAUTION_MM: 140.0, LOW_Z_MM: 280.0,
+    FLOOR_WARN_MM: 35.0, SAFETY_ZONE_M: 0.138,
+  };
+
   // Zwei verschiedene Dinge, die nicht verwechselt werden duerfen:
   //
   // 1) Gizmo-Deadzone: blockiert Auto-Move, wenn das Ziel zu nah an der Base
-  //    UND zu tief liegt (r < 125 mm && z < 280 mm). Reine UI-Pruefung.
-  const DEADZONE_RADIUS_MM = 125.0;
-  const CAUTION_RADIUS_MM = 140.0;
+  //    UND zu tief liegt. Reine UI-Pruefung, die der harten Ablehnung in
+  //    robot_motion_handler_movegroup.py:1041 vorgreift.
+  const DEADZONE_RADIUS_MM = LIM.HARD_BLOCK_MM;
+  const CAUTION_RADIUS_MM = LIM.CAUTION_MM;
   //
   // 2) Safety Zone: der Bereich um die Base, der wegen Singularitaet /
-  //    Eigenkollision NICHT anfahrbar ist. Massgeblich ist die aeussere
-  //    Grenze dieser Zone, und die liegt bei 138 mm (app.js:
-  //    "INNER BOUNDARY SINGULARITY (r < 138 mm)"). Darunter liegen noch
-  //    125 mm (MoveTo wird hart abgelehnt) und 118 mm (Eigenkollision).
-  //    Die frueheren 200 mm waren KEINE Reichweitengrenze, sondern nur der
-  //    Bahnabstand, den generate_single_object_trajectory() einhaelt.
+  //    Eigenkollision NICHT anfahrbar ist. Die frueheren 200 mm waren KEINE
+  //    Reichweitengrenze, sondern nur der Bahnabstand, den
+  //    generate_single_object_trajectory() einhaelt.
   //    Ueber /ui/safety_zone_params zur Laufzeit aenderbar.
-  const SAFETY_ZONE_RADIUS_M = 0.138;
+  const SAFETY_ZONE_RADIUS_M = LIM.SAFETY_ZONE_M;
   let hasUserTargetOffset = false;
 
   // ── Viewport Navigation Gizmo State (Blender-style axis ball widget) ──
@@ -220,8 +225,21 @@
     loadURDFModel();
 
     // 10. Animation Loop
+    // Lief bisher bedingungslos mit voller Bildrate weiter - auch wenn das
+    // Panel eingeklappt oder auf den RViz-Tab umgeschaltet war. Ist der
+    // Container nicht dargestellt, hat er weder Breite noch offsetParent;
+    // dann wird der ganze Block uebersprungen. requestAnimationFrame laeuft
+    // weiter, damit der Loop beim Wiederaufklappen von allein anspringt.
+    function isViewportVisible() {
+      if (!container) return false;
+      if (document.hidden) return false;
+      if (container.offsetParent === null) return false;
+      return container.clientWidth > 0 && container.clientHeight > 0;
+    }
+
     function animate() {
       animId = requestAnimationFrame(animate);
+      if (!isViewportVisible()) return;
       updateNavGizmo();
       if (controls) controls.update();
       updateSafetyVisuals();
@@ -957,7 +975,7 @@
 
     // Safety check on current gizmo coordinates
     const r_xy = Math.sqrt(posX_mm * posX_mm + posY_mm * posY_mm);
-    const isInsideDeadzone = (r_xy < DEADZONE_RADIUS_MM && posZ_mm < 280.0);
+    const isInsideDeadzone = (r_xy < DEADZONE_RADIUS_MM && posZ_mm < LIM.LOW_Z_MM);
     const isBelowFloor = (posZ_mm <= 15.0);
 
     // Update floating HUD in viewport
@@ -978,7 +996,7 @@
       if (isInsideDeadzone || isBelowFloor) {
         hudCoords.style.color = '#ef4444';
         hudCoords.classList.add('coords-alert');
-      } else if (r_xy < CAUTION_RADIUS_MM || posZ_mm < 35.0) {
+      } else if (r_xy < CAUTION_RADIUS_MM || posZ_mm < LIM.FLOOR_WARN_MM) {
         hudCoords.style.color = '#f59e0b';
         hudCoords.classList.add('coords-alert');
       } else {
@@ -1023,7 +1041,7 @@
     const posY_mm = Math.round((gizmoTarget.position.y - linearShiftY) * 1000.0);
     const posZ_mm = Math.round(gizmoTarget.position.z * 1000.0);
     const r_xy = Math.sqrt(posX_mm * posX_mm + posY_mm * posY_mm);
-    const isInsideDeadzone = (r_xy < DEADZONE_RADIUS_MM && posZ_mm < 280.0);
+    const isInsideDeadzone = (r_xy < DEADZONE_RADIUS_MM && posZ_mm < LIM.LOW_Z_MM);
     const isBelowFloor = (posZ_mm <= 15.0);
 
     if (isInsideDeadzone || isBelowFloor) {
