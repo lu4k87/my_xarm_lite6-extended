@@ -1595,10 +1595,10 @@ function setInitialPose() {
 
 function showScene() {
   setButtonsLocked(true);
-  if (soundEnabled) {
-    scanPosSound.currentTime = 0;
-    scanPosSound.play().catch(err => console.warn('Audio play failed:', err));
-  }
+  // Gleiche Absicherung wie beim Klick-Sound: ungeschuetzt haette ein
+  // fehlendes Audio-Objekt die Funktion hier abgebrochen - der Roboter
+  // waere dann gar nicht losgefahren.
+  playVoice(scanPosSound, 'scan position');
 
   const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
   const x = 300.0;
@@ -1733,6 +1733,62 @@ window.addEventListener("gamepaddisconnected", (e) => {
 });
 
 
+// Spielt den Klick-Sound und sagt im Log, warum nicht, falls er ausbleibt.
+// Ohne diese Rueckmeldung laesst sich "es klickt nicht" nicht von
+// "der Browser hat play() abgelehnt" unterscheiden.
+let lastClickSoundProblem = '';
+function playButtonClick(btn) {
+  if (!soundEnabled) return;
+
+  const where = (btn && (btn.id || btn.title || btn.textContent.trim().slice(0, 24))) || 'button';
+
+  if (!uiClickSound) {
+    reportClickSoundProblem(`Audio-Objekt fehlt (sounds/ui_mouse_click.mp3 nicht ladbar) - ${where}`);
+    return;
+  }
+  if (uiClickSound.muted || uiClickSound.volume === 0) {
+    reportClickSoundProblem(`Audio ist stummgeschaltet (muted=${uiClickSound.muted}, volume=${uiClickSound.volume})`);
+    return;
+  }
+
+  try {
+    uiClickSound.currentTime = 0;
+    const pr = uiClickSound.play();
+    if (pr && typeof pr.catch === 'function') {
+      pr.catch(err => reportClickSoundProblem(`${err && err.name ? err.name : 'Fehler'} bei play() - ${where}`));
+    }
+  } catch (err) {
+    reportClickSoundProblem(`${err && err.name ? err.name : 'Fehler'} beim Abspielen - ${where}`);
+  }
+}
+
+// Sprachausgabe der UI (aktuell nur die Scan-Position; die uebrigen Stimmen
+// spielt robot_motion_handler_movegroup selbst ueber pygame ab).
+function playVoice(audio, what) {
+  if (!soundEnabled) return;
+  if (!audio) {
+    reportClickSoundProblem(`Sprachdatei fehlt (${what})`);
+    return;
+  }
+  try {
+    audio.currentTime = 0;
+    const pr = audio.play();
+    if (pr && typeof pr.catch === 'function') {
+      pr.catch(err => reportClickSoundProblem(`${err && err.name ? err.name : 'Fehler'} bei play() - ${what}`));
+    }
+  } catch (err) {
+    reportClickSoundProblem(`${err && err.name ? err.name : 'Fehler'} beim Abspielen - ${what}`);
+  }
+}
+
+// Dieselbe Ursache nicht bei jedem Klick wiederholen.
+function reportClickSoundProblem(msg) {
+  if (msg === lastClickSoundProblem) return;
+  lastClickSoundProblem = msg;
+  if (typeof logMsg === 'function') logMsg('AUDIO', `🔇 Klick-Sound nicht abgespielt: ${msg}`, 'warn');
+  else console.warn('[AUDIO]', msg);
+}
+
 // ── Global Button Debounce (Anti-Double-Click) ──────────────────────────
 document.addEventListener('click', function(e) {
   const btn = e.target.closest('button');
@@ -1748,11 +1804,10 @@ document.addEventListener('click', function(e) {
     return;
   }
   
-  // Play UI click sound
-  if (soundEnabled) {
-    uiClickSound.currentTime = 0;
-    uiClickSound.play().catch(err => console.warn('Audio play failed:', err));
-  }
+  // Klick-Sound. Frueher ungeschuetzt: waere uiClickSound null gewesen,
+  // haette die Zuweisung den Handler abgebrochen - der Button haette dann
+  // funktioniert, aber weder Sound noch Debounce bekommen.
+  playButtonClick(btn);
 
   // Allow continuous jogging buttons to be pressed rapidly or held without getting visually disabled by the debounce
   if (btn.classList.contains('btn-z') || btn.classList.contains('btn-rot')) return;
