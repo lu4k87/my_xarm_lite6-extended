@@ -1501,6 +1501,423 @@
     }
   };
 
+
+  // ── YOLO Detection Overlay ────────────────────────────────────────────────
+  // Rendert die Marker von /zed/bboxes_3d direkt in die WebGL-Szene.
+  //
+  // Der Publisher (yolo_3d_bbox_for_zed_m.py) sendet pro erkanntem Objekt:
+  //   yolo_bboxes                     LINE_LIST (5)  Drahtgitter, 24 Punkte
+  //   yolo_object_grasp_center_point  SPHERE    (2)  roter Greifpunkt
+  //   yolo_labels_{class,x,y,z}       TEXT      (9)  vier gestapelte Labels
+  //
+  // Alle Marker stehen im Frame "world" - die TF-Aufloesung passiert bereits
+  // im Node. Die Szene hier laeuft ebenfalls in ROS-Konvention (Z oben, Meter),
+  // deshalb werden Positionen 1:1 uebernommen, ohne Umrechnung.
+  const MARKER_ADD = 0, MARKER_DELETE = 2, MARKER_DELETEALL = 3;
+  const MARKER_SPHERE = 2, MARKER_LINE_LIST = 5, MARKER_TEXT = 9;
+
+  // lifetime der Marker ist 2 s; etwas Reserve gegen Netzwerk-Jitter.
+  const DETECTION_TTL_MS = 2600;
+  // Label-Texturen nicht bei jeder Nachricht neu zeichnen - die mm-Werte
+  // zittern sonst mit Kamerarate und erzeugen dauernd Canvas-Arbeit.
+  const LABEL_REDRAW_MS = 200;
+
+  let detectionGroup = null;
+  let detectionObjects = {};            // "ns/id" -> { obj, lastSeen, ... }
+  let detectionsVisible = true;
+
+  function ensureDetectionGroup() {
+    if (!scene) return null;
+    if (!detectionGroup) {
+      detectionGroup = new THREE.Group();
+      detectionGroup.name = 'yolo-detections';
+      detectionGroup.visible = detectionsVisible;
+    }
+    // Wird die Szene je neu aufgebaut, haengt die Gruppe sonst an der alten
+    // und waere unsichtbar, ohne dass irgendetwas Fehler meldet.
+    if (detectionGroup.parent !== scene) scene.add(detectionGroup);
+    ensureDetectionPicking();
+    return detectionGroup;
+  }
+
+  // Scratch-Instanz: markerColor() laeuft pro Marker und Nachricht, ein
+  // new THREE.Color() je Aufruf waere unnoetiger GC-Druck bei Kamerarate.
+  const _mColor = new THREE.Color();
+  function markerColor(m) {
+    const c = (m && m.color) || {};
+    return _mColor.setRGB(c.r || 0, c.g || 0, c.b || 0);
+  }
+
+  function applyMarkerPose(obj, m) {
+    const pos = (m.pose && m.pose.position) || { x: 0, y: 0, z: 0 };
+    obj.position.set(pos.x || 0, pos.y || 0, pos.z || 0);
+    const q = (m.pose && m.pose.orientation) || null;
+    if (q) obj.quaternion.set(q.x || 0, q.y || 0, q.z || 0, q.w === undefined ? 1 : q.w);
+  }
+
+  // Ein Sprite mit Canvas-Textur. Der Canvas wird wiederverwendet und nur neu
+  // bezeichnet - sonst wuerde pro Aktualisierung eine neue GPU-Textur anfallen.
+  function makeLabelSprite() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 128;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;   // kein Mipmapping bei NPOT-Text
+    texture.magFilter = THREE.LinearFilter;
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,      // Label bleibt lesbar, auch hinter dem Roboter
+      depthWrite: false,
+    });
+    const sprite = new THREE.Sprite(material);
+    sprite.renderOrder = 999;
+    return { sprite, canvas, texture, text: null, color: null, drawnAt: 0 };
+  }
+
+  const LABEL_FONT_PX = 72;
+
+  // Verkleinert alle Labels gegenueber marker.scale.z (Klassenname wie auch
+  // die X/Y/Z-Zeilen). 1.0 entspraeche exakt der RViz-Groesse, die im
+  // Viewport zu wuchtig wirkt. Zur Laufzeit ueber
+  // window.setDigitalTwinLabelScale() nachjustierbar.
+  let labelScale = 0.6;
+
+  function drawLabel(entry, text, color) {
+    const cv = entry.canvas;
+    const ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.font = `bold ${LABEL_FONT_PX}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // Dunkler Umriss, damit der Text auf hellem wie dunklem Grund steht
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.strokeText(text, cv.width / 2, cv.height / 2);
+    ctx.fillStyle = color;
+    ctx.fillText(text, cv.width / 2, cv.height / 2);
+    entry.texture.needsUpdate = true;
+
+    // Echte Glyphenhoehe messen statt zu schaetzen. RViz interpretiert
+    // scale.z als Hoehe des Textes selbst - die vier Labels stehen nur 12 mm
+    // auseinander, ein zu grosszuegig geschaetzter Faktor laesst sie
+    // ineinanderlaufen. actualBoundingBox* fehlt in aelteren Engines,
+    // deshalb ein Fallback ueber die Schriftgroesse.
+    const mt = ctx.measureText(text);
+    const asc = mt.actualBoundingBoxAscent;
+    const desc = mt.actualBoundingBoxDescent;
+    const glyphPx = (typeof asc === 'number' && typeof desc === 'number' && (asc + desc) > 0)
+      ? (asc + desc)
+      : LABEL_FONT_PX * 0.72;
+    entry.glyphPx = glyphPx;
+    entry.widthPx = Math.max(mt.width, 1);
+  }
+
+  function disposeDetection(rec) {
+    const obj = rec.obj;
+    if (!obj) return;
+    if (detectionGroup) detectionGroup.remove(obj);
+    // ACHTUNG: three.js legt die Sprite-Geometrie EINMAL modulweit an und
+    // teilt sie unter allen Sprites (r128: "if (void 0 === Cs) Cs = new En").
+    // Ein dispose() darauf wuerde saemtliche Labels zerstoeren, nicht nur
+    // dieses. Nur eigene Geometrien freigeben.
+    if (obj.geometry && !obj.isSprite) obj.geometry.dispose();
+    if (obj.material) {
+      if (obj.material.map) obj.material.map.dispose();
+      obj.material.dispose();
+    }
+  }
+
+  function upsertDetection(m, now) {
+    const group = ensureDetectionGroup();
+    if (!group) return;
+
+    const key = `${m.ns || ''}/${m.id || 0}`;
+    let rec = detectionObjects[key];
+
+    if (m.action === MARKER_DELETE) {
+      if (rec) { disposeDetection(rec); delete detectionObjects[key]; }
+      return;
+    }
+    if (m.action !== undefined && m.action !== MARKER_ADD) return;
+
+    // ── LINE_LIST: Drahtgitter-Box ──
+    if (m.type === MARKER_LINE_LIST) {
+      const pts = m.points || [];
+      if (pts.length < 2) return;
+
+      if (!rec || rec.kind !== 'lines' || rec.count !== pts.length) {
+        if (rec) disposeDetection(rec);
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pts.length * 3), 3));
+        const mat = new THREE.LineBasicMaterial({
+          color: markerColor(m),
+          transparent: true,
+          opacity: (m.color && m.color.a !== undefined) ? m.color.a : 1.0,
+        });
+        const obj = new THREE.LineSegments(geo, mat);
+        group.add(obj);
+        rec = detectionObjects[key] = { obj, kind: 'lines', count: pts.length };
+      } else {
+        rec.obj.material.color.copy(markerColor(m));
+      }
+
+      // Punkte direkt in den bestehenden Puffer schreiben - kein
+      // Zwischenarray je Nachricht.
+      const attr = rec.obj.geometry.getAttribute('position');
+      const buf = attr.array;
+      for (let i = 0; i < pts.length; i++) {
+        buf[i * 3] = pts[i].x; buf[i * 3 + 1] = pts[i].y; buf[i * 3 + 2] = pts[i].z;
+      }
+      attr.needsUpdate = true;
+      rec.obj.geometry.computeBoundingSphere();
+      applyMarkerPose(rec.obj, m);
+      rec.lastSeen = now;
+      return;
+    }
+
+    // ── SPHERE: roter Greifpunkt ──
+    if (m.type === MARKER_SPHERE) {
+      if (!rec || rec.kind !== 'sphere') {
+        if (rec) disposeDetection(rec);
+        const geo = new THREE.SphereGeometry(0.5, 20, 14);   // Einheitskugel
+        const mat = new THREE.MeshStandardMaterial({
+          color: markerColor(m),
+          emissive: markerColor(m),
+          emissiveIntensity: 0.55,
+          metalness: 0.1,
+          roughness: 0.4,
+          transparent: true,
+          opacity: (m.color && m.color.a !== undefined) ? m.color.a : 1.0,
+        });
+        const obj = new THREE.Mesh(geo, mat);
+        group.add(obj);
+        rec = detectionObjects[key] = { obj, kind: 'sphere' };
+      } else {
+        rec.obj.material.color.copy(markerColor(m));
+        rec.obj.material.emissive.copy(markerColor(m));
+      }
+      const sc = m.scale || { x: 0.0125, y: 0.0125, z: 0.0125 };
+      rec.obj.scale.set(sc.x || 0.0125, sc.y || 0.0125, sc.z || 0.0125);
+      applyMarkerPose(rec.obj, m);
+      rec.markerId = m.id || 0;   // Bruecke zum Klassen-Label gleicher id
+      rec.lastSeen = now;
+      return;
+    }
+
+    // ── TEXT_VIEW_FACING: Label ──
+    if (m.type === MARKER_TEXT) {
+      // Der Publisher ersetzt Leerzeichen durch "_" (RViz-Eigenheit) -
+      // im Viewport ist die lesbare Schreibweise sinnvoller. Der ROHTEXT wird
+      // aber gebraucht: die Liste "Detected Objects" und damit auch der
+      // Grasp-Befehl nutzen genau ihn als Objektnamen.
+      const rawText = String(m.text || '').trim();
+      const text = rawText.replace(/_/g, ' ').trim();
+      if (!text) return;
+      const col = markerColor(m);
+      const css = `rgb(${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)})`;
+
+      if (!rec || rec.kind !== 'text') {
+        if (rec) disposeDetection(rec);
+        const made = makeLabelSprite();
+        group.add(made.sprite);
+        rec = detectionObjects[key] = { obj: made.sprite, kind: 'text', label: made };
+      }
+      const lbl = rec.label;
+      const changed = (lbl.text !== text || lbl.color !== css);
+      // Erstzeichnung greift hier ebenfalls: drawnAt startet bei 0, die
+      // Throttle-Bedingung ist beim ersten Mal also immer erfuellt.
+      if (changed && (now - lbl.drawnAt) >= LABEL_REDRAW_MS) {
+        drawLabel(lbl, text, css);
+        lbl.text = text; lbl.color = css; lbl.drawnAt = now;
+      }
+
+      // scale.z ist die Texthoehe in Metern. Das Sprite ist groesser als die
+      // Glyphe (Leerraum im Canvas), deshalb wird ueber das gemessene
+      // Verhaeltnis hochgerechnet - so entspricht die sichtbare Texthoehe
+      // exakt scale.z und die vier Labels ueberlappen nicht.
+      const textH = ((m.scale && m.scale.z) ? m.scale.z : 0.012) * labelScale;
+      const glyphPx = lbl.glyphPx || (LABEL_FONT_PX * 0.72);
+      const spriteH = textH * (rec.obj.material.map.image.height / glyphPx);
+      const aspect = rec.obj.material.map.image.width / rec.obj.material.map.image.height;
+      rec.obj.scale.set(spriteH * aspect, spriteH, 1);
+      applyMarkerPose(rec.obj, m);
+      rec.rawText = rawText;
+      rec.lastSeen = now;
+    }
+  }
+
+  // ── Klick auf die rote Greifkugel ─────────────────────────────────────────
+  // Loest dasselbe aus wie ein Klick auf den Eintrag in "Detected Objects".
+  const _ray = new THREE.Raycaster();
+  const _ndc = new THREE.Vector2();
+  let pickingWired = false;
+  let pressX = 0, pressY = 0, pressT = 0;
+  let hoveredKey = null;
+
+  // Nur als Klick werten, wenn kaum bewegt und kurz gedrueckt wurde -
+  // sonst wuerde jedes Orbit-Drag, das auf einer Kugel endet, ausloesen.
+  const CLICK_MAX_MOVE_PX = 5;
+  const CLICK_MAX_MS = 500;
+  // Hover nicht bei jedem pointermove raycasten - das feuert mit
+  // Bildwiederholrate und wuerde pro Ereignis ein Trefferarray erzeugen.
+  const HOVER_THROTTLE_MS = 50;
+  let lastHoverT = 0;
+
+  function sphereRecords() {
+    const out = [];
+    for (const key of Object.keys(detectionObjects)) {
+      const rec = detectionObjects[key];
+      if (rec.kind === 'sphere' && rec.obj) out.push(rec);
+    }
+    return out;
+  }
+
+  // Objektname zur Kugel: gleiche id, Namespace der Klassen-Labels.
+  function nameForSphere(rec) {
+    const lbl = detectionObjects[`yolo_labels_class/${rec.markerId}`];
+    return (lbl && lbl.rawText) || null;
+  }
+
+  function pickSphereAt(ev) {
+    if (!renderer || !camera || !detectionGroup || !detectionsVisible) return null;
+    const recs = sphereRecords();
+    if (recs.length === 0) return null;
+
+    const rect = renderer.domElement.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    _ndc.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+    _ndc.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+    _ray.setFromCamera(_ndc, camera);
+
+    const hits = _ray.intersectObjects(recs.map(r => r.obj), false);
+    if (hits.length === 0) return null;
+    return recs.find(r => r.obj === hits[0].object) || null;
+  }
+
+  function setHover(rec) {
+    const key = rec ? `${rec.markerId}` : null;
+    if (key === hoveredKey) return;
+    // Vorherige Hervorhebung zuruecknehmen
+    for (const r of sphereRecords()) {
+      if (r.obj.material && r.obj.userData.baseEmissive !== undefined) {
+        r.obj.material.emissiveIntensity = r.obj.userData.baseEmissive;
+      }
+    }
+    if (rec && rec.obj.material) {
+      if (rec.obj.userData.baseEmissive === undefined) {
+        rec.obj.userData.baseEmissive = rec.obj.material.emissiveIntensity;
+      }
+      rec.obj.material.emissiveIntensity = 1.4;
+    }
+    hoveredKey = key;
+    if (renderer) renderer.domElement.style.cursor = rec ? 'pointer' : '';
+  }
+
+  function ensureDetectionPicking() {
+    if (pickingWired || !renderer || !renderer.domElement) return;
+    const el = renderer.domElement;
+
+    el.addEventListener('pointerdown', (ev) => {
+      pressX = ev.clientX; pressY = ev.clientY; pressT = Date.now();
+    });
+
+    el.addEventListener('pointerup', (ev) => {
+      if (isDraggingGizmo) return;                       // TCP-Gizmo hat Vorrang
+      const dx = ev.clientX - pressX, dy = ev.clientY - pressY;
+      if (Math.hypot(dx, dy) > CLICK_MAX_MOVE_PX) return; // war ein Orbit-Drag
+      if (Date.now() - pressT > CLICK_MAX_MS) return;
+
+      const rec = pickSphereAt(ev);
+      if (!rec) return;
+      const name = nameForSphere(rec);
+      if (!name) {
+        if (typeof window.logMsg === 'function') {
+          window.logMsg('GIZMO', '⚠ Grasp point clicked but its class label is missing - ignoring.', 'warn');
+        }
+        return;
+      }
+      // KEIN stopPropagation()/preventDefault() hier!
+      // OrbitControls haengt pointermove/pointerup am ownerDocument (nicht am
+      // Canvas) und entfernt den move-Listener erst in seinem pointerup.
+      // Wird das Bubbling hier gestoppt, erreicht pointerup das Document nie,
+      // der move-Listener bleibt haengen und der Viewport dreht sich danach
+      // weiter, als haette man die Maustaste noch gedrueckt.
+      // Ein Klick ohne Bewegung erzeugt in OrbitControls ohnehin keine
+      // Rotation - es gibt also nichts zu unterdruecken.
+      if (typeof window.graspDetectedObject === 'function') {
+        window.graspDetectedObject(name, 'viewport');
+      }
+    });
+
+    el.addEventListener('pointermove', (ev) => {
+      if (isDraggingGizmo) return;
+      const t = Date.now();
+      if (t - lastHoverT < HOVER_THROTTLE_MS) return;
+      lastHoverT = t;
+      setHover(pickSphereAt(ev));
+    });
+
+    el.addEventListener('pointerleave', () => setHover(null));
+
+    pickingWired = true;
+  }
+
+  function sweepDetections(now) {
+    for (const key of Object.keys(detectionObjects)) {
+      const rec = detectionObjects[key];
+      if (now - (rec.lastSeen || 0) > DETECTION_TTL_MS) {
+        disposeDetection(rec);
+        delete detectionObjects[key];
+      }
+    }
+  }
+
+  function clearDetections() {
+    for (const key of Object.keys(detectionObjects)) disposeDetection(detectionObjects[key]);
+    detectionObjects = {};
+  }
+
+  // Wird von app.js mit dem kompletten MarkerArray gefuettert.
+  window.updateDigitalTwinDetections = function (markers) {
+    if (!scene || !Array.isArray(markers)) return;
+    const now = Date.now();
+
+    if (markers.some(m => m && m.action === MARKER_DELETEALL)) {
+      clearDetections();
+      return;
+    }
+    for (const m of markers) {
+      if (m) upsertDetection(m, now);
+    }
+    sweepDetections(now);
+  };
+
+  window.setDigitalTwinDetectionsVisible = function (visible) {
+    detectionsVisible = !!visible;
+    if (detectionGroup) detectionGroup.visible = detectionsVisible;
+    return detectionsVisible;
+  };
+
+  window.getDigitalTwinDetectionsVisible = function () {
+    return detectionsVisible;
+  };
+
+  // Labelgroesse live nachregeln, z.B. window.setDigitalTwinLabelScale(0.45).
+  // Wirkt beim naechsten eingehenden MarkerArray, da die Skalierung dort
+  // gesetzt wird - bereits sichtbare Labels ziehen also innerhalb eines
+  // Frames nach.
+  window.setDigitalTwinLabelScale = function (factor) {
+    const f = Number(factor);
+    if (!isFinite(f) || f <= 0) return labelScale;
+    labelScale = f;
+    return labelScale;
+  };
+
+  window.getDigitalTwinLabelScale = function () {
+    return labelScale;
+  };
+
   // Initialize on DOM ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initDigitalTwin);

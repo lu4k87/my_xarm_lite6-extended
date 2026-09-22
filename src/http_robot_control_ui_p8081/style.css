@@ -1372,19 +1372,18 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 /* Speed Toggle Segmented Control */
 .speed-toggle-group {
-  /* einzige Box (die frueher umgebende wurde entfernt) - uebernimmt deren
-     Aussenmasse: 250px Inhalt + 2x12px Padding + 2x1px Border = 276 x 44 px.
-     Optik wie die uebrigen HUD-Panels: gleicher Grund, Radius und Blur. */
-  width: 276px;
+  /* Label und die drei Stufen untereinander. Optik wie die uebrigen
+     HUD-Panels: gleicher Grund, Radius und Blur.
+     Kein flex-wrap mehr - in einer Spalte wuerde das eine zweite Spalte
+     aufmachen statt umzubrechen. */
+  width: 124px;
   max-width: 100%;
-  min-height: 44px;
   box-sizing: border-box;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap; /* schmale Viewports: umbrechen statt ueberlaufen */
-  gap: 4px;
-  padding: 2px 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding: 6px;
   background: rgba(10, 14, 23, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
@@ -1396,10 +1395,11 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   font-size: 11.5px;
   font-weight: 700;
   color: var(--accent);
-  margin: 0 4px 0 2px;
+  margin: 0 0 2px 0;
+  padding: 0 2px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   white-space: nowrap;
 }
 
@@ -1408,11 +1408,13 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .speed-opt {
-  flex: 1;
+  /* feste Zeilenhoehe statt height:100% - in der Spalte gibt es keine
+     Zeilenhoehe zum Fuellen mehr */
+  flex: 0 0 auto;
+  height: 24px;
   text-align: center;
   margin: 0;
   cursor: pointer;
-  height: 100%;
   display: flex;
 }
 
@@ -1683,6 +1685,59 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 .log-entry { margin-bottom: 3px; word-break: break-word; line-height: 1.4; font-size: 16.5px; }
 
+/* ── ZED Live Stream: Modus-Auswahl ─────────────────────────────────────── */
+.zed-stream-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  min-height: 30px;
+  margin-bottom: 6px;
+  min-width: 0;
+}
+
+.zed-stream-bar label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--mut);
+}
+
+.zed-stream-bar select {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 14, 23, 0.9);
+  color: #e2e8f0;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.zed-stream-bar select:focus {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.55);
+}
+
+.zed-stream-topic {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10px;
+  color: #64748b;
+}
 
 /* ── TF Control Tuner Section ── */
 .tf-tuner-section {

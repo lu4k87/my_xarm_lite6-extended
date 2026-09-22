@@ -335,6 +335,40 @@ function updateLinearAxis(val) {
   }
 }
 
+// ── YOLO 3D Overlay im Viewport ein-/ausblenden ─────────────────────────
+// Zustand in localStorage, damit die Ansicht einen Reload ueberlebt.
+const TWIN_DETECTIONS_LS_KEY = 'twin_detections_visible';
+
+function applyTwinDetectionsBtn(visible) {
+  const btn = document.getElementById('btn-twin-detections');
+  if (!btn) return;
+  btn.style.color = visible ? 'var(--accent)' : 'var(--dim)';
+  btn.style.opacity = visible ? '1' : '0.5';
+}
+
+function toggleTwinDetections() {
+  if (typeof window.setDigitalTwinDetectionsVisible !== 'function') return;
+  const now = !window.getDigitalTwinDetectionsVisible();
+  window.setDigitalTwinDetectionsVisible(now);
+  applyTwinDetectionsBtn(now);
+  try { localStorage.setItem(TWIN_DETECTIONS_LS_KEY, now ? '1' : '0'); } catch (e) {}
+  logMsg('UI', `YOLO 3D overlay ${now ? 'enabled' : 'disabled'}`);
+}
+
+function restoreTwinDetections() {
+  let visible = true;   // Labels und Boxen sind standardmaessig an
+  try {
+    const saved = localStorage.getItem(TWIN_DETECTIONS_LS_KEY);
+    if (saved !== null) visible = (saved === '1');
+  } catch (e) {}
+  if (typeof window.setDigitalTwinDetectionsVisible === 'function') {
+    window.setDigitalTwinDetectionsVisible(visible);
+  }
+  applyTwinDetectionsBtn(visible);
+}
+
+document.addEventListener('DOMContentLoaded', () => setTimeout(restoreTwinDetections, 400));
+
 // ── YOLO 3D Objects ─────────────────────────────────────────────────────
 const yoloSub = new ROSLIB.Topic({
   ros: ros,
@@ -342,15 +376,22 @@ const yoloSub = new ROSLIB.Topic({
   messageType: 'visualization_msgs/MarkerArray'
 });
 
+// Ein erkanntes Objekt anfahren. Wird sowohl von der Liste "Detected
+// Objects" als auch vom Klick auf die rote Greifkugel im Viewport benutzt,
+// damit beide Wege garantiert identisch reagieren.
+window.graspDetectedObject = function (name, source) {
+  if (!name) return;
+  logMsg('UI', `Clicked on YOLO object: ${name}${source ? ' (' + source + ')' : ''}`);
+  const input = document.getElementById('inp-grasp-obj');
+  if (input) input.value = name;
+  executeGrasp();
+};
+
 function createYoloItem(item) {
   const el = document.createElement('div');
   el.className = 'yolo-item';
   el.setAttribute('data-id', item.name);
-  el.onclick = () => {
-    logMsg('UI', `Clicked on YOLO object: ${item.name}`);
-    document.getElementById('inp-grasp-obj').value = item.name;
-    executeGrasp();
-  };
+  el.onclick = () => window.graspDetectedObject(item.name, 'list');
   el.innerHTML = `
     <i class="fa-solid fa-cube" style="color: var(--accent); font-size: 16px;"></i>
     <div class="yolo-details">
@@ -367,6 +408,14 @@ function createYoloItem(item) {
 }
 
 yoloSub.subscribe((msg) => {
+  // 3D-Overlay im WebGL-Viewport zuerst bedienen - und bewusst VOR dem
+  // yolo-container-Guard: fehlt die Liste im DOM, soll das Overlay trotzdem
+  // laufen. Der Twin bekommt das komplette MarkerArray (Box, Greifpunkt,
+  // Labels), die Liste unten filtert weiterhin nur die Text-Marker heraus.
+  if (typeof window.updateDigitalTwinDetections === 'function') {
+    window.updateDigitalTwinDetections((msg && msg.markers) || []);
+  }
+
   const container = document.getElementById('yolo-container');
   if (!container) return;
   

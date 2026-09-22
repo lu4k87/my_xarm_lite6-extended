@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="stylesheet" href="style.css?v=36">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -125,7 +125,14 @@
 
         <section id="panel-zed-camera" class="glass-panel" style="height: calc(33.33vh - 70px); min-height: 250px; min-width: 300px;">
           <h2 style="cursor: grab;"><i class="fa-solid fa-camera"></i> ZED M Live Stream</h2>
-          <div style="width: 100%; height: calc(100% - 30px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+          <!-- Modus-Auswahl steht bewusst NICHT im h2: das ist der Drag-Handle
+               von SortableJS, ein Dropdown darin liesse sich nicht bedienen. -->
+          <div class="zed-stream-bar">
+            <label for="zed-stream-mode"><i class="fa-solid fa-layer-group"></i> Modus</label>
+            <select id="zed-stream-mode" title="Which ZED image topic to stream"></select>
+            <span id="zed-stream-topic" class="zed-stream-topic" title="Active topic"></span>
+          </div>
+          <div style="width: 100%; height: calc(100% - 66px); background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
             <div id="zed-cam-stream-err" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--red); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; text-align: center; z-index: 10;">
               <i class="fa-solid fa-video-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
               Stream Disconnected
@@ -257,6 +264,9 @@
                 </button>
                 <button class="btn btn-icon-small" id="btn-twin-scene-zedm" onclick="toggleSceneNode('zedm')" title="ZED-M camera stand (rviz_marker_3d_scene_zedm_stand)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-video"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-detections" onclick="toggleTwinDetections()" title="YOLO detections in 3D view: bounding box, red grasp point and labels (/zed/bboxes_3d)">
+                  <i class="fa-solid fa-vector-square"></i>
                 </button>
               </div>
 
@@ -675,9 +685,9 @@
   <script src="lib/TransformControls.js"></script>
   <script src="lib/STLLoader.js"></script>
   <script src="lib/URDFLoader.js"></script>
-  <script src="digital_twin.js?v=9"></script>
+  <script src="digital_twin.js?v=16"></script>
 
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=18"></script>
   
   <script>
     // ── Live Camera Update Loop ──
@@ -719,27 +729,153 @@
       };
       updateCam2(); // start the loop
     }
-    // ── ZED M Camera Stream ──
+    // ── ZED M Camera Stream mit Modus-Auswahl ──
     const zedImg = document.getElementById('zed-cam-stream');
     const zedErr = document.getElementById('zed-cam-stream-err');
+    const zedSel = document.getElementById('zed-stream-mode');
+    const zedTopicLbl = document.getElementById('zed-stream-topic');
+
     if (zedImg) {
-      // Connect to web_video_server on the same host as the UI
       const host = window.location.hostname || 'localhost';
-      zedImg.src = `http://${host}:8082/stream?topic=/zed/zed_node/rgb/image_rect_color`;
-      
+      const ZED_NS = '/zed/zed_node';
+      const ZED_LS_KEY = 'zed_stream_topic';
+
+      // Kuratierte Liste: Reihenfolge und Namen fuer die Anzeige. Welche davon
+      // wirklich existieren, haengt von der ZED-Konfiguration ab - das wird
+      // unten per rosapi abgeglichen. "float: true" markiert 32FC1-Bilder;
+      // web_video_server skaliert die automatisch, wenn min == max.
+      const ZED_MODES = [
+        { topic: `${ZED_NS}/rgb/image_rect_color`,       label: 'RGB (rektifiziert)' },
+        { topic: `${ZED_NS}/rgb_raw/image_raw_color`,    label: 'RGB (raw)' },
+        { topic: `${ZED_NS}/left/image_rect_color`,      label: 'Links (rektifiziert)' },
+        { topic: `${ZED_NS}/left_raw/image_raw_color`,   label: 'Links (raw)' },
+        { topic: `${ZED_NS}/right/image_rect_color`,     label: 'Rechts (rektifiziert)' },
+        { topic: `${ZED_NS}/right_raw/image_raw_color`,  label: 'Rechts (raw)' },
+        { topic: `${ZED_NS}/stereo/image_rect_color`,    label: 'Stereo (nebeneinander)' },
+        { topic: `${ZED_NS}/rgb_gray/image_rect_gray`,   label: 'Graustufen (rektifiziert)' },
+        { topic: `${ZED_NS}/depth/depth_registered`,     label: 'Tiefe', float: true },
+        { topic: `${ZED_NS}/confidence/confidence_map`,  label: 'Konfidenz', float: true },
+      ];
+
+      const modeFor = (t) => ZED_MODES.find(m => m.topic === t) || null;
+
+      function streamUrl(topic, bust) {
+        const m = modeFor(topic);
+        // Float-Bilder (Tiefe, Konfidenz) brauchen eine Skalierung. min == max
+        // laesst web_video_server je Frame automatisch normalisieren - ohne das
+        // bliebe das Bild schwarz.
+        const extra = (m && m.float) ? '&min=0&max=0' : '';
+        const t = bust ? `&_t=${Date.now()}` : '';
+        return `http://${host}:8082/stream?topic=${encodeURIComponent(topic)}&type=mjpeg${extra}${t}`;
+      }
+
+      let savedTopic = null;
+      try { savedTopic = localStorage.getItem(ZED_LS_KEY); } catch (e) {}
+      let currentTopic = savedTopic || ZED_MODES[0].topic;
+
+      function renderOptions(available) {
+        if (!zedSel) return;
+        zedSel.innerHTML = '';
+        // Bekannte Modi zuerst, in kuratierter Reihenfolge
+        const known = new Set();
+        ZED_MODES.forEach(m => {
+          if (available && !available.has(m.topic)) return;
+          known.add(m.topic);
+          const o = document.createElement('option');
+          o.value = m.topic;
+          o.textContent = m.label;
+          zedSel.appendChild(o);
+        });
+        // Alles Weitere, was die Kamera sonst noch anbietet
+        if (available) {
+          Array.from(available).sort().forEach(t => {
+            if (known.has(t)) return;
+            const o = document.createElement('option');
+            o.value = t;
+            o.textContent = t.replace(ZED_NS + '/', '');
+            zedSel.appendChild(o);
+          });
+        }
+        if (zedSel.options.length === 0) {
+          const o = document.createElement('option');
+          o.value = currentTopic;
+          o.textContent = 'Keine ZED-Bildtopics gefunden';
+          zedSel.appendChild(o);
+        }
+        // Auswahl halten. Der gespeicherte Wunsch-Topic wird bevorzugt, falls
+        // er erst jetzt - nach dem rosapi-Abgleich - in der Liste auftaucht;
+        // sonst wuerde eine Auswahl ausserhalb der kuratierten Modi bei jedem
+        // Neuladen verloren gehen.
+        const values = Array.from(zedSel.options).map(o => o.value);
+        if (savedTopic && values.includes(savedTopic)) currentTopic = savedTopic;
+        else if (!values.includes(currentTopic)) currentTopic = values[0];
+        zedSel.value = currentTopic;
+      }
+
+      function applyTopic(topic) {
+        currentTopic = topic;
+        try { localStorage.setItem(ZED_LS_KEY, topic); } catch (e) {}
+        if (zedTopicLbl) zedTopicLbl.textContent = topic.replace(ZED_NS + '/', '');
+        if (zedErr) zedErr.style.display = 'flex';
+        zedImg.style.display = 'none';
+        zedImg.src = streamUrl(topic, true);
+        if (typeof logMsg === 'function') logMsg('UI', `ZED stream mode: ${topic}`);
+      }
+
       zedImg.onload = () => {
         if (zedErr) zedErr.style.display = 'none';
         zedImg.style.display = 'block';
       };
 
-      // Auto-retry if connection fails or web_video_server restarts
+      // Auto-retry - immer mit dem GERADE gewaehlten Topic, nicht mit einem
+      // fest verdrahteten.
       zedImg.onerror = () => {
         if (zedErr) zedErr.style.display = 'flex';
         zedImg.style.display = 'none';
-        setTimeout(() => {
-          zedImg.src = `http://${host}:8082/stream?topic=/zed/zed_node/rgb/image_rect_color&_t=${new Date().getTime()}`;
-        }, 3000);
+        setTimeout(() => { zedImg.src = streamUrl(currentTopic, true); }, 3000);
       };
+
+      if (zedSel) zedSel.onchange = () => applyTopic(zedSel.value);
+
+      renderOptions(null);          // sofort bedienbar, auch ohne rosbridge
+      applyTopic(currentTopic);
+
+      // Tatsaechlich vorhandene Bildtopics nachladen, sobald rosbridge steht.
+      function refreshZedTopics() {
+        if (typeof ros === 'undefined' || !ros || !ros.isConnected) return;
+        try {
+          const client = new ROSLIB.Service({
+            ros: ros,
+            name: '/rosapi/topics_for_type',
+            serviceType: 'rosapi/TopicsForType'
+          });
+
+          // Beide Schreibweisen abfragen: ROS 2 meldet "sensor_msgs/msg/Image",
+          // aeltere rosapi-Staende vergleichen gegen "sensor_msgs/Image".
+          // Was nicht passt, liefert einfach eine leere Liste.
+          const found = new Set();
+          let pending = 2;
+
+          const done = () => {
+            if (--pending > 0) return;
+            const zed = Array.from(found).filter(t => t.startsWith(ZED_NS + '/'));
+            if (zed.length === 0) return;   // Kamera laeuft nicht - Liste behalten
+            renderOptions(new Set(zed));
+            if (zedSel && zedSel.value !== currentTopic) applyTopic(zedSel.value);
+          };
+
+          ['sensor_msgs/msg/Image', 'sensor_msgs/Image'].forEach(typeName => {
+            client.callService(
+              new ROSLIB.ServiceRequest({ type: typeName }),
+              (res) => { ((res && res.topics) || []).forEach(t => found.add(t)); done(); },
+              () => done()
+            );
+          });
+        } catch (e) { /* ignorieren - kuratierte Liste bleibt bedienbar */ }
+      }
+
+      setTimeout(refreshZedTopics, 1500);
+      setInterval(refreshZedTopics, 15000);
     }
   </script>
 </body>
