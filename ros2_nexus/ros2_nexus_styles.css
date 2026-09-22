@@ -1042,6 +1042,77 @@
       letter-spacing: 1px;
     }
 
+    /* ── Action Card Collapse: Chevron oben rechts + einklappbarer Body ── */
+    /* Der Button sitzt per margin-left:auto im Flow der Header-Zeile,
+       keine absolute Positionierung -> keine Overlaps. */
+    .modal-card-collapse-btn {
+      margin-left: auto;
+      flex: 0 0 auto;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      box-sizing: border-box;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #94a3b8;
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .modal-card-collapse-btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+    }
+
+    .modal-card-collapse-btn:focus-visible {
+      outline: 2px solid rgba(56, 189, 248, 0.6);
+      outline-offset: 2px;
+    }
+
+    .modal-card-collapse-btn i {
+      pointer-events: none;
+    }
+
+    /* Der Header behaelt seinen Platz, damit der Chevron nie wegklappt */
+    .modal-action-card .modal-params-header {
+      padding-right: 0;
+    }
+
+    /* Offen: kein max-height, overflow sichtbar -> die Tree-Connector-Linien
+       der Launch-Baeume (top: -16px) werden nicht abgeschnitten.
+       overflow wird nur waehrend der Animation und im eingeklappten
+       Zustand begrenzt. */
+    .modal-action-card .card-collapsible-body {
+      opacity: 1;
+      transition: max-height 0.28s ease, opacity 0.22s ease, margin 0.28s ease;
+    }
+
+    .modal-action-card .card-collapsible-body.is-animating {
+      overflow: hidden;
+    }
+
+    /* !important, weil margin-top der Body-Elemente inline gesetzt wird */
+    .modal-action-card.card-collapsed .card-collapsible-body {
+      overflow: hidden;
+      opacity: 0;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      border: none !important;
+    }
+
+    .modal-action-card.card-collapsed .modal-card-divider-h {
+      opacity: 0;
+    }
+
     .modal-args-list {
       flex: 1;
       display: flex;
@@ -1080,11 +1151,91 @@
       transform: translateY(-1px);
     }
 
+    /* ── Parameter-Arten farblich unterscheiden ───────────────────────────
+       Gruen  = echtes, von dieser Launch-Datei deklariertes Launch-Argument
+       Blau   = ROS-2-Node-Parameter (--ros-args -p)
+       Violett= ROS-2-Remapping     (--ros-args -r)
+       Rot    = sieht aus wie ein Launch-Argument, wird aber nicht deklariert
+                -> laeuft beim Start ins Leere
+       Gelb   = Paket/Launch-Datei gibt es im Workspace nicht
+       Die Grundfarbe von .param-chip ist bereits gruen, chip-kind-launch
+       setzt sie nur explizit, damit die Absicht im Code lesbar bleibt. */
+    .param-chip.chip-kind-launch {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.28);
+      color: #34d399;
+    }
+
+    .param-chip.chip-kind-param {
+      background: rgba(56, 189, 248, 0.10);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: #7dd3fc;
+    }
+
+    .param-chip.chip-kind-param:hover {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.5);
+    }
+
+    .param-chip.chip-kind-remap {
+      background: rgba(188, 140, 255, 0.10);
+      border-color: rgba(188, 140, 255, 0.35);
+      color: #d2a8ff;
+    }
+
+    .param-chip.chip-kind-remap:hover {
+      background: rgba(188, 140, 255, 0.18);
+      border-color: rgba(188, 140, 255, 0.5);
+    }
+
+    .param-chip.chip-kind-dead {
+      background: rgba(248, 81, 73, 0.10);
+      border-color: rgba(248, 81, 73, 0.40);
+      color: #ff9a92;
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+      text-decoration-color: rgba(248, 81, 73, 0.6);
+    }
+
+    .param-chip.chip-kind-dead:hover {
+      background: rgba(248, 81, 73, 0.18);
+      border-color: rgba(248, 81, 73, 0.55);
+    }
+
+    .param-chip.chip-kind-unknown {
+      background: rgba(227, 179, 65, 0.10);
+      border-color: rgba(227, 179, 65, 0.40);
+      color: #f0c674;
+    }
+
+    .param-chip.chip-kind-unknown:hover {
+      background: rgba(227, 179, 65, 0.18);
+      border-color: rgba(227, 179, 65, 0.55);
+    }
+
+    /* Der Durchstrich gehoert zur Warnung, nicht zur Checkbox */
+    .param-chip.chip-kind-dead input {
+      text-decoration: none;
+    }
+
     .param-chip.chip-inactive {
       opacity: 0.45;
       background: rgba(255, 255, 255, 0.03);
       border-color: rgba(255, 255, 255, 0.08);
       color: #94a3b8;
+    }
+
+    /* Warnungen bleiben auch bei abgewaehltem Chip erkennbar - eine
+       wirkungslose oder fehlende Referenz ist unabhaengig davon ein Fehler.
+       Drei Klassen schlagen die zweistellige Spezifitaet von .chip-inactive. */
+    .param-chip.chip-kind-dead.chip-inactive {
+      color: #ff9a92;
+      border-color: rgba(248, 81, 73, 0.30);
+    }
+
+    .param-chip.chip-kind-unknown.chip-inactive {
+      color: #f0c674;
+      border-color: rgba(227, 179, 65, 0.30);
     }
 
     .param-chip.chip-inactive:hover {

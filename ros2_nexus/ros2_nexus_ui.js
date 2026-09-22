@@ -1,3 +1,54 @@
+    // ─── PARAMETER-KLASSIFIKATION ─────────────────────────────────────────────
+    // Die Chips in den Action Cards sehen bisher alle gleich aus, obwohl drei
+    // verschiedene ROS-2-Dinge dahinterstecken. /api/launch_args liefert die
+    // tatsaechlich deklarierten Launch-Argumente je Paket/Datei, damit ein
+    // Parameter, der ins Leere laeuft, auch als solcher erkennbar wird.
+    window.NEXUS_LAUNCH_ARGS = null;
+
+    fetch('/api/launch_args')
+      .then(r => r.json())
+      .then(d => { if (d && d.ok) window.NEXUS_LAUNCH_ARGS = d.launch_files || {}; })
+      .catch(() => { /* ohne Backend bleiben die Chips neutral */ });
+
+    // "ros2 launch <paket> <datei>.launch.py" -> "paket/datei.launch.py"
+    function launchKeyOf(cmd) {
+      if (!cmd) return null;
+      const m = cmd.match(/ros2\s+launch\s+(\S+)\s+(\S+\.launch\.py)/);
+      return m ? `${m[1]}/${m[2]}` : null;
+    }
+
+    // Liefert { cls, title } fuer einen Argument-Chip.
+    function classifyArg(text, launchKey) {
+      const t = String(text || '').trim();
+
+      if (/(^|\s)-r(\s|$)/.test(t) || t.includes('__node:=') || /^__[a-z]+:=/.test(t)) {
+        return { cls: 'chip-kind-remap', title: 'ROS-2-Remapping (--ros-args -r) - benennt Node/Topic um' };
+      }
+      if (/(^|\s)-p(\s|$)/.test(t)) {
+        return { cls: 'chip-kind-param', title: 'ROS-2-Node-Parameter (--ros-args -p) - wird an den Node gesetzt' };
+      }
+
+      const m = t.match(/^([A-Za-z_][A-Za-z0-9_]*):=/);
+      if (!m) return { cls: '', title: '' };
+      const name = m[1];
+
+      if (!launchKey) {
+        // Kein "ros2 launch" - z.B. "ros2 run" oder ein Shell-Kommando.
+        return { cls: '', title: 'Argument (kein ros2-launch-Kommando - nicht pruefbar)' };
+      }
+      const map = window.NEXUS_LAUNCH_ARGS;
+      if (!map) return { cls: '', title: '' };   // noch nicht geladen
+
+      const declared = map[launchKey];
+      if (!declared) {
+        return { cls: 'chip-kind-unknown', title: `Launch-Datei "${launchKey}" nicht gefunden - Paket oder Datei existiert nicht` };
+      }
+      if (declared.indexOf(name) !== -1) {
+        return { cls: 'chip-kind-launch', title: `Echtes Launch-Argument von ${launchKey}` };
+      }
+      return { cls: 'chip-kind-dead', title: `"${name}" wird von ${launchKey} nicht deklariert - dieser Parameter bleibt wirkungslos` };
+    }
+
     // ─── CONSOLE LOGIC ────────────────────────────────────────────────────────────
     let lastLogId = 0;
 
@@ -561,6 +612,99 @@
            }
        });
        
+       // ── Action Card Collapse (Ein-/Ausklappen pro Card, je Popup persistiert) ──
+       const COLLAPSE_LS_KEY = 'ros2_nexus_cards_collapsed';
+
+       const readCollapsedStore = () => {
+           try { return JSON.parse(localStorage.getItem(COLLAPSE_LS_KEY) || '{}'); } catch (e) { return {}; }
+       };
+
+       const isCardCollapsed = (cardKey) => {
+           if (!cardKey) return false;
+           const store = readCollapsedStore();
+           for (const pKey of popupCandidateKeys) {
+               if (pKey && store[pKey] && store[pKey][cardKey] !== undefined) return !!store[pKey][cardKey];
+           }
+           return false;
+       };
+
+       const saveCardCollapsed = (cardKey, collapsed) => {
+           if (!cardKey) return;
+           const store = readCollapsedStore();
+           popupCandidateKeys.forEach(pKey => {
+               if (!pKey) return;
+               if (!store[pKey]) store[pKey] = {};
+               store[pKey][cardKey] = collapsed;
+           });
+           try { localStorage.setItem(COLLAPSE_LS_KEY, JSON.stringify(store)); } catch (e) {}
+       };
+
+       // Haengt den kleinen Chevron-Button oben rechts in die Card.
+       // headerHost bleibt immer sichtbar, alles in bodyEls klappt weg.
+       // Die Hoehe wird per JS gesetzt: im offenen Zustand steht max-height wieder
+       // auf '' (natuerliche Hoehe) und overflow auf visible, damit die
+       // Tree-Connector-Linien der Launch-Baeume nicht abgeschnitten werden.
+       const attachCardCollapse = (cardDiv, headerHost, cardKey, bodyEls) => {
+           if (!cardDiv || !headerHost) return;
+           const bodies = (bodyEls || []).filter(Boolean);
+           bodies.forEach(el => el.classList.add('card-collapsible-body'));
+
+           const btn = document.createElement('button');
+           btn.type = 'button';
+           btn.className = 'modal-card-collapse-btn';
+           btn.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+
+           const setBodyHeights = (collapsed, animate) => {
+               bodies.forEach(el => {
+                   if (!animate) {
+                       el.classList.remove('is-animating');
+                       el.style.maxHeight = collapsed ? '0px' : '';
+                       return;
+                   }
+
+                   // overflow:hidden zuerst setzen, damit scrollHeight zuverlaessig
+                   // die volle Inhaltshoehe liefert
+                   el.classList.add('is-animating');
+                   const full = el.scrollHeight;
+
+                   const done = (ev) => {
+                       if (ev.propertyName !== 'max-height') return;
+                       el.removeEventListener('transitionend', done);
+                       el.classList.remove('is-animating');
+                       // Offen: natuerliche Hoehe zurueckgeben, sonst wuerde
+                       // hoher Inhalt spaeter am fixen Wert haengen bleiben.
+                       if (!cardDiv.classList.contains('card-collapsed')) el.style.maxHeight = '';
+                   };
+                   el.addEventListener('transitionend', done);
+
+                   el.style.maxHeight = (collapsed ? full : 0) + 'px';
+                   void el.offsetHeight; // Reflow erzwingen, damit die Transition startet
+                   el.style.maxHeight = (collapsed ? 0 : full) + 'px';
+               });
+           };
+
+           const apply = (collapsed, animate) => {
+               cardDiv.classList.toggle('card-collapsed', collapsed);
+               const ic = btn.querySelector('i');
+               if (ic) ic.className = collapsed ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
+               btn.title = collapsed ? 'Action Card ausklappen' : 'Action Card einklappen';
+               btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+               setBodyHeights(collapsed, animate);
+           };
+
+           apply(isCardCollapsed(cardKey), false);
+
+           btn.onclick = (e) => {
+               e.stopPropagation();
+               e.preventDefault();
+               const collapsed = !cardDiv.classList.contains('card-collapsed');
+               apply(collapsed, true);
+               saveCardCollapsed(cardKey, collapsed);
+           };
+
+           headerHost.appendChild(btn);
+       };
+
        const saveActiveState = () => {
            const modalBody = document.getElementById('launch-modal-body');
            const container = modalBody || contentClone;
@@ -1355,9 +1499,15 @@
                      return 0;
                  });
 
+                 const argLaunchKey = launchKeyOf(action.baseCmd || action.cmd);
+
                  action.args.forEach(argObj => {
                      const argLbl = document.createElement('label');
-                     argLbl.className = 'param-chip' + (argObj.checked ? '' : ' chip-inactive');
+                     const kind = classifyArg(argObj.text, argLaunchKey);
+                     argLbl.className = 'param-chip'
+                         + (argObj.checked ? '' : ' chip-inactive')
+                         + (kind.cls ? ' ' + kind.cls : '');
+                     if (kind.title) argLbl.title = kind.title;
                      argLbl.dataset.argText = argObj.text;
                      
                      const argCb = document.createElement('input');
@@ -1682,6 +1832,13 @@
                   cardDiv.appendChild(hrLine);
               }
 
+              // Chevron nur, wenn es auch etwas einzuklappen gibt (Baum oder Args)
+              if (hasBodyContent) {
+                  attachCardCollapse(cardDiv, spacer,
+                      (action && (action.cmd || action.baseCmd)) || cmdToDisplay || li.dataset.cmd,
+                      [ulNode, argsDiv]);
+              }
+
               li.className = 'modal-card-row ' + (isChecked ? 'row-active' : 'row-inactive');
               li.innerHTML = '';
               li.appendChild(cardDiv);
@@ -1843,6 +2000,13 @@
                     cardDiv.appendChild(hrLine2);
                 }
 
+                // Chevron nur, wenn es auch etwas einzuklappen gibt
+                if (hasBodyContent2) {
+                    attachCardCollapse(cardDiv, spacer,
+                        (action && (action.cmd || action.baseCmd)) || li.dataset.cmd,
+                        [argsDiv]);
+                }
+
                 li.className = 'modal-card-row ' + (isChecked2 ? 'row-active' : 'row-inactive');
                 li.innerHTML = '';
                 li.appendChild(cardDiv);
@@ -1905,16 +2069,31 @@
             const innerCol = document.createElement('div');
             innerCol.style.cssText = 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px;';
 
+            let singleArgsDiv = null;
+            let singleHeader = null;
             if (action) {
                 parseArgs(action);
                 const argsDiv = createArgsDiv(action);
                 if (action.args.length > 0) {
+                    // Kopfzeile nur anlegen, wenn es auch etwas einzuklappen gibt
+                    singleHeader = document.createElement('div');
+                    singleHeader.className = 'modal-params-header';
+                    singleHeader.innerHTML = `<i class="fa-solid fa-sliders" style="font-size:10px; color:var(--accent);"></i> <span>PARAMETERS &amp; ARGS</span>`;
+                    innerCol.appendChild(singleHeader);
+
                     argsDiv.style.marginTop = '10px';
                     argsDiv.style.justifyContent = 'flex-start';
                     innerCol.appendChild(argsDiv);
+                    singleArgsDiv = argsDiv;
                 }
             }
             cardDiv.appendChild(innerCol);
+
+            if (singleHeader && singleArgsDiv) {
+                attachCardCollapse(cardDiv, singleHeader,
+                    (action && (action.cmd || action.baseCmd)) || effPopupId,
+                    [singleArgsDiv]);
+            }
             contentClone.appendChild(cardDiv);
        }
        
