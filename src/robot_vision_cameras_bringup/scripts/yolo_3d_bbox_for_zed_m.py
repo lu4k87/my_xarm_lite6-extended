@@ -437,6 +437,15 @@ class ZedYolo3DNode(Node):
                     assigned_id += 1
                 self.ema_states[cls_id][assigned_id] = {'state': state, 'last_seen': current_t}
                 
+            # Objekte stehen auf dem Tisch, ihre Unterkante gehoert also auf
+            # Z = 0. Beim Messen gilt das auch (bottom_z = max(0.0, table_z)),
+            # der EMA glaettet center_z und scale_z danach aber UNABHAENGIG
+            # voneinander - schon kleine Abweichungen lassen center_z - scale_z/2
+            # von 0 wegwandern, und die Box schwebt oder versinkt im Boden.
+            # Deshalb wird die Unterkante nach der Glaettung wieder fest auf die
+            # Bodenebene gesetzt; die Hoehe (scale_z) bleibt unangetastet.
+            center_z = scale_z / 2.0
+
             color = self.colors[cls_id % 100]
             class_name = names[cls_id]
             
