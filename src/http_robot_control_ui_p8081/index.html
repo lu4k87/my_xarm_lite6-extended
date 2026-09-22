@@ -766,7 +766,16 @@
         // bliebe das Bild schwarz.
         const extra = (m && m.float) ? '&min=0&max=0' : '';
         const t = bust ? `&_t=${Date.now()}` : '';
-        return `http://${host}:8082/stream?topic=${encodeURIComponent(topic)}&type=mjpeg${extra}${t}`;
+        // qos_profile=sensor_data ist PFLICHT: der ZED-Wrapper publiziert seine
+        // Bilder mit BEST_EFFORT. web_video_server abonniert ohne diesen
+        // Parameter mit RELIABLE - und ein RELIABLE-Subscriber matcht einen
+        // BEST_EFFORT-Publisher nie. Die HTTP-Verbindung kommt dann zwar
+        // zustande (Port 8082 meldet gruen), es trifft aber nie ein Frame ein:
+        // kein Bild, kein Fehler, nur schwarz. In RViz faellt das nicht auf,
+        // weil man die Reliability dort pro Display auf Best Effort stellt.
+        // BEST_EFFORT-Subscriber matchen auch RELIABLE-Publisher, der Wert ist
+        // also fuer alle Topics sicher.
+        return `http://${host}:8082/stream?topic=${encodeURIComponent(topic)}&type=mjpeg&qos_profile=sensor_data${extra}${t}`;
       }
 
       let savedTopic = null;
