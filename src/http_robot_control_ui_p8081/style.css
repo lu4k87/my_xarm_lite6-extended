@@ -1922,7 +1922,9 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   font-weight: 700;
   margin-right: 6px;
   font-size: 16.5px;
-  cursor: help;
+  /* Kein cursor: help - das setzte den Fragezeichen-Zeiger ueber jedem
+     [Quelle]-Tag. Der Zeitstempel blendet sich beim Hover ohnehin ein. */
+  cursor: default;
 }
 
 .log-src::after {
@@ -1949,11 +1951,15 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .log-src:hover::after { opacity: 1; }
 
-/* Quellen - jede Quelle einen eigenen Farbton, damit die Spalte scanbar ist */
+/* Quellen - jede Quelle einen eigenen Farbton, damit die Spalte scanbar ist.
+   [Motion] und [ROS] liegen beide im Lila-Bereich, deshalb bewusst ein
+   magenta-lastiges Lila fuer Motion: Abstand zu #bc8cff betraegt so
+   dE 27.6 statt 14.5 bei einem neutralen Lila - und der Kontrast auf dem
+   dunklen Log-Hintergrund ist mit 6.4:1 sogar besser. */
 .log-src-ros    { color: #bc8cff; }  /* Violett   */
 .log-src-ui     { color: #58a6ff; }  /* Blau      */
 .log-src-sys    { color: #e3b341; }  /* Bernstein */
-.log-src-motion { color: #3fb950; }  /* Gruen     */
+.log-src-motion { color: #d264ff; }  /* Lila      */
 .log-src-gizmo  { color: #39c5cf; }  /* Tuerkis   */
 .log-src-voice  { color: #f778ba; }  /* Pink      */
 .log-src-audio  { color: #ffa657; }  /* Orange    */
