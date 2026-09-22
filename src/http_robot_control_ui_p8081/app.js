@@ -1497,9 +1497,17 @@ const servoStatusSub = new ROSLIB.Topic({
 });
 
 function updateMoveItBadge() {
+  // Gruener Puls-Rahmen am Viewport, solange sich der Roboter bewegt.
+  // vignette-moving steht im Stylesheet VOR collision/singularity, damit eine
+  // Warnung den gruenen Puls ueberschreibt, wenn beides zugleich anliegt.
+  const twinContainer = document.getElementById('digital-twin-container');
+  if (twinContainer) {
+    twinContainer.classList.toggle('vignette-moving', isRobotMoving);
+  }
+
   const badge = document.getElementById('moveit-badge');
   if(!badge) return;
-  
+
   badge.className = 'moveit-status'; // Reset classes
   
   if (currentServoStatus === 0) {

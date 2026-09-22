@@ -948,13 +948,25 @@
     const hudDelta = document.getElementById('gizmo-hud-delta');
     const btnExecute = /** @type {HTMLButtonElement|null} */ (document.getElementById('btn-gizmo-execute'));
     if (hudCoords) {
-      hudCoords.innerText = `X: ${posX_mm} Y: ${posY_mm} Z: ${posZ_mm}`;
+      // Nur die Zahlen schreiben - die farbigen Achsen-Label (X/Y/Z) bleiben
+      // als eigene Spans stehen. innerText wuerde sie ueberschreiben.
+      const hudX = document.getElementById('gizmo-hud-x');
+      const hudY = document.getElementById('gizmo-hud-y');
+      const hudZ = document.getElementById('gizmo-hud-z');
+      if (hudX) hudX.textContent = String(posX_mm);
+      if (hudY) hudY.textContent = String(posY_mm);
+      if (hudZ) hudZ.textContent = String(posZ_mm);
+      // coords-alert laesst auch die farbigen Achsen-Label die Warnfarbe
+      // uebernehmen, sonst bliebe die Warnung nur auf den Zahlen sichtbar.
       if (isInsideDeadzone || isBelowFloor) {
         hudCoords.style.color = '#ef4444';
+        hudCoords.classList.add('coords-alert');
       } else if (r_xy < 140.0 || posZ_mm < 35.0) {
         hudCoords.style.color = '#f59e0b';
+        hudCoords.classList.add('coords-alert');
       } else {
         hudCoords.style.color = 'inherit';
+        hudCoords.classList.remove('coords-alert');
       }
     }
     if (hudDelta) {

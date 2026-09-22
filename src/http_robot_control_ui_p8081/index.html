@@ -219,17 +219,12 @@
               <!-- top-left: Viewport Navigation Gizmo (Blender style) -->
               <canvas id="twin-nav-gizmo" class="twin-nav-gizmo" title="Viewport gizmo: drag to orbit the view, click an axis ball to align it (X / Y / Z, ROS frame: Z is up), scroll to zoom"></canvas>
 
-              <!-- top-center: Safety Warning Banner + Floating TCP Gizmo Target HUD -->
+              <!-- top-center: Floating TCP Gizmo Target HUD + Safety Warning Banner darunter -->
               <div class="twin-ov-top-center">
-                <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
-                  <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
-                  <span id="twin-warning-text">COLLISION DETECTED</span>
-                </div>
-
                 <div id="twin-gizmo-hud" class="twin-gizmo-hud">
                   <div class="gizmo-hud-info">
                     <span class="gizmo-hud-title"><i class="fa-solid fa-arrows-up-down-left-right"></i> TCP GIZMO:</span>
-                    <span id="gizmo-hud-coords" class="gizmo-hud-val">X: 300 Y: 0 Z: 200</span>
+                    <span id="gizmo-hud-coords" class="gizmo-hud-val"><span class="gizmo-ax gizmo-ax-x">X:</span> <span id="gizmo-hud-x">300</span> <span class="gizmo-ax gizmo-ax-y">Y:</span> <span id="gizmo-hud-y">0</span> <span class="gizmo-ax gizmo-ax-z">Z:</span> <span id="gizmo-hud-z">200</span></span>
                     <span id="gizmo-hud-delta" class="gizmo-hud-delta">Δ 0 mm</span>
                   </div>
                   <div class="gizmo-hud-actions">
@@ -241,6 +236,11 @@
                       <i class="fa-solid fa-play"></i> Execute
                     </button>
                   </div>
+                </div>
+
+                <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
+                  <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
+                  <span id="twin-warning-text">COLLISION DETECTED</span>
                 </div>
               </div>
 
@@ -276,10 +276,44 @@
                 </button>
               </div>
 
-              <!-- bottom-left: Speed Toggle + Mini Safety Telemetry HUD -->
-              <div class="twin-ov-bottom-left">
-                <div id="twin-speed-overlay" class="twin-speed-overlay">
-                  <div class="speed-toggle-group">
+              <!-- bottom row (one line): Telemetry left · Pose Inputs center · Watermark right -->
+              <div class="twin-ov-bottom-row">
+                <!-- bottom-left: Mini Safety Telemetry HUD -->
+                <div class="twin-ov-bottom-left">
+                  <div id="twin-hud-safety" class="twin-hud-safety">
+                    <div class="hud-safety-item" id="hud-manip-item" title="Reachability (distance to wrist singularity J5)">
+                      <span class="hud-lbl">REACH</span>
+                      <div class="hud-bar-bg"><div id="hud-manip-bar" class="hud-bar-fill" style="width: 100%;"></div></div>
+                      <span id="hud-manip-val" class="hud-val">100%</span>
+                    </div>
+                    <div class="hud-safety-item" id="hud-floor-item" title="Distance to table surface (floor limit: 91 mm)">
+                      <span class="hud-lbl">FLOOR</span>
+                      <span id="hud-floor-val" class="hud-val">-- mm</span>
+                    </div>
+                    <div class="hud-safety-item hud-moveit-item" title="MoveIt Servo status">
+                      <span id="moveit-badge" class="moveit-status">MoveIt: Off</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- bottom-center: Absolute Pose Inputs -->
+                <div id="twin-pose-overlay" class="twin-pose-overlay">
+                  <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
+                  <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
+                  <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span></label><input type="number" id="inp-z" step="1" value="200"></div>
+                  <div class="input-row-divider"></div>
+                  <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">R</span></label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
+                  <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
+                  <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
+                  <div class="input-row-divider"></div>
+                  <button class="btn btn-action motion-lockable" onclick="moveToPose()" title="Move to entered pose">
+                    <i class="fa-solid fa-crosshairs"></i> Go
+                  </button>
+                </div>
+
+                <!-- bottom-right: Speed Toggle ueber dem Watermark, rechtsbuendig -->
+                <div class="twin-ov-bottom-right">
+                  <div id="twin-speed-overlay" class="speed-toggle-group">
                     <span class="speed-toggle-label"><i class="fa-solid fa-gauge"></i> Speed:</span>
                     <label class="speed-opt">
                       <input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()">
@@ -294,38 +328,9 @@
                       <span>Fast</span>
                     </label>
                   </div>
-                </div>
-
-                <div id="twin-hud-safety" class="twin-hud-safety">
-                  <div class="hud-safety-item" id="hud-manip-item" title="Reachability (distance to wrist singularity J5)">
-                    <span class="hud-lbl">REACH</span>
-                    <div class="hud-bar-bg"><div id="hud-manip-bar" class="hud-bar-fill" style="width: 100%;"></div></div>
-                    <span id="hud-manip-val" class="hud-val">100%</span>
-                  </div>
-                  <div class="hud-safety-item" id="hud-floor-item" title="Distance to table surface (floor limit: 91 mm)">
-                    <span class="hud-lbl">FLOOR</span>
-                    <span id="hud-floor-val" class="hud-val">-- mm</span>
-                  </div>
+                  <div class="twin-ov-watermark">xArm Lite 6 · Live Synchronized</div>
                 </div>
               </div>
-
-              <!-- bottom-center: Absolute Pose Inputs -->
-              <div id="twin-pose-overlay" class="twin-pose-overlay">
-                <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
-                <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
-                <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span></label><input type="number" id="inp-z" step="1" value="200"></div>
-                <div class="input-row-divider"></div>
-                <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">R</span></label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-                <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-                <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
-                <div class="input-row-divider"></div>
-                <button class="btn btn-action motion-lockable" onclick="moveToPose()" title="Move to entered pose">
-                  <i class="fa-solid fa-crosshairs"></i> Go
-                </button>
-              </div>
-
-              <!-- bottom-right: Viewport Watermark -->
-              <div class="twin-ov-watermark">xArm Lite 6 · Live Synchronized</div>
             </div>
 
             <!-- RViz Stream Container -->
@@ -346,7 +351,6 @@
 
         <section id="panel-jogging" class="glass-panel joystick-section">
           <h2 style="cursor: grab;"><i class="fa-solid fa-arrows-up-down-left-right"></i> Cartesian Jogging</h2>
-          <span id="moveit-badge" class="moveit-status">MoveIt: Off</span>
           
           <div class="jogging-container">
             <div class="z-controls">
