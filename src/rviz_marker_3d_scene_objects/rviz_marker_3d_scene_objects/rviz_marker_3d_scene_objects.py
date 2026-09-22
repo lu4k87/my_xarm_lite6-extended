@@ -58,7 +58,7 @@ class DynamicSceneMarkerPublisher(Node):
         from std_msgs.msg import Float32MultiArray
         self.safe_x = 0.0
         self.safe_y = 0.0
-        self.safe_radius = 0.20
+        self.safe_radius = 0.138  # aeussere Grenze der Innen-Singularitaetszone
         self.safety_sub = self.create_subscription(
             Float32MultiArray,
             '/ui/safety_zone_params',

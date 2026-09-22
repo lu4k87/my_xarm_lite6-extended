@@ -30,9 +30,10 @@ class SceneSafetyZonePublisher(Node):
         # Safety Zone Parameter (Defaults)
         self.safe_x = 0.0
         self.safe_y = 0.0
-        # 200 mm - derselbe Wert, den robot_motion_handler_movegroup.py
-        # durchsetzt (safe_radius = 0.20).
-        self.safe_radius = 0.20
+        # 138 mm - aeussere Grenze der wegen Singularitaet / Eigenkollision
+        # nicht anfahrbaren Innenzone. Wird vom UI ueber
+        # /ui/safety_zone_params ueberschrieben.
+        self.safe_radius = 0.138
 
         # Subscriber für Safety Zone Parameter vom UI
         self.safety_sub = self.create_subscription(

@@ -31,12 +31,15 @@
   const DEADZONE_RADIUS_MM = 125.0;
   const CAUTION_RADIUS_MM = 140.0;
   //
-  // 2) Safety Zone: der Bereich, den robot_motion_handler_movegroup.py aktiv
-  //    durchsetzt - liegt der TCP darin, wird er herausgeschoben
-  //    ("if r_base < self.safe_radius: scale = self.safe_radius / r_base").
-  //    Dort ist safe_radius = 0.20, also ist 200 mm der massgebliche Wert.
+  // 2) Safety Zone: der Bereich um die Base, der wegen Singularitaet /
+  //    Eigenkollision NICHT anfahrbar ist. Massgeblich ist die aeussere
+  //    Grenze dieser Zone, und die liegt bei 138 mm (app.js:
+  //    "INNER BOUNDARY SINGULARITY (r < 138 mm)"). Darunter liegen noch
+  //    125 mm (MoveTo wird hart abgelehnt) und 118 mm (Eigenkollision).
+  //    Die frueheren 200 mm waren KEINE Reichweitengrenze, sondern nur der
+  //    Bahnabstand, den generate_single_object_trajectory() einhaelt.
   //    Ueber /ui/safety_zone_params zur Laufzeit aenderbar.
-  const SAFETY_ZONE_RADIUS_M = 0.20;
+  const SAFETY_ZONE_RADIUS_M = 0.138;
   let hasUserTargetOffset = false;
 
   // ── Viewport Navigation Gizmo State (Blender-style axis ball widget) ──
@@ -1503,7 +1506,7 @@
       obj.quaternion.set(qx, qy, qz, qw);
 
       if (name === 'Safety Zone' && data.radius) {
-        const scale = Number(data.radius) / 0.200;
+        const scale = Number(data.radius) / SAFETY_ZONE_RADIUS_M;
         obj.scale.set(scale, scale, 1);
       }
     }
