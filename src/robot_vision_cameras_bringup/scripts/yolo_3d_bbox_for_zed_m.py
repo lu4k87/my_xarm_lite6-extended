@@ -28,6 +28,21 @@ class ZedYolo3DNode(Node):
         
         # Declare parameter for model path — strictly defaults to yolov8l.pt
         self.declare_parameter('model_path', 'yolov8l.pt')
+
+        # Die Kamera steht dem Roboter gegenueber und filmt in seine Richtung.
+        # Links und rechts sind aus Robotersicht damit vertauscht: was rechts
+        # vor der Kamera liegt, liegt links vor dem Roboter. Diese Spiegelung
+        # an der XZ-Ebene (y -> -y) korrigiert das in Weltkoordinaten, also an
+        # genau EINER Stelle - Marker, Collision-Walls und Greifausfuehrung
+        # lesen alle /zed/bboxes_3d und bleiben dadurch konsistent.
+        # Bei geaenderter Kameraaufstellung auf false setzen:
+        #   ros2 run ... --ros-args -p mirror_y:=false
+        self.declare_parameter('mirror_y', True)
+        self.mirror_y = bool(self.get_parameter('mirror_y').value)
+        self.get_logger().info(
+            f"Y-Spiegelung (Kamera gegenueber dem Roboter): "
+            f"{'aktiv' if self.mirror_y else 'inaktiv'}"
+        )
         model_name = self.get_param_safe('model_path', 'yolov8l.pt')
 
         # Resolve full path if file exists in workspace or relative
@@ -233,6 +248,14 @@ class ZedYolo3DNode(Node):
             R = self.last_R
             T = self.last_T
 
+        # Die Kameraposition liegt ebenfalls in Weltkoordinaten und wird weiter
+        # unten zusammen mit den (gespiegelten) Objektpunkten fuer die
+        # Blickrichtung Kamera->Objekt benutzt. Sie muss deshalb im selben
+        # gespiegelten Raum liegen, sonst zeigt dir_x/dir_y in die falsche
+        # Richtung und Tiefe/Ausdehnung der Box werden falsch geschaetzt.
+        if self.mirror_y:
+            cam_y = -cam_y
+
         marker_array = MarkerArray()
         current_frame_ids = set()
 
@@ -265,7 +288,13 @@ class ZedYolo3DNode(Node):
             
             # Transform to world frame
             pts_base = R @ pts_opt + T
-            
+
+            # Spiegelung VOR dem Workspace-Filter: der Filter prueft
+            # y in [-0.80, 0.80] und haette sonst die ungespiegelte Seite
+            # bewertet.
+            if self.mirror_y:
+                pts_base[1, :] *= -1.0
+
             # Workspace filter
             dist_from_base = np.sqrt(pts_base[0, :]**2 + pts_base[1, :]**2)
             valid_pts_filter = (
