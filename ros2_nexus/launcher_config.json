@@ -61,6 +61,13 @@
       "yolo_model:=yolov8l.pt": true,
       "yolo_model:=yolov8s.pt": false
     },
+    "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m yolo_model:=yolov8l.pt": {
+      "camera:=ip_cam": false,
+      "camera:=zed_m": true,
+      "yolo_model:=my_yolo_model.pt": false,
+      "yolo_model:=yolov8l.pt": true,
+      "yolo_model:=yolov8s.pt": false
+    },
     "ros2 launch robot_vision_cameras_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py": {
       "use_zed_hardware:=false": false,
       "use_zed_hardware:=true": false,
@@ -199,7 +206,6 @@
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
       "ros2 launch web_video_server web_video_server.launch.py",
-      "ros2 run tf_control_tuner tf_control_tuner",
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses",
       "ros2 run rviz_overlay_servo_status rviz_servo_status",
@@ -211,7 +217,6 @@
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true",
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
-      "ros2 run tf_control_tuner tf_control_tuner",
       "ros2 launch web_video_server web_video_server.launch.py",
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses",
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py"
@@ -234,9 +239,7 @@
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py",
-      "ros2 launch web_video_server web_video_server.launch.py",
-      "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true",
-      "ros2 launch voice_command_listener voice_listener.launch.py"
+      "ros2 launch web_video_server web_video_server.launch.py"
     ],
     "dev_real": [],
     "extras_zed": [],
@@ -280,9 +283,7 @@
       "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner"
     ],
     "sec_5": [],
-    "sec_6": [
-      "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node"
-    ],
+    "sec_6": [],
     "sec_7": [
       "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
       "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
@@ -337,17 +338,7 @@
       "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",
       "ros2 run rviz_overlay_servo_status servo_status_overlay"
     ],
-    "sec_nodes_6": [
-      "ros2 launch robot_vision_cameras_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py",
-      "ros2 launch robot_vision_cameras_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
-      "ros2 run robot_vision_cameras_bringup pointcloud_optimizer.py",
-      "ros2 run robot_vision_cameras_bringup yolo_planned_grasp_executor.py",
-      "ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_zed_m.py",
-      "ros2 run tf_control_tuner tf_control_tuner",
-      "ros2 run robot_vision_cameras_bringup yolo_grasp_executor.py",
-      "ros2 run web_video_server web_video_server --ros-args -r __node:=http_web_video_server_p8082 -p port:=8082",
-      "ros2 run webcam_aruco_6_pose webcam_aruco_6_pose_node"
-    ],
+    "sec_nodes_6": [],
     "sec_nodes_7": [
       "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
       "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
@@ -674,12 +665,44 @@
     "sec_11": {},
     "sec_2": {},
     "sec_5": {},
+    "sec_6": {
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py": {
+        "camera:=zed_m": true,
+        "camera:=ip_cam": false,
+        "yolo_model:=yolov8l.pt": true,
+        "yolo_model:=yolov8s.pt": false,
+        "yolo_model:=my_yolo_model.pt": false
+      },
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m yolo_model:=yolov8l.pt": {
+        "camera:=zed_m": true,
+        "camera:=ip_cam": false,
+        "yolo_model:=yolov8l.pt": true,
+        "yolo_model:=yolov8s.pt": false,
+        "yolo_model:=my_yolo_model.pt": false
+      }
+    },
     "sec_7": {},
     "sec_8": {},
     "sec_info_0": {},
     "sec_info_1": {},
     "sec_info_2": {},
-    "sec_nodes_5": {}
+    "sec_nodes_5": {},
+    "sec_nodes_6": {
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py": {
+        "camera:=zed_m": true,
+        "camera:=ip_cam": false,
+        "yolo_model:=yolov8l.pt": true,
+        "yolo_model:=yolov8s.pt": false,
+        "yolo_model:=my_yolo_model.pt": false
+      },
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m yolo_model:=yolov8l.pt": {
+        "camera:=zed_m": true,
+        "camera:=ip_cam": false,
+        "yolo_model:=yolov8l.pt": true,
+        "yolo_model:=yolov8s.pt": false,
+        "yolo_model:=my_yolo_model.pt": false
+      }
+    }
   },
   "info": [
     {
@@ -1029,7 +1052,7 @@
     {
       "actions": [
         {
-          "active": true,
+          "active": false,
           "args": [
             {
               "checked": true,
@@ -1059,7 +1082,7 @@
           "type": "launch"
         },
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 launch robot_vision_cameras_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
           "cmd": "ros2 launch robot_vision_cameras_bringup zed_cam_eef_rviz_octomap_yolo.launch.py",
@@ -1068,7 +1091,7 @@
           "type": "launch"
         },
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 run robot_vision_cameras_bringup pointcloud_optimizer.py",
           "cmd": "ros2 run robot_vision_cameras_bringup pointcloud_optimizer.py",
@@ -1077,7 +1100,7 @@
           "type": "node"
         },
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 run robot_vision_cameras_bringup yolo_planned_grasp_executor.py",
           "cmd": "ros2 run robot_vision_cameras_bringup yolo_planned_grasp_executor.py",
@@ -1086,7 +1109,7 @@
           "type": "node"
         },
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_zed_m.py",
           "cmd": "ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_zed_m.py",
@@ -1095,7 +1118,7 @@
           "type": "node"
         },
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 run rviz_object_distance_visualizer rviz_object_distance_visualizer.py",
           "cmd": "ros2 run rviz_object_distance_visualizer rviz_object_distance_visualizer.py",
@@ -1104,16 +1127,7 @@
           "type": "node"
         },
         {
-          "active": true,
-          "args": [],
-          "baseCmd": "ros2 run tf_control_tuner tf_control_tuner",
-          "cmd": "ros2 run tf_control_tuner tf_control_tuner",
-          "label": "Transform Tuner (tf_control_tuner)",
-          "postCmd": "",
-          "type": "node"
-        },
-        {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 run robot_vision_cameras_bringup yolo_grasp_executor.py",
           "cmd": "ros2 run robot_vision_cameras_bringup yolo_grasp_executor.py",
@@ -1122,7 +1136,7 @@
           "type": "node"
         },
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 launch web_video_server web_video_server.launch.py",
           "cmd": "ros2 launch web_video_server web_video_server.launch.py",
@@ -1131,7 +1145,7 @@
           "type": "launch"
         },
         {
-          "active": true,
+          "active": false,
           "args": [],
           "baseCmd": "ros2 run ip_cam_aruco_6pose_tf_coord ip_cam_aruco_6pose_tf_coord",
           "cmd": "ros2 run ip_cam_aruco_6pose_tf_coord ip_cam_aruco_6pose_tf_coord",
