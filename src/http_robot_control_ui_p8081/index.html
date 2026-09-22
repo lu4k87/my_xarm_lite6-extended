@@ -11,9 +11,12 @@
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
-  <link rel="icon" type="image/png" href="icon.png">
-  <link rel="shortcut icon" type="image/png" href="icon.png">
-  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Verkleinerte Varianten: icon.png ist 1024x1024 und 1,1 MB gross und wurde
+       hier dreimal geladen. Die Datei selbst bleibt - install_desktop_icon.sh
+       braucht sie fuer den Desktop-Starter. -->
+  <link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
+  <link rel="shortcut icon" type="image/png" href="icon-64.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 </head>
 <body>
   
@@ -349,7 +352,10 @@
                 <i class="fa-solid fa-video-slash" style="font-size: 24px; margin-bottom: 8px;"></i>
                 Stream Disconnected
               </div>
-              <img id="rviz-stream" src="http://127.0.0.1:8082/stream?topic=/rviz_video/image_raw&type=mjpeg&width=800&height=450" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="RViz Stream" onload="this.style.display='block'; document.getElementById('rviz-stream-err').style.display='none';">
+              <!-- src wird unten gesetzt: die URL stand fest auf 127.0.0.1 und
+                   zeigte damit beim Aufruf von einem anderen Rechner auf
+                   dessen eigenen localhost. -->
+              <img id="rviz-stream" style="display: none; width: 100%; height: 100%; object-fit: contain; pointer-events: none;" alt="RViz Stream">
             </div>
 
           </div>
@@ -685,9 +691,11 @@
   <script src="lib/TransformControls.js"></script>
   <script src="lib/STLLoader.js"></script>
   <script src="lib/URDFLoader.js"></script>
-  <script src="digital_twin.js?v=19"></script>
+  <!-- Muss VOR digital_twin.js und app.js stehen: beide lesen window.ROBOT_LIMITS. -->
+  <script src="robot_limits.js?v=1"></script>
+  <script src="digital_twin.js?v=20"></script>
 
-  <script src="app.js?v=20"></script>
+  <script src="app.js?v=21"></script>
   
   <script>
     // ── Live Camera Update Loop ──
@@ -729,6 +737,50 @@
       };
       updateCam2(); // start the loop
     }
+    // ── RViz Fenster-Stream ──
+    // Hatte dieselben zwei Fehler wie der ZED-Stream: die Einblendung haengte
+    // allein am load-Event (das bei MJPEG ausbleibt) und es fehlte
+    // qos_profile=sensor_data. Dazu stand der Host fest auf 127.0.0.1.
+    (function () {
+      const rvizImg = document.getElementById('rviz-stream');
+      const rvizErr = document.getElementById('rviz-stream-err');
+      if (!rvizImg) return;
+
+      const rvizHost = window.location.hostname || 'localhost';
+      const rvizUrl = () =>
+        `http://${rvizHost}:8082/stream?topic=${encodeURIComponent('/rviz_video/image_raw')}` +
+        `&type=mjpeg&qos_profile=sensor_data&width=800&height=450&_t=${Date.now()}`;
+
+      let watch = null;
+      const stop = () => { if (watch) { clearInterval(watch); watch = null; } };
+      const show = () => {
+        stop();
+        if (rvizErr) rvizErr.style.display = 'none';
+        rvizImg.style.display = 'block';
+      };
+
+      function start() {
+        stop();
+        rvizImg.style.display = 'block';
+        if (rvizErr) rvizErr.style.display = 'flex';
+        rvizImg.src = rvizUrl();
+        let waited = 0;
+        watch = setInterval(() => {
+          if (rvizImg.naturalWidth > 0) { show(); return; }
+          waited += 400;
+          if (waited >= 15000) { stop(); start(); }
+        }, 400);
+      }
+
+      rvizImg.onload = show;
+      rvizImg.onerror = () => {
+        stop();
+        if (rvizErr) rvizErr.style.display = 'flex';
+        setTimeout(start, 3000);
+      };
+      start();
+    })();
+
     // ── ZED M Camera Stream mit Modus-Auswahl ──
     const zedImg = document.getElementById('zed-cam-stream');
     const zedErr = document.getElementById('zed-cam-stream-err');
