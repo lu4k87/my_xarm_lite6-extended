@@ -1351,6 +1351,18 @@
   let tunerSceneObjects = {};
   let areTunerSceneObjectsVisible = false;
 
+  // Der TF-Tuner-Wert z ist die UNTERKANTE des Objekts, nicht seine Mitte -
+  // so haelt es auch rviz_marker_3d_scene_objects.py: die Hohlkoerper-Linien
+  // laufen dort von z = 0 bis z = dim_z, und der gefuellte Marker wird um
+  // +dim_z/2 versetzt, weil eine RViz-Marker-Pose die Mitte meint.
+  // Three.js-Geometrien sind ebenfalls um ihren Mittelpunkt zentriert, also
+  // braucht es denselben Versatz - sonst steckt das halbe Objekt im Boden.
+  // Der Versatz wird in Weltrichtung Z addiert, genau wie in RViz, damit
+  // Drehungen weiterhin um den Objektmittelpunkt laufen.
+  function groundOffsetOf(obj) {
+    return (obj && obj.userData && obj.userData.groundOffset) || 0;
+  }
+
   function initTunerSceneObjects() {
     if (!scene || Object.keys(tunerSceneObjects).length > 0) return;
 
@@ -1361,6 +1373,7 @@
     blueMesh.castShadow = true;
     blueMesh.receiveShadow = true;
     blueMesh.visible = areTunerSceneObjectsVisible;
+    blueMesh.userData.groundOffset = 0.015;   // halbe Hoehe (30 mm)
     scene.add(blueMesh);
     tunerSceneObjects['Blue Cube'] = blueMesh;
 
@@ -1371,6 +1384,7 @@
     redMesh.castShadow = true;
     redMesh.receiveShadow = true;
     redMesh.visible = areTunerSceneObjectsVisible;
+    redMesh.userData.groundOffset = 0.015;    // halbe Hoehe (30 mm)
     scene.add(redMesh);
     tunerSceneObjects['Red Rectangle'] = redMesh;
 
@@ -1382,6 +1396,7 @@
     greenMesh.castShadow = true;
     greenMesh.receiveShadow = true;
     greenMesh.visible = areTunerSceneObjectsVisible;
+    greenMesh.userData.groundOffset = 0.015;  // halbe Hoehe (30 mm)
     scene.add(greenMesh);
     tunerSceneObjects['Green Cylinder'] = greenMesh;
 
@@ -1484,7 +1499,7 @@
       const obj = tunerSceneObjects[name];
       if (!obj) continue;
 
-      obj.position.set(Number(data.x), Number(data.y), Number(data.z));
+      obj.position.set(Number(data.x), Number(data.y), Number(data.z) + groundOffsetOf(obj));
 
       // Euler (deg) to Quaternion
       const rollRad = (Number(data.roll) * Math.PI) / 180.0;
