@@ -24,13 +24,19 @@
   let gizmoMode = 'translate'; // 'translate' | 'rotate'
   let isDraggingGizmo = false;
 
-  // Nicht anfahrbarer Bereich um die Roboterbasis (Handgelenk-Singularitaet).
-  // Wird fuer die Pruefung der Gizmo-Position UND fuer den Safety-Zone-Ring
-  // benutzt, damit beide nicht auseinanderlaufen koennen - genau das war der
-  // Fall: Ring bei 200 mm, Pruefung bei 125 mm.
+  // Zwei verschiedene Dinge, die nicht verwechselt werden duerfen:
+  //
+  // 1) Gizmo-Deadzone: blockiert Auto-Move, wenn das Ziel zu nah an der Base
+  //    UND zu tief liegt (r < 125 mm && z < 280 mm). Reine UI-Pruefung.
   const DEADZONE_RADIUS_MM = 125.0;
-  const DEADZONE_RADIUS_M = DEADZONE_RADIUS_MM / 1000.0;
   const CAUTION_RADIUS_MM = 140.0;
+  //
+  // 2) Safety Zone: der Bereich, den robot_motion_handler_movegroup.py aktiv
+  //    durchsetzt - liegt der TCP darin, wird er herausgeschoben
+  //    ("if r_base < self.safe_radius: scale = self.safe_radius / r_base").
+  //    Dort ist safe_radius = 0.20, also ist 200 mm der massgebliche Wert.
+  //    Ueber /ui/safety_zone_params zur Laufzeit aenderbar.
+  const SAFETY_ZONE_RADIUS_M = 0.20;
   let hasUserTargetOffset = false;
 
   // ── Viewport Navigation Gizmo State (Blender-style axis ball widget) ──
@@ -1385,12 +1391,18 @@
     scene.add(planeMesh);
     tunerSceneObjects['White Plane'] = planeMesh;
 
-    // 5. Safety Zone (Ring on ground)
-    // Markiert den Bereich um die Base, der wegen Handgelenk-Singularitaet
-    // NICHT anfahrbar ist. Radius aus derselben Konstante wie die Pruefung.
-    const safetyGeo = new THREE.RingGeometry(
-      DEADZONE_RADIUS_M - 0.003, DEADZONE_RADIUS_M + 0.003, 48);
-    const safetyMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide });
+    // 5. Safety Zone (gefuellte Flaeche am Boden)
+    // Markiert den Bereich um die Base, den der Motion-Handler durchsetzt.
+    // Gefuellte Scheibe statt Ring, damit die Flaeche als Sperrgebiet lesbar
+    // ist. depthWrite aus, sonst flimmert sie gegen die Bodenebene.
+    const safetyGeo = new THREE.CircleGeometry(SAFETY_ZONE_RADIUS_M, 64);
+    const safetyMat = new THREE.MeshBasicMaterial({
+      color: 0xf59e0b,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.22,
+      depthWrite: false,
+    });
     const safetyMesh = new THREE.Mesh(safetyGeo, safetyMat);
     safetyMesh.position.z = 0.0005;
     safetyMesh.visible = areTunerSceneObjectsVisible;

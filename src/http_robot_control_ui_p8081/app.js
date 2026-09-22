@@ -2098,11 +2098,11 @@ const TF_TUNER_ELEMENTS = {
     frame_id: 'target_safety_zone',
     x: 0.0, y: 0.0, z: 0.0,
     roll: 0.0, pitch: 0.0, yaw: 0.0,
-    // 125 mm = Singularitaets-Deadzone um die Base (siehe DEADZONE_RADIUS_MM
-    // in digital_twin.js). Der Ring markiert den NICHT erreichbaren Bereich.
-    radius: 0.125,
+    // 200 mm = der Radius, den robot_motion_handler_movegroup.py durchsetzt
+    // (safe_radius = 0.20). Nicht mit der Gizmo-Deadzone (125 mm) verwechseln.
+    radius: 0.200,
     minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
-    default: { x: 0.0, y: 0.0, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0, radius: 0.125 }
+    default: { x: 0.0, y: 0.0, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0, radius: 0.200 }
   }
 };
 
@@ -2329,7 +2329,7 @@ function broadcastAllTFTunerTransforms() {
 
     if (name === 'Safety Zone') {
       const arrMsg = new ROSLIB.Message({
-        data: [Number(data.x), Number(data.y), Number(data.radius || 0.125)]
+        data: [Number(data.x), Number(data.y), Number(data.radius || 0.200)]
       });
       safetyZoneParamsPub.publish(arrMsg);
     }

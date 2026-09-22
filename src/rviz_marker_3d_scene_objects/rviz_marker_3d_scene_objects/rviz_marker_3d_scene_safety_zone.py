@@ -30,9 +30,9 @@ class SceneSafetyZonePublisher(Node):
         # Safety Zone Parameter (Defaults)
         self.safe_x = 0.0
         self.safe_y = 0.0
-        # 125 mm = Bereich um die Base, der wegen Handgelenk-Singularitaet
-        # nicht anfahrbar ist (identisch zu DEADZONE_RADIUS_MM in der Web-UI).
-        self.safe_radius = 0.125
+        # 200 mm - derselbe Wert, den robot_motion_handler_movegroup.py
+        # durchsetzt (safe_radius = 0.20).
+        self.safe_radius = 0.20
 
         # Subscriber für Safety Zone Parameter vom UI
         self.safety_sub = self.create_subscription(
@@ -68,10 +68,11 @@ class SceneSafetyZonePublisher(Node):
         m_safe.scale.x = self.safe_radius * 2.0
         m_safe.scale.y = self.safe_radius * 2.0
         m_safe.scale.z = 0.001
-        m_safe.color.r = 0.0
-        m_safe.color.g = 1.0
-        m_safe.color.b = 0.0
-        m_safe.color.a = 0.2
+        # Orange, passend zur Darstellung im WebGL-Viewport
+        m_safe.color.r = 0.96
+        m_safe.color.g = 0.62
+        m_safe.color.b = 0.04
+        m_safe.color.a = 0.22
         marker_array.markers.append(m_safe)
 
         self.publisher_.publish(marker_array)
