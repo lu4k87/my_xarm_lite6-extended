@@ -323,7 +323,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 > [!NOTE]
 > **Virtuelle Linearachse (Nur Simulation):** Im FAKE-Modus kann der Roboter auf einer simulierten Linearachse bewegt werden, ohne die MoveIt-Planungsgruppe (`lite6`) zu beeinflussen.
 > - **Aktivierung:** Die Nexus Web App startet die Linearachse beim Klick auf den Button **RUN DEV Setup (FAKE)** automatisch mit. Bei manuellem Start muss der Parameter `attach_to:=linear_axis_link` an den Launch-Befehl angehängt werden.
-> - **Steuerung:** Der Headless-Node `fake_linear_axis_node.py (`fake_linear_axis`) empfängt Schieberegler-Werte über das Topic `/ui/linear_axis_position` (oder über interaktive RViz-Marker) und transformiert `linear_axis_link` dynamisch per TF. Das Schieberegler-UI ist direkt in das Robot Control Web Interface (`http://localhost:8081`) integriert.
+> - **Steuerung:** Der GUI-Schieberegler im Web UI (Port 8081) oder das Gamepad-D-Pad (Links/Rechts) steuert die horizontale Verschiebung durch Publizieren auf `/linear_axis_cmd`. Der Headless-Node `fake_linear_axis` (`ros2 run fake_linear_axis fake_linear_axis`) wandelt dies in dynamisches TF und visuelle Schienen-Marker um.
 > - **MoveIt-Architektur:** Die Achse wird rein über dynamisches TF (`world` -> `linear_axis_link`) verschoben und nicht als URDF-Joint in die Kinematik aufgenommen. Dadurch weiß MoveIt (dank TF) automatisch, wo der Roboter steht, ohne dass ein 7-DoF IK-Solver benötigt wird.
 > - **URDF Modifikation:** Um Fehler beim Parsen von dynamischen `attach_to`-Argumenten zu vermeiden, wurde `xarm_description/urdf/xarm_device_macro.xacro` angepasst. Die Bedingung für `create_attach_link` generiert nun einen Root-Link für *jeden* übergebenen String und nicht mehr exklusiv nur für `"world"`.
 
@@ -1025,23 +1025,30 @@ stateDiagram-v2
 > ```bash
 > ros2 run fake_linear_axis fake_linear_axis
 > ```
+> *(Wird im FAKE-Modus-Bringup automatisch mitgestartet)*
 >
-> **Zweck & Aufgabe:** Headless ROS 2 Node zur Transformation der virtuellen Linearachse. Abonniert `/ui/linear_axis_position` (`std_msgs/Float64`) und publiziert den dynamischen TF-Frame `linear_axis_link` relativ zu `world` entlang der horizontalen Achse. Bietet zudem einen interaktiven 3D-Marker (`visualization_msgs/InteractiveMarkerUpdate`) in RViz für direkte Manipulation per Mauszeiger.
+> **Zweck & Aufgabe:** Headless ROS 2 Node zur Steuerung des virtuellen 7. Freiheitsgrades (Linearschiene) in der Simulation. Abonniert den Verschiebungsbefehl `/linear_axis_cmd` (vom Web-UI-Schieberegler oder Gamepad-D-Pad), broadcastet dynamisch den TF-Frame `world` ➔ `linear_axis_link` und rendert realistische 3D-RViz-Visualisierungsmarker (Hauptschiene, Führungsschienen und Schlittenplatte) auf `/visualization_marker_array`.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/ui/linear_axis_position`** | `std_msgs/Float64` | *Empfängt Positionssollwerte vom Schieberegler des Web-Control-Panels.* |
+>> | **`/linear_axis_cmd`** | `std_msgs/Float64` | *Ziel-Verschiebung der Linearschiene in Metern.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/tf`** | `tf2_msgs/TFMessage` | *Sendet die dynamische Transformation `world` ➔ `linear_axis_link`.* |
->> | **`/fake_linear_axis/update`** | `visualization_msgs/InteractiveMarkerUpdate` | *Publiziert interaktive 3D-Marker zur Steuerung in RViz.* |
+>> | **`/visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Publiziert 3D-RViz-Marker für die physische Linearschiene und Schlittenelemente.* |
+>
+>
+> ![TF2](https://img.shields.io/badge/TF2-yellow?style=flat-square)
+>
+>> | Frame / Transformation | Beschreibung |
+>> |---|---|
+>> | **`world` ➔ `linear_axis_link`** | *Broadcastet dynamisch die Translation der Roboterbasis entlang der Y-Achse.* |
 
 
 
@@ -1684,7 +1691,7 @@ flowchart TD
 >   - **Virtuelle Teleoperation & Ergonomischer 1080p-Fit:** Integrierter 2D-Analogstick für kartesisches Jogging sowie 6-DoF absolute Gelenkwinkel-Slider und Geschwindigkeitsstufen (`0.1` bis `0.5` m/s). Das gesamte Interface ist ergonomisch optimiert, sodass alle Steuerelemente auf Standard-1080p-Monitoren ohne jegliches vertikales Scrollen Platz finden.
 >   - **Interaktives UI & Layout-Optimierung:** Die Benutzeroberfläche behält 100% aller funktionellen Panels (MoveTo, YOLO 3D, Cartesian Jogging, Telemetrie, Whisper AI, Konsole) lückenlos bei. Beinhaltet dynamische Elemente wie den Whisper AI "Start Listening"-Button mit Echtzeit-Sprachaufnahme sowie farbcodierte RViz-Achsenmarkierungen (X Rot, Y Grün, Z Blau) an den Koordinatenfeldern.
 >   - **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
->   - **3D-Centerpiece mit Tab-Umschalter (WebGL Digital Twin & RViz-Stream):** Zentral integrierter 3D-Hauptbereich mit schnellem Umschalt-Tab zwischen dem offline-fähigen 3D WebGL Digital Twin (Three.js & URDFLoader mit Live-Spiegelung von `/joint_states` und `/linear_axis_shift`, Orbit-Kamera, Reset, Draufsicht, Cyber-Grid sowie interaktivem 3D-Szenenobjekte-Toggle-Button `fa-cubes` zum Ein-/Ausblenden von Tisch, Regal und Kamerastativ, die sich bei aktivem `rviz_marker_3d_scene_objects`-Node automatisch zuschalten) und dem Live-Stream aus RViz2 (`/rviz_video/image_raw` auf Port 8082) ohne vertikalen Platzverlust.
+>   - **3D-Centerpiece mit Tab-Umschalter (WebGL Digital Twin & RViz-Stream):** Zentral integrierter 3D-Hauptbereich mit schnellem Umschalt-Tab zwischen dem offline-fähigen 3D WebGL Digital Twin (Three.js & URDFLoader mit Live-Spiegelung von `/joint_states` und synchronisierter Live-Anzeige des Linearachsen-Schiebereglers, Orbit-Kamera, Reset, Draufsicht, Cyber-Grid sowie vier unabhängigen 3D-Szenenknoten-Toggle-Icons (`fa-cubes` für interaktive Objekte & Arbeitsbereichskreis, `fa-square` für die weiße Referenzebene, `fa-shield-halved` für die Safety Zone, `fa-video` für das ZED-M-Kamerastativ) zum individuellen Ein-/Ausblenden der Marker jedes einzelnen `rviz_marker_3d_scene_objects`-Knotens im Digital Twin) und dem Live-Stream aus RViz2 (`/rviz_video/image_raw` auf Port 8082) ohne vertikalen Platzverlust.
 >   - **Farbkodiertes Konsolen-Log:** Ein live scrollbares Konsolen-Log mit detailliertem Feedback für alle Bewegungsbefehle — inklusive Koordinatenanzeige (`X`, `Y`, `Z`) bei MoveTo-Befehlen und expliziten Erfolgs- (✓) / Fehler- (❌) Statusanzeigen mit Fehlercodes.
 >
 >
@@ -1712,7 +1719,7 @@ flowchart TD
 >> | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | *Sichert die geänderte Geschwindigkeit.* |
 >> | **`/ui/scan_speed`** | `std_msgs/Int32` | *Publiziert die gewählte Scan-Geschwindigkeit (0: Langsam, 1: Normal, 2: Schnell).* |
 >> | **`/ui/emergency_stop_topic`** | `std_msgs/Empty` | *Publiziert sofortigen Software-Not-Aus (blockierungsfreier Topic-Bypass).* |
->> | **`/ui/linear_axis_position`** | `std_msgs/Float64` | *Sendet Slider-Positionen der virtuellen Linearachse.* |
+>> | **`/linear_axis_cmd`** | `std_msgs/Float64` | *Publiziert den Befehl zur Bewegung der Linearachse.* |
 >> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggert Autonomie-Aktionen per Objekt-Identifikator.* |
 >> | **`/ui/voice_listen_trigger`** | `std_msgs/String` | *Startet Audio-Aufnahmen bei Klick auf das Mikrofon-Symbol.* |
 >> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Sendet aktualisierte Parameter für die Safety-Zone.* |

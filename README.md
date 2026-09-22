@@ -1654,7 +1654,7 @@ flowchart TD
 >   - **Virtual Teleoperation & Ergonomic 1080p Fit:** An integrated 2D virtual analog joystick for cartesian jogging, alongside a 6-DoF absolute joint state slider system and speed level adjustments. Movement speed and Cartesian jogging have been perfectly synchronized with physical Gamepad controllers (`0.1` to `0.5` m/s). The entire UI layout is ergonomically optimized to fit standard 1080p screens with zero vertical scrolling required.
 >   - **Interactive UI & Layout Optimization:** The layout is intelligently structured with all functional panels (MoveTo, YOLO 3D, Cartesian Jogging, Telemetry, Whisper AI, and Console) preserved. Features dynamic elements like the "Start Listening" Whisper AI button with real-time speech recording and color-coded RViz axis indicators (X Red, Y Green, Z Blue) on input fields.
 >   - **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
->   - **3D Centerpiece Tab Switcher (WebGL Digital Twin & RViz Stream):** An integrated 3D centerpiece featuring quick tab switching between the offline WebGL 3D Digital Twin (powered by Three.js & URDFLoader with live `/joint_states` and `/linear_axis_shift` mirroring, orbit controls, reset, top-down view, cyber grid floor, and an interactive 3D Scene Objects Toggle Button `fa-cubes` to show/hide the physical table, shelf, and camera stands dynamically only when `rviz_marker_3d_scene_objects` is active) and the live RViz2 stream (`/rviz_video/image_raw` on Port 8082) without wasting vertical screen space.
+>   - **3D Centerpiece Tab Switcher (WebGL Digital Twin & RViz Stream):** An integrated 3D centerpiece featuring quick tab switching between the offline WebGL 3D Digital Twin (powered by Three.js & URDFLoader with live `/joint_states` mirroring and synchronized linear axis slider updates, orbit controls, reset, top-down view, cyber grid floor, and four independent 3D Scene Node toggle icons (`fa-cubes` for interactive objects & workspace circle, `fa-square` for the white reference plane, `fa-shield-halved` for the Safety Zone, `fa-video` for the ZED-M camera stand) to individually show/hide each `rviz_marker_3d_scene_objects` node's markers in the Digital Twin view) and the live RViz2 stream (`/rviz_video/image_raw` on Port 8082) without wasting vertical screen space.
 >   - **Color-Coded Console Log:** A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
 >
 >
@@ -1669,6 +1669,7 @@ flowchart TD
 >> | **`/ui/voice_feedback`** | `std_msgs/String` | *Flashes voice-triggered actions directly in the Web Log.* |
 >> | **`/ui/voice_status`** | `std_msgs/String` | *Displays real-time Whisper listening status and transcriptions.* |
 >> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Syncs UI speed sliders with the backend level.* |
+>> | **`/ui/collision_msg`** | `std_msgs/String` | *Displays collision warnings in the Web Log.* |
 >> | **`/ui/grasp_status`** | `std_msgs/String` | *Forwards grasp status strings to the web console.* |
 >
 >
@@ -1681,8 +1682,10 @@ flowchart TD
 >> | **`/ui/robot_control/set_speed_index`** | `std_msgs/Int32` | *Saves the speed scale changed via web slider.* |
 >> | **`/ui/scan_speed`** | `std_msgs/Int32` | *Publishes selected scan speed mode (0: Slow, 1: Normal, 2: Fast).* |
 >> | **`/ui/emergency_stop_topic`** | `std_msgs/Empty` | *Publishes immediate non-blocking software emergency stop.* |
+>> | **`/linear_axis_cmd`** | `std_msgs/Float64` | *Publishes the command to move the linear axis.* |
 >> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggers autonomy pipeline actions.* |
 >> | **`/ui/voice_listen_trigger`** | `std_msgs/String` | *Signals voice listener node to begin speech recording.* |
+>> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Publishes updated dynamic safety zone parameters `[x, y, radius]`.* |
 >
 >
 > ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
