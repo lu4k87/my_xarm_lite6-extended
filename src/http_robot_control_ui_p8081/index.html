@@ -685,9 +685,9 @@
   <script src="lib/TransformControls.js"></script>
   <script src="lib/STLLoader.js"></script>
   <script src="lib/URDFLoader.js"></script>
-  <script src="digital_twin.js?v=16"></script>
+  <script src="digital_twin.js?v=17"></script>
 
-  <script src="app.js?v=18"></script>
+  <script src="app.js?v=19"></script>
   
   <script>
     // ── Live Camera Update Loop ──
@@ -774,7 +774,8 @@
       let currentTopic = savedTopic || ZED_MODES[0].topic;
 
       function renderOptions(available) {
-        if (!zedSel) return;
+        if (!zedSel) return null;
+        const before = currentTopic;
         zedSel.innerHTML = '';
         // Bekannte Modi zuerst, in kuratierter Reihenfolge
         const known = new Set();
@@ -810,6 +811,10 @@
         if (savedTopic && values.includes(savedTopic)) currentTopic = savedTopic;
         else if (!values.includes(currentTopic)) currentTopic = values[0];
         zedSel.value = currentTopic;
+        // Meldet zurueck, ob sich die Auswahl geaendert hat. Ohne das bliebe
+        // der Stream auf dem alten Topic stehen, waehrend das Dropdown schon
+        // ein anderes anzeigt.
+        return currentTopic !== before ? currentTopic : null;
       }
 
       function applyTopic(topic) {
@@ -860,8 +865,8 @@
             if (--pending > 0) return;
             const zed = Array.from(found).filter(t => t.startsWith(ZED_NS + '/'));
             if (zed.length === 0) return;   // Kamera laeuft nicht - Liste behalten
-            renderOptions(new Set(zed));
-            if (zedSel && zedSel.value !== currentTopic) applyTopic(zedSel.value);
+            const changed = renderOptions(new Set(zed));
+            if (changed) applyTopic(changed);
           };
 
           ['sensor_msgs/msg/Image', 'sensor_msgs/Image'].forEach(typeName => {
