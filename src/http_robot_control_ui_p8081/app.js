@@ -665,6 +665,94 @@ function evaluateRobotSafety() {
 }
 
 // ── UI Actions ──────────────────────────────────────────────────────────
+// ── Log Output: Escaping + Syntax-Highlighting ──────────────────────────────
+// Nur &, < und > maskieren. Das " bleibt stehen, damit die String-Erkennung
+// unten greift - der Text landet ausschliesslich im Elementinhalt, nie in
+// einem Attribut. Vorher ging der Text ungeprueft in innerHTML.
+const LOG_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
+function escapeLogText(s) {
+  return String(s).replace(/[&<>]/g, (c) => LOG_ESCAPES[c]);
+}
+
+// Ein einziger Durchlauf mit Alternation: was in der Reihenfolge frueher
+// steht, gewinnt. So kann kein Treffer in einem bereits erzeugten <span>
+// landen.
+// "on"/"off" stehen bewusst NICHT in der Bool-Liste: "Publishing on /tf"
+// waere sonst faelschlich eingefaerbt. Die Zahl verlangt links einen
+// Nicht-Buchstaben, sonst wuerde aus "J5" ein eingefaerbtes "5".
+const LOG_TOKEN_RE = new RegExp([
+  /(\b[a-z][a-z0-9+.-]*:\/\/[^\s,;)]+)/.source,                          // 1 URL
+  /("[^"]*"|'[^']*')/.source,                                             // 2 String
+  /((?<![\w)])\/[A-Za-z_][A-Za-z0-9_]*(?:\/[A-Za-z0-9_]+)*)/.source,      // 3 Topic/Pfad
+  /\b([XYZ])(?=\s*[:=])/.source,                                          // 4 Achse
+  /\b(true|false|enabled|disabled|active|inactive)\b/.source,             // 5 Bool
+  /\b([a-z_][a-z0-9_]*)(?=:=)/.source,                                    // 6 Parametername
+  /(?<=:=)([A-Za-z_][A-Za-z0-9_.-]*)/.source,                             // 7 Wert hinter :=
+  /(?<![A-Za-z_])([-+]?\d+(?:[.,]\d+)?)\s*(mm|cm|m|deg|rad|°|%|Hz|ms|s)?(?![A-Za-z])/.source, // 8 Zahl (+9 Einheit)
+].join('|'), 'gi');
+
+function highlightLog(raw) {
+  const src = escapeLogText(raw);
+  const span = (cls, txt) => `<span class="${cls}">${txt}</span>`;
+
+  // Ein Wert uebernimmt die Farbe der Variablen direkt davor:
+  // "X: 300" -> 300 rot wie X, "camera:=zed_m" -> zed_m blau wie camera.
+  // carryClass haelt die Farbe, carryEnd die Position hinter der Variablen -
+  // uebernommen wird nur, wenn dazwischen bloss ":", ":=" oder Leerzeichen
+  // stehen.
+  let carryClass = null;
+  let carryEnd = -1;
+
+  return src.replace(LOG_TOKEN_RE, (...args) => {
+    const m = args[0];
+    const [url, str, path, axis, bool, key, val, num, unit] = args.slice(1, 10);
+    const offset = args[10];
+
+    const inherited = (carryClass !== null && /^\s*:?=?\s*$/.test(src.slice(carryEnd, offset)))
+      ? carryClass
+      : null;
+    carryClass = null;
+    carryEnd = -1;
+
+    if (url) return span('log-path', url);
+    if (str) return span('log-str', str);
+    if (path) return span('log-path', path);
+    if (axis) {
+      carryClass = 'log-ax-' + axis.toLowerCase();
+      carryEnd = offset + m.length;
+      return span(carryClass, axis);
+    }
+    if (bool) {
+      const isOn = /^(true|enabled|active)$/i.test(bool);
+      return span(`log-bool-${isOn ? 'on' : 'off'}`, bool);
+    }
+    if (key) {
+      carryClass = 'log-key';
+      carryEnd = offset + m.length;
+      return span('log-key', key);
+    }
+    if (val) return span(inherited || 'log-key', val);
+    if (num) {
+      // rest ist " mm" o.ae. - oder nur der vom \s* geschluckte Abstand,
+      // der sonst verloren ginge.
+      const rest = m.slice(num.length);
+      return span(inherited || 'log-num', num) +
+             (unit ? span('log-unit', rest) : rest);
+    }
+    return m;
+  });
+}
+
+const LOG_SRC_CLASSES = {
+  'ROS': 'log-src-ros',
+  'UI': 'log-src-ui',
+  'System': 'log-src-sys',
+  'Motion': 'log-src-motion',
+  'GIZMO': 'log-src-gizmo',
+  'VOICE': 'log-src-voice',
+  'AUDIO': 'log-src-audio',
+};
+
 function logMsg(source, text, type='info') {
   const win = document.getElementById('log-window');
   if(!win) return;
@@ -679,10 +767,12 @@ function logMsg(source, text, type='info') {
   else if (text.includes('➤')) autoType = 'action';
   else if (text.includes('⚠')) autoType = 'warn';
 
-  const srcColors = { 'ROS': 'log-src-ros', 'UI': 'log-src-ui', 'System': 'log-src-sys', 'Motion': 'log-src-motion' };
-  const srcClass = srcColors[source] || 'log-src-sys';
+  const srcClass = LOG_SRC_CLASSES[source] || 'log-src-sys';
 
-  div.innerHTML = `<span class="log-time">[${timeStr}]</span><span class="log-src ${srcClass}">[${source}]</span> <span class="log-${autoType}">${text}</span>`;
+  // Der Zeitstempel steht nicht mehr in der Zeile - er haengt als data-time
+  // am Quellen-Tag und wird per CSS beim Hover eingeblendet.
+  div.innerHTML = `<span class="log-src ${srcClass}" data-time="${timeStr}">[${source}]</span> ` +
+                  `<span class="log-${autoType}">${highlightLog(text)}</span>`;
   win.appendChild(div);
   win.scrollTop = win.scrollHeight;
 }

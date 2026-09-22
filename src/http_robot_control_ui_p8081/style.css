@@ -1675,14 +1675,14 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   border: 1px solid rgba(255,255,255,0.05);
   padding: 8px 10px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13.5px;
+  font-size: 15.5px;
   overflow-y: auto;
   color: #cbd5e1;
   flex: 1;
   min-height: 80px;
 }
-.log-entry { margin-bottom: 3px; word-break: break-word; line-height: 1.4; font-size: 14.5px; }
-.log-time { color: #64748b; margin-right: 6px; font-size: 14.5px; }
+.log-entry { margin-bottom: 3px; word-break: break-word; line-height: 1.4; font-size: 16.5px; }
+
 
 /* ── TF Control Tuner Section ── */
 .tf-tuner-section {
@@ -1857,18 +1857,74 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 /* Source Badges */
-.log-src { font-weight: 700; margin-right: 6px; font-size: 14.5px; }
-.log-src-ros { color: #c678dd; }      /* Purple */
-.log-src-ui { color: #61afef; }       /* Blue */
-.log-src-sys { color: #e5c07b; }      /* Yellow */
-.log-src-motion { color: #98c379; }   /* Green */
+/* ── Log Output: Quellen-Tag mit Zeitstempel beim Hover ──────────────────
+   Der Zeitstempel steht nicht mehr in der Zeile. Er haengt als data-time am
+   Tag und wird rechts daneben eingeblendet - nicht darueber, weil
+   #log-window scrollt und ein Tooltip ueber der obersten Zeile
+   abgeschnitten wuerde. */
+.log-src {
+  position: relative;
+  font-weight: 700;
+  margin-right: 6px;
+  font-size: 16.5px;
+  cursor: help;
+}
+
+.log-src::after {
+  content: attr(data-time);
+  position: absolute;
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: rgba(13, 17, 23, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+  color: #8b949e;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 5;
+}
+
+.log-src:hover::after { opacity: 1; }
+
+/* Quellen - jede Quelle einen eigenen Farbton, damit die Spalte scanbar ist */
+.log-src-ros    { color: #bc8cff; }  /* Violett   */
+.log-src-ui     { color: #58a6ff; }  /* Blau      */
+.log-src-sys    { color: #e3b341; }  /* Bernstein */
+.log-src-motion { color: #3fb950; }  /* Gruen     */
+.log-src-gizmo  { color: #39c5cf; }  /* Tuerkis   */
+.log-src-voice  { color: #f778ba; }  /* Pink      */
+.log-src-audio  { color: #ffa657; }  /* Orange    */
 
 /* Message Types */
-.log-info { color: #abb2bf; font-size: 14.5px; }         /* Light Gray */
-.log-success { color: #7ee787; font-weight: 600; font-size: 14.5px; }  /* Bright Green */
-.log-action { color: #56b6c2; font-weight: 600; font-size: 14.5px; }   /* Cyan */
-.log-warn { color: #d19a66; font-size: 14.5px; }         /* Orange */
-.log-err { color: #ff7b72; font-weight: 600; font-size: 14.5px; }      /* Red */
+/* Zustaende - Grundfarbe der Meldung */
+.log-info    { color: #c9d1d9; font-size: 16.5px; }                    /* Neutral  */
+.log-success { color: #3fb950; font-weight: 600; font-size: 16.5px; }  /* Gruen    */
+.log-action  { color: #39c5cf; font-weight: 600; font-size: 16.5px; }  /* Tuerkis  */
+.log-warn    { color: #e3b341; font-size: 16.5px; }                    /* Bernstein*/
+.log-err     { color: #f85149; font-weight: 600; font-size: 16.5px; }  /* Rot      */
+
+/* Token innerhalb der Meldung - heben sich von der Zustandsfarbe ab */
+.log-num  { color: #ffa657; font-weight: 600; }  /* Zahlen / Werte      */
+.log-unit { color: #8b949e; }                    /* Einheiten gedaempft */
+.log-key  { color: #79c0ff; }                    /* Parametername vor := */
+.log-str  { color: #a5d6ff; }                    /* Strings             */
+.log-val  { color: #a5d6ff; }                    /* Wert hinter :=      */
+.log-path { color: #7ee787; }                    /* Topics, Pfade, URLs */
+.log-bool-on  { color: #3fb950; font-weight: 600; }  /* true/on/enabled  */
+.log-bool-off { color: #f85149; font-weight: 600; }  /* false/off/disabled */
+
+/* Achsen wie in RViz und in den Pose-Feldern: X rot, Y gruen, Z blau */
+.log-ax-x { color: var(--rviz-x); font-weight: 700; }
+.log-ax-y { color: var(--rviz-y); font-weight: 700; }
+.log-ax-z { color: var(--rviz-z); font-weight: 700; }
 
 /* YOLO Objects List */
 .yolo-list-container {
@@ -2601,7 +2657,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     max-height: none !important;
     min-height: 80px !important;
     padding: 8px 10px;
-    font-size: 14.5px;
+    font-size: 16.5px;
     line-height: 1.45;
     box-sizing: border-box;
   }
