@@ -30,6 +30,63 @@ let activeCollisionText = '';
 let collisionTextClearTimer = null;
 let lastReportedSafetyState = 'normal'; // 'normal', 'singularity', 'collision'
 
+// Grenzwerte zentral aus robot_limits.js. Fallback nur, falls die Datei fehlt.
+const LIM = window.ROBOT_LIMITS || {
+  SELF_COLLISION_MM: 118.0, HARD_BLOCK_MM: 125.0, SINGULARITY_MM: 138.0,
+  MANIP_FADE_MM: 180.0, LOW_Z_MM: 280.0, FLOOR_CLEARANCE_MM: 15.0,
+  POSE_MAX_MM: 1000.0, POSE_MAX_RAD: 2.0 * Math.PI,
+};
+
+// ── Kleine Helfer ─────────────────────────────────────────────────────────
+// localStorage wirft im Inkognito-Fenster und bei blockierten Site-Daten.
+// Bisher war nur ein Teil der Zugriffe abgesichert, der Rest haette die
+// jeweilige Funktion mitgerissen.
+function lsGet(key, fallback = null) {
+  try {
+    const v = localStorage.getItem(key);
+    return v === null ? fallback : v;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function lsSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Eine Posen-Eingabe lesen. Fehlt das Feld, kommt NaN zurueck - das faengt
+// validatePose() ab, statt dass ein TypeError die Funktion abbricht.
+function readPoseInput(id) {
+  const el = document.getElementById(id);
+  return el ? parseFloat(el.value) : NaN;
+}
+
+// Letzte Pruefung vor dem Roboter. Vorher ging der Wert aus dem Eingabefeld
+// voellig ungeprueft in den Service-Request: ein leeres Feld ergab NaN, das
+// ueber JSON als null beim Node ankam.
+// Die Grenzen sind bewusst weit - der Arbeitsraum endet laengst vorher, hier
+// geht es nur darum, offensichtlichen Unsinn nicht abzuschicken.
+function validatePose(pose) {
+  const names = ['X', 'Y', 'Z', 'Roll', 'Pitch', 'Yaw'];
+  for (let i = 0; i < 6; i++) {
+    const v = pose[i];
+    if (!Number.isFinite(v)) {
+      return `${names[i]} ist keine gueltige Zahl`;
+    }
+    const max = (i < 3) ? LIM.POSE_MAX_MM : LIM.POSE_MAX_RAD;
+    if (Math.abs(v) > max) {
+      const unit = (i < 3) ? 'mm' : 'rad';
+      return `${names[i]}=${v} liegt ausserhalb von ±${max.toFixed(2)} ${unit}`;
+    }
+  }
+  return null;
+}
+
 let uiClickSound = null;
 let scanPosSound = null;
 try {
@@ -38,15 +95,142 @@ try {
 } catch (e) {}
 
 // ── ROS Connection ────────────────────────────────────────────────────────
+// Host und URL werden genau einmal bestimmt. Vorher stand "const host" in vier
+// getrennten Scopes, und die Log-Ausgabe nannte fest "localhost", obwohl die
+// UI je nach Aufruf unter 127.0.0.2 laeuft.
+const ROS_HOST = window.location.hostname || 'localhost';
+const ROS_URL = 'ws://' + ROS_HOST + ':9090';
+
 try {
-  const host = window.location.hostname || 'localhost';
-  ros = new ROSLIB.Ros({
-    url: 'ws://' + host + ':9090'
-  });
+  ros = new ROSLIB.Ros({ url: ROS_URL });
 } catch (e) {
   const statusEl = document.getElementById('connection-status');
   if (statusEl) statusEl.innerText = 'JS Error';
   console.error("Failed to init ROSLIB", e);
+}
+
+// Node-Checker und Metadaten-Abo werden GENAU EINMAL eingerichtet, nicht in
+// ros.on('connection'). Dort kam bei jedem Reconnect ein weiterer Timer bzw.
+// ein weiteres Topic-Objekt dazu, beides ohne Abbau - nach laengerem
+// rosbridge-Ausfall lief der Poll vielfach parallel.
+// Topics duerfen auf Modulebene stehen: roslibjs setzt reconnect_on_close
+// per Default auf true und schickt das subscribe nach einem Reconnect
+// selbsttaetig erneut.
+let getNodesClient = null;
+let paramClient = null;
+
+function checkRosNodes() {
+  if (!ros || !ros.isConnected) return;
+  if (!getNodesClient) {
+    getNodesClient = new ROSLIB.Service({
+      ros: ros,
+      name: '/rosapi/nodes',
+      serviceType: 'rosapi/Nodes'
+    });
+  }
+
+  getNodesClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
+    // ── 3D Scene Objects Node Detection ──
+    if (typeof checkSceneObjectsNodeState === 'function') {
+      checkSceneObjectsNodeState(result ? result.nodes : null);
+    }
+
+    const dot = document.getElementById('mode-dot');
+    const text = document.getElementById('mode-status');
+    if (!dot || !text) return;
+
+    let driverNode = null;
+    if (result && result.nodes) {
+      driverNode = result.nodes.find(n => n.includes('ufactory_driver'));
+    }
+
+    if (driverNode) {
+      dot.className = 'dot glow-green';
+
+      if (!paramClient) {
+        paramClient = new ROSLIB.Service({
+          ros: ros,
+          name: '/rosapi/get_param',
+          serviceType: 'rosapi/GetParam'
+        });
+      }
+
+      paramClient.callService(new ROSLIB.ServiceRequest({
+        name: `${driverNode}/robot_ip`,
+        default: ''
+      }), (paramResult) => {
+        try {
+          if (paramResult && paramResult.value) {
+            let ip = paramResult.value;
+            // rosapi in ROS2 returns JSON encoded strings, e.g. '"192.168.1.127"'
+            ip = ip.replace(/"/g, ''); 
+            if (ip && ip.length > 5) {
+              // Kein innerHTML: der Wert kommt aus einem ROS-Parameter und ist
+              // damit Fremddaten. Aufbau ueber DOM-Knoten statt String.
+              text.textContent = 'Real Arm';
+              text.appendChild(document.createElement('br'));
+              const ipEl = document.createElement('span');
+              ipEl.style.fontSize = '0.85em';
+              ipEl.style.color = '#00cec9';
+              ipEl.textContent = ip;
+              text.appendChild(ipEl);
+            } else {
+              text.innerText = `Mode: Real Arm`;
+            }
+          } else {
+            text.innerText = `Mode: Real Arm`;
+          }
+        } catch (e) {
+          text.innerText = `Mode: Real Arm`;
+        }
+      }, (err) => { 
+        text.innerText = `Mode: Real Arm`;
+      });
+    } else {
+      dot.className = 'dot glow-blue';
+      text.innerText = 'Mode: Fake Arm';
+    }
+  }, (err) => {
+    // Swallow errors silently in case /rosapi/nodes does not exist yet.
+    // Prevents "polluting" the WebSocket connection.
+  });
+}
+
+setInterval(checkRosNodes, 2500);
+
+// Live ROS Environment Metadata (Topic: /dashboard/workspace_metadata)
+try {
+  const metaTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: '/dashboard/workspace_metadata',
+    messageType: 'std_msgs/String',
+    throttle_rate: 1000,
+    queue_length: 1
+  });
+  metaTopic.subscribe((msg) => {
+    try {
+      const data = JSON.parse(msg.data);
+      if (data) {
+        if (data.ros_domain_id) {
+          const el = document.getElementById('val-domain-id');
+          if (el) el.innerText = data.ros_domain_id;
+        }
+        if (data.rmw_impl) {
+          const el = document.getElementById('val-rmw-impl');
+          if (el) el.innerText = data.rmw_impl;
+        }
+        if (data.localhost_only !== undefined) {
+          const el = document.getElementById('val-localhost-only');
+          const dot = document.getElementById('dot-localhost-only');
+          const isOn = data.localhost_only === '1' || data.localhost_only === 1;
+          if (el) el.innerText = isOn ? 'On' : 'Off';
+          if (dot) dot.className = isOn ? 'dot glow-orange' : 'dot glow-blue';
+        }
+      }
+    } catch (err) {}
+  });
+} catch (e) {
+  console.warn("Could not subscribe to /dashboard/workspace_metadata", e);
 }
 
 ros.on('connection', () => {
@@ -54,108 +238,10 @@ ros.on('connection', () => {
   if (connStatus) connStatus.innerText = 'ROS 2 Bridge: 9090';
   const connDot = document.getElementById('connection-dot');
   if (connDot) connDot.className = 'dot glow-green';
-  logMsg('System', 'Connected to rosbridge_server (ws://localhost:9090)', 'info');
+  logMsg('System', `Connected to rosbridge_server (${ROS_URL})`, 'info');
   if (typeof publishSoundState === 'function') publishSoundState();
-
-  // Node checker (with error handling to avoid websocket crashes)
-  setInterval(() => {
-    if (ros && ros.isConnected) {
-      const getNodesClient = new ROSLIB.Service({
-        ros: ros,
-        name: '/rosapi/nodes',
-        serviceType: 'rosapi/Nodes'
-      });
-      
-      getNodesClient.callService(new ROSLIB.ServiceRequest({}), (result) => {
-        // ── 3D Scene Objects Node Detection ──
-        if (typeof checkSceneObjectsNodeState === 'function') {
-          checkSceneObjectsNodeState(result ? result.nodes : null);
-        }
-
-        const dot = document.getElementById('mode-dot');
-        const text = document.getElementById('mode-status');
-        if (!dot || !text) return;
-
-        let driverNode = null;
-        if (result && result.nodes) {
-          driverNode = result.nodes.find(n => n.includes('ufactory_driver'));
-        }
-
-        if (driverNode) {
-          dot.className = 'dot glow-green';
-          
-          const paramClient = new ROSLIB.Service({
-            ros: ros,
-            name: '/rosapi/get_param',
-            serviceType: 'rosapi/GetParam'
-          });
-          
-          paramClient.callService(new ROSLIB.ServiceRequest({
-            name: `${driverNode}/robot_ip`,
-            default: ''
-          }), (paramResult) => {
-            try {
-              if (paramResult && paramResult.value) {
-                let ip = paramResult.value;
-                // rosapi in ROS2 returns JSON encoded strings, e.g. '"192.168.1.127"'
-                ip = ip.replace(/"/g, ''); 
-                if (ip && ip.length > 5) {
-                  text.innerHTML = `Real Arm<br><span style="font-size:0.85em; color:#00cec9;">${ip}</span>`;
-                } else {
-                  text.innerText = `Mode: Real Arm`;
-                }
-              } else {
-                text.innerText = `Mode: Real Arm`;
-              }
-            } catch (e) {
-              text.innerText = `Mode: Real Arm`;
-            }
-          }, (err) => { 
-            text.innerText = `Mode: Real Arm`;
-          });
-        } else {
-          dot.className = 'dot glow-blue';
-          text.innerText = 'Mode: Fake Arm';
-        }
-      }, (err) => {
-        // Swallow errors silently in case /rosapi/nodes does not exist yet.
-        // Prevents "polluting" the WebSocket connection.
-      });
-    }
-  }, 2500);
-
-  // Live ROS Environment Metadata (Topic: /dashboard/workspace_metadata)
-  try {
-    const metaTopic = new ROSLIB.Topic({
-      ros: ros,
-      name: '/dashboard/workspace_metadata',
-      messageType: 'std_msgs/String'
-    });
-    metaTopic.subscribe((msg) => {
-      try {
-        const data = JSON.parse(msg.data);
-        if (data) {
-          if (data.ros_domain_id) {
-            const el = document.getElementById('val-domain-id');
-            if (el) el.innerText = data.ros_domain_id;
-          }
-          if (data.rmw_impl) {
-            const el = document.getElementById('val-rmw-impl');
-            if (el) el.innerText = data.rmw_impl;
-          }
-          if (data.localhost_only !== undefined) {
-            const el = document.getElementById('val-localhost-only');
-            const dot = document.getElementById('dot-localhost-only');
-            const isOn = data.localhost_only === '1' || data.localhost_only === 1;
-            if (el) el.innerText = isOn ? 'On' : 'Off';
-            if (dot) dot.className = isOn ? 'dot glow-orange' : 'dot glow-blue';
-          }
-        }
-      } catch (err) {}
-    });
-  } catch (e) {
-    console.warn("Could not subscribe to /dashboard/workspace_metadata", e);
-  }
+  // Sofort einmal pruefen, statt bis zu 2,5 s auf den naechsten Tick zu warten.
+  checkRosNodes();
 });
 
 ros.on('error', (error) => {
@@ -173,17 +259,16 @@ ros.on('close', () => {
   if (connStatus) connStatus.innerText = 'ROS 2 Bridge: 9090';
   const connDot = document.getElementById('connection-dot');
   if (connDot) connDot.className = 'dot glow-red';
-  document.getElementById('mode-dot').className = 'dot glow-red';
-  document.getElementById('mode-status').innerText = 'Mode: Offline';
-  
+  const modeDot = document.getElementById('mode-dot');
+  if (modeDot) modeDot.className = 'dot glow-red';
+  const modeStatus = document.getElementById('mode-status');
+  if (modeStatus) modeStatus.innerText = 'Mode: Offline';
+
   if (!reconnectTimer) {
     logMsg('System', 'Connection closed. Retrying in 3s...', 'warn');
     reconnectTimer = setTimeout(() => {
       reconnectTimer = null;
-      const host = window.location.hostname || 'localhost';
-      if (ros) {
-        ros.connect('ws://' + host + ':9090');
-      }
+      if (ros) ros.connect(ROS_URL);
     }, 3000);
   }
 });
@@ -351,14 +436,14 @@ function toggleTwinDetections() {
   const now = !window.getDigitalTwinDetectionsVisible();
   window.setDigitalTwinDetectionsVisible(now);
   applyTwinDetectionsBtn(now);
-  try { localStorage.setItem(TWIN_DETECTIONS_LS_KEY, now ? '1' : '0'); } catch (e) {}
+  lsSet(TWIN_DETECTIONS_LS_KEY, now ? '1' : '0');
   logMsg('UI', `YOLO 3D overlay ${now ? 'enabled' : 'disabled'}`);
 }
 
 function restoreTwinDetections() {
   let visible = true;   // Labels und Boxen sind standardmaessig an
   try {
-    const saved = localStorage.getItem(TWIN_DETECTIONS_LS_KEY);
+    const saved = lsGet(TWIN_DETECTIONS_LS_KEY);
     if (saved !== null) visible = (saved === '1');
   } catch (e) {}
   if (typeof window.setDigitalTwinDetectionsVisible === 'function') {
@@ -370,10 +455,13 @@ function restoreTwinDetections() {
 document.addEventListener('DOMContentLoaded', () => setTimeout(restoreTwinDetections, 400));
 
 // ── YOLO 3D Objects ─────────────────────────────────────────────────────
+// Kamerarate ist fuer eine Liste und ein 3D-Overlay deutlich mehr als noetig.
 const yoloSub = new ROSLIB.Topic({
   ros: ros,
   name: '/zed/bboxes_3d',
-  messageType: 'visualization_msgs/MarkerArray'
+  messageType: 'visualization_msgs/MarkerArray',
+  throttle_rate: 100,
+  queue_length: 1
 });
 
 // Ein erkanntes Objekt anfahren. Wird sowohl von der Liste "Detected
@@ -387,23 +475,50 @@ window.graspDetectedObject = function (name, source) {
   executeGrasp();
 };
 
+// Der Name stammt aus dem YOLO-Marker, ist also Fremddaten. Frueher ging er
+// ueber ein Template direkt in innerHTML - ein Klassenname mit < haette
+// Markup einschleusen koennen. Der Aufbau laeuft deshalb ueber DOM-Knoten,
+// Text landet ausschliesslich in textContent.
 function createYoloItem(item) {
   const el = document.createElement('div');
   el.className = 'yolo-item';
-  el.setAttribute('data-id', item.name);
+  el.dataset.id = item.name;
   el.onclick = () => window.graspDetectedObject(item.name, 'list');
-  el.innerHTML = `
-    <i class="fa-solid fa-cube" style="color: var(--accent); font-size: 16px;"></i>
-    <div class="yolo-details">
-      <span class="yolo-class">${item.name}</span>
-      <span class="yolo-coords">
-        <span class="coord-x" style="color: var(--rviz-x);">X:${item.x}</span>
-        <span class="coord-y" style="color: var(--rviz-y); margin-left:6px;">Y:${item.y}</span>
-        <span class="coord-z" style="color: var(--rviz-z); margin-left:6px;">Z:${item.z}</span>
-        <span style="color: var(--mut); margin-left:6px;">[mm]</span>
-      </span>
-    </div>
-  `;
+
+  const icon = document.createElement('i');
+  icon.className = 'fa-solid fa-cube';
+  icon.style.color = 'var(--accent)';
+  icon.style.fontSize = '16px';
+
+  const details = document.createElement('div');
+  details.className = 'yolo-details';
+
+  const cls = document.createElement('span');
+  cls.className = 'yolo-class';
+  cls.textContent = item.name;
+
+  const coords = document.createElement('span');
+  coords.className = 'yolo-coords';
+  [['coord-x', 'X', item.x, 'var(--rviz-x)'],
+   ['coord-y', 'Y', item.y, 'var(--rviz-y)'],
+   ['coord-z', 'Z', item.z, 'var(--rviz-z)']].forEach(([cn, ax, val, col], i) => {
+    const sp = document.createElement('span');
+    sp.className = cn;
+    sp.style.color = col;
+    if (i > 0) sp.style.marginLeft = '6px';
+    sp.textContent = `${ax}:${val}`;
+    coords.appendChild(sp);
+  });
+  const unit = document.createElement('span');
+  unit.style.color = 'var(--mut)';
+  unit.style.marginLeft = '6px';
+  unit.textContent = '[mm]';
+  coords.appendChild(unit);
+
+  details.appendChild(cls);
+  details.appendChild(coords);
+  el.appendChild(icon);
+  el.appendChild(details);
   return el;
 }
 
@@ -458,9 +573,18 @@ yoloSub.subscribe((msg) => {
     }
   });
 
-  // In-Place Update & geordnete DOM-Platzierung ohne Springen
+  // In-Place Update & geordnete DOM-Platzierung ohne Springen.
+  // Die vorhandenen Eintraege werden einmal in eine Map gelegt, statt je
+  // Objekt einen CSS-Selektor aus dem Namen zusammenzubauen - ein
+  // Anfuehrungszeichen darin haette querySelector einen SyntaxError werfen
+  // lassen und den ganzen Callback abgebrochen.
+  const existing = new Map();
+  container.querySelectorAll('.yolo-item').forEach(el => {
+    existing.set(el.dataset.id, el);
+  });
+
   detected.forEach((item, index) => {
-    let el = container.querySelector(`.yolo-item[data-id="${item.name}"]`);
+    let el = existing.get(item.name);
     if (el) {
       const xSpan = el.querySelector('.coord-x');
       const ySpan = el.querySelector('.coord-y');
@@ -478,10 +602,14 @@ yoloSub.subscribe((msg) => {
   });
 });
 
+// /joint_states laeuft je nach Treiber mit 100-250 Hz. 30 Hz reichen fuer
+// Slider und Digital Twin vollauf und entlasten den WebSocket spuerbar.
 const jointStateSub = new ROSLIB.Topic({
   ros: ros,
   name: '/joint_states',
-  messageType: 'sensor_msgs/JointState'
+  messageType: 'sensor_msgs/JointState',
+  throttle_rate: 33,
+  queue_length: 1
 });
 
 jointStateSub.subscribe((msg) => {
@@ -532,7 +660,9 @@ jointStateSub.subscribe((msg) => {
 const eefSub = new ROSLIB.Topic({
   ros: ros,
   name: '/ui/eef_position',
-  messageType: 'std_msgs/Float32MultiArray'
+  messageType: 'std_msgs/Float32MultiArray',
+  throttle_rate: 33,
+  queue_length: 1
 });
 
 eefSub.subscribe((msg) => {
@@ -633,26 +763,26 @@ function evaluateRobotSafety() {
 
   // B. Ground / Table Plane Clearance (Z <= 15.0 mm is table limit)
   if (latestEEF_Z !== null && !isNaN(latestEEF_Z)) {
-    if (latestEEF_Z <= 15.0) {
+    if (latestEEF_Z <= LIM.FLOOR_CLEARANCE_MM) {
       isCollision = true;
       collidingLinks = ['link6', 'vacuum', 'gripper'];
-      message = `PLANE COLLISION (Z: ${latestEEF_Z.toFixed(1)} mm ≤ 15 mm)`;
+      message = `PLANE COLLISION (Z: ${latestEEF_Z.toFixed(1)} mm ≤ ${LIM.FLOOR_CLEARANCE_MM} mm)`;
     }
   }
 
   // C. Inner Workspace Boundary & Self-Collision Deadzone (r = sqrt(x^2 + y^2))
   if (latestEEF_X !== null && latestEEF_Y !== null && !isNaN(latestEEF_X) && !isNaN(latestEEF_Y)) {
     const r_xy = Math.sqrt(latestEEF_X * latestEEF_X + latestEEF_Y * latestEEF_Y);
-    const isLowZ = (latestEEF_Z !== null && latestEEF_Z < 280.0);
-    if (r_xy < 118.0 && isLowZ) {
+    const isLowZ = (latestEEF_Z !== null && latestEEF_Z < LIM.LOW_Z_MM);
+    if (r_xy < LIM.SELF_COLLISION_MM && isLowZ) {
       isCollision = true;
       collidingLinks = ['link6', 'link5', 'link2', 'link1'];
-      message = `SELF-COLLISION / INNER CYLINDER (r: ${r_xy.toFixed(0)} mm < 118 mm)`;
-    } else if (r_xy < 138.0 && isLowZ) {
+      message = `SELF-COLLISION / INNER CYLINDER (r: ${r_xy.toFixed(0)} mm < ${LIM.SELF_COLLISION_MM} mm)`;
+    } else if (r_xy < LIM.SINGULARITY_MM && isLowZ) {
       if (!isCollision) {
         isSingularity = true;
         singularityJoints = ['link5', 'link4', 'link2'];
-        message = `INNER BOUNDARY SINGULARITY (r: ${r_xy.toFixed(0)} mm < 138 mm)`;
+        message = `INNER BOUNDARY SINGULARITY (r: ${r_xy.toFixed(0)} mm < ${LIM.SINGULARITY_MM} mm)`;
       }
     }
   }
@@ -680,8 +810,10 @@ function evaluateRobotSafety() {
   // Factor in inner deadzone to manipulability indicator
   if (latestEEF_X !== null && latestEEF_Y !== null) {
     const r_xy = Math.sqrt(latestEEF_X * latestEEF_X + latestEEF_Y * latestEEF_Y);
-    if (r_xy < 180.0 && latestEEF_Z !== null && latestEEF_Z < 280.0) {
-      const rPct = Math.min(100, Math.max(0, Math.round(((r_xy - 118.0) / 62.0) * 100)));
+    if (r_xy < LIM.MANIP_FADE_MM && latestEEF_Z !== null && latestEEF_Z < LIM.LOW_Z_MM) {
+      // Von SELF_COLLISION_MM (0 %) linear bis MANIP_FADE_MM (100 %).
+      const span = LIM.MANIP_FADE_MM - LIM.SELF_COLLISION_MM;
+      const rPct = Math.min(100, Math.max(0, Math.round(((r_xy - LIM.SELF_COLLISION_MM) / span) * 100)));
       manipPct = Math.min(manipPct, rPct);
     }
   }
@@ -1043,7 +1175,7 @@ function stopJointJog() {
 }
 
 // ── Web Audio UI Click Sound Effect & Sound Toggle ───────────────────────
-let soundEnabled = localStorage.getItem('robot_control_sound_enabled') !== 'false';
+let soundEnabled = lsGet('robot_control_sound_enabled') !== 'false';
 
 // ROS Publisher for Sound State (Synchronizes sound toggle with backend robot motion nodes)
 const soundStatePub = new ROSLIB.Topic({
@@ -1099,7 +1231,7 @@ function updateSoundUI() {
 
 function toggleSound() {
   soundEnabled = !soundEnabled;
-  localStorage.setItem('robot_control_sound_enabled', soundEnabled ? 'true' : 'false');
+  lsSet('robot_control_sound_enabled', soundEnabled ? 'true' : 'false');
   updateSoundUI();
   publishSoundState();
   if (soundEnabled) {
@@ -1313,15 +1445,26 @@ function setButtonsLocked(locked) {
 }
 
 function moveToPose() {
+  const x = readPoseInput('inp-x');
+  const y = readPoseInput('inp-y');
+  const z = readPoseInput('inp-z');
+  const r = readPoseInput('inp-r');
+  const p = readPoseInput('inp-p');
+  const yw = readPoseInput('inp-yw');
+
+  // Erst pruefen, dann sperren - sonst blieben die Buttons bei einer
+  // abgelehnten Eingabe gesperrt zurueck.
+  const bad = validatePose([x, y, z, r, p, yw]);
+  if (bad) {
+    logMsg('UI', `❌ MoveTo abgebrochen: ${bad}`, 'err');
+    return;
+  }
+
   setButtonsLocked(true);
   const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
-  const x = parseFloat(document.getElementById('inp-x').value);
-  const y = parseFloat(document.getElementById('inp-y').value);
-  const z = parseFloat(document.getElementById('inp-z').value);
-  const r = parseFloat(document.getElementById('inp-r').value);
-  const p = parseFloat(document.getElementById('inp-p').value);
-  const yw = parseFloat(document.getElementById('inp-yw').value);
 
+  // speed und acc gehoeren zur srv-Definition, werden vom Handler aber nicht
+  // ausgewertet - die Geschwindigkeit kommt ueber /ui/robot_control/set_speed_index.
   const req = new ROSLIB.ServiceRequest({
     pose: [x, y, z, r, p, yw],
     speed: 100.0,
@@ -1354,22 +1497,24 @@ window.executeMoveToPoseFromGizmo = function () {
     poseData = window.getTCPGizmoPose();
   }
 
-  const x = poseData ? poseData.x : parseFloat(document.getElementById('inp-x').value);
-  const y = poseData ? poseData.y : parseFloat(document.getElementById('inp-y').value);
-  const z = poseData ? poseData.z : parseFloat(document.getElementById('inp-z').value);
-  const r = poseData ? poseData.roll : parseFloat(document.getElementById('inp-r').value);
-  const p = poseData ? poseData.pitch : parseFloat(document.getElementById('inp-p').value);
-  const yw = poseData ? poseData.yaw : parseFloat(document.getElementById('inp-yw').value);
+  const x = poseData ? poseData.x : readPoseInput('inp-x');
+  const y = poseData ? poseData.y : readPoseInput('inp-y');
+  const z = poseData ? poseData.z : readPoseInput('inp-z');
+  const r = poseData ? poseData.roll : readPoseInput('inp-r');
+  const p = poseData ? poseData.pitch : readPoseInput('inp-p');
+  const yw = poseData ? poseData.yaw : readPoseInput('inp-yw');
 
-  if (isNaN(x) || isNaN(y) || isNaN(z)) {
-    logMsg('GIZMO', '❌ Invalid gizmo target coordinates.', 'err');
+  // Prueft jetzt alle sechs Werte, nicht nur X/Y/Z.
+  const bad = validatePose([x, y, z, r, p, yw]);
+  if (bad) {
+    logMsg('GIZMO', `❌ Invalid gizmo target: ${bad}`, 'err');
     return;
   }
 
   // Safety Validation: Prevent driving into inner singularity & self-collision
   const r_xy = Math.sqrt(x * x + y * y);
-  if (r_xy < 125.0 && z < 280.0) {
-    logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the inner singularity zone (r=${r_xy.toFixed(0)} mm < 125 mm). Risk of collision with its own base!`, 'err');
+  if (r_xy < LIM.HARD_BLOCK_MM && z < LIM.LOW_Z_MM) {
+    logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the inner singularity zone (r=${r_xy.toFixed(0)} mm < ${LIM.HARD_BLOCK_MM} mm). Risk of collision with its own base!`, 'err');
     if (typeof window.updateDigitalTwinSafety === 'function') {
       window.updateDigitalTwinSafety({
         collision: true,
@@ -1786,7 +1931,7 @@ function initDragAndDrop() {
 
   // 1. Load saved layout if available
   try {
-    const saved = localStorage.getItem(layoutKey);
+    const saved = lsGet(layoutKey);
     if (saved) {
       const layout = JSON.parse(saved);
       // Restore left column
@@ -1822,7 +1967,7 @@ function initDragAndDrop() {
       middle: Array.from(colMiddle.querySelectorAll('.glass-panel')).map(el => el.id).filter(id => id),
       right: Array.from(colRight.querySelectorAll('.glass-panel')).map(el => el.id).filter(id => id)
     };
-    localStorage.setItem(layoutKey, JSON.stringify(layout));
+    lsSet(layoutKey, JSON.stringify(layout));
     logMsg('UI', '✓ Layout saved automatically', 'success');
   }
 
@@ -1861,7 +2006,8 @@ if (document.readyState === 'loading') {
 
 // ── Dynamic Port & Connection Monitoring ──────────────────────────────────
 function initPortMonitoring() {
-  const host = window.location.hostname || 'localhost';
+  // Nutzt denselben Host wie die ROS-Verbindung, statt ihn erneut abzuleiten.
+  const host = ROS_HOST;
 
   function checkPort8081() {
     const dot = document.getElementById('dot-port-8081');
@@ -2128,10 +2274,13 @@ const safetyZoneParamsPub = new ROSLIB.Topic({
 });
 
 // ── ROS topics used to detect active scene object nodes ──
+// Dient nur der Lebendpruefung (4,5-s-Fenster) - 2 Hz genuegen dafuer.
 const sceneMarkersSub = new ROSLIB.Topic({
   ros: ros,
   name: '/visualization_marker_array',
-  messageType: 'visualization_msgs/MarkerArray'
+  messageType: 'visualization_msgs/MarkerArray',
+  throttle_rate: 500,
+  queue_length: 1
 });
 
 sceneMarkersSub.subscribe((msg) => {
@@ -2147,10 +2296,13 @@ sceneMarkersSub.subscribe((msg) => {
   }
 });
 
+// Ebenfalls nur Lebendpruefung.
 const zedVisualMarkersSub = new ROSLIB.Topic({
   ros: ros,
   name: '/zed_visual_markers',
-  messageType: 'visualization_msgs/MarkerArray'
+  messageType: 'visualization_msgs/MarkerArray',
+  throttle_rate: 500,
+  queue_length: 1
 });
 
 zedVisualMarkersSub.subscribe((msg) => {
@@ -2534,11 +2686,11 @@ function toggleTFTunerCollapse() {
   if (!body || !icon) return;
   const isCollapsed = body.classList.toggle('collapsed');
   icon.className = isCollapsed ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
-  localStorage.setItem('tf_tuner_collapsed', isCollapsed ? '1' : '0');
+  lsSet('tf_tuner_collapsed', isCollapsed ? '1' : '0');
 }
 
 function restoreTFTunerCollapse() {
-  const saved = localStorage.getItem('tf_tuner_collapsed');
+  const saved = lsGet('tf_tuner_collapsed');
   if (saved === '1') {
     const body = document.getElementById('tf-tuner-body');
     const icon = document.getElementById('tf-collapse-icon');
