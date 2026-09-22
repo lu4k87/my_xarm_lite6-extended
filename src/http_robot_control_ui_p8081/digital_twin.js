@@ -1854,7 +1854,39 @@
     return recs.find(r => r.obj === hits[0].object) || null;
   }
 
-  function setHover(rec) {
+  // ── Puls-Cursor ueber der Greifkugel ──────────────────────────────────
+  // Ein CSS-Cursor kann nicht animiert werden, deshalb ein eigenes Element,
+  // das dem Zeiger folgt. Der echte Zeiger wird solange ausgeblendet.
+  let hoverCursorEl = null;
+
+  function ensureHoverCursor() {
+    if (!hoverCursorEl) {
+      hoverCursorEl = document.createElement('div');
+      hoverCursorEl.className = 'twin-hover-cursor';
+      document.body.appendChild(hoverCursorEl);
+    }
+    return hoverCursorEl;
+  }
+
+  // Wird bei JEDEM pointermove aufgerufen, nicht nur im Hover-Takt: sonst
+  // ruckelte der Kreis im 50-ms-Raster des Raycasts hinterher. Kostet zwei
+  // Style-Zuweisungen, und nur solange der Cursor sichtbar ist.
+  function moveHoverCursor(ev) {
+    if (!hoverCursorEl || !hoverCursorEl.classList.contains('is-active')) return;
+    hoverCursorEl.style.left = ev.clientX + 'px';
+    hoverCursorEl.style.top = ev.clientY + 'px';
+  }
+
+  function showHoverCursor(on, ev) {
+    const el = ensureHoverCursor();
+    el.classList.toggle('is-active', !!on);
+    if (on && ev) {
+      el.style.left = ev.clientX + 'px';
+      el.style.top = ev.clientY + 'px';
+    }
+  }
+
+  function setHover(rec, ev) {
     const key = rec ? `${rec.markerId}` : null;
     if (key === hoveredKey) return;
     // Vorherige Hervorhebung zuruecknehmen
@@ -1870,7 +1902,9 @@
       rec.obj.material.emissiveIntensity = 1.4;
     }
     hoveredKey = key;
-    if (renderer) renderer.domElement.style.cursor = rec ? 'pointer' : '';
+    // Echten Zeiger ausblenden, solange der Puls-Kreis ihn ersetzt.
+    if (renderer) renderer.domElement.style.cursor = rec ? 'none' : '';
+    showHoverCursor(!!rec, ev);
   }
 
   function ensureDetectionPicking() {
@@ -1911,10 +1945,11 @@
 
     el.addEventListener('pointermove', (ev) => {
       if (isDraggingGizmo) return;
+      moveHoverCursor(ev);                                // jedes Mal
       const t = Date.now();
-      if (t - lastHoverT < HOVER_THROTTLE_MS) return;
+      if (t - lastHoverT < HOVER_THROTTLE_MS) return;     // Raycast gedrosselt
       lastHoverT = t;
-      setHover(pickSphereAt(ev));
+      setHover(pickSphereAt(ev), ev);
     });
 
     el.addEventListener('pointerleave', () => setHover(null));
@@ -1929,6 +1964,13 @@
         disposeDetection(rec);
         delete detectionObjects[key];
       }
+    }
+    // Verschwindet gerade die Kugel, ueber der die Maus steht, bliebe der
+    // Puls-Cursor sonst stehen, bis die Maus wieder bewegt wird - und der
+    // Canvas-Zeiger bliebe auf 'none'.
+    if (hoveredKey !== null &&
+        !sphereRecords().some(r => `${r.markerId}` === hoveredKey)) {
+      setHover(null);
     }
   }
 
@@ -1955,6 +1997,10 @@
   window.setDigitalTwinDetectionsVisible = function (visible) {
     detectionsVisible = !!visible;
     if (detectionGroup) detectionGroup.visible = detectionsVisible;
+    // Werden die Erkennungen ausgeblendet, waehrend die Maus ueber einer
+    // Kugel steht, gibt es nichts mehr zu treffen - Hover sofort aufloesen,
+    // statt bis zur naechsten Mausbewegung zu warten.
+    if (!detectionsVisible) setHover(null);
     return detectionsVisible;
   };
 
