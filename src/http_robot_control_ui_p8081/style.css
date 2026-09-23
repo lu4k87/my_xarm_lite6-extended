@@ -2442,15 +2442,15 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   box-sizing: border-box;
   /* Oben mittig im Viewport (Rasterbereich tc, zwischen Nav-Gizmo und
      SCENE-Panel). Abstand zum oberen Viewportrand: 10 px Raster + margin. */
-  width: 560px;
+  width: 640px;
   max-width: 100%;
   margin-top: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
-  background: rgba(10, 14, 23, 0.74);
-  border: 1px solid color-mix(in srgb, var(--mp-accent) 45%, rgba(255, 255, 255, 0.14));
+  gap: 12px;
+  padding: 16px 18px;
+  background: rgba(10, 14, 23, 0.86);
+  border: 1px solid color-mix(in srgb, var(--mp-accent) 65%, rgba(255, 255, 255, 0.2));
   border-radius: 12px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px color-mix(in srgb, var(--mp-accent) 22%, transparent);
   backdrop-filter: blur(14px);
@@ -2485,7 +2485,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .mp-head-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -2497,7 +2497,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .mp-icon {
   color: var(--mp-accent);
-  font-size: 14px;
+  font-size: 18px;
   flex: 0 0 auto;
 }
 
@@ -2509,21 +2509,21 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .mp-title {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 1px;
-  color: var(--mut);
+  color: var(--txt);
   flex: 0 0 auto;
 }
 
 .mp-phase {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.6px;
-  padding: 2px 8px;
+  padding: 3px 11px;
   border-radius: 10px;
   color: var(--mp-accent);
-  background: color-mix(in srgb, var(--mp-accent) 14%, transparent);
+  background: color-mix(in srgb, var(--mp-accent) 22%, transparent);
   border: 1px solid color-mix(in srgb, var(--mp-accent) 45%, transparent);
   white-space: nowrap;
   overflow: hidden;
@@ -2537,9 +2537,9 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 7px;
   box-sizing: border-box;
   flex-wrap: wrap;
@@ -2548,12 +2548,12 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .mp-target-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .mp-target-label {
-  font-size: 11px;
+  font-size: 13.5px;
   font-weight: 800;
   color: var(--accent);
   letter-spacing: 0.6px;
@@ -2562,6 +2562,12 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   gap: 5px;
 }
 
+/* Gizmo-Ziel im Popup etwas groesser als im HUD-Tab */
+.mp-target-row .gizmo-hud-val { font-size: 16.5px; }
+.mp-target-row .gizmo-hud-delta { font-size: 14px; padding: 4px 10px; }
+.mp-target-row .gizmo-auto-toggle { font-size: 14.5px; }
+.mp-target-row .gizmo-auto-toggle input[type="checkbox"] { width: 19px; height: 19px; }
+
 .mp-target-right {
   display: flex;
   align-items: center;
@@ -2569,7 +2575,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .mp-timer {
   margin-left: auto;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--txt);
@@ -2578,8 +2584,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .mp-close {
   flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2587,9 +2593,9 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--mut);
+  color: var(--txt);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .mp-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--txt); }
@@ -2597,28 +2603,28 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .mp-steps {
   display: grid;
   /* Three columns when there is room, otherwise the steps wrap into rows. */
-  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
 }
 
 .mp-step {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   min-width: 0;
-  padding: 4px 6px;
+  padding: 7px 9px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  font-size: 10px;
-  color: var(--mut);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 12.5px;
+  color: #aab4c3;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .mp-dot {
   flex: 0 0 auto;
-  width: 7px;
-  height: 7px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.18);
 }
@@ -2657,8 +2663,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .mp-bar {
   position: relative;
-  height: 4px;
-  border-radius: 2px;
+  height: 6px;
+  border-radius: 3px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
@@ -2684,9 +2690,9 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .mp-detail {
-  font-size: 13px;
+  font-size: 14.5px;
   line-height: 1.45;
-  color: var(--mut);
+  color: #cbd5e1;
   overflow-wrap: anywhere;
 }
 
@@ -3760,11 +3766,11 @@ header {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 36px;
-  padding: 6px 16px;
+  min-height: 42px;
+  padding: 8px 18px;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 700;
   letter-spacing: 0.5px;
   cursor: pointer;
@@ -4222,7 +4228,7 @@ header {
   .twin-ov-top-center > #moveit-popup {
     grid-area: pp;
     justify-self: center;
-    width: min(560px, 100%);
+    width: min(640px, 100%);
   }
   .twin-ov-top-center > #twin-warning-banner {
     grid-area: tc;
