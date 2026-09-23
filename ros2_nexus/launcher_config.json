@@ -290,9 +290,10 @@
       "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
       "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
       "ros2 run voice_command_listener listener",
-      "ros2 launch whisper_bringup bringup.launch.py use_gpu:=true",
+      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=false use_gpu:=false",
+      "ros2 run whisper_demos whisper_on_key",
       "ros2 run xarm_moveit_servo xarm_keyboard_input",
-      "ros2 run fake_linear_axis fake_linear_axis"
+      "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner"
     ],
     "sec_5": [],
     "sec_6": [
@@ -343,9 +344,10 @@
       "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
       "ros2 run gaze_control_ui_tobii_glasses gaze_ui",
       "ros2 run voice_command_listener listener",
-      "ros2 launch whisper_bringup bringup.launch.py use_gpu:=true",
+      "ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=false use_gpu:=false",
+      "ros2 run whisper_demos whisper_on_key",
       "ros2 run xarm_moveit_servo xarm_keyboard_input",
-      "ros2 run fake_linear_axis fake_linear_axis"
+      "ros2 run rviz_linear_axis_tuner rviz_linear_axis_tuner"
     ],
     "sec_nodes_5": [
       "ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py",

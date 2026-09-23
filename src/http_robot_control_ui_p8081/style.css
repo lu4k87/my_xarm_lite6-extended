@@ -561,9 +561,10 @@ body.col-resizing * {
 
 .glass-panel h2,
 .glass-panel > h2,
-.tf-tuner-header h2 {
+.tf-tuner-header h2,
+.centerpiece-header h2 {
   font-size: 13.5px !important;
-  color: var(--mut);
+  color: #ffffff !important;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -575,12 +576,23 @@ body.col-resizing * {
   line-height: 1.2;
 }
 
-.glass-panel h2:active {
+.centerpiece-header h2 {
+  margin-bottom: 0 !important;
+}
+
+.glass-panel h2:active,
+.centerpiece-header h2:active {
   cursor: grabbing;
 }
 
-.glass-panel h2 i {
-  color: var(--accent);
+.glass-panel h2 i,
+.centerpiece-header h2 i,
+.tf-tuner-header h2 i {
+  color: #ffffff;
+}
+
+.glass-panel h2 .panel-collapse-btn i {
+  color: var(--mut);
 }
 
 /* Telemetry Panel */
@@ -2242,19 +2254,21 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .log-src:hover::after { opacity: 1; }
 
-/* Quellen - jede Quelle einen eigenen Farbton, damit die Spalte scanbar ist.
-   [Motion] und [ROS] liegen beide im Lila-Bereich, deshalb bewusst ein
-   magenta-lastiges Lila fuer Motion: Abstand zu #bc8cff betraegt so
-   dE 27.6 statt 14.5 bei einem neutralen Lila - und der Kontrast auf dem
-   dunklen Log-Hintergrund ist mit 6.4:1 sogar besser. */
-.log-src-ros    { color: #bc8cff; }  /* Violett   */
-.log-src-ui     { color: #58a6ff; }  /* Blau      */
-.log-src-sys    { color: #e3b341; }  /* Bernstein */
-.log-src-motion { color: #d264ff; }  /* Lila      */
-.log-src-gizmo  { color: #39c5cf; }  /* Tuerkis   */
-.log-src-voice  { color: #f778ba; }  /* Pink      */
-.log-src-audio  { color: #ffa657; }  /* Orange    */
-.log-src-moveit { color: #3fb950; }  /* green */
+/* Quellen [..] - Uebernimmt exakt die Farbe des Texts der Zeile */
+.log-src.log-info    { color: #c9d1d9; }  /* Neutral   */
+.log-src.log-success { color: #3fb950; }  /* Gruen     */
+.log-src.log-action  { color: #39c5cf; }  /* Tuerkis   */
+.log-src.log-warn    { color: #e3b341; }  /* Bernstein */
+.log-src.log-err     { color: #f85149; }  /* Rot       */
+
+.log-src-ros    { color: #c9d1d9; }
+.log-src-ui     { color: #c9d1d9; }
+.log-src-sys    { color: #c9d1d9; }
+.log-src-motion { color: #c9d1d9; }
+.log-src-gizmo  { color: #c9d1d9; }
+.log-src-voice  { color: #c9d1d9; }
+.log-src-audio  { color: #c9d1d9; }
+.log-src-moveit { color: #c9d1d9; }
 
 /* Message Types */
 /* Zustaende - Grundfarbe der Meldung */
@@ -3934,7 +3948,7 @@ header {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 240px;
+  min-width: 260px;
   max-width: calc(100vw - 16px);
   padding: 6px;
   background: rgba(10, 14, 23, 0.96);

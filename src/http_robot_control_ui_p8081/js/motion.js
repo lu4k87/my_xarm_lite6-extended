@@ -1,6 +1,6 @@
 import { TOPICS, SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
-import { collisionDisabledSound, collisionEnabledSound, playVoice, scanPosSound } from './audio.js';
+import { collisionDisabledSound, collisionEnabledSound, playOutOfReachSound, playVoice, scanPosSound } from './audio.js';
 import { logMsg } from './log.js';
 import { createSrv, motionAllowed, ros, rosHooks } from './ros.js';
 import { floorGuard, readPoseInput, validatePose } from './util.js';
@@ -13,7 +13,14 @@ export const logSub = new ROSLIB.Topic({
   name: TOPICS.graspStatus,
   messageType: 'std_msgs/String'
 });
-logSub.subscribe((msg) => logMsg('ROS', msg.data, 'info'));
+logSub.subscribe((msg) => {
+  const txt = msg.data || '';
+  const isErr = txt.includes('FAILED') || txt.includes('Error') || txt.includes('not reachable') || txt.includes('unreachable') || txt.includes('out of reach') || txt.includes('nicht erreichbar') || txt.includes('❌');
+  logMsg('ROS', txt, isErr ? 'err' : 'info');
+  if (isErr && (txt.toLowerCase().includes('reach') || txt.toLowerCase().includes('ik') || txt.toLowerCase().includes('fail') || txt.toLowerCase().includes('error'))) {
+    playOutOfReachSound();
+  }
+});
 
 export const motionStatusSub = new ROSLIB.Topic({
   ros: ros,
@@ -31,6 +38,9 @@ motionStatusSub.subscribe((msg) => {
   // MoveTo / MoveIt progress gets its own log source so the planning steps stand out.
   const source = (text.startsWith('MoveIt') || text.startsWith('MoveTo')) ? 'MoveIt' : 'Motion';
   logMsg(source, text, type);
+  if (type === 'err' && (text.toLowerCase().includes('reach') || text.toLowerCase().includes('ik') || text.toLowerCase().includes('out of reach') || text.toLowerCase().includes('unerreichbar') || text.toLowerCase().includes('collision') || text.toLowerCase().includes('failed'))) {
+    playOutOfReachSound();
+  }
 });
 
 export const speedIndexPub = new ROSLIB.Topic({
@@ -176,6 +186,7 @@ export function moveToPose() {
   const bad = validatePose([x, y, z, r, p, yw]);
   if (bad) {
     logMsg('UI', `❌ MoveTo abgebrochen: ${bad}`, 'err');
+    playOutOfReachSound();
     return;
   }
 
@@ -197,10 +208,14 @@ export function moveToPose() {
     // The service only starts the motion - progress and the result follow in
     // the MoveIt popup and as [MoveIt] log lines.
     if (res.ret === 0) logMsg('ROS', 'MoveTo accepted - MoveIt is planning the path.', 'info');
-    else logMsg('ROS', `❌ MoveTo rejected (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
+    else {
+      logMsg('ROS', `❌ MoveTo rejected (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
+      playOutOfReachSound();
+    }
   }, (err) => { 
     setButtonsLocked(false);
     logMsg('ROS', `❌ MoveTo Error: ${err}`, 'err'); 
+    playOutOfReachSound();
   });
 }
 
@@ -397,6 +412,11 @@ export function confirmMoveToPreview(execute) {
       twin.twinHooks.executeMoveToPoseFromGizmo();
     }
     return;
+  }
+  if (execute) {
+    if (typeof twin.twinHooks.triggerApproachVoice === 'function') {
+      twin.twinHooks.triggerApproachVoice();
+    }
   }
   createSrv(SERVICES.confirmMovetoPreview, 'std_srvs/SetBool').callService(
     new ROSLIB.ServiceRequest({ data: !!execute }),

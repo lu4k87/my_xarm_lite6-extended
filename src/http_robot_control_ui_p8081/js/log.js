@@ -95,21 +95,21 @@ export function logMsg(source, text, type='info') {
   if(!win) return;
   const d = new Date();
   const timeStr = d.toTimeString().split(' ')[0];
-  const div = document.createElement('div');
-  div.className = 'log-entry';
-
   let autoType = type;
   if (text.includes('✓')) autoType = 'success';
   else if (text.includes('❌')) autoType = 'err';
   else if (text.includes('➤')) autoType = 'action';
   else if (text.includes('⚠')) autoType = 'warn';
 
+  const div = document.createElement('div');
+  div.className = `log-entry log-entry-${autoType}`;
+
   const srcClass = LOG_SRC_CLASSES[source] || 'log-src-sys';
 
   // Der Zeitstempel steht nicht mehr in der Zeile - er haengt als data-time
   // am Quellen-Tag und wird per CSS beim Hover eingeblendet.
   const srcEl = document.createElement('span');
-  srcEl.className = `log-src ${srcClass}`;
+  srcEl.className = `log-src log-${autoType} ${srcClass}`;
   srcEl.dataset.time = timeStr;
   srcEl.textContent = `[${source}]`;
   const msgEl = document.createElement('span');

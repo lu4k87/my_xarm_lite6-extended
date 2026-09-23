@@ -196,15 +196,10 @@
         <section id="panel-3d-centerpiece" class="glass-panel">
           <div class="centerpiece-header panel-drag-handle">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="panel-drag-grip" title="Drag to reorder 3D Viewport"><i class="fa-solid fa-grip-vertical"></i></span>
-              <div class="viewport-tabs">
-                <span class="v-tab-btn active" style="cursor: default;">
-                  <i class="fa-solid fa-circle" style="color: #22c55e; font-size: 8px;"></i> Live Digital Twin
-                </span>
-                <button type="button" class="v-tab-hud-toggle" id="btn-hud-tabs-toggle" data-action="toggleAllHudTabs" title="Collapse / expand all viewport panels">
-                  <i class="fa-solid fa-window-minimize" id="hud-tabs-toggle-icon"></i>
-                </button>
-              </div>
+              <h2 style="margin: 0; cursor: grab;"><i class="fa-solid fa-cube"></i> Live Digital Twin</h2>
+              <button type="button" class="v-tab-hud-toggle" id="btn-hud-tabs-toggle" data-action="toggleAllHudTabs" title="Collapse / expand all viewport panels">
+                <i class="fa-solid fa-window-minimize" id="hud-tabs-toggle-icon"></i>
+              </button>
             </div>
             
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -706,7 +701,7 @@
         <section id="panel-tf-tuner" class="glass-panel tf-tuner-section">
           <div class="tf-tuner-header">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <h2 style="margin: 0;"><i class="fa-solid fa-sliders" style="color: var(--cyan);"></i> TF Control Tuner</h2>
+              <h2 style="margin: 0;"><i class="fa-solid fa-sliders"></i> TF Control Tuner</h2>
               <button id="btn-tuner-broadcast" class="btn-toggle-broadcast" data-action="toggleTFBroadcast" title="Toggle Live TF broadcasting via rosbridge (10 Hz)">
                 <i class="fa-solid fa-satellite-dish"></i> <span id="tuner-broadcast-label">Live TF</span>
               </button>

@@ -23,6 +23,8 @@ export const twinHooks = {
   openDetectedObjectMenu: null,
   graspDetectedObject: null,
   approachDetectedObject: null,
+  isApproachingObject: null,
+  triggerApproachVoice: null,
 };
 
 // ── Rendern nur bei Bedarf ──────────────────────────────────────────────────
@@ -2481,12 +2483,11 @@ function ensureDetectionPicking() {
     // weiter, als haette man die Maustaste noch gedrueckt.
     // Ein Klick ohne Bewegung erzeugt in OrbitControls ohnehin keine
     // Rotation - es gibt also nichts zu unterdruecken.
-    // Linksklick: TCP faehrt kollisionsfrei ueber die Kugel. Das Menue
-    // (Approach / Grasp / Collision) liegt auf dem Rechtsklick.
-    if (typeof twinHooks.approachDetectedObject === 'function') {
-      twinHooks.approachDetectedObject(objectInfoForSphere(rec, name));
-    } else if (typeof twinHooks.openDetectedObjectMenu === 'function') {
+    // Klick auf die Greifkugel oeffnet das Kontextmenue (Approach / Grasp / Collision).
+    if (typeof twinHooks.openDetectedObjectMenu === 'function') {
       twinHooks.openDetectedObjectMenu(objectInfoForSphere(rec, name), ev.clientX, ev.clientY);
+    } else if (typeof twinHooks.approachDetectedObject === 'function') {
+      twinHooks.approachDetectedObject(objectInfoForSphere(rec, name));
     } else if (typeof twinHooks.graspDetectedObject === 'function') {
       twinHooks.graspDetectedObject(name, 'viewport');
     }

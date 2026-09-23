@@ -8,12 +8,16 @@ export let scanPosSound = null;
 export let collisionEnabledSound = null;
 export let collisionDisabledSound = null;
 export let errorSound = null;
+export let outOfReachSound = null;
+export let movesToSelectedObjectSound = null;
 try {
   uiClickSound = new Audio('sounds/ui_mouse_click.mp3');
   scanPosSound = new Audio('sounds/_voice_robot_moves_to_scan_pos.mp3');
   collisionEnabledSound = new Audio('sounds/_voice_collision_detection_enabled.mp3');
   collisionDisabledSound = new Audio('sounds/_voice_collision_detection_disabled.mp3');
   errorSound = new Audio('sounds/error_sound.mp3');
+  outOfReachSound = new Audio('sounds/_voice_object_out_of_reach.mp3');
+  movesToSelectedObjectSound = new Audio('sounds/_voice_robot_moves_to_selected_object.mp3');
 } catch (e) {}
 
 // ── Web Audio UI Click Sound Effect & Sound Toggle ───────────────────────
@@ -48,6 +52,22 @@ export function syncAudioElements() {
     if (!soundEnabled) {
       scanPosSound.pause();
       scanPosSound.currentTime = 0;
+    }
+  }
+  if (outOfReachSound) {
+    outOfReachSound.muted = !soundEnabled;
+    outOfReachSound.volume = soundEnabled ? 1.0 : 0.0;
+    if (!soundEnabled) {
+      outOfReachSound.pause();
+      outOfReachSound.currentTime = 0;
+    }
+  }
+  if (movesToSelectedObjectSound) {
+    movesToSelectedObjectSound.muted = !soundEnabled;
+    movesToSelectedObjectSound.volume = soundEnabled ? 1.0 : 0.0;
+    if (!soundEnabled) {
+      movesToSelectedObjectSound.pause();
+      movesToSelectedObjectSound.currentTime = 0;
     }
   }
 }
@@ -173,6 +193,22 @@ export function playVoice(audio, what) {
   } catch (err) {
     reportClickSoundProblem(`${err && err.name ? err.name : 'Fehler'} beim Abspielen - ${what}`);
   }
+}
+
+let lastOutOfReachTs = 0;
+export function playOutOfReachSound() {
+  const now = Date.now();
+  if (now - lastOutOfReachTs < 1500) return; // Cooldown um Audio-Überlappung zu vermeiden
+  lastOutOfReachTs = now;
+  playVoice(outOfReachSound, 'object out of reach');
+}
+
+let lastMovesToSelectedObjectTs = 0;
+export function playMovesToSelectedObjectSound() {
+  const now = Date.now();
+  if (now - lastMovesToSelectedObjectTs < 8000) return; // Cooldown um Audio-Überlappung zu vermeiden
+  lastMovesToSelectedObjectTs = now;
+  playVoice(movesToSelectedObjectSound, 'moves to selected object');
 }
 
 // Dieselbe Ursache nicht bei jedem Klick wiederholen.

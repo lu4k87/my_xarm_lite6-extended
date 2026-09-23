@@ -1,5 +1,6 @@
 import { TOPICS, SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
+import { playOutOfReachSound, playMovesToSelectedObjectSound } from './audio.js';
 import { logMsg } from './log.js';
 import { setButtonsLocked } from './motion.js';
 import { createSrv, motionAllowed, ros } from './ros.js';
@@ -115,13 +116,28 @@ export function objMenuItem(icon, label, hint, onClick, opts = {}) {
 // MoveIt-Fahrt ohne Erfolg, wird die Markierung der Kugel wieder geloest -
 // sonst pulste sie bis zum Timeout weiter.
 let approachTarget = null;
+let approachVoicePlayed = false;
+
+export function isApproachingObject() {
+  return !!approachTarget;
+}
+
+export function triggerApproachVoice() {
+  if (!approachTarget || approachVoicePlayed) return;
+  approachVoicePlayed = true;
+  playMovesToSelectedObjectSound();
+}
 
 function endApproach(reason) {
   if (!approachTarget) return;
   approachTarget = null;
+  approachVoicePlayed = false;
   if (reason && typeof twin.clearDigitalTwinSelectedGrasp === 'function') {
     twin.clearDigitalTwinSelectedGrasp();
     logMsg('UI', `Approach ended: ${reason}`, 'warn');
+    if (!reason.includes('discard') && !reason.includes('cancel')) {
+      playOutOfReachSound();
+    }
   }
 }
 
@@ -136,16 +152,23 @@ new ROSLIB.Topic({
   if (!st || !Array.isArray(st.target)) return;
   // Nur auf die eigene Fahrt reagieren (Ziel auf 1 mm genau).
   if (st.target.some((v, i) => Math.abs(v - approachTarget[i]) > 1)) return;
+  if (st.phase === 'executing') {
+    triggerApproachVoice();
+  }
   if (st.phase === 'succeeded') endApproach(null);   // Twin loest per TCP-Abstand
   else if (['failed', 'aborted', 'discarded'].includes(st.phase)) endApproach(st.message || st.phase);
 });
 
 export function approachObjectFromAbove(info) {
-  if (!info || !info.grasp) return;
+  if (!info || !info.grasp) {
+    playOutOfReachSound();
+    return;
+  }
   const pose = [info.grasp.x, info.grasp.y, info.grasp.z + APPROACH_ABOVE_MM, ...APPROACH_ORIENTATION];
   const bad = validatePose(pose);
   if (bad) {
     logMsg('UI', `❌ Approach ${info.name} rejected: ${bad}`, 'err');
+    playOutOfReachSound();
     return;
   }
   if (!motionAllowed('Approach from above')) return;
@@ -153,6 +176,7 @@ export function approachObjectFromAbove(info) {
     twin.setDigitalTwinSelectedGrasp(info.name, APPROACH_ABOVE_MM / 1000);
   }
   approachTarget = pose.slice(0, 3);
+  approachVoicePlayed = false;
   setButtonsLocked(true);
   logMsg('UI', `➤ Approach ${info.name} from above: X=${pose[0]} Y=${pose[1]} Z=${pose[2]} mm (${APPROACH_ABOVE_MM} mm above grasp point)`, 'action');
   createSrv(SERVICES.approachFromAbove, 'xarm_msgs/MoveCartesian').callService(
@@ -163,12 +187,14 @@ export function approachObjectFromAbove(info) {
       else {
         logMsg('ROS', `❌ Approach rejected (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
         endApproach(res.message || 'rejected');
+        playOutOfReachSound();
       }
     },
     (err) => {
       setButtonsLocked(false);
       logMsg('ROS', `❌ Approach error: ${err}`, 'err');
       endApproach(String(err));
+      playOutOfReachSound();
     }
   );
 }
@@ -218,9 +244,11 @@ export function openDetectedObjectMenu(info, clientX, clientY) {
   objMenuEl.appendChild(objMenuItem('fa-arrow-down', 'Approach from above', `+${APPROACH_ABOVE_MM} mm`,
     () => approachObjectFromAbove(info),
     { disabled: !info.grasp, title: info.grasp ? 'Move the TCP above the grasp point, gripper pointing down' : 'Grasp point unknown' }));
-  objMenuEl.appendChild(objMenuItem('fa-hand-holding', 'Grasp', null,
-    () => graspDetectedObject(info.name, 'menu'),
-    { title: 'Run the grasp routine for this object' }));
+  objMenuEl.appendChild(objMenuItem('fa-hand-holding', 'Grasp', 'Not implemented',
+    () => {
+      logMsg('UI', 'ℹ️ Grasp function is not yet implemented.', 'info');
+    },
+    { title: 'Grasp function is not yet implemented' }));
 
   const off = info.collisionName && disabledCollisionObjects.has(info.collisionName);
   objMenuEl.appendChild(objMenuItem(off ? 'fa-shield-halved' : 'fa-shield',
@@ -464,18 +492,13 @@ export const graspPub = new ROSLIB.Topic({
 });
 
 export function executeGrasp() {
-  const obj = document.getElementById('inp-grasp-obj').value;
-  if(!obj) {
-    logMsg('UI', '❌ Error: No object name entered for grasp.', 'err');
-    return;
-  }
-  if (!motionAllowed('Grasp')) return;
-  logMsg('UI', `➤ Triggering Grasp for object: ${obj}`);
-  graspPub.publish(new ROSLIB.Message({ data: obj }));
+  logMsg('UI', 'ℹ️ Grasp function is not yet implemented.', 'info');
 }
 
 // Viewport: Linksklick auf die Greifkugel faehrt darueber, Rechtsklick oeffnet das Menue.
 twin.twinHooks.openDetectedObjectMenu = openDetectedObjectMenu;
 twin.twinHooks.graspDetectedObject = graspDetectedObject;
 twin.twinHooks.approachDetectedObject = approachObjectFromAbove;
+twin.twinHooks.isApproachingObject = isApproachingObject;
+twin.twinHooks.triggerApproachVoice = triggerApproachVoice;
 
