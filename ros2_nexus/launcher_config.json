@@ -726,6 +726,14 @@
       }
     }
   },
+  "__popups_env": {
+    "dev_fake": {
+      "localhost_only": true
+    },
+    "dev_real": {
+      "localhost_only": false
+    }
+  },
   "info": [
     {
       "actions": [

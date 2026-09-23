@@ -52,6 +52,7 @@ import './uievents.js';
 import './streams.js';
 import './persist.js';
 import './columns.js';
+import './panel_snap.js';
 import {
   cycleTCPGizmoMode, resetDigitalTwinView, setDigitalTwinDetectionFlip, setDigitalTwinLabelScale,
   setDigitalTwinTopView, syncTCPGizmoToRobot, testDigitalTwinSafetyCycle, toggleDigitalTwinEdges,

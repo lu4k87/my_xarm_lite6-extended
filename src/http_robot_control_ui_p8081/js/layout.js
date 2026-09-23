@@ -3,6 +3,7 @@ import { logMsg } from './log.js';
 import { initPortMonitoring } from './status.js';
 import { isSceneObjectsNodeRunning, updateAllSceneNodeBtns, updateRangeProgress, updateTunerUI } from './tf_tuner.js';
 import { lsGet, lsSet, setIconLabel } from './util.js';
+import { snapPanelToColumn } from './panel_snap.js';
 
 // ── YOLO 3D Overlay im Viewport ein-/ausblenden ─────────────────────────
 // Zustand in localStorage, damit die Ansicht einen Reload ueberlebt.
@@ -212,8 +213,11 @@ export function initDragAndDrop() {
     filter: 'button, input, select, a, .twin-toolbar, .viewport-tabs, .v-tab-btn',
     preventOnFilter: false,
     ghostClass: 'sortable-ghost',
-    onEnd: () => {
+    onEnd: (evt) => {
       saveLayout();
+      if (evt && evt.item) {
+        snapPanelToColumn(evt.item, true);
+      }
       if (typeof twin.resizeDigitalTwin === 'function') {
         setTimeout(twin.resizeDigitalTwin, 50);
         setTimeout(twin.resizeDigitalTwin, 250);
