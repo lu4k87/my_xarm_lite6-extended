@@ -333,7 +333,9 @@ export function initPanelCollapse() {
 
     const title = section.id === 'panel-3d-centerpiece'
       ? '3D Viewport'
-      : (header.textContent || section.id).trim();
+      : ([...header.childNodes]
+          .filter(n => !(n.classList && n.classList.contains('panel-title-meta')))
+          .map(n => n.textContent).join('') || section.id).trim();
     header.classList.add('panel-collapse-header');
     const btn = document.createElement('button');
     btn.type = 'button';

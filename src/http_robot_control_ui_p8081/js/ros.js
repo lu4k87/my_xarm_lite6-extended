@@ -75,8 +75,10 @@ export function checkRosNodes() {
       }
 
       paramClient.callService(new ROSLIB.ServiceRequest({
-        name: `${driverNode}/robot_ip`,
-        default: ''
+        // rosapi (ROS 2) erwartet "<node>:<parameter>" und das Feld
+        // default_value - mit "/robot_ip" kam die IP nie an.
+        name: `${driverNode}:robot_ip`,
+        default_value: ''
       }), (paramResult) => {
         try {
           if (paramResult && paramResult.value) {

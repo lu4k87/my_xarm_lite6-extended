@@ -4,45 +4,65 @@ import { logMsg } from './log.js';
 import { ros } from './ros.js';
 import { visibleInterval } from './util.js';
 
-// ── Live Camera Update Loop ──
-const camImg = document.getElementById('cam-stream');
-const camErr = document.getElementById('cam-stream-err');
-if (camImg) {
-  function updateCam() {
-    camImg.src = `http://192.168.0.124/html/cam_pic.php?time=${new Date().getTime()}&pDelay=40000`;
+// ── Live Camera 1 / 2 (Raspberry-Pi-Kameras, RPi Cam Web Interface) ──
+// cam_pic.php liefert je Anfrage ein einzelnes JPEG; das naechste wird
+// angefordert, sobald das vorige da ist. Die Bildrate ist also direkt
+// messbar: Anzahl geladener Bilder im gleitenden Fenster.
+const CAM_FPS_WINDOW_MS = 2000;
+
+function setupPolledCam(imgId, errId, metaId, camHost) {
+  const img = document.getElementById(imgId);
+  const err = document.getElementById(errId);
+  const meta = document.getElementById(metaId);
+  if (!img) return;
+
+  const loads = [];       // Zeitstempel der letzten geladenen Bilder
+  let online = false;
+  // Beim Setzen der naechsten src faellt naturalWidth sofort auf 0 zurueck -
+  // die Groesse deshalb beim Laden festhalten.
+  let frameW = 0, frameH = 0;
+
+  const url = () => `http://${camHost}/html/cam_pic.php?time=${Date.now()}&pDelay=40000`;
+
+  function renderMeta() {
+    if (!meta) return;
+    const now = performance.now();
+    while (loads.length && now - loads[0] > CAM_FPS_WINDOW_MS) loads.shift();
+    const fps = loads.length > 1 ? (loads.length - 1) / ((loads[loads.length - 1] - loads[0]) / 1000) : 0;
+    const w = frameW, h = frameH;
+    const text = online && w > 0
+      ? `${w}×${h} · JPEG · ${fps.toFixed(1)} fps · ${camHost}`
+      : `offline · ${camHost}`;
+    if (meta.textContent !== text) meta.textContent = text;
+    meta.title = online
+      ? `Stream: ${w}×${h} px, single JPEG frames polled from ${url().split('?')[0]} (RPi Cam Web Interface), measured ${fps.toFixed(1)} fps`
+      : `No frame from ${camHost} - camera not reachable`;
   }
-  camImg.onload = () => {
-    if (camErr) camErr.style.display = 'none';
-    camImg.style.display = 'block';
-    updateCam();
+
+  img.onload = () => {
+    online = true;
+    frameW = img.naturalWidth;
+    frameH = img.naturalHeight;
+    loads.push(performance.now());
+    if (err) err.style.display = 'none';
+    img.style.display = 'block';
+    img.src = url();
   };
-  camImg.onerror = () => {
-    if (camErr) camErr.style.display = 'flex';
-    camImg.style.display = 'none';
-    setTimeout(updateCam, 1000);
+  img.onerror = () => {
+    online = false;
+    loads.length = 0;
+    if (err) err.style.display = 'flex';
+    img.style.display = 'none';
+    setTimeout(() => { img.src = url(); }, 1000);
   };
-  updateCam(); // start the loop
+  img.src = url();
+  renderMeta();
+  visibleInterval(renderMeta, 1000);
 }
 
-// ── Live Camera 2 Update Loop ──
-const camImg2 = document.getElementById('cam-stream-2');
-const camErr2 = document.getElementById('cam-stream-2-err');
-if (camImg2) {
-  function updateCam2() {
-    camImg2.src = `http://192.168.0.123/html/cam_pic.php?time=${new Date().getTime()}&pDelay=40000`;
-  }
-  camImg2.onload = () => {
-    if (camErr2) camErr2.style.display = 'none';
-    camImg2.style.display = 'block';
-    updateCam2();
-  };
-  camImg2.onerror = () => {
-    if (camErr2) camErr2.style.display = 'flex';
-    camImg2.style.display = 'none';
-    setTimeout(updateCam2, 1000);
-  };
-  updateCam2(); // start the loop
-}
+setupPolledCam('cam-stream', 'cam-stream-err', 'cam-stream-meta', '192.168.0.124');
+setupPolledCam('cam-stream-2', 'cam-stream-2-err', 'cam-stream-2-meta', '192.168.0.123');
+
 // ── RViz Fenster-Stream ──
 // Hatte dieselben zwei Fehler wie der ZED-Stream: die Einblendung haengte
 // allein am load-Event (das bei MJPEG ausbleibt) und es fehlte
@@ -116,6 +136,56 @@ if (zedImg) {
   ];
 
   const modeFor = (t) => ZED_MODES.find(m => m.topic === t) || null;
+
+  // ── Stream-Details neben der Ueberschrift ──
+  // Aufloesung = was tatsaechlich ankommt (naturalWidth/Height des MJPEG-
+  // Bildes), dazu Transport, Quellformat des Topics und die Kamera-
+  // Einstellung (grab_resolution / grab_frame_rate des ZED-Nodes).
+  const zedMeta = document.getElementById('zed-stream-meta');
+  const ZED_NODE = '/zed/zed_node';
+  let zedCam = { res: null, fps: null };
+
+  function sourceEncoding(topic) {
+    const m = modeFor(topic);
+    if (m && m.float) return '32FC1';
+    if (/gray/.test(topic)) return 'MONO8';
+    if (/depth|confidence|disparity/.test(topic)) return '32FC1';
+    return 'BGRA8';
+  }
+
+  function renderZedMeta() {
+    if (!zedMeta) return;
+    const parts = [];
+    const w = zedImg.naturalWidth, h = zedImg.naturalHeight;
+    parts.push(w > 0 ? `${w}×${h}` : '–×–');
+    parts.push('MJPEG');
+    parts.push(sourceEncoding(currentTopic));
+    if (zedCam.res || zedCam.fps) {
+      parts.push(`Cam ${zedCam.res || '?'}${zedCam.fps ? ` @ ${zedCam.fps} fps` : ''}`);
+    }
+    const text = parts.join(' · ');
+    if (zedMeta.textContent !== text) zedMeta.textContent = text;
+    zedMeta.title = `Stream: ${w > 0 ? `${w}×${h} px` : 'no frame yet'}, transport MJPEG via web_video_server (port 8082), ` +
+      `source ${sourceEncoding(currentTopic)} (${currentTopic})` +
+      (zedCam.res ? `, camera grab_resolution ${zedCam.res}` : '') + (zedCam.fps ? `, grab_frame_rate ${zedCam.fps} fps` : '');
+  }
+
+  // rosapi erwartet "<node>:<parameter>" und liefert JSON-kodierte Werte.
+  function readZedParam(name, cb) {
+    if (!ros || !ros.isConnected) return;
+    new ROSLIB.Service({ ros, name: SERVICES.rosapiGetParam, serviceType: 'rosapi/GetParam' })
+      .callService(new ROSLIB.ServiceRequest({ name: `${ZED_NODE}:${name}`, default_value: '' }),
+        (res) => {
+          let v = res && res.value;
+          try { v = JSON.parse(v); } catch (e) { /* roher String */ }
+          cb(v === '' || v === null || v === undefined ? null : v);
+        }, () => cb(null));
+  }
+
+  function refreshZedCamParams() {
+    readZedParam('general.grab_resolution', (v) => { zedCam.res = v ? String(v) : null; renderZedMeta(); });
+    readZedParam('general.grab_frame_rate', (v) => { zedCam.fps = Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null; renderZedMeta(); });
+  }
 
   function streamUrl(topic, bust) {
     const m = modeFor(topic);
@@ -209,6 +279,7 @@ if (zedImg) {
     currentTopic = topic;
     try { localStorage.setItem(ZED_LS_KEY, topic); } catch (e) {}
     if (zedTopicLbl) zedTopicLbl.textContent = topic.replace(ZED_NS + '/', '');
+    renderZedMeta();
     stopZedWatch();
     // Das Bild bleibt sichtbar. Das Overlay liegt (z-index 10) darueber und
     // verschwindet, sobald der erste Frame da ist.
@@ -279,6 +350,10 @@ if (zedImg) {
   }
 
   setTimeout(refreshZedTopics, 1500);
+  setTimeout(refreshZedCamParams, 1500);
+  visibleInterval(refreshZedCamParams, 15000);
+  // Aufloesung kann sich mit dem Modus aendern (z. B. Stereo = doppelte Breite).
+  visibleInterval(renderZedMeta, 1000);
   // Pausiert bei verstecktem Tab
   visibleInterval(refreshZedTopics, 15000);
 }
