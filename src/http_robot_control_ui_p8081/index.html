@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=41">
+  <link rel="stylesheet" href="style.css?v=26">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -27,8 +27,24 @@
     
     <header>
       <div class="header-status">
+        <!-- Not-Aus: fest im Header, damit er unabhaengig vom Drag-and-Drop-
+             Layout und auch hinter dem Offline-Overlay immer erreichbar ist. -->
+        <div class="status-group estop-group">
+          <button type="button" class="estop-header-btn" id="btn-estop-header" data-action="emergencyStop" title="EMERGENCY STOP (Key: Space)">
+            <i class="fa-solid fa-hand"></i>
+            <span>E-STOP</span>
+            <kbd>Space</kbd>
+          </button>
+          <button type="button" class="estop-header-reset estop-reset-hidden" id="btn-estop-header-reset" data-action="resetEmergencyStop" title="Acknowledge Emergency Stop (reset robot state, resume MoveIt Servo)">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>Reset</span>
+          </button>
+        </div>
+
+        <div class="status-divider"></div>
+
         <div class="status-group">
-          <button class="status-pill reload-btn" onclick="location.reload()" title="Reload Web Control">
+          <button class="status-pill reload-btn" data-action="reloadPage" title="Reload Web Control">
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
 
@@ -41,15 +57,15 @@
             <div id="dot-port-8081" class="dot glow-green"></div>
             <span>Robot Control UI: 8081</span>
           </div>
-          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus Webapp & Web Backend (Flask API)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':5000', '_blank')">
+          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus Webapp & Web Backend (Flask API)" style="cursor: pointer;" data-open-port="5000">
             <div id="dot-port-5000" class="dot glow-red"></div>
             <span>Nexus Webapp: 5000</span>
           </div>
-          <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node Topology (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8080/dashboard_index.html', '_blank')">
+          <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node Topology (HTTP)" style="cursor: pointer;" data-open-port="8080" data-open-path="/dashboard_index.html">
             <div id="dot-port-8080" class="dot glow-red"></div>
             <span>Dashboard: 8080</span>
           </div>
-          <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server for Camera & RViz Streams (HTTP)" style="cursor: pointer;" onclick="window.open('http://' + (window.location.hostname || 'localhost') + ':8082', '_blank')">
+          <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server for Camera & RViz Streams (HTTP)" style="cursor: pointer;" data-open-port="8082">
             <div id="dot-port-8082" class="dot glow-red"></div>
             <span>Video Streams: 8082</span>
           </div>
@@ -161,7 +177,7 @@
           <h2 style="margin-top: 24px;"><i class="fa-solid fa-hand-holding"></i> Manual Grasp Target</h2>
           <div style="display: flex; gap: 12px;">
             <input type="text" id="inp-grasp-obj" placeholder="Object class (e.g. cup)" style="flex: 1;">
-            <button class="btn btn-orange" style="font-weight: 700; height: 36px; padding: 0 16px; display: flex; align-items: center; gap: 6px;" onclick="executeGrasp()">
+            <button class="btn btn-orange" style="font-weight: 700; height: 36px; padding: 0 16px; display: flex; align-items: center; gap: 6px;" data-action="executeGrasp">
               <i class="fa-solid fa-hand-holding"></i> Grasp Object
             </button>
           </div>
@@ -177,7 +193,7 @@
                 <span class="v-tab-btn active" style="cursor: default;">
                   <i class="fa-solid fa-circle" style="color: #22c55e; font-size: 8px;"></i> Live Digital Twin
                 </span>
-                <button type="button" class="v-tab-hud-toggle" id="btn-hud-tabs-toggle" onclick="toggleAllHudTabs()" title="Collapse / expand all viewport panels">
+                <button type="button" class="v-tab-hud-toggle" id="btn-hud-tabs-toggle" data-action="toggleAllHudTabs" title="Collapse / expand all viewport panels">
                   <i class="fa-solid fa-window-minimize" id="hud-tabs-toggle-icon"></i>
                 </button>
               </div>
@@ -186,33 +202,37 @@
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="badge badge-node" id="twin-status-badge"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
               <div class="twin-toolbar">
-                <button class="btn btn-icon-small" id="btn-twin-safety-test" onclick="testDigitalTwinSafetyCycle()" title="Test safety warnings (Collision & Singularity Visuals)" style="color: var(--mut);">
+                <button class="btn btn-icon-small" id="btn-twin-safety-test" data-action="testDigitalTwinSafetyCycle" title="Test safety warnings (Collision & Singularity Visuals)" style="color: var(--mut);">
                   <i class="fa-solid fa-shield-halved"></i>
                 </button>
-                <button class="btn btn-icon-small" onclick="resetDigitalTwinView()" title="Reset camera view (Isometric)">
+                <button class="btn btn-icon-small" data-action="resetDigitalTwinView" title="Reset camera view (Isometric)">
                   <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
-                <button class="btn btn-icon-small" onclick="setDigitalTwinTopView()" title="Top-down view">
+                <button class="btn btn-icon-small" data-action="setDigitalTwinTopView" title="Top-down view">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-grid" onclick="toggleDigitalTwinGrid()" title="Toggle ground grid" style="color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-grid" data-action="toggleDigitalTwinGrid" title="Toggle ground grid" style="color: var(--cyan);">
                   <i class="fa-solid fa-border-all"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-edges" onclick="toggleDigitalTwinEdges()" title="Toggle CAD edge outlines" style="color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-edges" data-action="toggleDigitalTwinEdges" title="Toggle CAD edge outlines" style="color: var(--cyan);">
                   <i class="fa-solid fa-shapes"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
-                <button class="btn btn-icon-small active" id="btn-twin-gizmo" onclick="toggleTCPGizmo()" title="Toggle 3D TCP Gizmo (Key: G)" style="color: var(--cyan);">
+                <button class="btn btn-icon-small active" id="btn-twin-gizmo" data-action="toggleTCPGizmo" title="Toggle 3D TCP Gizmo (Key: G)" style="color: var(--cyan);">
                   <i class="fa-solid fa-arrows-up-down-left-right"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-gizmo-mode" onclick="cycleTCPGizmoMode()" title="Mode: Translation (Arrows) / Rotation (Rings) [Keys: T / R]" style="color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-gizmo-mode" data-action="cycleTCPGizmoMode" title="Mode: Translation (Arrows) / Rotation (Rings) [Keys: T / R]" style="color: var(--cyan);">
                   <i class="fa-solid fa-arrows-to-circle"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-gizmo-sync" onclick="syncTCPGizmoToRobot()" title="Sync Gizmo to current robot TCP (Key: Esc)" style="color: var(--mut);">
+                <button class="btn btn-icon-small" id="btn-twin-gizmo-sync" data-action="syncTCPGizmoToRobot" title="Sync Gizmo to current robot TCP (Key: Esc)" style="color: var(--mut);">
                   <i class="fa-solid fa-crosshairs"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
-                <button class="btn btn-icon-small" id="btn-sound-toggle" onclick="toggleSound()" title="Toggle sound effects" style="color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-path-preview" data-action="toggleMoveToPreview" title="MoveTo path preview (node robot_motion_handler_movegroup inactive)" style="color: var(--dim); opacity: 0.45;">
+                  <i class="fa-solid fa-ghost"></i>
+                </button>
+                <div class="twin-toolbar-divider"></div>
+                <button class="btn btn-icon-small" id="btn-sound-toggle" data-action="toggleSound" title="Toggle sound effects" style="color: var(--cyan);">
                   <i class="fa-solid fa-volume-high" id="sound-toggle-icon"></i>
                 </button>
               </div>
@@ -235,7 +255,7 @@
               <!-- top-center: Floating TCP Gizmo Target HUD + Safety Warning Banner darunter -->
               <div class="twin-ov-top-center">
                 <div class="twin-hud-tab" id="hud-tab-gizmo" data-hud="gizmo">
-                <button type="button" class="hud-tab-head" onclick="toggleHudTab('gizmo')" title="Collapse / expand the TCP gizmo panel" aria-expanded="true">
+                <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["gizmo"]' title="Collapse / expand the TCP gizmo panel" aria-expanded="true">
                   <i class="fa-solid fa-arrows-up-down-left-right hud-tab-icon"></i>
                   <span class="hud-tab-title">TCP GIZMO</span>
                   <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
@@ -252,7 +272,7 @@
                       <input type="checkbox" id="chk-gizmo-auto-drop" checked>
                       <span>Auto-Move</span>
                     </label>
-                    <button id="btn-gizmo-execute" class="btn btn-gizmo-go" onclick="executeMoveToPoseFromGizmo()" title="Move robot to gizmo target pose">
+                    <button id="btn-gizmo-execute" class="btn btn-gizmo-go" data-action="executeMoveToPoseFromGizmo" title="Move robot to gizmo target pose">
                       <i class="fa-solid fa-play"></i> Execute
                     </button>
                   </div>
@@ -267,7 +287,7 @@
                     <span class="mp-title">MOVEIT</span>
                     <span class="mp-phase" id="mp-phase">IDLE</span>
                     <span class="mp-timer" id="mp-timer">0.0 s</span>
-                    <button type="button" class="mp-close" onclick="hideMoveitPopup()" title="Close MoveIt status">
+                    <button type="button" class="mp-close" data-action="hideMoveitPopup" title="Close MoveIt status">
                       <i class="fa-solid fa-xmark"></i>
                     </button>
                   </div>
@@ -284,6 +304,15 @@
                   </div>
                   <div class="mp-bar"><div class="mp-bar-fill" id="mp-bar-fill"></div></div>
                   <div class="mp-detail" id="mp-detail">Waiting for MoveIt...</div>
+                  <!-- Nur in der Phase "confirm" sichtbar (Pfad-Vorschau) -->
+                  <div class="mp-actions">
+                    <button type="button" class="mp-btn mp-btn-exec" data-action="confirmMoveToPreview" data-args='[true]' title="Execute the previewed path">
+                      <i class="fa-solid fa-play"></i> Execute path
+                    </button>
+                    <button type="button" class="mp-btn mp-btn-discard" data-action="confirmMoveToPreview" data-args='[false]' title="Discard the previewed path - the robot does not move">
+                      <i class="fa-solid fa-xmark"></i> Discard
+                    </button>
+                  </div>
                 </div>
 
                 <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
@@ -294,36 +323,36 @@
 
               <!-- top-right: Scene Node Toggle Icons -->
               <div class="twin-hud-tab twin-ov-right-top" id="hud-tab-scene" data-hud="scene">
-                <button type="button" class="hud-tab-head" onclick="toggleHudTab('scene')" title="Collapse / expand the scene toggles" aria-expanded="true">
+                <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["scene"]' title="Collapse / expand the scene toggles" aria-expanded="true">
                   <i class="fa-solid fa-layer-group hud-tab-icon"></i>
                   <span class="hud-tab-title">SCENE</span>
                   <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
                 </button>
                 <div class="hud-tab-body">
                 <div id="twin-scene-node-overlay" class="twin-scene-node-overlay">
-                <button class="btn btn-icon-small" id="btn-twin-scene-objects" onclick="toggleSceneNode('objects')" title="Interactive objects &amp; workspace circle (rviz_marker_3d_scene_objects)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small" id="btn-twin-scene-objects" data-action="toggleSceneNode" data-args='["objects"]' title="Interactive objects &amp; workspace circle (rviz_marker_3d_scene_objects)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-cubes"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-scene-plane" onclick="toggleSceneNode('plane')" title="White reference plane (rviz_marker_3d_scene_plane)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small" id="btn-twin-scene-plane" data-action="toggleSceneNode" data-args='["plane"]' title="White reference plane (rviz_marker_3d_scene_plane)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-square"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-scene-safety" onclick="toggleSceneNode('safety')" title="Safety Zone (rviz_marker_3d_scene_safety_zone)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small" id="btn-twin-scene-safety" data-action="toggleSceneNode" data-args='["safety"]' title="Safety Zone (rviz_marker_3d_scene_safety_zone)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-shield-halved"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-scene-zedm" onclick="toggleSceneNode('zedm')" title="ZED-M camera stand (rviz_marker_3d_scene_zedm_stand)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small" id="btn-twin-scene-zedm" data-action="toggleSceneNode" data-args='["zedm"]' title="ZED-M camera stand (rviz_marker_3d_scene_zedm_stand)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-video"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-detections" onclick="toggleTwinDetections()" title="YOLO detections in 3D view: bounding box, red grasp point and labels (/zed/bboxes_3d)">
+                <button class="btn btn-icon-small" id="btn-twin-detections" data-action="toggleTwinDetections" title="YOLO detections in 3D view: bounding box, red grasp point and labels (/zed/bboxes_3d)">
                   <i class="fa-solid fa-vector-square"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-distance-line" onclick="toggleTwinDistanceLine()" title="Distance line (dashed line from TCP to the nearest detected object)">
+                <button class="btn btn-icon-small" id="btn-twin-distance-line" data-action="toggleTwinDistanceLine" title="Distance line (dashed line from TCP to the nearest detected object)">
                   <i class="fa-solid fa-ruler-horizontal"></i>
                 </button>
                 <div class="twin-scene-divider"></div>
-                <button class="btn btn-icon-small" id="btn-moveit-coll-objects" onclick="toggleMoveitCollision('objects')" title="MoveIt collision of detected objects (node inactive)" style="color: var(--dim); opacity: 0.45;">
+                <button class="btn btn-icon-small" id="btn-moveit-coll-objects" data-action="toggleMoveitCollision" data-args='["objects"]' title="MoveIt collision of detected objects (node inactive)" style="color: var(--dim); opacity: 0.45;">
                   <i class="fa-solid fa-box-open"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-moveit-coll-ground" onclick="toggleMoveitCollision('ground')" title="MoveIt ground collision (node inactive)" style="color: var(--dim); opacity: 0.45;">
+                <button class="btn btn-icon-small" id="btn-moveit-coll-ground" data-action="toggleMoveitCollision" data-args='["ground"]' title="MoveIt ground collision (node inactive)" style="color: var(--dim); opacity: 0.45;">
                   <i class="fa-solid fa-arrows-down-to-line"></i>
                 </button>
               </div>
@@ -332,26 +361,26 @@
 
               <!-- middle-left: Motion Action Buttons -->
               <div class="twin-hud-tab twin-ov-left-mid" id="hud-tab-motion" data-hud="motion">
-                <button type="button" class="hud-tab-head" onclick="toggleHudTab('motion')" title="Collapse / expand the motion actions" aria-expanded="true">
+                <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["motion"]' title="Collapse / expand the motion actions" aria-expanded="true">
                   <i class="fa-solid fa-bolt hud-tab-icon"></i>
                   <span class="hud-tab-title">MOTION</span>
                   <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
                 </button>
                 <div class="hud-tab-body">
                 <div id="twin-motion-overlay" class="twin-motion-overlay">
-                <button class="btn btn-action motion-lockable" onclick="setInitialPose()" title="Move to Initial Pose">
+                <button class="btn btn-action motion-lockable" data-action="setInitialPose" title="Move to Initial Pose">
                   <i class="fa-solid fa-house"></i>
                 </button>
-                <button id="btn-show-scene" class="btn btn-action motion-lockable" onclick="showScene()" title="Move to Scan Position">
+                <button id="btn-show-scene" class="btn btn-action motion-lockable" data-action="showScene" title="Move to Scan Position">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button id="btn-scan-objects" class="btn btn-action motion-lockable" onclick="startObjectScan()" title="Create OctoMap of Objects">
+                <button id="btn-scan-objects" class="btn btn-action motion-lockable" data-action="startObjectScan" title="Create OctoMap of Objects">
                   <i class="fa-solid fa-cube"></i>
                 </button>
-                <button id="btn-emergency-stop" class="btn btn-danger" onclick="emergencyStop()" title="Emergency Stop">
+                <button id="btn-emergency-stop" class="btn btn-danger" data-action="emergencyStop" title="Emergency Stop">
                   <i class="fa-solid fa-hand"></i>
                 </button>
-                <button id="btn-estop-reset" class="btn btn-action estop-reset-hidden" onclick="resetEmergencyStop()" title="Acknowledge Emergency Stop (reset robot state, resume MoveIt Servo)">
+                <button id="btn-estop-reset" class="btn btn-action estop-reset-hidden" data-action="resetEmergencyStop" title="Acknowledge Emergency Stop (reset robot state, resume MoveIt Servo)">
                   <i class="fa-solid fa-rotate-left"></i>
                 </button>
               </div>
@@ -363,7 +392,7 @@
                 <!-- bottom-left: Mini Safety Telemetry HUD -->
                 <div class="twin-ov-bottom-left">
                   <div class="twin-hud-tab" id="hud-tab-telemetry" data-hud="telemetry">
-                    <button type="button" class="hud-tab-head" onclick="toggleHudTab('telemetry')" title="Collapse / expand reach, floor and MoveIt status" aria-expanded="true">
+                    <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["telemetry"]' title="Collapse / expand reach, floor and MoveIt status" aria-expanded="true">
                       <i class="fa-solid fa-gauge-high hud-tab-icon"></i>
                       <span class="hud-tab-title">TELEMETRY</span>
                       <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
@@ -389,7 +418,7 @@
 
                 <!-- bottom-center: Absolute Pose Inputs -->
                 <div class="twin-hud-tab twin-ov-bottom-center" id="hud-tab-pose" data-hud="pose">
-                  <button type="button" class="hud-tab-head" onclick="toggleHudTab('pose')" title="Collapse / expand the absolute pose inputs" aria-expanded="true">
+                  <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["pose"]' title="Collapse / expand the absolute pose inputs" aria-expanded="true">
                     <i class="fa-solid fa-location-crosshairs hud-tab-icon"></i>
                     <span class="hud-tab-title">POSE</span>
                     <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
@@ -404,37 +433,34 @@
                   <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
                   <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
                   <div class="input-row-divider"></div>
-                  <button class="btn btn-action motion-lockable" onclick="moveToPose()" title="Move to entered pose">
+                  <button class="btn btn-action motion-lockable" data-action="moveToPose" title="Move to entered pose">
                     <i class="fa-solid fa-crosshairs"></i> Go
                   </button>
                 </div>
                 </div>
                 </div>
 
-                <!-- bottom-right: Speed Toggle ueber dem Watermark, rechtsbuendig -->
+                <!-- bottom-right: Speed Slider ueber dem Watermark, rechtsbuendig -->
                 <div class="twin-ov-bottom-right">
                   <div class="twin-hud-tab" id="hud-tab-speed" data-hud="speed">
-                    <button type="button" class="hud-tab-head" onclick="toggleHudTab('speed')" title="Collapse / expand the speed selection" aria-expanded="true">
+                    <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["speed"]' title="Geschwindigkeit ein-/ausklappen" aria-expanded="true">
                       <i class="fa-solid fa-gauge hud-tab-icon"></i>
                       <span class="hud-tab-title">SPEED</span>
+                      <span id="speed-val" class="speed-val hud-speed-badge">3/5 (60%)</span>
                       <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
                     </button>
-                  <div class="hud-tab-body">
-                  <div id="twin-speed-overlay" class="speed-toggle-group">
-                    <label class="speed-opt">
-                      <input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()">
-                      <span>Slow</span>
-                    </label>
-                    <label class="speed-opt">
-                      <input type="radio" name="scanSpeed" value="1" checked onchange="updateScanSpeed()">
-                      <span>Normal</span>
-                    </label>
-                    <label class="speed-opt">
-                      <input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()">
-                      <span>Fast</span>
-                    </label>
-                  </div>
-                  </div>
+                    <div class="hud-tab-body">
+                      <div id="twin-speed-overlay" class="twin-speed-slider-wrap">
+                        <input type="range" id="speed-slider" min="0" max="4" value="2" data-input="updateSpeed" title="Geschwindigkeit (1-5)">
+                        <div class="speed-hud-ticks">
+                          <span>1</span>
+                          <span>2</span>
+                          <span>3</span>
+                          <span>4</span>
+                          <span>5</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div class="twin-ov-watermark">xArm Lite 6 · Live Synchronized</div>
                 </div>
@@ -465,20 +491,20 @@
           
           <div class="jogging-container">
             <div class="z-controls">
-              <button class="btn btn-z" onpointerdown="playUiClickSound(); startJog(0,0,1,0,0,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">⇈<br>Z+</button>
-              <button class="btn btn-z" onpointerdown="playUiClickSound(); startJog(0,0,-1,0,0,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">⇊<br>Z-</button>
+              <button class="btn btn-z" data-jog="0,0,1,0,0,0">⇈<br>Z+</button>
+              <button class="btn btn-z" data-jog="0,0,-1,0,0,0">⇊<br>Z-</button>
             </div>
 
             <div class="joystick-assembly">
               <div class="joy-grid-cell joy-top">
-                <button type="button" class="joy-arrow-btn joy-label top" id="btn-arrow-x-plus" onpointerdown="startArrowJog(1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X+ (Forward)">
+                <button type="button" class="joy-arrow-btn joy-label top" id="btn-arrow-x-plus" data-arrow-jog="1,0" title="Jog X+ (Forward)">
                   <i class="fa-solid fa-caret-up"></i>
                   <span>X+</span>
                 </button>
               </div>
 
               <div class="joy-grid-cell joy-left">
-                <button type="button" class="joy-arrow-btn joy-label left" id="btn-arrow-y-plus" onpointerdown="startArrowJog(0, 1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y+ (Left)">
+                <button type="button" class="joy-arrow-btn joy-label left" id="btn-arrow-y-plus" data-arrow-jog="0,1" title="Jog Y+ (Left)">
                   <i class="fa-solid fa-caret-left"></i>
                   <span>Y+</span>
                 </button>
@@ -491,14 +517,14 @@
               </div>
 
               <div class="joy-grid-cell joy-right">
-                <button type="button" class="joy-arrow-btn joy-label right" id="btn-arrow-y-minus" onpointerdown="startArrowJog(0, -1, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog Y- (Right)">
+                <button type="button" class="joy-arrow-btn joy-label right" id="btn-arrow-y-minus" data-arrow-jog="0,-1" title="Jog Y- (Right)">
                   <span>Y-</span>
                   <i class="fa-solid fa-caret-right"></i>
                 </button>
               </div>
 
               <div class="joy-grid-cell joy-bottom">
-                <button type="button" class="joy-arrow-btn joy-label bottom" id="btn-arrow-x-minus" onpointerdown="startArrowJog(-1, 0, event)" onpointerup="stopArrowJog()" onpointerleave="stopArrowJog()" onpointercancel="stopArrowJog()" title="Jog X- (Backward)">
+                <button type="button" class="joy-arrow-btn joy-label bottom" id="btn-arrow-x-minus" data-arrow-jog="-1,0" title="Jog X- (Backward)">
                   <span>X-</span>
                   <i class="fa-solid fa-caret-down"></i>
                 </button>
@@ -507,17 +533,17 @@
             
             <div class="rot-and-frame-group">
               <div class="rot-controls">
-                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,1,0,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Roll + (<span style="color: var(--rviz-x);">X</span>)</button>
-                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,-1,0,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Roll - (<span style="color: var(--rviz-x);">X</span>)</button>
-                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,0,1,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Pitch + (<span style="color: var(--rviz-y);">Y</span>)</button>
-                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,0,-1,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Pitch - (<span style="color: var(--rviz-y);">Y</span>)</button>
-                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,0,0,1)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Yaw + (<span style="color: var(--rviz-z);">Z</span>)</button>
-                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,0,0,-1)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Yaw - (<span style="color: var(--rviz-z);">Z</span>)</button>
+                <button class="btn btn-rot" data-jog="0,0,0,1,0,0">Roll + (<span style="color: var(--rviz-x);">X</span>)</button>
+                <button class="btn btn-rot" data-jog="0,0,0,-1,0,0">Roll - (<span style="color: var(--rviz-x);">X</span>)</button>
+                <button class="btn btn-rot" data-jog="0,0,0,0,1,0">Pitch + (<span style="color: var(--rviz-y);">Y</span>)</button>
+                <button class="btn btn-rot" data-jog="0,0,0,0,-1,0">Pitch - (<span style="color: var(--rviz-y);">Y</span>)</button>
+                <button class="btn btn-rot" data-jog="0,0,0,0,0,1">Yaw + (<span style="color: var(--rviz-z);">Z</span>)</button>
+                <button class="btn btn-rot" data-jog="0,0,0,0,0,-1">Yaw - (<span style="color: var(--rviz-z);">Z</span>)</button>
               </div>
 
               <div class="frame-toggles">
-                <button class="btn frame-btn active btn-primary" id="btn-frame-base" onclick="playUiClickSound(); setFrame('link_base')">Base Frame</button>
-                <button class="btn frame-btn" id="btn-frame-tcp" onclick="playUiClickSound(); setFrame('link_tcp')">TCP Frame</button>
+                <button class="btn frame-btn active btn-primary" id="btn-frame-base" data-action="setFrame" data-args='["link_base"]' data-click-sound>Base Frame</button>
+                <button class="btn frame-btn" id="btn-frame-tcp" data-action="setFrame" data-args='["link_tcp"]' data-click-sound>TCP Frame</button>
               </div>
             </div>
 
@@ -525,29 +551,21 @@
               <div class="jog-divider"></div>
               
               <div class="gripper-controls">
-                <button id="btn-grip-open" class="btn btn-primary" onclick="playUiClickSound(); setGripper('open')">
+                <button id="btn-grip-open" class="btn btn-primary" data-action="setGripper" data-args='["open"]' data-click-sound>
                   <i class="fa-solid fa-hand"></i>
                   <span>Open</span>
                 </button>
-                <button id="btn-grip-close" class="btn btn-orange" onclick="playUiClickSound(); setGripper('close')">
+                <button id="btn-grip-close" class="btn btn-orange" data-action="setGripper" data-args='["close"]' data-click-sound>
                   <i class="fa-solid fa-hand-fist"></i>
                   <span>Close</span>
                 </button>
-                <button id="btn-grip-off" class="btn btn-danger" onclick="playUiClickSound(); setGripper('off')">
+                <button id="btn-grip-off" class="btn btn-danger" data-action="setGripper" data-args='["off"]' data-click-sound>
                   <i class="fa-solid fa-power-off"></i>
                   <span>Off</span>
                 </button>
               </div>
             </div>
           </div>
-          <div class="speed-control">
-            <div class="speed-header">
-              <span class="speed-title"><i class="fa-solid fa-gauge"></i> Speed Level</span>
-              <span id="speed-val" class="speed-val">3/5 (60%)</span>
-            </div>
-            <input type="range" id="speed-slider" min="0" max="4" value="2" oninput="updateSpeed(this.value)">
-          </div>
-          
         </section>
 
 
@@ -588,7 +606,7 @@
                 <span class="j-name">J1</span>
                 <span class="j-val" id="j1-val">0.00</span>
               </div>
-              <div class="j-bar" onpointerdown="startJointJog(0, event)">
+              <div class="j-bar" data-joint-jog="0">
                 <div class="j-fill" id="j1-fill"></div>
               </div>
             </div>
@@ -597,7 +615,7 @@
                 <span class="j-name">J2</span>
                 <span class="j-val" id="j2-val">0.00</span>
               </div>
-              <div class="j-bar" onpointerdown="startJointJog(1, event)">
+              <div class="j-bar" data-joint-jog="1">
                 <div class="j-fill" id="j2-fill"></div>
               </div>
             </div>
@@ -606,7 +624,7 @@
                 <span class="j-name">J3</span>
                 <span class="j-val" id="j3-val">0.00</span>
               </div>
-              <div class="j-bar" onpointerdown="startJointJog(2, event)">
+              <div class="j-bar" data-joint-jog="2">
                 <div class="j-fill" id="j3-fill"></div>
               </div>
             </div>
@@ -615,7 +633,7 @@
                 <span class="j-name">J4</span>
                 <span class="j-val" id="j4-val">0.00</span>
               </div>
-              <div class="j-bar" onpointerdown="startJointJog(3, event)">
+              <div class="j-bar" data-joint-jog="3">
                 <div class="j-fill" id="j4-fill"></div>
               </div>
             </div>
@@ -624,7 +642,7 @@
                 <span class="j-name">J5</span>
                 <span class="j-val" id="j5-val">0.00</span>
               </div>
-              <div class="j-bar" onpointerdown="startJointJog(4, event)">
+              <div class="j-bar" data-joint-jog="4">
                 <div class="j-fill" id="j5-fill"></div>
               </div>
             </div>
@@ -633,7 +651,7 @@
                 <span class="j-name">J6</span>
                 <span class="j-val" id="j6-val">0.00</span>
               </div>
-              <div class="j-bar" onpointerdown="startJointJog(5, event)">
+              <div class="j-bar" data-joint-jog="5">
                 <div class="j-fill" id="j6-fill"></div>
               </div>
             </div>
@@ -645,7 +663,7 @@
               <span id="linear-axis-val">0.00 m</span>
             </div>
             <div class="linear-axis-control">
-              <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0.0" oninput="updateLinearAxis(this.value)">
+              <input type="range" id="linear-axis-slider" min="-0.5" max="0.5" step="0.01" value="0.0" data-input="updateLinearAxis">
             </div>
           </div>
         </section>
@@ -654,7 +672,7 @@
           <h2><i class="fa-solid fa-microphone"></i> Speech Control (Whisper AI)</h2>
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
             <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
-              <button id="btn-start-listening" class="btn btn-primary" style="width: 50px; height: 50px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" onclick="startListening()">
+              <button id="btn-start-listening" class="btn btn-primary" style="width: 50px; height: 50px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" data-action="startListening">
                 <i class="fa-solid fa-microphone" id="btn-listen-icon" style="font-size: 20px;"></i>
               </button>
               <span id="btn-listen-text" style="color: var(--mut); font-weight: 500; font-size: 15px;">Start Listening</span>
@@ -672,15 +690,15 @@
           <div class="tf-tuner-header">
             <div style="display: flex; align-items: center; gap: 8px;">
               <h2 style="margin: 0;"><i class="fa-solid fa-sliders" style="color: var(--cyan);"></i> TF Control Tuner</h2>
-              <button id="btn-tuner-broadcast" class="btn-toggle-broadcast" onclick="toggleTFBroadcast()" title="Toggle Live TF broadcasting via rosbridge (10 Hz)">
+              <button id="btn-tuner-broadcast" class="btn-toggle-broadcast" data-action="toggleTFBroadcast" title="Toggle Live TF broadcasting via rosbridge (10 Hz)">
                 <i class="fa-solid fa-satellite-dish"></i> <span id="tuner-broadcast-label">Live TF</span>
               </button>
             </div>
             <div style="display: flex; align-items: center; gap: 6px;">
-              <button class="btn btn-icon-small" onclick="resetCurrentTFElement()" title="Reset current element to defaults" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
+              <button class="btn btn-icon-small" data-action="resetCurrentTFElement" title="Reset current element to defaults" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
                 <i class="fa-solid fa-rotate-left"></i>
               </button>
-              <button class="btn btn-icon-small" id="btn-tf-collapse" onclick="toggleTFTunerCollapse()" title="Collapse / expand TF Control Tuner" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
+              <button class="btn btn-icon-small" id="btn-tf-collapse" data-action="toggleTFTunerCollapse" title="Collapse / expand TF Control Tuner" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
                 <i class="fa-solid fa-chevron-up" id="tf-collapse-icon"></i>
               </button>
             </div>
@@ -689,7 +707,7 @@
 
           <div class="tuner-selector-row">
             <label for="tuner-element-select" style="font-size: 11px; font-weight: 600; color: var(--mut); text-transform: uppercase; letter-spacing: 0.5px;">Element:</label>
-            <select id="tuner-element-select" class="tuner-select" onchange="onTunerElementChange(this.value)">
+            <select id="tuner-element-select" class="tuner-select" data-change="onTunerElementChange">
               <option value="Zed M Camera">📷 Zed M Camera (zed_camera_link)</option>
               <option value="Blue Cube">🟦 Blue Cube (target_blue_cube)</option>
               <option value="Red Rectangle">🟥 Red Rectangle (target_red_rectangle)</option>
@@ -708,22 +726,22 @@
               <!-- X -->
               <div class="tuner-input-row">
                 <span class="tuner-axis-lbl" style="color: var(--rviz-x);">X</span>
-                <input type="range" id="tuner-slider-x" class="tuner-slider" min="-0.5" max="1.0" step="0.005" oninput="onTunerSliderInput('x', this.value)">
-                <input type="number" id="tuner-num-x" class="tuner-num" step="0.005" onchange="onTunerNumChange('x', this.value)">
+                <input type="range" id="tuner-slider-x" class="tuner-slider" min="-0.5" max="1.0" step="0.005" data-input="onTunerSliderInput" data-args='["x"]'>
+                <input type="number" id="tuner-num-x" class="tuner-num" step="0.005" data-change="onTunerNumChange" data-args='["x"]'>
               </div>
 
               <!-- Y -->
               <div class="tuner-input-row">
                 <span class="tuner-axis-lbl" style="color: var(--rviz-y);">Y</span>
-                <input type="range" id="tuner-slider-y" class="tuner-slider" min="-0.5" max="0.5" step="0.005" oninput="onTunerSliderInput('y', this.value)">
-                <input type="number" id="tuner-num-y" class="tuner-num" step="0.005" onchange="onTunerNumChange('y', this.value)">
+                <input type="range" id="tuner-slider-y" class="tuner-slider" min="-0.5" max="0.5" step="0.005" data-input="onTunerSliderInput" data-args='["y"]'>
+                <input type="number" id="tuner-num-y" class="tuner-num" step="0.005" data-change="onTunerNumChange" data-args='["y"]'>
               </div>
 
               <!-- Z -->
               <div class="tuner-input-row">
                 <span class="tuner-axis-lbl" style="color: var(--rviz-z);">Z</span>
-                <input type="range" id="tuner-slider-z" class="tuner-slider" min="-0.5" max="1.0" step="0.005" oninput="onTunerSliderInput('z', this.value)">
-                <input type="number" id="tuner-num-z" class="tuner-num" step="0.005" onchange="onTunerNumChange('z', this.value)">
+                <input type="range" id="tuner-slider-z" class="tuner-slider" min="-0.5" max="1.0" step="0.005" data-input="onTunerSliderInput" data-args='["z"]'>
+                <input type="number" id="tuner-num-z" class="tuner-num" step="0.005" data-change="onTunerNumChange" data-args='["z"]'>
               </div>
             </div>
 
@@ -734,22 +752,22 @@
               <!-- Roll -->
               <div class="tuner-input-row">
                 <span class="tuner-axis-lbl" style="color: var(--rviz-x);">R</span>
-                <input type="range" id="tuner-slider-roll" class="tuner-slider" min="-180" max="180" step="1" oninput="onTunerSliderInput('roll', this.value)">
-                <input type="number" id="tuner-num-roll" class="tuner-num" step="0.5" onchange="onTunerNumChange('roll', this.value)">
+                <input type="range" id="tuner-slider-roll" class="tuner-slider" min="-180" max="180" step="1" data-input="onTunerSliderInput" data-args='["roll"]'>
+                <input type="number" id="tuner-num-roll" class="tuner-num" step="0.5" data-change="onTunerNumChange" data-args='["roll"]'>
               </div>
 
               <!-- Pitch -->
               <div class="tuner-input-row">
                 <span class="tuner-axis-lbl" style="color: var(--rviz-y);">P</span>
-                <input type="range" id="tuner-slider-pitch" class="tuner-slider" min="-180" max="180" step="1" oninput="onTunerSliderInput('pitch', this.value)">
-                <input type="number" id="tuner-num-pitch" class="tuner-num" step="0.5" onchange="onTunerNumChange('pitch', this.value)">
+                <input type="range" id="tuner-slider-pitch" class="tuner-slider" min="-180" max="180" step="1" data-input="onTunerSliderInput" data-args='["pitch"]'>
+                <input type="number" id="tuner-num-pitch" class="tuner-num" step="0.5" data-change="onTunerNumChange" data-args='["pitch"]'>
               </div>
 
               <!-- Yaw -->
               <div class="tuner-input-row">
                 <span class="tuner-axis-lbl" style="color: var(--rviz-z);">Yw</span>
-                <input type="range" id="tuner-slider-yaw" class="tuner-slider" min="-180" max="270" step="1" oninput="onTunerSliderInput('yaw', this.value)">
-                <input type="number" id="tuner-num-yaw" class="tuner-num" step="0.5" onchange="onTunerNumChange('yaw', this.value)">
+                <input type="range" id="tuner-slider-yaw" class="tuner-slider" min="-180" max="270" step="1" data-input="onTunerSliderInput" data-args='["yaw"]'>
+                <input type="number" id="tuner-num-yaw" class="tuner-num" step="0.5" data-change="onTunerNumChange" data-args='["yaw"]'>
               </div>
             </div>
           </div>
@@ -758,8 +776,8 @@
           <div id="tuner-radius-container" class="tuner-radius-row" style="display: none;">
             <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
               <span class="tuner-axis-lbl" style="color: var(--orange); font-size: 11px; width: 48px;">Radius:</span>
-              <input type="range" id="tuner-slider-radius" class="tuner-slider" min="0" max="1.0" step="0.005" oninput="onTunerSliderInput('radius', this.value)">
-              <input type="number" id="tuner-num-radius" class="tuner-num" step="0.005" onchange="onTunerNumChange('radius', this.value)">
+              <input type="range" id="tuner-slider-radius" class="tuner-slider" min="0" max="1.0" step="0.005" data-input="onTunerSliderInput" data-args='["radius"]'>
+              <input type="number" id="tuner-num-radius" class="tuner-num" step="0.005" data-change="onTunerNumChange" data-args='["radius"]'>
             </div>
           </div>
 
@@ -780,297 +798,33 @@
 
   </div>
 
-  <!-- WebGL 3D Digital Twin Libraries (Offline-capable) -->
-  <script src="lib/three.min.js"></script>
-  <script src="lib/OrbitControls.js"></script>
-  <script src="lib/TransformControls.js"></script>
-  <script src="lib/STLLoader.js"></script>
-  <script src="lib/URDFLoader.js"></script>
-  <!-- Muss VOR digital_twin.js und app.js stehen: beide lesen window.ROBOT_LIMITS. -->
-  <script src="robot_limits.js?v=1"></script>
-  <script src="digital_twin.js?v=21"></script>
+  <!-- Verbindungsabbruch: sperrt die komplette Bedienflaeche. Der Header
+       (Not-Aus, Status) liegt darueber und bleibt erreichbar. -->
+  <div id="ros-offline-overlay" class="ros-offline-overlay is-connecting" role="alertdialog" aria-live="assertive" aria-labelledby="ros-offline-title">
+    <div class="ros-offline-card">
+      <i class="fa-solid fa-plug-circle-xmark ros-offline-icon"></i>
+      <div class="ros-offline-title" id="ros-offline-title">Connecting to ROS 2 Bridge...</div>
+      <div class="ros-offline-text" id="ros-offline-text">Motion controls are locked until the connection is established.</div>
+      <div class="ros-offline-meta" id="ros-offline-meta"></div>
+      <button type="button" class="btn ros-offline-reload" data-action="reloadPage">
+        <i class="fa-solid fa-arrows-rotate"></i> Reload page
+      </button>
+    </div>
+  </div>
 
-  <script src="app.js?v=27"></script>
-  
-  <script>
-    // ── Live Camera Update Loop ──
-    const camImg = document.getElementById('cam-stream');
-    const camErr = document.getElementById('cam-stream-err');
-    if (camImg) {
-      function updateCam() {
-        camImg.src = `http://192.168.0.124/html/cam_pic.php?time=${new Date().getTime()}&pDelay=40000`;
+  <!-- ES-Module: three.js r186 und urdf-loader liegen lokal (offline-faehig).
+       Die Import-Map loest die Paketnamen auf, main.js laedt alle Module. -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./lib/three/three.module.js",
+        "three/addons/": "./lib/three/addons/",
+        "three/examples/jsm/": "./lib/three/addons/",
+        "urdf-loader": "./lib/urdf-loader/URDFLoader.js"
       }
-      camImg.onload = () => {
-        if (camErr) camErr.style.display = 'none';
-        camImg.style.display = 'block';
-        updateCam();
-      };
-      camImg.onerror = () => {
-        if (camErr) camErr.style.display = 'flex';
-        camImg.style.display = 'none';
-        setTimeout(updateCam, 1000);
-      };
-      updateCam(); // start the loop
-    }
-
-    // ── Live Camera 2 Update Loop ──
-    const camImg2 = document.getElementById('cam-stream-2');
-    const camErr2 = document.getElementById('cam-stream-2-err');
-    if (camImg2) {
-      function updateCam2() {
-        camImg2.src = `http://192.168.0.123/html/cam_pic.php?time=${new Date().getTime()}&pDelay=40000`;
-      }
-      camImg2.onload = () => {
-        if (camErr2) camErr2.style.display = 'none';
-        camImg2.style.display = 'block';
-        updateCam2();
-      };
-      camImg2.onerror = () => {
-        if (camErr2) camErr2.style.display = 'flex';
-        camImg2.style.display = 'none';
-        setTimeout(updateCam2, 1000);
-      };
-      updateCam2(); // start the loop
-    }
-    // ── RViz Fenster-Stream ──
-    // Hatte dieselben zwei Fehler wie der ZED-Stream: die Einblendung haengte
-    // allein am load-Event (das bei MJPEG ausbleibt) und es fehlte
-    // qos_profile=sensor_data. Dazu stand der Host fest auf 127.0.0.1.
-    (function () {
-      const rvizImg = document.getElementById('rviz-stream');
-      const rvizErr = document.getElementById('rviz-stream-err');
-      if (!rvizImg) return;
-
-      const rvizHost = window.location.hostname || 'localhost';
-      // Ebenfalls ungekodiert - siehe Begruendung bei streamUrl() weiter unten.
-      const rvizUrl = () =>
-        `http://${rvizHost}:8082/stream?topic=/rviz_video/image_raw` +
-        `&type=mjpeg&qos_profile=sensor_data&width=800&height=450&_t=${Date.now()}`;
-
-      let watch = null;
-      const stop = () => { if (watch) { clearInterval(watch); watch = null; } };
-      const show = () => {
-        stop();
-        if (rvizErr) rvizErr.style.display = 'none';
-        rvizImg.style.display = 'block';
-      };
-
-      function start() {
-        stop();
-        rvizImg.style.display = 'block';
-        if (rvizErr) rvizErr.style.display = 'flex';
-        rvizImg.src = rvizUrl();
-        let waited = 0;
-        watch = setInterval(() => {
-          if (rvizImg.naturalWidth > 0) { show(); return; }
-          waited += 400;
-          if (waited >= 15000) { stop(); start(); }
-        }, 400);
-      }
-
-      rvizImg.onload = show;
-      rvizImg.onerror = () => {
-        stop();
-        if (rvizErr) rvizErr.style.display = 'flex';
-        setTimeout(start, 3000);
-      };
-      start();
-    })();
-
-    // ── ZED M Camera Stream mit Modus-Auswahl ──
-    const zedImg = document.getElementById('zed-cam-stream');
-    const zedErr = document.getElementById('zed-cam-stream-err');
-    const zedSel = document.getElementById('zed-stream-mode');
-    const zedTopicLbl = document.getElementById('zed-stream-topic');
-
-    if (zedImg) {
-      const host = window.location.hostname || 'localhost';
-      const ZED_NS = '/zed/zed_node';
-      const ZED_LS_KEY = 'zed_stream_topic';
-
-      // Kuratierte Liste: Reihenfolge und Namen fuer die Anzeige. Welche davon
-      // wirklich existieren, haengt von der ZED-Konfiguration ab - das wird
-      // unten per rosapi abgeglichen. "float: true" markiert 32FC1-Bilder;
-      // web_video_server skaliert die automatisch, wenn min == max.
-      const ZED_MODES = [
-        { topic: `${ZED_NS}/rgb/image_rect_color`,       label: 'RGB (rektifiziert)' },
-        { topic: `${ZED_NS}/rgb_raw/image_raw_color`,    label: 'RGB (raw)' },
-        { topic: `${ZED_NS}/left/image_rect_color`,      label: 'Links (rektifiziert)' },
-        { topic: `${ZED_NS}/left_raw/image_raw_color`,   label: 'Links (raw)' },
-        { topic: `${ZED_NS}/right/image_rect_color`,     label: 'Rechts (rektifiziert)' },
-        { topic: `${ZED_NS}/right_raw/image_raw_color`,  label: 'Rechts (raw)' },
-        { topic: `${ZED_NS}/stereo/image_rect_color`,    label: 'Stereo (nebeneinander)' },
-        { topic: `${ZED_NS}/rgb_gray/image_rect_gray`,   label: 'Graustufen (rektifiziert)' },
-        { topic: `${ZED_NS}/depth/depth_registered`,     label: 'Tiefe', float: true },
-        { topic: `${ZED_NS}/confidence/confidence_map`,  label: 'Konfidenz', float: true },
-      ];
-
-      const modeFor = (t) => ZED_MODES.find(m => m.topic === t) || null;
-
-      function streamUrl(topic, bust) {
-        const m = modeFor(topic);
-        // Float-Bilder (Tiefe, Konfidenz) brauchen eine Skalierung. min == max
-        // laesst web_video_server je Frame automatisch normalisieren - ohne das
-        // bliebe das Bild schwarz.
-        const extra = (m && m.float) ? '&min=0&max=0' : '';
-        const t = bust ? `&_t=${Date.now()}` : '';
-        // qos_profile=sensor_data ist PFLICHT: der ZED-Wrapper publiziert seine
-        // Bilder mit BEST_EFFORT. web_video_server abonniert ohne diesen
-        // Parameter mit RELIABLE - und ein RELIABLE-Subscriber matcht einen
-        // BEST_EFFORT-Publisher nie. Die HTTP-Verbindung kommt dann zwar
-        // zustande (Port 8082 meldet gruen), es trifft aber nie ein Frame ein:
-        // kein Bild, kein Fehler, nur schwarz. In RViz faellt das nicht auf,
-        // weil man die Reliability dort pro Display auf Best Effort stellt.
-        // BEST_EFFORT-Subscriber matchen auch RELIABLE-Publisher, der Wert ist
-        // also fuer alle Topics sicher.
-        // Der Topic-Name wird NICHT kodiert. web_video_server dekodiert den
-        // Query-Parameter nicht und bekommt sonst "%2Fzed%2F..." zu sehen;
-        // es lehnt das ab ("Invalid topic name: must not contain characters
-        // other than alphanumerics, '_', '~', '{', or '}'") und liefert eine
-        // leere Multipart-Antwort - Verbindung steht, Bild kommt nie.
-        // Die Index-Seite des Servers verlinkt die Streams selbst ungekodiert.
-        // Gueltige ROS-Topicnamen enthalten ohnehin nur [A-Za-z0-9_~{}/].
-        return `http://${host}:8082/stream?topic=${topic}&type=mjpeg&qos_profile=sensor_data${extra}${t}`;
-      }
-
-      let savedTopic = null;
-      try { savedTopic = localStorage.getItem(ZED_LS_KEY); } catch (e) {}
-      let currentTopic = savedTopic || ZED_MODES[0].topic;
-
-      function renderOptions(available) {
-        if (!zedSel) return null;
-        const before = currentTopic;
-        zedSel.innerHTML = '';
-        // Bekannte Modi zuerst, in kuratierter Reihenfolge
-        const known = new Set();
-        ZED_MODES.forEach(m => {
-          if (available && !available.has(m.topic)) return;
-          known.add(m.topic);
-          const o = document.createElement('option');
-          o.value = m.topic;
-          o.textContent = m.label;
-          zedSel.appendChild(o);
-        });
-        // Alles Weitere, was die Kamera sonst noch anbietet
-        if (available) {
-          Array.from(available).sort().forEach(t => {
-            if (known.has(t)) return;
-            const o = document.createElement('option');
-            o.value = t;
-            o.textContent = t.replace(ZED_NS + '/', '');
-            zedSel.appendChild(o);
-          });
-        }
-        if (zedSel.options.length === 0) {
-          const o = document.createElement('option');
-          o.value = currentTopic;
-          o.textContent = 'Keine ZED-Bildtopics gefunden';
-          zedSel.appendChild(o);
-        }
-        // Auswahl halten. Der gespeicherte Wunsch-Topic wird bevorzugt, falls
-        // er erst jetzt - nach dem rosapi-Abgleich - in der Liste auftaucht;
-        // sonst wuerde eine Auswahl ausserhalb der kuratierten Modi bei jedem
-        // Neuladen verloren gehen.
-        const values = Array.from(zedSel.options).map(o => o.value);
-        if (savedTopic && values.includes(savedTopic)) currentTopic = savedTopic;
-        else if (!values.includes(currentTopic)) currentTopic = values[0];
-        zedSel.value = currentTopic;
-        // Meldet zurueck, ob sich die Auswahl geaendert hat. Ohne das bliebe
-        // der Stream auf dem alten Topic stehen, waehrend das Dropdown schon
-        // ein anderes anzeigt.
-        return currentTopic !== before ? currentTopic : null;
-      }
-
-      // Ein MJPEG-Stream ist eine multipart/x-mixed-replace-Antwort, die NIE
-      // endet. Chrome feuert darauf kein zuverlaessiges load-Event. Wer das
-      // Bild also nur in onload einblendet, sieht nie eines - auch wenn der
-      // Stream einwandfrei laeuft. naturalWidth wird dagegen gesetzt, sobald
-      // der erste Frame dekodiert ist; das ist das belastbare Signal.
-      let zedWatch = null;
-      const stopZedWatch = () => { if (zedWatch) { clearInterval(zedWatch); zedWatch = null; } };
-
-      const zedShow = () => {
-        stopZedWatch();
-        if (zedErr) zedErr.style.display = 'none';
-        zedImg.style.display = 'block';
-      };
-
-      function applyTopic(topic) {
-        currentTopic = topic;
-        try { localStorage.setItem(ZED_LS_KEY, topic); } catch (e) {}
-        if (zedTopicLbl) zedTopicLbl.textContent = topic.replace(ZED_NS + '/', '');
-        stopZedWatch();
-        // Das Bild bleibt sichtbar. Das Overlay liegt (z-index 10) darueber und
-        // verschwindet, sobald der erste Frame da ist.
-        zedImg.style.display = 'block';
-        if (zedErr) zedErr.style.display = 'flex';
-        zedImg.src = streamUrl(topic, true);
-        let waited = 0;
-        zedWatch = setInterval(() => {
-          if (zedImg.naturalWidth > 0) { zedShow(); return; }
-          waited += 400;
-          // Weder load noch error nach 15 s: Topic publiziert vermutlich nicht.
-          // Neu anstossen, statt stumm haengen zu bleiben.
-          if (waited >= 15000) {
-            stopZedWatch();
-            applyTopic(currentTopic);
-          }
-        }, 400);
-        if (typeof logMsg === 'function') logMsg('UI', `ZED stream mode: ${topic}`);
-      }
-
-      zedImg.onload = zedShow;
-
-      // Auto-retry - immer mit dem GERADE gewaehlten Topic, nicht mit einem
-      // fest verdrahteten.
-      zedImg.onerror = () => {
-        stopZedWatch();
-        if (zedErr) zedErr.style.display = 'flex';
-        setTimeout(() => { applyTopic(currentTopic); }, 3000);
-      };
-
-      if (zedSel) zedSel.onchange = () => applyTopic(zedSel.value);
-
-      renderOptions(null);          // sofort bedienbar, auch ohne rosbridge
-      applyTopic(currentTopic);
-
-      // Tatsaechlich vorhandene Bildtopics nachladen, sobald rosbridge steht.
-      function refreshZedTopics() {
-        if (typeof ros === 'undefined' || !ros || !ros.isConnected) return;
-        try {
-          const client = new ROSLIB.Service({
-            ros: ros,
-            name: '/rosapi/topics_for_type',
-            serviceType: 'rosapi/TopicsForType'
-          });
-
-          // Beide Schreibweisen abfragen: ROS 2 meldet "sensor_msgs/msg/Image",
-          // aeltere rosapi-Staende vergleichen gegen "sensor_msgs/Image".
-          // Was nicht passt, liefert einfach eine leere Liste.
-          const found = new Set();
-          let pending = 2;
-
-          const done = () => {
-            if (--pending > 0) return;
-            const zed = Array.from(found).filter(t => t.startsWith(ZED_NS + '/'));
-            if (zed.length === 0) return;   // Kamera laeuft nicht - Liste behalten
-            const changed = renderOptions(new Set(zed));
-            if (changed) applyTopic(changed);
-          };
-
-          ['sensor_msgs/msg/Image', 'sensor_msgs/Image'].forEach(typeName => {
-            client.callService(
-              new ROSLIB.ServiceRequest({ type: typeName }),
-              (res) => { ((res && res.topics) || []).forEach(t => found.add(t)); done(); },
-              () => done()
-            );
-          });
-        } catch (e) { /* ignorieren - kuratierte Liste bleibt bedienbar */ }
-      }
-
-      setTimeout(refreshZedTopics, 1500);
-      setInterval(refreshZedTopics, 15000);
     }
   </script>
+  <script type="module" src="js/main.js?v=2"></script>
+  
 </body>
 </html>

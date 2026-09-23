@@ -1260,6 +1260,23 @@ input[type=range]:active::-moz-range-thumb {
   display: none;
 }
 
+/* Niedriger Viewport: wieder die kompakten Groessen, damit SCENE- und
+   MOTION-Spalte nicht in die Panels darueber/darunter wachsen. */
+.viewport-container.twin-viewport-short .twin-scene-node-overlay .btn-icon-small {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  font-size: 15px !important;
+}
+
+.viewport-container.twin-viewport-short .twin-motion-overlay .btn-action,
+.viewport-container.twin-viewport-short .twin-motion-overlay .btn-danger {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+}
+
 /* Very short viewports also need compact motion buttons so the overlay
    rows still fit without pushing into each other. */
 .viewport-container.twin-viewport-tiny .twin-motion-overlay .btn-action,
@@ -1297,11 +1314,11 @@ input[type=range]:active::-moz-range-thumb {
 
 .twin-motion-overlay .btn-action,
 .twin-motion-overlay .btn-danger {
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
   padding: 0 !important;
-  font-size: 15px !important;
+  font-size: 16px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1311,8 +1328,9 @@ input[type=range]:active::-moz-range-thumb {
 .twin-motion-overlay .btn-action i,
 .twin-motion-overlay .btn-danger i {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
 }
+
 
 /* Quittieren-Button: nur sichtbar, solange der Not-Aus verriegelt ist.
    Drei Klassen, damit er das display:flex !important oben schlaegt. */
@@ -1785,6 +1803,42 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   opacity: 1;
 }
 
+/* ── Collapsible sections (chevron button at the top right of each header) ── */
+.panel-collapse-btn {
+  flex: 0 0 auto;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px;
+  padding: 0 !important;
+  margin-left: auto;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px !important;
+  cursor: pointer;
+}
+
+.glass-panel h2 .panel-collapse-btn i {
+  color: var(--mut);
+}
+
+/* Collapsed: keep only the header row, drop fixed/resized heights and flex growth. */
+.glass-panel.panel-collapsed > :not(.panel-collapse-header) {
+  display: none !important;
+}
+
+.glass-panel.panel-collapsed {
+  height: auto !important;
+  min-height: 0 !important;
+  flex: 0 0 auto !important;
+  resize: none !important;
+  overflow: hidden !important;
+}
+
+.glass-panel.panel-collapsed > .panel-collapse-header {
+  margin-bottom: 0 !important;
+}
+
 .tf-tuner-body.collapsed {
   max-height: 0;
   opacity: 0;
@@ -2146,13 +2200,13 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .twin-toolbar .btn-icon-small {
-  width: 32px !important;
-  height: 32px !important;
+  width: 34px !important;
+  height: 34px !important;
   padding: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 14px !important;
+  font-size: 15px !important;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--mut);
@@ -2749,7 +2803,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .hud-tab-body > .twin-scene-node-overlay,
 .hud-tab-body > .twin-motion-overlay,
 .hud-tab-body > .twin-pose-overlay,
-.hud-tab-body > .speed-toggle-group {
+.hud-tab-body > .speed-toggle-group,
+.hud-tab-body > .twin-speed-slider-wrap {
   background: none !important;
   border: none !important;
   box-shadow: none !important;
@@ -2792,6 +2847,59 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 #hud-tab-gizmo .hud-tab-icon {
   color: #38bdf8;
+}
+
+/* Speed-Tab im Viewport: breiter fuer komfortable Slider-Bedienung */
+#hud-tab-speed {
+  width: 220px;
+  min-width: 200px;
+}
+
+#hud-tab-speed .hud-tab-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.hud-speed-badge {
+  margin-left: auto;
+  margin-right: 4px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.twin-speed-slider-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 4px 2px;
+  box-sizing: border-box;
+}
+
+.twin-speed-slider-wrap input[type=range] {
+  width: 100%;
+  margin: 3px 0;
+  cursor: pointer;
+}
+
+.speed-hud-ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--mut);
+  user-select: none;
+  font-weight: 600;
 }
 
 /* Platzierung der Tabs im Overlay-Grid */
@@ -2942,12 +3050,12 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .twin-scene-node-overlay .btn-icon-small {
-  width: 34px !important;
-  height: 34px !important;
-  min-width: 34px !important;
-  min-height: 34px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
   padding: 0 !important;
-  font-size: 15px !important;
+  font-size: 16px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -3151,18 +3259,13 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     gap: 10px;
     margin-top: 6px;
   }
-  #panel-jogging .speed-control {
-    margin-top: 10px !important;
-    padding: 6px 12px !important;
-    gap: 4px !important;
-  }
   .col-left, .col-middle, .col-right {
     gap: 10px !important;
   }
   .twin-toolbar .btn-icon-small {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 14px !important;
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 15px !important;
   }
   #panel-telemetry .telemetry-grid {
     margin-bottom: 10px;
@@ -3305,3 +3408,319 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 
+
+/* ── Not-Aus im Header ─────────────────────────────────────────────────────
+   Fester Platz ausserhalb des Drag-and-Drop-Layouts. Der Header liegt ueber
+   dem Offline-Overlay, damit Not-Aus und Status auch dann erreichbar bleiben. */
+header {
+  position: relative;
+  z-index: 1001;
+}
+
+.estop-group {
+  gap: 8px;
+}
+
+.estop-header-btn,
+.estop-header-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.estop-header-btn {
+  color: #fff;
+  background: linear-gradient(180deg, #ef4444, #b91c1c);
+  border: 1px solid #fca5a5;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.45);
+}
+
+.estop-header-btn:hover {
+  background: linear-gradient(180deg, #f87171, #dc2626);
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.7);
+}
+
+.estop-header-btn:active {
+  transform: scale(0.97);
+}
+
+.estop-header-btn kbd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+/* Verriegelter Not-Aus: der Knopf pulsiert, bis quittiert wird. */
+.estop-header-btn.estop-latched {
+  animation: estop-latched-pulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes estop-latched-pulse {
+  from { box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+  to   { box-shadow: 0 0 24px rgba(239, 68, 68, 0.95); }
+}
+
+.estop-header-reset {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.6);
+}
+
+.estop-header-reset:hover {
+  background: rgba(245, 158, 11, 0.24);
+}
+
+.estop-header-reset.estop-reset-hidden {
+  display: none;
+}
+
+/* Kleine Fenster scrollen - der Header samt Not-Aus bleibt oben stehen. */
+@media (max-height: 799px) {
+  header {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+  }
+}
+
+/* ── Offline-Overlay (rosbridge getrennt) ────────────────────────────────── */
+.ros-offline-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 15, 25, 0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.ros-offline-overlay.is-hidden {
+  display: none;
+}
+
+.ros-offline-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 460px;
+  max-width: 100%;
+  padding: 24px 24px 20px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(239, 68, 68, 0.7);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(239, 68, 68, 0.35);
+}
+
+.ros-offline-icon {
+  font-size: 34px;
+  color: var(--red);
+  animation: mp-pulse 0.9s ease-in-out infinite alternate;
+}
+
+.ros-offline-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fecaca;
+}
+
+.ros-offline-text {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--txt);
+}
+
+.ros-offline-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--mut);
+  overflow-wrap: anywhere;
+}
+
+.ros-offline-reload {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Erstverbindung: ruhiger, kein Alarm-Rot */
+.ros-offline-overlay.is-connecting .ros-offline-card {
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+.ros-offline-overlay.is-connecting .ros-offline-icon { color: var(--accent); }
+.ros-offline-overlay.is-connecting .ros-offline-title { color: var(--txt); }
+
+/* ── MoveIt-Popup: Pfad-Vorschau bestaetigen ─────────────────────────────── */
+.moveit-popup.mp-phase-confirm   { --mp-accent: #22d3ee; }
+.moveit-popup.mp-phase-discarded { --mp-accent: #94a3b8; }
+
+.mp-step.mp-step-waiting {
+  color: var(--txt);
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--mp-accent) 70%, transparent);
+}
+.mp-step.mp-step-waiting .mp-dot {
+  background: var(--mp-accent);
+  animation: mp-pulse 0.5s ease-in-out infinite alternate;
+}
+
+.mp-actions {
+  display: none;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.moveit-popup.mp-phase-confirm .mp-actions {
+  display: flex;
+}
+
+.mp-btn {
+  flex: 1 1 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.mp-btn-exec {
+  color: #ecfeff;
+  background: rgba(34, 211, 238, 0.22);
+  border: 1px solid rgba(34, 211, 238, 0.75);
+}
+.mp-btn-exec:hover { background: rgba(34, 211, 238, 0.36); }
+
+.mp-btn-discard {
+  color: var(--txt);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.mp-btn-discard:hover { background: rgba(255, 255, 255, 0.12); }
+
+/* ── Kontextmenue fuer erkannte Objekte ──────────────────────────────────
+   Schwebt an der Klickposition (fixed, per JS in den Viewport geschoben). */
+.obj-menu {
+  position: fixed;
+  z-index: 1002;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 240px;
+  max-width: calc(100vw - 16px);
+  padding: 6px;
+  background: rgba(10, 14, 23, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.obj-menu.is-hidden {
+  display: none;
+}
+
+.obj-menu-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px 7px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.obj-menu-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--txt);
+  overflow-wrap: anywhere;
+}
+
+.obj-menu-coords {
+  font-size: 10.5px;
+  color: var(--mut);
+}
+
+.obj-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--txt);
+  font-family: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.obj-menu-item i {
+  flex: 0 0 16px;
+  text-align: center;
+  color: var(--accent);
+}
+
+.obj-menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.obj-menu-hint {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  color: var(--mut);
+}
+
+.obj-menu-item:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.obj-menu-item.is-danger i {
+  color: var(--orange);
+}
+
+.obj-menu-item.is-danger:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.obj-menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
