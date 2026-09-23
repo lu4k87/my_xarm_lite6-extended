@@ -248,8 +248,7 @@
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py",
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
-      "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true",
-      "ros2 launch voice_command_listener voice_listener.launch.py"
+      "ros2 launch web_video_server web_video_server.launch.py"
     ],
     "extras_zed": [],
     "sec_0": [],
