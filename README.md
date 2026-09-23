@@ -319,7 +319,7 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 
 > [!NOTE]
 > **Virtual Linear Axis (Simulation Only):** In FAKE mode, it is possible to mount the robot on a virtual linear axis without affecting the MoveIt planning group (`lite6`).
-> - **Activation:** The Nexus Web App automatically starts the linear axis tuner when you click the **RUN DEV Setup (FAKE)** button. If starting manually, append `attach_to:=linear_axis_link` to the launch command.
+> - **Activation:** The Nexus Webapp automatically starts the linear axis tuner when you click the **RUN DEV Setup (FAKE)** button. If starting manually, append `attach_to:=linear_axis_link` to the launch command.
 > - **Control:** The GUI slider in the Web UI (Port 8081) or gamepad D-Pad (Left/Right) controls the horizontal translation by publishing `/linear_axis_cmd`. The headless node `fake_linear_axis` (`ros2 run fake_linear_axis fake_linear_axis`) translates this into the dynamic TF and visual rail markers.
 > - **MoveIt Architecture:** The axis is shifted purely via dynamic TF (`world` -> `linear_axis_link`), completely decoupled from the URDF joints. This ensures MoveIt automatically recognizes the new base pose for planning/collision detection without needing a 7-DoF IK solver.
 > - **URDF Modification:** To prevent parsing errors with dynamic `attach_to` arguments, `xarm_description/urdf/xarm_device_macro.xacro` was modified. The `create_attach_link` condition now generates a root link for *any* custom `attach_to` string, rather than being hardcoded to only `"world"`.
@@ -378,8 +378,8 @@ The table below illustrates which project modules can be evaluated in pure softw
 >> | **D-Pad** (↕️) | **Speed Control** | *Cycles through 5 speed levels* |
 >> | **D-Pad** (↔️) | **Linear Axis** | *Moves the robot along the rail (Base Y-Shift)* |
 >> | **START / BACK** | **Reference Frame** | *Toggles between base (`link_base`) and tool coordinates (`link_tcp`)* |
->> | **Button A** (🟢) | **Vacuum Gripper** | *Toggles the vacuum on / off* |
->> | **Button B** (🔴) | **E-Stop (Gripper)** | *Stops the vacuum gripper immediately* |
+>> | **Button A** (🟢) | **Gripper Open / Close** | *Toggles the Lite 6 gripper between open and closed* |
+>> | **Button B** (🔴) | **E-Stop (Gripper)** | *Stops the Lite 6 gripper immediately and releases the holding force* |
 >> | **Button X** (🔵) | **Microphone (Voice)** | *Starts/Stops recording for Whisper AI* |
 >> | **Button Y** (🟡) | **Initial Pose** | *Moves the robot to the safe home position* |
 >
@@ -417,10 +417,10 @@ The table below illustrates which project modules can be evaluated in pure softw
 >> |---|---|---|
 >> | **`/servo_server/start_servo`** | `std_srvs/srv/Trigger` (Client) | *Starts the MoveIt Servo engine on bringup.* |
 >> | **`/servo_server/stop_servo`** | `std_srvs/srv/Trigger` (Client) | *Safely stops the MoveIt Servo engine.* |
->> | **`/servo_server/switch_command_type`** | Client | *Switches the input mode of the Servo Server (e.g., Twist to Joint Jog).* |
->> | **`/ufactory/open_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Opens / turns on the vacuum gripper (Button A).* |
->> | **`/ufactory/close_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Closes / turns off the vacuum gripper (Button A).* |
->> | **`/ufactory/stop_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Stops the vacuum gripper immediately (Button B).* |
+>> | **`/ufactory/open_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Opens the Lite 6 gripper (Button A).* |
+>> | **`/ufactory/close_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Closes the Lite 6 gripper (Button A).* |
+>> | **`/ufactory/stop_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Stops the Lite 6 gripper immediately, releasing the holding force (Button B).* |
+>> | **`/ufactory/get_position`** | `xarm_msgs/srv/GetFloat32List` (Client) | *Queries the current Cartesian controller position from the xArm driver.* |
 >> | **`/ui/execute_initial_pose`** | `std_srvs/srv/Trigger` (Client) | *Triggers initial/home pose sequence via central motion handler (Button Y).* |
 >
 >
@@ -828,6 +828,7 @@ stateDiagram-v2
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Reads the object coordinates as a target for the grasp path.* |
+>> | **`/ui/sound_enabled`** | `std_msgs/Bool` | *Mutes the spoken grasp announcements together with the Web UI sound toggle.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1110,6 +1111,7 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/ui/voice_listen_trigger`** | `std_msgs/String` | *Trigger from Web UI or Gamepad to begin voice listening.* |
+>> | **`/ui/sound_enabled`** | `std_msgs/Bool` | *Mutes the node's spoken feedback together with the Web UI sound toggle.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1228,6 +1230,15 @@ flowchart TD
 >> |---|---|---|
 >> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Commands the robot to execute scan poses and hover over detected targets.* |
 >
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/ui/sound_enabled`** | `std_msgs/Bool` | *Mutes the acoustic feedback together with the Web UI sound toggle.* |
+>
+> *The gaze data does not arrive over a ROS topic — it is read straight from the Tobii Glasses 3 RTSP stream (`rtsp://<tobii-ip>:8554/live/all`, JSON field `gaze2d`). Object detection runs node-internally via YOLOv8 on that same stream.*
+>
 
 ---
 
@@ -1287,7 +1298,7 @@ flowchart TD
 >    ```
 >    *(Alternatively, the headset can be connected via USB-C; ADB port-forwarding bypasses the firewall automatically).*
 > 2. **Generate Certificates:** Ensure `cert.pem` and `key.pem` are located in the `~/dev_ws/certs/` folder, otherwise the secure ROSbridge will fail to start.
-> 3. **Launch Node:** Start via the **"VR Quest 3 Teleop"** button in the Nexus Web App or via the launch command above.
+> 3. **Launch Node:** Start via the **"VR Quest 3 Teleop"** button in the Nexus Webapp or via the launch command above.
 > 4. **Accept SSL Certificates in VR (Critical!):** Because self-signed certificates are used, the Meta Quest Browser blocks the connection by default. You MUST manually open and accept **two addresses** sequentially in the headset's browser:
 >    - Navigate to `https://<PC-IP>:9091` -> Click "Advanced" -> "Proceed (unsafe)". (You will see a blank page or an error after, this is normal! The WebSocket certificate is now accepted).
 >    - Navigate to `https://<PC-IP>:8443/controller_reader.html` -> Click "Advanced" -> "Proceed (unsafe)".
@@ -1307,7 +1318,7 @@ flowchart TD
 ### 3.6 Feature: GUI - Graphical Robot Control & Visual Feedback
 *Tools for the operator for manual positioning and visual monitoring in RViz and the Web.*
 
-<img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control Web UI">
+<img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control UI">
 
 ---
 
@@ -1317,7 +1328,7 @@ flowchart TD
 > [!NOTE]
 > 💻 **Run Command:** *(Automatically executed in RUN DEV FAKE / RUN PROD REAL setup)*
 >
-> **Purpose & Task:** Serves as the "headless" backend for the Web UI. Starts MoveIt 2's `move_group` node without resource-intensive graphical interfaces like RViz. It provides all planning and execution services (Inverse Kinematics, Collision Avoidance, Action Servers) required by the Nexus Web App or other remote controllers to perform motion planning and execute complex trajectories. Decoupling this from RViz prevents synchronization errors (e.g., MotionPlanning load failures) during startup.
+> **Purpose & Task:** Serves as the "headless" backend for the Web UI. Starts MoveIt 2's `move_group` node without resource-intensive graphical interfaces like RViz. It provides all planning and execution services (Inverse Kinematics, Collision Avoidance, Action Servers) required by the Nexus Webapp or other remote controllers to perform motion planning and execute complex trajectories. Decoupling this from RViz prevents synchronization errors (e.g., MotionPlanning load failures) during startup.
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) / ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
@@ -1643,7 +1654,7 @@ flowchart TD
 > ```
 >
 > **Purpose & Task:** A native-feeling, standalone Chrome Web App designed with a modern Glassmorphism aesthetic. It acts as a comprehensive multimodal dashboard directly replicating the RViz control panel features for remote operation. Operates on **Port 8081**.
-> **Native Desktop Integration:** Both the *ROS 2 Nexus Web App* and the *Robot Control Web UI* now launch in dedicated, isolated Chrome `--app` profiles. They start perfectly maximized as standalone applications, completely detached from standard browser windows, and feature their own distinct taskbar icons for a seamless, native OS experience.
+> **Native Desktop Integration:** Both the *ROS 2 Nexus Webapp* and the *Robot Control UI* now launch in dedicated, isolated Chrome `--app` profiles. They start perfectly maximized as standalone applications, completely detached from standard browser windows, and feature their own distinct taskbar icons for a seamless, native OS experience.
 > - ✨ **Core Features:** 
 >   - **Standardized Status Bar & Quick Reload:** Unified navbar with a live refresh button (`fa-arrows-rotate`) on the far left, followed by standardized port badges in `Name: PORT` format (`ROS 2 Bridge: 9090`, `Robot Control UI: 8081`, `Nexus Webapp: 5000`, `Dashboard: 8080`, `Video Streams: 8082`, `VR Teleop: 9091`), USB gamepad connection detection, live ROS environment parameters (`ROS_DOMAIN_ID: 66`, `RMW: rmw_cyclonedds_cpp`, `Localhost Only: On/Off`), and real-time hardware mode pills.
 >   - **Harmonized Speed Level Controls:** The Speed Level slider has been visually harmonized with the joint slider controls (6px slim track, translucent backdrop, cyan accent gradient fill, neon glow thumb with active grabbing animation, gauge icon, and dynamic speed level readout e.g. `3/5 (60%)`).
@@ -1655,6 +1666,9 @@ flowchart TD
 >   - **Interactive UI & Layout Optimization:** The layout is intelligently structured with all functional panels (MoveTo, YOLO 3D, Cartesian Jogging, Telemetry, Whisper AI, and Console) preserved. Features dynamic elements like the "Start Listening" Whisper AI button with real-time speech recording and color-coded RViz axis indicators (X Red, Y Green, Z Blue) on input fields.
 >   - **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
 >   - **3D Centerpiece Tab Switcher (WebGL Digital Twin & RViz Stream):** An integrated 3D centerpiece featuring quick tab switching between the offline WebGL 3D Digital Twin (powered by Three.js & URDFLoader with live `/joint_states` mirroring and synchronized linear axis slider updates, orbit controls, reset, top-down view, cyber grid floor, and four independent 3D Scene Node toggle icons (`fa-cubes` for interactive objects & workspace circle, `fa-square` for the white reference plane, `fa-shield-halved` for the Safety Zone, `fa-video` for the ZED-M camera stand) to individually show/hide each `rviz_marker_3d_scene_objects` node's markers in the Digital Twin view) and the live RViz2 stream (`/rviz_video/image_raw` on Port 8082) without wasting vertical screen space.
+>   - **Collapsible Viewport HUD Panels:** The Digital Twin viewport carries six independently collapsible glass panels laid out around the 3D scene — **TCP GIZMO**, **SCENE**, **MOTION**, **TELEMETRY**, **POSE** and **SPEED**. Each panel header toggles its own body, a single button in the viewport tab bar (`fa-window-minimize`) collapses or expands all of them at once, and every panel remembers its state per browser via `localStorage`. Collapsing frees the whole viewport for the 3D view without losing a single control. A dedicated toggle (`fa-ruler-horizontal`) additionally shows or hides the dashed TCP-to-object distance line inside the twin.
+>   - **Acoustic Feedback & System-Wide Mute:** Every button click plays a short UI sound (`sounds/ui_mouse_click.mp3`), and motion commands are accompanied by pre-rendered German voice announcements (e.g. `_voice_robot_moves_to_scan_pos.mp3`). A single speaker button (`fa-volume-high` / `fa-volume-xmark`) in the status bar mutes the whole system: the state is stored per browser and published every 2 seconds on **`/ui/sound_enabled`** (`std_msgs/Bool`), which `voice_command_listener` and `yolo_planned_grasp_executor` subscribe to. Muting the Web UI therefore silences the robot-side voice output as well. If playback is blocked (e.g. by the browser autoplay policy), the failure is reported explicitly in the console log instead of failing silently.
+>   - **Gripper Controls (Vacuum & Lite 6 Gripper):** The system supports two mechanically different end effectors. The **vacuum gripper** knows two states (`on` / `off`) and is driven via `/ufactory/set_vacuum_gripper` (`xarm_msgs/srv/VacuumGripperCtrl`). The **Lite 6 two-finger gripper** knows three states (`open` / `close` / `off`, the latter releasing the holding force) and is driven via `/ufactory/open_lite6_gripper`, `/ufactory/close_lite6_gripper` and `/ufactory/stop_lite6_gripper` (`xarm_msgs/srv/Call`). Gamepad and gaze control already use these services. In the Web UI the three buttons (`Open`, `Close`, `Off`) currently only render the state visually — **wiring them to the services is still pending**.
 >   - **Color-Coded Console Log:** A live, scrollable console log with detailed feedback for all motion commands — including coordinate display (`X`, `Y`, `Z`) for MoveTo commands and explicit success (✓) / failure (❌) status indicators with error codes.
 >
 >
@@ -1671,6 +1685,12 @@ flowchart TD
 >> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Syncs UI speed sliders with the backend level.* |
 >> | **`/ui/collision_msg`** | `std_msgs/String` | *Displays collision warnings in the Web Log.* |
 >> | **`/ui/grasp_status`** | `std_msgs/String` | *Forwards grasp status strings to the web console.* |
+>> | **`/ui/motion_status`** | `std_msgs/String` | *Locks/unlocks the motion buttons while a trajectory is running.* |
+>> | **`/joy`** | `sensor_msgs/Joy` | *Mirrors the physical gamepad state into the browser UI.* |
+>> | **`/tf`** | `tf2_msgs/TFMessage` | *Feeds the live TF tree into the WebGL Digital Twin.* |
+>> | **`/visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Renders the `rviz_marker_3d_scene_objects` markers inside the Digital Twin.* |
+>> | **`/zed_visual_markers`** | `visualization_msgs/MarkerArray` | *Renders the ZED-M camera stand and scene meshes in the Digital Twin.* |
+>> | **`/dashboard/workspace_metadata`** | `std_msgs/String` | *Reads the live node/topic inventory published by the Workspace Analyzer.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1686,6 +1706,7 @@ flowchart TD
 >> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggers autonomy pipeline actions.* |
 >> | **`/ui/voice_listen_trigger`** | `std_msgs/String` | *Signals voice listener node to begin speech recording.* |
 >> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Publishes updated dynamic safety zone parameters `[x, y, radius]`.* |
+>> | **`/ui/sound_enabled`** | `std_msgs/Bool` | *Publishes the acoustic feedback mute state so other nodes stay in sync.* |
 >
 >
 > ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
@@ -1694,10 +1715,11 @@ flowchart TD
 >> |---|---|---|
 >> | **`/ui/execute_initial_pose`** | `std_srvs/srv/Trigger` (Client) | *Commands robot to return to home/initial position.* |
 >> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Sends absolute XYZ Cartesian coordinates to motion handler.* |
->> | **`/ui/execute_move_joint`** | `xarm_msgs/srv/MoveJoint` (Client) | *Sends absolute joint angles to motion handler.* |
 >> | **`/ui/start_object_scan`** | `std_srvs/srv/Trigger` (Client) | *Triggers predefined object dome scan sweep.* |
->> | **`/ui/emergency_stop`** | `std_srvs/srv/Trigger` (Client) | *Sends emergency stop service request to motion handler.* |
->> | **`/ufactory/set_vacuum_gripper`** | `xarm_msgs/srv/VacuumGripperCtrl` (Client) | *Toggles vacuum gripper state directly from the dashboard.* |
+>> | **`/rosapi/nodes`** | `rosapi/Nodes` (Client) | *Detects the running hardware mode (Fake Arm vs. Real Arm) from the node list.* |
+>> | **`/rosapi/get_param`** | `rosapi/GetParam` (Client) | *Reads the live ROS environment parameters shown in the status bar.* |
+>
+> *The emergency stop is dispatched over the non-blocking topic `/ui/emergency_stop_topic`, not over the `/ui/emergency_stop` service. The services `/ui/execute_move_joint` and `/ui/emergency_stop` are provided by `robot_motion_handler_movegroup` and are used by the RViz control panel, not by this Web UI.*
 >
 
 
@@ -2034,7 +2056,7 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 
 > [!WARNING]
 > **1. `.bashrc` Configuration (CUDA & ROS 2 Nexus Compatibility)**
-> When launching the ZED camera (which requires CUDA) via the ROS 2 Nexus WebApp, the backend spawns terminals as a *non-interactive shell*. As a result, Ubuntu aborts the loading of your `~/.bashrc` very early. To prevent the ZED SDK from falling back to CPU rendering (which causes massive stuttering!), you **must** place all CUDA and ROS environment variables at the **very top** of your `~/.bashrc` (before the `case $- in *i*) ;; *) return;; esac` block!). Example of a correct `.bashrc` header:
+> When launching the ZED camera (which requires CUDA) via the ROS 2 Nexus Webapp, the backend spawns terminals as a *non-interactive shell*. As a result, Ubuntu aborts the loading of your `~/.bashrc` very early. To prevent the ZED SDK from falling back to CPU rendering (which causes massive stuttering!), you **must** place all CUDA and ROS environment variables at the **very top** of your `~/.bashrc` (before the `case $- in *i*) ;; *) return;; esac` block!). Example of a correct `.bashrc` header:
 > ```bash
 > source /opt/ros/humble/setup.bash
 > source ~/dev_ws/install/setup.bash
@@ -2213,7 +2235,7 @@ The ZED Mini camera requires the official ZED SDK and a matching CUDA toolkit ve
  colcon build --packages-select zed_interfaces zed_components zed_wrapper robot_vision_cameras_bringup --symlink-install
  ```
 4. **Execution Workflow & RViz Integration**:
- * First, launch the robot base (e.g., **Fake Arm** or **Real Arm**) via the ROS 2 Nexus WebApp. This automatically opens **RViz** with the pre-configured layout (`servo.rviz`).
+ * First, launch the robot base (e.g., **Fake Arm** or **Real Arm**) via the ROS 2 Nexus Webapp. This automatically opens **RViz** with the pre-configured layout (`servo.rviz`).
  * Next, launch the **3D Vision Bringup (cam, tf, yolo3d, pc_opt, grasp)** via Nexus. This executes the `robot_vision_cameras_bringup` package, which simultaneously initializes the ZED wrapper, broadcasts the static TF (aligning the camera to the robot's `link_base`), and publishes the dynamically generated 3D tripod visualization.
  * The live Point Cloud (`PointCloud2`) and the camera axes will instantly and automatically appear in the already running RViz instance without any manual configuration.
 
@@ -2287,9 +2309,9 @@ cd ~/dev_ws
 python3 ros2_nexus/ros2_nexus_web.py
 # → Opens at http://localhost:5000 (accessible in LAN, e.g., http://192.168.x.x:5000)
 ```
-*Note: The Nexus Web App features an integrated, expandable Live Console Overlay. It tracks all launched nodes and their PIDs reliably in real-time. If the backend terminal is closed, the browser tab will automatically shut itself down.*
+*Note: The Nexus Webapp features an integrated, expandable Live Console Overlay. It tracks all launched nodes and their PIDs reliably in real-time. If the backend terminal is closed, the browser tab will automatically shut itself down.*
 
-**Kill All ROS 2 Processes:** The Nexus WebApp Navbar includes a dedicated "KILL ALL ROS2 Processes" button. It triggers an isolated bash script (`kill_ros2.sh`) to instantly and cleanly terminate all active ROS 2 nodes, launch files, RViz instances, and their associated terminal wrappers, regardless of the UI's state.
+**Kill All ROS 2 Processes:** The Nexus Webapp Navbar includes a dedicated "KILL ALL ROS2 Processes" button. It triggers an isolated bash script (`kill_ros2.sh`) to instantly and cleanly terminate all active ROS 2 nodes, launch files, RViz instances, and their associated terminal wrappers, regardless of the UI's state.
 
 **Quick Launch (auto-start Nexus Web Backend + open browser):**
 ```bash
@@ -2308,8 +2330,8 @@ This automatically configures the paths, copies desktop shortcuts to `~/.local/s
 
 ### 7.3 Step 3: Start Nodes via GUI
 Once the ROS 2 Nexus interface is open in the browser:
-1. Navigate through the available tabs (e.g., `Nodes / Launch`, `Sensors`, `Hardware`, `Web`).
-2. Click the corresponding buttons to launch the required modules (for instance, the ZED camera driver is located under the **Sensors** tab).
+1. Navigate through the available tabs: `Nodes / Launch` (all node and launch buttons), `Pub MSG on Topic` (publish messages to a topic by hand), `ROS Info` (live environment and network information) and `System` (terminal and system commands).
+2. Inside the `Nodes / Launch` tab the buttons are grouped into collapsible sections — `AUTOMATED SYSTEM BRINGUP`, `Lite6 Fake / Lite6 - Moveit Servo (+Rviz2)`, `Controllers (Input -> Moveit Servo)`, `Visualization (Rviz2)`, `Vision (Cameras + CV)`, `Workspace Analyzer Backend`, `Frontend & Browser`, `Client / Server Control Bringup`, `NVIDIA Isaac Sim` and `MoveIt Planning (OMPL Server)`. The ZED camera driver, for instance, lives in **`Vision (Cameras + CV)`**.
 3. The terminal output of each launched node will stream directly back to the web interface in real-time.
 4. **Dynamic Tooltips:** Hover over any action button to instantly view an exhaustive, auto-generated list of all underlying source files (e.g., `.cpp`, `.py`, `.launch.py`) and ROS 2 arguments executed by that button. Nodes spawned by parent launch files are visually indented to reflect the true execution hierarchy. This provides immediate architectural introspection for complex launch sequences.
 5. **Interactive Launch Modals (Glassmorphism):** When clicking an action button, a centered, stylized modal appears over a darkened background. This modal cleanly visualizes the exact command structure before execution. It intelligently parses ROS 2 parameters (`key:=value`) into individual, toggleable checkboxes. It automatically preserves bash operators (like `&`, `&&`, `;`) in the background, ensuring complex piped commands or delayed executions (e.g., `sleep 5`) remain structurally intact and functionally robust, even when parameters are interactively modified by the user.
@@ -2356,8 +2378,8 @@ To run the complete system with both web interfaces (Nexus and Dashboard), multi
 | Port | Protocol | Service / Component | Description |
 | :--- | :--- | :--- | :--- |
 | **`5000`** | HTTP / SocketIO | **ROS 2 Nexus Web Backend** | *Central process manager & web console.* |
-| **`8080`** | HTTP | **ROS 2 Core Dashboard** | *System monitoring, Hz tracking, topology visualization.* |
-| **`8081`** | HTTP | **Robot Control Web UI** | *Standalone web app for remote robot control (jogging, telemetry, YOLO grasp).* |
+| **`8080`** | HTTP | **Dashboard Monitoring UI** | *System monitoring, Hz tracking, topology visualization.* |
+| **`8081`** | HTTP | **Robot Control UI** | *Standalone web app for remote robot control (jogging, telemetry, YOLO grasp).* |
 | **`8082`** | HTTP / MJPEG | **Web Video Server** | *Video streaming of camera and RViz window feeds to the web.* |
 | **`8443`** | HTTPS | **WebXR VR Server** | *Meta Quest 3 3D browser interface.* |
 | **`8554`** | RTSP | **Tobii Glasses 3 Stream** | *Video & JSON Gaze data transmission.* |
@@ -2503,7 +2525,7 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 
 ## 8. 📊 Monitoring: Dashboard & Workspace Analyzer
 
-Once the nodes are launched via ROS 2 Nexus, the live state of the system can be monitored using the **ROS2 Core Dashboard**. This is a web-based real-time UI, which fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface.
+Once the nodes are launched via ROS 2 Nexus, the live state of the system can be monitored using the **Dashboard Monitoring UI**. This is a web-based real-time UI, which fuses static source code analysis with live ROS 2 network telemetry into a unified monitoring interface.
 
 ---
 <br>
@@ -2521,7 +2543,7 @@ The Workspace Analyzer Backend is a ROS 2 node that performs execution-free, reg
 ### 8.2 Frontend (`dashboard_index.html`)
 Connects to the ROS network via WebSocket (`rosbridge_server` on port 9090). The frontend logic has been strictly modularized into 8 specialized JavaScript files (e.g., `dashboard_script_nodes.js`, `dashboard_script_graph.js`, `dashboard_script_ros.js`) for maintainability. It visually matches statically analyzed nodes against the currently running nodes, displays real-time topic frequencies (Hz), and enables direct execution of system scripts from the browser in a clean, single-column reference view. The UI employs a modern Glassmorphism design aesthetic and performs recursive JSON parsing to cleanly format nested ROS message payloads. The sidebar provides at-a-glance status information including connection health, robot availability, and the active ROS 2 environment configuration.
 
-![ROS2 Core - Dashboard](_imgs/dashboard_nodes.png)
+![Dashboard Monitoring UI](_imgs/dashboard_nodes.png)
 
 ---
 <br>
@@ -2552,7 +2574,7 @@ dev_ws/
 │   ├── robotsystem.jpg                                                    # Full system hardware setup overview
 │   ├── ros2_nexus_web.png                                                 # ROS 2 Nexus Web Launcher UI preview
 │   ├── ros2_nexus_web_popup.png                                           # Nexus script terminal output pop-up preview
-│   ├── robot_control_ui.png                                               # Robot Control Web UI (Port 8081) preview
+│   ├── robot_control_ui.png                                               # Robot Control UI (Port 8081) preview
 │   ├── dashboard_nodes.png                                                # System Dashboard (Port 8080) topology preview
 │   ├── gaze_control_interface.png                                         # Tobii Gaze Eye-Tracking GUI preview
 │   ├── SS4_pointcloud object det collision off.png                        # Perception/collision visualization
