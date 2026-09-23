@@ -265,16 +265,16 @@ export function evaluateRobotSafety() {
   }
 }
 
-// Error sound when the moving robot actually runs into a collision or
-// singularity (entering it, or escalating singularity -> collision). MoveIt
-// planning failures never get here - this is driven by live telemetry only.
+// Error sound only when the moving robot actually runs into a collision
+// (also when escalating singularity -> collision). Singularities stay silent -
+// they are shown visually only. MoveIt planning failures never get here -
+// this is driven by live telemetry only.
 export function maybePlaySafetyErrorSound(newState, oldState) {
-  const entering = (newState === 'collision' && oldState !== 'collision') ||
-                   (newState === 'singularity' && oldState === 'normal');
-  if (!entering) return;
+  if (newState !== 'collision' || oldState === 'collision') return;
   const now = performance.now();
-  // Servo status 1-4 (decelerating/halting) only happens during commanded motion.
-  const servoStopped = lastServoStatus >= 1 && lastServoStatus <= 4;
+  // Servo status 3/4 (decelerating/halting for collision) only happens during
+  // commanded motion.
+  const servoStopped = lastServoStatus === 3 || lastServoStatus === 4;
   const recentlyMoved = now - lastRobotMotionAt < SAFETY_SOUND_MOTION_WINDOW_MS;
   if (!servoStopped && !recentlyMoved) return;
   if (now - lastSafetyErrorSoundAt < SAFETY_SOUND_COOLDOWN_MS) return;
