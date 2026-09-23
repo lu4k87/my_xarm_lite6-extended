@@ -94,7 +94,10 @@ function restore() {
         }
       }
       const auto = document.getElementById('chk-gizmo-auto-drop');
-      if (auto && typeof st.autoMove === 'boolean') auto.checked = st.autoMove;
+      if (auto && typeof st.autoMove === 'boolean' && auto.checked !== st.autoMove) {
+        auto.checked = st.autoMove;
+        auto.dispatchEvent(new Event('change', { bubbles: true }));
+      }
       if (st.frame === 'link_base' || st.frame === 'link_tcp') {
         if (st.frame !== currentFrame) setFrame(st.frame);
       }

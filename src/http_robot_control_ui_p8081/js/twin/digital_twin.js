@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls_r128.js';
 import URDFLoader from 'urdf-loader';
-import { ROBOT_LIMITS } from '../robot_limits.js';
+import { ROBOT_LIMITS, unreachableClearance, unreachableRadiusAt } from '../robot_limits.js';
 import { logMsg } from '../log.js';
 import { floorGuard } from '../util.js';
 
@@ -67,23 +67,16 @@ let isDraggingGizmo = false;
 
 // Grenzwerte kommen aus robot_limits.js, damit UI und Twin nicht
 // auseinanderlaufen. Der Fallback greift nur, falls die Datei fehlt.
-const LIM = ROBOT_LIMITS || {
-  HARD_BLOCK_MM: 125.0, CAUTION_MM: 140.0, LOW_Z_MM: 280.0,
-  FLOOR_WARN_MM: 35.0, SAFETY_ZONE_M: 0.138,
-};
+const LIM = ROBOT_LIMITS;
 
 // Zwei verschiedene Dinge, die nicht verwechselt werden duerfen:
 //
-// 1) Gizmo-Deadzone: blockiert Auto-Move, wenn das Ziel zu nah an der Base
-//    UND zu tief liegt. Reine UI-Pruefung, die der harten Ablehnung in
-//    robot_motion_handler_movegroup.py:1041 vorgreift.
-const DEADZONE_RADIUS_MM = LIM.HARD_BLOCK_MM;
-const CAUTION_RADIUS_MM = LIM.CAUTION_MM;
+// 1) Unerreichbare Zone (UNREACHABLE_PROFILE, mit MoveIt vermessen): dort
+//    kann der TCP nicht stehen. Das Gizmo warnt nur noch (Farbe, Hinweis) -
+//    ob ein Ziel geht, entscheidet MoveIt.
 //
-// 2) Safety Zone: der Bereich um die Base, der wegen Singularitaet /
-//    Eigenkollision NICHT anfahrbar ist. Die frueheren 200 mm waren KEINE
-//    Reichweitengrenze, sondern nur der Bahnabstand, den
-//    generate_single_object_trajectory() einhaelt.
+// 2) Safety Zone: Bahnabstand, den die Scan-Trajektorien um die Base
+//    einhalten (safe_radius im Motion-Handler, Standard 138 mm).
 //    Ueber /ui/safety_zone_params zur Laufzeit aenderbar.
 const SAFETY_ZONE_RADIUS_M = LIM.SAFETY_ZONE_M;
 let hasUserTargetOffset = false;
@@ -1039,7 +1032,8 @@ function handleGizmoChange(updateInputs = true) {
 
   // Safety check on current gizmo coordinates
   const r_xy = Math.sqrt(posX_mm * posX_mm + posY_mm * posY_mm);
-  const isInsideDeadzone = (r_xy < DEADZONE_RADIUS_MM && posZ_mm < LIM.LOW_Z_MM);
+  const zoneClearance = unreachableClearance(posX_mm, posY_mm, posZ_mm);
+  const isInsideDeadzone = zoneClearance < 0;    // nur Warnung, keine Sperre
   const isBelowFloor = floorGuard.enabled && (posZ_mm <= 15.0);
 
   // Update floating HUD in viewport
@@ -1060,7 +1054,7 @@ function handleGizmoChange(updateInputs = true) {
     if (isInsideDeadzone || isBelowFloor) {
       hudCoords.style.color = '#ef4444';
       hudCoords.classList.add('coords-alert');
-    } else if (r_xy < CAUTION_RADIUS_MM || posZ_mm < LIM.FLOOR_WARN_MM) {
+    } else if (zoneClearance < LIM.CAUTION_MARGIN_MM || posZ_mm < LIM.FLOOR_WARN_MM) {
       hudCoords.style.color = '#f59e0b';
       hudCoords.classList.add('coords-alert');
     } else {
@@ -1070,7 +1064,7 @@ function handleGizmoChange(updateInputs = true) {
   }
   if (hudDelta) {
     if (isInsideDeadzone) {
-      hudDelta.innerText = `⚠️ R: ${Math.round(r_xy)} < ${DEADZONE_RADIUS_MM} mm`;
+      hudDelta.innerText = `⚠️ R: ${Math.round(r_xy)} < ${Math.round(unreachableRadiusAt(posZ_mm))} mm`;
       hudDelta.style.color = '#ef4444';
       hudDelta.style.background = 'rgba(239, 68, 68, 0.25)';
     } else if (isBelowFloor) {
@@ -1089,7 +1083,7 @@ function handleGizmoChange(updateInputs = true) {
     }
   }
   if (btnExecute) {
-    btnExecute.disabled = (isInsideDeadzone || isBelowFloor);
+    btnExecute.disabled = isBelowFloor;
   }
 
   updateConnectingLine();
@@ -1104,16 +1098,12 @@ function handleGizmoDragEnd() {
   const posX_mm = Math.round(gizmoTarget.position.x * 1000.0);
   const posY_mm = Math.round((gizmoTarget.position.y - linearShiftY) * 1000.0);
   const posZ_mm = Math.round(gizmoTarget.position.z * 1000.0);
-  const r_xy = Math.sqrt(posX_mm * posX_mm + posY_mm * posY_mm);
-  const isInsideDeadzone = (r_xy < DEADZONE_RADIUS_MM && posZ_mm < LIM.LOW_Z_MM);
   const isBelowFloor = floorGuard.enabled && (posZ_mm <= 15.0);
 
-  if (isInsideDeadzone || isBelowFloor) {
-    if (typeof logMsg === 'function') {
-      logMsg('GIZMO', isInsideDeadzone 
-        ? `⚠️ Target lies inside the inner singularity / collision zone (r=${Math.round(r_xy)} mm < ${DEADZONE_RADIUS_MM} mm). Auto-move blocked!`
-        : `⚠️ Target lies inside the table surface (Z=${posZ_mm} mm). Auto-move blocked!`, 'err');
-    }
+  // Nur die Tischebene blockiert noch. Ziele nahe der Roboterachse gehen an
+  // MoveIt; executeMoveToPoseFromGizmo warnt dazu im Log.
+  if (isBelowFloor) {
+    logMsg('GIZMO', `⚠️ Target lies inside the table surface (Z=${posZ_mm} mm). Auto-move blocked!`, 'err');
     return;
   }
 
@@ -1581,20 +1571,64 @@ function initTunerSceneObjects() {
   scene.add(planeMesh);
   tunerSceneObjects['White Plane'] = planeMesh;
 
-  // 5. Safety Zone (gefuellte Flaeche am Boden)
-  // Markiert den Bereich um die Base, den der Motion-Handler durchsetzt.
-  // Gefuellte Scheibe statt Ring, damit die Flaeche als Sperrgebiet lesbar
-  // ist. depthWrite aus, sonst flimmert sie gegen die Bodenebene.
-  const safetyGeo = new THREE.CircleGeometry(SAFETY_ZONE_RADIUS_M, 64);
-  const safetyMat = new THREE.MeshBasicMaterial({
-    color: 0xf59e0b,
-    side: THREE.DoubleSide,
-    transparent: true,
-    opacity: 0.22,
-    depthWrite: false,
-  });
-  const safetyMesh = new THREE.Mesh(safetyGeo, safetyMat);
-  safetyMesh.position.z = 0.0005;
+  // 5. Safety Zone: unerreichbarer Bereich um die Roboterachse + Bahnabstand
+  //   innen (rot): die mit MoveIt vermessene Zone, in der der TCP nicht stehen
+  //     kann (UNREACHABLE_PROFILE, Drehkoerper - unten breiter, oben spitz
+  //     zulaufend, ab 300 mm frei). Fest, skaliert nicht mit.
+  //   aussen (orange, flach am Boden): Bahnabstand der Scan-Trajektorien
+  //     (Safety-Zone-Radius aus dem TF Tuner, Standard 138 mm).
+  // Transparent und ohne depthWrite, damit der Roboter darin sichtbar bleibt.
+  const safetyMesh = new THREE.Group();
+  safetyMesh.name = 'safety-zone';
+  const zoneParts = { outer: new THREE.Group(), inner: new THREE.Group() };
+
+  // Aussen: Scheibe + Kantenring am Boden
+  {
+    const orange = 0xf59e0b;
+    const disc = new THREE.Mesh(
+      new THREE.CircleGeometry(SAFETY_ZONE_RADIUS_M, 64),
+      new THREE.MeshBasicMaterial({ color: orange, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+    );
+    disc.position.z = 0.0005;
+    const ringPts = [];
+    for (let i = 0; i <= 64; i++) {
+      const a = (i / 64) * Math.PI * 2;
+      ringPts.push(new THREE.Vector3(Math.cos(a) * SAFETY_ZONE_RADIUS_M, Math.sin(a) * SAFETY_ZONE_RADIUS_M, 0.001));
+    }
+    const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ringPts),
+      new THREE.LineBasicMaterial({ color: orange, transparent: true, opacity: 0.8, depthWrite: false }));
+    zoneParts.outer.add(disc, ring);
+  }
+
+  // Innen: Drehkoerper aus dem vermessenen Profil
+  {
+    const red = 0xef4444;
+    const prof = LIM.UNREACHABLE_PROFILE;
+    // LatheGeometry dreht um die Y-Achse: Punkte als (r, z) in Metern,
+    // danach in ROS-Konvention (Z oben) kippen.
+    const pts = [new THREE.Vector2(0, 0)];
+    for (const [z, r] of prof) pts.push(new THREE.Vector2(r / 1000, z / 1000));
+    const body = new THREE.Mesh(
+      new THREE.LatheGeometry(pts, 64),
+      new THREE.MeshBasicMaterial({ color: red, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+    );
+    body.rotation.x = Math.PI / 2;
+    // Konturlinien an jeder Profilstufe, damit die Form lesbar ist
+    const lineMat = new THREE.LineBasicMaterial({ color: red, transparent: true, opacity: 0.85, depthWrite: false });
+    for (const [z, r] of prof) {
+      if (r <= 0) continue;
+      const ringPts = [];
+      for (let i = 0; i <= 64; i++) {
+        const a = (i / 64) * Math.PI * 2;
+        ringPts.push(new THREE.Vector3(Math.cos(a) * r / 1000, Math.sin(a) * r / 1000, Math.max(0.001, z / 1000)));
+      }
+      zoneParts.inner.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ringPts), lineMat));
+    }
+    zoneParts.inner.add(body);
+  }
+
+  safetyMesh.add(zoneParts.outer, zoneParts.inner);
+  safetyMesh.userData.zoneParts = zoneParts;
   safetyMesh.visible = areTunerSceneObjectsVisible;
   scene.add(safetyMesh);
   tunerSceneObjects['Safety Zone'] = safetyMesh;
@@ -1698,8 +1732,11 @@ export function updateTunerSceneObjects(elements) {
     obj.quaternion.set(qx, qy, qz, qw);
 
     if (name === 'Safety Zone' && data.radius) {
+      // Nur der Bahnabstand (aussen) folgt dem Radius; die unerreichbare
+      // Zone (innen) ist fest vermessen.
       const scale = Number(data.radius) / SAFETY_ZONE_RADIUS_M;
-      obj.scale.set(scale, scale, 1);
+      const outer = obj.userData.zoneParts ? obj.userData.zoneParts.outer : obj;
+      outer.scale.set(scale, scale, 1);
     }
   }
 }

@@ -11,21 +11,24 @@
 // anfassen.
 //
 // WICHTIG: Der Roboter selbst haelt seine Grenzen in
-// robot_motion_handler_movegroup.py. Diese Datei (ES-Modul) beschreibt, was die Oberflaeche
-// anzeigt und vorab blockiert - sie ersetzt die Pruefung im Node nicht.
+// robot_motion_handler_movegroup.py und MoveIt. Diese Datei (ES-Modul) beschreibt,
+// was die Oberflaeche anzeigt und vorab warnt - sie ersetzt keine Pruefung im Node.
 const LIMITS = {
-  // ── Radien um die Base (mm), von innen nach aussen ──
-  // Alle drei gelten nur unterhalb von LOW_Z_MM; darueber ist der
-  // Sockelbereich frei.
-  SELF_COLLISION_MM: 118.0,  // safety.js: "SELF-COLLISION / INNER CYLINDER"
-  HARD_BLOCK_MM: 125.0,      // robot_motion_handler_movegroup.py:1041 lehnt
-                             // MoveTo hier ab -> das Gizmo blockiert vorher
-  SINGULARITY_MM: 138.0,     // safety.js: "INNER BOUNDARY SINGULARITY"
-  CAUTION_MM: 140.0,         // twin/digital_twin.js: Warnfarbe am TCP-Gizmo
-  MANIP_FADE_MM: 180.0,      // ab hier faellt nur die Manipulierbarkeit
+  // ── Unerreichbare Zone um die Roboterachse ──
+  // Mit MoveIt vermessen (/compute_ik mit Kollisionspruefung, Greifer nach
+  // unten, 10-mm-Raster): unterhalb dieses Radius kann der TCP in der
+  // jeweiligen Hoehe nicht stehen - der Arm muesste durch Sockel oder Unterarm.
+  // Paare [z_mm, r_mm], dazwischen linear interpoliert, ab 300 mm frei.
+  // Nur Anzeige und Warnung: MoveTo/Gizmo werden NICHT mehr blockiert, das
+  // entscheidet MoveIt (IK + Planung mit Eigenkollision) selbst.
+  UNREACHABLE_PROFILE: Object.freeze([
+    [0, 100], [60, 100], [80, 80], [240, 80], [260, 60], [280, 30], [300, 0],
+  ]),
+  // Warnfarbe am Gizmo bis so viel ausserhalb der Zone (mm).
+  CAUTION_MARGIN_MM: 20.0,
+  // Manipulierbarkeit (REACH) steigt von der Zonengrenze bis +60 mm auf 100 %.
+  MANIP_FADE_MARGIN_MM: 60.0,
 
-  // Hoehe, unterhalb derer die Radien ueberhaupt greifen (mm).
-  LOW_Z_MM: 280.0,
   // Tischebene: darunter gilt der TCP als kollidiert (mm).
   FLOOR_CLEARANCE_MM: 15.0,
   // Zusaetzlicher Puffer fuer die Gizmo-Anzeige (mm).
@@ -45,3 +48,22 @@ const LIMITS = {
 
 // Object.freeze, damit kein Modul die Werte zur Laufzeit still veraendert.
 export const ROBOT_LIMITS = Object.freeze(LIMITS);
+
+// Radius der unerreichbaren Zone in Hoehe z (mm); 0 = frei.
+export function unreachableRadiusAt(zMm) {
+  const p = LIMITS.UNREACHABLE_PROFILE;
+  if (!Number.isFinite(zMm) || zMm <= p[0][0]) return p[0][1];
+  for (let i = 1; i < p.length; i++) {
+    const [z1, r1] = p[i];
+    if (zMm <= z1) {
+      const [z0, r0] = p[i - 1];
+      return r0 + (r1 - r0) * (zMm - z0) / (z1 - z0);
+    }
+  }
+  return 0;
+}
+
+// Abstand (mm) des Punkts ausserhalb der Zone; negativ = in der Zone.
+export function unreachableClearance(xMm, yMm, zMm) {
+  return Math.hypot(xMm, yMm) - unreachableRadiusAt(zMm);
+}

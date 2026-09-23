@@ -1220,10 +1220,10 @@ class RobotMotionHandlerMovegroup(Node):
             target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
             q = target_rot.as_quat() # [x, y, z, w]
             
-            # 2. Safety boundary check (Inner workspace singularity & self-collision radius)
-            r_xy = (target_x**2 + target_y**2)**0.5
-            if r_xy < 0.125 and target_z < 0.28:
-                raise Exception(f"Ziel liegt in der inneren Singularitätszone (r={r_xy*1000:.0f} mm < 125 mm). Kollisionsgefahr mit eigenem Sockel!")
+            # 2. Kein fester Sperrzylinder um die Achse mehr (frueher r < 125 mm
+            #    bei z < 280 mm): der war deutlich groesser als der wirklich
+            #    unerreichbare Bereich. Ob ein Ziel geht, entscheiden die IK mit
+            #    avoid_collisions (Eigenkollision) und die Planung unten.
 
             # 3. IK mit Kollisionspruefung - die Loesung, die der aktuellen
             #    Stellung am naechsten liegt (siehe _solve_ik_near_current).

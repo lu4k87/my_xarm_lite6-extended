@@ -4,6 +4,7 @@ import { errorSound, playUiClickSound, playVoice } from './audio.js';
 import { stopAllJogging } from './jog.js';
 import { logMsg } from './log.js';
 import { createSrv, ros } from './ros.js';
+import { unreachableClearance, unreachableRadiusAt } from './robot_limits.js';
 import { LIM, floorGuard } from './util.js';
 
 export let currentServoStatus = 0;
@@ -202,22 +203,9 @@ export function evaluateRobotSafety() {
     }
   }
 
-  // C. Inner Workspace Boundary & Self-Collision Deadzone (r = sqrt(x^2 + y^2))
-  if (latestEEF_X !== null && latestEEF_Y !== null && !isNaN(latestEEF_X) && !isNaN(latestEEF_Y)) {
-    const r_xy = Math.sqrt(latestEEF_X * latestEEF_X + latestEEF_Y * latestEEF_Y);
-    const isLowZ = (latestEEF_Z !== null && latestEEF_Z < LIM.LOW_Z_MM);
-    if (r_xy < LIM.SELF_COLLISION_MM && isLowZ) {
-      isCollision = true;
-      collidingLinks = ['link6', 'link5', 'link2', 'link1'];
-      message = `SELF-COLLISION / INNER CYLINDER (r: ${r_xy.toFixed(0)} mm < ${LIM.SELF_COLLISION_MM} mm)`;
-    } else if (r_xy < LIM.SINGULARITY_MM && isLowZ) {
-      if (!isCollision) {
-        isSingularity = true;
-        singularityJoints = ['link5', 'link4', 'link2'];
-        message = `INNER BOUNDARY SINGULARITY (r: ${r_xy.toFixed(0)} mm < ${LIM.SINGULARITY_MM} mm)`;
-      }
-    }
-  }
+  // C. Kein geometrischer Innenzylinder mehr: ob der Arm nahe der eigenen
+  //    Achse mit sich selbst kollidiert oder singulaer wird, melden MoveIt
+  //    Servo (Status 1-4, siehe A.) und die MoveIt-Planung selbst.
 
   // D. Geometric Wrist Singularity Analysis (Joint 5 near 0°)
   let manipPct = 100;
@@ -239,13 +227,12 @@ export function evaluateRobotSafety() {
     }
   }
 
-  // Factor in inner deadzone to manipulability indicator
-  if (latestEEF_X !== null && latestEEF_Y !== null) {
-    const r_xy = Math.sqrt(latestEEF_X * latestEEF_X + latestEEF_Y * latestEEF_Y);
-    if (r_xy < LIM.MANIP_FADE_MM && latestEEF_Z !== null && latestEEF_Z < LIM.LOW_Z_MM) {
-      // Von SELF_COLLISION_MM (0 %) linear bis MANIP_FADE_MM (100 %).
-      const span = LIM.MANIP_FADE_MM - LIM.SELF_COLLISION_MM;
-      const rPct = Math.min(100, Math.max(0, Math.round(((r_xy - LIM.SELF_COLLISION_MM) / span) * 100)));
+  // REACH sinkt nahe der unerreichbaren Zone um die Achse: 0 % an der
+  // gemessenen Grenze, 100 % ab MANIP_FADE_MARGIN_MM ausserhalb.
+  if (latestEEF_X !== null && latestEEF_Y !== null && latestEEF_Z !== null) {
+    const clearance = unreachableClearance(latestEEF_X, latestEEF_Y, latestEEF_Z);
+    if (clearance < LIM.MANIP_FADE_MARGIN_MM && unreachableRadiusAt(latestEEF_Z) > 0) {
+      const rPct = Math.min(100, Math.max(0, Math.round((clearance / LIM.MANIP_FADE_MARGIN_MM) * 100)));
       manipPct = Math.min(manipPct, rPct);
     }
   }

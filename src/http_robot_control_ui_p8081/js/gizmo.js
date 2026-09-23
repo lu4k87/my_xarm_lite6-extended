@@ -4,6 +4,7 @@ import { toggleSound } from './audio.js';
 import { logMsg } from './log.js';
 import { setButtonsLocked } from './motion.js';
 import { createSrv, motionAllowed } from './ros.js';
+import { unreachableClearance, unreachableRadiusAt } from './robot_limits.js';
 import { LIM, floorGuard, readPoseInput, setIconLabel, validatePose } from './util.js';
 
 // ── Interactive 3D TCP Gizmo Execution ───────────────────────────────────────
@@ -35,18 +36,11 @@ export function executeMoveToPoseFromGizmo() {
     return;
   }
 
-  // Safety Validation: Prevent driving into inner singularity & self-collision
-  const r_xy = Math.sqrt(x * x + y * y);
-  if (r_xy < LIM.HARD_BLOCK_MM && z < LIM.LOW_Z_MM) {
-    logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the inner singularity zone (r=${r_xy.toFixed(0)} mm < ${LIM.HARD_BLOCK_MM} mm). Risk of collision with its own base!`, 'err');
-    if (typeof twin.updateDigitalTwinSafety === 'function') {
-      twin.updateDigitalTwinSafety({
-        collision: true,
-        message: `SELF-COLLISION ZONE (r: ${r_xy.toFixed(0)} mm < 125 mm)`,
-        collidingLinks: ['link6', 'link5', 'link2', 'link1']
-      });
-    }
-    return;
+  // Nahe der Roboterachse nur warnen - ob das Ziel erreichbar ist,
+  // entscheidet MoveIt (IK + Planung mit Eigenkollision).
+  const zoneR = unreachableRadiusAt(z);
+  if (unreachableClearance(x, y, z) < 0) {
+    logMsg('GIZMO', `⚠ Target lies inside the measured unreachable zone around the robot axis (r=${Math.hypot(x, y).toFixed(0)} mm < ${zoneR.toFixed(0)} mm at Z=${z.toFixed(0)} mm) - MoveIt will most likely reject it.`, 'warn');
   }
   if (floorGuard.enabled && z <= 15.0) {
     logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the table surface (Z=${z.toFixed(0)} mm ≤ 15 mm).`, 'err');

@@ -488,6 +488,10 @@ export function renderMoveitPopup() {
   const failedAt = st.failed_phase;
 
   el.className = `moveit-popup mp-phase-${phase}` + (MP_ACTIVE_PHASES.includes(phase) ? ' mp-active' : '');
+  // Wartet ein Vorschau-Pfad auf Bestaetigung, bleiben Execute/Discard auch
+  // bei aktivem Auto-Move sichtbar (siehe syncAutoMoveActions).
+  if (phase === 'confirm') el.dataset.awaiting = '1';
+  else delete el.dataset.awaiting;
 
   document.getElementById('mp-phase').textContent = MP_PHASE_LABELS[phase] || phase.toUpperCase();
   document.getElementById('mp-timer').textContent = mpFmt((st.elapsed || 0) + live);
@@ -625,3 +629,21 @@ export function checkMoveitCollNodes(nodesList) {
 }
 
 rosHooks.onNodeList.push(checkMoveitCollNodes, checkMoveToPreviewNode);
+
+// ── Auto-Move: Execute/Discard im Popup ausblenden ────────────────────────
+// Faehrt der Roboter nach dem Loslassen des Gizmos ohnehin selbst los, sind
+// die Buttons ueberfluessig. Als data-Attribut, weil renderMoveitPopup die
+// Klassen des Popups komplett neu setzt.
+export function syncAutoMoveActions() {
+  const el = document.getElementById('moveit-popup');
+  const chk = document.getElementById('chk-gizmo-auto-drop');
+  if (!el || !chk) return;
+  if (chk.checked) el.dataset.automove = '1';
+  else delete el.dataset.automove;
+}
+
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'chk-gizmo-auto-drop') syncAutoMoveActions();
+});
+syncAutoMoveActions();
+
