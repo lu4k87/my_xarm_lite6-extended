@@ -55,7 +55,11 @@ export function graspDetectedObject(name, source) {
 //   Grasp                - bisherige Greif-Routine
 //   Disable / Enable collision for this object
 // Alle Texte kommen per textContent ins DOM - der Name ist Fremddaten.
-export const APPROACH_ABOVE_MM = 80;           // Hoehe ueber dem Greifpunkt
+// Die Kugel sitzt mittig auf der Oberseite der Objekt-Box (Radius 6,25 mm).
+// 10 mm = TCP knapp ueber der Kugel. Das Backend (/ui/approach_from_above)
+// faehrt erst kollisionsfrei auf eine Vorposition 70 mm darueber und senkt
+// dann geradlinig und kollisionsgeprueft ab.
+export const APPROACH_ABOVE_MM = 10;           // Hoehe ueber dem Greifpunkt
 export const APPROACH_ORIENTATION = [Math.PI, 0, 0];   // Greifer zeigt nach unten
 export let disabledCollisionObjects = new Set();
 export let objMenuEl = null;
@@ -107,6 +111,35 @@ export function objMenuItem(icon, label, hint, onClick, opts = {}) {
   return btn;
 }
 
+// Laufende Anfahrt aus dem Viewport/Menue: Ziel [x, y, z] in mm. Endet die
+// MoveIt-Fahrt ohne Erfolg, wird die Markierung der Kugel wieder geloest -
+// sonst pulste sie bis zum Timeout weiter.
+let approachTarget = null;
+
+function endApproach(reason) {
+  if (!approachTarget) return;
+  approachTarget = null;
+  if (reason && typeof twin.clearDigitalTwinSelectedGrasp === 'function') {
+    twin.clearDigitalTwinSelectedGrasp();
+    logMsg('UI', `Approach ended: ${reason}`, 'warn');
+  }
+}
+
+new ROSLIB.Topic({
+  ros: ros,
+  name: TOPICS.moveitMotionState,
+  messageType: 'std_msgs/String'
+}).subscribe((msg) => {
+  if (!approachTarget) return;
+  let st;
+  try { st = JSON.parse(msg.data); } catch (e) { return; }
+  if (!st || !Array.isArray(st.target)) return;
+  // Nur auf die eigene Fahrt reagieren (Ziel auf 1 mm genau).
+  if (st.target.some((v, i) => Math.abs(v - approachTarget[i]) > 1)) return;
+  if (st.phase === 'succeeded') endApproach(null);   // Twin loest per TCP-Abstand
+  else if (['failed', 'aborted', 'discarded'].includes(st.phase)) endApproach(st.message || st.phase);
+});
+
 export function approachObjectFromAbove(info) {
   if (!info || !info.grasp) return;
   const pose = [info.grasp.x, info.grasp.y, info.grasp.z + APPROACH_ABOVE_MM, ...APPROACH_ORIENTATION];
@@ -116,19 +149,26 @@ export function approachObjectFromAbove(info) {
     return;
   }
   if (!motionAllowed('Approach from above')) return;
-  if (typeof twin.setDigitalTwinSelectedGrasp === 'function') twin.setDigitalTwinSelectedGrasp(info.name);
+  if (typeof twin.setDigitalTwinSelectedGrasp === 'function') {
+    twin.setDigitalTwinSelectedGrasp(info.name, APPROACH_ABOVE_MM / 1000);
+  }
+  approachTarget = pose.slice(0, 3);
   setButtonsLocked(true);
   logMsg('UI', `➤ Approach ${info.name} from above: X=${pose[0]} Y=${pose[1]} Z=${pose[2]} mm (${APPROACH_ABOVE_MM} mm above grasp point)`, 'action');
-  createSrv(SERVICES.executeMoveToPoseSilent, 'xarm_msgs/MoveCartesian').callService(
+  createSrv(SERVICES.approachFromAbove, 'xarm_msgs/MoveCartesian').callService(
     new ROSLIB.ServiceRequest({ pose, speed: 100.0, acc: 1000.0, mvtime: 0.0 }),
     (res) => {
       setButtonsLocked(false);
-      if (res.ret === 0) logMsg('ROS', 'Approach accepted - MoveIt is planning the path.', 'info');
-      else logMsg('ROS', `❌ Approach rejected (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
+      if (res.ret === 0) logMsg('ROS', 'Approach accepted - collision-free path to the pre-position, then straight down.', 'info');
+      else {
+        logMsg('ROS', `❌ Approach rejected (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
+        endApproach(res.message || 'rejected');
+      }
     },
     (err) => {
       setButtonsLocked(false);
       logMsg('ROS', `❌ Approach error: ${err}`, 'err');
+      endApproach(String(err));
     }
   );
 }
@@ -434,7 +474,8 @@ export function executeGrasp() {
   graspPub.publish(new ROSLIB.Message({ data: obj }));
 }
 
-// Klick auf die Greifkugel im Viewport -> dasselbe Menue wie in der Liste.
+// Viewport: Linksklick auf die Greifkugel faehrt darueber, Rechtsklick oeffnet das Menue.
 twin.twinHooks.openDetectedObjectMenu = openDetectedObjectMenu;
 twin.twinHooks.graspDetectedObject = graspDetectedObject;
+twin.twinHooks.approachDetectedObject = approachObjectFromAbove;
 

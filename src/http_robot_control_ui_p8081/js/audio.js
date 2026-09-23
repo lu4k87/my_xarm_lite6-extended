@@ -58,6 +58,7 @@ export function updateSoundUI() {
   syncAudioElements();
   if (!btn || !icon) return;
 
+  btn.classList.toggle('active', soundEnabled);
   if (soundEnabled) {
     btn.style.color = 'var(--cyan)';
     btn.style.opacity = '1';

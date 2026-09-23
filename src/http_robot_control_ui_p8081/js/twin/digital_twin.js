@@ -22,6 +22,7 @@ export const twinHooks = {
   executeMoveToPoseFromGizmo: null,
   openDetectedObjectMenu: null,
   graspDetectedObject: null,
+  approachDetectedObject: null,
 };
 
 // ── Rendern nur bei Bedarf ──────────────────────────────────────────────────
@@ -1123,7 +1124,7 @@ function handleGizmoDragEnd() {
       const phaseEl = document.getElementById('mp-phase');
       if (phaseEl) phaseEl.textContent = 'GIZMO TARGET';
       const detailEl = document.getElementById('mp-detail');
-      if (detailEl) detailEl.textContent = 'Target pose set. Click "Execute path" to plan and move.';
+      if (detailEl) detailEl.textContent = 'Target pose set. Click ▶ (Execute path) to plan and move.';
     }
   }
 }
@@ -1378,6 +1379,7 @@ export function toggleDigitalTwinGrid() {
   const btn = document.getElementById('btn-twin-grid');
   if (btn) {
     btn.style.color = isGridVisible ? 'var(--cyan)' : 'var(--mut)';
+    btn.classList.toggle('active', isGridVisible);
   }
 }
 
@@ -1390,6 +1392,7 @@ export function toggleDigitalTwinEdges() {
   const btn = document.getElementById('btn-twin-edges');
   if (btn) {
     btn.style.color = isEdgesVisible ? 'var(--cyan)' : 'var(--mut)';
+    btn.classList.toggle('active', isEdgesVisible);
   }
 }
 
@@ -2455,6 +2458,7 @@ function ensureDetectionPicking() {
   });
 
   el.addEventListener('pointerup', (ev) => {
+    if (ev.button !== 0) return;                       // Rechtsklick -> contextmenu
     if (isDraggingGizmo) return;                       // TCP-Gizmo hat Vorrang
     const dx = ev.clientX - pressX, dy = ev.clientY - pressY;
     if (Math.hypot(dx, dy) > CLICK_MAX_MOVE_PX) return; // war ein Orbit-Drag
@@ -2477,12 +2481,24 @@ function ensureDetectionPicking() {
     // weiter, als haette man die Maustaste noch gedrueckt.
     // Ein Klick ohne Bewegung erzeugt in OrbitControls ohnehin keine
     // Rotation - es gibt also nichts zu unterdruecken.
-    // Kontextmenue (Approach / Grasp / Collision) statt sofort zu greifen.
-    if (typeof twinHooks.openDetectedObjectMenu === 'function') {
+    // Linksklick: TCP faehrt kollisionsfrei ueber die Kugel. Das Menue
+    // (Approach / Grasp / Collision) liegt auf dem Rechtsklick.
+    if (typeof twinHooks.approachDetectedObject === 'function') {
+      twinHooks.approachDetectedObject(objectInfoForSphere(rec, name));
+    } else if (typeof twinHooks.openDetectedObjectMenu === 'function') {
       twinHooks.openDetectedObjectMenu(objectInfoForSphere(rec, name), ev.clientX, ev.clientY);
     } else if (typeof twinHooks.graspDetectedObject === 'function') {
       twinHooks.graspDetectedObject(name, 'viewport');
     }
+  });
+
+  el.addEventListener('contextmenu', (ev) => {
+    const rec = pickSphereAt(ev);
+    if (!rec) return;
+    const name = nameForSphere(rec);
+    if (!name || typeof twinHooks.openDetectedObjectMenu !== 'function') return;
+    ev.preventDefault();
+    twinHooks.openDetectedObjectMenu(objectInfoForSphere(rec, name), ev.clientX, ev.clientY);
   });
 
   el.addEventListener('pointermove', (ev) => {
@@ -2506,11 +2522,14 @@ function ensureDetectionPicking() {
 let selectedGraspName = null;
 let selectedGraspRec = null;
 let selectedGraspSince = 0;
+let selectedGraspHoverM = 0;      // Zielhoehe des TCP ueber der Kugel
 let graspHalo = null;
 
 // Abstand, ab dem das Ziel als erreicht gilt, und Notbremse, falls die
 // Fahrt scheitert - sonst pulste die Kugel bis zum Reload weiter.
-const GRASP_REACHED_M = 0.035;
+// Knapp gehalten, weil der TCP nur 10 mm ueber der Kugel schwebt - sonst
+// ginge das HUD schon waehrend des Absenkens aus.
+const GRASP_REACHED_M = 0.015;
 const GRASP_SELECT_TIMEOUT_MS = 120000;
 
 // Cyan wie der UI-Akzent fuer die Ringe, Rot wie die Kugel fuer die Glut -
@@ -2627,6 +2646,8 @@ function updateGraspSelection() {
   return true;
 }
 
+const _graspGoal = new THREE.Vector3();
+
 function applyGraspSelection() {
   if (!selectedGraspName) return;
 
@@ -2647,9 +2668,12 @@ function applyGraspSelection() {
     return;
   }
 
-  // Erreicht? Dann ist die Markierung ihre Aufgabe los.
+  // Erreicht? Dann ist die Markierung ihre Aufgabe los. Ziel ist der Punkt
+  // senkrecht ueber der Kugel, auf dem der TCP schweben soll.
   const tcp = getRealRobotTCPPose();
-  if (tcp && tcp.position.distanceTo(rec.obj.position) <= GRASP_REACHED_M) {
+  _graspGoal.copy(rec.obj.position);
+  _graspGoal.z += selectedGraspHoverM;
+  if (tcp && tcp.position.distanceTo(_graspGoal) <= GRASP_REACHED_M) {
     clearGraspSelection('reached');
     return;
   }
@@ -2713,7 +2737,8 @@ function applyGraspSelection() {
 }
 
 // Von grasp.js aufgerufen, sobald ein Objekt angeklickt wurde.
-export function setDigitalTwinSelectedGrasp(name) {
+// hoverAboveM: Hoehe, in der der TCP ueber der Kugel als "angekommen" gilt.
+export function setDigitalTwinSelectedGrasp(name, hoverAboveM = 0) {
   requestRender();
   const clean = String(name || '').trim();
   if (!clean) { clearGraspSelection(null); return null; }
@@ -2723,6 +2748,7 @@ export function setDigitalTwinSelectedGrasp(name) {
   selectedGraspName = clean;
   selectedGraspRec = findSphereByName(clean);
   selectedGraspSince = Date.now();
+  selectedGraspHoverM = Number(hoverAboveM) || 0;
   ensureGraspHalo();
   return selectedGraspName;
 }

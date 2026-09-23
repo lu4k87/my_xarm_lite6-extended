@@ -8,6 +8,7 @@
   --mut: #94a3b8;
   --dim: #1e293b;
   --accent: #38bdf8;
+  --cyan: #38bdf8;   /* wurde ueberall benutzt, war aber nie definiert -> Icons fielen auf Grau zurueck */
   --green: #10b981;
   --red: #ef4444;
   --purple: #8b5cf6;
@@ -99,11 +100,13 @@ header {
 }
 
 button.status-pill.reload-btn {
+  justify-content: center;
+  width: 32px;
   background: var(--bg-panel);
   border: 1px solid var(--brd);
   color: var(--mut);
   cursor: pointer;
-  padding: 6px 13px;
+  padding: 0;
   font-family: inherit;
   outline: none;
 }
@@ -126,11 +129,13 @@ button.status-pill.reload-btn i {
 }
 
 button.status-pill.sound-btn {
+  justify-content: center;
+  width: 32px;
   background: var(--bg-panel);
   border: 1px solid var(--brd);
   color: var(--accent, #38bdf8);
   cursor: pointer;
-  padding: 6px 13px;
+  padding: 0;
   font-family: inherit;
   outline: none;
   transition: all 0.2s ease;
@@ -197,24 +202,57 @@ button.status-pill.sound-btn.sound-muted:hover {
 }
 
 .status-pill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--bg-panel);
-  padding: 6px 14px;
-  border-radius: 4px;
-  border: 1px solid var(--brd);
+  height: 32px;
+  padding: 0 5px 0 12px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 6px;
+  font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
-  font-weight: 400;
-  color: var(--mut);
-  transition: all 0.2s ease;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  line-height: 1;
+  color: #e2e8f0;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
   user-select: none;
 }
 
-.status-pill[onclick]:hover {
-  border-color: rgba(56, 189, 248, 0.5);
-  background: rgba(255, 255, 255, 0.06);
+/* Label links, Wert als eigener "Tab" rechts in der Pill. */
+.status-pill .pill-label {
+  color: #cbd5e1;
+}
+
+.status-pill .pill-val {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--txt);
+}
+
+/* Randfarbe folgt dem Status-Punkt, so ist der Zustand auf einen Blick lesbar. */
+.status-pill:has(.dot.glow-green) { border-color: rgba(16, 185, 129, 0.45); }
+.status-pill:has(.dot.glow-red)   { border-color: rgba(239, 68, 68, 0.45); }
+.status-pill:has(.dot.glow-orange) { border-color: rgba(245, 158, 11, 0.55); }
+.status-pill:has(.dot.glow-red) .pill-val { color: #fca5a5; }
+
+.status-pill[data-open-port] {
+  cursor: pointer;
+}
+
+.status-pill[data-open-port]:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(56, 189, 248, 0.6);
   transform: translateY(-1px);
 }
 
@@ -292,16 +330,19 @@ button.status-pill.sound-btn.sound-muted:hover {
 }
 .status-divider {
   width: 1px;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.15);
-  margin: 0 6px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.18);
+  margin: 0 4px;
 }
 .mode-badge {
-  background: rgba(56, 189, 248, 0.15) !important;
-  border-color: rgba(56, 189, 248, 0.5) !important;
-  font-weight: 500;
-  padding: 6px 14px;
+  background: rgba(56, 189, 248, 0.14) !important;
+  border-color: rgba(56, 189, 248, 0.6) !important;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
+.mode-badge .pill-val {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.45);
 }
 
 .dot.glow-green {
@@ -1012,6 +1053,13 @@ body.col-resizing * {
   border-color: var(--accent);
   color: #ffffff;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+/* Blauer Rahmen = aktiv = Icon weiss. Die Toggle-Skripte setzen die Farbe
+   inline (style.color) - ohne !important gewaenne das Inline-Grau/-Cyan. */
+.btn.active,
+.btn.active i {
+  color: #ffffff !important;
 }
 
 .btn-z {
@@ -3236,10 +3284,26 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* MoveIt-Kollision AUS: rot umrandet, damit der unsichere Zustand auffaellt */
+/* MoveIt-Kollision: Sicherheitsschalter in Ampelfarben statt Blau.
+   AN = gruen (geschuetzt), AUS = rot (Roboter kann kollidieren). */
+.twin-scene-node-overlay .btn-icon-small.coll-on {
+  border: 1px solid rgba(16, 185, 129, 0.75) !important;
+  background: rgba(16, 185, 129, 0.16) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+.twin-scene-node-overlay .btn-icon-small.coll-on,
+.twin-scene-node-overlay .btn-icon-small.coll-on i {
+  color: #34d399 !important;
+}
+
 .twin-scene-node-overlay .btn-icon-small.coll-off {
-  border: 1px solid rgba(239, 68, 68, 0.6) !important;
-  background: rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid rgba(239, 68, 68, 0.75) !important;
+  background: rgba(239, 68, 68, 0.16) !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+.twin-scene-node-overlay .btn-icon-small.coll-off,
+.twin-scene-node-overlay .btn-icon-small.coll-off i {
+  color: #f87171 !important;
 }
 
 /* ── Floating TCP Gizmo HUD (Interactive Target & Auto-Move Bar) ── */
@@ -3753,24 +3817,26 @@ header {
 
 .mp-actions {
   display: none;
-  flex-wrap: wrap;
-  gap: 8px;
+  justify-content: center;
+  gap: 16px;
 }
 .moveit-popup.mp-phase-confirm .mp-actions {
   display: flex;
 }
 
+/* Nur Symbol, kein Text - Bedeutung steht im title/aria-label. */
 .mp-btn {
-  flex: 1 1 150px;
+  flex: 0 0 72px;
+  width: 72px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 42px;
-  padding: 8px 18px;
+  padding: 8px 0;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 14.5px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.5px;
   cursor: pointer;

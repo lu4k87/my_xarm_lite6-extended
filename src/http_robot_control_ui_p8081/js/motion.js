@@ -289,7 +289,9 @@ export function applyMoveitCollBtn(key) {
   const btn = document.getElementById(cfg.btnId);
   if (!btn) return;
   const state = moveitCollState[key];
-  btn.classList.toggle('active', state === true);
+  // Sicherheitsschalter: gruen = Kollision aktiv, rot = MoveIt ignoriert
+  // sie. Bewusst ohne .active, das waere das neutrale Blau der Anzeige-Toggles.
+  btn.classList.toggle('coll-on', state === true);
   btn.classList.toggle('coll-off', state === false);
   if (state === null) {
     btn.style.color = 'var(--dim)';

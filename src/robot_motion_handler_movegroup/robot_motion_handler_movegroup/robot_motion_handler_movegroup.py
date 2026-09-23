@@ -13,7 +13,7 @@ from builtin_interfaces.msg import Duration
 from std_msgs.msg import Bool, String
 from std_srvs.srv import SetBool, Trigger
 from xarm_msgs.srv import MoveCartesian, MoveJoint
-from moveit_msgs.srv import GetPositionIK
+from moveit_msgs.srv import GetCartesianPath, GetPositionIK
 from moveit_msgs.action import ExecuteTrajectory, MoveGroup
 from moveit_msgs.msg import Constraints, DisplayTrajectory, JointConstraint, MotionPlanRequest, MoveItErrorCodes
 import math
@@ -90,6 +90,12 @@ class RobotMotionHandlerMovegroup(Node):
         self.ui_log_pub = self.create_publisher(String, '/ui/motion_status', 10)
         
         self.ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
+        self.cartesian_client = self.create_client(GetCartesianPath, '/compute_cartesian_path',
+                                                   callback_group=self.cb_group)
+        # Anfahrt von oben: erst kollisionsfrei auf eine Vorposition ueber dem
+        # Ziel, dann geradlinig senkrecht nach unten.
+        self.declare_parameter('approach_pre_height', 0.07)        # m ueber der Endpose
+        self.declare_parameter('approach_descent_scaling', 0.15)   # Tempo des Absenkens
 
         # MoveTo lets move_group (OMPL) plan a collision-free path to the IK goal
         # instead of sending the joint angles straight to the controller. Only
@@ -176,6 +182,15 @@ class RobotMotionHandlerMovegroup(Node):
             self.execute_move_to_pose_silent_cb,
             callback_group=self.cb_group
         )
+        # Anfahrt eines erkannten Objekts von oben (Klick auf die Greifkugel).
+        # pose = Endpose in mm/rad; der Arm faehrt erst auf eine Vorposition
+        # darueber und senkt sich dann geradlinig ab.
+        self.approach_srv = self.create_service(
+            MoveCartesian,
+            '/ui/approach_from_above',
+            self.approach_from_above_cb,
+            callback_group=self.cb_group
+        )
         self.move_joint_srv = self.create_service(
             MoveJoint,
             '/ui/execute_move_joint',
@@ -234,7 +249,7 @@ class RobotMotionHandlerMovegroup(Node):
         latched_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.estop_state_pub = self.create_publisher(Bool, '/ui/emergency_stop_active', latched_qos)
 
-        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose[_silent], /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint, /ui/emergency_stop, /ui/reset_emergency_stop) ready.', 'success')
+        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose[_silent], /ui/approach_from_above, /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint, /ui/emergency_stop, /ui/reset_emergency_stop) ready.', 'success')
         self.is_executing = False
         self.stop_requested = False
         self.estop_latched = False
@@ -1193,6 +1208,173 @@ class RobotMotionHandlerMovegroup(Node):
         response.message = "Move to pose started."
         return response
 
+    def approach_from_above_cb(self, request, response):
+        rejection = self._estop_rejection()
+        if rejection:
+            response.ret = -1
+            response.message = rejection
+            return response
+        if len(request.pose) < 6:
+            response.ret = -1
+            response.message = "pose needs 6 values (x, y, z in mm, roll, pitch, yaw in rad)."
+            return response
+        if not self._begin_execution():
+            response.ret = -1
+            response.message = "Already executing."
+            return response
+
+        self._reset_hardware_state()
+        self.stop_requested = False
+        pose = [float(v) for v in request.pose[:6]]
+
+        def _task():
+            try:
+                self._execute_approach_core(pose)
+            finally:
+                self.is_executing = False
+
+        threading.Thread(target=_task, daemon=True).start()
+        response.ret = 0
+        response.message = "Approach from above started."
+        return response
+
+    def _pose_stamped_mm(self, pose_mm):
+        from geometry_msgs.msg import PoseStamped
+        q = R.from_euler('xyz', pose_mm[3:6], degrees=False).as_quat()  # [x, y, z, w]
+        ps = PoseStamped()
+        ps.header.frame_id = "link_base"
+        ps.pose.position.x = pose_mm[0] / 1000.0
+        ps.pose.position.y = pose_mm[1] / 1000.0
+        ps.pose.position.z = pose_mm[2] / 1000.0
+        ps.pose.orientation.x = float(q[0])
+        ps.pose.orientation.y = float(q[1])
+        ps.pose.orientation.z = float(q[2])
+        ps.pose.orientation.w = float(q[3])
+        return ps
+
+    def _execute_approach_core(self, pose_mm):
+        pre_mm = list(pose_mm)
+        pre_mm[2] += float(self.get_parameter('approach_pre_height').value) * 1000.0
+        try:
+            self._moveit_begin(pose_mm[:3])
+            self.ui_log(f"Approach from above: X={pose_mm[0]:.0f} Y={pose_mm[1]:.0f} Z={pose_mm[2]:.0f} mm "
+                        f"(pre-position Z={pre_mm[2]:.0f} mm, then straight down)", 'action')
+            if not self.ik_client.wait_for_service(timeout_sec=2.0):
+                raise Exception("IK Service /compute_ik not available!")
+
+            # Beide Posen vorab pruefen - so faehrt der Arm gar nicht erst los,
+            # wenn die Endpose unerreichbar oder in Kollision ist.
+            self.ui_log("MoveIt [1/3] Solving IK for pre-position and goal...", 'info')
+            pre_joints = self._solve_ik_near_current(self._pose_stamped_mm(pre_mm))
+            self._call_ik_or_raise(self._pose_stamped_mm(pose_mm), pre_joints, 'goal above the object')
+            self._moveit_mark('t_ik')
+
+            # Phase 1: kollisionsfreier Pfad zur Vorposition ueber dem Objekt.
+            self._plan_and_execute_joints(pre_joints)
+            if self.stop_requested:
+                raise Exception("Movement interrupted by EMERGENCY STOP!")
+
+            # Phase 2: geradlinig senkrecht nach unten, kollisionsgeprueft.
+            self._descend_straight(pose_mm)
+
+            run = self._moveit_finish('succeeded')
+            self.ui_log(f"Approach reached: TCP above the grasp point ({self._moveit_timing_text(run)}).", 'success')
+
+        except PreviewDiscarded as e:
+            self._moveit_finish('discarded', message=str(e))
+            self.ui_log(f"Approach cancelled: {e}", 'warn')
+
+        except Exception as e:
+            aborted = self.stop_requested
+            self._moveit_finish('aborted' if aborted else 'failed', message=str(e))
+            self.ui_log(f"Approach {'aborted' if aborted else 'failed'}: {e}", 'error')
+
+    def _call_ik_or_raise(self, pose, seed, what):
+        sol, err = self._call_ik(pose, seed)
+        if sol is None:
+            raise Exception(f"IK for the {what} failed (Error Code: {err}) - out of reach or in collision.")
+        return sol
+
+    # Groesster erlaubter Gelenksprung zwischen zwei Punkten des Absenkpfads.
+    # Bei 5 mm Schrittweite bewegt sich kein Gelenk annaehernd so weit - ein
+    # groesserer Sprung hiesse Umklappen der Konfiguration.
+    _DESCENT_MAX_JOINT_STEP = 0.3   # rad
+
+    def _descend_straight(self, pose_mm):
+        if not self.cartesian_client.wait_for_service(timeout_sec=2.0):
+            raise Exception("/compute_cartesian_path not available - straight descent not possible.")
+        time.sleep(0.3)   # Gelenkzustand nach Phase 1 im Planning Scene ankommen lassen
+
+        descent_scaling = float(self.get_parameter('approach_descent_scaling').value)
+        self._moveit_phase('planning', planning_budget=5.0, speed='Descent', velocity_scaling=descent_scaling)
+        self.ui_log("MoveIt [2/3] Computing straight, collision-checked descent...", 'info')
+        req = GetCartesianPath.Request()
+        req.header.frame_id = "link_base"
+        req.group_name = "lite6"
+        req.link_name = "link_tcp"
+        req.start_state.is_diff = True
+        req.waypoints = [self._pose_stamped_mm(pose_mm).pose]
+        req.max_step = 0.005
+        req.jump_threshold = 0.0
+        req.avoid_collisions = True
+        future = self.cartesian_client.call_async(req)
+        t_end = time.time() + 5.0
+        while not future.done():
+            if self.stop_requested:
+                raise Exception("Movement interrupted by EMERGENCY STOP!")
+            if time.time() > t_end:
+                raise Exception("Timeout computing the straight descent.")
+            time.sleep(0.02)
+        res = future.result()
+        if res.error_code.val != MoveItErrorCodes.SUCCESS:
+            reason = self._MOVEIT_ERROR_TEXT.get(res.error_code.val, 'MoveIt error')
+            raise Exception(f"straight descent not possible: {reason} (code {res.error_code.val}).")
+        if res.fraction < 0.999:
+            raise Exception(f"straight descent blocked after {res.fraction * 100:.0f}% "
+                            "(collision or unreachable) - arm stays at the pre-position.")
+
+        jt = res.solution.joint_trajectory
+        if len(jt.points) < 2:
+            return   # schon am Ziel
+        for a, b in zip(jt.points, jt.points[1:]):
+            if max(abs(x - y) for x, y in zip(a.positions, b.positions)) > self._DESCENT_MAX_JOINT_STEP:
+                raise Exception("straight descent would flip the arm configuration - aborted.")
+
+        self._slow_down(jt, descent_scaling)
+        self._moveit_mark('t_plan')
+        t = jt.points[-1].time_from_start
+        self._moveit_phase('planning', waypoints=len(jt.points),
+                           exec_expected=round(t.sec + t.nanosec * 1e-9, 3))
+
+        self._pause_servo()
+        try:
+            if self.preview_enabled:
+                self._confirm_preview(res.solution)
+            self._execute_trajectory(res.solution, "MoveIt [3/3] Descending straight down onto the object.")
+        finally:
+            self._resume_servo()
+
+    @staticmethod
+    def _slow_down(jt, scaling):
+        """Zeitstempel strecken: /compute_cartesian_path parametriert mit voller Geschwindigkeit."""
+        k = 1.0 / min(max(scaling, 0.01), 1.0)
+        last = jt.points[-1].time_from_start
+        if last.sec == 0 and last.nanosec == 0:
+            # Ohne Zeitstempel: 50 ms je 5-mm-Schritt bei voller Geschwindigkeit,
+            # die Controller interpolieren dann selbst.
+            for i, p in enumerate(jt.points):
+                p.velocities = []
+                p.accelerations = []
+                t = i * 0.05
+                p.time_from_start.sec = int(t)
+                p.time_from_start.nanosec = int((t - int(t)) * 1e9)
+        for p in jt.points:
+            t = (p.time_from_start.sec + p.time_from_start.nanosec * 1e-9) * k
+            p.time_from_start.sec = int(t)
+            p.time_from_start.nanosec = int((t - int(t)) * 1e9)
+            p.velocities = [v / k for v in p.velocities]
+            p.accelerations = [a / (k * k) for a in p.accelerations]
+
     def _execute_move_to_pose_core(self, request, response, announce=True):
         try:
             from geometry_msgs.msg import PoseStamped
@@ -1516,14 +1698,14 @@ class RobotMotionHandlerMovegroup(Node):
             self.preview_path_pub.publish(String(data=json.dumps({'clear': True})))
         self._moveit_mark('t_confirm')
 
-    def _execute_trajectory(self, robot_traj):
+    def _execute_trajectory(self, robot_traj, log_msg="MoveIt [3/3] Path confirmed - executing."):
         """Den bestaetigten Pfad unveraendert ueber move_group ausfuehren."""
         if not self.execute_traj_client.wait_for_server(timeout_sec=2.0):
             raise Exception("MoveIt action /execute_trajectory not available - path not executed.")
         # preview_pending: der Controller-Start gehoert zu diesem Pfad und ist
         # KEIN Umplanen (siehe _controller_status_cb).
         self._moveit_phase('executing', preview_pending=True)
-        self.ui_log("MoveIt [3/3] Path confirmed - executing.", 'info')
+        self.ui_log(log_msg, 'info')
 
         goal = ExecuteTrajectory.Goal()
         goal.trajectory = robot_traj

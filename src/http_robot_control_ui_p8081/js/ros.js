@@ -96,20 +96,20 @@ export function checkRosNodes() {
               ipEl.textContent = ip;
               text.appendChild(ipEl);
             } else {
-              text.innerText = `Mode: Real Arm`;
+              text.innerText = 'Real Arm';
             }
           } else {
-            text.innerText = `Mode: Real Arm`;
+            text.innerText = 'Real Arm';
           }
         } catch (e) {
-          text.innerText = `Mode: Real Arm`;
+          text.innerText = 'Real Arm';
         }
       }, (err) => { 
-        text.innerText = `Mode: Real Arm`;
+        text.innerText = 'Real Arm';
       });
     } else {
       dot.className = 'dot glow-blue';
-      text.innerText = 'Mode: Fake Arm';
+      text.innerText = 'Fake Arm';
     }
   }, (err) => {
     // Swallow errors silently in case /rosapi/nodes does not exist yet.
@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 ros.on('connection', () => {
   setRosOnline(true);
   const connStatus = document.getElementById('connection-status');
-  if (connStatus) connStatus.innerText = 'ROS 2 Bridge: 9090';
+  if (connStatus) connStatus.innerText = 'ROS 2 Bridge';
   const connDot = document.getElementById('connection-dot');
   if (connDot) connDot.className = 'dot glow-green';
   logMsg('System', `Connected to rosbridge_server (${ROS_URL})`, 'info');
@@ -225,7 +225,7 @@ ros.on('connection', () => {
 
 ros.on('error', (error) => {
   const connStatus = document.getElementById('connection-status');
-  if (connStatus) connStatus.innerText = 'ROS 2 Bridge: 9090';
+  if (connStatus) connStatus.innerText = 'ROS 2 Bridge';
   const connDot = document.getElementById('connection-dot');
   if (connDot) connDot.className = 'dot glow-red';
   logMsg('System', 'Error connecting to websocket server', 'err');
@@ -236,13 +236,13 @@ export let reconnectTimer = null;
 ros.on('close', () => {
   setRosOnline(false);
   const connStatus = document.getElementById('connection-status');
-  if (connStatus) connStatus.innerText = 'ROS 2 Bridge: 9090';
+  if (connStatus) connStatus.innerText = 'ROS 2 Bridge';
   const connDot = document.getElementById('connection-dot');
   if (connDot) connDot.className = 'dot glow-red';
   const modeDot = document.getElementById('mode-dot');
   if (modeDot) modeDot.className = 'dot glow-red';
   const modeStatus = document.getElementById('mode-status');
-  if (modeStatus) modeStatus.innerText = 'Mode: Offline';
+  if (modeStatus) modeStatus.innerText = 'Offline';
 
   if (!reconnectTimer) {
     logMsg('System', 'Connection closed. Retrying in 3s...', 'warn');

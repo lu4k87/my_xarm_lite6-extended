@@ -53,6 +53,7 @@ export const SERVICES = Object.freeze({
   executeInitialPose: '/ui/execute_initial_pose',
   executeMoveToPose: '/ui/execute_move_to_pose',
   executeMoveToPoseSilent: '/ui/execute_move_to_pose_silent',
+  approachFromAbove: '/ui/approach_from_above',
   resetEmergencyStop: '/ui/reset_emergency_stop',
   setMoveitCollisionGround: '/ui/set_moveit_collision_ground',
   setMoveitCollisionObjects: '/ui/set_moveit_collision_objects',

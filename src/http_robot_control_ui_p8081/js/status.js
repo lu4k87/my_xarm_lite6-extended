@@ -20,7 +20,7 @@ window.addEventListener("gamepaddisconnected", (e) => {
   const status = document.getElementById('gamepad-status');
   if(dot && status) {
     dot.className = 'dot glow-red';
-    status.innerText = 'Gamepad';
+    status.innerText = 'USB';
     logMsg('System', 'Gamepad disconnected.', 'warn');
   }
 });

@@ -51,27 +51,27 @@
 
           <div class="status-pill" id="pill-port-9090" title="Port 9090: ROS 2 WebSocket Interface (rosbridge)">
             <div id="connection-dot" class="dot glow-red"></div>
-            <span id="connection-status">ROS 2 Bridge: 9090</span>
+            <span class="pill-label" id="connection-status">ROS 2 Bridge</span><span class="pill-val">9090</span>
           </div>
           <div class="status-pill" id="pill-port-8081" title="Port 8081: Robot Control UI (Webserver HTTP)">
             <div id="dot-port-8081" class="dot glow-green"></div>
-            <span>Robot Control UI: 8081</span>
+            <span class="pill-label">Robot Control UI</span><span class="pill-val">8081</span>
           </div>
-          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus Webapp & Web Backend (Flask API)" style="cursor: pointer;" data-open-port="5000">
+          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus Webapp & Web Backend (Flask API)" data-open-port="5000">
             <div id="dot-port-5000" class="dot glow-red"></div>
-            <span>Nexus Webapp: 5000</span>
+            <span class="pill-label">Nexus Webapp</span><span class="pill-val">5000</span>
           </div>
-          <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node Topology (HTTP)" style="cursor: pointer;" data-open-port="8080" data-open-path="/dashboard_index.html">
+          <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node Topology (HTTP)" data-open-port="8080" data-open-path="/dashboard_index.html">
             <div id="dot-port-8080" class="dot glow-red"></div>
-            <span>Dashboard: 8080</span>
+            <span class="pill-label">Dashboard</span><span class="pill-val">8080</span>
           </div>
-          <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server for Camera & RViz Streams (HTTP)" style="cursor: pointer;" data-open-port="8082">
+          <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server for Camera & RViz Streams (HTTP)" data-open-port="8082">
             <div id="dot-port-8082" class="dot glow-red"></div>
-            <span>Video Streams: 8082</span>
+            <span class="pill-label">Video Streams</span><span class="pill-val">8082</span>
           </div>
           <div class="status-pill" id="pill-port-9091" title="Port 9091: Meta Quest 3 VR Teleoperation (WebSocket)">
             <div id="dot-port-9091" class="dot glow-red"></div>
-            <span>VR Teleop: 9091</span>
+            <span class="pill-label">VR Teleop</span><span class="pill-val">9091</span>
           </div>
         </div>
 
@@ -80,11 +80,11 @@
         <div class="status-group">
           <div class="status-pill" id="gamepad-pill">
             <div id="gp-dot" class="dot glow-red"></div>
-            <span id="gamepad-status">Gamepad (USB)</span>
+            <span class="pill-label">Gamepad</span><span class="pill-val" id="gamepad-status">USB</span>
           </div>
           <div class="status-pill" id="eye-pill">
             <div id="eye-dot" class="dot glow-red"></div>
-            <span id="eye-status">Eyetracking: Offline</span>
+            <span class="pill-label">Eyetracking</span><span class="pill-val" id="eye-status">Offline</span>
           </div>
         </div>
 
@@ -93,15 +93,15 @@
         <div class="status-group">
           <div class="status-pill" title="ROS 2 Domain ID">
             <div class="dot glow-blue"></div>
-            <span>ROS_DOMAIN_ID: <span id="val-domain-id" style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">66</span></span>
+            <span class="pill-label">ROS_DOMAIN_ID</span><span class="pill-val" id="val-domain-id">66</span>
           </div>
           <div class="status-pill" title="ROS 2 DDS Middleware">
             <div class="dot glow-blue"></div>
-            <span>RMW: <span id="val-rmw-impl" style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">rmw_cyclonedds_cpp</span></span>
+            <span class="pill-label">RMW</span><span class="pill-val" id="val-rmw-impl">rmw_cyclonedds_cpp</span>
           </div>
           <div class="status-pill" id="pill-localhost-only" title="ROS_LOCALHOST_ONLY (0: Off / 1: On)">
             <div class="dot glow-blue" id="dot-localhost-only"></div>
-            <span>Localhost Only: <span id="val-localhost-only" style="font-family: 'JetBrains Mono'; font-weight: bold; color: var(--txt);">Off</span></span>
+            <span class="pill-label">Localhost Only</span><span class="pill-val" id="val-localhost-only">Off</span>
           </div>
         </div>
 
@@ -110,7 +110,7 @@
         <div class="status-group">
           <div class="status-pill mode-badge" id="mode-pill">
             <div id="mode-dot" class="dot glow-blue"></div>
-            <span id="mode-status">Mode: Wait</span>
+            <span class="pill-label">Mode</span><span class="pill-val" id="mode-status">Wait</span>
           </div>
         </div>
       </div>
@@ -219,10 +219,10 @@
                 <button class="btn btn-icon-small" data-action="setDigitalTwinTopView" title="Top-down view">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-grid" data-action="toggleDigitalTwinGrid" title="Toggle ground grid" style="color: var(--cyan);">
+                <button class="btn btn-icon-small active" id="btn-twin-grid" data-action="toggleDigitalTwinGrid" title="Toggle ground grid" style="color: var(--cyan);">
                   <i class="fa-solid fa-border-all"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-edges" data-action="toggleDigitalTwinEdges" title="Toggle CAD edge outlines" style="color: var(--cyan);">
+                <button class="btn btn-icon-small active" id="btn-twin-edges" data-action="toggleDigitalTwinEdges" title="Toggle CAD edge outlines" style="color: var(--cyan);">
                   <i class="fa-solid fa-shapes"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
@@ -312,11 +312,11 @@
                   <div class="mp-detail" id="mp-detail">Waiting for MoveIt...</div>
                   <!-- Nur in der Phase "confirm" sichtbar (Pfad-Vorschau) -->
                   <div class="mp-actions">
-                    <button type="button" class="mp-btn mp-btn-exec" data-action="confirmMoveToPreview" data-args='[true]' title="Execute the previewed path">
-                      <i class="fa-solid fa-play"></i> Execute path
+                    <button type="button" class="mp-btn mp-btn-exec" data-action="confirmMoveToPreview" data-args='[true]' title="Execute the previewed path" aria-label="Execute path">
+                      <i class="fa-solid fa-play"></i>
                     </button>
-                    <button type="button" class="mp-btn mp-btn-discard" data-action="confirmMoveToPreview" data-args='[false]' title="Discard the previewed path - the robot does not move">
-                      <i class="fa-solid fa-xmark"></i> Discard
+                    <button type="button" class="mp-btn mp-btn-discard" data-action="confirmMoveToPreview" data-args='[false]' title="Discard the previewed path - the robot does not move" aria-label="Discard path">
+                      <i class="fa-solid fa-xmark"></i>
                     </button>
                   </div>
                 </div>
