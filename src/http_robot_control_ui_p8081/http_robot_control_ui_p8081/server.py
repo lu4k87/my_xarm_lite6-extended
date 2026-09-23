@@ -18,6 +18,7 @@ Aufruf: server.py [PORT] [VERZEICHNIS]
 import functools
 import http.server
 import os
+import posixpath
 import re
 import sys
 
@@ -31,6 +32,21 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
         '.js': 'text/javascript',
         '.mjs': 'text/javascript',
     }
+
+    def translate_path(self, path):
+        clean_path = path.split('?', 1)[0].split('#', 1)[0]
+        norm = posixpath.normpath(clean_path).lstrip('/')
+        if norm == 'sounds' or norm.startswith('sounds/'):
+            candidates = [
+                os.path.abspath(os.path.join(self.directory, '..', '..', 'sounds')),
+                os.path.join(os.environ.get('ROS2_WS', os.path.expanduser('~/dev_ws')), 'sounds'),
+                os.path.expanduser('~/dev_ws/sounds'),
+                '/home/mk/dev_ws/sounds',
+            ]
+            sounds_dir = next((d for d in candidates if os.path.isdir(d)), candidates[0])
+            rel = norm[len('sounds'):].lstrip('/')
+            return os.path.join(sounds_dir, rel)
+        return super().translate_path(path)
 
     def end_headers(self):
         path = self.path.split('?', 1)[0]

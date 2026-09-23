@@ -141,7 +141,9 @@ def launch_setup(context, *args, **kwargs):
 
     # rviz_config_file = PathJoinSubstitution([FindPackageShare(moveit_config_package_name), 'rviz', 'moveit.rviz'])
     rviz_config_file = PathJoinSubstitution([FindPackageShare('xarm_moveit_servo'), 'rviz', 'servo.rviz'])
+    # rviz:=false startet MoveIt Servo ohne RViz-Fenster (Checkbox in der Nexus Webapp).
     rviz_node = Node(
+        condition=IfCondition(LaunchConfiguration('rviz', default='true')),
         package='rviz2',
         executable='rviz2',
         name='rviz2',

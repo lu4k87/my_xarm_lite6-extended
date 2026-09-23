@@ -30,6 +30,7 @@ def generate_launch_description():
     add_vacuum_gripper = LaunchConfiguration('add_vacuum_gripper', default=False)
     attach_to = LaunchConfiguration('attach_to', default='world')
     static_objects = LaunchConfiguration('static_objects', default='false')
+    rviz = LaunchConfiguration('rviz', default='true')
     static_onjects = LaunchConfiguration('static_onjects', default='false')
 
     # robot moveit servo launch
@@ -47,6 +48,7 @@ def generate_launch_description():
             'add_vacuum_gripper': add_vacuum_gripper,
             'robot_type': 'lite',
             'attach_to': attach_to,
+            'rviz': rviz,
         }.items(),
     )
     
@@ -92,6 +94,7 @@ def generate_launch_description():
         DeclareLaunchArgument('add_gripper', default_value='false', description='Whether to add xArm gripper'),
         DeclareLaunchArgument('add_vacuum_gripper', default_value='false', description='Whether to add vacuum gripper'),
         DeclareLaunchArgument('attach_to', default_value='world', description='Root link to attach robot to (e.g. world or linear_axis_link)'),
+        DeclareLaunchArgument('rviz', default_value='true', description='Start RViz2 together with MoveIt Servo'),
         DeclareLaunchArgument('static_objects', default_value='false', description='Whether to launch rviz_marker_3d_scene_objects (3D scene calibration objects)'),
         DeclareLaunchArgument('static_onjects', default_value='false', description='Alias for static_objects'),
         robot_moveit_servo_launch,

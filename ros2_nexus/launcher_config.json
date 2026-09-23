@@ -289,7 +289,7 @@
     "sec_7": [
       "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
       "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
-      "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
+      "python3 src/http_robot_control_ui_p8081/http_robot_control_ui_p8081/server.py 8081 src/http_robot_control_ui_p8081",
       "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py"
     ],
     "sec_8": [
@@ -346,7 +346,7 @@
     "sec_nodes_7": [
       "ros2 launch rosbridge_server rosbridge_websocket_launch.xml",
       "python3 -m http.server 8080 -d src/http_dashboard_monitoring_p8080",
-      "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
+      "python3 src/http_robot_control_ui_p8081/http_robot_control_ui_p8081/server.py 8081 src/http_robot_control_ui_p8081",
       "python3 src/http_dashboard_monitoring_p8080/workspace_analyzer.py"
     ],
     "sec_nodes_8": [
@@ -357,7 +357,7 @@
       "read -p \"Dateiname?: \" st; find / -iname \"*${st}*\" 2>/dev/null"
     ],
     "sec_system_1": [
-      "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'"
+      "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server' && pkill -9 -f 'server.py'"
     ],
     "sec_system_2": [
       "source ~/.bashrc && echo -e '\\033[1;32m.bashrc geladen!\\033[0m'; sleep 2",
@@ -1186,8 +1186,8 @@
         {
           "active": true,
           "args": [],
-          "baseCmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
-          "cmd": "python3 -m http.server 8081 -d src/http_robot_control_ui_p8081",
+          "baseCmd": "python3 src/http_robot_control_ui_p8081/http_robot_control_ui_p8081/server.py 8081 src/http_robot_control_ui_p8081",
+          "cmd": "python3 src/http_robot_control_ui_p8081/http_robot_control_ui_p8081/server.py 8081 src/http_robot_control_ui_p8081",
           "label": "Robot Control Web UI (Port 8081)",
           "postCmd": "",
           "type": "node"
@@ -1343,7 +1343,7 @@
     {
       "actions": [
         {
-          "cmd": "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server'",
+          "cmd": "pkill -9 -f 'rosbridge_server' && pkill -9 -f 'rosbridge_websocket' && pkill -9 -f 'rosapi_node' && pkill -9 -f 'workspace_analyzer' && pkill -9 -f 'lite6' && pkill -9 -f 'http.server' && pkill -9 -f 'server.py'",
           "label": "ALLE ROS-Prozesse beenden",
           "mode": "bg",
           "type": "kill"

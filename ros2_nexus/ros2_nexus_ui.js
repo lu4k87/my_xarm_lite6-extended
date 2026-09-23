@@ -1312,6 +1312,14 @@
                     const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, staticArgText);
                     action.args.push({ text: staticArgText, checked: isChecked });
                 }
+                // RViz mitstarten ja/nein - echtes Launch-Argument "rviz" der
+                // Servo-Launches (Standard: an). Ohne Haken wird rviz:=false
+                // angehaengt, siehe buildCmdWithArgs.
+                const rvizArgText = 'rviz:=true';
+                if (!action.args.some(a => a.text.startsWith('rviz:='))) {
+                    const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, rvizArgText);
+                    action.args.push({ text: rvizArgText, checked: isChecked });
+                }
             }
 
             // Ensure camera selection and ZED M YOLO models args are available for robot_vision_cameras_bringup
@@ -2278,6 +2286,11 @@
               let finalCmd = action.baseCmd;
               if (action.args.length > 0) {
                   const activeArgs = action.args.filter(a => a.checked).map(a => a.text);
+                  // rviz ist standardmaessig an - ein fehlendes Argument wuerde
+                  // RViz also trotzdem starten. Deshalb explizit abschalten.
+                  if (action.args.some(a => a.text === 'rviz:=true' && !a.checked)) {
+                      activeArgs.push('rviz:=false');
+                  }
                   if (activeArgs.length > 0) {
                       finalCmd += ' ' + activeArgs.join(' ');
                   }

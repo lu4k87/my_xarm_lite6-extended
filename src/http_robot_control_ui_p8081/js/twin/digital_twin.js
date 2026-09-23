@@ -5,7 +5,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls_r128.js';
 import URDFLoader from 'urdf-loader';
 import { ROBOT_LIMITS } from '../robot_limits.js';
 import { logMsg } from '../log.js';
@@ -922,8 +922,7 @@ function initTCPGizmo() {
 
     gizmoTarget.add(ghostTCPGroup);
     transformControls.attach(gizmoTarget);
-    // Seit r169 ist TransformControls kein Object3D mehr - in die Szene
-    // kommt der Helper.
+    // TransformControls_r128 ist selbst das Object3D (getHelper() = this).
     scene.add(transformControls.getHelper());
 
     // Dashed connecting line

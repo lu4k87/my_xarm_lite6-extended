@@ -33,6 +33,7 @@ def generate_launch_description():
     baud_checkset = LaunchConfiguration('baud_checkset', default=True)
     default_gripper_baud = LaunchConfiguration('default_gripper_baud', default=2000000)
     static_objects = LaunchConfiguration('static_objects', default='false')
+    rviz = LaunchConfiguration('rviz', default='true')
     static_onjects = LaunchConfiguration('static_onjects', default='false')
 
     # robot moveit servo launch
@@ -55,6 +56,7 @@ def generate_launch_description():
             'robot_type': 'lite',
             'attach_to': attach_to,
             'ros2_control_plugin': 'uf_robot_hardware/UFRobotSystemHardware',
+            'rviz': rviz,
         }.items(),
     )
 
@@ -93,6 +95,7 @@ def generate_launch_description():
         DeclareLaunchArgument('report_type', default_value='dev', description='Report type (dev, normal, rich)'),
         DeclareLaunchArgument('add_gripper', default_value='false', description='Whether to add xArm gripper'),
         DeclareLaunchArgument('add_vacuum_gripper', default_value='false', description='Whether to add vacuum gripper'),
+        DeclareLaunchArgument('rviz', default_value='true', description='Start RViz2 together with MoveIt Servo'),
         DeclareLaunchArgument('static_objects', default_value='false', description='Whether to launch rviz_marker_3d_scene_objects (3D scene calibration objects)'),
         DeclareLaunchArgument('static_onjects', default_value='false', description='Alias for static_objects'),
         robot_moveit_servo_launch,
