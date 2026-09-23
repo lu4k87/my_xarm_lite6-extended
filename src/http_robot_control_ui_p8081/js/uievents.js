@@ -9,6 +9,8 @@ document.addEventListener('click', function(e) {
   if (btn.id === 'btn-sound-toggle') return;
   // Der Not-Aus muss jederzeit und beliebig oft ausloesbar sein.
   if (btn.id === 'btn-estop-header' || btn.id === 'btn-emergency-stop') return;
+  // Layout-Schalter (Spalten ein-/ausklappen) duerfen sofort wieder klicken.
+  if (btn.classList.contains('col-splitter-btn')) return;
 
   // Check if button is disabled by motion lock or already clicked
   if (btn.disabled || btn.dataset.clicked || btn.style.pointerEvents === 'none') {

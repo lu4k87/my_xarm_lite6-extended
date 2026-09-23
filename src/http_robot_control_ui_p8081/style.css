@@ -346,9 +346,96 @@ button.status-pill.sound-btn.sound-muted:hover {
 
 .grid-layout {
   display: grid;
-  grid-template-columns: 1fr 2fr 1.2fr;
-  gap: 8px;
+  /* Aussenspalten per Trennleiste verstellbar/einklappbar (js/columns.js);
+     die Mitte bekommt immer den restlichen Platz. Die Trennleisten ersetzen
+     den frueheren Spaltenabstand. */
+  --col-left-w: 1fr;
+  --col-right-w: 1.2fr;
+  grid-template-columns: var(--col-left-w) 12px minmax(0, 2fr) 12px var(--col-right-w);
+  column-gap: 0;
+  row-gap: 8px;
   flex: 1;
+}
+
+/* Eingeklappte Aussenspalte: aus dem Layout, nur die Trennleiste bleibt. */
+.grid-layout.col-left-collapsed { --col-left-w: 0px; }
+.grid-layout.col-right-collapsed { --col-right-w: 0px; }
+.grid-layout.col-left-collapsed > .col-left,
+.grid-layout.col-right-collapsed > .col-right {
+  display: none;
+}
+
+.col-left, .col-right {
+  min-width: 0;
+}
+
+/* Feste Rasterplaetze - sonst rutscht beim Einklappen alles eine Spalte nach. */
+.grid-layout > .col-left            { grid-column: 1; }
+.grid-layout > #col-splitter-left   { grid-column: 2; }
+.grid-layout > .col-middle          { grid-column: 3; min-width: 0; }
+.grid-layout > #col-splitter-right  { grid-column: 4; }
+.grid-layout > .col-right           { grid-column: 5; }
+
+/* ── Trennleiste zwischen den Spalten ── */
+.col-splitter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+/* Schmale Linie in der Mitte der Leiste */
+.col-splitter::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: background 0.15s ease;
+}
+
+.col-splitter:hover::before,
+.col-splitter.is-dragging::before {
+  background: rgba(56, 189, 248, 0.55);
+}
+
+.col-splitter-btn {
+  position: relative;          /* ueber der Linie */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--mut);
+  font-size: 9px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.col-splitter-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.6);
+  color: var(--txt);
+}
+
+/* Ziehen: kein Textmarkieren, Mauszeiger ueberall als Resize */
+body.col-resizing,
+body.col-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 
 .col-left, .col-middle, .col-right {
@@ -1137,7 +1224,10 @@ input[type=range]:active::-moz-range-thumb {
      sitzt der HUD in der mittleren auto-Spalte wirklich viewport-mittig und
      nicht um die halbe Differenz von Nav-Gizmo (96px) und Icons (45px)
      versetzt. */
-  grid-template-columns: minmax(min-content, 1fr) auto minmax(min-content, 1fr);
+  /* Beide Seitenspalten gleich breit (mind. Nav-Gizmo 144 px + Rand), damit
+     die Mitte - MoveIt-Popup, Warnbanner - exakt viewport-mittig sitzt. Die
+     Mitte darf bis 0 schrumpfen und ragt so nie ueber Nav-Gizmo/SCENE. */
+  grid-template-columns: minmax(152px, 1fr) minmax(0, auto) minmax(152px, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "tl tc tr"
@@ -2350,11 +2440,11 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .moveit-popup {
   --mp-accent: #f59e0b;
   box-sizing: border-box;
-  /* Darf mittig ueber die Spalte des POSE-Panels hinausragen (die ist auf
-     1920 px nur ~410 px breit), bleibt aber im Viewport. */
-  flex-shrink: 0;
+  /* Oben mittig im Viewport (Rasterbereich tc, zwischen Nav-Gizmo und
+     SCENE-Panel). Abstand zum oberen Viewportrand: 10 px Raster + margin. */
   width: 560px;
-  max-width: calc(100vw - 32px);
+  max-width: 100%;
+  margin-top: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2373,7 +2463,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .moveit-popup.mp-hidden { display: none; }
 
-.moveit-popup.mp-phase-executing { --mp-accent: #38bdf8; }
+.moveit-popup.mp-phase-executing { --mp-accent: #10b981; }   /* gruen: Roboter faehrt */
 .moveit-popup.mp-phase-succeeded { --mp-accent: #10b981; }
 .moveit-popup.mp-phase-failed,
 .moveit-popup.mp-phase-aborted   { --mp-accent: #ef4444; }
@@ -3829,4 +3919,345 @@ header {
    wartet auf Bestaetigung (data-awaiting). */
 .moveit-popup[data-automove="1"]:not([data-awaiting="1"]) .mp-actions {
   display: none !important;
+}
+
+/* ── MoveIt-Popup: Puls/Glow je nach Zustand ─────────────────────────────
+   Wartet auf Bestaetigung (cyan): kraeftiger, schneller Puls, damit das
+   Popup auffaellt. Roboter faehrt (gruen): ruhigerer gruener Puls.
+   mp-in bleibt als erste Animation erhalten (Einblenden). */
+@keyframes mp-glow-confirm {
+  from {
+    border-color: color-mix(in srgb, var(--mp-accent) 55%, transparent);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6),
+                0 0 10px color-mix(in srgb, var(--mp-accent) 30%, transparent);
+  }
+  to {
+    border-color: var(--mp-accent);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6),
+                0 0 34px color-mix(in srgb, var(--mp-accent) 85%, transparent),
+                0 0 0 2px color-mix(in srgb, var(--mp-accent) 45%, transparent),
+                inset 0 0 18px color-mix(in srgb, var(--mp-accent) 22%, transparent);
+  }
+}
+
+@keyframes mp-glow-exec {
+  from {
+    border-color: color-mix(in srgb, var(--mp-accent) 50%, transparent);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6),
+                0 0 8px color-mix(in srgb, var(--mp-accent) 25%, transparent);
+  }
+  to {
+    border-color: var(--mp-accent);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6),
+                0 0 26px color-mix(in srgb, var(--mp-accent) 70%, transparent),
+                inset 0 0 14px color-mix(in srgb, var(--mp-accent) 18%, transparent);
+  }
+}
+
+.moveit-popup.mp-phase-confirm {
+  animation: mp-in 0.18s ease-out, mp-glow-confirm 0.8s ease-in-out infinite alternate;
+}
+
+.moveit-popup.mp-phase-executing {
+  animation: mp-in 0.18s ease-out, mp-glow-exec 1.2s ease-in-out infinite alternate;
+}
+
+/* Der Execute-Button pulsiert beim Warten mit - dort wird geklickt. */
+.moveit-popup.mp-phase-confirm .mp-btn-exec {
+  animation: mp-exec-btn-pulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes mp-exec-btn-pulse {
+  from { box-shadow: 0 0 0 rgba(34, 211, 238, 0); }
+  to   { box-shadow: 0 0 16px rgba(34, 211, 238, 0.75); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moveit-popup.mp-phase-confirm,
+  .moveit-popup.mp-phase-executing,
+  .moveit-popup.mp-phase-confirm .mp-btn-exec {
+    animation: none;
+  }
+}
+
+/* ══ Responsive Sections (Container Queries) ═══════════════════════════════
+   Die Aussenspalten sind verstellbar und Sections lassen sich zwischen den
+   Spalten verschieben - dieselbe Section kann also 300 px oder 700 px breit
+   sein. Deshalb richten sich die Umbrueche nach der Breite der Section
+   selbst (@container), nicht nach der Fensterbreite. */
+.glass-panel {
+  container-type: inline-size;
+}
+
+/* ── Cartesian Jogging: Gruppen umbrechen statt aus dem Panel zu ragen ──
+   Reihenfolge bleibt: Z | Joystick | Rotation + Frame | Greifer. Passt es
+   nicht, rutschen die hinteren Gruppen zentriert in die naechste Zeile. */
+.jogging-container {
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 14px;
+  column-gap: 14px;
+}
+
+.jogging-container > * {
+  flex-shrink: 0;
+}
+
+/* Greifer in eigener Zeile: Buttons nebeneinander, Trenner waagerecht. */
+@container (max-width: 620px) {
+  .gripper-area {
+    flex: 1 1 100%;
+    flex-direction: column;
+    gap: 10px;
+    margin-right: 0;
+  }
+  .gripper-area .jog-divider {
+    width: 100%;
+    height: 1px;
+  }
+  .gripper-controls {
+    flex-direction: row;
+    gap: 10px;
+  }
+  .gripper-controls .btn {
+    width: 84px;
+  }
+}
+
+/* Sehr schmal: Z-Buttons nebeneinander unter den Joystick, Rotation +
+   Frame als eigene Zeile ueber die volle Breite. */
+@container (max-width: 400px) {
+  .z-controls {
+    order: 2;
+    flex-direction: row;
+    margin-left: 0;
+  }
+  .joystick-assembly {
+    order: 1;
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+  .rot-and-frame-group {
+    order: 3;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .gripper-area {
+    order: 4;
+  }
+  .btn-z {
+    height: 44px;
+    width: 72px;
+  }
+}
+
+/* ── EEF Telemetry: X/Y/Z-Kacheln schrumpfen, Einheit bricht um ── */
+@container (max-width: 440px) {
+  .telemetry-grid {
+    gap: 6px;
+  }
+  .telem-box {
+    padding: 6px 4px !important;
+    flex-wrap: wrap !important;
+    column-gap: 4px !important;
+    row-gap: 0 !important;
+  }
+  .telem-box span[style*="font-size: 22px"] {
+    font-size: 16px !important;
+  }
+  .telem-box .t-value {
+    font-size: 14px !important;
+  }
+  .telem-box .t-label {
+    font-size: 10.5px;
+  }
+}
+
+/* ── 3D-Viewport-Kopfzeile: Icon-Leiste bricht um statt ueberzustehen ── */
+.centerpiece-header {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.centerpiece-header > div {
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.centerpiece-header > div:last-child {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.twin-toolbar {
+  flex-wrap: wrap;
+  flex-shrink: 1;
+  justify-content: flex-end;
+  row-gap: 5px;
+}
+
+/* ── ZED-Stream-Leiste: Topic rutscht bei Platzmangel in die naechste Zeile ── */
+.zed-stream-bar {
+  flex-wrap: wrap;
+  height: auto;
+  row-gap: 4px;
+}
+
+.zed-stream-bar select {
+  flex: 1 1 140px;
+}
+
+/* ── Manuelles Greifziel (YOLO-Section): Eingabe und Button untereinander ── */
+@container (max-width: 380px) {
+  #panel-yolo > div[style*="display: flex"] {
+    flex-wrap: wrap;
+  }
+  #panel-yolo > div[style*="display: flex"] > input {
+    flex: 1 1 100% !important;
+  }
+  #panel-yolo > div[style*="display: flex"] > button {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+/* ── 3D-Viewport-Kopfzeile: rechte Gruppe bleibt eine Einheit ──
+   Badge, Icon-Leiste und Einklapp-Pfeil stehen zusammen; ist es zu eng,
+   bricht die Icon-Leiste in sich um - der Pfeil rutscht nie allein weg. */
+.centerpiece-header > div:last-child {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.centerpiece-header .twin-toolbar {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.centerpiece-header #twin-status-badge,
+.centerpiece-header .panel-collapse-btn {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ── Viewport-HUD bei schmalem Viewport ──
+   Der Viewport selbst ist der Container: wird er schmal (Mitte eng durch
+   breite Aussenspalten oder kleines Fenster), bekommt das POSE-Panel eine
+   eigene, volle Zeile unter TELEMETRY | SPEED statt auf ~165 px
+   zusammengedrueckt zu werden. */
+#digital-twin-container {
+  container: twinvp / inline-size;
+}
+
+@container twinvp (max-width: 780px) {
+  .twin-ov-bottom-center {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+  .twin-ov-bottom-center .twin-pose-overlay {
+    justify-content: center;
+  }
+  /* Watermark ist Deko - bei wenig Platz weg */
+  .twin-ov-watermark {
+    display: none;
+  }
+}
+
+/* ── Sprachsteuerung: Button + Status und Erkennungsfeld untereinander ── */
+#panel-whisper > div {
+  flex-wrap: wrap;
+}
+
+#panel-whisper > div > div {
+  min-width: 0;
+}
+
+@container (max-width: 420px) {
+  #panel-whisper > div > div {
+    flex: 1 1 100% !important;
+  }
+}
+
+/* ── TF Tuner: Dropdown passt sich der Breite an ── */
+.tuner-selector-row {
+  min-width: 0;
+}
+
+.tuner-select {
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+
+/* ── Niedrige Bildschirme (< 800 px Hoehe) ──
+   Dort scrollt die Seite ohnehin (Header mit Not-Aus bleibt oben stehen).
+   Der Viewport bekommt deshalb eine Mindesthoehe, statt die fuenf HUD-Panels
+   uebereinander zu quetschen. */
+@media (max-height: 799px) {
+  #digital-twin-container {
+    min-height: 560px !important;
+  }
+}
+
+/* ── MoveIt-Popup oben mittig ──
+   Breiter Viewport: im Rasterbereich tc zwischen Nav-Gizmo und SCENE.
+   Schmaler Viewport (< 780 px): eigene Zeile ueber die volle Breite oben,
+   statt zwischen Nav-Gizmo und SCENE zusammengedrueckt zu werden. Der
+   Top-Center-Wrapper loest sich dafuer auf (display: contents), damit
+   Popup und Warnbanner direkt im Raster liegen. */
+@container twinvp (max-width: 780px) {
+  .twin-overlay-grid {
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "pp pp pp"
+      "tl tc tr"
+      "ml ml mr"
+      "bb bb bb";
+  }
+  .twin-ov-top-center {
+    display: contents;
+  }
+  .twin-ov-top-center > #moveit-popup {
+    grid-area: pp;
+    justify-self: center;
+    width: min(560px, 100%);
+  }
+  .twin-ov-top-center > #twin-warning-banner {
+    grid-area: tc;
+    justify-self: center;
+  }
+  /* SCENE sitzt fest auf Zeile 1-2 - mit der Popup-Zeile eine tiefer. */
+  .twin-ov-right-top {
+    grid-row: 2 / 4;
+  }
+}
+
+
+/* Schmaler Viewport: kompakteres HUD, damit auch mit sichtbarem MoveIt-Popup
+   alles Platz findet. */
+@container twinvp (max-width: 780px) {
+  .twin-nav-gizmo {
+    --nav-gizmo-size: 96px;
+  }
+  /* TELEMETRY | SPEED nebeneinander: SPEED darf bis 200 px schrumpfen. */
+  .twin-ov-bottom-row {
+    column-gap: 8px;
+  }
+  .twin-ov-bottom-right {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+}
+
+/* Rueckfallebene: reicht die Hoehe trotzdem nicht (z. B. Popup sichtbar in
+   einem sehr kleinen Viewport), laesst sich das HUD scrollen - Mausrad ueber
+   einem Panel -, statt dass Panels unerreichbar aus dem Bild ragen. */
+.twin-overlay-grid {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.twin-overlay-grid::-webkit-scrollbar {
+  display: none;
 }

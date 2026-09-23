@@ -18,6 +18,7 @@
 //   uievents.js  Globaler Klick-Debounce
 //   streams.js   Kamera- und RViz-Streams
 //   persist.js   Letzten UI-Zustand speichern / wiederherstellen
+//   columns.js   Aussenspalten: Breite ziehen, ein-/ausklappen
 //   twin/        Digital Twin (three.js)
 //
 // Statt globaler window.*-Funktionen fuer Inline-Handler tragen die Elemente
@@ -50,6 +51,7 @@ import {
 import './uievents.js';
 import './streams.js';
 import './persist.js';
+import './columns.js';
 import {
   cycleTCPGizmoMode, resetDigitalTwinView, setDigitalTwinDetectionFlip, setDigitalTwinLabelScale,
   setDigitalTwinTopView, syncTCPGizmoToRobot, testDigitalTwinSafetyCycle, toggleDigitalTwinEdges,

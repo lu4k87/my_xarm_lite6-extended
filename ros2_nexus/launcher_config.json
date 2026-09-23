@@ -217,13 +217,13 @@
     ],
     "dev_real": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich static_objects:=true",
-      "ros2 run rviz_overlay_servo_status rviz_servo_status",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
-      "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true",
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
       "ros2 launch web_video_server web_video_server.launch.py",
+      "ros2 run rviz_overlay_servo_status rviz_servo_status",
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses",
-      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py"
+      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
+      "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true"
     ],
     "sec_4": [
       "ros2 run teleop_pre_collision_checker teleop_pre_collision_checker",
@@ -246,6 +246,13 @@
       "ros2 launch web_video_server web_video_server.launch.py"
     ],
     "dev_real": [
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich static_objects:=true",
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py",
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py",
+      "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
+      "ros2 launch web_video_server web_video_server.launch.py",
+      "ros2 run rviz_overlay_servo_status rviz_servo_status",
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true",
       "ros2 launch voice_command_listener voice_listener.launch.py"
     ],
