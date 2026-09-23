@@ -70,12 +70,6 @@ def generate_launch_description():
         description='Kamera Roll-Winkel [rad] (0.0 = 0.0°)')
     tf_pitch_arg = DeclareLaunchArgument('tf_pitch', default_value='1.00356',
         description='Kamera Pitch-Winkel [rad] (positiv = nach unten geneigt, 1.00356 = ~57.5°)')
-    mirror_y_arg = DeclareLaunchArgument(
-        'mirror_y', default_value='true',
-        description='Y-Achse der erkannten Objekte spiegeln. Noetig, weil die '
-                    'Kamera dem Roboter gegenuebersteht und in seine Richtung '
-                    'filmt - links und rechts sind aus Robotersicht vertauscht.')
-
     tf_yaw_arg = DeclareLaunchArgument('tf_yaw', default_value='3.14159',
         description='Kamera Yaw-Winkel [rad] (3.14159 = 180°, zeigt zum Roboter)')
 
@@ -152,7 +146,6 @@ def generate_launch_description():
         parameters=[
             perception_params_file,
             {'model_path': LaunchConfiguration('yolo_model')},
-            {'mirror_y': LaunchConfiguration('mirror_y')}
         ],
         condition=LaunchConfigurationEquals('camera', 'zed_m')
     )
@@ -232,7 +225,6 @@ def generate_launch_description():
         tf_roll_arg,
         tf_pitch_arg,
         tf_yaw_arg,
-        mirror_y_arg,
         # Camera-specific Nodes
         static_tf_node,
         pointcloud_optimizer_node,
