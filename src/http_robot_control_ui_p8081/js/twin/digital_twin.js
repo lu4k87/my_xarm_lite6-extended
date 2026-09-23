@@ -1404,6 +1404,46 @@ export function toggleDigitalTwinEdges() {
 }
 
 
+// ── Ansichtszustand fuer persist.js (Speichern / Wiederherstellen) ─────────
+export function setDigitalTwinGrid(visible) {
+  if (isGridVisible !== !!visible) toggleDigitalTwinGrid();
+}
+
+export function setDigitalTwinEdges(visible) {
+  if (isEdgesVisible !== !!visible) toggleDigitalTwinEdges();
+}
+
+// null, solange Kamera/Controls noch nicht initialisiert sind.
+export function getTwinViewState() {
+  if (!camera || !controls) return null;
+  const r = (v) => Math.round(v * 10000) / 10000;
+  return {
+    grid: isGridVisible,
+    edges: isEdgesVisible,
+    gizmo: isGizmoActive,
+    gizmoMode,
+    camPos: [r(camera.position.x), r(camera.position.y), r(camera.position.z)],
+    camTarget: [r(controls.target.x), r(controls.target.y), r(controls.target.z)],
+  };
+}
+
+export function applyTwinViewState(st) {
+  if (!st || !camera || !controls) return false;
+  if (typeof st.grid === 'boolean') setDigitalTwinGrid(st.grid);
+  if (typeof st.edges === 'boolean') setDigitalTwinEdges(st.edges);
+  if (st.gizmoMode === 'translate' || st.gizmoMode === 'rotate') setTCPGizmoMode(st.gizmoMode);
+  if (typeof st.gizmo === 'boolean' && st.gizmo !== isGizmoActive) toggleTCPGizmo(st.gizmo);
+  const ok3 = (a) => Array.isArray(a) && a.length === 3 && a.every(Number.isFinite);
+  if (ok3(st.camPos) && ok3(st.camTarget)) {
+    navSnap = null;
+    controls.target.set(...st.camTarget);
+    camera.position.set(...st.camPos);
+    controls.update();
+  }
+  requestRender();
+  return true;
+}
+
 export function resizeDigitalTwin() {
   requestRender();
   handleResize();

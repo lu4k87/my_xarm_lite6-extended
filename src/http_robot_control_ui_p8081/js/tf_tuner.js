@@ -474,6 +474,51 @@ export function toggleTFBroadcast() {
 
 
 
+// ── Zustand fuer persist.js ──────────────────────────────────────────────
+const TUNER_FIELDS = ['x', 'y', 'z', 'roll', 'pitch', 'yaw', 'radius'];
+
+export function getTunerState() {
+  const values = {};
+  for (const [name, el] of Object.entries(TF_TUNER_ELEMENTS)) {
+    values[name] = {};
+    for (const f of TUNER_FIELDS) if (typeof el[f] === 'number') values[name][f] = el[f];
+  }
+  return { element: currentTFTunerElement, values, scene: { ...sceneGroupUserVisible } };
+}
+
+export function applyTunerState(st) {
+  if (!st) return;
+  if (st.values) {
+    for (const [name, vals] of Object.entries(st.values)) {
+      const el = TF_TUNER_ELEMENTS[name];
+      if (!el || !vals) continue;
+      for (const f of TUNER_FIELDS) {
+        if (typeof el[f] === 'number' && Number.isFinite(vals[f])) el[f] = vals[f];
+      }
+    }
+  }
+  if (st.element && TF_TUNER_ELEMENTS[st.element]) {
+    currentTFTunerElement = st.element;
+    const sel = document.getElementById('tuner-element-select');
+    if (sel) sel.value = st.element;
+  }
+  if (st.scene) {
+    for (const k of Object.keys(sceneGroupUserVisible)) {
+      if (typeof st.scene[k] === 'boolean') sceneGroupUserVisible[k] = st.scene[k];
+    }
+    isSceneObjectsUserVisible = Object.values(sceneGroupUserVisible).some(v => v);
+    if (isSceneObjectsNodeRunning) {
+      for (const k of Object.keys(sceneGroupUserVisible)) {
+        if (twin.setSceneGroupVisibility) twin.setSceneGroupVisibility(k, sceneGroupUserVisible[k]);
+      }
+    }
+    updateAllSceneNodeBtns(isSceneObjectsNodeRunning);
+  }
+  updateTunerUI();
+  if (twin.updateTunerSceneObjects) twin.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
+  broadcastAllTFTunerTransforms();
+}
+
 // Start TF Broadcast Loop (10 Hz)
 if (tfBroadcasterInterval) clearInterval(tfBroadcasterInterval);
 tfBroadcasterInterval = setInterval(broadcastAllTFTunerTransforms, 100);

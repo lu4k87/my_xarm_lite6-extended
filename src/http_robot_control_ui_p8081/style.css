@@ -1225,8 +1225,8 @@ input[type=range]:active::-moz-range-thumb {
   grid-area: tl;
   align-self: start;
   justify-self: start;
-  width: var(--nav-gizmo-size, 96px);
-  height: var(--nav-gizmo-size, 96px);
+  width: var(--nav-gizmo-size, 144px);
+  height: var(--nav-gizmo-size, 144px);
   /* zusaetzlich zum inset:10px des Grids - der Gizmo soll weiter von der
      Viewport-Ecke wegstehen als die Tabs daneben. */
   margin: 8px 0 0 8px;
@@ -1253,7 +1253,7 @@ input[type=range]:active::-moz-range-thumb {
 /* Short viewports: shrink the gizmo, then drop it entirely so the
    motion action buttons always keep their full space. */
 .viewport-container.twin-viewport-short .twin-nav-gizmo {
-  --nav-gizmo-size: 76px;
+  --nav-gizmo-size: 114px;
 }
 
 .viewport-container.twin-viewport-tiny .twin-nav-gizmo {
@@ -1263,18 +1263,18 @@ input[type=range]:active::-moz-range-thumb {
 /* Niedriger Viewport: wieder die kompakten Groessen, damit SCENE- und
    MOTION-Spalte nicht in die Panels darueber/darunter wachsen. */
 .viewport-container.twin-viewport-short .twin-scene-node-overlay .btn-icon-small {
-  width: 34px !important;
-  height: 34px !important;
-  min-width: 34px !important;
-  min-height: 34px !important;
-  font-size: 15px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  font-size: 16px !important;
 }
 
 .viewport-container.twin-viewport-short .twin-motion-overlay .btn-action,
 .viewport-container.twin-viewport-short .twin-motion-overlay .btn-danger {
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
 }
 
 /* Very short viewports also need compact motion buttons so the overlay
@@ -1314,11 +1314,11 @@ input[type=range]:active::-moz-range-thumb {
 
 .twin-motion-overlay .btn-action,
 .twin-motion-overlay .btn-danger {
-  width: 38px !important;
-  height: 38px !important;
-  min-width: 38px !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
   padding: 0 !important;
-  font-size: 16px !important;
+  font-size: 17px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1328,7 +1328,7 @@ input[type=range]:active::-moz-range-thumb {
 .twin-motion-overlay .btn-action i,
 .twin-motion-overlay .btn-danger i {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 
@@ -1357,11 +1357,13 @@ input[type=range]:active::-moz-range-thumb {
   flex-wrap: wrap; /* narrow viewports: break into rows instead of overflowing */
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  /* Etwas engere Abstaende, damit die breiteren Eingabefelder in dieselbe
+     Zeile passen wie vorher. */
+  gap: 8px;
   background: rgba(10, 14, 23, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  padding: 9px 16px;
+  padding: 9px 12px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -1377,15 +1379,17 @@ input[type=range]:active::-moz-range-thumb {
 }
 
 .twin-pose-overlay .input-group input {
-  width: 70px;
-  padding: 6px 8px;
+  /* Platz fuer die Spinner-Pfeile rechts, damit sie den Wert nicht verdecken:
+     etwas breiter, dafuer weniger Innenabstand (Platz fuer "-1000" / "-3.14"). */
+  width: 76px;
+  padding: 6px 2px 6px 6px;
   font-size: 14px;
   border-radius: 0;
 }
 
 .twin-pose-overlay .btn-action {
   height: 36px;
-  padding: 0 16px;
+  padding: 0 12px;
   font-size: 14px;
 }
 
@@ -2200,13 +2204,13 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .twin-toolbar .btn-icon-small {
-  width: 34px !important;
-  height: 34px !important;
+  width: 36px !important;
+  height: 36px !important;
   padding: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 15px !important;
+  font-size: 16px !important;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--mut);
@@ -3006,6 +3010,10 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   justify-content: flex-start;
 }
 
+.twin-pose-overlay .input-row-divider {
+  margin: 0 2px;
+}
+
 /* Kleines Icon in der Viewport-Tab-Leiste: klappt alle HUD-Tabs zusammen
    oder wieder auf. */
 .v-tab-hud-toggle {
@@ -3109,12 +3117,12 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .twin-scene-node-overlay .btn-icon-small {
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
   padding: 0 !important;
-  font-size: 16px !important;
+  font-size: 17px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -3322,9 +3330,9 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     gap: 10px !important;
   }
   .twin-toolbar .btn-icon-small {
-    width: 34px !important;
-    height: 34px !important;
-    font-size: 15px !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 16px !important;
   }
   #panel-telemetry .telemetry-grid {
     margin-bottom: 10px;

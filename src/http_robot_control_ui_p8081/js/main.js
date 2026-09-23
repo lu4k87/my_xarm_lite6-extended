@@ -17,6 +17,7 @@
 //   tf_tuner.js  TF Control Tuner, Szenen-Nodes
 //   uievents.js  Globaler Klick-Debounce
 //   streams.js   Kamera- und RViz-Streams
+//   persist.js   Letzten UI-Zustand speichern / wiederherstellen
 //   twin/        Digital Twin (three.js)
 //
 // Statt globaler window.*-Funktionen fuer Inline-Handler tragen die Elemente
@@ -48,6 +49,7 @@ import {
 } from './tf_tuner.js';
 import './uievents.js';
 import './streams.js';
+import './persist.js';
 import {
   cycleTCPGizmoMode, resetDigitalTwinView, setDigitalTwinDetectionFlip, setDigitalTwinLabelScale,
   setDigitalTwinTopView, syncTCPGizmoToRobot, testDigitalTwinSafetyCycle, toggleDigitalTwinEdges,
