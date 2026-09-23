@@ -140,10 +140,10 @@ source install/setup.bash
 *Dies startet den lokalen Prozess-Manager-Daemon und öffnet die Nexus Webapp automatisch im Standardbrowser unter `http://localhost:5000`.*
 
 #### 3. Simulation starten & Web-Panels erkunden
-1. Klicke in der **Nexus Webapp** auf den grünen Button **`RUN DEV Setup (FAKE)`**.
+1. Klicke in der **Nexus Webapp** auf den grünen Button **`RUN DEV SETUP (FAKE)`**.
    * Startet automatisch das simulierte xArm Lite 6 `ros2_control` Hardware-Interface, MoveIt 2 Servo, RViz2 und die WebSocket ROS Bridge (`ws://localhost:9090`).
 2. Öffne die **Robot Control UI** (`http://localhost:8081`):
-   * Teste kartesische XYZ-Jog-Steuerung, schalte den virtuellen Vakuumgreifer oder fahre die Home-Initialpose an.
+   * Teste kartesische XYZ-Jog-Steuerung, bewege die Joint-Slider oder fahre die Home-Initialpose an. *(Die Greifer-Buttons geben bislang nur ihren Zustand wieder — siehe 3.6.)*
 3. Öffne das **Dashboard Monitoring UI** (`http://localhost:8080/dashboard_index.html`):
    * Überwache Echtzeit-Topic-Frequenzen (Hz), visualisiere Node-Topologiegraphen und inspiziere Live-Parameter.
 
@@ -322,7 +322,7 @@ Das `ros2_control` Framework bindet das echte `xarm_api` Hardware Interface ein,
 
 > [!NOTE]
 > **Virtuelle Linearachse (Nur Simulation):** Im FAKE-Modus kann der Roboter auf einer simulierten Linearachse bewegt werden, ohne die MoveIt-Planungsgruppe (`lite6`) zu beeinflussen.
-> - **Aktivierung:** Die Nexus Webapp startet die Linearachse beim Klick auf den Button **RUN DEV Setup (FAKE)** automatisch mit. Bei manuellem Start muss der Parameter `attach_to:=linear_axis_link` an den Launch-Befehl angehängt werden.
+> - **Aktivierung:** Die Nexus Webapp startet die Linearachse beim Klick auf den Button **RUN DEV SETUP (FAKE)** automatisch mit. Bei manuellem Start muss der Parameter `attach_to:=linear_axis_link` an den Launch-Befehl angehängt werden.
 > - **Steuerung:** Der GUI-Schieberegler im Web UI (Port 8081) oder das Gamepad-D-Pad (Links/Rechts) steuert die horizontale Verschiebung durch Publizieren auf `/linear_axis_cmd`. Der Headless-Node `fake_linear_axis` (`ros2 run fake_linear_axis fake_linear_axis`) wandelt dies in dynamisches TF und visuelle Schienen-Marker um.
 > - **MoveIt-Architektur:** Die Achse wird rein über dynamisches TF (`world` -> `linear_axis_link`) verschoben und nicht als URDF-Joint in die Kinematik aufgenommen. Dadurch weiß MoveIt (dank TF) automatisch, wo der Roboter steht, ohne dass ein 7-DoF IK-Solver benötigt wird.
 > - **URDF Modifikation:** Um Fehler beim Parsen von dynamischen `attach_to`-Argumenten zu vermeiden, wurde `xarm_description/urdf/xarm_device_macro.xacro` angepasst. Die Bedingung für `create_attach_link` generiert nun einen Root-Link für *jeden* übergebenen String und nicht mehr exklusiv nur für `"world"`.
@@ -672,10 +672,12 @@ flowchart TD
 >
 >> | Parameter | Standardwert | Beschreibung |
 >> |---|---|---|
->> | `yolo_model` | `yolov8l.pt` | *Gewichtsdatei des neuronalen Netzes (Standard: `yolov8l.pt`, per Launch-Argument oder Nexus Webapp Parameter-Chip umschaltbar).* |
->> | `class_dimension_overrides` | *Optional* | *Hinterlegt feste metrische Dimensionen (x,y,z) für spezifische Objekte, falls eine feste Geometrie erzwungen werden soll.* |
->> | `percentiles` | `[0.5, 99.5]` | *Schneidet extreme Tiefen-Rausch-Pixel ("Flying Pixels" an Objektkanten) hart ab, während echte Kanten erhalten bleiben.* |
->> | `ema_alpha` | `0.2` | *Glättungsfaktor (Exponential Moving Average), um Boxen-Jittering zwischen Frames sicher zu eliminieren.* |
+>> | `model_path` | `yolov8l.pt` | *Gewichtsdatei des neuronalen Netzes. Wird über das Launch-Argument `yolo_model` oder den Parameter-Chip der Nexus Webapp gesetzt.* |
+>> | `confidence_threshold` | `0.35` | *Mindest-Konfidenz einer YOLOv8-Erkennung; alles darunter wird verworfen.* |
+>> | `ema_alpha` | `0.4` | *Glättungsfaktor (Exponential Moving Average) gegen Boxen-Jittering zwischen Frames. Kleiner heißt ruhiger, folgt aber träger.* |
+>> | `class_dimension_overrides` | `[]` | *Optional feste metrische Dimensionen (x,y,z) für bekannte Kalibrierziele. Standardmäßig leer, dann wird jedes Objekt aus der 3D-Punktwolke vermessen.* |
+>
+> *Die Perzentil-Grenzen gegen Tiefenrauschen ("Flying Pixels" an Objektkanten) stecken fest im Node und sind keine Parameter. Die Standardwerte liegen in [`config/perception_params.yaml`](./src/robot_vision_cameras_bringup/config/perception_params.yaml).*
 >
 >
 
@@ -855,8 +857,17 @@ stateDiagram-v2
 >
 >> | Parameter | Standardwert | Beschreibung |
 >> |---|---|---|
+>> | `safe_z_hover_height` | `0.15` | *Z-Höhe [m], auf der der Greifer schwebt, bevor er auf das Objekt absinkt.* |
+>> | `grasp_z_offset` | `0.02` | *Zusätzlicher Z-Versatz [m] oberhalb der gemessenen Objektoberkante.* |
+>> | `target_roll` | `3.14159` | *Ziel-Roll [rad] der Greif-Orientierung — 180°, also senkrecht von oben.* |
+>> | `target_pitch` | `0.0` | *Ziel-Pitch [rad] der Greif-Orientierung.* |
+>> | `target_yaw` | `0.0` | *Ziel-Yaw [rad] der Greif-Orientierung.* |
+>> | `ik_tolerance_position` | `0.005` | *Positions-Toleranz der IK [m] — Radius der Kugel, in der MoveIt lösen darf.* |
+>> | `ik_tolerance_orientation` | `0.001` | *Orientierungs-Toleranz der IK [rad].* |
 >> | `velocity_scaling` | `0.2` | *Skaliert die Geschwindigkeit für extrem weiche und vorhersehbare Roboterbewegungen während der Greifsequenz.* |
 >> | `acceleration_scaling` | `0.1` | *Skaliert die Beschleunigung für extrem weiche und vorhersehbare Roboterbewegungen während der Greifsequenz.* |
+>
+> *Die Standardwerte liegen in [`config/grasping_params.yaml`](./src/robot_vision_cameras_bringup/config/grasping_params.yaml).*
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1284,8 +1295,8 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
 >> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Fährt Ziel- und Scan-Posen kartesisch an.* |
->> | **`/ufactory/open_lite6_gripper`** | `std_srvs/srv/Trigger` (Client) | *Öffnet den Greifer.* |
->> | **`/ufactory/close_lite6_gripper`** | `std_srvs/srv/Trigger` (Client) | *Schließt den Greifer zur Aufnahme.* |
+>> | **`/ufactory/open_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Öffnet den Lite 6 Greifer.* |
+>> | **`/ufactory/close_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Schließt den Lite 6 Greifer zur Aufnahme.* |
 >
 
 ---
@@ -1311,7 +1322,7 @@ flowchart TD
 > - Das Launch-File **startet automatisch eine gesicherte ROSbridge-Instanz (WSS)** auf Port `9091` unter Verwendung von SSL-Zertifikaten (`~/dev_ws/certs/cert.pem`). Dies ist zwingend erforderlich, da WebXR (für 6DoF-Tracking) strikt einen Secure Context (HTTPS/WSS) vorschreibt.
 > - Enthält eine integrierte WebGL-Rendering-Engine (`XRWebGLLayer`), um den nativen "Ladebildschirm" (die fliegenden Sterne) der Quest 3 zu beenden und die Controller-Datenströme freizuschalten.
 > - **Grip Trigger (Mittelfinger):** Wirkt als "Kupplung". Solange er gedrückt ist, wird das exakte räumliche Delta des Controllers direkt auf den Endeffektor des Roboters übertragen (es wird automatisch der Controller getrackt, dessen Taste gedrückt wird).
-> - **Index Trigger (Zeigefinger):** Öffnet und schließt den Vakuumgreifer.
+> - **Index Trigger (Zeigefinger):** Schaltet den Greifer. Der Node bedient beide Endeffektoren gleichzeitig — den Vakuumgreifer über `/ufactory/set_vacuum_gripper` und den Lite 6 Greifer über `open`/`close_lite6_gripper` — damit derselbe Trigger unabhängig vom montierten Greifer funktioniert.
 >
 > 🛠️ **System Setup & Nutzung:**
 > 1. **Netzwerk & Firewall:** PC und Quest 3 müssen sich im selben WLAN/Netzwerk befinden. Wenn dein Ubuntu eine Firewall (UFW) nutzt, musst du zwingend die Ports für die Brille öffnen, da das Web-Interface und die WebSocket-Verbindung sonst blockiert werden:
@@ -1347,14 +1358,17 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
 >> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Streamt kartesische Geschwindigkeits-Deltas an MoveIt Servo.* |
+>> | **`/linear_axis_cmd`** | `std_msgs/Float64` | *Verfährt die Linearachse über die Daumensticks der VR-Controller.* |
 >
 >
 > ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/ufactory/open_lite6_gripper`** | `std_srvs/srv/Trigger` (Client) | *Öffnet den Lite 6 Vakuumgreifer.* |
->> | **`/ufactory/close_lite6_gripper`** | `std_srvs/srv/Trigger` (Client) | *Schließt den Lite 6 Vakuumgreifer.* |
+>> | **`/servo_server/start_servo`** | `std_srvs/srv/Trigger` (Client) | *Stellt sicher, dass MoveIt Servo vor der ersten Bewegung aktiv ist.* |
+>> | **`/ufactory/set_vacuum_gripper`** | `xarm_msgs/srv/VacuumGripperCtrl` (Client) | *Schaltet den Vakuumgreifer über den Zeigefinger-Trigger.* |
+>> | **`/ufactory/open_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Öffnet zusätzlich den Lite 6 Greifer, falls dieser montiert ist.* |
+>> | **`/ufactory/close_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Schließt zusätzlich den Lite 6 Greifer, falls dieser montiert ist.* |
 
 ---
 
@@ -1364,6 +1378,26 @@ flowchart TD
 *Werkzeuge für den Operator zur manuellen Positionierung und für visuelles Monitoring in RViz und Web.*
 
 <img src="_imgs/robot_control_ui.png" width="90%" alt="Robot Control UI">
+
+---
+
+<br>
+
+#### ![Launch](https://img.shields.io/badge/Launch-Skript-FF9900?style=flat-square) `standalone_move_group.launch.py` &nbsp;&nbsp; <sub><i>[`/src/robot_motion_handler_movegroup/launch/standalone_move_group.launch.py`](./src/robot_motion_handler_movegroup/launch/standalone_move_group.launch.py)</i></sub>
+> [!NOTE]
+> 💻 **Startbefehl:** *(Wird von `RUN DEV SETUP (FAKE)` und `RUN DEV SETUP (REAL)` automatisch mitgestartet)*
+>
+> **Zweck & Aufgabe:** Dient als "headless" Backend für die Web-UI. Startet den `move_group` Node von MoveIt 2 ohne ressourcenhungrige grafische Oberflächen wie RViz. Er stellt alle Planungs- und Ausführungsdienste bereit (Inverse Kinematik, Kollisionsvermeidung, Action Server), die die Nexus Webapp oder andere Remote-Steuerungen für Bahnplanung und komplexe Trajektorien benötigen. Die Entkopplung von RViz verhindert Synchronisationsfehler beim Start (z.B. fehlschlagendes Laden von MotionPlanning).
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) / ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/move_action`** | Action Server | *Stellt Bahnplanung und Ausführung bereit.* |
+>> | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Pflegt die Kollisionsumgebung und den Roboterzustand.* |
+>
+>
 
 ---
 
@@ -1766,7 +1800,7 @@ flowchart TD
 #### ![Bash Script](https://img.shields.io/badge/Bash_Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white) `start_isaac_sim.sh`
 > [!NOTE]
 > **Zweck & Aufgabe:** Integriert eine lokal kompilierte NVIDIA Isaac Sim Umgebung direkt in die ROS 2 Nexus Startsequenz. Anstatt aktiv Physik zu berechnen oder mit Hardware-Controllern zu konkurrieren, läuft Isaac Sim im **Shadow Mode**. Es abonniert das `/joint_states` Topic und überträgt die physischen (oder simulierten) Roboterbewegungen in Echtzeit auf ein extrem detailliertes USD-Asset.
-> - **Ablauf:** 1. Der Nutzer startet `RUN DEV Setup (FAKE)` oder `(REAL)` über die Nexus Webapp.
+> - **Ablauf:** 1. Der Nutzer startet `RUN DEV SETUP (FAKE)` oder `(REAL)` über die Nexus Webapp.
 >   2. Der Nutzer klickt auf `Start Isaac Sim (Lite6 Modul)` in der Isaac Sim Kategorie.
 >   7. Das eigene Skript startet die lokale `isaac-sim.sh` Datei mit `--allow-root` und öffnet automatisch die vorkonfigurierte Action Graph Szene (`lite6_isaac_ros2.usd`).
 > - **OmniGraph Architektur:** Die Szene nutzt einen minimalistischen Action Graph, bestehend aus einem `On Playback Tick` Knoten, der in einen `ROS2 Subscribe Joint State` Knoten feuert (welcher `/joint_states` abonniert), der wiederum direkt in den `Articulation Controller` mündet, welcher das Roboter-Asset steuert.
@@ -1969,16 +2003,16 @@ Z ≤ 91,0 mm → 🛑 HARD STOP: Abwärtsachse genullt + Rumble
 |---------|---------|-----------|-------------------|
 | **Left Stick ↑↓** | X-Achse (vor/zurück) | `TwistStamped.linear.x` | *`axes[1] × speed_scale`* |
 | **Left Stick ←→** | Y-Achse (links/rechts) | `TwistStamped.linear.y` | *`axes[0] × speed_scale`* |
-| **LT (Left Trigger)** | Z **aufwärts** (Z+) | `TwistStamped.linear.z` | *`clamp(LT−RT, -1,1) × −speed_scale` → LT gedrückt: negativer zAchse-Wert × −scale = **positive Z*** |
-| **RT (Right Trigger)** | Z **abwärts** (Z−) | `TwistStamped.linear.z` | *`clamp(LT−RT, -1,1) × −speed_scale` → RT gedrückt: positiver zAchse-Wert × −scale = **negative Z*** |
+| **LT (Left Trigger)** | Z **aufwärts** (Z+) | `TwistStamped.linear.z` | *`clamp(LT−RT, -1,1) × −speed_scale` → LT gedrückt: negativer z-Wert × −scale = **positive Z*** |
+| **RT (Right Trigger)** | Z **abwärts** (Z−) | `TwistStamped.linear.z` | *`clamp(LT−RT, -1,1) × −speed_scale` → RT gedrückt: positiver z-Wert × −scale = **negative Z*** |
 | **LB (Left Bumper)** | Handgelenk CCW (Z-) | `TwistStamped.angular.z` | *`buttons[LB] - buttons[RB]`* |
 | **RB (Right Bumper)** | Handgelenk CW (Z+) | `TwistStamped.angular.z` | *`buttons[LB] - buttons[RB]`* |
 | **D-Pad ↑** | Geschwindigkeit hoch | Pub → `/ui/robot_control/current_speed` | *5 Stufen durchschalten* |
 | **D-Pad ↓** | Geschwindigkeit runter | Pub → `/ui/robot_control/current_speed` | *5 Stufen durchschalten* |
 | **D-Pad ←** | Linearachse nach links | Pub → `/linear_axis_cmd` | *Verschiebt den Roboter auf der Schiene* |
 | **D-Pad →** | Linearachse nach rechts | Pub → `/linear_axis_cmd` | *Verschiebt den Roboter auf der Schiene* |
-| **Back (⊞)** | Rahmen → `link_base` | Pub → `/ui/joy_button_presses` | *Weltkoordinaten-Modus* |
-| **Start (≡)** | Rahmen → `link_tcp` | Pub → `/ui/joy_button_presses` | *EEF-relativer Modus* |
+| **Back (⊞)** | Rahmen → `link_base` | Pub → `/ui/joy_button_presses` + `/ui/robot_control/current_frame` | *Weltkoordinaten-Modus* |
+| **Start (≡)** | Rahmen → `link_tcp` | Pub → `/ui/joy_button_presses` + `/ui/robot_control/current_frame` | *EEF-relativer Modus* |
 | **A (grün)** | Greifer toggle | Service: `open/close_lite6_gripper` | *Zustand in `vacuum_gripper_state_`* |
 | **B (rot)** | Greifer stopp | Service: `/ufactory/stop_lite6_gripper` | *Not-Aus* |
 | **X (blau)** | Whisper AI toggle | Action: `/whisper/inference` (max 5 Sek.) | *Toggle start/stopp* |
@@ -2299,11 +2333,11 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 
 | Use-Case / Szenario | Benötigte Hardware | Empfohlene Start-Sequenz in Nexus | Erreichbare Web-Tools |
 | :--- | :--- | :--- | :--- |
-| **Reine Simulation / GUI-Test** | Nur PC (Keine Roboter-HW) | 1. `RUN DEV Setup (FAKE)` | Dashboard (8080), Control UI (8081) |
-| **Gamepad Teleoperation** | xArm Lite 6 + Xbox Controller | 1. Roboter einschalten<br>2. `RUN DEV Setup (REAL)` | RViz2, Control UI (8081) |
-| **3D-Objekterkennung & Greifen** | xArm Lite 6 + ZED Mini | 1. `RUN DEV Setup (REAL)`<br>2. `3D Vision Bringup` | RViz2, Web-Video (8082) |
-| **Eye-Tracking Teleoperation** | Tobii Glasses 3 + ArUco-Setup | 1. `RUN DEV Setup (REAL)`<br>2. `Gaze UI (ZED M)` | Gaze-Fenster, Live-Feedback |
-| **Meta Quest 3 VR Teleop** | Meta Quest 3 + PC im selben WLAN | 1. `RUN DEV Setup (REAL)`<br>2. `VR Quest 3 Teleop` | WebXR (`https://<IP>:8443`) |
+| **Reine Simulation / GUI-Test** | Nur PC (Keine Roboter-HW) | 1. `RUN DEV SETUP (FAKE)` | Dashboard (8080), Control UI (8081) |
+| **Gamepad Teleoperation** | xArm Lite 6 + Xbox Controller | 1. Roboter einschalten<br>2. `RUN DEV SETUP (REAL)` | RViz2, Control UI (8081) |
+| **3D-Objekterkennung & Greifen** | xArm Lite 6 + ZED Mini | 1. `RUN DEV SETUP (REAL)`<br>2. `3D Vision Bringup` | RViz2, Web-Video (8082) |
+| **Eye-Tracking Teleoperation** | Tobii Glasses 3 + ArUco-Setup | 1. `RUN DEV SETUP (REAL)`<br>2. `Gaze UI (ZED M)` | Gaze-Fenster, Live-Feedback |
+| **Meta Quest 3 VR Teleop** | Meta Quest 3 + PC im selben WLAN | 1. `RUN DEV SETUP (REAL)`<br>2. `VR Quest 3 Teleop` | WebXR (`https://<IP>:8443`) |
 
 ---
 <br>
