@@ -2372,7 +2372,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .moveit-popup.mp-phase-aborted   { --mp-accent: #ef4444; }
 
 @keyframes mp-in {
-  from { opacity: 0; transform: translateY(-4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
 
@@ -2941,6 +2941,15 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
      sind gemessen: Telemetrie (177) + rechte Spalte (185, das Wasserzeichen
      ist breiter als der Speed-Tab darueber) + Abstaende + Reserve. */
   max-width: calc(100% - 420px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  pointer-events: none;
+}
+
+.twin-ov-bottom-center > * {
+  pointer-events: auto;
 }
 
 .twin-ov-bottom-center .twin-pose-overlay {

@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="style.css?v=27">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -280,40 +280,6 @@
                 </div>
                 </div>
 
-                <!-- MoveIt progress popup: IK -> planning -> execution with live timers -->
-                <div id="moveit-popup" class="moveit-popup mp-hidden" role="status" aria-live="polite">
-                  <div class="mp-head">
-                    <i class="fa-solid fa-route mp-icon" id="mp-icon"></i>
-                    <span class="mp-title">MOVEIT</span>
-                    <span class="mp-phase" id="mp-phase">IDLE</span>
-                    <span class="mp-timer" id="mp-timer">0.0 s</span>
-                    <button type="button" class="mp-close" data-action="hideMoveitPopup" title="Close MoveIt status">
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
-                  </div>
-                  <div class="mp-steps">
-                    <div class="mp-step" data-step="ik">
-                      <span class="mp-dot"></span><span class="mp-step-label">IK</span><span class="mp-step-time" id="mp-t-ik">–</span>
-                    </div>
-                    <div class="mp-step" data-step="plan">
-                      <span class="mp-dot"></span><span class="mp-step-label">PLAN</span><span class="mp-step-time" id="mp-t-plan">–</span>
-                    </div>
-                    <div class="mp-step" data-step="exec">
-                      <span class="mp-dot"></span><span class="mp-step-label">EXECUTE</span><span class="mp-step-time" id="mp-t-exec">–</span>
-                    </div>
-                  </div>
-                  <div class="mp-bar"><div class="mp-bar-fill" id="mp-bar-fill"></div></div>
-                  <div class="mp-detail" id="mp-detail">Waiting for MoveIt...</div>
-                  <!-- Nur in der Phase "confirm" sichtbar (Pfad-Vorschau) -->
-                  <div class="mp-actions">
-                    <button type="button" class="mp-btn mp-btn-exec" data-action="confirmMoveToPreview" data-args='[true]' title="Execute the previewed path">
-                      <i class="fa-solid fa-play"></i> Execute path
-                    </button>
-                    <button type="button" class="mp-btn mp-btn-discard" data-action="confirmMoveToPreview" data-args='[false]' title="Discard the previewed path - the robot does not move">
-                      <i class="fa-solid fa-xmark"></i> Discard
-                    </button>
-                  </div>
-                </div>
 
                 <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
                   <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
@@ -416,28 +382,66 @@
                   </div>
                 </div>
 
-                <!-- bottom-center: Absolute Pose Inputs -->
-                <div class="twin-hud-tab twin-ov-bottom-center" id="hud-tab-pose" data-hud="pose">
-                  <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["pose"]' title="Collapse / expand the absolute pose inputs" aria-expanded="true">
-                    <i class="fa-solid fa-location-crosshairs hud-tab-icon"></i>
-                    <span class="hud-tab-title">POSE</span>
-                    <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
-                  </button>
-                <div class="hud-tab-body">
-                <div id="twin-pose-overlay" class="twin-pose-overlay">
-                  <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
-                  <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
-                  <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span></label><input type="number" id="inp-z" step="1" value="200"></div>
-                  <div class="input-row-divider"></div>
-                  <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">R</span></label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-                  <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-                  <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
-                  <div class="input-row-divider"></div>
-                  <button class="btn btn-action motion-lockable" data-action="moveToPose" title="Move to entered pose">
-                    <i class="fa-solid fa-crosshairs"></i> Go
-                  </button>
-                </div>
-                </div>
+                <!-- bottom-center: MoveIt Confirm Path Popup + Absolute Pose Inputs darunter -->
+                <div class="twin-ov-bottom-center">
+                  <!-- MoveIt progress popup: IK -> planning -> execution with live timers -->
+                  <div id="moveit-popup" class="moveit-popup mp-hidden" role="status" aria-live="polite">
+                    <div class="mp-head">
+                      <i class="fa-solid fa-route mp-icon" id="mp-icon"></i>
+                      <span class="mp-title">MOVEIT</span>
+                      <span class="mp-phase" id="mp-phase">IDLE</span>
+                      <span class="mp-timer" id="mp-timer">0.0 s</span>
+                      <button type="button" class="mp-close" data-action="hideMoveitPopup" title="Close MoveIt status">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+                    <div class="mp-steps">
+                      <div class="mp-step" data-step="ik">
+                        <span class="mp-dot"></span><span class="mp-step-label">IK</span><span class="mp-step-time" id="mp-t-ik">–</span>
+                      </div>
+                      <div class="mp-step" data-step="plan">
+                        <span class="mp-dot"></span><span class="mp-step-label">PLAN</span><span class="mp-step-time" id="mp-t-plan">–</span>
+                      </div>
+                      <div class="mp-step" data-step="exec">
+                        <span class="mp-dot"></span><span class="mp-step-label">EXECUTE</span><span class="mp-step-time" id="mp-t-exec">–</span>
+                      </div>
+                    </div>
+                    <div class="mp-bar"><div class="mp-bar-fill" id="mp-bar-fill"></div></div>
+                    <div class="mp-detail" id="mp-detail">Waiting for MoveIt...</div>
+                    <!-- Nur in der Phase "confirm" sichtbar (Pfad-Vorschau) -->
+                    <div class="mp-actions">
+                      <button type="button" class="mp-btn mp-btn-exec" data-action="confirmMoveToPreview" data-args='[true]' title="Execute the previewed path">
+                        <i class="fa-solid fa-play"></i> Execute path
+                      </button>
+                      <button type="button" class="mp-btn mp-btn-discard" data-action="confirmMoveToPreview" data-args='[false]' title="Discard the previewed path - the robot does not move">
+                        <i class="fa-solid fa-xmark"></i> Discard
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- bottom-center: Absolute Pose Inputs -->
+                  <div class="twin-hud-tab" id="hud-tab-pose" data-hud="pose">
+                    <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["pose"]' title="Collapse / expand the absolute pose inputs" aria-expanded="true">
+                      <i class="fa-solid fa-location-crosshairs hud-tab-icon"></i>
+                      <span class="hud-tab-title">POSE</span>
+                      <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
+                    </button>
+                    <div class="hud-tab-body">
+                      <div id="twin-pose-overlay" class="twin-pose-overlay">
+                        <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
+                        <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
+                        <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span></label><input type="number" id="inp-z" step="1" value="200"></div>
+                        <div class="input-row-divider"></div>
+                        <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">R</span></label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
+                        <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
+                        <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
+                        <div class="input-row-divider"></div>
+                        <button class="btn btn-action motion-lockable" data-action="moveToPose" title="Move to entered pose">
+                          <i class="fa-solid fa-crosshairs"></i> Go
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- bottom-right: Speed Slider ueber dem Watermark, rechtsbuendig -->
