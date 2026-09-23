@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "teleop_pre_collision_checker = teleop_pre_collision_checker.teleop_pre_collision_checker:main" # <<-----------------add entry point for checker node         'mein_node = mein_paket.mein_script:main',            
+            "teleop_pre_collision_checker = teleop_pre_collision_checker.teleop_pre_collision_checker:main"
         ],
     },
 )
