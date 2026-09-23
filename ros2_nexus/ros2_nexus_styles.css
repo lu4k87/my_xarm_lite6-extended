@@ -452,6 +452,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 16px;
       background: rgba(13, 18, 30, 0.7);
       flex-shrink: 0;
     }
@@ -513,7 +515,82 @@
     .modal-header-right {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
       gap: 12px;
+      margin-left: auto;
+    }
+
+    .modal-dds-bar {
+      flex: 1 1 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .dds-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      max-width: 100%;
+      padding: 4px 10px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 11px;
+      color: #cbd5e1;
+      white-space: nowrap;
+    }
+
+    .dds-chip > i {
+      font-size: 10px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .dds-chip-key {
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 9.5px;
+      letter-spacing: 0.04em;
+    }
+
+    .dds-chip-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 600;
+      color: #f1f5f9;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .dds-chip[data-state="ok"] {
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    .dds-chip[data-state="ok"] > i { color: #10b981; }
+
+    .dds-chip[data-state="info"] {
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .dds-chip[data-state="warn"] {
+      border-color: rgba(245, 158, 11, 0.5);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .dds-chip[data-state="warn"] > i { color: #f59e0b; }
+
+    .modal-localhost-btn input[type="checkbox"] {
+      accent-color: #f59e0b;
+    }
+
+    .modal-localhost-btn:has(input:checked) {
+      border-color: rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.1);
+      color: #fcd34d;
     }
 
     .modal-select-all-btn {

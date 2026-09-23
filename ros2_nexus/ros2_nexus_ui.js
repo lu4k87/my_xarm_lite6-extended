@@ -597,6 +597,16 @@
            }
        }
        
+       // ROS_LOCALHOST_ONLY je Popup (Checkbox im Header, persistiert in __popups_env)
+       let localhostOnly = false;
+       const popupsEnv = (window.TABS && window.TABS['__popups_env']) || {};
+       for (const pKey of popupCandidateKeys) {
+           if (pKey && popupsEnv[pKey] && popupsEnv[pKey].localhost_only !== undefined) {
+               localhostOnly = !!popupsEnv[pKey].localhost_only;
+               break;
+           }
+       }
+
        actionsData.forEach(a => { 
            a.baseCmd = a.cmd; 
            a.args = []; 
@@ -750,6 +760,13 @@
            if (!window.TABS['__popups_active']) window.TABS['__popups_active'] = {};
            if (!window.TABS['__popups_args']) window.TABS['__popups_args'] = {};
            if (!window.TABS['__cmd_args']) window.TABS['__cmd_args'] = {};
+           if (!window.TABS['__popups_env']) window.TABS['__popups_env'] = {};
+
+           const localhostCb = document.getElementById('modal-localhost-cb');
+           if (localhostCb) localhostOnly = localhostCb.checked;
+           popupCandidateKeys.forEach(pKey => {
+               if (pKey) window.TABS['__popups_env'][pKey] = Object.assign(window.TABS['__popups_env'][pKey] || {}, { localhost_only: localhostOnly });
+           });
 
            window.TABS['__popups_active'][effPopupId] = activeCmds;
            window.TABS['__popups_args'][effPopupId] = Object.assign(window.TABS['__popups_args'][effPopupId] || {}, currentArgsState);
@@ -2131,6 +2148,18 @@
                          <i class="fa-solid fa-xmark"></i>
                       </button>
                    </div>
+
+                   <div class="modal-dds-bar">
+                      <label class="modal-select-all-btn modal-localhost-btn" id="modal-localhost-lbl" title="ROS_LOCALHOST_ONLY=1: DDS-Verkehr bleibt auf diesem Rechner und flutet nicht das LAN. Andere Rechner sehen die ROS-2-Topics dann nicht mehr (Quest 3 WebXR ist nicht betroffen).">
+                         <input type="checkbox" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}>
+                         <span>Nur localhost (DDS)</span>
+                      </label>
+                      <span class="dds-chip" title="ROS_DOMAIN_ID: nur Nodes mit derselben ID sehen sich"><i class="fa-solid fa-hashtag"></i><span class="dds-chip-key">Domain</span><span class="dds-chip-val" id="dds-chip-domain">–</span></span>
+                      <span class="dds-chip" title="RMW_IMPLEMENTATION: verwendete DDS-Middleware"><i class="fa-solid fa-diagram-project"></i><span class="dds-chip-key">RMW</span><span class="dds-chip-val" id="dds-chip-rmw">–</span></span>
+                      <span class="dds-chip" id="dds-chip-scope-wrap" title="Wohin der DDS-Verkehr der gestarteten Nodes geht"><i class="fa-solid fa-tower-broadcast"></i><span class="dds-chip-key">Scope</span><span class="dds-chip-val" id="dds-chip-scope">–</span></span>
+                      <span class="dds-chip" title="Netzwerk-Interface der Default-Route und IP dieses Rechners"><i class="fa-solid fa-ethernet"></i><span class="dds-chip-val" id="dds-chip-net">–</span></span>
+                      <span class="dds-chip" id="dds-chip-traffic-wrap" title="Aktueller Netzwerkverkehr auf dem LAN-Interface (Senden / Empfangen). Dauerhaft hohes TX bei wenig RX deutet auf DDS-Flut ins LAN hin."><i class="fa-solid fa-arrow-right-arrow-left"></i><span class="dds-chip-val" id="dds-chip-traffic">–</span></span>
+                   </div>
                 </div>
                 
                 <div id="launch-modal-body"></div>
@@ -2159,7 +2188,62 @@
            modalBodyEl.addEventListener('scroll', hideGlobalCmdTooltip, { passive: true });
        }
        
+       let ddsStatusTimer = null;
+       let ddsLastSample = null;
+       let ddsStatus = null;
+
+       const fmtRate = (bps) => {
+           if (bps >= 1e6) return (bps / 1e6).toFixed(1) + ' MB/s';
+           if (bps >= 1e3) return (bps / 1e3).toFixed(0) + ' kB/s';
+           return Math.round(bps) + ' B/s';
+       };
+
+       const renderDdsScope = () => {
+           const el = document.getElementById('dds-chip-scope');
+           const wrap = document.getElementById('dds-chip-scope-wrap');
+           if (!el || !wrap) return;
+           const uri = ddsStatus && ddsStatus.cyclonedds_uri;
+           let text, cls;
+           if (localhostOnly) { text = 'nur localhost'; cls = 'ok'; }
+           else if (uri) { text = 'LAN · ' + uri.split('/').pop(); cls = 'info'; }
+           else { text = 'LAN · Multicast'; cls = 'warn'; }
+           el.textContent = text;
+           wrap.dataset.state = cls;
+       };
+
+       const refreshDdsStatus = async () => {
+           try {
+               const res = await fetch('/api/status');
+               const st = await res.json();
+               ddsStatus = st;
+               const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+               set('dds-chip-domain', st.ros_domain_id || '–');
+               set('dds-chip-rmw', (st.rmw_implementation || '–').replace(/^rmw_/, '').replace(/_cpp$/, ''));
+               set('dds-chip-net', st.net_iface ? `${st.net_iface} · ${st.net_ip || 'keine IP'}` : 'kein Netz');
+               renderDdsScope();
+
+               const trafficWrap = document.getElementById('dds-chip-traffic-wrap');
+               if (st.tx_bytes != null && ddsLastSample && st.ts > ddsLastSample.ts) {
+                   const dt = st.ts - ddsLastSample.ts;
+                   const tx = (st.tx_bytes - ddsLastSample.tx) / dt;
+                   const rx = (st.rx_bytes - ddsLastSample.rx) / dt;
+                   set('dds-chip-traffic', `↑ ${fmtRate(tx)}  ↓ ${fmtRate(rx)}`);
+                   // > 5 MB/s Senden bei deutlich weniger Empfang: typisches DDS-Flut-Muster
+                   if (trafficWrap) trafficWrap.dataset.state = (tx > 5e6 && tx > rx * 5) ? 'warn' : 'ok';
+               } else if (st.tx_bytes == null) {
+                   set('dds-chip-traffic', 'n/a');
+               } else {
+                   set('dds-chip-traffic', 'misst …');
+               }
+               if (st.tx_bytes != null) ddsLastSample = { ts: st.ts, tx: st.tx_bytes, rx: st.rx_bytes };
+           } catch (e) {
+               const el = document.getElementById('dds-chip-traffic');
+               if (el) el.textContent = 'Backend offline';
+           }
+       };
+
        const closeModal = () => {
+           if (ddsStatusTimer) { clearInterval(ddsStatusTimer); ddsStatusTimer = null; }
            saveActiveState();
            hideGlobalCmdTooltip();
            const m = document.getElementById('launch-modal');
@@ -2184,6 +2268,18 @@
                if (e.target === modalRoot) closeModal();
            });
        }
+
+       const headerLocalhostCb = document.getElementById('modal-localhost-cb');
+       if (headerLocalhostCb) {
+           headerLocalhostCb.onchange = (e) => {
+               localhostOnly = e.target.checked;
+               renderDdsScope();
+               saveActiveState();
+           };
+       }
+       renderDdsScope();
+       refreshDdsStatus();
+       ddsStatusTimer = setInterval(refreshDdsStatus, 2000);
 
        const topUlElement = contentClone.querySelector('ul');
        const headerSelectAllCb = document.getElementById('modal-select-all-cb');
@@ -2323,7 +2419,7 @@
                 await fetch('/api/run', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ command: finalCmd, title: finalTitle, mode: "ros" })
+                  body: JSON.stringify({ command: finalCmd, title: finalTitle, mode: "ros", localhost_only: localhostOnly })
                 });
                 await new Promise(resolve => setTimeout(resolve, 1000));
               } catch (e) {

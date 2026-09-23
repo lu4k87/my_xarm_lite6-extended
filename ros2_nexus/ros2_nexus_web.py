@@ -134,10 +134,18 @@ StartupWMClass=robot-control-ui
 # Einmalig im Hintergrund beim Start prüfen und sicherstellen
 threading.Thread(target=ensure_desktop_integration, daemon=True).start()
 
-def _build_ros_script(command: str, ws_path: str) -> str:
+def _localhost_only_value(override) -> str:
+    # override kommt aus der Popup-Checkbox "Nur localhost (DDS)".
+    # None = nicht gesetzt -> Wert aus der Umgebung der Nexus Webapp.
+    if override is None:
+        return os.environ.get("ROS_LOCALHOST_ONLY", "0")
+    return "1" if override else "0"
+
+
+def _build_ros_script(command: str, ws_path: str, localhost_only_override=None) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
-    localhost_only = os.environ.get("ROS_LOCALHOST_ONLY", "0")
+    localhost_only = _localhost_only_value(localhost_only_override)
     ros_setup = "source /opt/ros/humble/setup.bash"
     ws_setup  = f"source {ws_path}/install/setup.bash"
 
@@ -153,8 +161,9 @@ def _build_ros_script(command: str, ws_path: str) -> str:
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
-export ROS_LOCALHOST_ONLY={localhost_only}
 source ~/.bashrc 2>/dev/null || true
+# Nach der .bashrc exportieren, sonst setzt deren ROS_LOCALHOST_ONLY=0 den Wert zurueck
+export ROS_LOCALHOST_ONLY={localhost_only}
 {ros_setup} 2>/dev/null || true
 {ws_setup} 2>/dev/null || true
 cd {ws_path} 2>/dev/null || true
@@ -177,10 +186,10 @@ trap 'send_log "stop" &' EXIT
 """
 
 
-def _build_interactive_script(command: str) -> str:
+def _build_interactive_script(command: str, localhost_only_override=None) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
-    localhost_only = os.environ.get("ROS_LOCALHOST_ONLY", "0")
+    localhost_only = _localhost_only_value(localhost_only_override)
     ros_setup = "source /opt/ros/humble/setup.bash"
 
     # Identisch mit run_interactive_cmd: CMD-Teile anzeigen
@@ -194,8 +203,9 @@ def _build_interactive_script(command: str) -> str:
 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
-export ROS_LOCALHOST_ONLY={localhost_only}
 source ~/.bashrc 2>/dev/null || true
+# Nach der .bashrc exportieren, sonst setzt deren ROS_LOCALHOST_ONLY=0 den Wert zurueck
+export ROS_LOCALHOST_ONLY={localhost_only}
 {ros_setup} 2>/dev/null || true
 clear
 echo -e "\033[1;35mROS 2 Humble aktiv (Domain: {domain_id}, RMW: {rmw_impl}, Localhost: {localhost_only})\033[0m"
@@ -272,19 +282,64 @@ def serve_icons(filename):
     return send_from_directory(icons_dir, filename)
 
 
+_net_cache = {"ts": 0.0, "iface": None, "ip": None}
+
+
+def _default_iface_info():
+    # Interface der Default-Route + IPv4. Kurz gecacht, weil /api/status oft
+    # gepollt wird und sich das praktisch nie aendert.
+    now = time.time()
+    if now - _net_cache["ts"] < 10:
+        return _net_cache["iface"], _net_cache["ip"]
+    iface, ip = None, None
+    try:
+        with open("/proc/net/route") as f:
+            for line in f.readlines()[1:]:
+                cols = line.split()
+                if len(cols) > 2 and cols[1] == "00000000":
+                    iface = cols[0]
+                    break
+        if iface:
+            out = subprocess.run(["ip", "-4", "-o", "addr", "show", iface],
+                                 capture_output=True, text=True, timeout=2).stdout
+            m = re.search(r"inet (\d+\.\d+\.\d+\.\d+)", out)
+            ip = m.group(1) if m else None
+    except Exception:
+        pass
+    _net_cache.update(ts=now, iface=iface, ip=ip)
+    return iface, ip
+
+
+def _iface_bytes(iface):
+    try:
+        base = f"/sys/class/net/{iface}/statistics"
+        with open(f"{base}/tx_bytes") as f_tx, open(f"{base}/rx_bytes") as f_rx:
+            return int(f_tx.read()), int(f_rx.read())
+    except Exception:
+        return None, None
+
+
 @app.route("/api/ping")
 @app.route("/api/status")
 def ping():
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
     localhost_only = os.environ.get("ROS_LOCALHOST_ONLY", "0")
+    iface, ip = _default_iface_info()
+    tx_bytes, rx_bytes = _iface_bytes(iface) if iface else (None, None)
     return jsonify({
         "ok": True,
         "version": "Web Edition 1.0",
         "status": "running",
         "ros_domain_id": domain_id,
         "rmw_implementation": rmw_impl,
-        "localhost_only": localhost_only
+        "localhost_only": localhost_only,
+        "cyclonedds_uri": os.environ.get("CYCLONEDDS_URI", ""),
+        "net_iface": iface,
+        "net_ip": ip,
+        "tx_bytes": tx_bytes,
+        "rx_bytes": rx_bytes,
+        "ts": time.time()
     })
 
 
@@ -446,6 +501,7 @@ def api_run():
     title   = data.get("title", "ROS 2 Terminal")
     ws_path = data.get("ws_path", WS_PATH)
     mode    = data.get("mode", "ros")   # 'ros' | 'interactive' | 'bg'
+    localhost_only = data.get("localhost_only")   # None | bool (Popup-Checkbox)
 
     if not command:
         return jsonify({"ok": False, "error": "No command provided"}), 400
@@ -465,12 +521,14 @@ def api_run():
         if mode == "bg":
             env = os.environ.copy()
             env.setdefault("DISPLAY", ":0")
+            if localhost_only is not None:
+                env["ROS_LOCALHOST_ONLY"] = "1" if localhost_only else "0"
             process = subprocess.Popen(command, shell=True, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, preexec_fn=os.setsid)
             active_processes[cmd_id] = process
         elif mode == "interactive":
-            _open_terminal(_build_interactive_script(command), title)
+            _open_terminal(_build_interactive_script(command, localhost_only), title)
         else:
-            _open_terminal(_build_ros_script(command, ws_path), title)
+            _open_terminal(_build_ros_script(command, ws_path, localhost_only), title)
 
         return jsonify({"ok": True, "cmd_id": cmd_id})
 
