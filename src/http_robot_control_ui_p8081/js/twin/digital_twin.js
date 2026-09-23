@@ -2532,24 +2532,90 @@ let graspHalo = null;
 const GRASP_REACHED_M = 0.015;
 const GRASP_SELECT_TIMEOUT_MS = 120000;
 
-// Cyan wie der UI-Akzent fuer die Ringe, Rot wie die Kugel fuer die Glut -
-// der Kontrast laesst das Ziel auch vor dem weissen Roboter stehen.
-const GRASP_ACCENT = 0x38bdf8;
+// Cyan wie der UI-Akzent fuer die Ringe (in den Canvas-Texturen), Rot wie
+// die Kugel fuer die Glut - der Kontrast laesst das Ziel auch vor dem
+// weissen Roboter stehen.
 const GRASP_CORE = 0xff3b30;
 const GRASP_PING_COUNT = 2;
 const GRASP_PING_MS = 1400;
 const GRASP_LOCK_MS = 380;        // Dauer des Einrastens beim Anklicken
 
-function graspRingMaterial(color) {
+// Kantenlaenge der Zielkreuz-Ebene in Kugelradien; der Ring liegt bei
+// RETICLE_R, der Rest ist Platz fuer den Glow.
+const RETICLE_PLANE = 3.0;
+const RETICLE_R = 1.08;
+
+function makeReticleTexture() {
+  const size = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  const mid = size / 2;
+  const r = RETICLE_R / RETICLE_PLANE * size;
+  const rgb = '56, 189, 248';
+
+  // Dezenter Grundring - verbindet die Boegen optisch.
+  g.lineWidth = 3;
+  g.strokeStyle = `rgba(${rgb}, 0.18)`;
+  g.beginPath();
+  g.arc(mid, mid, r, 0, Math.PI * 2);
+  g.stroke();
+
+  // Vier Boegen mit runden Enden und weichem Glow.
+  const arc = Math.PI / 3;
+  g.lineCap = 'round';
+  g.lineWidth = 6;
+  g.strokeStyle = `rgba(${rgb}, 0.9)`;
+  g.shadowColor = `rgba(${rgb}, 0.9)`;
+  g.shadowBlur = 14;
+  for (let i = 0; i < 4; i++) {
+    const a0 = i * (Math.PI / 2) - arc / 2;
+    g.beginPath();
+    g.arc(mid, mid, r, a0, a0 + arc);
+    g.stroke();
+  }
+
+  const tex = new THREE.CanvasTexture(c);
+  if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function graspTexMaterial(map) {
   return new THREE.MeshBasicMaterial({
-    color,
+    map,
     transparent: true,
     opacity: 0,
-    side: THREE.DoubleSide,
     depthWrite: false,
     depthTest: false,             // Markierung bleibt vor dem Roboter lesbar
     blending: THREE.AdditiveBlending
   });
+}
+
+// Ping-Ebene in Kugelradien: Ringmitte bei Radius 0.95 wie frueher die
+// RingGeometry(0.9, 1.0), der Rand der Ebene laesst Platz fuers Ausblenden.
+const PING_PLANE = 2.4;
+
+function makePingTexture() {
+  const size = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  const mid = size / 2;
+  const ring = 0.95 / (PING_PLANE / 2);   // Ringmitte relativ zum Canvas-Radius
+  const grad = g.createRadialGradient(mid, mid, 0, mid, mid, mid);
+  grad.addColorStop(0, 'rgba(56, 189, 248, 0)');
+  grad.addColorStop(ring - 0.16, 'rgba(56, 189, 248, 0)');
+  grad.addColorStop(ring - 0.05, 'rgba(56, 189, 248, 0.45)');
+  grad.addColorStop(ring, 'rgba(56, 189, 248, 0.9)');
+  grad.addColorStop(ring + 0.06, 'rgba(56, 189, 248, 0.35)');
+  grad.addColorStop(Math.min(1, ring + 0.17), 'rgba(56, 189, 248, 0)');
+  grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, size, size);
+
+  const tex = new THREE.CanvasTexture(c);
+  if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
 
 // Alle Teile sind in Kugelradien modelliert (Radius 1 = Radius der roten
@@ -2574,30 +2640,30 @@ function ensureGraspHalo() {
   core.renderOrder = 997;
   graspHalo.add(core);
 
-  // 2) Radar-Pings: duenne Ringe, die nach aussen laufen und verblassen.
+  // 2) Radar-Pings: weiche Ringe, die nach aussen laufen und verblassen.
   //    Zwei Stueck mit halbem Phasenversatz ergeben einen stetigen Takt.
+  //    Textur statt RingGeometry: das Ringprofil laeuft nach innen und
+  //    aussen weich aus, statt harte Kanten zu haben.
+  const pingTex = makePingTexture();
   for (let i = 0; i < GRASP_PING_COUNT; i++) {
     const ping = new THREE.Mesh(
-      new THREE.RingGeometry(0.9, 1.0, 64),
-      graspRingMaterial(GRASP_ACCENT)
+      new THREE.PlaneGeometry(PING_PLANE, PING_PLANE),
+      graspTexMaterial(pingTex)
     );
     ping.name = 'ping' + i;
     ping.renderOrder = 999;
     graspHalo.add(ping);
   }
 
-  // 3) Zielkreuz: vier 60-Grad-Boegen mit Luecken, die langsam kreisen.
-  const reticle = new THREE.Group();
+  // 3) Zielkreuz: vier Boegen mit Luecken, die langsam kreisen. Als Textur
+  //    statt RingGeometry - so bekommen die Boegen runde Enden, einen weichen
+  //    Glow und einen dezenten durchgehenden Grundring statt harter Kanten.
+  const reticle = new THREE.Mesh(
+    new THREE.PlaneGeometry(RETICLE_PLANE, RETICLE_PLANE),
+    graspTexMaterial(makeReticleTexture())
+  );
   reticle.name = 'reticle';
-  const arc = Math.PI / 3;
-  for (let i = 0; i < 4; i++) {
-    const seg = new THREE.Mesh(
-      new THREE.RingGeometry(1.0, 1.16, 24, 1, i * (Math.PI / 2) - arc / 2, arc),
-      graspRingMaterial(GRASP_ACCENT)
-    );
-    seg.renderOrder = 999;
-    reticle.add(seg);
-  }
+  reticle.renderOrder = 999;
   graspHalo.add(reticle);
 
   graspHalo.visible = false;
@@ -2718,7 +2784,7 @@ function applyGraspSelection() {
     ping.scale.setScalar(2.0 + 7.5 * phase);
     // Quadratisch ausblenden: die Welle verliert sich zum Rand hin, statt
     // abrupt zu verschwinden.
-    ping.material.opacity = 0.85 * Math.pow(1 - phase, 2) * lock;
+    ping.material.opacity = 0.7 * Math.pow(1 - phase, 2) * lock;
   }
 
   const reticle = halo.getObjectByName('reticle');
@@ -2727,12 +2793,10 @@ function applyGraspSelection() {
     // Kreisen um die Sichtachse. faceCamera() hat die Drehung gerade neu
     // gesetzt, also wird hier der absolute Winkel aufgesetzt - ein Delta
     // waere im naechsten Frame wieder weg.
-    reticle.rotateZ((now % 12000) / 12000 * Math.PI * 2);
-    const r = 4.6 + 9.0 * (1 - lock) + 0.35 * k;
+    reticle.rotateZ((now % 20000) / 20000 * Math.PI * 2);
+    const r = 4.6 + 9.0 * (1 - lock) + 0.2 * k;
     reticle.scale.setScalar(r);
-    reticle.children.forEach(seg => {
-      seg.material.opacity = (0.55 + 0.35 * k) * lock;
-    });
+    reticle.material.opacity = (0.6 + 0.2 * k) * lock;
   }
 }
 
