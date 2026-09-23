@@ -7,10 +7,12 @@ echo "==========================================================="
 
 echo ""
 echo "[1/3] Setting up CUDA 12.1 Toolkit..."
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
-sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub
-sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /" -y
+# apt-key ist abgekuendigt - NVIDIA liefert Schluessel + Repo als cuda-keyring.
+# Downloads nach /tmp, damit nichts im aktuellen Verzeichnis liegen bleibt.
+wget -O /tmp/cuda-ubuntu2204.pin https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
+sudo mv /tmp/cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
+wget -O /tmp/cuda-keyring.deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i /tmp/cuda-keyring.deb
 sudo apt update
 sudo apt install cuda-toolkit-12-1 -y
 

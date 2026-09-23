@@ -25,6 +25,7 @@ let latestJointVals = [0, 0, 0, 0, 0, 0];
 let latestEEF_X = null;
 let latestEEF_Y = null;
 let latestEEF_Z = null;
+let latestEEF_Q = null; // [x, y, z, w] von link_tcp in link_base
 let lastServoStatus = 0;
 let activeCollisionText = '';
 let collisionTextClearTimer = null;
@@ -83,6 +84,11 @@ function validatePose(pose) {
       const unit = (i < 3) ? 'mm' : 'rad';
       return `${names[i]}=${v} liegt ausserhalb von ±${max.toFixed(2)} ${unit}`;
     }
+  }
+  // Unterhalb der Z Collision Level bremst MoveIt Servo den Arm danach fast
+  // auf null - ein manuelles Ziel dort ist fast immer ein Tippfehler.
+  if (pose[2] < LIM.FLOOR_CLEARANCE_MM) {
+    return `Z=${pose[2]} mm liegt unter der Z Collision Level (${LIM.FLOOR_CLEARANCE_MM} mm)`;
   }
   return null;
 }
@@ -255,6 +261,7 @@ ros.on('error', (error) => {
 let reconnectTimer = null;
 
 ros.on('close', () => {
+  if (typeof stopAllJogging === 'function') stopAllJogging();
   const connStatus = document.getElementById('connection-status');
   if (connStatus) connStatus.innerText = 'ROS 2 Bridge: 9090';
   const connDot = document.getElementById('connection-dot');
@@ -799,6 +806,7 @@ eefSub.subscribe((msg) => {
   }
   if (msg.data.length >= 7) {
     const qx = msg.data[3], qy = msg.data[4], qz = msg.data[5], qw = msg.data[6];
+    latestEEF_Q = [qx, qy, qz, qw];
     const sinr_cosp = 2 * (qw * qx + qy * qz);
     const cosr_cosp = 1 - 2 * (qx * qx + qy * qy);
     const roll = Math.atan2(sinr_cosp, cosr_cosp);
@@ -1138,6 +1146,41 @@ function emergencyStop() {
   logMsg('System', 'STOP signal published via Topic (Bypassing Service Queue).', 'info');
 }
 
+// Not-Aus bleibt im robot_motion_handler_movegroup verriegelt, bis er hier
+// quittiert wird. Der Knopf erscheint nur, solange der Node "aktiv" meldet.
+function setEstopResetVisible(active) {
+  const btn = document.getElementById('btn-estop-reset');
+  if (btn) btn.classList.toggle('estop-reset-hidden', !active);
+}
+
+new ROSLIB.Topic({
+  ros: ros,
+  name: '/ui/emergency_stop_active',
+  messageType: 'std_msgs/Bool'
+  // rosbridge uebernimmt transient_local vom Publisher -> Zustand kommt auch
+  // nach einem Reload der Seite sofort an.
+}).subscribe((msg) => {
+  setEstopResetVisible(Boolean(msg.data));
+  if (msg.data) logMsg('SAFETY', '🚨 Emergency stop is latched - motions are blocked until acknowledged (↺ button).', 'err');
+});
+
+function resetEmergencyStop() {
+  playUiClickSound();
+  createSrv('/ui/reset_emergency_stop', 'std_srvs/Trigger').callService(
+    new ROSLIB.ServiceRequest({}),
+    (res) => {
+      if (res.success) {
+        setEstopResetVisible(false);
+        logMsg('SAFETY', `✓ ${res.message}`, 'info');
+      } else {
+        logMsg('SAFETY', `❌ Reset failed: ${res.message}`, 'err');
+      }
+    },
+    (err) => logMsg('SAFETY', `❌ Reset error: ${err}`, 'err')
+  );
+}
+window.resetEmergencyStop = resetEmergencyStop;
+
 function setGripper(state) {
   logMsg('UI', `➤ Gripper Command: ${state.toUpperCase()}`);
   
@@ -1161,6 +1204,63 @@ function setGripper(state) {
   } else if (state === 'off') {
     btnOff.classList.add('grip-off-active', 'gripper-active');
   }
+}
+
+// ── Floor Guard (Z Collision Level) ─────────────────────────────────────
+// MoveIt kennt die Tischebene als Kollisionsobjekt (moveit_floor_collision)
+// und haelt Servo dort an. Nur: MoveIt Servo in Humble skaliert bei einer
+// Kollision ALLE Richtungen auf null - der Arm kaeme danach auch nach oben
+// nicht mehr weg. Deshalb nimmt die UI den Anteil nach unten schon an der
+// Z Collision Level heraus, bevor MoveIt eingreifen muss. Seitwaerts, nach
+// oben und Rotationen bleiben frei. MoveIt ist die harte Grenze dahinter.
+const SERVO_MAX_LINEAR_MM_S = 400.0;  // scale.linear in xarm_moveit_servo_config.yaml
+// Bremsweg-Zeitkonstante: die erlaubte Geschwindigkeit nach unten ist
+// Restabstand / FLOOR_BRAKE_TIME_S. Der TCP naehert sich der Grenze dadurch
+// exponentiell und kommt bei jeder Jog-Geschwindigkeit bis knapp an 15 mm
+// heran. Muss deutlich groesser sein als die Latenz rosbridge + Servo (~0.08 s).
+const FLOOR_BRAKE_TIME_S = 0.25;
+let floorGuardActive = false;
+
+function rotateByQuat(q, v, inverse) {
+  // q = [x, y, z, w]; inverse -> Drehung mit dem konjugierten Quaternion
+  const qx = inverse ? -q[0] : q[0], qy = inverse ? -q[1] : q[1], qz = inverse ? -q[2] : q[2], qw = q[3];
+  const tx = 2 * (qy * v.z - qz * v.y);
+  const ty = 2 * (qz * v.x - qx * v.z);
+  const tz = 2 * (qx * v.y - qy * v.x);
+  return {
+    x: v.x + qw * tx + (qy * tz - qz * ty),
+    y: v.y + qw * ty + (qz * tx - qx * tz),
+    z: v.z + qw * tz + (qx * ty - qy * tx),
+  };
+}
+
+function applyFloorGuard(lx, ly, lz) {
+  const cmd = { x: lx, y: ly, z: lz };
+  if (latestEEF_Z === null) return cmd;
+
+  const useTcp = currentFrame === 'link_tcp' && latestEEF_Q;
+  const base = useTcp ? rotateByQuat(latestEEF_Q, cmd, false) : { ...cmd };
+  if (base.z >= 0) {
+    floorGuardActive = false;
+    return cmd;
+  }
+
+  // Erlaubte Abwaertsgeschwindigkeit (unitless) aus dem Restabstand.
+  const clearanceMm = Math.max(0, latestEEF_Z - LIM.FLOOR_CLEARANCE_MM);
+  const maxDown = clearanceMm / (SERVO_MAX_LINEAR_MM_S * FLOOR_BRAKE_TIME_S);
+  if (-base.z <= maxDown) {
+    floorGuardActive = false;
+    return cmd;
+  }
+
+  const reached = clearanceMm < 0.5;
+  if (reached && !floorGuardActive) {
+    logMsg('SAFETY', `⛔ Z Collision Level erreicht (${latestEEF_Z.toFixed(1)} mm ≤ ${LIM.FLOOR_CLEARANCE_MM} mm) - Bewegung nach unten gesperrt.`, 'warn');
+  }
+  floorGuardActive = reached;
+
+  base.z = -maxDown;
+  return useTcp ? rotateByQuat(latestEEF_Q, base, true) : base;
 }
 
 // ── Jogging Logic ───────────────────────────────────────────────────────
@@ -1211,9 +1311,10 @@ function processJogTimer() {
     jogZeroCount = 0;
   }
 
-  twistMsg.twist.linear.x = smoothedTwist.lx;
-  twistMsg.twist.linear.y = smoothedTwist.ly;
-  twistMsg.twist.linear.z = smoothedTwist.lz;
+  const lin = applyFloorGuard(smoothedTwist.lx, smoothedTwist.ly, smoothedTwist.lz);
+  twistMsg.twist.linear.x = lin.x;
+  twistMsg.twist.linear.y = lin.y;
+  twistMsg.twist.linear.z = lin.z;
   twistMsg.twist.angular.x = smoothedTwist.ax;
   twistMsg.twist.angular.y = smoothedTwist.ay;
   twistMsg.twist.angular.z = smoothedTwist.az;
@@ -1249,13 +1350,39 @@ function stopJog() {
 }
 
 // ── Live Joint Jogging ──────────────────────────────────────────────────
+// Floor Guard fuer Gelenke: welche Gelenkrichtung den TCP nach unten
+// bringt, haengt von der ganzen Pose ab. Deshalb wird beobachtet: sinkt der
+// TCP an der Z Collision Level weiter, ist genau diese Drehrichtung gesperrt,
+// die Gegenrichtung (weg vom Tisch) bleibt frei.
+let jointJogPrevZ = null;
+let jointJogBlockedSign = 0;
+
+function guardJointJogVelocity(vel) {
+  if (latestEEF_Z === null || latestEEF_Z > LIM.FLOOR_CLEARANCE_MM) {
+    jointJogBlockedSign = 0;
+    jointJogPrevZ = latestEEF_Z;
+    return vel;
+  }
+  if (jointJogPrevZ !== null && vel !== 0 && latestEEF_Z < jointJogPrevZ - 0.05) {
+    if (jointJogBlockedSign === 0) {
+      logMsg('SAFETY', `⛔ Z Collision Level erreicht (${latestEEF_Z.toFixed(1)} mm) - Gelenkrichtung zum Tisch gesperrt.`, 'warn');
+    }
+    jointJogBlockedSign = Math.sign(vel);
+  }
+  jointJogPrevZ = latestEEF_Z;
+  return (jointJogBlockedSign !== 0 && Math.sign(vel) === jointJogBlockedSign) ? 0.0 : vel;
+}
+
 function startJointJog(idx, e) {
   activeJointJog = idx;
   jointJogStartX = e.clientX;
   jointJogVelocity = 0;
-  
+  jointJogPrevZ = latestEEF_Z;
+  jointJogBlockedSign = 0;
+
   document.addEventListener('pointermove', onJointJogMove);
   document.addEventListener('pointerup', stopJointJog);
+  document.addEventListener('pointercancel', stopJointJog);
 
   if(jointJogTimer) clearInterval(jointJogTimer);
   jointJogTimer = setInterval(() => {
@@ -1265,6 +1392,7 @@ function startJointJog(idx, e) {
       let scaledVel = jointJogVelocity * 0.005 * speedScale;
       if(scaledVel > 1.0) scaledVel = 1.0;
       if(scaledVel < -1.0) scaledVel = -1.0;
+      scaledVel = guardJointJogVelocity(scaledVel);
       jointJogMsg.velocities = [scaledVel];
       jointJogPub.publish(jointJogMsg);
     }
@@ -1291,7 +1419,22 @@ function stopJointJog() {
   }
   document.removeEventListener('pointermove', onJointJogMove);
   document.removeEventListener('pointerup', stopJointJog);
+  document.removeEventListener('pointercancel', stopJointJog);
 }
+
+// Totmann-Verhalten: verliert das Fenster den Fokus, wird der Tab verdeckt
+// oder bricht rosbridge weg, kommt kein pointerup/mouseup mehr an. Ohne das
+// hier liefe ein gerade aktiver Jog-Befehl einfach weiter.
+function stopAllJogging() {
+  if (jogActive || jogTimer) stopJog();
+  if (activeJointJog !== -1) stopJointJog();
+  if (joyActive) endJoy();
+  if (typeof stopArrowJog === 'function') stopArrowJog();
+}
+window.addEventListener('blur', stopAllJogging);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopAllJogging();
+});
 
 // ── Web Audio UI Click Sound Effect & Sound Toggle ───────────────────────
 let soundEnabled = lsGet('robot_control_sound_enabled') !== 'false';

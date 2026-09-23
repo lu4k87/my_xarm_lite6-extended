@@ -4,6 +4,7 @@
 import time
 import math
 import rclpy
+import rclpy.duration
 from rclpy.node import Node
 from std_msgs.msg import String
 from visualization_msgs.msg import MarkerArray, Marker
@@ -16,6 +17,11 @@ class YoloGraspExecutor(Node):
         super().__init__('yolo_grasp_executor')
 
         self.cb_group = ReentrantCallbackGroup()
+
+        # Ein TF-Listener fuer die ganze Lebensdauer (vorher einer pro Greifvorgang).
+        import tf2_ros
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         # Target object state
         self.target_object_name = ""
@@ -132,14 +138,9 @@ class YoloGraspExecutor(Node):
             # No, if we send [target_x_mm, target_y_mm, safe_z_mm], it moves diagonally.
             # The user explicitly requested: "da wo er ist, erstmal hoch und dann zum objekt"
             # So we need current X, Y.
-            import tf2_ros
-            tf_buffer = tf2_ros.Buffer()
-            tf_listener = tf2_ros.TransformListener(tf_buffer, self)
-            
-            # Allow some time for TF buffer to fill
-            time.sleep(1.0)
             try:
-                trans = tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+                trans = self.tf_buffer.lookup_transform(
+                    'link_base', 'link_tcp', rclpy.time.Time(), timeout=rclpy.duration.Duration(seconds=1.0))
                 current_x_mm = trans.transform.translation.x * 1000.0
                 current_y_mm = trans.transform.translation.y * 1000.0
             except Exception as e:

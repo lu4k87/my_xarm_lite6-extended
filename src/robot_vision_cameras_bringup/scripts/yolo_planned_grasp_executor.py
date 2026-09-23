@@ -4,6 +4,7 @@
 import time
 import math
 import rclpy
+import rclpy.duration
 import os
 import pygame
 from rclpy.node import Node
@@ -39,6 +40,11 @@ class YoloPlannedGraspExecutor(Node):
         super().__init__('yolo_planned_grasp_executor')
 
         self.cb_group = ReentrantCallbackGroup()
+
+        # Ein TF-Listener fuer die ganze Lebensdauer. Vorher entstand pro
+        # Greifvorgang ein neuer, dessen /tf-Subscriptions nie abgebaut wurden.
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         # Target object state
         self.target_object_name = ""
@@ -248,24 +254,12 @@ class YoloPlannedGraspExecutor(Node):
                 result.message = "MoveIt action server /move_action not available!"
                 return result
 
-            tf_buffer = tf2_ros.Buffer()
-            tf_listener = tf2_ros.TransformListener(tf_buffer, self)
-            
-            # Allow time for TF tree to populate
-            time.sleep(0.5)
-            
             try:
-                trans = tf_buffer.lookup_transform('world', 'link_tcp', rclpy.time.Time())
+                trans = self.tf_buffer.lookup_transform(
+                    'world', 'link_tcp', rclpy.time.Time(), timeout=rclpy.duration.Duration(seconds=1.0))
                 cur_x = trans.transform.translation.x
                 cur_y = trans.transform.translation.y
                 cur_z = trans.transform.translation.z
-                
-                cur_q = [
-                    trans.transform.rotation.x,
-                    trans.transform.rotation.y,
-                    trans.transform.rotation.z,
-                    trans.transform.rotation.w
-                ]
                 
                 # Wir nutzen Parameter für die Top-Down Orientierung
                 grasp_roll = target_roll

@@ -3,3 +3,6 @@ install/
 log/
 __pycache__/
 ros2_nexus/backup_popup_pre_redesign/
+
+# TLS-Zertifikat der VR-Teleop (wird bei Bedarf automatisch erzeugt)
+certs/

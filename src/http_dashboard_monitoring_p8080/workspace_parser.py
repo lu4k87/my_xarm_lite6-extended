@@ -205,20 +205,22 @@ class WorkspaceParser:
         source_cmd = ('source /opt/ros/humble/setup.bash && '
                       'source ~/dev_ws/install/setup.bash 2>/dev/null')
         new_map    = {}
-        ws_pkg_names = list(self.pkg_cache.values())
+        ws_pkg_names = set(self.pkg_cache.values())
 
-        for pkg_name in ws_pkg_names:
-            try:
-                result = subprocess.run(
-                    f'{source_cmd} && ros2 pkg executables {pkg_name}',
-                    shell=True, executable='/bin/bash',
-                    capture_output=True, text=True, timeout=10)
-                for line in result.stdout.splitlines():
-                    parts = line.strip().split()
-                    if len(parts) == 2:
-                        new_map[parts[1]] = pkg_name
-            except Exception as e:
-                self.logger.debug(f'[exe-cache] {pkg_name}: {e}')
+        # Ein einziger Aufruf fuer alle Pakete. Vorher startete pro Paket eine
+        # eigene Bash samt source + ros2-CLI - bei ~40 Paketen dauerte der
+        # Cache-Aufbau entsprechend lange.
+        try:
+            result = subprocess.run(
+                f'{source_cmd} && ros2 pkg executables',
+                shell=True, executable='/bin/bash',
+                capture_output=True, text=True, timeout=30)
+            for line in result.stdout.splitlines():
+                parts = line.strip().split()
+                if len(parts) == 2 and parts[0] in ws_pkg_names:
+                    new_map[parts[1]] = parts[0]
+        except Exception as e:
+            self.logger.debug(f'[exe-cache] {e}')
 
         with self._exe_cache_lock:
             self.executable_pkg_map = new_map

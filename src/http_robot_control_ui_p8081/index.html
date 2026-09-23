@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=38">
+  <link rel="stylesheet" href="style.css?v=39">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -318,6 +318,9 @@
                 <button id="btn-emergency-stop" class="btn btn-danger" onclick="emergencyStop()" title="Emergency Stop">
                   <i class="fa-solid fa-hand"></i>
                 </button>
+                <button id="btn-estop-reset" class="btn btn-action estop-reset-hidden" onclick="resetEmergencyStop()" title="Acknowledge Emergency Stop (reset robot state, resume MoveIt Servo)">
+                  <i class="fa-solid fa-rotate-left"></i>
+                </button>
               </div>
               </div>
               </div>
@@ -429,8 +432,8 @@
           
           <div class="jogging-container">
             <div class="z-controls">
-              <button class="btn btn-z" onmousedown="playUiClickSound(); startJog(0,0,1,0,0,0)" onmouseup="stopJog()">⇈<br>Z+</button>
-              <button class="btn btn-z" onmousedown="playUiClickSound(); startJog(0,0,-1,0,0,0)" onmouseup="stopJog()">⇊<br>Z-</button>
+              <button class="btn btn-z" onpointerdown="playUiClickSound(); startJog(0,0,1,0,0,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">⇈<br>Z+</button>
+              <button class="btn btn-z" onpointerdown="playUiClickSound(); startJog(0,0,-1,0,0,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">⇊<br>Z-</button>
             </div>
 
             <div class="joystick-assembly">
@@ -471,12 +474,12 @@
             
             <div class="rot-and-frame-group">
               <div class="rot-controls">
-                <button class="btn btn-rot" onmousedown="playUiClickSound(); startJog(0,0,0,1,0,0)" onmouseup="stopJog()">Roll + (<span style="color: var(--rviz-x);">X</span>)</button>
-                <button class="btn btn-rot" onmousedown="playUiClickSound(); startJog(0,0,0,-1,0,0)" onmouseup="stopJog()">Roll - (<span style="color: var(--rviz-x);">X</span>)</button>
-                <button class="btn btn-rot" onmousedown="playUiClickSound(); startJog(0,0,0,0,1,0)" onmouseup="stopJog()">Pitch + (<span style="color: var(--rviz-y);">Y</span>)</button>
-                <button class="btn btn-rot" onmousedown="playUiClickSound(); startJog(0,0,0,0,-1,0)" onmouseup="stopJog()">Pitch - (<span style="color: var(--rviz-y);">Y</span>)</button>
-                <button class="btn btn-rot" onmousedown="playUiClickSound(); startJog(0,0,0,0,0,1)" onmouseup="stopJog()">Yaw + (<span style="color: var(--rviz-z);">Z</span>)</button>
-                <button class="btn btn-rot" onmousedown="playUiClickSound(); startJog(0,0,0,0,0,-1)" onmouseup="stopJog()">Yaw - (<span style="color: var(--rviz-z);">Z</span>)</button>
+                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,1,0,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Roll + (<span style="color: var(--rviz-x);">X</span>)</button>
+                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,-1,0,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Roll - (<span style="color: var(--rviz-x);">X</span>)</button>
+                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,0,1,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Pitch + (<span style="color: var(--rviz-y);">Y</span>)</button>
+                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,0,-1,0)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Pitch - (<span style="color: var(--rviz-y);">Y</span>)</button>
+                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,0,0,1)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Yaw + (<span style="color: var(--rviz-z);">Z</span>)</button>
+                <button class="btn btn-rot" onpointerdown="playUiClickSound(); startJog(0,0,0,0,0,-1)" onpointerup="stopJog()" onpointerleave="if (event.buttons) stopJog()" onpointercancel="stopJog()">Yaw - (<span style="color: var(--rviz-z);">Z</span>)</button>
               </div>
 
               <div class="frame-toggles">
@@ -754,7 +757,7 @@
   <script src="robot_limits.js?v=1"></script>
   <script src="digital_twin.js?v=21"></script>
 
-  <script src="app.js?v=22"></script>
+  <script src="app.js?v=23"></script>
   
   <script>
     // ── Live Camera Update Loop ──

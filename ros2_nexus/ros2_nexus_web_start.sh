@@ -1,7 +1,7 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────
 # ROS 2 Nexus Web — Launcher
-# Startet Nexus Web Backend (beinhaltet terminal_server auf Port 8765)
+# Startet das Nexus Web Backend (Flask, Port 5000)
 # und öffnet den Browser.
 # ─────────────────────────────────────────────────────────────────
 

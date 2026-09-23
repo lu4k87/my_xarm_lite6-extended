@@ -272,6 +272,17 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
+    # Tischebene als MoveIt-Kollisionsobjekt: Servo (Jogging) und IK/Planung
+    # blocken damit Bewegungen unter die Tischplatte. Mit floor_collision:=false
+    # abschaltbar.
+    floor_collision_node = Node(
+        package='robot_motion_handler_movegroup',
+        executable='moveit_floor_collision',
+        name='moveit_floor_collision',
+        output='screen',
+        condition=IfCondition(LaunchConfiguration('floor_collision', default='true'))
+    )
+
     return [
         RegisterEventHandler(
             event_handler=OnProcessExit(
@@ -285,6 +296,7 @@ def launch_setup(context, *args, **kwargs):
         traj_controller_node,
         checker_node,
         set_pose_moveit_node,
+        floor_collision_node,
     ] + controller_nodes
 
 

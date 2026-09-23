@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
+import threading
 import time
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from builtin_interfaces.msg import Duration
 from std_srvs.srv import Trigger
@@ -77,7 +79,6 @@ class RobotMotionHandlerMovegroup(Node):
         from std_msgs.msg import String
         self.ui_log_pub = self.create_publisher(String, '/ui/motion_status', 10)
         
-        from moveit_msgs.srv import GetPositionIK
         self.ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
         
         self.servo_stop_client = self.create_client(Trigger, '/servo_server/stop_servo', callback_group=self.cb_group)
@@ -145,9 +146,28 @@ class RobotMotionHandlerMovegroup(Node):
             10,
             callback_group=self.stop_cb_group
         )
-        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint, /ui/emergency_stop) ready.', 'success')
+        # Not-Aus bleibt verriegelt, bis er ueber /ui/reset_emergency_stop
+        # quittiert wird. Vorher hob jede neue Bewegung ihn stillschweigend auf.
+        self.reset_estop_srv = self.create_service(
+            Trigger,
+            '/ui/reset_emergency_stop',
+            self.reset_emergency_stop_cb,
+            callback_group=self.stop_cb_group
+        )
+        from std_msgs.msg import Bool
+        latched_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.estop_state_pub = self.create_publisher(Bool, '/ui/emergency_stop_active', latched_qos)
+
+        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint, /ui/emergency_stop, /ui/reset_emergency_stop) ready.', 'success')
         self.is_executing = False
         self.stop_requested = False
+        self.estop_latched = False
+        self._exec_state_lock = threading.Lock()
+        self._publish_estop_state()
+
+        # Beim Start automatisch in die Initialpose fahren (bisheriges Verhalten).
+        # Mit auto_initial_pose:=false bleibt der Arm stehen, bis jemand ihn bewegt.
+        self.declare_parameter('auto_initial_pose', True)
         
         from sensor_msgs.msg import JointState
         self.current_joint_state = None
@@ -225,13 +245,78 @@ class RobotMotionHandlerMovegroup(Node):
             self.safe_radius = msg.data[2]
 
     def _check_servo_ready(self):
-        if self.servo_start_client.service_is_ready() and self.servo_stop_client.service_is_ready():
-            self.startup_timer.cancel()
-            self.ui_log('MoveIt Servo fully loaded. Auto-triggering initial pose in 1s...', 'success')
-            pass
-            time.sleep(1.0) # Give TF a moment to stabilize
-            # Startup: Just move to initial pose directly
-            self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
+        if not (self.servo_start_client.service_is_ready() and self.servo_stop_client.service_is_ready()):
+            return
+        self.startup_timer.cancel()
+        if not self.get_parameter('auto_initial_pose').value:
+            self.ui_log('MoveIt Servo fully loaded. Auto initial pose disabled (auto_initial_pose:=false).', 'success')
+            return
+        # Laeuft ueber dieselbe Sperre wie jede andere Bewegung, damit kein
+        # zweiter Befehl parallel startet, und blockiert keinen Executor-Thread.
+        if self.estop_latched or not self._begin_execution():
+            return
+        self.ui_log('MoveIt Servo fully loaded. Auto-triggering initial pose in 1s...', 'success')
+
+        def _task():
+            try:
+                time.sleep(1.0)  # Give TF a moment to stabilize
+                self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
+            finally:
+                self.is_executing = False
+
+        threading.Thread(target=_task, daemon=True).start()
+
+    def _begin_execution(self):
+        """Prueft und belegt die Ausfuehrung atomar (16 Executor-Threads)."""
+        with self._exec_state_lock:
+            if self.is_executing:
+                return False
+            self.is_executing = True
+            return True
+
+    def _estop_rejection(self):
+        """Meldung, wenn der Not-Aus noch verriegelt ist, sonst None."""
+        if self.estop_latched:
+            msg = 'EMERGENCY STOP active - acknowledge it first (/ui/reset_emergency_stop).'
+            self.ui_log(msg, 'warn')
+            return msg
+        return None
+
+    def _publish_estop_state(self):
+        from std_msgs.msg import Bool
+        self.estop_state_pub.publish(Bool(data=self.estop_latched))
+
+    def _pause_servo(self, log_msg=None):
+        if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
+            self.servo_stop_client.call_async(Trigger.Request())
+            if log_msg:
+                self.ui_log(log_msg, 'info')
+            time.sleep(0.5)
+
+    def _resume_servo(self):
+        # Nach einem Not-Aus bleibt Servo aus - erst das Quittieren startet es wieder.
+        if self.stop_requested:
+            return
+        if self.servo_start_client.wait_for_service(timeout_sec=1.0):
+            self.servo_start_client.call_async(Trigger.Request())
+            self.ui_log('MoveIt Servo resumed.', 'info')
+            time.sleep(0.5)
+
+    def reset_emergency_stop_cb(self, request, response):
+        if not self.estop_latched:
+            response.success = True
+            response.message = "No emergency stop active."
+            return response
+        self.estop_latched = False
+        self.stop_requested = False
+        self._reset_hardware_state()
+        if self.servo_start_client.service_is_ready():
+            self.servo_start_client.call_async(Trigger.Request())
+        self._publish_estop_state()
+        self.ui_log('Emergency stop acknowledged. Robot state reset, MoveIt Servo resumed.', 'success')
+        response.success = True
+        response.message = "Emergency stop acknowledged."
+        return response
 
     def _reset_hardware_state(self):
         from xarm_msgs.srv import SetInt16
@@ -254,13 +339,17 @@ class RobotMotionHandlerMovegroup(Node):
         self.get_logger().info(f"UI Sound State received: enabled={self.sound_enabled}")
 
     def execute_initial_pose_cb(self, request, response):
-        if self.is_executing:
+        rejection = self._estop_rejection()
+        if rejection:
+            response.success = False
+            response.message = rejection
+            return response
+        if not self._begin_execution():
             response.success = False
             response.message = "Already executing."
             return response
-            
+
         self._reset_hardware_state()
-        self.is_executing = True
         self.stop_requested = False
         
         if self.sound_enabled and self.sound_initial:
@@ -277,8 +366,7 @@ class RobotMotionHandlerMovegroup(Node):
             finally:
                 self.is_executing = False
 
-        import threading
-        threading.Thread(target=_task).start()
+        threading.Thread(target=_task, daemon=True).start()
         
         response.success = True
         response.message = "Initial Pose sequence started."
@@ -286,11 +374,7 @@ class RobotMotionHandlerMovegroup(Node):
 
     def _go_to_joints(self, target_joints, log_msg="Moving to target pose..."):
         # 1. Stop MoveIt Servo
-        if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
-            req = Trigger.Request()
-            self.servo_stop_client.call_async(req)
-            self.ui_log('MoveIt Servo paused for direct joint motion.', 'info')
-            time.sleep(0.5) 
+        self._pause_servo('MoveIt Servo paused for direct joint motion.')
             
         # 2. Publish trajectory
         msg = JointTrajectory()
@@ -330,19 +414,11 @@ class RobotMotionHandlerMovegroup(Node):
             time.sleep(0.1)
         
         # 3. Start MoveIt Servo again
-        if self.servo_start_client.wait_for_service(timeout_sec=1.0):
-            req = Trigger.Request()
-            self.servo_start_client.call_async(req)
-            self.ui_log('MoveIt Servo resumed.', 'info')
-            time.sleep(0.5)
+        self._resume_servo()
 
     def _go_to_joints_trajectory(self, target_joint_points, log_msg="Executing trajectory..."):
         # 1. Stop MoveIt Servo
-        if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
-            req = Trigger.Request()
-            self.servo_stop_client.call_async(req)
-            self.ui_log('MoveIt Servo paused for direct trajectory execution.', 'info')
-            time.sleep(0.5) 
+        self._pause_servo('MoveIt Servo paused for direct trajectory execution.')
             
         # 2. Publish trajectory
         msg = JointTrajectory()
@@ -392,28 +468,25 @@ class RobotMotionHandlerMovegroup(Node):
             time.sleep(0.1)
         
         # 3. Start MoveIt Servo again
-        if self.servo_start_client.wait_for_service(timeout_sec=1.0):
-            req = Trigger.Request()
-            self.servo_start_client.call_async(req)
-            self.ui_log('MoveIt Servo resumed.', 'info')
-            time.sleep(0.5)
+        self._resume_servo()
 
     def execute_move_joint_cb(self, request, response):
-        if self.is_executing:
+        rejection = self._estop_rejection()
+        if rejection:
+            response.ret = -1
+            response.message = rejection
+            return response
+        if not self._begin_execution():
             response.ret = -1
             response.message = "Already executing."
             return response
-            
-        self.is_executing = True
+
         self.stop_requested = False
         
         def _task():
             try:
                 # 1. Stop MoveIt Servo
-                if self.servo_stop_client.wait_for_service(timeout_sec=1.0):
-                    req = Trigger.Request()
-                    self.servo_stop_client.call_async(req)
-                    time.sleep(0.5) 
+                self._pause_servo()
                     
                 # 2. Publish trajectory
                 msg = JointTrajectory()
@@ -441,6 +514,9 @@ class RobotMotionHandlerMovegroup(Node):
                 point.time_from_start = Duration(sec=int(duration_sec), nanosec=int((duration_sec - int(duration_sec)) * 1e9))
                 
                 msg.points.append(point)
+                if self.stop_requested:
+                    self.ui_log('Execution aborted due to EMERGENCY STOP.', 'error')
+                    return
                 self.publisher_.publish(msg)
                 self.ui_log('Trajectory sent. Moving to Joint Pose...', 'action')
                 
@@ -453,19 +529,14 @@ class RobotMotionHandlerMovegroup(Node):
                     time.sleep(0.1)
                 
                 # 3. Start MoveIt Servo again
-                if self.servo_start_client.wait_for_service(timeout_sec=1.0):
-                    req = Trigger.Request()
-                    self.servo_start_client.call_async(req)
-                    self.ui_log('MoveIt Servo resumed.', 'info')
-                    time.sleep(0.5)
+                self._resume_servo()
                     
             except Exception as e:
                 self.ui_log(f"Error: {e}", 'error')
             finally:
                 self.is_executing = False
 
-        import threading
-        threading.Thread(target=_task).start()
+        threading.Thread(target=_task, daemon=True).start()
         
         response.ret = 0
         response.message = "Joint Pose sequence started."
@@ -481,7 +552,13 @@ class RobotMotionHandlerMovegroup(Node):
 
     def emergency_stop_cb(self, request, response):
         self.stop_requested = True
+        self.estop_latched = True
+        self._publish_estop_state()
         self.ui_log('<span style="color: var(--rviz-x); font-weight: bold; font-size: 1.2em;">EMERGENCY STOP TRIGGERED!</span>', 'error')
+
+        # Servo anhalten, damit auch Jogging (UI, Gamepad) bis zum Quittieren ruht.
+        if self.servo_stop_client.service_is_ready():
+            self.servo_stop_client.call_async(Trigger.Request())
         
         # 1. HARDWARE STOP (Firmware level halt)
         from xarm_msgs.srv import SetInt16
@@ -516,15 +593,15 @@ class RobotMotionHandlerMovegroup(Node):
             self.publisher_.publish(msg)
             self.ui_log('Published STOP trajectory holding current position.', 'info')
         else:
-            # Fallback if no joint states: try an empty point to force preempt
+            # Ohne Gelenkdaten: eine Trajektorie ganz ohne Punkte. Der
+            # joint_trajectory_controller bricht damit die laufende Bahn ab und
+            # haelt die aktuelle Position. Ein Punkt ohne positions wuerde er
+            # dagegen als ungueltig verwerfen.
             msg = JointTrajectory()
             msg.header.stamp = self.get_clock().now().to_msg()
             msg.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-            point = JointTrajectoryPoint()
-            point.time_from_start = Duration(sec=0, nanosec=100000000)
-            msg.points.append(point)
             self.publisher_.publish(msg)
-            self.ui_log('Warning: No joint states. Published fallback STOP trajectory.', 'warn')
+            self.ui_log('Warning: No joint states. Published empty STOP trajectory (controller holds position).', 'warn')
         
         response.success = True
         response.message = "Emergency Stop Executed."
@@ -712,11 +789,16 @@ class RobotMotionHandlerMovegroup(Node):
         return waypoints
 
     def execute_scan_path_cb(self, request, response):
-        if self.is_executing:
+        rejection = self._estop_rejection()
+        if rejection:
+            response.success = False
+            response.message = rejection
+            return response
+        if not self._begin_execution():
             response.success = False
             response.message = "System is already executing a move."
             return response
-            
+
         self._reset_hardware_state()
         self.stop_requested = False
         self.ui_log('Generating 3D Wave Scan Path...', 'info')
@@ -731,18 +813,12 @@ class RobotMotionHandlerMovegroup(Node):
             
         self.ui_log(f'{len(waypoints)} waypoints generated. Starting IK resolution.', 'success')
         
-        self.is_executing = True
-        self.stop_requested = False
-        
         def _task():
             try:
-                from moveit_msgs.srv import GetPositionIK
                 from geometry_msgs.msg import PoseStamped
-                from scipy.spatial.transform import Rotation as R
                 from moveit_msgs.msg import RobotState
                 from sensor_msgs.msg import JointState
-                pass
-                
+
                 # Zuerst lesen wir den aktuellen Zustand aus, um den ersten Seed zu haben
                 # Wir verwenden einfach den ersten Punkt und loesen ihn ohne Seed (oder mit aktueller Roboterpose)
                 current_seed_joints = None
@@ -820,28 +896,29 @@ class RobotMotionHandlerMovegroup(Node):
             finally:
                 self.is_executing = False
                 
-        import threading
-        threading.Thread(target=_task).start()
+        threading.Thread(target=_task, daemon=True).start()
         
         response.success = True
         response.message = "Scan path processing started."
         return response
 
     def execute_object_scan_cb(self, request, response):
-        if self.is_executing:
+        rejection = self._estop_rejection()
+        if rejection:
+            response.success = False
+            response.message = rejection
+            return response
+        if not self._begin_execution():
             response.success = False
             response.message = "System is already executing a move."
             return response
-            
+
         self._reset_hardware_state()
-        self.is_executing = True
         self.stop_requested = False
         
         def _task():
             try:
-                from moveit_msgs.srv import GetPositionIK
                 from geometry_msgs.msg import PoseStamped
-                from scipy.spatial.transform import Rotation as R
                 from moveit_msgs.msg import RobotState
                 from sensor_msgs.msg import JointState
                 pass
@@ -875,7 +952,7 @@ class RobotMotionHandlerMovegroup(Node):
                         obj_x = t.transform.translation.x
                         obj_y = t.transform.translation.y
                         self.ui_log(f'Live-Position {name_html}: <span style="color: var(--rviz-x);">X={obj_x:.3f}</span>, <span style="color: var(--rviz-y);">Y={obj_y:.3f}</span>', 'success')
-                    except Exception as e:
+                    except Exception:
                         self.ui_log(f'Live-Position for {name_html} not found. Using Fallback.', 'warn')
                         obj_x = default_pos[0]
                         obj_y = default_pos[1]
@@ -980,21 +1057,24 @@ class RobotMotionHandlerMovegroup(Node):
             finally:
                 self.is_executing = False
                 
-        import threading
-        threading.Thread(target=_task).start()
+        threading.Thread(target=_task, daemon=True).start()
         
         response.success = True
         response.message = "Object Scan processing started."
         return response
 
     def execute_move_to_pose_cb(self, request, response):
-        if self.is_executing:
+        rejection = self._estop_rejection()
+        if rejection:
+            response.ret = -1
+            response.message = rejection
+            return response
+        if not self._begin_execution():
             response.ret = -1
             response.message = "Already executing."
             return response
-            
+
         self._reset_hardware_state()
-        self.is_executing = True
         self.stop_requested = False
         def _task():
             try:
@@ -1002,8 +1082,7 @@ class RobotMotionHandlerMovegroup(Node):
             finally:
                 self.is_executing = False
                 
-        import threading
-        threading.Thread(target=_task).start()
+        threading.Thread(target=_task, daemon=True).start()
         
         response.ret = 0
         response.message = "Move to pose started."
@@ -1011,9 +1090,7 @@ class RobotMotionHandlerMovegroup(Node):
 
     def _execute_move_to_pose_core(self, request, response):
         try:
-            from moveit_msgs.srv import GetPositionIK
             from geometry_msgs.msg import PoseStamped
-            from scipy.spatial.transform import Rotation as R
             
             # Ziel-Koordinaten (Panel sendet mm, Konvertierung in m)
             target_x = request.pose[0] / 1000.0

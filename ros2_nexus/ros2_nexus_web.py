@@ -9,10 +9,7 @@ Usage: python3 ros2_nexus_web.py
 from flask import Flask, request, jsonify, send_from_directory
 import subprocess
 import os
-import shlex
 import threading
-import sys
-import atexit
 import json
 
 import uuid
@@ -21,11 +18,41 @@ import re
 
 app     = Flask(__name__)
 
+# ── Zugriffsschutz ──────────────────────────────────────────────────────────
+# /api/run fuehrt beliebige Shell-Befehle aus. Vorher durfte das jeder im
+# Netzwerk (Bind auf 0.0.0.0) und dank "Access-Control-Allow-Origin: *" plus
+# get_json(force=True) sogar jede fremde Webseite im Browser dieses Rechners.
+# Jetzt gilt: lesen (GET) weiterhin von ueberall, veraendern (POST) nur vom
+# eigenen Rechner und nur von der Nexus Webapp selbst. curl aus den
+# Nexus-Terminals schickt keinen Origin-Header und bleibt erlaubt.
+def _is_loopback(addr):
+    return bool(addr) and (addr.startswith("127.") or addr == "::1" or addr == "::ffff:127.0.0.1")
+
+
+def _is_own_origin(origin):
+    m = re.match(r"^https?://([^/:]+)(?::(\d+))?$", origin or "")
+    if not m:
+        return False
+    host, port = m.group(1), m.group(2)
+    return (host == "localhost" or host.startswith("127.")) and port == str(app.config.get("NEXUS_PORT", 5000))
+
+
+@app.before_request
+def restrict_mutating_requests():
+    if request.method in ("GET", "HEAD", "OPTIONS"):
+        return None
+    origin = request.headers.get("Origin")
+    if not _is_loopback(request.remote_addr) or (origin and not _is_own_origin(origin)):
+        return jsonify({"ok": False, "error": "Forbidden: nur lokal aus der Nexus Webapp erlaubt"}), 403
+    return None
+
+
 @app.after_request
 def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    # Nur lesend: die Robot Control UI (Port 8081) fragt /api/status ab.
+    if request.method in ("GET", "HEAD"):
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET"
     return response
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,6 +61,7 @@ WS_PATH  = os.environ.get("ROS2_WS", os.path.abspath(os.path.join(BASE_DIR, ".."
 active_processes = {}
 global_logs = []
 log_id_counter = 1
+_log_lock = threading.Lock()
 import time
 
 def ensure_desktop_integration():
@@ -189,11 +217,12 @@ trap 'send_log "stop" &' EXIT
 
 
 def _open_terminal(script: str, title: str):
-    safe = shlex.quote(script)
-    subprocess.Popen(
-        f'gnome-terminal --geometry=120x30 --title="{title}" -- bash -c \'eval "$1"; exec bash\' _ {safe}',
-        shell=True,
-    )
+    # Als Argumentliste statt Shell-String: der Titel kommt aus dem Request
+    # und landete vorher ungequotet in einer Shell-Zeile.
+    subprocess.Popen([
+        "gnome-terminal", "--geometry=120x30", f"--title={title}", "--",
+        "bash", "-c", 'eval "$1"; exec bash', "_", script,
+    ])
 
 
 # ── Routes ──────────────────────────────────────────────────────────────────
@@ -402,6 +431,14 @@ def api_launch_args():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+def _reap_finished_processes():
+    # Beendete Hintergrundprozesse einsammeln - sonst bleiben sie als Zombies
+    # stehen und active_processes waechst mit jedem Start weiter.
+    for cid, proc in list(active_processes.items()):
+        if proc.poll() is not None:
+            active_processes.pop(cid, None)
+
+
 @app.route("/api/run", methods=["POST"])
 def api_run():
     data    = request.get_json(force=True)
@@ -422,6 +459,7 @@ def api_run():
         ensure_desktop_integration()
 
     cmd_id = "cmd_" + uuid.uuid4().hex[:8]
+    _reap_finished_processes()
 
     try:
         if mode == "bg":
@@ -445,25 +483,31 @@ def api_log_event():
     global log_id_counter
     try:
         data = request.get_json(force=True)
-        data['id'] = log_id_counter
-        data['timestamp'] = time.time()
         # strip ANSI escape sequences from command for display in web
-        import re
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         data['command'] = ansi_escape.sub('', data.get('command', ''))
         data['command'] = data['command'].replace('CMD: ', '').replace('\n', ' | ')
-        log_id_counter += 1
-        global_logs.append(data)
-        if len(global_logs) > 200:
-            global_logs.pop(0)
+        # Flask bedient Requests in Threads: Zaehler und Liste nur unter Lock
+        # anfassen, sonst koennen zwei Eintraege dieselbe ID bekommen.
+        with _log_lock:
+            data['id'] = log_id_counter
+            data['timestamp'] = time.time()
+            log_id_counter += 1
+            global_logs.append(data)
+            if len(global_logs) > 200:
+                global_logs.pop(0)
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @app.route("/api/logs", methods=["GET"])
 def api_logs():
-    since = int(request.args.get("since", 0))
-    new_logs = [l for l in global_logs if l['id'] > since]
+    try:
+        since = int(request.args.get("since", 0))
+    except (TypeError, ValueError):
+        since = 0
+    with _log_lock:
+        new_logs = [l for l in global_logs if l['id'] > since]
     return jsonify({"ok": True, "logs": new_logs})
 
 @app.route("/api/kill", methods=["POST"])
@@ -500,4 +544,5 @@ def api_kill_all_ros2():
 
 if __name__ == "__main__":
     port = int(os.environ.get("NEXUS_PORT", 5000))
+    app.config["NEXUS_PORT"] = port
     app.run(host="0.0.0.0", port=port, debug=False)

@@ -4,6 +4,32 @@ from launch_ros.actions import Node
 from launch.launch_description_sources import AnyLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
+import subprocess
+
+
+def ensure_self_signed_cert(cert_path, key_path):
+    """Legt ein selbstsigniertes Zertifikat an, falls keins da ist.
+
+    certs/ liegt nicht mehr im Git-Repo (ein privater Schluessel gehoert da
+    nicht hinein). Auf einem frischen Klon oder nach dem Loeschen entsteht es
+    hier beim ersten Start neu. Die Quest muss ein neues Zertifikat einmal im
+    Browser akzeptieren.
+    """
+    if os.path.exists(cert_path) and os.path.exists(key_path):
+        return
+    os.makedirs(os.path.dirname(cert_path), exist_ok=True)
+    print(f'[vr_quest3_teleop] Kein Zertifikat gefunden - erzeuge {cert_path}')
+    try:
+        subprocess.run([
+            'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes',
+            '-days', '825', '-subj', '/CN=localhost',
+            '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1',
+            '-keyout', key_path, '-out', cert_path,
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        os.chmod(key_path, 0o600)
+    except (OSError, subprocess.CalledProcessError) as e:
+        print(f'[vr_quest3_teleop] Zertifikat konnte nicht erzeugt werden: {e}')
+
 
 def generate_launch_description():
     pkg_dir = get_package_share_directory('vr_quest3_teleop')
@@ -31,7 +57,8 @@ def generate_launch_description():
     if not os.path.exists(cert_path):
         cert_path = os.path.expanduser('~/dev_ws/certs/cert.pem')
         key_path = os.path.expanduser('~/dev_ws/certs/key.pem')
-    
+    ensure_self_signed_cert(cert_path, key_path)
+
     rosbridge = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(
             os.path.join(get_package_share_directory('rosbridge_server'), 'launch', 'rosbridge_websocket_launch.xml')

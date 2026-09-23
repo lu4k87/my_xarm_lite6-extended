@@ -785,6 +785,14 @@ button.status-pill.sound-btn.sound-muted:hover {
   color: var(--txt);
 }
 
+/* Halten-zum-Joggen: ohne touch-action bricht der Browser die Geste auf
+   Touch-Geraeten fuer Scrollen ab, bevor pointerup kommt. */
+.btn-z,
+.btn-rot {
+  touch-action: none;
+  user-select: none;
+}
+
 .frame-toggles {
   display: flex;
   flex-direction: column;
@@ -1304,6 +1312,24 @@ input[type=range]:active::-moz-range-thumb {
 .twin-motion-overlay .btn-danger i {
   margin: 0;
   font-size: 15px;
+}
+
+/* Quittieren-Button: nur sichtbar, solange der Not-Aus verriegelt ist.
+   Drei Klassen, damit er das display:flex !important oben schlaegt. */
+.twin-motion-overlay .btn-action.estop-reset-hidden {
+  display: none !important;
+}
+
+.twin-motion-overlay #btn-estop-reset,
+.twin-motion-overlay #btn-estop-reset i {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.6);
+  animation: estop-reset-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes estop-reset-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.0); }
+  50%      { box-shadow: 0 0 10px 2px rgba(245, 158, 11, 0.55); }
 }
 
 /* Floating Speed Toggle (bottom-left inside viewport, above REACH/FLOOR) */

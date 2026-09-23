@@ -8,6 +8,7 @@ import tf2_ros
 import pygame
 from std_msgs.msg import Float32, Float32MultiArray, String, Int8
 import sys
+import time
 
 # ANSI-Escape-Codes als globale Konstanten
 HIDE_CURSOR = "\033[?25l"
@@ -27,6 +28,7 @@ class Checker(Node):
         self.MAX_LINEAR_VELOCITY_MM_S = 75.0 # Maximale Lineargeschw. des Roboters (Basis für Berechnung)
         self.LOOKAHEAD_TIME = 0.1 # Vorausschau-Zeit für Kollisionsprüfung (Sekunden)
         self.ACCELERATION_FACTOR = 0.9 # Abschwächungsfaktor für die voraussichtliche Geschwindigkeit
+        self.EEF_TIMEOUT = 1.0 # s ohne neue EEF-Position -> Position gilt als unbekannt (Quelle: 10 Hz)
 
         # --- ROS2-Setup ---
         self.__sub = self.create_subscription(Joy, "/joy", self.pre_joy_callback, 10)
@@ -45,6 +47,8 @@ class Checker(Node):
         
         self.joy_cmd = Joy()
         self.current_z = 0.0
+        self.last_eef_time = None  # monotonic Zeitpunkt der letzten EEF-Position
+        self.eef_unknown_warned = False
         self.current_speed_factor_from_joy = 0.5 # Startwert
         self.is_blocked_state = False 
         
@@ -69,6 +73,7 @@ class Checker(Node):
         """Aktualisiert die interne Z-Position basierend auf den Daten von /ui/eef_position."""
         if len(msg.data) >= 3:
             self.current_z = msg.data[2]
+            self.last_eef_time = time.monotonic()
 
     def servo_status_callback(self, msg):
         """Reagiert auf dynamische 3D-Kollisionswarnungen von MoveIt Servo."""
@@ -86,9 +91,22 @@ class Checker(Node):
 
     def check_position(self):
         """Kollisionsprüfung basierend auf letzter EEF-Position."""
-        if self.current_z == 0.0:
-            if self.joy_cmd: 
-                self.__pub.publish(self.joy_cmd)
+        # Fail-safe: ohne (aktuelle) EEF-Position ist nicht pruefbar, wie nah
+        # der Tisch ist. Vorher ging der Befehl dann ungefiltert durch - jetzt
+        # wird nur "nach unten" gesperrt, alles andere bleibt bedienbar.
+        eef_known = (self.last_eef_time is not None and
+                     time.monotonic() - self.last_eef_time <= self.EEF_TIMEOUT)
+        if not eef_known:
+            if not self.eef_unknown_warned:
+                self.get_logger().warn("Keine aktuelle EEF-Position (/ui/eef_position) - Bewegung nach unten gesperrt.")
+                self.eef_unknown_warned = True
+            if len(self.joy_cmd.axes) > self.DOWN_TRIGGER_AXIS:
+                self.joy_cmd.axes[self.DOWN_TRIGGER_AXIS] = 1.0
+            self.__pub.publish(self.joy_cmd)
+            return
+        self.eef_unknown_warned = False
+        if len(self.joy_cmd.axes) <= self.DOWN_TRIGGER_AXIS:
+            self.__pub.publish(self.joy_cmd)
             return
         
         # --- Kollisionsprüfung ---

@@ -305,7 +305,7 @@ namespace xarm_moveit_servo
         const std::vector<float> &axes,
         const std::vector<int> &buttons,
         std::unique_ptr<geometry_msgs::msg::TwistStamped> &twist,
-        std::unique_ptr<control_msgs::msg::JointJog> &joint
+        std::unique_ptr<control_msgs::msg::JointJog> & /* joint: Gamepad steuert nur kartesisch */
     )
     {
         float current_cross_key_fb = axes[xbox_CROSS_KEY_FB];

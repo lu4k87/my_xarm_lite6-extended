@@ -439,11 +439,12 @@ def main(args=None):
     analyzer = WorkspaceAnalyzer()
     try:
         rclpy.spin(analyzer)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
         pass
     finally:
         analyzer.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

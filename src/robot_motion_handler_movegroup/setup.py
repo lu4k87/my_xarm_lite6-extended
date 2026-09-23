@@ -23,7 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'robot_motion_handler_movegroup = robot_motion_handler_movegroup.robot_motion_handler_movegroup:main'
+            'robot_motion_handler_movegroup = robot_motion_handler_movegroup.robot_motion_handler_movegroup:main',
+            'moveit_floor_collision = robot_motion_handler_movegroup.moveit_floor_collision:main',
         ],
     },
 )
