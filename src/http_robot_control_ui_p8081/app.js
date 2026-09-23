@@ -30,6 +30,10 @@ let lastServoStatus = 0;
 let activeCollisionText = '';
 let collisionTextClearTimer = null;
 let lastReportedSafetyState = 'normal'; // 'normal', 'singularity', 'collision'
+let lastRobotMotionAt = 0;          // performance.now() of the last detected joint motion
+let lastSafetyErrorSoundAt = 0;
+const SAFETY_SOUND_MOTION_WINDOW_MS = 1500;
+const SAFETY_SOUND_COOLDOWN_MS = 2500;
 
 // Grenzwerte zentral aus robot_limits.js. Fallback nur, falls die Datei fehlt.
 const LIM = window.ROBOT_LIMITS || {
@@ -95,9 +99,15 @@ function validatePose(pose) {
 
 let uiClickSound = null;
 let scanPosSound = null;
+let collisionEnabledSound = null;
+let collisionDisabledSound = null;
+let errorSound = null;
 try {
   uiClickSound = new Audio('sounds/ui_mouse_click.mp3');
   scanPosSound = new Audio('sounds/_voice_robot_moves_to_scan_pos.mp3');
+  collisionEnabledSound = new Audio('sounds/_voice_collision_detection_enabled.mp3');
+  collisionDisabledSound = new Audio('sounds/_voice_collision_detection_disabled.mp3');
+  errorSound = new Audio('sounds/error_sound.mp3');
 } catch (e) {}
 
 // ── ROS Connection ────────────────────────────────────────────────────────
@@ -139,6 +149,9 @@ function checkRosNodes() {
     // ── 3D Scene Objects Node Detection ──
     if (typeof checkSceneObjectsNodeState === 'function') {
       checkSceneObjectsNodeState(result ? result.nodes : null);
+    }
+    if (typeof checkMoveitCollNodes === 'function') {
+      checkMoveitCollNodes(result ? result.nodes : null);
     }
 
     const dot = document.getElementById('mode-dot');
@@ -330,7 +343,9 @@ motionStatusSub.subscribe((msg) => {
   else if (text.startsWith("ERR:")) { type = 'err'; text = text.substring(4).trim(); }
   else if (text.startsWith("SUCCESS:")) { type = 'success'; text = text.substring(8).trim(); }
   else if (text.startsWith("ACTION:")) { type = 'action'; text = text.substring(7).trim(); }
-  logMsg('Motion', text, type);
+  // MoveTo / MoveIt progress gets its own log source so the planning steps stand out.
+  const source = (text.startsWith('MoveIt') || text.startsWith('MoveTo')) ? 'MoveIt' : 'Motion';
+  logMsg(source, text, type);
 });
 
 const speedIndexPub = new ROSLIB.Topic({
@@ -767,6 +782,13 @@ jointStateSub.subscribe((msg) => {
   if (typeof window.updateDigitalTwinJoints === 'function' && currentJointVals.length === 6) {
     window.updateDigitalTwinJoints(currentJointVals);
   }
+  // Remember when the arm last actually moved - the safety error sound only
+  // fires for a collision/singularity the robot drives into, not for a pose
+  // it is already standing in when the page loads.
+  if (!moving && currentJointVals.length === latestJointVals.length) {
+    moving = currentJointVals.some((v, i) => Math.abs(v - latestJointVals[i]) > 0.002);
+  }
+  if (moving) lastRobotMotionAt = performance.now();
   latestJointVals = currentJointVals;
   evaluateRobotSafety();
   
@@ -961,6 +983,7 @@ function evaluateRobotSafety() {
   // State Transition Logging in Log Output
   const currentState = isCollision ? 'collision' : (isSingularity ? 'singularity' : 'normal');
   if (currentState !== lastReportedSafetyState) {
+    maybePlaySafetyErrorSound(currentState, lastReportedSafetyState);
     if (currentState === 'collision') {
       logMsg('Motion', `⚠ ${message}`, 'err');
     } else if (currentState === 'singularity') {
@@ -970,6 +993,23 @@ function evaluateRobotSafety() {
     }
     lastReportedSafetyState = currentState;
   }
+}
+
+// Error sound when the moving robot actually runs into a collision or
+// singularity (entering it, or escalating singularity -> collision). MoveIt
+// planning failures never get here - this is driven by live telemetry only.
+function maybePlaySafetyErrorSound(newState, oldState) {
+  const entering = (newState === 'collision' && oldState !== 'collision') ||
+                   (newState === 'singularity' && oldState === 'normal');
+  if (!entering) return;
+  const now = performance.now();
+  // Servo status 1-4 (decelerating/halting) only happens during commanded motion.
+  const servoStopped = lastServoStatus >= 1 && lastServoStatus <= 4;
+  const recentlyMoved = now - lastRobotMotionAt < SAFETY_SOUND_MOTION_WINDOW_MS;
+  if (!servoStopped && !recentlyMoved) return;
+  if (now - lastSafetyErrorSoundAt < SAFETY_SOUND_COOLDOWN_MS) return;
+  lastSafetyErrorSoundAt = now;
+  playVoice(errorSound, `safety error (${newState})`);
 }
 
 // ── UI Actions ──────────────────────────────────────────────────────────
@@ -1059,6 +1099,7 @@ const LOG_SRC_CLASSES = {
   'GIZMO': 'log-src-gizmo',
   'VOICE': 'log-src-voice',
   'AUDIO': 'log-src-audio',
+  'MoveIt': 'log-src-moveit',
 };
 
 function logMsg(source, text, type='info') {
@@ -1736,8 +1777,10 @@ function moveToPose() {
   logMsg('UI', `➤ MoveTo Absolute Pose: X=${x} Y=${y} Z=${z}`);
   srv.callService(req, (res) => {
     setButtonsLocked(false);
-    if (res.ret === 0) logMsg('ROS', '✓ MoveTo successful.', 'info');
-    else logMsg('ROS', `❌ MoveTo failed (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
+    // The service only starts the motion - progress and the result follow in
+    // the MoveIt popup and as [MoveIt] log lines.
+    if (res.ret === 0) logMsg('ROS', 'MoveTo accepted - MoveIt is planning the path.', 'info');
+    else logMsg('ROS', `❌ MoveTo rejected (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
   }, (err) => { 
     setButtonsLocked(false);
     logMsg('ROS', `❌ MoveTo Error: ${err}`, 'err'); 
@@ -1802,7 +1845,8 @@ window.executeMoveToPoseFromGizmo = function () {
     btnGo.disabled = true;
   }
 
-  const srv = createSrv('/ui/execute_move_to_pose', 'xarm_msgs/MoveCartesian');
+  // Silent variant: no "robot moves to absolute pose" voice for gizmo moves.
+  const srv = createSrv('/ui/execute_move_to_pose_silent', 'xarm_msgs/MoveCartesian');
   const req = new ROSLIB.ServiceRequest({
     pose: [x, y, z, r, p, yw],
     speed: 100.0,
@@ -1822,12 +1866,12 @@ window.executeMoveToPoseFromGizmo = function () {
     }
 
     if (res.ret === 0) {
-      logMsg('GIZMO', '✓ Target pose reached successfully via IK.', 'success');
+      logMsg('GIZMO', 'Gizmo move accepted - MoveIt is planning the path.', 'info');
       if (typeof window.syncTCPGizmoToRobot === 'function') {
         window.syncTCPGizmoToRobot();
       }
     } else {
-      logMsg('GIZMO', `❌ IK / move failed (ret=${res.ret}): ${res.message || 'Target unreachable or in collision'}`, 'err');
+      logMsg('GIZMO', `❌ Gizmo move rejected (ret=${res.ret}): ${res.message || 'Target unreachable or in collision'}`, 'err');
     }
   }, (err) => {
     isExecutingGizmoMove = false;
@@ -2024,8 +2068,8 @@ function playButtonClick(btn) {
   }
 }
 
-// Sprachausgabe der UI (aktuell nur die Scan-Position; die uebrigen Stimmen
-// spielt robot_motion_handler_movegroup selbst ueber pygame ab).
+// UI audio: scan position voice, MoveIt collision toggle voices and the safety
+// error sound (the other voices are played by robot_motion_handler_movegroup via pygame).
 function playVoice(audio, what) {
   if (!soundEnabled) return;
   if (!audio) {
@@ -2712,6 +2756,247 @@ function toggleSceneNode(groupKey) {
   isSceneObjectsUserVisible = Object.values(sceneGroupUserVisible).some(v => v);
 }
 window.toggleSceneNode = toggleSceneNode;
+
+// ── MoveIt-Kollision ein/aus (Objekte / Boden) ──────────────────────────
+// Schaltet nur, was MoveIt (Planung, IK, Servo) als Hindernis kennt. Die
+// Anzeige der erkannten Objekte im Viewport bleibt davon unberuehrt.
+// Zustand kommt latched von den Nodes; null = Node laeuft nicht.
+const moveitCollState = { objects: null, ground: null };
+const moveitCollCfg = {
+  objects: {
+    btnId: 'btn-moveit-coll-objects',
+    label: 'MoveIt collision of detected objects',
+    stateTopic: '/ui/moveit_collision_objects_enabled',
+    srv: '/ui/set_moveit_collision_objects',
+    node: 'yolo_moveit_collision'
+  },
+  ground: {
+    btnId: 'btn-moveit-coll-ground',
+    label: 'MoveIt ground collision',
+    stateTopic: '/ui/moveit_collision_ground_enabled',
+    srv: '/ui/set_moveit_collision_ground',
+    node: 'moveit_floor_collision'
+  }
+};
+
+function applyMoveitCollBtn(key) {
+  const cfg = moveitCollCfg[key];
+  const btn = document.getElementById(cfg.btnId);
+  if (!btn) return;
+  const state = moveitCollState[key];
+  btn.classList.toggle('active', state === true);
+  btn.classList.toggle('coll-off', state === false);
+  if (state === null) {
+    btn.style.color = 'var(--dim)';
+    btn.style.opacity = '0.45';
+    btn.title = `${cfg.label} (node ${cfg.node} inactive)`;
+  } else if (state) {
+    btn.style.color = 'var(--green)';
+    btn.style.opacity = '1.0';
+    btn.title = `${cfg.label}: ON - click to disable`;
+  } else {
+    btn.style.color = 'var(--red)';
+    btn.style.opacity = '1.0';
+    btn.title = `${cfg.label}: OFF - MoveIt ignores it! Click to enable`;
+  }
+}
+
+function toggleMoveitCollision(key) {
+  const cfg = moveitCollCfg[key];
+  if (moveitCollState[key] === null) {
+    logMsg('MoveIt', `ℹ️ ${cfg.label}: node ${cfg.node} is not running`, 'warn');
+    return;
+  }
+  const enable = !moveitCollState[key];
+  createSrv(cfg.srv, 'std_srvs/SetBool').callService(
+    new ROSLIB.ServiceRequest({ data: enable }),
+    (res) => {
+      if (!res.success) {
+        logMsg('MoveIt', `✗ ${cfg.label}: ${res.message}`, 'err');
+        return;
+      }
+      moveitCollState[key] = enable;
+      applyMoveitCollBtn(key);
+      // Erst nach bestaetigtem Umschalten ansagen - sonst hiesse es
+      // "enabled", obwohl der Node den Befehl abgelehnt hat.
+      playVoice(enable ? collisionEnabledSound : collisionDisabledSound,
+                `collision detection ${enable ? 'enabled' : 'disabled'}`);
+      logMsg('MoveIt', enable ? `🟢 ${cfg.label} ON` : `⚠ ${cfg.label} OFF - robot may collide!`, enable ? 'info' : 'err');
+    },
+    (err) => logMsg('MoveIt', `✗ ${cfg.label}: service call failed: ${err}`, 'err')
+  );
+}
+window.toggleMoveitCollision = toggleMoveitCollision;
+
+// ── MoveIt progress popup ───────────────────────────────────────────────
+// Driven by /ui/moveit_motion_state (JSON from robot_motion_handler_movegroup).
+// Timers run locally between messages, anchored to the server-side elapsed
+// times, so they tick smoothly without flooding rosbridge.
+const MP_PHASE_LABELS = {
+  ik: 'SOLVING IK',
+  preparing: 'PAUSING SERVO',
+  planning: 'PLANNING',
+  executing: 'EXECUTING',
+  succeeded: 'DONE',
+  failed: 'FAILED',
+  aborted: 'ABORTED'
+};
+const MP_ACTIVE_PHASES = ['ik', 'preparing', 'planning', 'executing'];
+const MP_HIDE_AFTER_MS = { succeeded: 5000, failed: 12000, aborted: 12000 };
+let mpState = null;        // last message
+let mpReceivedAt = 0;      // performance.now() when it arrived
+let mpTicker = null;
+let mpHideTimer = null;
+
+function mpFmt(sec) {
+  if (sec === undefined || sec === null || isNaN(sec)) return '–';
+  return sec < 10 ? `${sec.toFixed(2)} s` : `${sec.toFixed(1)} s`;
+}
+
+function mpLive() {
+  // Seconds since the last message; only meaningful while a phase is running.
+  return mpState && MP_ACTIVE_PHASES.includes(mpState.phase)
+    ? (performance.now() - mpReceivedAt) / 1000 : 0;
+}
+
+function hideMoveitPopup() {
+  const el = document.getElementById('moveit-popup');
+  if (el) el.classList.add('mp-hidden');
+  if (mpTicker) { clearInterval(mpTicker); mpTicker = null; }
+  if (mpHideTimer) { clearTimeout(mpHideTimer); mpHideTimer = null; }
+}
+window.hideMoveitPopup = hideMoveitPopup;
+
+function renderMoveitPopup() {
+  const el = document.getElementById('moveit-popup');
+  if (!el || !mpState) return;
+  const st = mpState;
+  const live = mpLive();
+  const phase = st.phase;
+  const failedAt = st.failed_phase;
+
+  el.className = `moveit-popup mp-phase-${phase}` + (MP_ACTIVE_PHASES.includes(phase) ? ' mp-active' : '');
+
+  document.getElementById('mp-phase').textContent = MP_PHASE_LABELS[phase] || phase.toUpperCase();
+  document.getElementById('mp-timer').textContent = mpFmt((st.elapsed || 0) + live);
+
+  // Steps: IK (incl. servo pause), PLAN, EXECUTE
+  const phaseElapsed = (st.phase_elapsed || 0) + live;
+  const stepOf = { ik: 'ik', preparing: 'ik', planning: 'plan', executing: 'exec' };
+  const order = ['ik', 'plan', 'exec'];
+  const current = stepOf[phase] || stepOf[failedAt] || null;
+  const doneUpTo = phase === 'succeeded' ? 3 : (current ? order.indexOf(current) : 0);
+  const times = {
+    ik: st.t_ik,
+    plan: st.t_plan,
+    exec: st.t_exec !== undefined ? st.t_exec : undefined
+  };
+  if (phase === 'succeeded' && st.t_plan_exec !== undefined) times.plan = st.t_plan_exec;
+  order.forEach((key, i) => {
+    const step = el.querySelector(`.mp-step[data-step="${key}"]`);
+    step.classList.remove('mp-step-active', 'mp-step-done', 'mp-step-failed');
+    let t = times[key];
+    if (i < doneUpTo) {
+      step.classList.add('mp-step-done');
+    } else if (key === current && MP_ACTIVE_PHASES.includes(phase)) {
+      step.classList.add('mp-step-active');
+      if (phase !== 'preparing' || key !== 'ik') t = phaseElapsed;
+    } else if (key === current && (phase === 'failed' || phase === 'aborted')) {
+      step.classList.add('mp-step-failed');
+    }
+    document.getElementById(`mp-t-${key}`).textContent = mpFmt(t);
+  });
+
+  // Progress bar
+  const bar = el.querySelector('.mp-bar');
+  const fill = document.getElementById('mp-bar-fill');
+  bar.classList.toggle('mp-bar-indeterminate', ['ik', 'preparing', 'planning'].includes(phase));
+  if (phase === 'executing' && st.exec_expected > 0) {
+    fill.style.width = `${Math.min(99, (phaseElapsed / st.exec_expected) * 100).toFixed(1)}%`;
+  } else if (['succeeded', 'failed', 'aborted'].includes(phase)) {
+    fill.style.width = '100%';
+  } else {
+    fill.style.width = '0%';
+  }
+
+  // Detail line
+  const tgt = Array.isArray(st.target) ? `X ${st.target[0].toFixed(0)} · Y ${st.target[1].toFixed(0)} · Z ${st.target[2].toFixed(0)} mm` : '';
+  let detail = '';
+  switch (phase) {
+    case 'ik':
+      detail = `Solving IK for a collision-free goal · ${tgt}`; break;
+    case 'preparing':
+      detail = 'Pausing MoveIt Servo before the planned motion...'; break;
+    case 'planning':
+      detail = `Searching a collision-free path · budget ${mpFmt(st.planning_budget)}` +
+               (st.attempt > 0 ? ` · candidate ${st.attempt}` : '') +
+               (st.speed ? ` · ${st.speed} ×${Number(st.velocity_scaling).toFixed(2)}` : '');
+      break;
+    case 'executing':
+      detail = (st.waypoints ? `${st.waypoints} waypoints · est. ${mpFmt(st.exec_expected)}` : 'Executing the planned path') +
+               (st.replans > 0 ? ` · replanned ${st.replans}×` : '') +
+               ` · ${tgt}`;
+      break;
+    case 'succeeded':
+      detail = `Target reached · ${tgt}`; break;
+    case 'aborted':
+      detail = `Aborted${failedAt ? ` during ${MP_PHASE_LABELS[failedAt] || failedAt}` : ''}: ${st.message || 'emergency stop'}`; break;
+    case 'failed':
+      detail = `Failed${failedAt ? ` during ${MP_PHASE_LABELS[failedAt] || failedAt}` : ''}: ${st.message || 'unknown error'}`; break;
+  }
+  document.getElementById('mp-detail').textContent = detail;
+}
+
+new ROSLIB.Topic({
+  ros: ros,
+  name: '/ui/moveit_motion_state',
+  messageType: 'std_msgs/String'
+}).subscribe((msg) => {
+  let st;
+  try { st = JSON.parse(msg.data); } catch (e) { return; }
+  if (!st || !st.phase) return;
+  mpState = st;
+  mpReceivedAt = performance.now();
+
+  const el = document.getElementById('moveit-popup');
+  if (el) el.classList.remove('mp-hidden');
+  if (mpHideTimer) { clearTimeout(mpHideTimer); mpHideTimer = null; }
+
+  if (MP_ACTIVE_PHASES.includes(st.phase)) {
+    if (!mpTicker) mpTicker = setInterval(renderMoveitPopup, 100);
+  } else {
+    if (mpTicker) { clearInterval(mpTicker); mpTicker = null; }
+    mpHideTimer = setTimeout(hideMoveitPopup, MP_HIDE_AFTER_MS[st.phase] || 8000);
+  }
+  renderMoveitPopup();
+});
+
+Object.keys(moveitCollCfg).forEach((key) => {
+  // rosbridge uebernimmt transient_local vom Publisher -> Zustand kommt auch
+  // nach einem Reload der Seite sofort an.
+  new ROSLIB.Topic({
+    ros: ros,
+    name: moveitCollCfg[key].stateTopic,
+    messageType: 'std_msgs/Bool'
+  }).subscribe((msg) => {
+    moveitCollState[key] = Boolean(msg.data);
+    applyMoveitCollBtn(key);
+  });
+});
+
+// Der latched Zustand bleibt nach einem Node-Absturz im Topic haengen -
+// deshalb an der Node-Liste pruefen, ob der Schalter ueberhaupt wirkt.
+function checkMoveitCollNodes(nodesList) {
+  if (!Array.isArray(nodesList)) return;
+  Object.keys(moveitCollCfg).forEach((key) => {
+    const running = nodesList.some(n => n.includes(moveitCollCfg[key].node));
+    if (!running && moveitCollState[key] !== null) {
+      moveitCollState[key] = null;
+      applyMoveitCollBtn(key);
+    }
+  });
+}
+window.checkMoveitCollNodes = checkMoveitCollNodes;
 
 function applySceneObjectsActiveState(isActive, reason) {
   const wasRunning = isSceneObjectsNodeRunning;

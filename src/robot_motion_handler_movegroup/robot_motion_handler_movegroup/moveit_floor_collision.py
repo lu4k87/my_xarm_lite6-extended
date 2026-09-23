@@ -15,14 +15,21 @@ Humble eigener "primary" Planning Scene Monitor). Damit blockieren:
 Veroeffentlicht wird zyklisch, damit ein spaeter oder neu gestarteter
 move_group/servo_server den Boden ohne Neustart dieses Nodes bekommt. Ein ADD
 mit gleicher ID ersetzt das Objekt nur, die Last ist vernachlaessigbar.
+
+Die Robot Control UI kann den Boden ueber /ui/set_moveit_collision_ground
+(std_srvs/SetBool) fuer MoveIt aus- und wieder einschalten. Der Zustand geht
+latched auf /ui/moveit_collision_ground_enabled. Nach einem Neustart des Nodes
+ist der Boden immer wieder aktiv.
 """
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy
 from geometry_msgs.msg import Pose
 from moveit_msgs.msg import CollisionObject, ObjectColor, PlanningScene
 from shape_msgs.msg import SolidPrimitive
-from std_msgs.msg import ColorRGBA
+from std_msgs.msg import Bool, ColorRGBA
+from std_srvs.srv import SetBool
 
 
 class MoveitFloorCollision(Node):
@@ -40,6 +47,14 @@ class MoveitFloorCollision(Node):
         self.declare_parameter('publish_period', 2.0)
 
         self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
+
+        self.enabled = True
+        latched_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.state_pub = self.create_publisher(
+            Bool, '/ui/moveit_collision_ground_enabled', latched_qos)
+        self.create_service(SetBool, '/ui/set_moveit_collision_ground', self.set_enabled_cb)
+        self.state_pub.publish(Bool(data=self.enabled))
+
         period = float(self.get_parameter('publish_period').value)
         self.timer = self.create_timer(period, self.publish_floor)
         self.publish_floor()
@@ -49,7 +64,33 @@ class MoveitFloorCollision(Node):
             f"(top at z={self.get_parameter('floor_z').value:.3f} m in "
             f"{self.get_parameter('frame_id').value}).")
 
+    def set_enabled_cb(self, request, response):
+        self.enabled = bool(request.data)
+        if self.enabled:
+            self.publish_floor()
+        else:
+            self.remove_floor()
+        self.state_pub.publish(Bool(data=self.enabled))
+        response.success = True
+        response.message = f"MoveIt ground collision {'enabled' if self.enabled else 'disabled'}"
+        self.get_logger().warn(response.message)
+        return response
+
+    def remove_floor(self):
+        obj = CollisionObject()
+        obj.header.frame_id = self.get_parameter('frame_id').value
+        obj.header.stamp = self.get_clock().now().to_msg()
+        obj.id = self.get_parameter('object_id').value
+        obj.operation = CollisionObject.REMOVE
+
+        scene = PlanningScene()
+        scene.is_diff = True
+        scene.world.collision_objects = [obj]
+        self.scene_pub.publish(scene)
+
     def publish_floor(self):
+        if not self.enabled:
+            return
         floor_z = float(self.get_parameter('floor_z').value)
         size_xy = float(self.get_parameter('size_xy').value)
         thickness = float(self.get_parameter('thickness').value)

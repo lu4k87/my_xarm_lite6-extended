@@ -16,6 +16,7 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
   <exec_depend>rviz_object_distance_visualizer</exec_depend>
   <exec_depend>rviz_overlay_servo_status</exec_depend>
   <exec_depend>ip_cam_aruco_6pose_tf_coord</exec_depend>

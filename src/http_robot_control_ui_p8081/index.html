@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=39">
+  <link rel="stylesheet" href="style.css?v=41">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -260,6 +260,32 @@
                 </div>
                 </div>
 
+                <!-- MoveIt progress popup: IK -> planning -> execution with live timers -->
+                <div id="moveit-popup" class="moveit-popup mp-hidden" role="status" aria-live="polite">
+                  <div class="mp-head">
+                    <i class="fa-solid fa-route mp-icon" id="mp-icon"></i>
+                    <span class="mp-title">MOVEIT</span>
+                    <span class="mp-phase" id="mp-phase">IDLE</span>
+                    <span class="mp-timer" id="mp-timer">0.0 s</span>
+                    <button type="button" class="mp-close" onclick="hideMoveitPopup()" title="Close MoveIt status">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                  <div class="mp-steps">
+                    <div class="mp-step" data-step="ik">
+                      <span class="mp-dot"></span><span class="mp-step-label">IK</span><span class="mp-step-time" id="mp-t-ik">–</span>
+                    </div>
+                    <div class="mp-step" data-step="plan">
+                      <span class="mp-dot"></span><span class="mp-step-label">PLAN</span><span class="mp-step-time" id="mp-t-plan">–</span>
+                    </div>
+                    <div class="mp-step" data-step="exec">
+                      <span class="mp-dot"></span><span class="mp-step-label">EXECUTE</span><span class="mp-step-time" id="mp-t-exec">–</span>
+                    </div>
+                  </div>
+                  <div class="mp-bar"><div class="mp-bar-fill" id="mp-bar-fill"></div></div>
+                  <div class="mp-detail" id="mp-detail">Waiting for MoveIt...</div>
+                </div>
+
                 <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
                   <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
                   <span id="twin-warning-text">COLLISION DETECTED</span>
@@ -292,6 +318,13 @@
                 </button>
                 <button class="btn btn-icon-small" id="btn-twin-distance-line" onclick="toggleTwinDistanceLine()" title="Distance line (dashed line from TCP to the nearest detected object)">
                   <i class="fa-solid fa-ruler-horizontal"></i>
+                </button>
+                <div class="twin-scene-divider"></div>
+                <button class="btn btn-icon-small" id="btn-moveit-coll-objects" onclick="toggleMoveitCollision('objects')" title="MoveIt collision of detected objects (node inactive)" style="color: var(--dim); opacity: 0.45;">
+                  <i class="fa-solid fa-box-open"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-moveit-coll-ground" onclick="toggleMoveitCollision('ground')" title="MoveIt ground collision (node inactive)" style="color: var(--dim); opacity: 0.45;">
+                  <i class="fa-solid fa-arrows-down-to-line"></i>
                 </button>
               </div>
               </div>
@@ -757,7 +790,7 @@
   <script src="robot_limits.js?v=1"></script>
   <script src="digital_twin.js?v=21"></script>
 
-  <script src="app.js?v=23"></script>
+  <script src="app.js?v=27"></script>
   
   <script>
     // ── Live Camera Update Loop ──

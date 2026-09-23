@@ -1996,6 +1996,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .log-src-gizmo  { color: #39c5cf; }  /* Tuerkis   */
 .log-src-voice  { color: #f778ba; }  /* Pink      */
 .log-src-audio  { color: #ffa657; }  /* Orange    */
+.log-src-moveit { color: #3fb950; }  /* green */
 
 /* Message Types */
 /* Zustaende - Grundfarbe der Meldung */
@@ -2284,6 +2285,212 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   color: #fef08a;
   animation: banner-pulse-amber 1.1s infinite alternate ease-in-out;
 }
+
+/* ── MoveIt progress popup (below the TCP gizmo HUD, in the top-center flow) ──
+   Sits in the same flex column as the gizmo HUD and the warning banner, so it
+   pushes nothing around and can never overlap them. */
+.moveit-popup {
+  --mp-accent: #f59e0b;
+  box-sizing: border-box;
+  width: 390px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 8px 10px 9px;
+  background: rgba(10, 14, 23, 0.9);
+  border: 1px solid color-mix(in srgb, var(--mp-accent) 55%, transparent);
+  border-radius: 10px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45), 0 0 14px color-mix(in srgb, var(--mp-accent) 22%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--txt);
+  animation: mp-in 0.18s ease-out;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.moveit-popup.mp-hidden { display: none; }
+
+.moveit-popup.mp-phase-executing { --mp-accent: #38bdf8; }
+.moveit-popup.mp-phase-succeeded { --mp-accent: #10b981; }
+.moveit-popup.mp-phase-failed,
+.moveit-popup.mp-phase-aborted   { --mp-accent: #ef4444; }
+
+@keyframes mp-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.mp-head {
+  display: flex;
+  flex-wrap: wrap; /* narrow viewports: timer moves to a second row instead of overlapping */
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.mp-icon {
+  color: var(--mp-accent);
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+
+.moveit-popup.mp-active .mp-icon { animation: mp-pulse 1s ease-in-out infinite alternate; }
+
+@keyframes mp-pulse {
+  from { opacity: 0.45; }
+  to   { opacity: 1; }
+}
+
+.mp-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--mut);
+  flex: 0 0 auto;
+}
+
+.mp-phase {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: var(--mp-accent);
+  background: color-mix(in srgb, var(--mp-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mp-accent) 45%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.mp-timer {
+  margin-left: auto;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--txt);
+  flex: 0 0 auto;
+}
+
+.mp-close {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mut);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.mp-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--txt); }
+
+.mp-steps {
+  display: grid;
+  /* Three columns when there is room, otherwise the steps wrap into rows. */
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 6px;
+}
+
+.mp-step {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 10px;
+  color: var(--mut);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.mp-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.mp-step-label {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.mp-step-time {
+  margin-left: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mp-step.mp-step-active {
+  color: var(--txt);
+  border-color: color-mix(in srgb, var(--mp-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--mp-accent) 10%, transparent);
+}
+
+.mp-step.mp-step-active .mp-dot {
+  background: var(--mp-accent);
+  animation: mp-pulse 0.7s ease-in-out infinite alternate;
+}
+
+.mp-step.mp-step-done { color: #cbd5e1; }
+.mp-step.mp-step-done .mp-dot { background: #10b981; }
+.mp-step.mp-step-failed { color: #fecaca; border-color: rgba(239, 68, 68, 0.6); }
+.mp-step.mp-step-failed .mp-dot { background: #ef4444; }
+
+.mp-bar {
+  position: relative;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.mp-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 2px;
+  background: var(--mp-accent);
+  transition: width 0.12s linear;
+}
+
+/* Planning has no known end - show a running stripe instead of a fake percentage. */
+.mp-bar.mp-bar-indeterminate .mp-bar-fill {
+  width: 35% !important;
+  transition: none;
+  animation: mp-indeterminate 1.1s ease-in-out infinite;
+}
+
+@keyframes mp-indeterminate {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(290%); }
+}
+
+.mp-detail {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--mut);
+  overflow-wrap: anywhere;
+}
+
+.moveit-popup.mp-phase-failed .mp-detail,
+.moveit-popup.mp-phase-aborted .mp-detail { color: #fecaca; }
 
 .twin-hud-banner.banner-hidden {
   display: none; /* aus dem Flow genommen - der Banner sitzt unter dem TCP HUD */
@@ -2745,6 +2952,20 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   align-items: center !important;
   justify-content: center !important;
   line-height: 1 !important;
+}
+
+/* Trennt die Anzeige-Toggles von den MoveIt-Kollisions-Toggles */
+.twin-scene-divider {
+  width: 22px;
+  height: 1px;
+  margin: 2px 0;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* MoveIt-Kollision AUS: rot umrandet, damit der unsichere Zustand auffaellt */
+.twin-scene-node-overlay .btn-icon-small.coll-off {
+  border: 1px solid rgba(239, 68, 68, 0.6) !important;
+  background: rgba(239, 68, 68, 0.12) !important;
 }
 
 /* ── Floating TCP Gizmo HUD (Interactive Target & Auto-Move Bar) ── */

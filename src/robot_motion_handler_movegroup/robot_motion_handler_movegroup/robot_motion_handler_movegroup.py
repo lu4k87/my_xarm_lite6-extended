@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 
+import json
 import threading
 import time
 import rclpy
 from rclpy.node import Node
+from rclpy.action import ActionClient
+from action_msgs.msg import GoalStatus, GoalStatusArray
 from rclpy.qos import QoSProfile, DurabilityPolicy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from builtin_interfaces.msg import Duration
+from std_msgs.msg import String
 from std_srvs.srv import Trigger
 from xarm_msgs.srv import MoveCartesian, MoveJoint
 from moveit_msgs.srv import GetPositionIK
+from moveit_msgs.action import MoveGroup
+from moveit_msgs.msg import Constraints, DisplayTrajectory, JointConstraint, MotionPlanRequest, MoveItErrorCodes
 import math
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -80,6 +86,41 @@ class RobotMotionHandlerMovegroup(Node):
         self.ui_log_pub = self.create_publisher(String, '/ui/motion_status', 10)
         
         self.ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
+
+        # MoveTo lets move_group (OMPL) plan a collision-free path to the IK goal
+        # instead of sending the joint angles straight to the controller. Only
+        # this way every intermediate pose is checked against objects and ground.
+        self.move_group_client = ActionClient(self, MoveGroup, '/move_action', callback_group=self.cb_group)
+        self._move_goal_handle = None
+        self.declare_parameter('moveto_planning_time', 5.0)
+        self.declare_parameter('moveto_planning_attempts', 10)
+        self.declare_parameter('moveto_timeout', 120.0)  # planning + execution in total (s)
+        # Index = UI speed level (0: Slow, 1: Normal, 2: Fast)
+        self.declare_parameter('moveto_velocity_scaling', [0.15, 0.3, 0.6])
+        self.declare_parameter('moveto_acceleration_scaling', [0.15, 0.3, 0.6])
+
+        # Live MoveTo progress for the MoveIt popup in the Robot Control UI
+        # (JSON in std_msgs/String). move_group itself only reports PLANNING and
+        # IDLE, so the phases are derived from two other sources:
+        #  - /display_planned_path: a candidate path was computed. The pipeline
+        #    publishes it even if the path fails validation afterwards, so it
+        #    does NOT mean execution has started.
+        #  - the trajectory controller's action status: a goal switching to
+        #    EXECUTING is the moment move_group actually starts moving the arm.
+        self.declare_parameter(
+            'moveit_controller_status_topic', '/lite6_traj_controller/follow_joint_trajectory/_action/status')
+        self.moveit_state_pub = self.create_publisher(String, '/ui/moveit_motion_state', 10)
+        self._moveit_run = None
+        self._moveit_seq = 0
+        self._moveit_lock = threading.Lock()
+        self._controller_goals_seen = set()
+        self.create_subscription(
+            DisplayTrajectory, '/display_planned_path', self._planned_path_cb, 10,
+            callback_group=self.cb_group)
+        status_qos = QoSProfile(depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.create_subscription(
+            GoalStatusArray, self.get_parameter('moveit_controller_status_topic').value,
+            self._controller_status_cb, status_qos, callback_group=self.cb_group)
         
         self.servo_stop_client = self.create_client(Trigger, '/servo_server/stop_servo', callback_group=self.cb_group)
         self.servo_start_client = self.create_client(Trigger, '/servo_server/start_servo', callback_group=self.cb_group)
@@ -98,6 +139,14 @@ class RobotMotionHandlerMovegroup(Node):
             MoveCartesian,
             '/ui/execute_move_to_pose',
             self.execute_move_to_pose_cb,
+            callback_group=self.cb_group
+        )
+        # Same MoveTo without the "robot moves to absolute pose" voice - used by
+        # the viewport TCP gizmo, where the announcement on every drag is noise.
+        self.move_silent_srv = self.create_service(
+            MoveCartesian,
+            '/ui/execute_move_to_pose_silent',
+            self.execute_move_to_pose_silent_cb,
             callback_group=self.cb_group
         )
         self.move_joint_srv = self.create_service(
@@ -158,7 +207,7 @@ class RobotMotionHandlerMovegroup(Node):
         latched_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.estop_state_pub = self.create_publisher(Bool, '/ui/emergency_stop_active', latched_qos)
 
-        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose, /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint, /ui/emergency_stop, /ui/reset_emergency_stop) ready.', 'success')
+        self.ui_log('Universal Control Services (/ui/execute_initial_pose, /ui/execute_move_to_pose[_silent], /ui/start_octomap_scan, /ui/start_object_scan, /ui/execute_move_joint, /ui/emergency_stop, /ui/reset_emergency_stop) ready.', 'success')
         self.is_executing = False
         self.stop_requested = False
         self.estop_latched = False
@@ -555,6 +604,11 @@ class RobotMotionHandlerMovegroup(Node):
         self.estop_latched = True
         self._publish_estop_state()
         self.ui_log('<span style="color: var(--rviz-x); font-weight: bold; font-size: 1.2em;">EMERGENCY STOP TRIGGERED!</span>', 'error')
+
+        # Cancel a planned MoveTo path that move_group is currently running.
+        goal_handle = self._move_goal_handle
+        if goal_handle is not None:
+            goal_handle.cancel_goal_async()
 
         # Servo anhalten, damit auch Jogging (UI, Gamepad) bis zum Quittieren ruht.
         if self.servo_stop_client.service_is_ready():
@@ -1063,7 +1117,10 @@ class RobotMotionHandlerMovegroup(Node):
         response.message = "Object Scan processing started."
         return response
 
-    def execute_move_to_pose_cb(self, request, response):
+    def execute_move_to_pose_silent_cb(self, request, response):
+        return self.execute_move_to_pose_cb(request, response, announce=False)
+
+    def execute_move_to_pose_cb(self, request, response, announce=True):
         rejection = self._estop_rejection()
         if rejection:
             response.ret = -1
@@ -1078,7 +1135,7 @@ class RobotMotionHandlerMovegroup(Node):
         self.stop_requested = False
         def _task():
             try:
-                self._execute_move_to_pose_core(request, response)
+                self._execute_move_to_pose_core(request, response, announce)
             finally:
                 self.is_executing = False
                 
@@ -1088,7 +1145,7 @@ class RobotMotionHandlerMovegroup(Node):
         response.message = "Move to pose started."
         return response
 
-    def _execute_move_to_pose_core(self, request, response):
+    def _execute_move_to_pose_core(self, request, response, announce=True):
         try:
             from geometry_msgs.msg import PoseStamped
             
@@ -1104,10 +1161,12 @@ class RobotMotionHandlerMovegroup(Node):
             is_scan_pos = (abs(target_x - 0.3) < 0.001 and abs(target_y - 0.0) < 0.001 and abs(target_z - 0.4) < 0.001)
             is_hover_pos = (abs(target_z - 0.04) < 0.001)
             
-            if self.sound_enabled and self.sound_absolute and not is_scan_pos and not is_hover_pos:
+            if announce and self.sound_enabled and self.sound_absolute and not is_scan_pos and not is_hover_pos:
                 self.sound_absolute.play()
             
-            self.ui_log(f"MoveTo started (IK mode): X={target_x:.3f}, Y={target_y:.3f}, Z={target_z:.3f}", 'action')
+            self._moveit_begin(request.pose[:3])
+            self.ui_log(f"MoveTo started: target X={request.pose[0]:.0f} Y={request.pose[1]:.0f} Z={request.pose[2]:.0f} mm", 'action')
+            self.ui_log("MoveIt [1/3] Solving IK for a collision-free goal pose...", 'info')
             
             # 1. Konvertiere Euler zu Quaternion
             target_rot = R.from_euler('xyz', [target_r, target_p, target_yaw], degrees=False)
@@ -1122,6 +1181,7 @@ class RobotMotionHandlerMovegroup(Node):
             ik_req = GetPositionIK.Request()
             ik_req.ik_request.group_name = "lite6"
             ik_req.ik_request.avoid_collisions = True
+            ik_req.ik_request.robot_state.is_diff = True  # seed = current robot state
             ik_req.ik_request.pose_stamped = PoseStamped()
             ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
             ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
@@ -1166,19 +1226,275 @@ class RobotMotionHandlerMovegroup(Node):
                 else:
                     raise Exception(f"Joint {j_name} not found in IK solution!")
                     
-            # 5. Führe Gelenkbewegung aus
-            self._go_to_joints(target_joints, log_msg="Executing MoveTo Pose via IK...")
-            
-            self.ui_log("MoveTo target successfully reached!", 'success')
+            self._moveit_mark('t_ik')
+
+            # 5. Plan and execute a collision-free path
+            self._plan_and_execute_joints(target_joints)
+
+            run = self._moveit_finish('succeeded')
+            self.ui_log(f"MoveTo target reached ({self._moveit_timing_text(run)}).", 'success')
             response.ret = 0
             response.message = "Success"
             
         except Exception as e:
-            self.ui_log(f"Error in MoveTo: {e}", 'error')
+            aborted = self.stop_requested
+            run = self._moveit_finish('aborted' if aborted else 'failed', message=str(e))
+            phase_names = {'ik': 'IK', 'preparing': 'setup', 'planning': 'planning', 'executing': 'execution'}
+            failed_phase = run.get('failed_phase') if run else None
+            where = f" during {phase_names.get(failed_phase, failed_phase)}" if failed_phase else ""
+            elapsed = f" after {run['elapsed']:.1f} s" if run else ""
+            self.ui_log(f"MoveTo {'aborted' if aborted else 'failed'}{where}{elapsed}: {e}", 'error')
             response.ret = -1
             response.message = str(e)
             
         return response
+
+    _MOVEIT_ERROR_TEXT = {
+        MoveItErrorCodes.PLANNING_FAILED: 'no collision-free path found',
+        MoveItErrorCodes.INVALID_MOTION_PLAN: 'no valid path - every candidate path failed collision validation',
+        MoveItErrorCodes.MOTION_PLAN_INVALIDATED_BY_ENVIRONMENT_CHANGE: 'path blocked by a changed scene',
+        MoveItErrorCodes.CONTROL_FAILED: 'controller failed to execute the path',
+        MoveItErrorCodes.TIMED_OUT: 'planning timed out',
+        MoveItErrorCodes.PREEMPTED: 'motion was preempted',
+        MoveItErrorCodes.START_STATE_IN_COLLISION: 'robot is already in collision at its current pose',
+        MoveItErrorCodes.GOAL_IN_COLLISION: 'target pose is in collision',
+        MoveItErrorCodes.GOAL_CONSTRAINTS_VIOLATED: 'target not reached within tolerance',
+        MoveItErrorCodes.NO_IK_SOLUTION: 'no IK solution',
+    }
+
+    @staticmethod
+    def _cancel_when_accepted(send_future):
+        goal_handle = send_future.result()
+        if goal_handle is not None and goal_handle.accepted:
+            goal_handle.cancel_goal_async()
+
+    def _plan_and_execute_joints(self, target_joints):
+        """Plan a collision-free path to target_joints with move_group and execute it.
+
+        If move_group is unreachable there is deliberately NO fallback to the
+        direct, unchecked joint motion.
+        """
+        if not self.move_group_client.wait_for_server(timeout_sec=2.0):
+            raise Exception("MoveGroup action /move_action not available - motion aborted (no unchecked fallback).")
+
+        speed_idx = min(max(int(self.current_scan_speed), 0), 2)
+        vel_scaling = self.get_parameter('moveto_velocity_scaling').value
+        acc_scaling = self.get_parameter('moveto_acceleration_scaling').value
+        planning_time = float(self.get_parameter('moveto_planning_time').value)
+
+        req = MotionPlanRequest()
+        req.group_name = 'lite6'
+        req.num_planning_attempts = int(self.get_parameter('moveto_planning_attempts').value)
+        req.allowed_planning_time = planning_time
+        req.max_velocity_scaling_factor = float(vel_scaling[speed_idx])
+        req.max_acceleration_scaling_factor = float(acc_scaling[speed_idx])
+
+        goal = Constraints()
+        for i, position in enumerate(target_joints):
+            jc = JointConstraint()
+            jc.joint_name = f'joint{i + 1}'
+            jc.position = float(position)
+            jc.tolerance_above = 0.001
+            jc.tolerance_below = 0.001
+            jc.weight = 1.0
+            goal.joint_constraints.append(jc)
+        req.goal_constraints.append(goal)
+
+        goal_msg = MoveGroup.Goal()
+        goal_msg.request = req
+        goal_msg.planning_options.plan_only = False  # planen UND ausfuehren
+        goal_msg.planning_options.look_around = False
+        goal_msg.planning_options.replan = True
+        goal_msg.planning_options.replan_attempts = 3
+        goal_msg.planning_options.replan_delay = 0.1
+
+        # Servo and move_group must not command the trajectory controller at the same time.
+        self._moveit_phase('preparing')
+        self._pause_servo('MoveIt Servo paused for the planned MoveTo motion.')
+        try:
+            if self.stop_requested:
+                raise Exception("aborted by EMERGENCY STOP.")
+
+            speed_label = ('Slow', 'Normal', 'Fast')[speed_idx]
+            self._moveit_phase('planning', planning_budget=planning_time,
+                               speed=speed_label, velocity_scaling=req.max_velocity_scaling_factor)
+            self.ui_log(f"MoveIt [2/3] Planning a collision-free path (budget {planning_time:.1f} s, "
+                        f"speed {speed_label} x{req.max_velocity_scaling_factor:.2f})...", 'info')
+            # move_group (Humble) may acknowledge the goal only after planning
+            # AND execution. A short timeout on the acceptance would report
+            # MoveTo as failed while the arm keeps moving - hence only one
+            # generous deadline for the whole sequence.
+            deadline = time.time() + float(self.get_parameter('moveto_timeout').value)
+            send_future = self.move_group_client.send_goal_async(goal_msg)
+            while not send_future.done():
+                if self.stop_requested or time.time() > deadline:
+                    send_future.add_done_callback(self._cancel_when_accepted)
+                    raise Exception("Movement interrupted by EMERGENCY STOP!" if self.stop_requested
+                                    else "Timeout waiting for move_group.")
+                time.sleep(0.05)
+
+            goal_handle = send_future.result()
+            if not goal_handle.accepted:
+                raise Exception("move_group rejected the MoveTo goal.")
+            self._move_goal_handle = goal_handle
+
+            result_future = goal_handle.get_result_async()
+            while not result_future.done():
+                if self.stop_requested or time.time() > deadline:
+                    goal_handle.cancel_goal_async()
+                    raise Exception("Movement interrupted by EMERGENCY STOP!" if self.stop_requested
+                                    else "Timeout waiting for move_group.")
+                time.sleep(0.05)
+
+            code = result_future.result().result.error_code.val
+            if code != MoveItErrorCodes.SUCCESS:
+                reason = self._MOVEIT_ERROR_TEXT.get(code, 'MoveIt error')
+                raise Exception(f"{reason} (MoveIt error code {code}).")
+        finally:
+            self._move_goal_handle = None
+            self._resume_servo()
+
+
+    # ── MoveIt progress reporting (UI popup + log) ─────────────────────────
+    def _moveit_begin(self, target_mm):
+        now = time.time()
+        with self._moveit_lock:
+            self._moveit_seq += 1
+            self._moveit_run = {
+                'seq': self._moveit_seq,
+                'target': [round(float(v), 1) for v in target_mm],
+                't0': now,
+                'phase_t0': now,
+            }
+        self._moveit_phase('ik')
+
+    def _moveit_publish(self, run):
+        msg = {k: v for k, v in run.items() if k not in ('t0', 'phase_t0')}
+        msg['elapsed'] = round(time.time() - run['t0'], 3)
+        msg['phase_elapsed'] = round(time.time() - run['phase_t0'], 3)
+        self.moveit_state_pub.publish(String(data=json.dumps(msg)))
+
+    def _moveit_phase(self, phase, **info):
+        with self._moveit_lock:
+            run = self._moveit_run
+            if run is None:
+                return
+            run.update(info)
+            run['phase'] = phase
+            run['phase_t0'] = time.time()
+            self._moveit_publish(run)
+
+    def _moveit_mark(self, key):
+        """Store the duration of the phase that just ended (e.g. t_ik)."""
+        with self._moveit_lock:
+            run = self._moveit_run
+            if run is not None:
+                run[key] = round(time.time() - run['phase_t0'], 3)
+
+    def _moveit_finish(self, outcome, message=''):
+        """Publish the final state and return a copy of the run (None if none was active)."""
+        with self._moveit_lock:
+            run = self._moveit_run
+            if run is None:
+                return None
+            now = time.time()
+            if outcome == 'succeeded':
+                if run.get('phase') == 'executing':
+                    run['t_exec'] = round(now - run['phase_t0'], 3)
+                elif run.get('phase') == 'planning':
+                    # No /display_planned_path seen: planning and execution cannot be told apart.
+                    run['t_plan_exec'] = round(now - run['phase_t0'], 3)
+            else:
+                run['failed_phase'] = run.get('phase')
+                if run.get('phase') == 'planning':
+                    run['t_plan'] = round(now - run['phase_t0'], 3)
+            run['message'] = message
+            run['phase'] = outcome
+            run['phase_t0'] = now
+            self._moveit_publish(run)
+            result = dict(run)
+            result['elapsed'] = round(now - run['t0'], 3)
+            self._moveit_run = None
+            return result
+
+    @staticmethod
+    def _moveit_timing_text(run):
+        if not run:
+            return 'no timing'
+        parts = []
+        if 't_ik' in run:
+            parts.append(f"IK {run['t_ik']:.2f} s")
+        if 't_plan' in run:
+            parts.append(f"planning {run['t_plan']:.2f} s")
+        if 't_exec' in run:
+            parts.append(f"execution {run['t_exec']:.2f} s")
+        if 't_plan_exec' in run:
+            parts.append(f"planning + execution {run['t_plan_exec']:.2f} s")
+        parts.append(f"total {run['elapsed']:.2f} s")
+        return ', '.join(parts)
+
+    def _planned_path_cb(self, msg):
+        """move_group computed a candidate path (it may still fail validation)."""
+        if not msg.trajectory:
+            return
+        points = msg.trajectory[-1].joint_trajectory.points
+        expected = 0.0
+        if points:
+            t = points[-1].time_from_start
+            expected = t.sec + t.nanosec * 1e-9
+        with self._moveit_lock:
+            run = self._moveit_run
+            if run is None or run.get('phase') not in ('planning', 'executing'):
+                return
+            run['attempt'] = run.get('attempt', 0) + 1
+            run['waypoints'] = len(points)
+            run['exec_expected'] = round(expected, 3)
+            attempt = run['attempt']
+            phase = run['phase']
+            if phase == 'planning':
+                self._moveit_publish(run)
+        if phase == 'planning' and attempt > 1:
+            self.ui_log(f"MoveIt: previous path failed validation - new candidate path found "
+                        f"(attempt {attempt}, {len(points)} waypoint{'s' if len(points) != 1 else ''}).", 'warn')
+
+    def _controller_status_cb(self, msg):
+        """A new controller goal switching to EXECUTING = move_group starts moving the arm."""
+        started = False
+        for status in msg.status_list:
+            if status.status != GoalStatus.STATUS_EXECUTING:
+                continue
+            goal_id = bytes(status.goal_info.goal_id.uuid)
+            if goal_id in self._controller_goals_seen:
+                continue
+            self._controller_goals_seen.add(goal_id)
+            started = True
+        if len(self._controller_goals_seen) > 200:
+            self._controller_goals_seen.clear()
+        if not started:
+            return
+
+        with self._moveit_lock:
+            run = self._moveit_run
+            if run is None or run.get('phase') not in ('planning', 'executing'):
+                return
+            replanned = run['phase'] == 'executing'
+            if replanned:
+                run['replans'] = run.get('replans', 0) + 1
+            else:
+                run['t_plan'] = round(time.time() - run['phase_t0'], 3)
+            run['phase'] = 'executing'
+            run['phase_t0'] = time.time()
+            t_plan = run.get('t_plan', 0.0)
+            waypoints = run.get('waypoints')
+            expected = run.get('exec_expected')
+            self._moveit_publish(run)
+
+        path_info = (f"{waypoints} waypoint{'s' if waypoints != 1 else ''}, est. {expected:.1f} s"
+                     if waypoints else "path details unavailable")
+        if replanned:
+            self.ui_log(f"MoveIt replanned during execution ({path_info}) - executing the new path.", 'warn')
+        else:
+            self.ui_log(f"MoveIt [3/3] Collision-free path found in {t_plan:.2f} s ({path_info}) - executing.", 'info')
 
 def main(args=None):
     rclpy.init(args=args)

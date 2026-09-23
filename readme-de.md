@@ -775,8 +775,16 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
 >> | **`/collision_object`** | `moveit_msgs/CollisionObject` | *Sendet die Becher-Formen als `CollisionObjects` direkt an MoveIt.* |
+>> | **`/ui/moveit_collision_objects_enabled`** | `std_msgs/Bool` (latched) | *Ob MoveIt die erkannten Objekte gerade berücksichtigt.* |
 >> | **`/ui/yolo_collision_toggle`** | `visualization_msgs/MarkerArray` | *Publiziert visuelle Marker und dient als RViz-Toggle.* |
 >> | **`/ui/grasp_status`** | `std_msgs/String` | *Publiziert Statusmeldungen zu Kollisions-Timeouts.* |
+>
+>
+> ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/ui/set_moveit_collision_objects`** | `std_srvs/srv/SetBool` (Server) | *Schaltet die Objekte als MoveIt-Hindernis an/aus (RViz-Marker bleiben sichtbar). Nach einem Neustart immer AN.* |
 >
 
 ---
@@ -1457,6 +1465,7 @@ flowchart TD
 > - **Service-Bereitstellung:** Öffnet wichtige ROS2-Services wie `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/execute_move_joint`, `/ui/start_octomap_scan` und `/ui/start_object_scan`.
 > - **Ressourcen-Management:** Stoppt automatisch die manuelle Teleop-Steuerung (`MoveIt Servo` / Gamepad), bevor eine automatische Trajektorie gefahren wird, und reaktiviert sie danach.
 > - **Trajektorien-Planung & Scans:** Generiert flüssige Spline-Bewegungen und komplexe Pfade (z.B. wellenförmige Octomap-Scans oder Halbkugel-Fahrten über Objekten) inkl. sanftem Beschleunigen/Abbremsen, gesteuert über globale Action-Speed-Ratios (Slow/Normal/Fast). Bei Objekt-Scans nutzt der Arm einen trigonometrischen Look-At (Fokus-Punkt), um das Ziel dauerhaft im Zentrum der Kamera zu halten. Ein präziser 90-Grad-Yaw-Ausgleich vermeidet dabei Singularitäten des Handgelenks (Joint 4).
+> - **Kollisionsbewusstes MoveTo:** `/ui/execute_move_to_pose` bestimmt zuerst per `/compute_ik` (`avoid_collisions`) ein kollisionsfreies Ziel und lässt dann `move_group` (`/move_action`, OMPL) eine Bahn planen und abfahren, die allen Kollisionsobjekten (erkannte YOLO-Objekte, Boden) ausweicht. Gibt es keinen kollisionsfreien Weg, fährt der Arm nicht los. Ist `move_group` nicht erreichbar, gibt es bewusst keinen ungeprüften Fallback. Die Geschwindigkeit folgt der Stufe Slow/Normal/Fast (`moveto_velocity_scaling`, `moveto_acceleration_scaling`); ein Not-Aus bricht auch das laufende `move_group`-Ziel ab.
 > - **Inverse Kinematik (IK) & Unwrapping:** Rechnet Ziel-Koordinaten (X, Y, Z) in entsprechende Gelenkwinkel für alle 6 Achsen um (`/compute_ik`). Ein aktiver *Joint Unwrapping Algorithmus* fängt >180° Sprünge ab, was das Aufwickeln von Kabeln und 360-Grad-Flips physisch ausschließt.
 > - **Dynamische Safety Zone:** Abonniert die Live-Sicherheitsgrenzen und stoppt den Arm automatisch davor, während die Kamera nachkorrigiert, um das Objekt weiterhin im Blick zu behalten.
 > - **Emergency Stop:** Behandelt den Not-Halt (`/ui/emergency_stop`). Stoppt sofort die Hardware und zwingt die Gelenke auf 0-Geschwindigkeit.
@@ -1480,6 +1489,8 @@ flowchart TD
 >> | **`/ui/emergency_stop_topic`** | `std_msgs/Empty` | *Hört auf sofortige Software-Not-Aus-Befehle (blockierungsfreier Bypass).* |
 >> | **`/joint_states`** | `sensor_msgs/JointState` | *Liest aktuelle Gelenkwinkel aus.* |
 >> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Empfängt dynamische Safety-Zone Parameter `[x, y, radius]` zur Bewegungsbegrenzung.* |
+>> | **`/display_planned_path`** | `moveit_msgs/DisplayTrajectory` | *Kandidatenpfade von `move_group` für MoveTo (Wegpunkte, geschätzte Dauer, verworfene Kandidaten).* |
+>> | **`/lite6_traj_controller/follow_joint_trajectory/_action/status`** | `action_msgs/GoalStatusArray` | *Erkennt, wann `move_group` eine MoveTo-Bahn tatsächlich abzufahren beginnt (Parameter `moveit_controller_status_topic`).* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1487,8 +1498,9 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
 >> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Sendet Null-Geschwindigkeitsbefehle zum Anhalten von Servo.* |
->> | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | *Sendet sichere, kollisionsfreie Gelenktrajektorien an den Arm.* |
+>> | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | *Direkte Gelenktrajektorien für Initial Pose, MoveJoint und Scan-Fahrten (ohne MoveIt-Kollisionsprüfung) sowie das Halten beim Not-Aus. MoveTo läuft stattdessen über `move_group`.* |
 >> | **`/ui/motion_status`** | `std_msgs/String` | *Publiziert UI-Statusmeldungen für den Logger.* |
+>> | **`/ui/moveit_motion_state`** | `std_msgs/String` (JSON) | *Live-Fortschritt von MoveTo (IK → Planung → Ausführung, Zeiten, Kandidatenpfade, Ergebnis) für das MoveIt-Popup.* |
 >
 >
 > ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
@@ -1496,18 +1508,62 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
 >> | **`/ui/execute_initial_pose`** | `std_srvs/srv/Trigger` (Server) | *Führt die Planung der Home-Fahrt durch.* |
->> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Server) | *Berechnet via MoveIt IK die Pose und fährt sie an.* |
+>> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Server) | *Fährt eine absolute kartesische Pose auf einer von `move_group` geplanten, kollisionsfreien Bahn an.* |
+>> | **`/ui/execute_move_to_pose_silent`** | `xarm_msgs/srv/MoveCartesian` (Server) | *Wie oben, aber ohne die Ansage „robot moves to absolute pose“ (genutzt vom TCP-Gizmo im Viewport).* |
 >> | **`/ui/execute_move_joint`** | `xarm_msgs/srv/MoveJoint` (Server) | *Setzt Gelenkziele um.* |
 >> | **`/ui/start_octomap_scan`** | `std_srvs/srv/Trigger` (Server) | *Startet eine 3D-Scan-Trajektorie (Alias: `/ui/execute_scan_trajectory`).* |
 >> | **`/ui/start_object_scan`** | `std_srvs/srv/Trigger` (Server) | *Startet einen präzisen Bogenscan zentriert auf ein spezifisches Objekt.* |
 >> | **`/ui/emergency_stop`** | `std_srvs/srv/Trigger` (Server) | *Bricht die aktuelle Trajektorie sofort ab (Alias: `/ui/stop_motion`).* |
 >> | **`/compute_ik`** | `moveit_msgs/srv/GetPositionIK` (Client) | *Nutzt MoveIt zur kinematischen Vorwärts-/Rückwärtsrechnung.* |
+>> | **`/move_action`** | `moveit_msgs/action/MoveGroup` (Action Client) | *Plant und fährt die kollisionsfreie MoveTo-Bahn.* |
 >> | **`/servo_server/stop_servo`** | `std_srvs/srv/Trigger` (Client) | *Pausiert MoveIt Servo während der Trajektorienfahrt.* |
 >> | **`/servo_server/start_servo`** | `std_srvs/srv/Trigger` (Client) | *Setzt MoveIt Servo nach Abschluss der Fahrt fort.* |
 >> | **`/ufactory/set_state`** | `xarm_msgs/srv/SetInt16` (Client) | *Setzt Hardware-Zustände auf dem physischen Controller.* |
 >> | **`/xarm/set_state`** | `xarm_msgs/srv/SetInt16` (Client) | *Setzt Hardware-Zustände auf dem xArm-Controller.* |
 >
 
+
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `moveit_floor_collision.py` &nbsp;&nbsp; <sub><i>[`/src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/moveit_floor_collision.py`](./src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/moveit_floor_collision.py)</i></sub>
+> [!NOTE]
+> 💻 **Startbefehl:**
+> ```bash
+> ros2 run robot_motion_handler_movegroup moveit_floor_collision
+> ```
+> *Wird automatisch von den `xarm_moveit_servo`-Launch-Dateien gestartet (`_robot_moveit_servo_fake/realmove.launch.py`).*
+>
+> **Zweck & Aufgabe:** Legt die Tischplatte als flache Kollisionsbox (2 × 2 m, Oberkante 1 mm unter `link_base`) in die MoveIt-Planungsszene. Die Box geht als `/planning_scene`-Diff raus, den sowohl `move_group` als auch `servo_server` empfangen. Sie blockiert MoveIt Servo beim Jogging (`HALT_FOR_COLLISION`), `/compute_ik` mit `avoid_collisions` und jede `move_group`-Planung (MoveTo, Greifablauf). Alle 2 s wird sie erneut gesendet, damit ein neu gestarteter `move_group`/`servo_server` sie wieder bekommt. Die Robot Control UI kann sie über `/ui/set_moveit_collision_ground` aus- und einschalten. Nach einem Neustart des Nodes ist sie immer wieder AN.
+>
+>
+> ![Parameters](https://img.shields.io/badge/Parameters-8A2BE2?style=flat-square)
+>
+>> | Parameter | Default | Beschreibung |
+>> |---|---|---|
+>> | `floor_z` | `-0.001` | *Oberkante der Box relativ zu `frame_id` (m).* |
+>> | `frame_id` | `link_base` | *Bezugsframe der Box.* |
+>> | `size_xy` | `2.0` | *Kantenlänge der Box (m).* |
+>> | `thickness` | `0.02` | *Dicke der Box (m).* |
+>> | `object_id` | `floor` | *ID des Kollisionsobjekts in der Planungsszene.* |
+>> | `publish_period` | `2.0` | *Sendeintervall (s).* |
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Fügt die Boden-Kollisionsbox als Szenen-Diff hinzu (bzw. entfernt sie).* |
+>> | **`/ui/moveit_collision_ground_enabled`** | `std_msgs/Bool` (latched) | *Ob MoveIt den Boden gerade berücksichtigt.* |
+>
+>
+> ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/ui/set_moveit_collision_ground`** | `std_srvs/srv/SetBool` (Server) | *Schaltet den Boden als MoveIt-Hindernis an/aus.* |
+>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_servo_status.py` (`rviz_overlay_servo_status`) &nbsp;&nbsp; <sub><i>[`/src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_servo_status.py`](./src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_servo_status.py)</i></sub>
 > [!NOTE]
@@ -1729,8 +1785,10 @@ flowchart TD
 >   - **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
 >   - **3D-Centerpiece mit Tab-Umschalter (WebGL Digital Twin & RViz-Stream):** Zentral integrierter 3D-Hauptbereich mit schnellem Umschalt-Tab zwischen dem offline-fähigen 3D WebGL Digital Twin (Three.js & URDFLoader mit Live-Spiegelung von `/joint_states` und synchronisierter Live-Anzeige des Linearachsen-Schiebereglers, Orbit-Kamera, Reset, Draufsicht, Cyber-Grid sowie vier unabhängigen 3D-Szenenknoten-Toggle-Icons (`fa-cubes` für interaktive Objekte & Arbeitsbereichskreis, `fa-square` für die weiße Referenzebene, `fa-shield-halved` für die Safety Zone, `fa-video` für das ZED-M-Kamerastativ) zum individuellen Ein-/Ausblenden der Marker jedes einzelnen `rviz_marker_3d_scene_objects`-Knotens im Digital Twin) und dem Live-Stream aus RViz2 (`/rviz_video/image_raw` auf Port 8082) ohne vertikalen Platzverlust.
 >   - **Einklappbare Viewport-HUD-Panels:** Der Digital-Twin-Viewport trägt sechs unabhängig einklappbare Glas-Panels rund um die 3D-Szene — **TCP GIZMO**, **SCENE**, **MOTION**, **TELEMETRY**, **POSE** und **SPEED**. Jede Panel-Kopfzeile klappt ihren eigenen Inhalt zu, ein einzelner Button in der Viewport-Tableiste (`fa-window-minimize`) klappt alle gemeinsam zu oder auf, und jedes Panel merkt sich seinen Zustand pro Browser über `localStorage`. Zugeklappt gibt das den gesamten Viewport für die 3D-Ansicht frei, ohne dass ein einziges Bedienelement verloren geht. Ein eigener Schalter (`fa-ruler-horizontal`) blendet zusätzlich die gestrichelte Distanzlinie vom TCP zum Objekt im Twin ein oder aus.
->   - **Akustische Rückmeldung & systemweiter Mute:** Jeder Klick spielt einen kurzen UI-Sound (`sounds/ui_mouse_click.mp3`), Bewegungsbefehle werden von vorgerenderten deutschen Sprachansagen begleitet (z.B. `_voice_robot_moves_to_scan_pos.mp3`). Ein einzelner Lautsprecher-Button (`fa-volume-high` / `fa-volume-xmark`) in der Statusleiste schaltet das gesamte System stumm: Der Zustand wird pro Browser gespeichert und alle 2 Sekunden auf **`/ui/sound_enabled`** (`std_msgs/Bool`) publiziert, das `voice_command_listener` und `yolo_planned_grasp_executor` abonnieren. Wer die Web-UI stummschaltet, schaltet damit also auch die roboterseitige Sprachausgabe stumm. Schlägt die Wiedergabe fehl (z.B. wegen der Autoplay-Policy des Browsers), wird das im Konsolen-Log ausdrücklich gemeldet statt still zu scheitern.
+>   - **Akustische Rückmeldung & systemweiter Mute:** Jeder Klick spielt einen kurzen UI-Sound (`sounds/ui_mouse_click.mp3`), Bewegungsbefehle werden von vorgerenderten deutschen Sprachansagen begleitet (z.B. `_voice_robot_moves_to_scan_pos.mp3`). Ein einzelner Lautsprecher-Button (`fa-volume-high` / `fa-volume-xmark`) in der Statusleiste schaltet das gesamte System stumm: Der Zustand wird pro Browser gespeichert und alle 2 Sekunden auf **`/ui/sound_enabled`** (`std_msgs/Bool`) publiziert, das `voice_command_listener` und `yolo_planned_grasp_executor` abonnieren. Wer die Web-UI stummschaltet, schaltet damit also auch die roboterseitige Sprachausgabe stumm. Schlägt die Wiedergabe fehl (z.B. wegen der Autoplay-Policy des Browsers), wird das im Konsolen-Log ausdrücklich gemeldet statt still zu scheitern. Das Umschalten der MoveIt-Kollisionsicons wird mit „collision detection enabled/disabled“ angesagt, und ein Fehlerton (`sounds/error_sound.mp3`) erklingt, wenn der fahrende Roboter tatsächlich in eine Kollision oder Singularität gerät (Live-Telemetrie, nicht die MoveIt-Planung; 2,5 s Abklingzeit). Fahrten über das TCP-Gizmo im Viewport verzichten auf die Ansage „robot moves to absolute pose“.
 >   - **Greifersteuerung (Vakuum- & Lite 6 Greifer):** Das System unterstützt zwei mechanisch unterschiedliche Endeffektoren. Der **Vakuumgreifer** kennt zwei Zustände (`an` / `aus`) und wird über `/ufactory/set_vacuum_gripper` (`xarm_msgs/srv/VacuumGripperCtrl`) angesteuert. Der **Lite 6 Zwei-Finger-Greifer** kennt drei Zustände (`auf` / `zu` / `off`, wobei `off` die Haltekraft löst) und wird über `/ufactory/open_lite6_gripper`, `/ufactory/close_lite6_gripper` und `/ufactory/stop_lite6_gripper` (`xarm_msgs/srv/Call`) angesteuert. Gamepad- und Blicksteuerung nutzen diese Services bereits. In der Web-UI geben die drei Buttons (`Open`, `Close`, `Off`) den Zustand bislang nur optisch wieder — **die Anbindung an die Services steht noch aus**.
+>   - **MoveIt-Fortschritts-Popup:** Unter dem TCP-Gizmo-Panel zeigt ein kleines Popup, was MoveIt bei einem MoveTo gerade tut: die drei Schritte IK → PLAN → EXECUTE mit Live-Timern, einen Fortschrittsbalken (laufender Streifen beim Planen, geschätzter Fortschritt beim Fahren), verworfene Kandidatenpfade sowie Ergebnis oder Fehler. Es blendet sich nach der Bewegung selbst aus (5 s bei Erfolg, 12 s bei Fehler). Gespeist von `/ui/moveit_motion_state`; die Schritte erscheinen zusätzlich als grüne `[MoveIt]`-Zeilen im Konsolen-Log.
+>   - **MoveIt-Kollisionsschalter:** Zwei Icons unten im **SCENE**-Panel schalten die MoveIt-Kollision der erkannten Objekte (`/ui/set_moveit_collision_objects`) und des Bodens (`/ui/set_moveit_collision_ground`) an und aus. Grün = AN, rot umrandet = AUS, grau = Node läuft nicht. Die Objekte bleiben im Viewport in jedem Fall sichtbar.
 >   - **Farbkodiertes Konsolen-Log:** Ein live scrollbares Konsolen-Log mit detailliertem Feedback für alle Bewegungsbefehle — inklusive Koordinatenanzeige (`X`, `Y`, `Z`) bei MoveTo-Befehlen und expliziten Erfolgs- (✓) / Fehler- (❌) Statusanzeigen mit Fehlercodes.
 >
 >
@@ -1753,6 +1811,9 @@ flowchart TD
 >> | **`/visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Zeichnet die Marker aus `rviz_marker_3d_scene_objects` im Digital Twin.* |
 >> | **`/zed_visual_markers`** | `visualization_msgs/MarkerArray` | *Zeichnet Kamerastativ und Szenen-Meshes der ZED M im Digital Twin.* |
 >> | **`/dashboard/workspace_metadata`** | `std_msgs/String` | *Liest das Live-Inventar an Nodes und Topics vom Workspace Analyzer.* |
+>> | **`/ui/moveit_motion_state`** | `std_msgs/String` (JSON) | *Speist das MoveIt-Fortschritts-Popup im Viewport.* |
+>> | **`/ui/moveit_collision_objects_enabled`** | `std_msgs/Bool` | *Zustand des Icons „Collision Objects“.* |
+>> | **`/ui/moveit_collision_ground_enabled`** | `std_msgs/Bool` | *Zustand des Icons „Collision Ground“.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1777,6 +1838,9 @@ flowchart TD
 >> |---|---|---|
 >> | **`/ui/execute_initial_pose`** | `std_srvs/srv/Trigger` (Client) | *Fährt den Arm in die Home-Position.* |
 >> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Fährt eine absolute kartesische Zielpose an.* |
+>> | **`/ui/execute_move_to_pose_silent`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Dasselbe MoveTo ohne Sprachansage - genutzt vom TCP-Gizmo im Viewport.* |
+>> | **`/ui/set_moveit_collision_objects`** | `std_srvs/srv/SetBool` (Client) | *Icon „Collision Objects“ im SCENE-Panel.* |
+>> | **`/ui/set_moveit_collision_ground`** | `std_srvs/srv/SetBool` (Client) | *Icon „Collision Ground“ im SCENE-Panel.* |
 >> | **`/ui/start_object_scan`** | `std_srvs/srv/Trigger` (Client) | *Startet den präzisen Objekt-Bogenscan.* |
 >> | **`/rosapi/nodes`** | `rosapi/Nodes` (Client) | *Erkennt anhand der Node-Liste den aktiven Hardware-Modus (Fake Arm vs. Real Arm).* |
 >> | **`/rosapi/get_param`** | `rosapi/GetParam` (Client) | *Liest die ROS-Umgebungsparameter für die Statusleiste aus.* |
@@ -2708,6 +2772,9 @@ dev_ws/
 │   │       ├── yolo_grasp_executor.py                                     # Direkter kartesischer Greif-Ausführungs-Action-Server
 │   │       └── grasp_action_bridge.py                                     # Interaktive RViz-Marker-Bridge zur Grasp Action
 │   ├── robot_motion_handler_movegroup/                                    # 🤖 Python: Zentraler MoveGroup kartesischer & Gelenkplaner
+│   │   └── robot_motion_handler_movegroup/
+│   │       ├── robot_motion_handler_movegroup.py                          # UI-Bewegungsservices, kollisionsbewusstes MoveTo, MoveIt-Fortschritt
+│   │       └── moveit_floor_collision.py                                  # Tischplatte als MoveIt-Kollisionsobjekt (schaltbar)
 │   ├── ros2_whisper/                                                      # 🎙️ Whisper AI Sprache-zu-Text Inferenzknoten
 │   ├── fake_linear_axis/                                            # 🎚️ Python: Headless TF-Publisher & interaktiver Marker
 │   │   └── fake_linear_axis/fake_linear_axis_node.py

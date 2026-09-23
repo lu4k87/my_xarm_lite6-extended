@@ -3,11 +3,13 @@
 import rclpy
 import math
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy
 from visualization_msgs.msg import MarkerArray, Marker
 from moveit_msgs.msg import CollisionObject
 from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose
-from std_msgs.msg import String
+from std_msgs.msg import Bool, String
+from std_srvs.srv import SetBool
 from tf2_ros import Buffer, TransformListener
 
 class YoloMoveitCollision(Node):
@@ -41,7 +43,9 @@ class YoloMoveitCollision(Node):
             10
         )
 
+        # known_objects = was aktuell als CollisionObject in MoveIt liegt
         self.known_objects = set()
+        self.ignored_objects = {}
         self.object_last_seen = {}
         self.published_vis_ids = set()
         self.last_publish_time = self.get_clock().now()
@@ -60,6 +64,17 @@ class YoloMoveitCollision(Node):
             self.ignore_callback,
             10
         )
+
+        # Die Robot Control UI schaltet die Objekt-Kollision fuer MoveIt ueber
+        # /ui/set_moveit_collision_objects ein/aus. Die RViz-Marker laufen
+        # unabhaengig davon weiter; nach einem Neustart ist die Kollision AN.
+        self.collision_enabled = True
+        latched_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.pub_enabled = self.create_publisher(
+            Bool, '/ui/moveit_collision_objects_enabled', latched_qos)
+        self.create_service(
+            SetBool, '/ui/set_moveit_collision_objects', self.set_enabled_callback)
+        self.pub_enabled.publish(Bool(data=self.collision_enabled))
 
         # End effector links that are allowed to collide with the objects
         self.eef_links = [
@@ -84,6 +99,26 @@ class YoloMoveitCollision(Node):
                 co.operation = CollisionObject.REMOVE
                 self.pub_collision_object.publish(co)
                 self.known_objects.remove(obj_name)
+
+    def set_enabled_callback(self, request, response):
+        self.collision_enabled = bool(request.data)
+        if not self.collision_enabled:
+            self.remove_collision_objects()
+        # Beim Einschalten fehlen die Objekte in known_objects und werden
+        # deshalb mit dem naechsten /zed/bboxes_3d sofort wieder angelegt.
+        self.pub_enabled.publish(Bool(data=self.collision_enabled))
+        response.success = True
+        response.message = f"MoveIt object collision {'enabled' if self.collision_enabled else 'disabled'}"
+        self.get_logger().warn(response.message)
+        return response
+
+    def remove_collision_objects(self):
+        for obj_name in list(self.known_objects):
+            co = CollisionObject()
+            co.id = obj_name
+            co.operation = CollisionObject.REMOVE
+            self.pub_collision_object.publish(co)
+        self.known_objects.clear()
 
     def remove_all_objects(self):
         for obj_name in list(self.known_objects):
@@ -204,7 +239,7 @@ class YoloMoveitCollision(Node):
             top_z = center_z + scale_z / 2.0
             
             # State Machine for Ignored Objects
-            if hasattr(self, 'ignored_objects') and obj_name in self.ignored_objects:
+            if obj_name in self.ignored_objects:
                 ign_info = self.ignored_objects[obj_name]
                 if tcp_x is not None:
                     dist = math.sqrt((tcp_x - top_x)**2 + (tcp_y - top_y)**2 + (tcp_z - top_z)**2)
@@ -226,7 +261,7 @@ class YoloMoveitCollision(Node):
                             self.pub_status.publish(String(data=msg_str))
                             del self.ignored_objects[obj_name]
                             
-                if hasattr(self, 'ignored_objects') and obj_name in self.ignored_objects:
+                if obj_name in self.ignored_objects:
                     continue
             
             current_objects.add(obj_name)
@@ -289,7 +324,8 @@ class YoloMoveitCollision(Node):
             co.primitives.extend([floor, left, right, front, back])
             co.primitive_poses.extend([pose_floor, pose_left, pose_right, pose_front, pose_back])
             
-            if (obj_name not in self.known_objects) or should_publish_collision:
+            if self.collision_enabled and (
+                    (obj_name not in self.known_objects) or should_publish_collision):
                 self.pub_collision_object.publish(co)
             
             # --- 2. Visual Marker for RViz (Transparent Red Cube) ---
@@ -337,7 +373,8 @@ class YoloMoveitCollision(Node):
             self.known_objects.discard(obj_name)
             self.object_last_seen.pop(obj_name, None)
 
-        self.known_objects.update(current_objects)
+        if self.collision_enabled:
+            self.known_objects.update(current_objects)
         
         # Clean up disappeared visual markers
         removed_vis_ids = self.published_vis_ids - current_vis_ids
