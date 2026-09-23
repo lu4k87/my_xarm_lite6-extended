@@ -25,6 +25,7 @@
 // XARM Spezifische Header
 // ***************************************************************
 #include <xarm_msgs/srv/call.hpp>
+#include <xarm_msgs/srv/vacuum_gripper_ctrl.hpp>
 #include <xarm_msgs/srv/get_float32_list.hpp>
 // Hinweis: move_cartesian und set_int16 werden in der CPP nicht verwendet, 
 // aber wir lassen sie aus Konsistenz im Header.
@@ -179,6 +180,21 @@ private:
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
     void _publish_eef_position();
+
+    // ***************************************************************
+    // 7. Greifer (Gamepad A/B und Robot Control UI)
+    // ***************************************************************
+    // Der Node ist der einzige Besitzer des Greiferzustands: Gamepad und
+    // Web-UI (/ui/gripper_cmd) laufen beide hier durch, dadurch bleibt der
+    // A-Tasten-Toggle mit den UI-Buttons synchron.
+    void _gripper_command(const std::string &cmd, const std::string &source);
+    void _publish_gripper_state(const std::string &state);
+    std::string gripper_type_;   // "vacuum" | "gripper" | "none"
+    std::string gripper_state_;  // "open" | "closed" | "off" | "unknown"
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr gripper_type_pub_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr gripper_state_pub_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr gripper_cmd_sub_;
+    rclcpp::Client<xarm_msgs::srv::VacuumGripperCtrl>::SharedPtr _vacuum_client_;
 };
 
 } // namespace xarm_moveit_servo

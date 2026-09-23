@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 import rclpy
 import math
 from rclpy.node import Node
@@ -7,7 +8,7 @@ from rclpy.qos import QoSProfile, DurabilityPolicy
 from visualization_msgs.msg import MarkerArray, Marker
 from moveit_msgs.msg import CollisionObject
 from shape_msgs.msg import SolidPrimitive
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Point, Pose
 from std_msgs.msg import Bool, String
 from std_srvs.srv import SetBool
 from tf2_ros import Buffer, TransformListener
@@ -76,7 +77,24 @@ class YoloMoveitCollision(Node):
             SetBool, '/ui/set_moveit_collision_objects', self.set_enabled_callback)
         self.pub_enabled.publish(Bool(data=self.collision_enabled))
 
+        # Kollision fuer einzelne Objekte dauerhaft aus (Kontextmenue der
+        # Robot Control UI). Anders als /ui/ignore_collision_object laeuft das
+        # nicht nach Abstand oder Timeout ab, sondern bis es wieder an ist.
+        # Befehl: JSON {"name": "<Kollisionsname>", "enabled": true|false}
+        self.disabled_objects = set()
+        self.pub_disabled = self.create_publisher(
+            String, '/ui/disabled_collision_objects', latched_qos)
+        self.create_subscription(
+            String, '/ui/set_object_collision', self.set_object_collision_callback, 10)
+        self._publish_disabled_objects()
+
         # End effector links that are allowed to collide with the objects
+        # Freie Zone unter der Objektoberkante, in der die Seitenwaende fehlen
+        # (siehe open_box_walls). Muss groesser sein als der Servo-Haltabstand
+        # von 2 cm, sonst stoppt der Greifer ueber dem Objekt.
+        self.top_clearance = float(
+            self.declare_parameter('top_clearance', 0.03).value)
+
         self.eef_links = [
             'link5', 'link6', 'link_eef',
             'uflite_vacuum_gripper_link', 'uflite_gripper_link',
@@ -99,6 +117,35 @@ class YoloMoveitCollision(Node):
                 co.operation = CollisionObject.REMOVE
                 self.pub_collision_object.publish(co)
                 self.known_objects.remove(obj_name)
+
+    def _publish_disabled_objects(self):
+        self.pub_disabled.publish(String(data=json.dumps(sorted(self.disabled_objects))))
+
+    def set_object_collision_callback(self, msg):
+        try:
+            cmd = json.loads(msg.data)
+            name = str(cmd['name']).strip().replace(' ', '_')
+            enabled = bool(cmd['enabled'])
+        except (ValueError, KeyError, TypeError):
+            self.get_logger().warn(f'Ungueltiger Befehl auf /ui/set_object_collision: {msg.data!r}')
+            return
+        if not name:
+            return
+        if enabled:
+            # Beim naechsten /zed/bboxes_3d wird das Objekt wieder angelegt.
+            self.disabled_objects.discard(name)
+        else:
+            self.disabled_objects.add(name)
+            if name in self.known_objects:
+                co = CollisionObject()
+                co.id = name
+                co.operation = CollisionObject.REMOVE
+                self.pub_collision_object.publish(co)
+                self.known_objects.discard(name)
+        state = 'enabled' if enabled else 'DISABLED'
+        self.get_logger().warn(f'Kollision fuer {name}: {state}')
+        self.pub_status.publish(String(data=f"{'🟢' if enabled else '⚠️'} Collision for {name} {state}"))
+        self._publish_disabled_objects()
 
     def set_enabled_callback(self, request, response):
         self.collision_enabled = bool(request.data)
@@ -143,6 +190,43 @@ class YoloMoveitCollision(Node):
             self.pub_collision_markers.publish(del_array)
             self.published_vis_ids.clear()
         self.get_logger().info('Alle YOLO Collision-Objekte aus MoveIt entfernt.')
+
+    def wall_height(self, scale_z):
+        # Mindestens 1 cm Wand, auch bei flachen Objekten.
+        return max(0.01, min(scale_z, scale_z - self.top_clearance))
+
+    def open_box_walls(self, cx, cy, cz, sx, sy, sz):
+        """Boden und vier Seitenwaende als (dimensions, center) - kein Deckel."""
+        t = 0.001
+        bottom = cz - sz / 2.0
+        h = self.wall_height(sz)
+        wz = bottom + t + (h - t) / 2.0
+        return [
+            ((sx, sy, t), (cx, cy, bottom + t / 2.0)),
+            ((t, sy, h - t), (cx - sx / 2.0 + t / 2.0, cy, wz)),
+            ((t, sy, h - t), (cx + sx / 2.0 - t / 2.0, cy, wz)),
+            ((sx - 2 * t, t, h - t), (cx, cy + sy / 2.0 - t / 2.0, wz)),
+            ((sx - 2 * t, t, h - t), (cx, cy - sy / 2.0 + t / 2.0, wz)),
+        ]
+
+    def open_box_triangles(self, cx, cy, cz, sx, sy, sz):
+        """Boden + 4 Seitenflaechen als TRIANGLE_LIST, oben offen."""
+        x0, x1 = cx - sx / 2.0, cx + sx / 2.0
+        y0, y1 = cy - sy / 2.0, cy + sy / 2.0
+        z0 = cz - sz / 2.0
+        z1 = z0 + self.wall_height(sz)
+        quads = [
+            ((x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0)),  # Boden
+            ((x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1)),  # -Y
+            ((x0, y1, z0), (x1, y1, z0), (x1, y1, z1), (x0, y1, z1)),  # +Y
+            ((x0, y0, z0), (x0, y1, z0), (x0, y1, z1), (x0, y0, z1)),  # -X
+            ((x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)),  # +X
+        ]
+        pts = []
+        for a, b, c, d in quads:
+            for x, y, z in (a, b, c, a, c, d):
+                pts.append(Point(x=x, y=y, z=z))
+        return pts
 
     def marker_callback(self, msg):
         current_time = self.get_clock().now().nanoseconds / 1e9
@@ -263,96 +347,74 @@ class YoloMoveitCollision(Node):
                             
                 if obj_name in self.ignored_objects:
                     continue
+
+            # Vom Nutzer dauerhaft abgeschaltet: weder Kollisionsobjekt noch
+            # rote Waende - der Rahmen aus /zed/bboxes_3d bleibt sichtbar.
+            if obj_name in self.disabled_objects:
+                continue
             
             current_objects.add(obj_name)
             self.object_last_seen[obj_name] = current_time
-            current_vis_ids.add(obj_id)
             
             # --- 1. Collision Object for MoveIt ---
-            # Create an open box with 5 thin walls (1mm) so TCP can enter from top
-            t = 0.001
+            # Offene Kiste aus 5 duennen Waenden (Boden + 4 Seiten), OHNE
+            # Deckel. Die Seitenwaende enden top_clearance unter der
+            # Objektoberkante: MoveIt Servo haelt schon 2 cm vor jeder
+            # Kollisionsgeometrie an (min_allowable_collision_distance), und
+            # Wandkanten genau auf Hoehe der Oberkante wirkten deshalb beim
+            # Anfahren von oben wie ein Deckel. Seitlich und unten bleibt das
+            # Objekt geschuetzt.
+            walls = self.open_box_walls(
+                center_x, center_y, center_z, scale_x, scale_y, scale_z)
+
             co = CollisionObject()
             co.header.frame_id = data['frame_id']
             co.id = obj_name
             co.operation = CollisionObject.ADD
-            
-            floor = SolidPrimitive()
-            floor.type = SolidPrimitive.BOX
-            floor.dimensions = [scale_x, scale_y, t]
-            pose_floor = Pose()
-            pose_floor.position.x = center_x
-            pose_floor.position.y = center_y
-            pose_floor.position.z = center_z - scale_z/2.0 + t/2.0
-            pose_floor.orientation.w = 1.0
-            
-            left = SolidPrimitive()
-            left.type = SolidPrimitive.BOX
-            left.dimensions = [t, scale_y, scale_z - t]
-            pose_left = Pose()
-            pose_left.position.x = center_x - scale_x/2.0 + t/2.0
-            pose_left.position.y = center_y
-            pose_left.position.z = center_z + t/2.0
-            pose_left.orientation.w = 1.0
-            
-            right = SolidPrimitive()
-            right.type = SolidPrimitive.BOX
-            right.dimensions = [t, scale_y, scale_z - t]
-            pose_right = Pose()
-            pose_right.position.x = center_x + scale_x/2.0 - t/2.0
-            pose_right.position.y = center_y
-            pose_right.position.z = center_z + t/2.0
-            pose_right.orientation.w = 1.0
-            
-            front = SolidPrimitive()
-            front.type = SolidPrimitive.BOX
-            front.dimensions = [scale_x - 2*t, t, scale_z - t]
-            pose_front = Pose()
-            pose_front.position.x = center_x
-            pose_front.position.y = center_y + scale_y/2.0 - t/2.0
-            pose_front.position.z = center_z + t/2.0
-            pose_front.orientation.w = 1.0
-            
-            back = SolidPrimitive()
-            back.type = SolidPrimitive.BOX
-            back.dimensions = [scale_x - 2*t, t, scale_z - t]
-            pose_back = Pose()
-            pose_back.position.x = center_x
-            pose_back.position.y = center_y - scale_y/2.0 + t/2.0
-            pose_back.position.z = center_z + t/2.0
-            pose_back.orientation.w = 1.0
-            
-            co.primitives.extend([floor, left, right, front, back])
-            co.primitive_poses.extend([pose_floor, pose_left, pose_right, pose_front, pose_back])
-            
+            for dims, (px, py, pz) in walls:
+                prim = SolidPrimitive()
+                prim.type = SolidPrimitive.BOX
+                prim.dimensions = list(dims)
+                p = Pose()
+                p.position.x = px
+                p.position.y = py
+                p.position.z = pz
+                p.orientation.w = 1.0
+                co.primitives.append(prim)
+                co.primitive_poses.append(p)
+
             if self.collision_enabled and (
                     (obj_name not in self.known_objects) or should_publish_collision):
                 self.pub_collision_object.publish(co)
-            
-            # --- 2. Visual Marker for RViz (Transparent Red Cube) ---
-            pose = Pose()
-            pose.position.x = center_x
-            pose.position.y = center_y
-            pose.position.z = center_z
-            pose.orientation.w = 1.0
+
+            # --- 2. Waende fuer RViz und die Robot Control UI ---
+            # Nur bei aktiver Kollision: rot transparent, exakt die Geometrie,
+            # die MoveIt kennt. Ist die Kollision aus, fehlt der Marker - der
+            # Rahmen (yolo_bboxes aus /zed/bboxes_3d) bleibt trotzdem sichtbar.
+            if not self.collision_enabled:
+                continue
 
             vm = Marker()
             vm.header.frame_id = data['frame_id']
             vm.header.stamp = now.to_msg()
             vm.ns = 'yolo_collision_vis'
             vm.id = obj_id
-            vm.type = Marker.CUBE
+            vm.type = Marker.TRIANGLE_LIST
             vm.action = Marker.ADD
-            vm.pose = pose
-            vm.scale.x = scale_x
-            vm.scale.y = scale_y
-            vm.scale.z = scale_z
+            vm.pose.orientation.w = 1.0
+            vm.scale.x = 1.0
+            vm.scale.y = 1.0
+            vm.scale.z = 1.0
             vm.color.r = 1.0
             vm.color.g = 0.0
             vm.color.b = 0.0
             vm.color.a = 0.30
+            vm.points = self.open_box_triangles(
+                center_x, center_y, center_z, scale_x, scale_y, scale_z)
             vm.lifetime.sec = 2
             vm.lifetime.nanosec = 0
             vis_markers.markers.append(vm)
+            current_vis_ids.add(obj_id)
 
         if should_publish_collision:
             self.last_publish_time = now

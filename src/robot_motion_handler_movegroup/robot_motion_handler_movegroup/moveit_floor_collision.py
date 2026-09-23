@@ -90,6 +90,11 @@ class MoveitFloorCollision(Node):
 
     def publish_floor(self):
         if not self.enabled:
+            # Das REMOVE ebenfalls periodisch wiederholen: /planning_scene ist
+            # nicht latched - verpasst move_group oder servo_server die eine
+            # Nachricht beim Umschalten, bliebe der Boden dort sonst bestehen
+            # und blockierte weiter Bewegungen nach unten.
+            self.remove_floor()
             return
         floor_z = float(self.get_parameter('floor_z').value)
         size_xy = float(self.get_parameter('size_xy').value)

@@ -143,7 +143,7 @@ source install/setup.bash
 1. Klicke in der **Nexus Webapp** auf den grünen Button **`RUN DEV SETUP (FAKE)`**.
    * Startet automatisch das simulierte xArm Lite 6 `ros2_control` Hardware-Interface, MoveIt 2 Servo, RViz2 und die WebSocket ROS Bridge (`ws://localhost:9090`).
 2. Öffne die **Robot Control UI** (`http://localhost:8081`):
-   * Teste kartesische XYZ-Jog-Steuerung, bewege die Joint-Slider oder fahre die Home-Initialpose an. *(Die Greifer-Buttons geben bislang nur ihren Zustand wieder — siehe 3.6.)*
+   * Teste kartesische XYZ-Jog-Steuerung, bewege die Joint-Slider oder fahre die Home-Initialpose an. *(Die Greifer-Buttons steuern den Greifer direkt — siehe 3.6.)*
 3. Öffne das **Dashboard Monitoring UI** (`http://localhost:8080/dashboard_index.html`):
    * Überwache Echtzeit-Topic-Frequenzen (Hz), visualisiere Node-Topologiegraphen und inspiziere Live-Parameter.
 
@@ -382,8 +382,8 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 >> | **D-Pad** (↕️) | **Speed Control** | *Schaltet 5 Geschwindigkeitsstufen durch* |
 >> | **D-Pad** (↔️) | **Linearachse** | *Bewegt den Roboter auf der Schiene (Base Y-Shift)* |
 >> | **START / BACK** | **Referenzrahmen** | *Wechselt zwischen Basis- (`link_base`) und Werkzeug-Koordinaten (`link_tcp`)* |
->> | **A-Taste** (🟢) | **Greifer auf / zu** | *Schaltet den Lite 6 Greifer zwischen geöffnet und geschlossen* |
->> | **B-Taste** (🔴) | **Not-Aus (Greifer)** | *Stoppt den Lite 6 Greifer sofort und löst die Haltekraft* |
+>> | **A-Taste** (🟢) | **Greifer auf / zu bzw. Vakuum an / aus** | *Hängt vom Launch-Argument ab: `add_gripper:=true` schaltet den Lite 6 Greifer auf/zu, `add_vacuum_gripper:=true` das Vakuum an/aus. Ohne beides (`gripper_type: none`) keine Funktion.* |
+>> | **B-Taste** (🔴) | **Greifer aus** | *Lite 6 Greifer: stoppt sofort und löst die Haltekraft. Vakuum: schaltet ab.* |
 >> | **X-Taste** (🔵) | **Mikrofon (Voice)** | *Startet/Stoppt die Aufnahme für Whisper AI* |
 >> | **Y-Taste** (🟡) | **Initialpose** | *Fährt den Roboter in die sichere Startposition* |
 >
@@ -394,6 +394,7 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 >> |---|---|---|
 >> | **`/joy_check`** | `sensor_msgs/Joy` | *Liest die vom Wächter-Node bereinigten Controller-Inputs.* |
 >> | **`/set_speed_index`** | `std_msgs/Int32` | *Empfängt Anpassungen der Geschwindigkeitsstufe.* |
+>> | **`/ui/gripper_cmd`** | `std_msgs/String` | *Greiferbefehl der Robot Control UI (`open` / `close` / `off` / `toggle`) - läuft durch dieselbe Logik wie die A/B-Tasten.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -404,6 +405,8 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 >> | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | *Publiziert mit 10 Hz die Live-Pose (X, Y, Z) für das Web-UI.* |
 >> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Publiziert den aktuellen Geschwindigkeitsfaktor für das UI.* |
 >> | **`/ui/joy_button_presses`** | `std_msgs/String` | *Publiziert Controller-Tastendrücke für das UI.* |
+>> | **`/ui/gripper_state`** | `std_msgs/String` (latched) | *Greiferzustand (`open` / `closed` / `off`) - hält Gamepad-Toggle und UI-Buttons synchron.* |
+>> | **`/ui/gripper_type`** | `std_msgs/String` (latched) | *Konfigurierter Greifer (`vacuum` / `gripper` / `none`) aus dem Launch-Argument.* |
 >> | **`/ui/robot_control/current_frame`** | `std_msgs/String` | *Publiziert den aktuellen Referenzrahmen (z. B. World, TCP).* |
 >> | **`/linear_axis_cmd`** | `std_msgs/Float64` | *Publiziert Befehle zur Steuerung der Linearachse.* |
 >
@@ -421,9 +424,10 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 >> |---|---|---|
 >> | **`/servo_server/start_servo`** | Client | *Startet die MoveIt Servo-Engine.* |
 >> | **`/servo_server/stop_servo`** | Client | *Stoppt die MoveIt Servo-Engine sicher.* |
->> | **`/ufactory/open_lite6_gripper`** | Client (`xarm_msgs/srv/Call`) | *Öffnet den Lite 6 Greifer (A-Taste).* |
->> | **`/ufactory/close_lite6_gripper`** | Client (`xarm_msgs/srv/Call`) | *Schließt den Lite 6 Greifer (A-Taste).* |
->> | **`/ufactory/stop_lite6_gripper`** | Client (`xarm_msgs/srv/Call`) | *Stoppt den Lite 6 Greifer sofort und löst die Haltekraft (B-Taste).* |
+>> | **`/ufactory/set_vacuum_gripper`** | Client (`xarm_msgs/srv/VacuumGripperCtrl`) | *Vakuum an/aus (A-Taste, B-Taste = aus) bei `add_vacuum_gripper:=true`.* |
+>> | **`/ufactory/open_lite6_gripper`** | Client (`xarm_msgs/srv/Call`) | *Öffnet den Lite 6 Greifer (A-Taste, bei `add_gripper:=true`).* |
+>> | **`/ufactory/close_lite6_gripper`** | Client (`xarm_msgs/srv/Call`) | *Schließt den Lite 6 Greifer (A-Taste, bei `add_gripper:=true`).* |
+>> | **`/ufactory/stop_lite6_gripper`** | Client (`xarm_msgs/srv/Call`) | *Stoppt den Lite 6 Greifer sofort und löst die Haltekraft (B-Taste, bei `add_gripper:=true`).* |
 >> | **`/ufactory/get_position`** | Client (`xarm_msgs/srv/GetFloat32List`) | *Fragt die aktuelle kartesische Controller-Position beim xArm-Treiber ab.* |
 >> | **`/ui/execute_initial_pose`** | Client (`std_srvs/srv/Trigger`) | *Fährt den Roboter in die definierte Home-/Initialpose (Y-Taste).* |
 >
@@ -759,7 +763,7 @@ flowchart TD
 > ros2 run robot_vision_cameras_bringup yolo_moveit_collision.py
 > ```
 >
-> **Zweck & Aufgabe:** Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten um. Statt eines massiven Blocks wird eine **nach oben offene Becher-Form** (5 hauchdünne Wände à 1 mm) in den Planungsraum eingefügt. Dies erlaubt dem Greifer ein ungehindertes Eintauchen von oben (für Top-Down-Grasps), blockiert aber seitliche Kollisionen sicher.
+> **Zweck & Aufgabe:** Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten um. Statt eines massiven Blocks wird eine **nach oben offene Becher-Form** (5 hauchdünne Wände à 1 mm) in den Planungsraum eingefügt. Dies erlaubt dem Greifer ein ungehindertes Eintauchen von oben (für Top-Down-Grasps), blockiert aber seitliche Kollisionen sicher. Die Seitenwände enden `top_clearance` (Parameter, Standard 0,03 m) unter der Objektoberkante: MoveIt Servo hält 2 cm vor jeder Kollisionsgeometrie an, Wandkanten genau auf Höhe der Oberkante wirkten beim Anfahren von oben sonst wie ein Deckel. Über `/ui/set_object_collision` lässt sich die Kollision einzelner Objekte dauerhaft ab- und wieder einschalten (Kontextmenü der Robot Control UI).
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -768,6 +772,7 @@ flowchart TD
 >> |---|---|---|
 >> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Liest die erkannten 3D-Bounding-Boxen von YOLO aus.* |
 >> | **`/ui/ignore_collision_object`** | `std_msgs/String` | *Empfängt Namen von Objekten, die temporär ignoriert werden sollen.* |
+>> | **`/ui/set_object_collision`** | `std_msgs/String` (JSON) | *`{"name": "cup_3", "enabled": false}` - Kollision eines Objekts dauerhaft aus bzw. wieder an.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -776,7 +781,8 @@ flowchart TD
 >> |---|---|---|
 >> | **`/collision_object`** | `moveit_msgs/CollisionObject` | *Sendet die Becher-Formen als `CollisionObjects` direkt an MoveIt.* |
 >> | **`/ui/moveit_collision_objects_enabled`** | `std_msgs/Bool` (latched) | *Ob MoveIt die erkannten Objekte gerade berücksichtigt.* |
->> | **`/ui/yolo_collision_toggle`** | `visualization_msgs/MarkerArray` | *Publiziert visuelle Marker und dient als RViz-Toggle.* |
+>> | **`/ui/yolo_collision_toggle`**, **`/zed/yolo_collision_markers`** | `visualization_msgs/MarkerArray` | *Die Kollisionswände (Boden + 4 Seiten, oben offen) als rot transparente `TRIANGLE_LIST` - nur solange die Objektkollision aktiv ist. Der Rahmen aus `/zed/bboxes_3d` bleibt immer sichtbar.* |
+>> | **`/ui/disabled_collision_objects`** | `std_msgs/String` (JSON, latched) | *Liste der Objekte, deren Kollision per Kontextmenü abgeschaltet ist.* |
 >> | **`/ui/grasp_status`** | `std_msgs/String` | *Publiziert Statusmeldungen zu Kollisions-Timeouts.* |
 >
 >
@@ -1466,6 +1472,8 @@ flowchart TD
 > - **Ressourcen-Management:** Stoppt automatisch die manuelle Teleop-Steuerung (`MoveIt Servo` / Gamepad), bevor eine automatische Trajektorie gefahren wird, und reaktiviert sie danach.
 > - **Trajektorien-Planung & Scans:** Generiert flüssige Spline-Bewegungen und komplexe Pfade (z.B. wellenförmige Octomap-Scans oder Halbkugel-Fahrten über Objekten) inkl. sanftem Beschleunigen/Abbremsen, gesteuert über globale Action-Speed-Ratios (Slow/Normal/Fast). Bei Objekt-Scans nutzt der Arm einen trigonometrischen Look-At (Fokus-Punkt), um das Ziel dauerhaft im Zentrum der Kamera zu halten. Ein präziser 90-Grad-Yaw-Ausgleich vermeidet dabei Singularitäten des Handgelenks (Joint 4).
 > - **Kollisionsbewusstes MoveTo:** `/ui/execute_move_to_pose` bestimmt zuerst per `/compute_ik` (`avoid_collisions`) ein kollisionsfreies Ziel und lässt dann `move_group` (`/move_action`, OMPL) eine Bahn planen und abfahren, die allen Kollisionsobjekten (erkannte YOLO-Objekte, Boden) ausweicht. Gibt es keinen kollisionsfreien Weg, fährt der Arm nicht los. Ist `move_group` nicht erreichbar, gibt es bewusst keinen ungeprüften Fallback. Die Geschwindigkeit folgt der Stufe Slow/Normal/Fast (`moveto_velocity_scaling`, `moveto_acceleration_scaling`); ein Not-Aus bricht auch das laufende `move_group`-Ziel ab.
+> - **Pfad-Vorschau (optional):** Ist sie über `/ui/set_moveto_preview` eingeschaltet (Parameter `moveto_preview`, Standard aus), plant MoveTo nur (`plan_only`), schickt den Pfad latched auf `/ui/moveto_preview_path` (die Robot Control UI zeigt ihn als Geisterroboter) und wartet auf `/ui/confirm_moveto_preview`. Bestätigt fährt der Arm genau diesen Pfad über `/execute_trajectory`; verworfen oder nach `moveto_preview_timeout` (60 s) ohne Antwort bleibt er stehen. MoveIt Servo bleibt während der Wartezeit pausiert, der Not-Aus bricht auch hier ab.
+> - **IK nächst zur aktuellen Stellung & volle Gelenkbereiche:** Die Lite-6-Launches starten jetzt standardmäßig mit `limited:=false`, also mit den echten Hardware-Bereichen (J1/J4/J6 ±360°). Mit `limited:=true` begrenzte das URDF J1 auf ±178,2°, und Ziele direkt hinter dem Roboter (z. B. X = −300, Y = 0) waren per IK unerreichbar. Weil J1/J4/J6 damit mehrdeutig sind, probiert MoveTo mehrere IK-Seeds (einen davon mit J1 schon in Zielrichtung), verschiebt J1/J4/J6 um ±2π auf den kürzesten Weg und nimmt die Lösung mit der kleinsten Gelenkbewegung - ohne unnötige volle Handgelenkdrehungen.
 > - **Inverse Kinematik (IK) & Unwrapping:** Rechnet Ziel-Koordinaten (X, Y, Z) in entsprechende Gelenkwinkel für alle 6 Achsen um (`/compute_ik`). Ein aktiver *Joint Unwrapping Algorithmus* fängt >180° Sprünge ab, was das Aufwickeln von Kabeln und 360-Grad-Flips physisch ausschließt.
 > - **Dynamische Safety Zone:** Abonniert die Live-Sicherheitsgrenzen und stoppt den Arm automatisch davor, während die Kamera nachkorrigiert, um das Objekt weiterhin im Blick zu behalten.
 > - **Emergency Stop:** Behandelt den Not-Halt (`/ui/emergency_stop`). Stoppt sofort die Hardware und zwingt die Gelenke auf 0-Geschwindigkeit.
@@ -1473,7 +1481,7 @@ flowchart TD
 >
 > **Welche Skripte nutzen das (Clients der `/ui/...` Services)?**
 > - **`gaze_grasp_routine_tobii_glasses.py`**: Ruft den Move-To-Pose Service für den Scan-Modus und das exakte Hovern über dem Objekt auf.
-> - **`http_robot_control_ui_p8081/app.js`**: Das Browser-Frontend-Skript (roslibjs) des Web-Panels steuert hierüber Initial Pose, Scans, absolute XYZ-Fahrten und den Not-Aus.
+> - **`http_robot_control_ui_p8081/js/`** (v. a. `motion.js`, `safety.js`): Das Browser-Frontend (roslibjs, ES-Module) des Web-Panels steuert hierüber Initial Pose, Scans, absolute XYZ-Fahrten und den Not-Aus.
 > - **`yolo_grasp_executor.py`** & **`yolo_planned_grasp_executor.py`**: Nutzen den Move-To-Pose Service als Fallback, wenn die eigene Bewegungsplanung nicht greift.
 > - **`gaze_ui_node_tobii_glasses.py`** & **`..._zedm.py`**: Steuern hierüber den Initial-Pose-Reset.
 > - **`rviz_tab_robot_control_panel.cpp`**: Das C++ RViz-Plugin sendet Button-Klicks für XYZ-Koordinaten, Gelenk-Winkel und Initial Pose an dieses Skript.
@@ -1501,6 +1509,8 @@ flowchart TD
 >> | **`/lite6_traj_controller/joint_trajectory`** | `trajectory_msgs/JointTrajectory` | *Direkte Gelenktrajektorien für Initial Pose, MoveJoint und Scan-Fahrten (ohne MoveIt-Kollisionsprüfung) sowie das Halten beim Not-Aus. MoveTo läuft stattdessen über `move_group`.* |
 >> | **`/ui/motion_status`** | `std_msgs/String` | *Publiziert UI-Statusmeldungen für den Logger.* |
 >> | **`/ui/moveit_motion_state`** | `std_msgs/String` (JSON) | *Live-Fortschritt von MoveTo (IK → Planung → Ausführung, Zeiten, Kandidatenpfade, Ergebnis) für das MoveIt-Popup.* |
+>> | **`/ui/moveto_preview_enabled`** | `std_msgs/Bool` (latched) | *Ob die Pfad-Vorschau aktiv ist.* |
+>> | **`/ui/moveto_preview_path`** | `std_msgs/String` (JSON, latched) | *Geplanter Pfad (Gelenknamen, Wegpunkte, Zeiten) bzw. `{"clear": true}`.* |
 >
 >
 > ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
@@ -1513,6 +1523,8 @@ flowchart TD
 >> | **`/ui/execute_move_joint`** | `xarm_msgs/srv/MoveJoint` (Server) | *Setzt Gelenkziele um.* |
 >> | **`/ui/start_octomap_scan`** | `std_srvs/srv/Trigger` (Server) | *Startet eine 3D-Scan-Trajektorie (Alias: `/ui/execute_scan_trajectory`).* |
 >> | **`/ui/start_object_scan`** | `std_srvs/srv/Trigger` (Server) | *Startet einen präzisen Bogenscan zentriert auf ein spezifisches Objekt.* |
+>> | **`/ui/set_moveto_preview`** | `std_srvs/srv/SetBool` (Server) | *Pfad-Vorschau an/aus.* |
+>> | **`/ui/confirm_moveto_preview`** | `std_srvs/srv/SetBool` (Server) | *`true` = wartenden Pfad ausführen, `false` = verwerfen.* |
 >> | **`/ui/emergency_stop`** | `std_srvs/srv/Trigger` (Server) | *Bricht die aktuelle Trajektorie sofort ab (Alias: `/ui/stop_motion`).* |
 >> | **`/compute_ik`** | `moveit_msgs/srv/GetPositionIK` (Client) | *Nutzt MoveIt zur kinematischen Vorwärts-/Rückwärtsrechnung.* |
 >> | **`/move_action`** | `moveit_msgs/action/MoveGroup` (Action Client) | *Plant und fährt die kollisionsfreie MoveTo-Bahn.* |
@@ -1768,7 +1780,7 @@ flowchart TD
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> python3 -m http.server 8081 -d src/http_robot_control_ui_p8081
+> python3 src/http_robot_control_ui_p8081/http_robot_control_ui_p8081/server.py 8081 src/http_robot_control_ui_p8081
 > ```
 >
 > **Zweck & Aufgabe:** Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorphism-Designsprache. Fungiert als multimodales Dashboard und spiegelt das RViz Control Panel für die Remote-Bedienung. Läuft auf **Port 8081**.
@@ -1786,7 +1798,16 @@ flowchart TD
 >   - **3D-Centerpiece mit Tab-Umschalter (WebGL Digital Twin & RViz-Stream):** Zentral integrierter 3D-Hauptbereich mit schnellem Umschalt-Tab zwischen dem offline-fähigen 3D WebGL Digital Twin (Three.js & URDFLoader mit Live-Spiegelung von `/joint_states` und synchronisierter Live-Anzeige des Linearachsen-Schiebereglers, Orbit-Kamera, Reset, Draufsicht, Cyber-Grid sowie vier unabhängigen 3D-Szenenknoten-Toggle-Icons (`fa-cubes` für interaktive Objekte & Arbeitsbereichskreis, `fa-square` für die weiße Referenzebene, `fa-shield-halved` für die Safety Zone, `fa-video` für das ZED-M-Kamerastativ) zum individuellen Ein-/Ausblenden der Marker jedes einzelnen `rviz_marker_3d_scene_objects`-Knotens im Digital Twin) und dem Live-Stream aus RViz2 (`/rviz_video/image_raw` auf Port 8082) ohne vertikalen Platzverlust.
 >   - **Einklappbare Viewport-HUD-Panels:** Der Digital-Twin-Viewport trägt sechs unabhängig einklappbare Glas-Panels rund um die 3D-Szene — **TCP GIZMO**, **SCENE**, **MOTION**, **TELEMETRY**, **POSE** und **SPEED**. Jede Panel-Kopfzeile klappt ihren eigenen Inhalt zu, ein einzelner Button in der Viewport-Tableiste (`fa-window-minimize`) klappt alle gemeinsam zu oder auf, und jedes Panel merkt sich seinen Zustand pro Browser über `localStorage`. Zugeklappt gibt das den gesamten Viewport für die 3D-Ansicht frei, ohne dass ein einziges Bedienelement verloren geht. Ein eigener Schalter (`fa-ruler-horizontal`) blendet zusätzlich die gestrichelte Distanzlinie vom TCP zum Objekt im Twin ein oder aus.
 >   - **Akustische Rückmeldung & systemweiter Mute:** Jeder Klick spielt einen kurzen UI-Sound (`sounds/ui_mouse_click.mp3`), Bewegungsbefehle werden von vorgerenderten deutschen Sprachansagen begleitet (z.B. `_voice_robot_moves_to_scan_pos.mp3`). Ein einzelner Lautsprecher-Button (`fa-volume-high` / `fa-volume-xmark`) in der Statusleiste schaltet das gesamte System stumm: Der Zustand wird pro Browser gespeichert und alle 2 Sekunden auf **`/ui/sound_enabled`** (`std_msgs/Bool`) publiziert, das `voice_command_listener` und `yolo_planned_grasp_executor` abonnieren. Wer die Web-UI stummschaltet, schaltet damit also auch die roboterseitige Sprachausgabe stumm. Schlägt die Wiedergabe fehl (z.B. wegen der Autoplay-Policy des Browsers), wird das im Konsolen-Log ausdrücklich gemeldet statt still zu scheitern. Das Umschalten der MoveIt-Kollisionsicons wird mit „collision detection enabled/disabled“ angesagt, und ein Fehlerton (`sounds/error_sound.mp3`) erklingt, wenn der fahrende Roboter tatsächlich in eine Kollision oder Singularität gerät (Live-Telemetrie, nicht die MoveIt-Planung; 2,5 s Abklingzeit). Fahrten über das TCP-Gizmo im Viewport verzichten auf die Ansage „robot moves to absolute pose“.
->   - **Greifersteuerung (Vakuum- & Lite 6 Greifer):** Das System unterstützt zwei mechanisch unterschiedliche Endeffektoren. Der **Vakuumgreifer** kennt zwei Zustände (`an` / `aus`) und wird über `/ufactory/set_vacuum_gripper` (`xarm_msgs/srv/VacuumGripperCtrl`) angesteuert. Der **Lite 6 Zwei-Finger-Greifer** kennt drei Zustände (`auf` / `zu` / `off`, wobei `off` die Haltekraft löst) und wird über `/ufactory/open_lite6_gripper`, `/ufactory/close_lite6_gripper` und `/ufactory/stop_lite6_gripper` (`xarm_msgs/srv/Call`) angesteuert. Gamepad- und Blicksteuerung nutzen diese Services bereits. In der Web-UI geben die drei Buttons (`Open`, `Close`, `Off`) den Zustand bislang nur optisch wieder — **die Anbindung an die Services steht noch aus**.
+>   - **Greifersteuerung (Vakuum- & Lite 6 Greifer):** Die drei Buttons steuern den Greifer jetzt wirklich. Der Befehl geht über `/ui/gripper_cmd` an `joy_to_servo_node`, der auch die Gamepad-Tasten A/B bedient und damit der einzige Besitzer des Greiferzustands ist (`/ui/gripper_state`, latched) - Gamepad-Toggle und UI bleiben synchron. Welcher Greifer angeschlossen ist, kommt aus dem Launch-Argument (`add_vacuum_gripper:=true` → Vakuum über `/ufactory/set_vacuum_gripper`, Buttons *Release / Suction / Off*; `add_gripper:=true` → Lite 6 Greifer über `open/close/stop_lite6_gripper`, Buttons *Open / Close / Off*). Ohne beides sind die Buttons gesperrt.
+>   - **Not-Aus im Header + Leertaste:** Der Not-Aus sitzt fest in der Statusleiste - unabhängig vom Drag-and-Drop-Layout und auch über dem Offline-Overlay erreichbar. Die **Leertaste** löst ihn überall aus (außer in Textfeldern). Ist er verriegelt, pulsiert der Knopf und daneben erscheint *Reset* zum Quittieren.
+>   - **Pfad-Vorschau (Geisterroboter):** Das Geist-Icon (`fa-ghost`) rechts in der Viewport-Tableiste schaltet die Vorschau an/aus (`/ui/set_moveto_preview`). An: jedes MoveTo (Go, Gizmo, Scan-Position, „Approach from above“) wird nur geplant, ein halbtransparenter Cyan-Klon fährt den Pfad im Twin in Echtzeit in einer Schleife ab, eine Linie zeigt die TCP-Bahn. Im MoveIt-Popup erscheinen *Execute path* / *Discard* mit Countdown bis zum automatischen Verwerfen.
+>   - **Totmann-Prinzip beim Jog:** Jog-Befehle laufen nur, solange wirklich gedrückt wird. Loslassen irgendwo auf der Seite, Fokusverlust, Tab-Wechsel, Kontextmenü, Schließen der Seite oder Verbindungsverlust stoppen jede Bewegung sofort (Log-Eintrag `Deadman: jog stopped (...)`). MoveIt Servo hält zusätzlich nach 0,2 s ohne Befehl an.
+>   - **Kollisionswände & Servo-Haltabstand:** Die Kollisionswände der erkannten Objekte erscheinen im Twin rot transparent (nur bei aktiver Objektkollision, sonst nur der Rahmen). Kommt der TCP einer Wand näher als 2 cm - dem Haltabstand von MoveIt Servo -, leuchten die Wände dieses Objekts gelb-orange und pulsieren.
+>   - **Objekt-Kontextmenü:** Klick auf die rote Greifkugel im Viewport oder auf einen Eintrag der Objektliste öffnet ein Menü: *Approach from above* (MoveTo 80 mm über den Greifpunkt, Greifer nach unten), *Grasp* (Greif-Routine) und *Disable / Enable collision for this object* (`/ui/set_object_collision`).
+>   - **Verbindungsabbruch:** Fehlt rosbridge, legt sich ein Overlay über die gesamte Bedienfläche (Header bleibt frei) und alle Bewegungsfunktionen sind gesperrt - mit Offline-Dauer, Reconnect-Versuchen und Reload-Button.
+>   - **Architektur (ES-Module, three.js r186):** Das frühere `app.js` ist in ES-Module unter `js/` aufgeteilt (`ros`, `jog`, `safety`, `motion`, `gizmo`, `grasp`, `audio`, `layout`, `log`, `status`, `tf_tuner`, `voice`, `streams`), der Digital Twin liegt in `js/twin/`. Statt globaler `window.*`-Funktionen tragen die Elemente `data-action`-Attribute, die `js/main.js` verteilt. Alle Topic- und Service-Namen stehen zentral in `js/config.js`. three.js r186 und urdf-loader 0.13 liegen lokal unter `lib/` (Import-Map, offline-fähig); der Twin rendert nur noch bei Änderungen oder laufenden Animationen. Das Log ist auf 500 Zeilen begrenzt, Polling-Intervalle pausieren bei verstecktem Tab.
+>   - **Webserver ohne manuelles Cache-Busting:** `server.py` ersetzt `python3 -m http.server`: HTML/JS/CSS gehen mit `Cache-Control: no-cache` raus (unverändert → 304), und `index.html` bekommt automatisch `?v=<Änderungszeit>` an jede Skript- und Stylesheet-URL.
+>   - **Einklappbare Sections:** Jede Section der Robot Control UI (Kamera-Streams, YOLO, 3D-Viewport, Jogging, Telemetrie, Sprachsteuerung, TF Control Tuner, Log) hat oben rechts im Header einen kleinen Chevron-Button. Eingeklappt bleibt nur die Kopfzeile sichtbar; der Zustand wird pro Section im Browser gespeichert (`localStorage`). Der Button sitzt im Drag-Handle, startet aber nie einen Drag.
 >   - **MoveIt-Fortschritts-Popup:** Unter dem TCP-Gizmo-Panel zeigt ein kleines Popup, was MoveIt bei einem MoveTo gerade tut: die drei Schritte IK → PLAN → EXECUTE mit Live-Timern, einen Fortschrittsbalken (laufender Streifen beim Planen, geschätzter Fortschritt beim Fahren), verworfene Kandidatenpfade sowie Ergebnis oder Fehler. Es blendet sich nach der Bewegung selbst aus (5 s bei Erfolg, 12 s bei Fehler). Gespeist von `/ui/moveit_motion_state`; die Schritte erscheinen zusätzlich als grüne `[MoveIt]`-Zeilen im Konsolen-Log.
 >   - **MoveIt-Kollisionsschalter:** Zwei Icons unten im **SCENE**-Panel schalten die MoveIt-Kollision der erkannten Objekte (`/ui/set_moveit_collision_objects`) und des Bodens (`/ui/set_moveit_collision_ground`) an und aus. Grün = AN, rot umrandet = AUS, grau = Node läuft nicht. Die Objekte bleiben im Viewport in jedem Fall sichtbar.
 >   - **Farbkodiertes Konsolen-Log:** Ein live scrollbares Konsolen-Log mit detailliertem Feedback für alle Bewegungsbefehle — inklusive Koordinatenanzeige (`X`, `Y`, `Z`) bei MoveTo-Befehlen und expliziten Erfolgs- (✓) / Fehler- (❌) Statusanzeigen mit Fehlercodes.
@@ -1814,6 +1835,11 @@ flowchart TD
 >> | **`/ui/moveit_motion_state`** | `std_msgs/String` (JSON) | *Speist das MoveIt-Fortschritts-Popup im Viewport.* |
 >> | **`/ui/moveit_collision_objects_enabled`** | `std_msgs/Bool` | *Zustand des Icons „Collision Objects“.* |
 >> | **`/ui/moveit_collision_ground_enabled`** | `std_msgs/Bool` | *Zustand des Icons „Collision Ground“.* |
+>> | **`/zed/yolo_collision_markers`** | `visualization_msgs/MarkerArray` | *Kollisionswände der erkannten Objekte (rot transparent im Twin).* |
+>> | **`/ui/disabled_collision_objects`** | `std_msgs/String` (JSON) | *Objekte mit abgeschalteter Kollision (Kontextmenü).* |
+>> | **`/ui/moveto_preview_enabled`** / **`/ui/moveto_preview_path`** | `std_msgs/Bool` / `std_msgs/String` (JSON) | *Zustand des Geist-Icons und der zu bestätigende Pfad.* |
+>> | **`/ui/gripper_state`** / **`/ui/gripper_type`** | `std_msgs/String` | *Greiferzustand und konfigurierter Greifer.* |
+>> | **`/ui/emergency_stop_active`** | `std_msgs/Bool` | *Verriegelter Not-Aus (Reset-Button im Header).* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1830,6 +1856,8 @@ flowchart TD
 >> | **`/ui/voice_listen_trigger`** | `std_msgs/String` | *Startet Audio-Aufnahmen bei Klick auf das Mikrofon-Symbol.* |
 >> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Sendet aktualisierte Parameter für die Safety-Zone.* |
 >> | **`/ui/sound_enabled`** | `std_msgs/Bool` | *Publiziert den Mute-Zustand der akustischen Rückmeldung, damit andere Nodes synchron bleiben.* |
+>> | **`/ui/gripper_cmd`** | `std_msgs/String` | *Greiferbefehl (`open` / `close` / `off`).* |
+>> | **`/ui/set_object_collision`** | `std_msgs/String` (JSON) | *Kollision eines Objekts ab-/einschalten (Kontextmenü).* |
 >
 >
 > ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
@@ -1841,6 +1869,8 @@ flowchart TD
 >> | **`/ui/execute_move_to_pose_silent`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Dasselbe MoveTo ohne Sprachansage - genutzt vom TCP-Gizmo im Viewport.* |
 >> | **`/ui/set_moveit_collision_objects`** | `std_srvs/srv/SetBool` (Client) | *Icon „Collision Objects“ im SCENE-Panel.* |
 >> | **`/ui/set_moveit_collision_ground`** | `std_srvs/srv/SetBool` (Client) | *Icon „Collision Ground“ im SCENE-Panel.* |
+>> | **`/ui/set_moveto_preview`** / **`/ui/confirm_moveto_preview`** | `std_srvs/srv/SetBool` (Client) | *Geist-Icon bzw. „Execute path / Discard“ im MoveIt-Popup.* |
+>> | **`/ui/reset_emergency_stop`** | `std_srvs/srv/Trigger` (Client) | *Reset-Button neben dem Not-Aus.* |
 >> | **`/ui/start_object_scan`** | `std_srvs/srv/Trigger` (Client) | *Startet den präzisen Objekt-Bogenscan.* |
 >> | **`/rosapi/nodes`** | `rosapi/Nodes` (Client) | *Erkennt anhand der Node-Liste den aktiven Hardware-Modus (Fake Arm vs. Real Arm).* |
 >> | **`/rosapi/get_param`** | `rosapi/GetParam` (Client) | *Liest die ROS-Umgebungsparameter für die Statusleiste aus.* |
@@ -2077,8 +2107,8 @@ Z ≤ 91,0 mm → 🛑 HARD STOP: Abwärtsachse genullt + Rumble
 | **D-Pad →** | Linearachse nach rechts | Pub → `/linear_axis_cmd` | *Verschiebt den Roboter auf der Schiene* |
 | **Back (⊞)** | Rahmen → `link_base` | Pub → `/ui/joy_button_presses` + `/ui/robot_control/current_frame` | *Weltkoordinaten-Modus* |
 | **Start (≡)** | Rahmen → `link_tcp` | Pub → `/ui/joy_button_presses` + `/ui/robot_control/current_frame` | *EEF-relativer Modus* |
-| **A (grün)** | Greifer toggle | Service: `open/close_lite6_gripper` | *Zustand in `vacuum_gripper_state_`* |
-| **B (rot)** | Greifer stopp | Service: `/ufactory/stop_lite6_gripper` | *Not-Aus* |
+| **A (grün)** | Greifer toggle / Vakuum an-aus | Service: `open/close_lite6_gripper` bzw. `set_vacuum_gripper` | *Je nach `gripper_type` (aus `add_gripper` / `add_vacuum_gripper`)* |
+| **B (rot)** | Greifer aus | Service: `/ufactory/stop_lite6_gripper` bzw. `set_vacuum_gripper(on=false)` | *Haltekraft lösen / Vakuum aus* |
 | **X (blau)** | Whisper AI toggle | Action: `/whisper/inference` (max 5 Sek.) | *Toggle start/stopp* |
 | **Y (gelb)** | Initialposition | Service: `/ui/execute_initial_pose` | *`robot_motion_handler_movegroup`* |
 
@@ -2140,6 +2170,9 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 | **Service Client** | `/ufactory/open_lite6_gripper` | `xarm_msgs/srv/Call` | *Öffnet Greifer* |
 | **Service Client** | `/ufactory/close_lite6_gripper` | `xarm_msgs/srv/Call` | *Schließt Greifer* |
 | **Service Client** | `/ufactory/stop_lite6_gripper` | `xarm_msgs/srv/Call` | *Stoppt Greifer* |
+| **Service Client** | `/ufactory/set_vacuum_gripper` | `xarm_msgs/srv/VacuumGripperCtrl` | *Vakuum an/aus* |
+| **Subscriber** | `/ui/gripper_cmd` | `std_msgs/String` | *Greiferbefehle der Robot Control UI* |
+| **Publisher** | `/ui/gripper_state` / `/ui/gripper_type` | `std_msgs/String` (latched) | *Greiferzustand und -typ für die UI* |
 | **Service Client** | `/ui/execute_initial_pose` | `std_srvs/srv/Trigger` | *Initialpositions-Sequenz* |
 | **Action Client** | `/whisper/inference` | `whisper_idl/action/Inference` | *Whisper-Sprachaufnahme* |
 
@@ -2746,8 +2779,10 @@ dev_ws/
 │   │   └── dashboard_index.html                                           # Echtzeit Web-Dashboard UI (Port 8080)
 │   ├── http_robot_control_ui_p8081/                                       # 🎮 HTML/JS: Eigenständiges Roboter-Steuerungs- & Jogging-Webpanel
 │   │   ├── index.html                                                     # Roboter-Steuerungsoberfläche (Port 8081)
-│   │   ├── app.js                                                         # Rosbridge WebSocket-Controller & Befehlsclient
-│   │   ├── digital_twin.js                                                # Three.js 3D WebGL Digital Twin & Szenenobjekte
+│   │   ├── js/                                                            # ES-Module (main.js, ros.js, jog.js, safety.js, motion.js, grasp.js, config.js …)
+│   │   │   └── twin/digital_twin.js                                       # Three.js 3D WebGL Digital Twin & Szenenobjekte
+│   │   ├── lib/                                                           # three.js r186 & urdf-loader (lokal, offline-fähig)
+│   │   ├── http_robot_control_ui_p8081/server.py                          # Webserver Port 8081 (no-cache + automatisches ?v=)
 │   │   └── roslib.min.js                                                  # ROS 2 Web-Bridge Client-Bibliothek
 │   ├── web_video_server/                                                  # 📹 ROS 2 HTTP/MJPEG Streaming-Bridge (Port 8082)
 │   │   ├── CMakeLists.txt

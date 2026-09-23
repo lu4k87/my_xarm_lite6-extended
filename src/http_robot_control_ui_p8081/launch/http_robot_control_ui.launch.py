@@ -33,7 +33,9 @@ def generate_launch_description():
 
     # 4. Webserver (Port 8081) und Chrome Browser-Fenster starten
     browser_cmd = (
-        f"python3 -m http.server 8081 -d '{ui_dir}' & "
+        # Eigener Server statt "python3 -m http.server": no-cache-Header und
+        # automatische ?v=-Versionen in index.html (siehe server.py).
+        f"python3 '{os.path.join(ui_dir, 'http_robot_control_ui_p8081', 'server.py')}' 8081 '{ui_dir}' & "
         "SERVER_PID=$!; "
         "sleep 1 && ("
         "google-chrome --user-data-dir=$HOME/.robot_control_profile --class='robot-control-ui' --start-maximized --app=http://127.0.0.2:8081/index.html || "

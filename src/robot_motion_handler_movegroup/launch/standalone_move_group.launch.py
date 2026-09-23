@@ -21,7 +21,12 @@ def launch_setup(context, *args, **kwargs):
     robot_type = LaunchConfiguration('robot_type', default='lite')
     prefix = LaunchConfiguration('prefix', default='')
     hw_ns = LaunchConfiguration('hw_ns', default='ufactory')
-    limited = LaunchConfiguration('limited', default=True)
+    # limited:=true schraenkt J1/J4/J6 im URDF auf +-0.99*pi (+-178.2 Grad) ein.
+    # Dann ist der Keil direkt hinter dem Roboter (z.B. X=-300, Y=0) per IK
+    # unerreichbar, obwohl die Hardware J1/J4/J6 +-360 Grad kann. Deshalb
+    # Standard false = echte Lite-6-Bereiche. Servo und move_group muessen
+    # dieselben Grenzen haben, sonst blockiert Servo eine geplante Pose.
+    limited = LaunchConfiguration('limited', default=False)
     effort_control = LaunchConfiguration('effort_control', default=False)
     velocity_control = LaunchConfiguration('velocity_control', default=False)
     model1300 = LaunchConfiguration('model1300', default=False)

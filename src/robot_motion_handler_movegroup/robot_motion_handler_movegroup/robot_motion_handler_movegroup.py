@@ -10,17 +10,21 @@ from action_msgs.msg import GoalStatus, GoalStatusArray
 from rclpy.qos import QoSProfile, DurabilityPolicy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from builtin_interfaces.msg import Duration
-from std_msgs.msg import String
-from std_srvs.srv import Trigger
+from std_msgs.msg import Bool, String
+from std_srvs.srv import SetBool, Trigger
 from xarm_msgs.srv import MoveCartesian, MoveJoint
 from moveit_msgs.srv import GetPositionIK
-from moveit_msgs.action import MoveGroup
+from moveit_msgs.action import ExecuteTrajectory, MoveGroup
 from moveit_msgs.msg import Constraints, DisplayTrajectory, JointConstraint, MotionPlanRequest, MoveItErrorCodes
 import math
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+
+class PreviewDiscarded(Exception):
+    """Die Pfad-Vorschau wurde verworfen (Nutzer oder Timeout) - kein Fehler."""
+
 
 def get_quaternion_from_euler(roll, pitch, yaw):
     cy = math.cos(yaw * 0.5)
@@ -98,6 +102,29 @@ class RobotMotionHandlerMovegroup(Node):
         # Index = UI speed level (0: Slow, 1: Normal, 2: Fast)
         self.declare_parameter('moveto_velocity_scaling', [0.15, 0.3, 0.6])
         self.declare_parameter('moveto_acceleration_scaling', [0.15, 0.3, 0.6])
+
+        # Pfad-Vorschau: Ist sie an, plant MoveTo nur (plan_only), schickt den
+        # Pfad an die Robot Control UI (Geisterroboter im Digital Twin) und
+        # faehrt ihn erst nach Bestaetigung ueber /execute_trajectory ab.
+        # Geschaltet wird ueber /ui/set_moveto_preview, der Zustand ist latched.
+        self.execute_traj_client = ActionClient(
+            self, ExecuteTrajectory, '/execute_trajectory', callback_group=self.cb_group)
+        self.declare_parameter('moveto_preview', False)
+        self.declare_parameter('moveto_preview_timeout', 60.0)  # s bis zum automatischen Verwerfen
+        self.preview_enabled = bool(self.get_parameter('moveto_preview').value)
+        self._preview_event = threading.Event()
+        self._preview_decision = None
+        self._preview_waiting = False
+        preview_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.preview_enabled_pub = self.create_publisher(Bool, '/ui/moveto_preview_enabled', preview_qos)
+        # Latched, damit ein Reload der UI einen wartenden Pfad wieder anzeigt.
+        self.preview_path_pub = self.create_publisher(String, '/ui/moveto_preview_path', preview_qos)
+        self.create_service(SetBool, '/ui/set_moveto_preview', self.set_moveto_preview_cb,
+                            callback_group=self.cb_group)
+        self.create_service(SetBool, '/ui/confirm_moveto_preview', self.confirm_moveto_preview_cb,
+                            callback_group=self.cb_group)
+        self.preview_enabled_pub.publish(Bool(data=self.preview_enabled))
+        self.preview_path_pub.publish(String(data=json.dumps({'clear': True})))
 
         # Live MoveTo progress for the MoveIt popup in the Robot Control UI
         # (JSON in std_msgs/String). move_group itself only reports PLANNING and
@@ -314,6 +341,26 @@ class RobotMotionHandlerMovegroup(Node):
                 self.is_executing = False
 
         threading.Thread(target=_task, daemon=True).start()
+
+    def set_moveto_preview_cb(self, request, response):
+        self.preview_enabled = bool(request.data)
+        self.preview_enabled_pub.publish(Bool(data=self.preview_enabled))
+        response.success = True
+        response.message = f"MoveTo path preview {'enabled' if self.preview_enabled else 'disabled'}"
+        self.ui_log(response.message + ('' if self.preview_enabled else
+                    ' - MoveTo executes planned paths without confirmation.'), 'info')
+        return response
+
+    def confirm_moveto_preview_cb(self, request, response):
+        if not self._preview_waiting:
+            response.success = False
+            response.message = 'No planned path is waiting for confirmation.'
+            return response
+        self._preview_decision = bool(request.data)
+        self._preview_event.set()
+        response.success = True
+        response.message = 'Path confirmed - executing.' if request.data else 'Path discarded.'
+        return response
 
     def _begin_execution(self):
         """Prueft und belegt die Ausfuehrung atomar (16 Executor-Threads)."""
@@ -603,7 +650,7 @@ class RobotMotionHandlerMovegroup(Node):
         self.stop_requested = True
         self.estop_latched = True
         self._publish_estop_state()
-        self.ui_log('<span style="color: var(--rviz-x); font-weight: bold; font-size: 1.2em;">EMERGENCY STOP TRIGGERED!</span>', 'error')
+        self.ui_log('EMERGENCY STOP TRIGGERED!', 'error')
 
         # Cancel a planned MoveTo path that move_group is currently running.
         goal_handle = self._move_goal_handle
@@ -999,13 +1046,14 @@ class RobotMotionHandlerMovegroup(Node):
                         self.ui_log('Scan Loop interrupted by EMERGENCY STOP!', 'error')
                         break
                         
-                    name_html = f"<span style='color: {cvar}; font-weight: 700;'>{name}</span>"
+                    # Klartext: das UI-Log escaped HTML (frueher als Markup sichtbar).
+                    name_html = f'"{name}"'
                     self.ui_log(f'Fetching Live-Position for {name_html} via TF...', 'info')
                     try:
                         t = self.tf_buffer.lookup_transform('link_base', frame_id, rclpy.time.Time())
                         obj_x = t.transform.translation.x
                         obj_y = t.transform.translation.y
-                        self.ui_log(f'Live-Position {name_html}: <span style="color: var(--rviz-x);">X={obj_x:.3f}</span>, <span style="color: var(--rviz-y);">Y={obj_y:.3f}</span>', 'success')
+                        self.ui_log(f'Live-Position {name_html}: X={obj_x:.3f}, Y={obj_y:.3f}', 'success')
                     except Exception:
                         self.ui_log(f'Live-Position for {name_html} not found. Using Fallback.', 'warn')
                         obj_x = default_pos[0]
@@ -1103,7 +1151,7 @@ class RobotMotionHandlerMovegroup(Node):
 
                 # Am Ende zurueck zur Initial Pose
                 if not self.stop_requested:
-                    init_html = "<span style='color: var(--orange); font-weight: 700;'>Initial Pose</span>"
+                    init_html = "Initial Pose"
                     self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], f"Returning to {init_html}...")
                 
             except Exception as e:
@@ -1177,55 +1225,21 @@ class RobotMotionHandlerMovegroup(Node):
             if r_xy < 0.125 and target_z < 0.28:
                 raise Exception(f"Ziel liegt in der inneren Singularitätszone (r={r_xy*1000:.0f} mm < 125 mm). Kollisionsgefahr mit eigenem Sockel!")
 
-            # 3. IK Request aufbauen mit aktiver Kollisionsprüfung (avoid_collisions = True)
-            ik_req = GetPositionIK.Request()
-            ik_req.ik_request.group_name = "lite6"
-            ik_req.ik_request.avoid_collisions = True
-            ik_req.ik_request.robot_state.is_diff = True  # seed = current robot state
-            ik_req.ik_request.pose_stamped = PoseStamped()
-            ik_req.ik_request.pose_stamped.header.frame_id = "link_base"
-            ik_req.ik_request.pose_stamped.pose.position.x = float(target_x)
-            ik_req.ik_request.pose_stamped.pose.position.y = float(target_y)
-            ik_req.ik_request.pose_stamped.pose.position.z = float(target_z)
-            ik_req.ik_request.pose_stamped.pose.orientation.x = float(q[0])
-            ik_req.ik_request.pose_stamped.pose.orientation.y = float(q[1])
-            ik_req.ik_request.pose_stamped.pose.orientation.z = float(q[2])
-            ik_req.ik_request.pose_stamped.pose.orientation.w = float(q[3])
-            ik_req.ik_request.timeout.sec = 1
-            
-            # 3. Call IK Service
+            # 3. IK mit Kollisionspruefung - die Loesung, die der aktuellen
+            #    Stellung am naechsten liegt (siehe _solve_ik_near_current).
             if not self.ik_client.wait_for_service(timeout_sec=2.0):
                 raise Exception("IK Service /compute_ik not available!")
-                
-            future = self.ik_client.call_async(ik_req)
-            
-            # Warte auf IK Antwort
-            pass
-            start_wait = time.time()
-            while not future.done():
-                if time.time() - start_wait > 2.0:
-                    raise Exception("Timeout while waiting for IK response.")
-                time.sleep(0.05)
-                
-            ik_res = future.result()
-            
-            if ik_res.error_code.val != 1: # 1 == SUCCESS
-                raise Exception(f"IK calculation failed (Error Code: {ik_res.error_code.val}). Target out of reach or in collision.")
-                
-            # 4. Extrahiere Gelenkwinkel
-            joint_names = ik_res.solution.joint_state.name
-            positions = ik_res.solution.joint_state.position
-            
-            # Sicherstellen, dass die Reihenfolge joint1...joint6 ist
-            target_joints = [0.0] * 6
-            for i in range(1, 7):
-                j_name = f'joint{i}'
-                if j_name in joint_names:
-                    idx = joint_names.index(j_name)
-                    target_joints[i-1] = positions[idx]
-                else:
-                    raise Exception(f"Joint {j_name} not found in IK solution!")
-                    
+            pose = PoseStamped()
+            pose.header.frame_id = "link_base"
+            pose.pose.position.x = float(target_x)
+            pose.pose.position.y = float(target_y)
+            pose.pose.position.z = float(target_z)
+            pose.pose.orientation.x = float(q[0])
+            pose.pose.orientation.y = float(q[1])
+            pose.pose.orientation.z = float(q[2])
+            pose.pose.orientation.w = float(q[3])
+            target_joints = self._solve_ik_near_current(pose)
+
             self._moveit_mark('t_ik')
 
             # 5. Plan and execute a collision-free path
@@ -1236,6 +1250,12 @@ class RobotMotionHandlerMovegroup(Node):
             response.ret = 0
             response.message = "Success"
             
+        except PreviewDiscarded as e:
+            run = self._moveit_finish('discarded', message=str(e))
+            self.ui_log(f"MoveTo cancelled: {e}", 'warn')
+            response.ret = -1
+            response.message = str(e)
+
         except Exception as e:
             aborted = self.stop_requested
             run = self._moveit_finish('aborted' if aborted else 'failed', message=str(e))
@@ -1267,6 +1287,90 @@ class RobotMotionHandlerMovegroup(Node):
         goal_handle = send_future.result()
         if goal_handle is not None and goal_handle.accepted:
             goal_handle.cancel_goal_async()
+
+    # Gelenke, die mehr als eine volle Umdrehung koennen (Lite 6: J1/J4/J6 +-360 Grad).
+    # Fuer sie sind v und v +- 2*pi dieselbe Stellung.
+    _WRAP_JOINTS = (0, 3, 5)
+    _JOINT_LIMIT_WRAP = 2.0 * math.pi
+
+    def _current_joints(self):
+        js = self.current_joint_state
+        if js is None:
+            return None
+        try:
+            return [js.position[js.name.index(f'joint{i}')] for i in range(1, 7)]
+        except ValueError:
+            return None
+
+    def _unwrap_near(self, sol, cur):
+        """J1/J4/J6 um +-2*pi verschieben, sodass sie dem aktuellen Wert am naechsten liegen."""
+        out = list(sol)
+        for i in self._WRAP_JOINTS:
+            cands = [sol[i] + k * 2.0 * math.pi for k in (-1, 0, 1)]
+            cands = [c for c in cands if abs(c) <= self._JOINT_LIMIT_WRAP + 1e-6]
+            out[i] = min(cands, key=lambda c: abs(c - cur[i]))
+        return out
+
+    def _call_ik(self, pose, seed=None):
+        req = GetPositionIK.Request()
+        req.ik_request.group_name = "lite6"
+        req.ik_request.avoid_collisions = True
+        req.ik_request.robot_state.is_diff = True  # ohne Seed: aktueller Zustand
+        if seed is not None:
+            req.ik_request.robot_state.joint_state.name = [f'joint{i}' for i in range(1, 7)]
+            req.ik_request.robot_state.joint_state.position = [float(v) for v in seed]
+        req.ik_request.pose_stamped = pose
+        req.ik_request.timeout.sec = 1
+        future = self.ik_client.call_async(req)
+        start_wait = time.time()
+        while not future.done():
+            if time.time() - start_wait > 2.0:
+                return None, 'timeout'
+            time.sleep(0.02)
+        res = future.result()
+        if res.error_code.val != 1:
+            return None, res.error_code.val
+        names = list(res.solution.joint_state.name)
+        pos = res.solution.joint_state.position
+        try:
+            return [pos[names.index(f'joint{i}')] for i in range(1, 7)], 1
+        except ValueError:
+            return None, 'joint missing'
+
+    def _solve_ik_near_current(self, pose):
+        """IK-Loesung mit der geringsten Gelenkbewegung ab der aktuellen Stellung.
+
+        KDL liefert bei J1/J4/J6 +-360 Grad beliebige gleichwertige Loesungen
+        (z. B. J4 = -2*pi oder ein umgeklappter Ellbogen) - der Arm wuerde dann
+        eine volle Handgelenkdrehung oder einen Umweg fahren. Deshalb mehrere
+        Seeds, darunter einer mit J1 schon in Zielrichtung, und am Ende die
+        Loesung mit der kleinsten Gelenkdistanz.
+        """
+        cur = self._current_joints()
+        seeds = [None]
+        if cur is not None:
+            p = pose.pose.position
+            azimuth = math.atan2(p.y, p.x)
+            d1 = math.atan2(math.sin(azimuth - cur[0]), math.cos(azimuth - cur[0]))
+            turned = list(cur)
+            turned[0] = cur[0] + d1
+            turned[5] = cur[5] + d1   # Werkzeug-Yaw dreht mit J1 mit
+            seeds = [turned, None, cur]
+        best, best_cost, last_err = None, None, None
+        for seed in seeds:
+            sol, err = self._call_ik(pose, seed)
+            if sol is None:
+                last_err = err
+                continue
+            if cur is None:
+                return sol
+            sol = self._unwrap_near(sol, cur)
+            cost = sum(abs(a - b) for a, b in zip(sol, cur))
+            if best is None or cost < best_cost:
+                best, best_cost = sol, cost
+        if best is None:
+            raise Exception(f"IK calculation failed (Error Code: {last_err}). Target out of reach or in collision.")
+        return best
 
     def _plan_and_execute_joints(self, target_joints):
         """Plan a collision-free path to target_joints with move_group and execute it.
@@ -1300,11 +1404,14 @@ class RobotMotionHandlerMovegroup(Node):
             goal.joint_constraints.append(jc)
         req.goal_constraints.append(goal)
 
+        # Mit Vorschau nur planen - ausgefuehrt wird erst nach Bestaetigung.
+        preview = self.preview_enabled
+
         goal_msg = MoveGroup.Goal()
         goal_msg.request = req
-        goal_msg.planning_options.plan_only = False  # planen UND ausfuehren
+        goal_msg.planning_options.plan_only = preview
         goal_msg.planning_options.look_around = False
-        goal_msg.planning_options.replan = True
+        goal_msg.planning_options.replan = not preview
         goal_msg.planning_options.replan_attempts = 3
         goal_msg.planning_options.replan_delay = 0.1
 
@@ -1346,13 +1453,106 @@ class RobotMotionHandlerMovegroup(Node):
                                     else "Timeout waiting for move_group.")
                 time.sleep(0.05)
 
-            code = result_future.result().result.error_code.val
+            result = result_future.result().result
+            code = result.error_code.val
             if code != MoveItErrorCodes.SUCCESS:
                 reason = self._MOVEIT_ERROR_TEXT.get(code, 'MoveIt error')
                 raise Exception(f"{reason} (MoveIt error code {code}).")
+            self._move_goal_handle = None
+
+            if preview:
+                # Servo bleibt waehrend der Wartezeit pausiert: der Arm darf
+                # sich nicht bewegen, sonst passt der Startzustand des Pfads
+                # nicht mehr.
+                self._confirm_preview(result.planned_trajectory)
+                self._execute_trajectory(result.planned_trajectory)
         finally:
             self._move_goal_handle = None
             self._resume_servo()
+
+    def _publish_preview_path(self, joint_traj):
+        with self._moveit_lock:
+            seq = self._moveit_run['seq'] if self._moveit_run else 0
+        msg = {
+            'seq': seq,
+            'joint_names': list(joint_traj.joint_names),
+            'points': [[round(float(v), 5) for v in p.positions] for p in joint_traj.points],
+            'times': [round(p.time_from_start.sec + p.time_from_start.nanosec * 1e-9, 3)
+                      for p in joint_traj.points],
+        }
+        self.preview_path_pub.publish(String(data=json.dumps(msg)))
+
+    def _confirm_preview(self, robot_traj):
+        """Pfad an die UI schicken und auf Ausfuehren / Verwerfen warten."""
+        jt = robot_traj.joint_trajectory
+        if not jt.points:
+            raise Exception("MoveIt returned an empty path.")
+        t = jt.points[-1].time_from_start
+        expected = t.sec + t.nanosec * 1e-9
+        timeout = float(self.get_parameter('moveto_preview_timeout').value)
+
+        self._moveit_mark('t_plan')
+        self._preview_decision = None
+        self._preview_event.clear()
+        self._preview_waiting = True
+        try:
+            self._publish_preview_path(jt)
+            self._moveit_phase('confirm', waypoints=len(jt.points),
+                               exec_expected=round(expected, 3), confirm_timeout=timeout)
+            self.ui_log(f"MoveIt path preview ready ({len(jt.points)} waypoints, est. {expected:.1f} s) - "
+                        f"confirm in the Robot Control UI (auto-discard after {timeout:.0f} s).", 'action')
+            t_end = time.time() + timeout
+            while not self._preview_event.wait(0.05):
+                if self.stop_requested:
+                    raise Exception("Movement interrupted by EMERGENCY STOP!")
+                if time.time() > t_end:
+                    raise PreviewDiscarded(f"path not confirmed within {timeout:.0f} s - discarded")
+            if self.stop_requested:
+                raise Exception("Movement interrupted by EMERGENCY STOP!")
+            if not self._preview_decision:
+                raise PreviewDiscarded("path discarded by user")
+        finally:
+            self._preview_waiting = False
+            self.preview_path_pub.publish(String(data=json.dumps({'clear': True})))
+        self._moveit_mark('t_confirm')
+
+    def _execute_trajectory(self, robot_traj):
+        """Den bestaetigten Pfad unveraendert ueber move_group ausfuehren."""
+        if not self.execute_traj_client.wait_for_server(timeout_sec=2.0):
+            raise Exception("MoveIt action /execute_trajectory not available - path not executed.")
+        # preview_pending: der Controller-Start gehoert zu diesem Pfad und ist
+        # KEIN Umplanen (siehe _controller_status_cb).
+        self._moveit_phase('executing', preview_pending=True)
+        self.ui_log("MoveIt [3/3] Path confirmed - executing.", 'info')
+
+        goal = ExecuteTrajectory.Goal()
+        goal.trajectory = robot_traj
+        deadline = time.time() + float(self.get_parameter('moveto_timeout').value)
+        send_future = self.execute_traj_client.send_goal_async(goal)
+        while not send_future.done():
+            if self.stop_requested or time.time() > deadline:
+                send_future.add_done_callback(self._cancel_when_accepted)
+                raise Exception("Movement interrupted by EMERGENCY STOP!" if self.stop_requested
+                                else "Timeout waiting for move_group.")
+            time.sleep(0.05)
+
+        goal_handle = send_future.result()
+        if not goal_handle.accepted:
+            raise Exception("move_group rejected the confirmed path.")
+        self._move_goal_handle = goal_handle
+
+        result_future = goal_handle.get_result_async()
+        while not result_future.done():
+            if self.stop_requested or time.time() > deadline:
+                goal_handle.cancel_goal_async()
+                raise Exception("Movement interrupted by EMERGENCY STOP!" if self.stop_requested
+                                else "Timeout waiting for move_group.")
+            time.sleep(0.05)
+
+        code = result_future.result().result.error_code.val
+        if code != MoveItErrorCodes.SUCCESS:
+            reason = self._MOVEIT_ERROR_TEXT.get(code, 'MoveIt error')
+            raise Exception(f"{reason} (MoveIt error code {code}).")
 
 
     # ── MoveIt progress reporting (UI popup + log) ─────────────────────────
@@ -1426,6 +1626,8 @@ class RobotMotionHandlerMovegroup(Node):
             parts.append(f"IK {run['t_ik']:.2f} s")
         if 't_plan' in run:
             parts.append(f"planning {run['t_plan']:.2f} s")
+        if 't_confirm' in run:
+            parts.append(f"waiting for confirmation {run['t_confirm']:.1f} s")
         if 't_exec' in run:
             parts.append(f"execution {run['t_exec']:.2f} s")
         if 't_plan_exec' in run:
@@ -1476,6 +1678,12 @@ class RobotMotionHandlerMovegroup(Node):
         with self._moveit_lock:
             run = self._moveit_run
             if run is None or run.get('phase') not in ('planning', 'executing'):
+                return
+            if run.get('preview_pending'):
+                # Start des bestaetigten Vorschau-Pfads, kein Umplanen.
+                run['preview_pending'] = False
+                run['phase_t0'] = time.time()
+                self._moveit_publish(run)
                 return
             replanned = run['phase'] == 'executing'
             if replanned:

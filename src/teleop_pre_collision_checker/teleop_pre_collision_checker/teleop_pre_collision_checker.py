@@ -3,10 +3,11 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy
 from sensor_msgs.msg import Joy
 import tf2_ros
 import pygame
-from std_msgs.msg import Float32, Float32MultiArray, String, Int8
+from std_msgs.msg import Bool, Float32, Float32MultiArray, String, Int8
 import sys
 import time
 
@@ -44,6 +45,15 @@ class Checker(Node):
         
         # Subscriber für MoveIt Servo Warnungen (3D Kollisionen)
         self.servo_status_sub = self.create_subscription(Int8, "/servo_server/status", self.servo_status_callback, 10)
+
+        # Die Z-Sperre folgt dem MoveIt-Bodenschalter der Robot Control UI
+        # (latched von moveit_floor_collision). Ist die Bodenkollision dort
+        # bewusst AUS, blockiert auch das Gamepad nicht mehr nach unten.
+        # Ohne Nachricht (Node laeuft nicht) bleibt die Sperre aktiv.
+        self.ground_enabled = True
+        self.create_subscription(
+            Bool, "/ui/moveit_collision_ground_enabled", self.ground_enabled_callback,
+            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
         
         self.joy_cmd = Joy()
         self.current_z = 0.0
@@ -64,6 +74,11 @@ class Checker(Node):
             
         self.collision_message = "Plane Collision!"
         self.collision_cleared_message = ""
+
+    def ground_enabled_callback(self, msg):
+        self.ground_enabled = bool(msg.data)
+        self.get_logger().info(f"Ground collision {'ON' if self.ground_enabled else 'OFF'} - "
+                               f"Z limit ({self.Z_LIMIT:.0f} mm) {'active' if self.ground_enabled else 'disabled'}.")
 
     def speed_callback(self, msg):
         """Speichert den aktuellen Geschwindigkeitsfaktor vom Joystick-Node."""
@@ -113,7 +128,7 @@ class Checker(Node):
         
         # Geschwindigkeitsbegrenzung in der Nähe des Bodens
         effective_speed_factor = self.current_speed_factor_from_joy
-        if self.current_z < self.CAUTION_ZONE_START:
+        if self.ground_enabled and self.current_z < self.CAUTION_ZONE_START:
             effective_speed_factor = min(self.current_speed_factor_from_joy, self.CAUTION_ZONE_SPEED)
 
         # Der rechte Trigger (DOWN_TRIGGER_AXIS = 5) hat einen Wert von 1.0 (unbetätigt) bis -1.0 (voll betätigt).
@@ -121,7 +136,7 @@ class Checker(Node):
         is_moving_down = down_trigger_value < 1.0 
         
         block_downward_movement = False
-        if is_moving_down:
+        if is_moving_down and self.ground_enabled:
             if self.current_z <= self.Z_LIMIT:
                 # 1. Sofortige Kollision (bereits unter oder auf dem Limit)
                 block_downward_movement = True

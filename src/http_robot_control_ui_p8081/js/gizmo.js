@@ -1,0 +1,146 @@
+import { SERVICES } from './config.js';
+import * as twin from './twin/digital_twin.js';
+import { toggleSound } from './audio.js';
+import { logMsg } from './log.js';
+import { setButtonsLocked } from './motion.js';
+import { createSrv, motionAllowed } from './ros.js';
+import { LIM, floorGuard, readPoseInput, setIconLabel, validatePose } from './util.js';
+
+// ── Interactive 3D TCP Gizmo Execution ───────────────────────────────────────
+export let isExecutingGizmoMove = false;
+
+export function executeMoveToPoseFromGizmo() {
+  if (isExecutingGizmoMove) {
+    console.warn('[Gizmo] Motion execution already in progress.');
+    return;
+  }
+
+  // Retrieve pose from 3D Gizmo or fallback to numeric inputs
+  let poseData = null;
+  if (typeof twin.getTCPGizmoPose === 'function') {
+    poseData = twin.getTCPGizmoPose();
+  }
+
+  const x = poseData ? poseData.x : readPoseInput('inp-x');
+  const y = poseData ? poseData.y : readPoseInput('inp-y');
+  const z = poseData ? poseData.z : readPoseInput('inp-z');
+  const r = poseData ? poseData.roll : readPoseInput('inp-r');
+  const p = poseData ? poseData.pitch : readPoseInput('inp-p');
+  const yw = poseData ? poseData.yaw : readPoseInput('inp-yw');
+
+  // Prueft jetzt alle sechs Werte, nicht nur X/Y/Z.
+  const bad = validatePose([x, y, z, r, p, yw]);
+  if (bad) {
+    logMsg('GIZMO', `❌ Invalid gizmo target: ${bad}`, 'err');
+    return;
+  }
+
+  // Safety Validation: Prevent driving into inner singularity & self-collision
+  const r_xy = Math.sqrt(x * x + y * y);
+  if (r_xy < LIM.HARD_BLOCK_MM && z < LIM.LOW_Z_MM) {
+    logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the inner singularity zone (r=${r_xy.toFixed(0)} mm < ${LIM.HARD_BLOCK_MM} mm). Risk of collision with its own base!`, 'err');
+    if (typeof twin.updateDigitalTwinSafety === 'function') {
+      twin.updateDigitalTwinSafety({
+        collision: true,
+        message: `SELF-COLLISION ZONE (r: ${r_xy.toFixed(0)} mm < 125 mm)`,
+        collidingLinks: ['link6', 'link5', 'link2', 'link1']
+      });
+    }
+    return;
+  }
+  if (floorGuard.enabled && z <= 15.0) {
+    logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the table surface (Z=${z.toFixed(0)} mm ≤ 15 mm).`, 'err');
+    return;
+  }
+
+  if (!motionAllowed('Gizmo move')) return;
+  isExecutingGizmoMove = true;
+  setButtonsLocked(true);
+
+  // Update floating HUD button in 3D viewport
+  const btnGo = document.getElementById('btn-gizmo-execute');
+  if (btnGo) {
+    setIconLabel(btnGo, 'fa-solid fa-circle-notch fa-spin', 'Moving...');
+    btnGo.style.opacity = '0.7';
+    btnGo.disabled = true;
+  }
+
+  // Silent variant: no "robot moves to absolute pose" voice for gizmo moves.
+  const srv = createSrv(SERVICES.executeMoveToPoseSilent, 'xarm_msgs/MoveCartesian');
+  const req = new ROSLIB.ServiceRequest({
+    pose: [x, y, z, r, p, yw],
+    speed: 100.0,
+    acc: 1000.0,
+    mvtime: 0.0
+  });
+
+  logMsg('GIZMO', `🎯 TCP gizmo move: X=${x} Y=${y} Z=${z} mm (R=${r} P=${p} Yw=${yw})`, 'action');
+
+  srv.callService(req, (res) => {
+    isExecutingGizmoMove = false;
+    setButtonsLocked(false);
+    if (btnGo) {
+      setIconLabel(btnGo, 'fa-solid fa-play', 'Execute');
+      btnGo.style.opacity = '1.0';
+      btnGo.disabled = false;
+    }
+
+    if (res.ret === 0) {
+      logMsg('GIZMO', 'Gizmo move accepted - MoveIt is planning the path.', 'info');
+      if (typeof twin.syncTCPGizmoToRobot === 'function') {
+        twin.syncTCPGizmoToRobot();
+      }
+    } else {
+      logMsg('GIZMO', `❌ Gizmo move rejected (ret=${res.ret}): ${res.message || 'Target unreachable or in collision'}`, 'err');
+    }
+  }, (err) => {
+    isExecutingGizmoMove = false;
+    setButtonsLocked(false);
+    if (btnGo) {
+      setIconLabel(btnGo, 'fa-solid fa-play', 'Execute');
+      btnGo.style.opacity = '1.0';
+      btnGo.disabled = false;
+    }
+    logMsg('GIZMO', `❌ Service error during gizmo move: ${err}`, 'err');
+  });
+}
+
+// ── Keyboard Shortcuts for 3D TCP Gizmo ──────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  // Ignore keystrokes when typing in an input field or text area
+  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)) {
+    return;
+  }
+
+  const key = e.key ? e.key.toLowerCase() : '';
+  if (key === 't') {
+    if (typeof twin.setTCPGizmoMode === 'function') {
+      twin.setTCPGizmoMode('translate');
+      logMsg('GIZMO', '⌨️ Mode: Translation (arrows) active [Key: T]', 'info');
+    }
+  } else if (key === 'r') {
+    if (typeof twin.setTCPGizmoMode === 'function') {
+      twin.setTCPGizmoMode('rotate');
+      logMsg('GIZMO', '⌨️ Mode: Rotation (rings) active [Key: R]', 'info');
+    }
+  } else if (key === 'g') {
+    if (typeof twin.toggleTCPGizmo === 'function') {
+      twin.toggleTCPGizmo();
+      logMsg('GIZMO', '⌨️ 3D TCP gizmo toggled [Key: G]', 'info');
+    }
+  } else if (e.key === 'Escape') {
+    if (typeof twin.syncTCPGizmoToRobot === 'function') {
+      twin.syncTCPGizmoToRobot();
+      logMsg('GIZMO', '⌨️ Gizmo reset to current robot TCP [Key: Esc]', 'info');
+    }
+  } else if (key === 'm') {
+    if (typeof toggleSound === 'function') {
+      toggleSound();
+    }
+  }
+});
+
+// Auto-Move nach dem Loslassen des TCP-Gizmos im Viewport.
+twin.twinHooks.executeMoveToPoseFromGizmo = executeMoveToPoseFromGizmo;
+

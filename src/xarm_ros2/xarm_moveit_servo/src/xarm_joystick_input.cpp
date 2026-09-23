@@ -97,7 +97,31 @@ namespace xarm_moveit_servo
         _open_gripper_client_ = this->create_client<xarm_msgs::srv::Call>("/ufactory/open_lite6_gripper");
         _close_gripper_client_ = this->create_client<xarm_msgs::srv::Call>("/ufactory/close_lite6_gripper");
         _stop_gripper_client_ = this->create_client<xarm_msgs::srv::Call>("/ufactory/stop_lite6_gripper");
+        _vacuum_client_ = this->create_client<xarm_msgs::srv::VacuumGripperCtrl>("/ufactory/set_vacuum_gripper");
         _get_position_client_ = this->create_client<xarm_msgs::srv::GetFloat32List>("/ufactory/get_position");
+        // Greifertyp kommt aus dem Launch (add_vacuum_gripper / add_gripper).
+        // Ohne Parameter bleibt es beim bisherigen Verhalten (Vakuum).
+        gripper_type_ = "vacuum";
+        gripper_state_ = "unknown";
+        _declare_or_get_param<std::string>(gripper_type_, "gripper_type", gripper_type_);
+        if (gripper_type_ != "vacuum" && gripper_type_ != "gripper" && gripper_type_ != "none") {
+            RCLCPP_WARN(this->get_logger(), "Unknown gripper_type '%s' - using 'vacuum'.", gripper_type_.c_str());
+            gripper_type_ = "vacuum";
+        }
+        gripper_type_pub_ = this->create_publisher<std_msgs::msg::String>("/ui/gripper_type", rclcpp::QoS(1).transient_local());
+        gripper_state_pub_ = this->create_publisher<std_msgs::msg::String>("/ui/gripper_state", rclcpp::QoS(1).transient_local());
+        gripper_cmd_sub_ = this->create_subscription<std_msgs::msg::String>(
+            "/ui/gripper_cmd", 10,
+            [this](const std_msgs::msg::String::SharedPtr msg) { _gripper_command(msg->data, "UI"); });
+        {
+            std_msgs::msg::String type_msg;
+            type_msg.data = gripper_type_;
+            gripper_type_pub_->publish(type_msg);
+        }
+        _publish_gripper_state(gripper_state_);
+        RCLCPP_INFO(this->get_logger(), "Gripper type: %s (A: %s, B: off)", gripper_type_.c_str(),
+                    gripper_type_ == "vacuum" ? "vacuum on/off" : "open/close toggle");
+
         execute_sequence_y_client_ = this->create_client<std_srvs::srv::Trigger>("/ui/execute_initial_pose");
         execute_sequence_y_client_->wait_for_service(std::chrono::seconds(1));
 
@@ -457,29 +481,13 @@ namespace xarm_moveit_servo
             return;
         }
 
+        // A: auf/zu umschalten, B: Greifer ausschalten (beide Greifertypen)
         if (msg->buttons[xbox_BTN_A] == 1 && prev_buttons_[xbox_BTN_A] == 0) {
-            auto request = std::make_shared<xarm_msgs::srv::Call::Request>();
-            if (vacuum_gripper_state_) {
-                _close_gripper_client_->async_send_request(request);
-                RCLCPP_INFO(this->get_logger(), "[Service Call: close_lite6_gripper]");
-                vacuum_gripper_state_ = false;
-            } else {
-                _open_gripper_client_->async_send_request(request);
-                RCLCPP_INFO(this->get_logger(), "[Service Call: open_lite6_gripper]");
-                vacuum_gripper_state_ = true;
-            }
-            auto btn_msg = std::make_unique<std_msgs::msg::String>();
-            btn_msg->data = "Greifer - [Status]: " + std::string(vacuum_gripper_state_ ? "✅ GEÖFFNET" : "❌ GESCHLOSSEN");
-            button_press_pub_->publish(std::move(btn_msg));
+            _gripper_command("toggle", "Gamepad A");
         }
 
         if (msg->buttons[xbox_BTN_B] == 1 && prev_buttons_[xbox_BTN_B] == 0) {
-            RCLCPP_INFO(this->get_logger(), "[B]: call '/ufactory/stop_lite6_gripper' service...");
-            auto request = std::make_shared<xarm_msgs::srv::Call::Request>();
-            _stop_gripper_client_->async_send_request(request);
-            auto btn_msg = std::make_unique<std_msgs::msg::String>();
-            btn_msg->data = "Greifer - [Status]: ⏹ GESTOPPT (OFF)";
-            button_press_pub_->publish(std::move(btn_msg));
+            _gripper_command("off", "Gamepad B");
         }
 
         if (msg->buttons[xbox_BTN_Y] == 1 && prev_buttons_[xbox_BTN_Y] == 0) {
@@ -518,6 +526,99 @@ namespace xarm_moveit_servo
                 prev_buttons_[i] = msg->buttons[i];
             }
         }
+    }
+    void JoyToServoPub::_publish_gripper_state(const std::string &state)
+    {
+        gripper_state_ = state;
+        vacuum_gripper_state_ = (state == "open");
+        std_msgs::msg::String msg;
+        msg.data = state;
+        gripper_state_pub_->publish(msg);
+    }
+
+    void JoyToServoPub::_gripper_command(const std::string &cmd_in, const std::string &source)
+    {
+        auto feedback = [this](const std::string &text) {
+            std_msgs::msg::String m;
+            m.data = text;
+            button_press_pub_->publish(m);
+        };
+
+        if (gripper_type_ == "none") {
+            RCLCPP_WARN(this->get_logger(), "[%s] No gripper configured (gripper_type:=none) - command '%s' ignored.",
+                        source.c_str(), cmd_in.c_str());
+            feedback("Greifer - kein Greifer konfiguriert (gripper_type:=none)");
+            return;
+        }
+
+        const bool vacuum = (gripper_type_ == "vacuum");
+        std::string cmd = cmd_in;
+        // A-Taste: Vakuum an/aus bzw. Greifer auf/zu. Beim Vakuum heisst
+        // "closed" = Saugen an (haelt), alles andere = aus.
+        if (cmd == "toggle") {
+            if (vacuum) cmd = (gripper_state_ == "closed") ? "off" : "close";
+            else cmd = vacuum_gripper_state_ ? "close" : "open";
+        }
+
+        std::string new_state, status_text;
+        if (cmd == "open") {
+            new_state = "open";
+            status_text = vacuum ? "💨 VAKUUM AUS (losgelassen)" : "✅ OFFEN";
+        } else if (cmd == "close") {
+            new_state = "closed";
+            status_text = vacuum ? "🟢 VAKUUM AN (saugt)" : "❌ GESCHLOSSEN";
+        } else if (cmd == "off") {
+            new_state = "off";
+            status_text = vacuum ? "⏹ VAKUUM AUS" : "⏹ GESTOPPT (OFF)";
+        } else {
+            RCLCPP_WARN(this->get_logger(), "[%s] Unknown gripper command '%s'.", source.c_str(), cmd_in.c_str());
+            return;
+        }
+
+        if (vacuum) {
+            // Vakuumgreifer: /ufactory/set_vacuum_gripper (an/aus), wie in
+            // der Blicksteuerung. "open" und "off" schalten beide ab.
+            if (!_vacuum_client_->service_is_ready()) {
+                RCLCPP_WARN(this->get_logger(), "[%s] Service %s not available - vacuum command '%s' not sent.",
+                            source.c_str(), _vacuum_client_->get_service_name(), cmd.c_str());
+                feedback(std::string("Greifer - Service ") + _vacuum_client_->get_service_name() + " nicht verfügbar (Fake Arm?)");
+                return;
+            }
+            auto req = std::make_shared<xarm_msgs::srv::VacuumGripperCtrl::Request>();
+            req->on = (cmd == "close");
+            RCLCPP_INFO(this->get_logger(), "[%s] Vacuum gripper: set_vacuum_gripper(on=%s)", source.c_str(), req->on ? "true" : "false");
+            _vacuum_client_->async_send_request(req,
+                [this, feedback](rclcpp::Client<xarm_msgs::srv::VacuumGripperCtrl>::SharedFuture future) {
+                    auto res = future.get();
+                    if (res && res->ret != 0) {
+                        RCLCPP_WARN(this->get_logger(), "set_vacuum_gripper returned ret=%d", res->ret);
+                        feedback("Greifer - Fehler: set_vacuum_gripper ret=" + std::to_string(res->ret));
+                    }
+                });
+        } else {
+            // Lite 6 Zwei-Finger-Greifer: open/close/stop_lite6_gripper.
+            rclcpp::Client<xarm_msgs::srv::Call>::SharedPtr client =
+                (cmd == "open") ? _open_gripper_client_ : (cmd == "close") ? _close_gripper_client_ : _stop_gripper_client_;
+            if (!client->service_is_ready()) {
+                RCLCPP_WARN(this->get_logger(), "[%s] Service %s not available - gripper command '%s' not sent.",
+                            source.c_str(), client->get_service_name(), cmd.c_str());
+                feedback(std::string("Greifer - Service ") + client->get_service_name() + " nicht verfügbar (Fake Arm?)");
+                return;
+            }
+            RCLCPP_INFO(this->get_logger(), "[%s] Gripper: call '%s'", source.c_str(), client->get_service_name());
+            const std::string service_name = client->get_service_name();
+            client->async_send_request(
+                std::make_shared<xarm_msgs::srv::Call::Request>(),
+                [this, service_name, feedback](rclcpp::Client<xarm_msgs::srv::Call>::SharedFuture future) {
+                    auto res = future.get();
+                    if (res && res->ret != 0) {
+                        RCLCPP_WARN(this->get_logger(), "Gripper service %s returned ret=%d", service_name.c_str(), res->ret);
+                        feedback("Greifer - Fehler: " + service_name + " ret=" + std::to_string(res->ret));
+                    }
+                });
+        }
+        _publish_gripper_state(new_state);
+        feedback("Greifer - [Status]: " + status_text);
     }
 } // namespace xarm_moveit_servo
 

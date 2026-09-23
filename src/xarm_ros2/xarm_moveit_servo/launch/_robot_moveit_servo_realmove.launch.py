@@ -201,6 +201,15 @@ def launch_setup(context, *args, **kwargs):
     #         ],
     #     ))
 
+    # Greifertyp fuer Gamepad (A/B) und Robot Control UI. Vakuum hat Vorrang,
+    # wenn versehentlich beide Argumente gesetzt sind.
+    if add_vacuum_gripper.perform(context) in ('True', 'true'):
+        gripper_type = 'vacuum'
+    elif add_gripper.perform(context) in ('True', 'true'):
+        gripper_type = 'gripper'
+    else:
+        gripper_type = 'none'
+
     # Launch as much as possible in components
     composable_nodes = [
         ComposableNode(
@@ -234,6 +243,7 @@ def launch_setup(context, *args, **kwargs):
                     'dof': dof, 
                     'ros_queue_size': 10,
                     'joystick_type': joystick_type,
+                    'gripper_type': gripper_type,
                     'joy_topic': "/joy_check" # <<<<<<<<<<<<<<<<<<----------------write node parameter to remap joy cmd topic!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 },
             ],
