@@ -177,6 +177,9 @@
                 <span class="v-tab-btn active" style="cursor: default;">
                   <i class="fa-solid fa-circle" style="color: #22c55e; font-size: 8px;"></i> Live Digital Twin
                 </span>
+                <button type="button" class="v-tab-hud-toggle" id="btn-hud-tabs-toggle" onclick="toggleAllHudTabs()" title="Collapse / expand all viewport panels">
+                  <i class="fa-solid fa-window-minimize" id="hud-tabs-toggle-icon"></i>
+                </button>
               </div>
             </div>
             
@@ -216,7 +219,7 @@
             </div>
           </div>
           
-          <div class="viewport-container" id="digital-twin-container" style="position: relative; width: 100%; flex: 1; min-height: 240px; background: #0a0e17; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08);">
+          <div class="viewport-container" id="digital-twin-container" style="position: relative; width: 100%; flex: 1; min-height: 240px; background: #0a0e17; border-radius: 6px; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.10);">
             <!-- Three.js Canvas Container -->
             <div id="digital-twin-viewport" style="width: 100%; height: 100%; cursor: grab;"></div>
 
@@ -231,6 +234,13 @@
 
               <!-- top-center: Floating TCP Gizmo Target HUD + Safety Warning Banner darunter -->
               <div class="twin-ov-top-center">
+                <div class="twin-hud-tab" id="hud-tab-gizmo" data-hud="gizmo">
+                <button type="button" class="hud-tab-head" onclick="toggleHudTab('gizmo')" title="Collapse / expand the TCP gizmo panel" aria-expanded="true">
+                  <i class="fa-solid fa-arrows-up-down-left-right hud-tab-icon"></i>
+                  <span class="hud-tab-title">TCP GIZMO</span>
+                  <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
+                </button>
+                <div class="hud-tab-body">
                 <div id="twin-gizmo-hud" class="twin-gizmo-hud">
                   <div class="gizmo-hud-info">
                     <span class="gizmo-hud-title"><i class="fa-solid fa-arrows-up-down-left-right"></i> TCP GIZMO:</span>
@@ -247,6 +257,8 @@
                     </button>
                   </div>
                 </div>
+                </div>
+                </div>
 
                 <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
                   <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
@@ -255,7 +267,14 @@
               </div>
 
               <!-- top-right: Scene Node Toggle Icons -->
-              <div id="twin-scene-node-overlay" class="twin-scene-node-overlay">
+              <div class="twin-hud-tab twin-ov-right-top" id="hud-tab-scene" data-hud="scene">
+                <button type="button" class="hud-tab-head" onclick="toggleHudTab('scene')" title="Collapse / expand the scene toggles" aria-expanded="true">
+                  <i class="fa-solid fa-layer-group hud-tab-icon"></i>
+                  <span class="hud-tab-title">SCENE</span>
+                  <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
+                </button>
+                <div class="hud-tab-body">
+                <div id="twin-scene-node-overlay" class="twin-scene-node-overlay">
                 <button class="btn btn-icon-small" id="btn-twin-scene-objects" onclick="toggleSceneNode('objects')" title="Interactive objects &amp; workspace circle (rviz_marker_3d_scene_objects)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-cubes"></i>
                 </button>
@@ -271,10 +290,22 @@
                 <button class="btn btn-icon-small" id="btn-twin-detections" onclick="toggleTwinDetections()" title="YOLO detections in 3D view: bounding box, red grasp point and labels (/zed/bboxes_3d)">
                   <i class="fa-solid fa-vector-square"></i>
                 </button>
+                <button class="btn btn-icon-small" id="btn-twin-distance-line" onclick="toggleTwinDistanceLine()" title="Distance line (dashed line from TCP to the nearest detected object)">
+                  <i class="fa-solid fa-ruler-horizontal"></i>
+                </button>
+              </div>
+              </div>
               </div>
 
               <!-- middle-left: Motion Action Buttons -->
-              <div id="twin-motion-overlay" class="twin-motion-overlay">
+              <div class="twin-hud-tab twin-ov-left-mid" id="hud-tab-motion" data-hud="motion">
+                <button type="button" class="hud-tab-head" onclick="toggleHudTab('motion')" title="Collapse / expand the motion actions" aria-expanded="true">
+                  <i class="fa-solid fa-bolt hud-tab-icon"></i>
+                  <span class="hud-tab-title">MOTION</span>
+                  <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
+                </button>
+                <div class="hud-tab-body">
+                <div id="twin-motion-overlay" class="twin-motion-overlay">
                 <button class="btn btn-action motion-lockable" onclick="setInitialPose()" title="Move to Initial Pose">
                   <i class="fa-solid fa-house"></i>
                 </button>
@@ -288,11 +319,20 @@
                   <i class="fa-solid fa-hand"></i>
                 </button>
               </div>
+              </div>
+              </div>
 
               <!-- bottom row (one line): Telemetry left · Pose Inputs center · Watermark right -->
               <div class="twin-ov-bottom-row">
                 <!-- bottom-left: Mini Safety Telemetry HUD -->
                 <div class="twin-ov-bottom-left">
+                  <div class="twin-hud-tab" id="hud-tab-telemetry" data-hud="telemetry">
+                    <button type="button" class="hud-tab-head" onclick="toggleHudTab('telemetry')" title="Collapse / expand reach, floor and MoveIt status" aria-expanded="true">
+                      <i class="fa-solid fa-gauge-high hud-tab-icon"></i>
+                      <span class="hud-tab-title">TELEMETRY</span>
+                      <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
+                    </button>
+                  <div class="hud-tab-body">
                   <div id="twin-hud-safety" class="twin-hud-safety">
                     <div class="hud-safety-item" id="hud-manip-item" title="Reachability (distance to wrist singularity J5)">
                       <span class="hud-lbl">REACH</span>
@@ -307,9 +347,18 @@
                       <span id="moveit-badge" class="moveit-status">MoveIt: Off</span>
                     </div>
                   </div>
+                  </div>
+                  </div>
                 </div>
 
                 <!-- bottom-center: Absolute Pose Inputs -->
+                <div class="twin-hud-tab twin-ov-bottom-center" id="hud-tab-pose" data-hud="pose">
+                  <button type="button" class="hud-tab-head" onclick="toggleHudTab('pose')" title="Collapse / expand the absolute pose inputs" aria-expanded="true">
+                    <i class="fa-solid fa-location-crosshairs hud-tab-icon"></i>
+                    <span class="hud-tab-title">POSE</span>
+                    <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
+                  </button>
+                <div class="hud-tab-body">
                 <div id="twin-pose-overlay" class="twin-pose-overlay">
                   <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
                   <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
@@ -323,11 +372,19 @@
                     <i class="fa-solid fa-crosshairs"></i> Go
                   </button>
                 </div>
+                </div>
+                </div>
 
                 <!-- bottom-right: Speed Toggle ueber dem Watermark, rechtsbuendig -->
                 <div class="twin-ov-bottom-right">
+                  <div class="twin-hud-tab" id="hud-tab-speed" data-hud="speed">
+                    <button type="button" class="hud-tab-head" onclick="toggleHudTab('speed')" title="Collapse / expand the speed selection" aria-expanded="true">
+                      <i class="fa-solid fa-gauge hud-tab-icon"></i>
+                      <span class="hud-tab-title">SPEED</span>
+                      <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
+                    </button>
+                  <div class="hud-tab-body">
                   <div id="twin-speed-overlay" class="speed-toggle-group">
-                    <span class="speed-toggle-label"><i class="fa-solid fa-gauge"></i> Speed:</span>
                     <label class="speed-opt">
                       <input type="radio" name="scanSpeed" value="0" onchange="updateScanSpeed()">
                       <span>Slow</span>
@@ -340,6 +397,8 @@
                       <input type="radio" name="scanSpeed" value="2" onchange="updateScanSpeed()">
                       <span>Fast</span>
                     </label>
+                  </div>
+                  </div>
                   </div>
                   <div class="twin-ov-watermark">xArm Lite 6 · Live Synchronized</div>
                 </div>

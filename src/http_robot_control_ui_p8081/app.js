@@ -424,12 +424,127 @@ function updateLinearAxis(val) {
 // Zustand in localStorage, damit die Ansicht einen Reload ueberlebt.
 const TWIN_DETECTIONS_LS_KEY = 'twin_detections_visible';
 
+// Der Button stand als einziger im Icon-Stapel ohne .active da und bekam
+// damit weder den blauen Hintergrund noch den Glow aus .btn.active - er
+// wechselte nur die Schriftfarbe. Jetzt schaltet er wie die Scene-Buttons.
 function applyTwinDetectionsBtn(visible) {
   const btn = document.getElementById('btn-twin-detections');
   if (!btn) return;
-  btn.style.color = visible ? 'var(--accent)' : 'var(--dim)';
+  btn.classList.toggle('active', visible);
+  btn.style.color = visible ? 'var(--cyan)' : 'var(--dim)';
   btn.style.opacity = visible ? '1' : '0.5';
+  btn.title = visible
+    ? 'Hide YOLO detections in 3D view (bounding box, grasp point, labels)'
+    : 'Show YOLO detections in 3D view (bounding box, grasp point, labels)';
 }
+
+// ── Distanzlinie (gestrichelt, TCP -> naechste Greifkugel) ──────────────
+const TWIN_DISTLINE_LS_KEY = 'twin_distance_line_visible';
+
+function applyTwinDistanceLineBtn(visible) {
+  const btn = document.getElementById('btn-twin-distance-line');
+  if (!btn) return;
+  btn.classList.toggle('active', visible);
+  btn.style.color = visible ? 'var(--cyan)' : 'var(--dim)';
+  btn.style.opacity = visible ? '1' : '0.5';
+  btn.title = visible
+    ? 'Hide distance line (dashed line from TCP to the nearest detected object)'
+    : 'Show distance line (dashed line from TCP to the nearest detected object)';
+}
+
+function toggleTwinDistanceLine() {
+  if (typeof window.setDigitalTwinDistanceLine !== 'function') return;
+  const now = !window.getDigitalTwinDistanceLine();
+  window.setDigitalTwinDistanceLine(now);
+  applyTwinDistanceLineBtn(now);
+  lsSet(TWIN_DISTLINE_LS_KEY, now ? '1' : '0');
+  logMsg('UI', `Distance line ${now ? 'enabled' : 'disabled'}`);
+}
+window.toggleTwinDistanceLine = toggleTwinDistanceLine;
+
+function restoreTwinDistanceLine() {
+  let visible = true;   // Die Linie war bisher immer an - Standard bleibt an
+  try {
+    const saved = lsGet(TWIN_DISTLINE_LS_KEY);
+    if (saved !== null) visible = (saved === '1');
+  } catch (e) {}
+  if (typeof window.setDigitalTwinDistanceLine === 'function') {
+    window.setDigitalTwinDistanceLine(visible);
+  }
+  applyTwinDistanceLineBtn(visible);
+}
+
+document.addEventListener('DOMContentLoaded', () => setTimeout(restoreTwinDistanceLine, 400));
+
+// ── Einklappbare HUD-Tabs im Viewport ───────────────────────────────────
+// Jedes Overlay am Viewportrand (Gizmo-HUD, Scene-Icons, Motion, Telemetrie,
+// Pose, Speed) sitzt in einem .twin-hud-tab mit eigener Kopfzeile. Der
+// Zustand haengt an data-hud und ueberlebt den Reload.
+const HUD_TAB_LS_PREFIX = 'twin_hud_tab_';
+
+function hudTabEl(key) {
+  return document.querySelector(`.twin-hud-tab[data-hud="${key}"]`);
+}
+
+function allHudTabs() {
+  return Array.from(document.querySelectorAll('.twin-hud-tab[data-hud]'));
+}
+
+function updateHudTabsToggleBtn() {
+  const btn = document.getElementById('btn-hud-tabs-toggle');
+  const icon = document.getElementById('hud-tabs-toggle-icon');
+  const tabs = allHudTabs();
+  if (!btn || tabs.length === 0) return;
+  const allCollapsed = tabs.every(t => t.classList.contains('is-collapsed'));
+  btn.classList.toggle('active', allCollapsed);
+  if (icon) {
+    icon.className = allCollapsed
+      ? 'fa-solid fa-window-maximize'
+      : 'fa-solid fa-window-minimize';
+  }
+  btn.title = allCollapsed
+    ? 'Expand all viewport panels'
+    : 'Collapse all viewport panels';
+}
+
+function setHudTabCollapsed(key, collapsed, persist = true) {
+  const el = hudTabEl(key);
+  if (!el) return;
+  el.classList.toggle('is-collapsed', !!collapsed);
+  const head = el.querySelector('.hud-tab-head');
+  if (head) head.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  if (persist) lsSet(HUD_TAB_LS_PREFIX + key, collapsed ? '1' : '0');
+}
+
+function toggleHudTab(key) {
+  const el = hudTabEl(key);
+  if (!el) return;
+  setHudTabCollapsed(key, !el.classList.contains('is-collapsed'));
+  updateHudTabsToggleBtn();
+}
+window.toggleHudTab = toggleHudTab;
+
+// Sammelschalter in der Viewport-Tableiste: ist noch irgendein Tab offen,
+// klappt der Klick alles zu - sonst wieder alles auf.
+function toggleAllHudTabs() {
+  const tabs = allHudTabs();
+  if (tabs.length === 0) return;
+  const collapse = !tabs.every(t => t.classList.contains('is-collapsed'));
+  tabs.forEach(t => setHudTabCollapsed(t.dataset.hud, collapse));
+  updateHudTabsToggleBtn();
+  logMsg('UI', `Viewport panels ${collapse ? 'collapsed' : 'expanded'}`);
+}
+window.toggleAllHudTabs = toggleAllHudTabs;
+
+function restoreHudTabs() {
+  allHudTabs().forEach(t => {
+    const saved = lsGet(HUD_TAB_LS_PREFIX + t.dataset.hud);
+    setHudTabCollapsed(t.dataset.hud, saved === '1', false);
+  });
+  updateHudTabsToggleBtn();
+}
+
+document.addEventListener('DOMContentLoaded', restoreHudTabs);
 
 function toggleTwinDetections() {
   if (typeof window.setDigitalTwinDetectionsVisible !== 'function') return;
@@ -472,6 +587,12 @@ window.graspDetectedObject = function (name, source) {
   logMsg('UI', `Clicked on YOLO object: ${name}${source ? ' (' + source + ')' : ''}`);
   const input = document.getElementById('inp-grasp-obj');
   if (input) input.value = name;
+  // Die Greifkugel des gewaehlten Objekts pulsiert und glimmt, bis der
+  // echte TCP sie erreicht hat - der Twin loest die Markierung selbst wieder
+  // auf (Abstand zum TCP), hier wird sie nur gesetzt.
+  if (typeof window.setDigitalTwinSelectedGrasp === 'function') {
+    window.setDigitalTwinSelectedGrasp(name);
+  }
   executeGrasp();
 };
 
@@ -501,17 +622,15 @@ function createYoloItem(item) {
   coords.className = 'yolo-coords';
   [['coord-x', 'X', item.x, 'var(--rviz-x)'],
    ['coord-y', 'Y', item.y, 'var(--rviz-y)'],
-   ['coord-z', 'Z', item.z, 'var(--rviz-z)']].forEach(([cn, ax, val, col], i) => {
+   ['coord-z', 'Z', item.z, 'var(--rviz-z)']].forEach(([cn, ax, val, col]) => {
     const sp = document.createElement('span');
     sp.className = cn;
     sp.style.color = col;
-    if (i > 0) sp.style.marginLeft = '6px';
     sp.textContent = `${ax}:${val}`;
     coords.appendChild(sp);
   });
   const unit = document.createElement('span');
   unit.style.color = 'var(--mut)';
-  unit.style.marginLeft = '6px';
   unit.textContent = '[mm]';
   coords.appendChild(unit);
 

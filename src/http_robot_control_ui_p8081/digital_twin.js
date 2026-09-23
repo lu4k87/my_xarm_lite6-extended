@@ -20,6 +20,9 @@
   let gizmoTarget = null;
   let ghostTCPGroup = null;
   let dashedLine = null;
+  // Nutzerschalter fuer die gestrichelte Distanzlinie TCP -> Gizmo-Ziel.
+  // Gatet jede Stelle, die sie sichtbar schalten wuerde.
+  let distanceLineEnabled = true;
   let isGizmoActive = true;
   let gizmoMode = 'translate'; // 'translate' | 'rotate'
   let isDraggingGizmo = false;
@@ -244,6 +247,7 @@
       if (controls) controls.update();
       updateSafetyVisuals();
       updateConnectingLine();
+      updateGraspSelection();
       renderer.render(scene, camera);
     }
     animate();
@@ -934,7 +938,7 @@
     if (transformControls) transformControls.updateMatrixWorld();
 
     handleGizmoChange(resetOffset);
-    if (dashedLine && !hasUserTargetOffset) dashedLine.visible = false;
+    updateConnectingLine();
   }
 
   function handleGizmoChange(updateInputs = true) {
@@ -1064,32 +1068,56 @@
     }
   }
 
+  // Die Linie laeuft vom echten TCP zur naechstgelegenen roten Greifkugel.
+  // Ist gerade kein Objekt erkannt, faellt sie auf das Gizmo-Ziel zurueck -
+  // dann zeigt sie wie frueher den Versatz zum gezogenen Ziel.
+  function pickDistanceLineTarget(tcpPos) {
+    let target = null;
+    let best = Infinity;
+
+    if (detectionsVisible) {
+      for (const rec of sphereRecords()) {
+        if (!rec.obj || !rec.obj.parent) continue;
+        const d = tcpPos.distanceTo(rec.obj.position);
+        if (d < best) { best = d; target = rec.obj.position; }
+      }
+    }
+
+    if (!target && gizmoTarget && isGizmoActive && hasUserTargetOffset) {
+      target = gizmoTarget.position;
+      best = tcpPos.distanceTo(target);
+    }
+    return target ? { position: target, dist: best } : null;
+  }
+
   function updateConnectingLine() {
-    if (!dashedLine || !gizmoTarget || !isGizmoActive) {
+    if (!dashedLine || !distanceLineEnabled) {
       if (dashedLine) dashedLine.visible = false;
       return;
     }
     const realTCP = getRealRobotTCPPose();
-    if (!realTCP || !hasUserTargetOffset) {
+    if (!realTCP) {
       dashedLine.visible = false;
       return;
     }
 
-    const dist = gizmoTarget.position.distanceTo(realTCP.position);
-    if (dist > 0.003) {
-      dashedLine.visible = true;
-      const positions = dashedLine.geometry.attributes.position.array;
-      positions[0] = realTCP.position.x;
-      positions[1] = realTCP.position.y;
-      positions[2] = realTCP.position.z;
-      positions[3] = gizmoTarget.position.x;
-      positions[4] = gizmoTarget.position.y;
-      positions[5] = gizmoTarget.position.z;
-      dashedLine.geometry.attributes.position.needsUpdate = true;
-      dashedLine.computeLineDistances();
-    } else {
+    const target = pickDistanceLineTarget(realTCP.position);
+    // Klebt der TCP praktisch auf dem Ziel, waere die Linie nur ein Punkt.
+    if (!target || target.dist <= 0.003) {
       dashedLine.visible = false;
+      return;
     }
+
+    dashedLine.visible = true;
+    const positions = dashedLine.geometry.attributes.position.array;
+    positions[0] = realTCP.position.x;
+    positions[1] = realTCP.position.y;
+    positions[2] = realTCP.position.z;
+    positions[3] = target.position.x;
+    positions[4] = target.position.y;
+    positions[5] = target.position.z;
+    dashedLine.geometry.attributes.position.needsUpdate = true;
+    dashedLine.computeLineDistances();
   }
 
   function updateGizmoVisibility() {
@@ -1097,7 +1125,9 @@
     transformControls.visible = isGizmoActive;
     transformControls.enabled = isGizmoActive;
     if (ghostTCPGroup) ghostTCPGroup.visible = isGizmoActive;
-    if (dashedLine) dashedLine.visible = isGizmoActive && hasUserTargetOffset;
+    // Die Linie haengt nicht mehr am Gizmo: ihr Ziel ist in der Regel die
+    // naechste Greifkugel, die es auch ohne aktives Gizmo gibt.
+    updateConnectingLine();
 
     const btnGizmo = document.getElementById('btn-twin-gizmo');
     if (btnGizmo) {
@@ -1607,11 +1637,37 @@
     return _mColor.setRGB(c.r || 0, c.g || 0, c.b || 0);
   }
 
+  // ── Spiegelung der YOLO-Detections ────────────────────────────────────
+  // STANDARDMAESSIG AUS. Der Viewport hat die Detections eine Zeit lang
+  // zurueckgespiegelt, weil yolo_3d_bbox_for_zed_m.py sie mit mirror_y=True
+  // seitenverkehrt publizierte. Das ist jetzt an der Quelle abgestellt
+  // (mirror_y=False), damit RViz, die Collision-Objekte und das Greifziel
+  // dieselbe Seite meinen - hier darf also nichts mehr gedreht werden.
+  //   'none' Rohdaten unveraendert                          [Standard]
+  //   'y'    an der XZ-Ebene spiegeln (links <-> rechts)
+  //   'x'    an der YZ-Ebene spiegeln (vorne <-> hinten)
+  //   'xy'   beides, entspricht 180 Grad um Z
+  // Zur Laufzeit umschaltbar: window.setDigitalTwinDetectionFlip('y').
+  let detectionFlip = 'none';
+
+  function flipX() { return (detectionFlip === 'x' || detectionFlip === 'xy') ? -1 : 1; }
+  function flipY() { return (detectionFlip === 'y' || detectionFlip === 'xy') ? -1 : 1; }
+
   function applyMarkerPose(obj, m) {
     const pos = (m.pose && m.pose.position) || { x: 0, y: 0, z: 0 };
-    obj.position.set(pos.x || 0, pos.y || 0, pos.z || 0);
+    const fx = flipX(), fy = flipY();
+    obj.position.set((pos.x || 0) * fx, (pos.y || 0) * fy, pos.z || 0);
     const q = (m.pose && m.pose.orientation) || null;
-    if (q) obj.quaternion.set(q.x || 0, q.y || 0, q.z || 0, q.w === undefined ? 1 : q.w);
+    if (q) {
+      // Eine Spiegelung ist selbst keine Drehung - die gespiegelte Lage
+      // ergibt sich aus der Konjugation M*R*M. In Quaternionen heisst das:
+      // an der XZ-Ebene kippen x und z das Vorzeichen, an der YZ-Ebene y und z.
+      let qx = q.x || 0, qy = q.y || 0, qz = q.z || 0;
+      const qw = (q.w === undefined) ? 1 : q.w;
+      if (fy < 0) { qx = -qx; qz = -qz; }
+      if (fx < 0) { qy = -qy; qz = -qz; }
+      obj.quaternion.set(qx, qy, qz, qw);
+    }
   }
 
   // Ein Sprite mit Canvas-Textur. Der Canvas wird wiederverwendet und nur neu
@@ -1640,7 +1696,7 @@
   // die X/Y/Z-Zeilen). 1.0 entspraeche exakt der RViz-Groesse, die im
   // Viewport zu wuchtig wirkt. Zur Laufzeit ueber
   // window.setDigitalTwinLabelScale() nachjustierbar.
-  let labelScale = 0.6;
+  let labelScale = 0.45;
 
   function drawLabel(entry, text, color) {
     const cv = entry.canvas;
@@ -1725,8 +1781,12 @@
       // Zwischenarray je Nachricht.
       const attr = rec.obj.geometry.getAttribute('position');
       const buf = attr.array;
+      // Liegen die Punkte lokal zur Pose (symmetrische Box), aendert das
+      // Spiegeln nichts; liegen sie absolut im Frame, wirkt genau hier der
+      // Flip. Beide Faelle sind damit abgedeckt.
+      const lfx = flipX(), lfy = flipY();
       for (let i = 0; i < pts.length; i++) {
-        buf[i * 3] = pts[i].x; buf[i * 3 + 1] = pts[i].y; buf[i * 3 + 2] = pts[i].z;
+        buf[i * 3] = pts[i].x * lfx; buf[i * 3 + 1] = pts[i].y * lfy; buf[i * 3 + 2] = pts[i].z;
       }
       attr.needsUpdate = true;
       rec.obj.geometry.computeBoundingSphere();
@@ -1755,12 +1815,23 @@
       } else {
         rec.obj.material.color.copy(markerColor(m));
         rec.obj.material.emissive.copy(markerColor(m));
+        rec.obj.material.opacity = (m.color && m.color.a !== undefined) ? m.color.a : 1.0;
       }
       const sc = m.scale || { x: 0.0125, y: 0.0125, z: 0.0125 };
       rec.obj.scale.set(sc.x || 0.0125, sc.y || 0.0125, sc.z || 0.0125);
+      // Ausgangswerte festhalten: die Auswahl-Animation moduliert Groesse,
+      // Deckkraft und Glut und muss sie danach wieder herstellen koennen.
+      // Die Marker kommen mit 10 Hz herein und wuerden sonst gegen die
+      // Animation anschreiben.
+      rec.baseScale = rec.obj.scale.x;
+      rec.baseOpacity = rec.obj.material.opacity;
+      rec.baseEmissiveIntensity = 0.55;
       applyMarkerPose(rec.obj, m);
       rec.markerId = m.id || 0;   // Bruecke zum Klassen-Label gleicher id
       rec.lastSeen = now;
+      if (selectedGraspName && nameForSphere(rec) === selectedGraspName) {
+        selectedGraspRec = rec;
+      }
       return;
     }
 
@@ -1957,6 +2028,235 @@
     pickingWired = true;
   }
 
+  // ── Ausgewaehltes Greifziel: pulsierende, glimmende Kugel ─────────────
+  // Klickt jemand ein Objekt an (Liste oder Viewport), bleibt seine
+  // Greifkugel markiert, bis der echte TCP sie erreicht hat. Ein Halo aus
+  // zwei transparenten Huellen macht den Glow auch vor hellem Grund sichtbar.
+  let selectedGraspName = null;
+  let selectedGraspRec = null;
+  let selectedGraspSince = 0;
+  let graspHalo = null;
+
+  // Abstand, ab dem das Ziel als erreicht gilt, und Notbremse, falls die
+  // Fahrt scheitert - sonst pulste die Kugel bis zum Reload weiter.
+  const GRASP_REACHED_M = 0.035;
+  const GRASP_SELECT_TIMEOUT_MS = 120000;
+
+  // Cyan wie der UI-Akzent fuer die Ringe, Rot wie die Kugel fuer die Glut -
+  // der Kontrast laesst das Ziel auch vor dem weissen Roboter stehen.
+  const GRASP_ACCENT = 0x38bdf8;
+  const GRASP_CORE = 0xff3b30;
+  const GRASP_PING_COUNT = 2;
+  const GRASP_PING_MS = 1400;
+  const GRASP_LOCK_MS = 380;        // Dauer des Einrastens beim Anklicken
+
+  function graspRingMaterial(color) {
+    return new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      depthTest: false,             // Markierung bleibt vor dem Roboter lesbar
+      blending: THREE.AdditiveBlending
+    });
+  }
+
+  // Alle Teile sind in Kugelradien modelliert (Radius 1 = Radius der roten
+  // Kugel); skaliert wird die Gruppe, nicht jede Geometrie.
+  function ensureGraspHalo() {
+    if (graspHalo || !scene || typeof THREE === 'undefined') return graspHalo;
+    graspHalo = new THREE.Group();
+
+    // 1) Weiche Glut direkt an der Kugel - gibt dem Ziel Volumen.
+    const core = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 20, 14),
+      new THREE.MeshBasicMaterial({
+        color: GRASP_CORE,
+        transparent: true,
+        opacity: 0.3,
+        depthWrite: false,
+        side: THREE.BackSide,       // Huelle von innen: kein harter Rand
+        blending: THREE.AdditiveBlending
+      })
+    );
+    core.name = 'core';
+    core.renderOrder = 997;
+    graspHalo.add(core);
+
+    // 2) Radar-Pings: duenne Ringe, die nach aussen laufen und verblassen.
+    //    Zwei Stueck mit halbem Phasenversatz ergeben einen stetigen Takt.
+    for (let i = 0; i < GRASP_PING_COUNT; i++) {
+      const ping = new THREE.Mesh(
+        new THREE.RingGeometry(0.9, 1.0, 64),
+        graspRingMaterial(GRASP_ACCENT)
+      );
+      ping.name = 'ping' + i;
+      ping.renderOrder = 999;
+      graspHalo.add(ping);
+    }
+
+    // 3) Zielkreuz: vier 60-Grad-Boegen mit Luecken, die langsam kreisen.
+    const reticle = new THREE.Group();
+    reticle.name = 'reticle';
+    const arc = Math.PI / 3;
+    for (let i = 0; i < 4; i++) {
+      const seg = new THREE.Mesh(
+        new THREE.RingGeometry(1.0, 1.16, 24, 1, i * (Math.PI / 2) - arc / 2, arc),
+        graspRingMaterial(GRASP_ACCENT)
+      );
+      seg.renderOrder = 999;
+      reticle.add(seg);
+    }
+    graspHalo.add(reticle);
+
+    graspHalo.visible = false;
+    scene.add(graspHalo);
+    return graspHalo;
+  }
+
+  // Ringe sind flach - ohne Ausrichtung zur Kamera waeren sie von der Seite
+  // nur ein Strich. Die Gruppe selbst wird nicht gedreht, deshalb genuegt es,
+  // die Kameradrehung zu uebernehmen.
+  function faceCamera(obj) {
+    if (camera) obj.quaternion.copy(camera.quaternion);
+  }
+
+  function restoreSphereLook(rec) {
+    if (!rec || !rec.obj || !rec.obj.material) return;
+    if (rec.baseScale) rec.obj.scale.setScalar(rec.baseScale);
+    if (rec.baseOpacity !== undefined) rec.obj.material.opacity = rec.baseOpacity;
+    rec.obj.material.emissiveIntensity = rec.baseEmissiveIntensity || 0.55;
+  }
+
+  function clearGraspSelection(reason) {
+    if (!selectedGraspName) return;
+    const name = selectedGraspName;
+    restoreSphereLook(selectedGraspRec);
+    selectedGraspName = null;
+    selectedGraspRec = null;
+    if (graspHalo) graspHalo.visible = false;
+    if (reason && typeof window.logMsg === 'function') {
+      window.logMsg('WebGL 3D', `Grasp target "${name}": ${reason}`);
+    }
+  }
+
+  // Kugel zum Namen suchen - die Marker-Ids wechseln zwischen zwei
+  // Erkennungen, der Klassenname ist die stabilere Bruecke.
+  function findSphereByName(name) {
+    for (const rec of sphereRecords()) {
+      if (nameForSphere(rec) === name) return rec;
+    }
+    return null;
+  }
+
+  function updateGraspSelection() {
+    if (!selectedGraspName) return;
+
+    const now = Date.now();
+    if (now - selectedGraspSince > GRASP_SELECT_TIMEOUT_MS) {
+      clearGraspSelection('selection timed out');
+      return;
+    }
+
+    if (!selectedGraspRec || !selectedGraspRec.obj || !selectedGraspRec.obj.parent) {
+      selectedGraspRec = findSphereByName(selectedGraspName);
+    }
+    const rec = selectedGraspRec;
+    if (!rec || !rec.obj || !rec.obj.material) {
+      // Objekt gerade nicht erkannt: Halo aus, Auswahl bleibt bestehen -
+      // die Erkennung flackert gelegentlich fuer einzelne Frames.
+      if (graspHalo) graspHalo.visible = false;
+      return;
+    }
+
+    // Erreicht? Dann ist die Markierung ihre Aufgabe los.
+    const tcp = getRealRobotTCPPose();
+    if (tcp && tcp.position.distanceTo(rec.obj.position) <= GRASP_REACHED_M) {
+      clearGraspSelection('reached');
+      return;
+    }
+
+    // 0 -> 1 -> 0 in 1.1 s, dieselbe Taktung wie der Hover-Ring in der UI.
+    const k = 0.5 - 0.5 * Math.cos((now % 1100) / 1100 * Math.PI * 2);
+    const base = rec.baseScale || rec.obj.scale.x || 0.0125;
+
+    // Die Kugel selbst bleibt ruhig - das Auffaellige machen die Ringe.
+    rec.obj.scale.setScalar(base * (1.0 + 0.08 * k));
+    rec.obj.material.transparent = true;
+    rec.obj.material.opacity = 0.60 + 0.30 * k;      // transparent schwebend
+    rec.obj.material.emissiveIntensity = 1.0 + 1.4 * k;
+
+    const halo = ensureGraspHalo();
+    if (!halo) return;
+
+    halo.visible = true;
+    halo.position.copy(rec.obj.position);
+    // Radius der Kugel: die Geometrie ist eine Einheitskugel mit r = 0.5,
+    // skaliert auf den Marker-Durchmesser.
+    halo.scale.setScalar(base * 0.5);
+
+    // Einrasten: beim Anklicken faehrt das Zielkreuz von weit aussen auf die
+    // Kugel zu und blendet dabei ein - kubisch ausklingend, damit es am Ende
+    // sanft andockt.
+    const lockT = Math.min(1, (now - selectedGraspSince) / GRASP_LOCK_MS);
+    const lock = 1 - Math.pow(1 - lockT, 3);
+
+    const core = halo.getObjectByName('core');
+    if (core) {
+      core.scale.setScalar(1.7 + 0.3 * k);
+      core.material.opacity = (0.22 + 0.2 * k) * lock;
+    }
+
+    for (let i = 0; i < GRASP_PING_COUNT; i++) {
+      const ping = halo.getObjectByName('ping' + i);
+      if (!ping) continue;
+      faceCamera(ping);
+      // Phasenversatz je Ring: 0, 1/2 - so laeuft immer eine Welle nach aussen.
+      const phase = ((now % GRASP_PING_MS) / GRASP_PING_MS + i / GRASP_PING_COUNT) % 1;
+      ping.scale.setScalar(2.0 + 7.5 * phase);
+      // Quadratisch ausblenden: die Welle verliert sich zum Rand hin, statt
+      // abrupt zu verschwinden.
+      ping.material.opacity = 0.85 * Math.pow(1 - phase, 2) * lock;
+    }
+
+    const reticle = halo.getObjectByName('reticle');
+    if (reticle) {
+      faceCamera(reticle);
+      // Kreisen um die Sichtachse. faceCamera() hat die Drehung gerade neu
+      // gesetzt, also wird hier der absolute Winkel aufgesetzt - ein Delta
+      // waere im naechsten Frame wieder weg.
+      reticle.rotateZ((now % 12000) / 12000 * Math.PI * 2);
+      const r = 4.6 + 9.0 * (1 - lock) + 0.35 * k;
+      reticle.scale.setScalar(r);
+      reticle.children.forEach(seg => {
+        seg.material.opacity = (0.55 + 0.35 * k) * lock;
+      });
+    }
+  }
+
+  // Von app.js aufgerufen, sobald ein Objekt angeklickt wurde.
+  window.setDigitalTwinSelectedGrasp = function (name) {
+    const clean = String(name || '').trim();
+    if (!clean) { clearGraspSelection(null); return null; }
+    if (selectedGraspName && selectedGraspName !== clean) {
+      restoreSphereLook(selectedGraspRec);
+    }
+    selectedGraspName = clean;
+    selectedGraspRec = findSphereByName(clean);
+    selectedGraspSince = Date.now();
+    ensureGraspHalo();
+    return selectedGraspName;
+  };
+
+  window.clearDigitalTwinSelectedGrasp = function () {
+    clearGraspSelection(null);
+  };
+
+  window.getDigitalTwinSelectedGrasp = function () {
+    return selectedGraspName;
+  };
+
   function sweepDetections(now) {
     for (const key of Object.keys(detectionObjects)) {
       const rec = detectionObjects[key];
@@ -1972,6 +2272,10 @@
         !sphereRecords().some(r => `${r.markerId}` === hoveredKey)) {
       setHover(null);
     }
+    // Die markierte Kugel kann beim Aufraeumen verschwunden sein - der
+    // Datensatz zeigt dann ins Leere und wird beim naechsten Frame neu
+    // gesucht.
+    if (selectedGraspRec && !selectedGraspRec.obj.parent) selectedGraspRec = null;
   }
 
   function clearDetections() {
@@ -2006,6 +2310,39 @@
 
   window.getDigitalTwinDetectionsVisible = function () {
     return detectionsVisible;
+  };
+
+  // Distanzlinie (gestrichelt, TCP -> naechste Greifkugel) ein-/ausschalten.
+  // Beim Einschalten wird nicht blind sichtbar geschaltet: updateConnectingLine
+  // entscheidet anhand von Gizmo-Zustand und Abstand, ob es etwas zu zeigen gibt.
+  window.setDigitalTwinDistanceLine = function (visible) {
+    distanceLineEnabled = !!visible;
+    if (!distanceLineEnabled) {
+      if (dashedLine) dashedLine.visible = false;
+    } else {
+      updateConnectingLine();
+    }
+    return distanceLineEnabled;
+  };
+
+  window.getDigitalTwinDistanceLine = function () {
+    return distanceLineEnabled;
+  };
+
+  // Spiegelung der Detections umschalten: 'y' (Standard), 'x', 'xy', 'none'.
+  // Wirkt ab dem naechsten MarkerArray, also nach Bruchteilen einer Sekunde.
+  window.setDigitalTwinDetectionFlip = function (mode) {
+    const m = String(mode || '').toLowerCase();
+    if (['x', 'y', 'xy', 'none'].indexOf(m) === -1) return detectionFlip;
+    detectionFlip = m;
+    if (typeof window.logMsg === 'function') {
+      window.logMsg('WebGL 3D', `Detection flip: ${m}`);
+    }
+    return detectionFlip;
+  };
+
+  window.getDigitalTwinDetectionFlip = function () {
+    return detectionFlip;
   };
 
   // Labelgroesse live nachregeln, z.B. window.setDigitalTwinLabelScale(0.45).

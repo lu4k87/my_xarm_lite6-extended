@@ -1129,7 +1129,7 @@ input[type=range]:active::-moz-range-thumb {
      sitzt der HUD in der mittleren auto-Spalte wirklich viewport-mittig und
      nicht um die halbe Differenz von Nav-Gizmo (96px) und Icons (45px)
      versetzt. */
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(min-content, 1fr) auto minmax(min-content, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "tl tc tr"
@@ -1164,11 +1164,19 @@ input[type=range]:active::-moz-range-thumb {
 
 .twin-ov-bottom-row {
   grid-area: bb;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: end;
+  /* Flex mit Umbruch statt starrer 3-Spalten-Grid: die Panels sind nicht
+     beliebig schrumpfbar, im Grid wurden sie deshalb zusammengequetscht und
+     liefen ineinander. Wird es eng, rutschen sie jetzt in eine zweite Zeile. */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 10px;
   pointer-events: none;
+}
+
+.twin-ov-bottom-row > * {
+  flex: 0 0 auto;
 }
 
 .twin-ov-bottom-row > * {
@@ -1176,7 +1184,6 @@ input[type=range]:active::-moz-range-thumb {
 }
 
 .twin-ov-bottom-left {
-  justify-self: start;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1190,7 +1197,6 @@ input[type=range]:active::-moz-range-thumb {
 }
 
 .twin-ov-bottom-right {
-  justify-self: end;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1213,6 +1219,9 @@ input[type=range]:active::-moz-range-thumb {
   justify-self: start;
   width: var(--nav-gizmo-size, 96px);
   height: var(--nav-gizmo-size, 96px);
+  /* zusaetzlich zum inset:10px des Grids - der Gizmo soll weiter von der
+     Viewport-Ecke wegstehen als die Tabs daneben. */
+  margin: 8px 0 0 8px;
   border-radius: 50%;
   background: rgba(10, 14, 23, 0.62);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1260,9 +1269,7 @@ input[type=range]:active::-moz-range-thumb {
 }
 
 .twin-motion-overlay {
-  grid-area: ml;
-  align-self: center;
-  justify-self: start;
+  /* grid-area sitzt jetzt am umschliessenden Tab (.twin-ov-left-mid) */
   display: flex;
   flex-direction: column;
   /* When the free height shrinks, the buttons wrap into a second column
@@ -2029,12 +2036,20 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   color: var(--txt);
 }
 .yolo-coords {
+  /* Abstand zwischen X/Y/Z kommt aus dem gap - frueher haengte er als
+     margin-left an jedem Wert im JS. */
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
   background: rgba(0,0,0,0.3);
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 5px;
   border: 1px solid rgba(255,255,255,0.05);
+  white-space: nowrap;
 }
 .yolo-empty {
   color: var(--mut);
@@ -2261,38 +2276,81 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 /* Viewport Vignette Glows
    Reihenfolge ist Absicht: liegt mehreres gleichzeitig an, gewinnt die
    spaetere Regel. "moving" steht deshalb zuerst - eine Kollisions- oder
-   Singularitaetswarnung soll den gruenen Puls immer ueberschreiben. */
+   Singularitaetswarnung soll den gruenen Puls immer ueberschreiben.
+
+   box-shadow darf hier KEIN !important tragen: in der Kaskade stehen
+   wichtige Autor-Deklarationen ueber den Animationen, das statische
+   !important haette die Keyframes also komplett ausgehebelt - der Glow
+   stand still. border-color/-width brauchen das !important dagegen, weil
+   der Container seinen Rahmen als Inline-Style mitbringt. */
 .viewport-container.vignette-moving {
-  border-color: rgba(16, 185, 129, 0.7) !important;
-  box-shadow: inset 0 0 36px rgba(16, 185, 129, 0.32), 0 0 14px rgba(16, 185, 129, 0.25) !important;
+  border-color: rgba(16, 185, 129, 0.9) !important;
+  border-width: 2px !important;
+  box-shadow: inset 0 0 48px rgba(16, 185, 129, 0.42),
+              0 0 0 2px rgba(16, 185, 129, 0.5),
+              0 0 30px 6px rgba(16, 185, 129, 0.38);
   animation: vignette-pulse-green 1.3s infinite alternate ease-in-out;
 }
 
 .viewport-container.vignette-collision {
-  border-color: rgba(239, 68, 68, 0.85) !important;
-  box-shadow: inset 0 0 45px rgba(239, 68, 68, 0.45), 0 0 18px rgba(239, 68, 68, 0.35) !important;
+  border-color: rgba(239, 68, 68, 1) !important;
+  border-width: 2px !important;
+  box-shadow: inset 0 0 60px rgba(239, 68, 68, 0.55),
+              0 0 0 2px rgba(239, 68, 68, 0.6),
+              0 0 38px 8px rgba(239, 68, 68, 0.5);
   animation: vignette-pulse-red 0.9s infinite alternate ease-in-out;
 }
 
 .viewport-container.vignette-singularity {
-  border-color: rgba(245, 158, 11, 0.85) !important;
-  box-shadow: inset 0 0 40px rgba(245, 158, 11, 0.4), 0 0 16px rgba(245, 158, 11, 0.3) !important;
+  border-color: rgba(245, 158, 11, 1) !important;
+  border-width: 2px !important;
+  box-shadow: inset 0 0 54px rgba(245, 158, 11, 0.5),
+              0 0 0 2px rgba(245, 158, 11, 0.55),
+              0 0 34px 7px rgba(245, 158, 11, 0.45);
   animation: vignette-pulse-amber 1.1s infinite alternate ease-in-out;
 }
 
+/* Jede Stufe besteht aus drei Schichten: innere Vignette, ein harter Ring
+   (0 0 0 2px) direkt auf der Kante - er laesst den Rahmen dicker wirken,
+   ohne die Border-Breite und damit die Canvas-Groesse anzufassen - und der
+   weiche Aussen-Glow mit Spread. */
 @keyframes vignette-pulse-green {
-  0% { box-shadow: inset 0 0 18px rgba(16, 185, 129, 0.18); }
-  100% { box-shadow: inset 0 0 44px rgba(16, 185, 129, 0.42), 0 0 18px rgba(16, 185, 129, 0.3); }
+  0% {
+    box-shadow: inset 0 0 28px rgba(16, 185, 129, 0.26),
+                0 0 0 2px rgba(16, 185, 129, 0.35),
+                0 0 20px 3px rgba(16, 185, 129, 0.25);
+  }
+  100% {
+    box-shadow: inset 0 0 64px rgba(16, 185, 129, 0.55),
+                0 0 0 2px rgba(16, 185, 129, 0.8),
+                0 0 44px 10px rgba(16, 185, 129, 0.5);
+  }
 }
 
 @keyframes vignette-pulse-red {
-  0% { box-shadow: inset 0 0 25px rgba(239, 68, 68, 0.25); }
-  100% { box-shadow: inset 0 0 55px rgba(239, 68, 68, 0.55), 0 0 22px rgba(239, 68, 68, 0.4); }
+  0% {
+    box-shadow: inset 0 0 36px rgba(239, 68, 68, 0.35),
+                0 0 0 2px rgba(239, 68, 68, 0.45),
+                0 0 26px 4px rgba(239, 68, 68, 0.32);
+  }
+  100% {
+    box-shadow: inset 0 0 78px rgba(239, 68, 68, 0.7),
+                0 0 0 2px rgba(239, 68, 68, 0.95),
+                0 0 56px 14px rgba(239, 68, 68, 0.62);
+  }
 }
 
 @keyframes vignette-pulse-amber {
-  0% { box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.2); }
-  100% { box-shadow: inset 0 0 48px rgba(245, 158, 11, 0.45), 0 0 18px rgba(245, 158, 11, 0.3); }
+  0% {
+    box-shadow: inset 0 0 30px rgba(245, 158, 11, 0.28),
+                0 0 0 2px rgba(245, 158, 11, 0.4),
+                0 0 22px 3px rgba(245, 158, 11, 0.28);
+  }
+  100% {
+    box-shadow: inset 0 0 70px rgba(245, 158, 11, 0.62),
+                0 0 0 2px rgba(245, 158, 11, 0.9),
+                0 0 48px 12px rgba(245, 158, 11, 0.55);
+  }
 }
 
 /* Mini Safety Telemetry HUD (Manipulability & Floor Clearance) */
@@ -2359,6 +2417,232 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   transition: width 0.15s ease-out, background-color 0.2s ease-out;
 }
 
+/* ── Einklappbare Viewport-HUD-Tabs ───────────────────────────────────────
+   Jedes Overlay am Viewportrand sitzt in einem eigenen Tab: Kopfzeile mit
+   Icon, Titel und Chevron, darunter der Inhalt. Der Rahmen (Hintergrund,
+   Border, Blur) gehoert ab jetzt dem Tab - die Panels darin werden weiter
+   unten entkleidet, sonst saessen zwei Rahmen ineinander.
+   Eingeklappt bleibt nur die Kopfzeile stehen; sie verschwindet nie, sonst
+   gaebe es keinen Weg zurueck. */
+.twin-hud-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  background: rgba(10, 14, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 5px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+.hud-tab-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  color: var(--mut);
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.hud-tab-head:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: var(--txt);
+}
+
+.hud-tab-icon {
+  font-size: 11px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.hud-tab-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.hud-tab-caret {
+  font-size: 9px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.hud-tab-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  /* Die Panels geben ihr eigenes Padding ab (siehe unten) - diese Luft
+     zwischen Tab-Rahmen und Inhalt ersetzt es. */
+  padding: 2px 6px 5px;
+}
+
+/* Eingeklappt: Inhalt raus aus dem Flow (nicht nur unsichtbar), damit der
+   Tab wirklich auf Kopfhoehe schrumpft und nichts darunter verdeckt. */
+.twin-hud-tab.is-collapsed .hud-tab-body {
+  display: none;
+}
+
+.twin-hud-tab.is-collapsed {
+  gap: 0;
+}
+
+.twin-hud-tab.is-collapsed .hud-tab-caret {
+  transform: rotate(-90deg);
+}
+
+/* Die Panels im Tab geben ihren eigenen Rahmen ab - der Tab traegt ihn. */
+.hud-tab-body > .twin-gizmo-hud,
+.hud-tab-body > .twin-scene-node-overlay,
+.hud-tab-body > .twin-motion-overlay,
+.hud-tab-body > .twin-pose-overlay,
+.hud-tab-body > .speed-toggle-group {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+
+/* Der Tab-Kopf beschriftet das Panel bereits - der interne Titel des
+   TCP-HUD waere danach doppelt. */
+.hud-tab-body .gizmo-hud-title {
+  display: none;
+}
+
+/* Telemetrie-Kacheln sitzen jetzt auf dem Tab-Hintergrund: eigener Blur
+   und harter Kachelgrund waeren dort zu viel. */
+.hud-tab-body .hud-safety-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Die beiden senkrechten Icon-Leisten sind schmaler als ihre Kopfzeile -
+   die Icons werden darum mittig unter dem Kopf ausgerichtet. */
+.twin-ov-right-top .twin-scene-node-overlay,
+.twin-ov-left-mid .twin-motion-overlay {
+  align-items: center;
+}
+
+/* Das TCP-HUD trug bisher selbst den cyanfarbenen Rahmen samt Glow. Der
+   ist auf den Tab umgezogen, damit das Panel weiter hervorsticht. */
+#hud-tab-gizmo {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.65), 0 0 14px rgba(56, 189, 248, 0.2);
+}
+
+#hud-tab-gizmo .hud-tab-icon {
+  color: #38bdf8;
+}
+
+/* Platzierung der Tabs im Overlay-Grid */
+.twin-ov-right-top {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  align-self: start;
+  justify-self: end;
+  min-width: max-content;
+  max-height: 100%;
+}
+
+.twin-ov-right-top .hud-tab-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.twin-ov-left-mid {
+  grid-area: ml;
+  align-self: center;
+  justify-self: start;
+  max-height: 100%;
+  min-width: max-content;
+  min-height: 0;
+}
+
+.twin-ov-left-mid .hud-tab-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.twin-ov-bottom-center {
+  align-self: flex-end;
+  flex: 0 1 auto;
+  min-width: 0;
+  /* Deckel fuer den breitesten Tab der Reihe: flex-wrap bricht um, BEVOR es
+     schrumpft - ohne Deckel schob der Pose-Tab Telemetrie und Speed also in
+     eigene Zeilen und nahm der Motion-Leiste darueber die Hoehe. Die 420 px
+     sind gemessen: Telemetrie (177) + rechte Spalte (185, das Wasserzeichen
+     ist breiter als der Speed-Tab darueber) + Abstaende + Reserve. */
+  max-width: calc(100% - 420px);
+}
+
+.twin-ov-bottom-center .twin-pose-overlay {
+  justify-content: flex-start;
+}
+
+/* Kleines Icon in der Viewport-Tab-Leiste: klappt alle HUD-Tabs zusammen
+   oder wieder auf. */
+.v-tab-hud-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  align-self: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  color: var(--mut);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.v-tab-hud-toggle:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: var(--txt);
+}
+
+.v-tab-hud-toggle.active {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+/* Auf sehr niedrigen Viewports bleiben nur die Kopfzeilen - Platz fuer die
+   Inhalte ist dort ohnehin keiner mehr. */
+.viewport-container.twin-viewport-tiny .hud-tab-head {
+  font-size: 9.5px;
+  padding: 2px 5px;
+}
+
 /* ── Puls-Cursor beim Hover ueber eine Greifkugel im Viewport ────────────
    Haengt bewusst am <body> und nicht im Viewport-Container: position:fixed
    wuerde sich sonst an einem transformierten Vorfahren ausrichten und der
@@ -2400,13 +2684,19 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     animation: none;
     opacity: 0.9;
   }
+
+  /* Gleiches fuer die Viewport-Vignetten: der Glow bleibt auf dem
+     statischen Wert der jeweiligen Regel stehen, nur der Puls faellt weg. */
+  .viewport-container.vignette-moving,
+  .viewport-container.vignette-collision,
+  .viewport-container.vignette-singularity {
+    animation: none;
+  }
 }
 
 /* ── Floating Scene Node Toggle Overlay (top-right inside viewport) ── */
 .twin-scene-node-overlay {
-  grid-area: tr;
-  align-self: start;
-  justify-self: end;
+  /* grid-area sitzt jetzt am umschliessenden Tab (.twin-ov-right-top) */
   display: flex;
   flex-direction: column;
   gap: 4px;
