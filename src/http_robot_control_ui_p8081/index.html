@@ -681,7 +681,15 @@
         </section>
 
         <section id="panel-whisper" class="glass-panel">
-          <h2><i class="fa-solid fa-microphone"></i> Speech Control (Whisper AI)</h2>
+          <h2 style="cursor: grab;">
+            <i class="fa-solid fa-microphone"></i>
+            <span>Speech Control (Whisper AI)</span>
+            <span class="speech-info-wrap panel-title-meta" id="speech-info-wrap">
+              <button type="button" class="speech-info-btn" id="speech-info-btn" aria-label="Available voice commands" title="Verfügbare Sprachbefehle anzeigen (Hover / Klick)">
+                <i class="fa-solid fa-circle-info"></i>
+              </button>
+            </span>
+          </h2>
           <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
             <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
               <button id="btn-start-listening" class="btn btn-primary" style="width: 50px; height: 50px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" data-action="startListening">
@@ -808,6 +816,31 @@
       </div>
     </main>
 
+  </div>
+
+  <!-- Speech Commands Info Popup (Hover / Klick in Speech Control Section) -->
+  <div id="speech-cmd-popup" class="speech-cmd-popup is-hidden" role="tooltip" aria-hidden="true">
+    <div class="speech-popup-header">
+      <div class="speech-popup-title">
+        <i class="fa-solid fa-microphone-lines"></i>
+        <span>Verfügbare Sprachbefehle</span>
+      </div>
+      <div class="speech-lang-switch" role="group" aria-label="Sprachauswahl">
+        <button type="button" class="speech-lang-btn active" data-lang="de" title="Deutsche Sprachbefehle anzeigen">DE</button>
+        <button type="button" class="speech-lang-btn" data-lang="en" title="Show English voice commands">EN</button>
+        <button type="button" class="speech-lang-btn" data-lang="all" title="Alle Sprachen / Both languages">Alle</button>
+      </div>
+    </div>
+    <div class="speech-popup-body" id="speech-popup-body"></div>
+    <div class="speech-popup-footer">
+      <div class="speech-footer-hint">
+        <i class="fa-solid fa-globe"></i>
+        <span>Whisper AI: <strong>DE &amp; ENG simultan aktiv</strong></span>
+      </div>
+      <button type="button" class="speech-popup-close-btn" id="speech-popup-close-btn" title="Schließen" aria-label="Schließen">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
   </div>
 
   <!-- Verbindungsabbruch: sperrt die komplette Bedienflaeche. Der Header
