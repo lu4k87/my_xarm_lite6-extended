@@ -386,6 +386,16 @@ export function toggleMoveToPreview() {
 
 export function confirmMoveToPreview(execute) {
   if (execute && !motionAllowed('Path execution')) return;
+  if (!execute && (!mpState || mpState.phase !== 'confirm')) {
+    hideMoveitPopup();
+    return;
+  }
+  if (execute && (!mpState || mpState.phase !== 'confirm')) {
+    if (typeof twin.twinHooks.executeMoveToPoseFromGizmo === 'function') {
+      twin.twinHooks.executeMoveToPoseFromGizmo();
+    }
+    return;
+  }
   createSrv(SERVICES.confirmMovetoPreview, 'std_srvs/SetBool').callService(
     new ROSLIB.ServiceRequest({ data: !!execute }),
     (res) => logMsg('MoveIt', res.success ? `${execute ? '▶' : '✗'} ${res.message}` : `ℹ️ ${res.message}`,

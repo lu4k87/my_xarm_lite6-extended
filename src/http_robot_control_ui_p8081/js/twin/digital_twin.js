@@ -950,6 +950,8 @@ function initTCPGizmo() {
 
       if (isDraggingGizmo) {
         hasUserTargetOffset = true;
+        const mp = document.getElementById('moveit-popup');
+        if (mp) mp.classList.remove('mp-hidden');
       } else {
         handleGizmoDragEnd();
       }
@@ -1123,6 +1125,16 @@ function handleGizmoDragEnd() {
   if (shouldAutoExecute && deltaDist_mm > 3.0) {
     if (typeof twinHooks.executeMoveToPoseFromGizmo === 'function') {
       twinHooks.executeMoveToPoseFromGizmo();
+    }
+  } else if (!shouldAutoExecute) {
+    const mp = document.getElementById('moveit-popup');
+    if (mp) {
+      mp.classList.remove('mp-hidden');
+      mp.classList.add('mp-phase-confirm');
+      const phaseEl = document.getElementById('mp-phase');
+      if (phaseEl) phaseEl.textContent = 'GIZMO TARGET';
+      const detailEl = document.getElementById('mp-detail');
+      if (detailEl) detailEl.textContent = 'Target pose set. Click "Execute path" to plan and move.';
     }
   }
 }

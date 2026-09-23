@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=28">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -252,35 +252,8 @@
               <!-- top-left: Viewport Navigation Gizmo (Blender style) -->
               <canvas id="twin-nav-gizmo" class="twin-nav-gizmo" title="Viewport gizmo: drag to orbit the view, click an axis ball to align it (X / Y / Z, ROS frame: Z is up), scroll to zoom"></canvas>
 
-              <!-- top-center: Floating TCP Gizmo Target HUD + Safety Warning Banner darunter -->
+              <!-- top-center: Safety Warning Banner -->
               <div class="twin-ov-top-center">
-                <div class="twin-hud-tab" id="hud-tab-gizmo" data-hud="gizmo">
-                <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["gizmo"]' title="Collapse / expand the TCP gizmo panel" aria-expanded="true">
-                  <i class="fa-solid fa-arrows-up-down-left-right hud-tab-icon"></i>
-                  <span class="hud-tab-title">TCP GIZMO</span>
-                  <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
-                </button>
-                <div class="hud-tab-body">
-                <div id="twin-gizmo-hud" class="twin-gizmo-hud">
-                  <div class="gizmo-hud-info">
-                    <span class="gizmo-hud-title"><i class="fa-solid fa-arrows-up-down-left-right"></i> TCP GIZMO:</span>
-                    <span id="gizmo-hud-coords" class="gizmo-hud-val"><span class="gizmo-ax gizmo-ax-x">X:</span> <span id="gizmo-hud-x">300</span> <span class="gizmo-ax gizmo-ax-y">Y:</span> <span id="gizmo-hud-y">0</span> <span class="gizmo-ax gizmo-ax-z">Z:</span> <span id="gizmo-hud-z">200</span></span>
-                    <span id="gizmo-hud-delta" class="gizmo-hud-delta">Δ 0 mm</span>
-                  </div>
-                  <div class="gizmo-hud-actions">
-                    <label class="gizmo-auto-toggle" title="Robot automatically moves to target pose when gizmo is released">
-                      <input type="checkbox" id="chk-gizmo-auto-drop" checked>
-                      <span>Auto-Move</span>
-                    </label>
-                    <button id="btn-gizmo-execute" class="btn btn-gizmo-go" data-action="executeMoveToPoseFromGizmo" title="Move robot to gizmo target pose">
-                      <i class="fa-solid fa-play"></i> Execute
-                    </button>
-                  </div>
-                </div>
-                </div>
-                </div>
-
-
                 <div id="twin-warning-banner" class="twin-hud-banner banner-hidden">
                   <i id="twin-warning-icon" class="fa-solid fa-triangle-exclamation"></i>
                   <span id="twin-warning-text">COLLISION DETECTED</span>
@@ -387,14 +360,38 @@
                   <!-- MoveIt progress popup: IK -> planning -> execution with live timers -->
                   <div id="moveit-popup" class="moveit-popup mp-hidden" role="status" aria-live="polite">
                     <div class="mp-head">
-                      <i class="fa-solid fa-route mp-icon" id="mp-icon"></i>
-                      <span class="mp-title">MOVEIT</span>
-                      <span class="mp-phase" id="mp-phase">IDLE</span>
-                      <span class="mp-timer" id="mp-timer">0.0 s</span>
-                      <button type="button" class="mp-close" data-action="hideMoveitPopup" title="Close MoveIt status">
-                        <i class="fa-solid fa-xmark"></i>
-                      </button>
+                      <div class="mp-head-left">
+                        <i class="fa-solid fa-route mp-icon" id="mp-icon"></i>
+                        <span class="mp-title">MOVEIT</span>
+                        <span class="mp-phase" id="mp-phase">IDLE</span>
+                      </div>
+                      <div class="mp-head-right">
+                        <span class="mp-timer" id="mp-timer">0.0 s</span>
+                        <button type="button" class="mp-close" data-action="hideMoveitPopup" title="Close MoveIt status">
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                      </div>
                     </div>
+
+                    <!-- Integrated TCP Gizmo Target, Delta & Auto-Move -->
+                    <div class="mp-target-row" id="twin-gizmo-hud">
+                      <div class="mp-target-left">
+                        <span class="mp-target-label"><i class="fa-solid fa-crosshairs"></i> TARGET:</span>
+                        <span id="gizmo-hud-coords" class="gizmo-hud-val">
+                          <span class="gizmo-ax gizmo-ax-x">X:</span> <span id="gizmo-hud-x">300</span>
+                          <span class="gizmo-ax gizmo-ax-y">Y:</span> <span id="gizmo-hud-y">0</span>
+                          <span class="gizmo-ax gizmo-ax-z">Z:</span> <span id="gizmo-hud-z">200</span>
+                        </span>
+                        <span id="gizmo-hud-delta" class="gizmo-hud-delta">Δ 0 mm</span>
+                      </div>
+                      <div class="mp-target-right">
+                        <label class="gizmo-auto-toggle" title="Roboter fährt bei Loslassen des Gizmos automatisch an">
+                          <input type="checkbox" id="chk-gizmo-auto-drop" checked>
+                          <span>Auto-Move</span>
+                        </label>
+                      </div>
+                    </div>
+
                     <div class="mp-steps">
                       <div class="mp-step" data-step="ik">
                         <span class="mp-dot"></span><span class="mp-step-label">IK</span><span class="mp-step-time" id="mp-t-ik">–</span>
