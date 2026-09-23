@@ -13,6 +13,11 @@ set(WHISPER_VERSION_MAJOR 1 CACHE STRING "Major whisper.cpp version.")
 set(WHISPER_VERSION_MINOR 7 CACHE STRING "Minor whisper.cpp version.")
 set(WHISPER_VERSION_PATCH 2 CACHE STRING "Patch whisper.cpp version.")
 
+set(GGML_CUDA ON CACHE BOOL "Use CUDA for whisper.cpp" FORCE)
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+  set(CMAKE_CUDA_ARCHITECTURES "86" CACHE STRING "CUDA architecture" FORCE)
+endif()
+
 FetchContent_Declare(
   whisper
   GIT_REPOSITORY https://github.com/ggerganov/whisper.cpp.git
