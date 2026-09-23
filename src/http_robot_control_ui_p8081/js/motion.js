@@ -1,6 +1,6 @@
 import { TOPICS, SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
-import { collisionDisabledSound, collisionEnabledSound, playOutOfReachSound, playVoice, scanPosSound } from './audio.js';
+import { collisionDisabledSound, collisionEnabledSound, playPoseOutOfReachSound, playReachFailureSound, playVoice, scanPosSound } from './audio.js';
 import { logMsg } from './log.js';
 import { createSrv, motionAllowed, ros, rosHooks } from './ros.js';
 import { floorGuard, readPoseInput, validatePose } from './util.js';
@@ -18,7 +18,7 @@ logSub.subscribe((msg) => {
   const isErr = txt.includes('FAILED') || txt.includes('Error') || txt.includes('not reachable') || txt.includes('unreachable') || txt.includes('out of reach') || txt.includes('nicht erreichbar') || txt.includes('❌');
   logMsg('ROS', txt, isErr ? 'err' : 'info');
   if (isErr && (txt.toLowerCase().includes('reach') || txt.toLowerCase().includes('ik') || txt.toLowerCase().includes('fail') || txt.toLowerCase().includes('error'))) {
-    playOutOfReachSound();
+    playReachFailureSound();
   }
 });
 
@@ -39,7 +39,7 @@ motionStatusSub.subscribe((msg) => {
   const source = (text.startsWith('MoveIt') || text.startsWith('MoveTo')) ? 'MoveIt' : 'Motion';
   logMsg(source, text, type);
   if (type === 'err' && (text.toLowerCase().includes('reach') || text.toLowerCase().includes('ik') || text.toLowerCase().includes('out of reach') || text.toLowerCase().includes('unerreichbar') || text.toLowerCase().includes('collision') || text.toLowerCase().includes('failed'))) {
-    playOutOfReachSound();
+    playReachFailureSound();
   }
 });
 
@@ -186,7 +186,7 @@ export function moveToPose() {
   const bad = validatePose([x, y, z, r, p, yw]);
   if (bad) {
     logMsg('UI', `❌ MoveTo abgebrochen: ${bad}`, 'err');
-    playOutOfReachSound();
+    playPoseOutOfReachSound();
     return;
   }
 
@@ -210,12 +210,12 @@ export function moveToPose() {
     if (res.ret === 0) logMsg('ROS', 'MoveTo accepted - MoveIt is planning the path.', 'info');
     else {
       logMsg('ROS', `❌ MoveTo rejected (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
-      playOutOfReachSound();
+      playPoseOutOfReachSound();
     }
   }, (err) => { 
     setButtonsLocked(false);
     logMsg('ROS', `❌ MoveTo Error: ${err}`, 'err'); 
-    playOutOfReachSound();
+    playPoseOutOfReachSound();
   });
 }
 

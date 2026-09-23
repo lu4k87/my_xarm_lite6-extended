@@ -1,6 +1,6 @@
 import { TOPICS, SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
-import { playOutOfReachSound, playMovesToSelectedObjectSound } from './audio.js';
+import { playOutOfReachSound, playMovesToSelectedObjectSound, setObjectReachContext } from './audio.js';
 import { logMsg } from './log.js';
 import { setButtonsLocked } from './motion.js';
 import { createSrv, motionAllowed, ros } from './ros.js';
@@ -132,6 +132,7 @@ function endApproach(reason) {
   if (!approachTarget) return;
   approachTarget = null;
   approachVoicePlayed = false;
+  setObjectReachContext(false, reason ? 3000 : 0);
   if (reason && typeof twin.clearDigitalTwinSelectedGrasp === 'function') {
     twin.clearDigitalTwinSelectedGrasp();
     logMsg('UI', `Approach ended: ${reason}`, 'warn');
@@ -177,6 +178,7 @@ export function approachObjectFromAbove(info) {
   }
   approachTarget = pose.slice(0, 3);
   approachVoicePlayed = false;
+  setObjectReachContext(true);
   setButtonsLocked(true);
   logMsg('UI', `➤ Approach ${info.name} from above: X=${pose[0]} Y=${pose[1]} Z=${pose[2]} mm (${APPROACH_ABOVE_MM} mm above grasp point)`, 'action');
   createSrv(SERVICES.approachFromAbove, 'xarm_msgs/MoveCartesian').callService(

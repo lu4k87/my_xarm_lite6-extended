@@ -1,6 +1,6 @@
 import { SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
-import { toggleSound } from './audio.js';
+import { playPoseOutOfReachSound, toggleSound } from './audio.js';
 import { logMsg } from './log.js';
 import { setButtonsLocked } from './motion.js';
 import { createSrv, motionAllowed } from './ros.js';
@@ -33,6 +33,7 @@ export function executeMoveToPoseFromGizmo() {
   const bad = validatePose([x, y, z, r, p, yw]);
   if (bad) {
     logMsg('GIZMO', `❌ Invalid gizmo target: ${bad}`, 'err');
+    playPoseOutOfReachSound();
     return;
   }
 
@@ -44,6 +45,7 @@ export function executeMoveToPoseFromGizmo() {
   }
   if (floorGuard.enabled && z <= 15.0) {
     logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the table surface (Z=${z.toFixed(0)} mm ≤ 15 mm).`, 'err');
+    playPoseOutOfReachSound();
     return;
   }
 
@@ -86,6 +88,7 @@ export function executeMoveToPoseFromGizmo() {
       }
     } else {
       logMsg('GIZMO', `❌ Gizmo move rejected (ret=${res.ret}): ${res.message || 'Target unreachable or in collision'}`, 'err');
+      playPoseOutOfReachSound();
     }
   }, (err) => {
     isExecutingGizmoMove = false;
@@ -96,6 +99,7 @@ export function executeMoveToPoseFromGizmo() {
       btnGo.disabled = false;
     }
     logMsg('GIZMO', `❌ Service error during gizmo move: ${err}`, 'err');
+    playPoseOutOfReachSound();
   });
 }
 

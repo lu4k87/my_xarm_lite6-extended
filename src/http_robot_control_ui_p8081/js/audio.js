@@ -9,6 +9,7 @@ export let collisionEnabledSound = null;
 export let collisionDisabledSound = null;
 export let errorSound = null;
 export let outOfReachSound = null;
+export let poseOutOfReachSound = null;
 export let movesToSelectedObjectSound = null;
 try {
   uiClickSound = new Audio('sounds/ui_mouse_click.mp3');
@@ -17,6 +18,7 @@ try {
   collisionDisabledSound = new Audio('sounds/_voice_collision_detection_disabled.mp3');
   errorSound = new Audio('sounds/error_sound.mp3');
   outOfReachSound = new Audio('sounds/_voice_object_out_of_reach.mp3');
+  poseOutOfReachSound = new Audio('sounds/_voice_pose_out_of_reach.mp3');
   movesToSelectedObjectSound = new Audio('sounds/_voice_robot_moves_to_selected_object.mp3');
 } catch (e) {}
 
@@ -60,6 +62,14 @@ export function syncAudioElements() {
     if (!soundEnabled) {
       outOfReachSound.pause();
       outOfReachSound.currentTime = 0;
+    }
+  }
+  if (poseOutOfReachSound) {
+    poseOutOfReachSound.muted = !soundEnabled;
+    poseOutOfReachSound.volume = soundEnabled ? 1.0 : 0.0;
+    if (!soundEnabled) {
+      poseOutOfReachSound.pause();
+      poseOutOfReachSound.currentTime = 0;
     }
   }
   if (movesToSelectedObjectSound) {
@@ -195,12 +205,41 @@ export function playVoice(audio, what) {
   }
 }
 
+// Gemeinsamer Cooldown fuer beide Out-of-Reach-Stimmen, damit sich
+// Service-Antwort und nachfolgende Status-Meldung nicht doppeln.
 let lastOutOfReachTs = 0;
-export function playOutOfReachSound() {
+function outOfReachCooldown() {
   const now = Date.now();
-  if (now - lastOutOfReachTs < 1500) return; // Cooldown um Audio-Überlappung zu vermeiden
+  if (now - lastOutOfReachTs < 1500) return true; // Cooldown um Audio-Überlappung zu vermeiden
   lastOutOfReachTs = now;
+  return false;
+}
+
+// Objekt-Kontext: Anfahrt einer roten Kugel / eines Detected-Object-Eintrags.
+// Nach dem Ende der Anfahrt noch kurz gueltig, weil die Fehlermeldungen
+// von MoveIt etwas spaeter eintreffen koennen.
+let objectReachContextUntil = 0;
+export function setObjectReachContext(active, graceMs = 3000) {
+  objectReachContextUntil = active ? Infinity : (graceMs > 0 ? Date.now() + graceMs : 0);
+}
+
+// Objekt nicht erreichbar (rote Kugel / Detected Objects).
+export function playOutOfReachSound() {
+  if (outOfReachCooldown()) return;
   playVoice(outOfReachSound, 'object out of reach');
+}
+
+// Gizmo- bzw. Pose-Ziel nicht erreichbar (Singularitaet, Kollision, IK).
+export function playPoseOutOfReachSound() {
+  if (outOfReachCooldown()) return;
+  playVoice(poseOutOfReachSound, 'pose out of reach');
+}
+
+// Fuer allgemeine Fehlermeldungen (Motion-/Grasp-Status): waehlt die Stimme
+// danach, ob gerade ein Objekt angefahren wird.
+export function playReachFailureSound() {
+  if (Date.now() < objectReachContextUntil) playOutOfReachSound();
+  else playPoseOutOfReachSound();
 }
 
 let lastMovesToSelectedObjectTs = 0;
