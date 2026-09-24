@@ -25,6 +25,7 @@ export const twinHooks = {
   approachDetectedObject: null,
   isApproachingObject: null,
   triggerApproachVoice: null,
+  refreshMoveitExecIcon: null,
 };
 
 // ── Rendern nur bei Bedarf ──────────────────────────────────────────────────
@@ -306,6 +307,45 @@ function initDigitalTwin() {
   }
 }
 
+// Viewport-Hoehe [px] fuer die HUD-Stufen: large = Icons 1,5x (SCENE/MOTION),
+// short = kompakte Icons + kleiner Nav-Gizmo, tiny = Gizmo aus, kleinste Icons.
+const VIEWPORT_H_LARGE = 640;
+const VIEWPORT_H_SHORT = 430;
+const VIEWPORT_H_TINY = 340;
+
+// HUD-Stufen von gross nach klein. Die Hoehe bestimmt, womit begonnen wird;
+// passt MOTION dann nicht (Buttons abgeschnitten - haengt auch von der Breite
+// ab), geht es eine Stufe kleiner.
+const HUD_LEVELS = [
+  ['twin-viewport-large'],
+  [],
+  ['twin-viewport-short'],
+  ['twin-viewport-short', 'twin-viewport-tiny'],
+];
+const HUD_LEVEL_CLASSES = ['twin-viewport-large', 'twin-viewport-short', 'twin-viewport-tiny'];
+
+function hudMotionFits(hudHost) {
+  const m = hudHost.querySelector('.twin-motion-overlay');
+  if (!m || !m.offsetParent) return true;   // eingeklappt oder nicht vorhanden
+  return m.scrollHeight <= m.clientHeight + 1 && m.scrollWidth <= m.clientWidth + 1;
+}
+
+function fitViewportHud(hudHost, h) {
+  let level = h >= VIEWPORT_H_LARGE ? 0 : h >= VIEWPORT_H_SHORT ? 1 : h >= VIEWPORT_H_TINY ? 2 : 3;
+  for (; level < HUD_LEVELS.length; level++) {
+    HUD_LEVEL_CLASSES.forEach(c => hudHost.classList.toggle(c, HUD_LEVELS[level].includes(c)));
+    if (level === HUD_LEVELS.length - 1 || hudMotionFits(hudHost)) break;
+  }
+}
+
+// Nach dem Auf-/Zuklappen eines HUD-Tabs neu einpassen - die Viewport-Groesse
+// aendert sich dabei nicht, der verfuegbare Platz fuer MOTION aber schon.
+export function refitDigitalTwinHud() {
+  if (!container) return;
+  const hudHost = container.closest('.viewport-container');
+  if (hudHost && container.clientHeight > 0) fitViewportHud(hudHost, container.clientHeight);
+}
+
 function handleResize() {
   requestRender();
   if (!container || !renderer || !camera) return;
@@ -317,10 +357,7 @@ function handleResize() {
     renderer.setSize(w, h);
     // Keep the nav gizmo from ever squeezing the other viewport HUDs
     const hudHost = container.closest('.viewport-container');
-    if (hudHost) {
-      hudHost.classList.toggle('twin-viewport-short', h < 430);
-      hudHost.classList.toggle('twin-viewport-tiny', h < 340);
-    }
+    if (hudHost) fitViewportHud(hudHost, h);
   }
 }
 
@@ -1123,10 +1160,13 @@ function handleGizmoDragEnd() {
     if (mp) {
       mp.classList.remove('mp-hidden');
       mp.classList.add('mp-phase-confirm');
+      // Execute gilt jetzt dem Gizmo-Ziel, nicht einer vorgemerkten MOTION-Aktion.
+      mp.dataset.pending = 'gizmo';
       const phaseEl = document.getElementById('mp-phase');
       if (phaseEl) phaseEl.textContent = 'GIZMO TARGET';
       const detailEl = document.getElementById('mp-detail');
       if (detailEl) detailEl.textContent = 'Target pose set. Click ▶ (Execute path) to plan and move.';
+      if (typeof twinHooks.refreshMoveitExecIcon === 'function') twinHooks.refreshMoveitExecIcon();
     }
   }
 }
@@ -1341,6 +1381,11 @@ export function testDigitalTwinSafetyCycle() {
     if (typeof logMsg === 'function') logMsg('Motion', '✓ [DEMO] Safety state cleared. Normal operation.', 'success');
   }
 }
+// Aktuelle Gelenkwinkel [rad] aus /joint_states (Kopie).
+export function getDigitalTwinJoints() {
+  return currentJoints.slice();
+}
+
 export function updateDigitalTwinJoints(jointVals, axisY) {
   requestRender();
   if (Array.isArray(jointVals)) {

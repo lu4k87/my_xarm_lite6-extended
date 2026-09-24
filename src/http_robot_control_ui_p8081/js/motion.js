@@ -5,7 +5,7 @@ import {
   playPoseOutOfReachSound, playReachFailureSound, playVoice, scanPosSound,
 } from './audio.js';
 import { logMsg } from './log.js';
-import { createSrv, motionAllowed, ros, rosHooks } from './ros.js';
+import { createSrv, estopLatched, motionAllowed, ros, rosHooks } from './ros.js';
 import { floorGuard, readPoseInput, validatePose } from './util.js';
 
 export let speedScale = 0.3;
@@ -169,14 +169,32 @@ export function startObjectScan() {
   });
 }
 
+// Zwei getrennte Sperren: "Fahrt laeuft" (kurz, per Service-Antwort wieder
+// frei) und der verriegelte Not-Aus. Sonst wuerde das Ende einer Fahrt die
+// Not-Aus-Sperre aufheben.
+let motionBusy = false;
+
 export function setButtonsLocked(locked) {
-  const btns = document.querySelectorAll('.motion-lockable');
-  btns.forEach(btn => {
-    btn.disabled = locked;
-    btn.style.opacity = locked ? '0.4' : '1.0';
-    btn.style.pointerEvents = locked ? 'none' : 'auto';
+  motionBusy = !!locked;
+  applyMotionLock();
+}
+
+function applyMotionLock() {
+  document.querySelectorAll('.motion-lockable').forEach(btn => {
+    // Deaktivierte Buttons loesen kein click aus - damit auch keinen Klick-Sound.
+    btn.disabled = motionBusy || estopLatched;
+    btn.classList.toggle('estop-locked', estopLatched);
+    if (btn.dataset.titleFree === undefined) btn.dataset.titleFree = btn.title || '';
+    btn.title = estopLatched
+      ? `${btn.dataset.titleFree} - blocked: emergency stop is latched (acknowledge with ↺)`
+      : btn.dataset.titleFree;
+    // Im Not-Aus bleibt der Hover fuer den Tooltip erhalten, geklickt werden
+    // kann wegen disabled trotzdem nicht.
+    btn.style.opacity = motionBusy && !estopLatched ? '0.4' : '';
+    btn.style.pointerEvents = motionBusy && !estopLatched ? 'none' : '';
   });
 }
+rosHooks.onEstop.push(applyMotionLock);
 
 export function moveToPose() {
   const x = readPoseInput('inp-x');
@@ -228,7 +246,9 @@ export function moveToPose() {
 export function setInitialPose() {
   if (!motionAllowed('Initial pose')) return;
   setButtonsLocked(true);
-  playVoice(initialPoseSound, 'initial pose');
+  // Steht der Arm schon dort, waere "robot moves to initial pose" falsch -
+  // ebenso im Ghost-Modus, wo dieser Klick den Pfad nur plant.
+  if (!isAtInitialPose() && movetoPreviewState !== true) playVoice(initialPoseSound, 'initial pose');
   const srv = createSrv(SERVICES.executeInitialPose, 'std_srvs/Trigger');
   logMsg('UI', '➤ Triggering Initial Pose...');
   srv.callService(new ROSLIB.ServiceRequest({}), (res) => {
@@ -241,13 +261,44 @@ export function setInitialPose() {
   });
 }
 
+// ── Steht der Arm schon am Ziel? Dann keine Sprachansage ─────────────────
+// Initialpose wie in robot_motion_handler_movegroup (_go_to_joints).
+const INITIAL_JOINTS = [0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0];
+const INITIAL_TOL_RAD = 0.02;
+const SCAN_POS_MM = [300.0, 0.0, 400.0];
+const SCAN_TOL_MM = 3.0;
+
+// Dieselbe TCP-Position wie die EEF-Telemetrie (link_base, mm).
+let lastEefMm = null;
+new ROSLIB.Topic({
+  ros: ros,
+  name: TOPICS.eefPosition,
+  messageType: 'std_msgs/Float32MultiArray',
+  throttle_rate: 200,
+  queue_length: 1
+}).subscribe((msg) => {
+  if (msg.data && msg.data.length >= 3) lastEefMm = [msg.data[0], msg.data[1], msg.data[2]];
+});
+
+function isAtInitialPose() {
+  if (typeof twin.getDigitalTwinJoints !== 'function') return false;
+  const j = twin.getDigitalTwinJoints();
+  return INITIAL_JOINTS.every((v, i) => Math.abs((j[i] || 0) - v) <= INITIAL_TOL_RAD);
+}
+
+function isAtScanPosition() {
+  if (!lastEefMm) return false;
+  return Math.hypot(lastEefMm[0] - SCAN_POS_MM[0], lastEefMm[1] - SCAN_POS_MM[1],
+                    lastEefMm[2] - SCAN_POS_MM[2]) <= SCAN_TOL_MM;
+}
+
 export function showScene() {
   if (!motionAllowed('Scan position move')) return;
   setButtonsLocked(true);
   // Gleiche Absicherung wie beim Klick-Sound: ungeschuetzt haette ein
   // fehlendes Audio-Objekt die Funktion hier abgebrochen - der Roboter
   // waere dann gar nicht losgefahren.
-  playVoice(scanPosSound, 'scan position');
+  if (!isAtScanPosition() && movetoPreviewState !== true) playVoice(scanPosSound, 'scan position');
 
   const srv = createSrv(SERVICES.executeMoveToPose, 'xarm_msgs/MoveCartesian');
   const x = 300.0;
@@ -365,6 +416,7 @@ export const MOVETO_PREVIEW_NODE = 'robot_motion_handler_movegroup';
 export let movetoPreviewState = null;
 
 export function applyMoveToPreviewBtn() {
+  applyMoveitExecIcon();
   const btn = document.getElementById('btn-twin-path-preview');
   if (!btn) return;
   const st = movetoPreviewState;
@@ -382,6 +434,24 @@ export function applyMoveToPreviewBtn() {
     btn.style.opacity = '0.6';
     btn.title = 'MoveTo path preview: OFF - planned paths are executed immediately. Click to enable';
   }
+}
+
+// Execute-Button im MoveIt-Popup: bei aktiver Pfad-Vorschau das Ghost-Icon
+// statt Play - sonst unveraendert. Gleiches <i> im selben Button, damit die
+// Groesse identisch bleibt.
+// Ghost nur, solange der Klick erst die Vorschau erzeugt: Steht der Geist-Pfad
+// schon im Viewport (Phase "confirm"), fuehrt Execute die echte Bewegung aus
+// -> Play. Initialpose und Objekt-Scan planen nicht ueber MoveIt, also nie Ghost.
+export function applyMoveitExecIcon() {
+  const icon = document.querySelector('#moveit-popup .mp-btn-exec i');
+  if (!icon) return;
+  const popup = document.getElementById('moveit-popup');
+  const pathShown = !!(mpState && mpState.phase === 'confirm');
+  const pendingWithoutPreview = !!(popup && popup.dataset.pending === 'motion'
+                                   && pendingMotion && !pendingMotion.preview);
+  const ghost = movetoPreviewState === true && !pathShown && !pendingWithoutPreview;
+  icon.classList.toggle('fa-ghost', ghost);
+  icon.classList.toggle('fa-play', !ghost);
 }
 
 export function toggleMoveToPreview() {
@@ -409,6 +479,22 @@ export function toggleMoveToPreview() {
 
 
 export function confirmMoveToPreview(execute) {
+  const popup = document.getElementById('moveit-popup');
+  if (popup && popup.dataset.pending === 'motion' && pendingMotion) {
+    const req = pendingMotion;
+    if (!execute) {
+      clearPendingMotion();
+      hideMoveitPopup();
+      logMsg('UI', `✗ ${req.label}: discarded - the robot does not move`, 'info');
+      return;
+    }
+    if (!motionAllowed(req.label)) return;
+    clearPendingMotion();
+    // Folgt eine MoveIt-Fahrt, oeffnet ihr Status das Popup wieder.
+    hideMoveitPopup();
+    req.run();
+    return;
+  }
   if (execute && !motionAllowed('Path execution')) return;
   if (!execute && (!mpState || mpState.phase !== 'confirm')) {
     hideMoveitPopup();
@@ -503,6 +589,7 @@ export function mpLive() {
 export function hideMoveitPopup() {
   const el = document.getElementById('moveit-popup');
   if (el) el.classList.add('mp-hidden');
+  clearPendingMotion();
   if (mpTicker) { clearInterval(mpTicker); mpTicker = null; }
   if (mpHideTimer) { clearTimeout(mpHideTimer); mpHideTimer = null; }
 }
@@ -605,6 +692,7 @@ export function renderMoveitPopup() {
       detail = `Failed${failedAt ? ` during ${MP_PHASE_LABELS[failedAt] || failedAt}` : ''}: ${st.message || 'unknown error'}`; break;
   }
   document.getElementById('mp-detail').textContent = detail;
+  applyMoveitExecIcon();
 }
 
 new ROSLIB.Topic({
@@ -617,6 +705,7 @@ new ROSLIB.Topic({
   if (!st || !st.phase) return;
   mpState = st;
   mpReceivedAt = performance.now();
+  clearPendingMotion();
   // IK, Planung (Kollision/Singularitaet) oder Ausfuehrung gescheitert.
   // "aborted" (Not-Aus) und "discarded" (verworfen) sind kein Reichweitenproblem.
   if (st.phase === 'failed') playReachFailureSound();
@@ -662,10 +751,49 @@ export function checkMoveitCollNodes(nodesList) {
 
 rosHooks.onNodeList.push(checkMoveitCollNodes, checkMoveToPreviewNode);
 
+// ── MOTION-Buttons mit Bestaetigung (wie der Viewport-Gizmo) ────────────
+// Auto-Move an: sofort fahren. Aus: Confirm-Popup, gefahren wird erst nach
+// Execute (X verwirft). Sprachbefehle rufen setInitialPose & Co. direkt auf.
+const MOTION_REQUESTS = {
+  initial: { label: 'INITIAL POSE', what: 'Initial pose selected', run: () => setInitialPose(), preview: true },
+  scene:   { label: 'SCAN POSITION', what: 'Scan position selected', run: () => showScene(), preview: true },
+  scan:    { label: 'OBJECT SCAN', what: 'Object scan selected', run: () => startObjectScan(), preview: true },
+};
+let pendingMotion = null;
+
+function clearPendingMotion() {
+  pendingMotion = null;
+  const el = document.getElementById('moveit-popup');
+  if (el && el.dataset.pending === 'motion') delete el.dataset.pending;
+  applyMoveitExecIcon();
+}
+
+export function requestMotion(kind) {
+  const req = MOTION_REQUESTS[kind];
+  if (!req) return;
+  const auto = document.getElementById('chk-gizmo-auto-drop');
+  if (!auto || auto.checked) { req.run(); return; }
+  if (!motionAllowed(req.label)) return;
+  const mp = document.getElementById('moveit-popup');
+  if (!mp) { req.run(); return; }
+  if (mpTicker) { clearInterval(mpTicker); mpTicker = null; }
+  if (mpHideTimer) { clearTimeout(mpHideTimer); mpHideTimer = null; }
+  pendingMotion = req;
+  mp.dataset.pending = 'motion';
+  mp.classList.remove('mp-hidden');
+  mp.classList.add('mp-phase-confirm');
+  document.getElementById('mp-phase').textContent = req.label;
+  document.getElementById('mp-detail').textContent = `${req.what}. Click ▶ (Execute path) to move.`;
+  applyMoveitExecIcon();
+  logMsg('UI', `${req.label}: waiting for confirmation (Auto-Move off)`, 'info');
+}
+
 // ── Auto-Move: Execute/Discard im Popup ausblenden ────────────────────────
 // Faehrt der Roboter nach dem Loslassen des Gizmos ohnehin selbst los, sind
 // die Buttons ueberfluessig. Als data-Attribut, weil renderMoveitPopup die
 // Klassen des Popups komplett neu setzt.
+twin.twinHooks.refreshMoveitExecIcon = applyMoveitExecIcon;
+
 export function syncAutoMoveActions() {
   const el = document.getElementById('moveit-popup');
   const chk = document.getElementById('chk-gizmo-auto-drop');

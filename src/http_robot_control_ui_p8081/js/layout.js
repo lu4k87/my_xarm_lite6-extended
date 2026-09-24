@@ -99,6 +99,7 @@ export function setHudTabCollapsed(key, collapsed, persist = true) {
   const head = el.querySelector('.hud-tab-head');
   if (head) head.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
   if (persist) lsSet(HUD_TAB_LS_PREFIX + key, collapsed ? '1' : '0');
+  if (typeof twin.refitDigitalTwinHud === 'function') twin.refitDigitalTwinHud();
 }
 
 export function toggleHudTab(key) {

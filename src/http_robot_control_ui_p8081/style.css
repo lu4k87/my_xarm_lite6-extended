@@ -1584,6 +1584,15 @@ input[type=range]:active::-moz-range-thumb {
   gap: 6px;
 }
 
+/* Einheit der Positionsfelder X/Y/Z vor dem ersten Feld */
+.twin-pose-overlay .pose-unit {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
 .twin-pose-overlay .input-group label {
   width: auto;
   font-size: 14px;
@@ -2688,7 +2697,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 /* Gizmo-Ziel im Popup etwas groesser als im HUD-Tab */
 .mp-target-row .gizmo-hud-val { font-size: 16.5px; }
-.mp-target-row .gizmo-hud-delta { font-size: 14px; padding: 4px 10px; }
+.mp-target-row .gizmo-hud-delta { font-size: 14px; padding: 4px 10px; margin-left: 8px; }
 .mp-target-row .gizmo-auto-toggle { font-size: 14.5px; }
 .mp-target-row .gizmo-auto-toggle input[type="checkbox"] { width: 19px; height: 19px; }
 
@@ -2727,20 +2736,22 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .mp-steps {
   display: grid;
   /* Three columns when there is room, otherwise the steps wrap into rows. */
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  /* Mindestbreite passend zu "EXECUTE 12.34 s" in 14 px - sonst lieber umbrechen
+     als die Zeit abschneiden. */
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
   gap: 8px;
 }
 
 .mp-step {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   min-width: 0;
-  padding: 7px 9px;
+  padding: 7px 8px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  font-size: 12.5px;
+  font-size: 14px;
   color: #aab4c3;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
@@ -2755,7 +2766,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .mp-step-label {
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.2px;
   white-space: nowrap;
   flex: 0 0 auto;
 }
@@ -2814,10 +2825,11 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .mp-detail {
-  font-size: 14.5px;
+  font-size: 16px;
   line-height: 1.45;
   color: #cbd5e1;
   overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .moveit-popup.mp-phase-failed .mp-detail,
@@ -4739,3 +4751,66 @@ header {
   color: #ffffff;
 }
 
+
+/* Bewegungs-Buttons bei verriegeltem Not-Aus: ausgegraut, nicht klickbar
+   (disabled). !important, weil der Klick-Debounce Inline-Styles zuruecksetzt. */
+.btn.motion-lockable.estop-locked,
+.btn.motion-lockable.estop-locked:hover {
+  filter: grayscale(1);
+  opacity: 0.35 !important;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ── Viewport-Icons 1,5x, sobald der Viewport hoch genug ist ──────────────
+   twin-viewport-large setzt digital_twin.js nach der Viewport-Hoehe. Darunter
+   gelten die bisherigen Groessen bzw. short/tiny, damit SCENE und MOTION
+   nicht abgeschnitten werden oder in die Nachbar-Panels wachsen. */
+.viewport-container.twin-viewport-large .twin-scene-node-overlay {
+  gap: 6px;
+}
+.viewport-container.twin-viewport-large .twin-scene-node-overlay .btn-icon-small {
+  width: 57px !important;
+  height: 57px !important;
+  min-width: 57px !important;
+  min-height: 57px !important;
+  font-size: 25px !important;
+}
+.viewport-container.twin-viewport-large .twin-scene-divider {
+  width: 33px;
+}
+.viewport-container.twin-viewport-large .twin-motion-overlay {
+  gap: 7px;
+}
+.viewport-container.twin-viewport-large .twin-motion-overlay .btn-action,
+.viewport-container.twin-viewport-large .twin-motion-overlay .btn-danger {
+  width: 60px !important;
+  height: 60px !important;
+  min-width: 60px !important;
+  font-size: 25px !important;
+}
+.viewport-container.twin-viewport-large .twin-motion-overlay .btn-action i,
+.viewport-container.twin-viewport-large .twin-motion-overlay .btn-danger i {
+  font-size: 25px;
+}
+
+/* ── Icon-Leiste ueber dem Viewport: 1,5x, wenn die Section breit genug ist ──
+   Container ist die Section selbst (.glass-panel). Bricht die Leiste in eine
+   zweite Zeile um, kostet das Viewport-Hoehe - darum erst ab genug Breite. */
+@container (min-width: 780px) {
+  .centerpiece-header .twin-toolbar { gap: 6px; }
+  .centerpiece-header .twin-toolbar .btn-icon-small {
+    width: 45px !important;
+    height: 45px !important;
+    font-size: 20px !important;
+  }
+}
+@container (min-width: 840px) {
+  .centerpiece-header .twin-toolbar { gap: 7px; }
+  .centerpiece-header .twin-toolbar .btn-icon-small {
+    width: 54px !important;
+    height: 54px !important;
+    font-size: 24px !important;
+  }
+}

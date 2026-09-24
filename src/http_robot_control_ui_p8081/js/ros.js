@@ -11,7 +11,19 @@ export const rosHooks = {
   onConnect: [],          // () => void
   onConnectionLost: [],   // () => void
   onNodeList: [],         // (nodes: string[] | null) => void
+  onEstop: [],            // (latched: boolean) => void
 };
+
+// Not-Aus verriegelt (robot_motion_handler_movegroup meldet es latched auf
+// /ui/emergency_stop_active). Solange er nicht quittiert ist, blockiert
+// motionAllowed() jede Bewegung - vor Sprachansage und Service-Aufruf.
+export let estopLatched = false;
+export function setEstopLatched(latched) {
+  const next = !!latched;
+  if (next === estopLatched) return;
+  estopLatched = next;
+  rosHooks.onEstop.forEach(fn => fn(estopLatched));
+}
 
 export let ros;
 
@@ -202,6 +214,10 @@ export function setRosOnline(online) {
 // Letzte Pruefung vor jedem Bewegungsbefehl. silent: fuer Aufrufe mit
 // Eingaberate (Joystick), die sonst das Log fluten wuerden.
 export function motionAllowed(what, silent = false) {
+  if (estopLatched) {
+    if (!silent) logMsg('SAFETY', `⛔ ${what} blocked - emergency stop is latched. Acknowledge it with ↺ first.`, 'err');
+    return false;
+  }
   if (ros && ros.isConnected) return true;
   if (!silent) logMsg('SAFETY', `⛔ ${what} blocked - no connection to rosbridge.`, 'err');
   return false;

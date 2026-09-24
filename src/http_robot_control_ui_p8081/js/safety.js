@@ -3,7 +3,7 @@ import * as twin from './twin/digital_twin.js';
 import { errorSound, playUiClickSound, playVoice } from './audio.js';
 import { stopAllJogging } from './jog.js';
 import { logMsg } from './log.js';
-import { createSrv, ros } from './ros.js';
+import { createSrv, ros, setEstopLatched } from './ros.js';
 import { unreachableClearance, unreachableRadiusAt } from './robot_limits.js';
 import { LIM, floorGuard } from './util.js';
 
@@ -307,6 +307,7 @@ export function emergencyStop() {
 // quittiert wird. Der Knopf erscheint nur, solange der Node "aktiv" meldet -
 // im Motion-HUD und im Header.
 export function setEstopResetVisible(active) {
+  setEstopLatched(active);
   ['btn-estop-reset', 'btn-estop-header-reset'].forEach((id) => {
     const btn = document.getElementById(id);
     if (btn) btn.classList.toggle('estop-reset-hidden', !active);

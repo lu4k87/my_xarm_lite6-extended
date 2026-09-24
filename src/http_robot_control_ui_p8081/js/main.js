@@ -35,7 +35,7 @@ import { setFrame, updateLinearAxis } from './jog.js';
 import { emergencyStop, resetEmergencyStop } from './safety.js';
 import {
   confirmMoveToPreview, hideMoveitPopup, moveToPose, setInitialPose, showScene,
-  startObjectScan, toggleMoveToPreview, toggleMoveitCollision, updateScanSpeed, updateSpeed,
+  requestMotion, startObjectScan, toggleMoveToPreview, toggleMoveitCollision, updateScanSpeed, updateSpeed,
 } from './motion.js';
 import { executeMoveToPoseFromGizmo } from './gizmo.js';
 import { executeGrasp, setGripper } from './grasp.js';
@@ -64,7 +64,7 @@ const ACTIONS = {
   // Sicherheit
   emergencyStop, resetEmergencyStop,
   // Bewegung
-  moveToPose, setInitialPose, showScene, startObjectScan, executeMoveToPoseFromGizmo,
+  moveToPose, requestMotion, setInitialPose, showScene, startObjectScan, executeMoveToPoseFromGizmo,
   confirmMoveToPreview, hideMoveitPopup, toggleMoveToPreview, toggleMoveitCollision,
   updateSpeed, updateScanSpeed, setFrame, updateLinearAxis,
   // Greifen
