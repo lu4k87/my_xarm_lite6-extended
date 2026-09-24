@@ -8,6 +8,7 @@
   <license>MIT</license>
 
   <exec_depend>rosbridge_server</exec_depend>
+  <exec_depend>web_video_server</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
 

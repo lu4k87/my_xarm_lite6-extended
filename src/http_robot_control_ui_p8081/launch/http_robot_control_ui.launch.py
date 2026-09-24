@@ -1,12 +1,12 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, ExecuteProcess,
+from launch.actions import (DeclareLaunchArgument, ExecuteProcess, GroupAction,
                             IncludeLaunchDescription, TimerAction)
 from launch.conditions import IfCondition
-from launch.launch_description_sources import AnyLaunchDescriptionSource
+from launch.launch_description_sources import (AnyLaunchDescriptionSource,
+                                               PythonLaunchDescriptionSource)
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
 
 def generate_launch_description():
     # 1. ROS-Bridge WebSocket Server aus /opt (Standard Port 9090)
@@ -59,22 +59,16 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. Web Video Server (Port 8082) fuer die Kamera- und RViz-Streams.
-    #    Ohne ihn zeigen alle Stream-Panels in der UI "Stream Disconnected" -
-    #    er lief bisher nur als separater Eintrag in der Nexus Webapp und
-    #    wurde von keinem Launch-File mitgestartet.
-    #    Nur 'port' setzen, wie im bereits funktionierenden
-    #    web_video_server.launch.py - ein nicht deklarierter Parameter wuerde
-    #    den Node beim Start scheitern lassen. Die Default-Adresse 0.0.0.0
-    #    ist noetig, weil der Browser die UI unter 127.0.0.2 oeffnet.
-    # Default bewusst FALSE: der Server wird ueblicherweise ueber das Popup in
-    # der Nexus Webapp gestartet. Waere das hier true, wuerde der
-    # 8082-Cleanup (fuser -k) genau diese laufende Instanz abschiessen.
+    # 5. Web Video Server (Port 8082) + RViz Streamer fuer die Kamera- und
+    #    RViz-Streams. Ohne ihn zeigen alle Stream-Panels in der UI
+    #    "Stream Disconnected". Eingebunden wird das komplette
+    #    web_video_server.launch.py, damit diese Card in der Nexus Webapp die
+    #    fruehere separate Card "Web Video Server & RViz Streamer" ersetzt.
+    #    Der fuser-Cleanup gibt Port 8082 vorher frei, falls noch eine alte
+    #    Instanz laeuft. Mit start_video_server:=false abschaltbar.
     start_video_server_arg = DeclareLaunchArgument(
-        'start_video_server', default_value='false',
-        description='Web Video Server auf Port 8082 mitstarten. Standard false, '
-                    'weil er normalerweise ueber die Nexus Webapp laeuft. Mit '
-                    'start_video_server:=true zuschaltbar.')
+        'start_video_server', default_value='true',
+        description='Web Video Server (Port 8082) und RViz Streamer mitstarten.')
 
     video_server_port_arg = DeclareLaunchArgument(
         'video_server_port', default_value='8082',
@@ -86,12 +80,16 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('start_video_server'))
     )
 
-    web_video_server_node = Node(
-        package='web_video_server',
-        executable='web_video_server',
-        name='http_web_video_server_p8082',
-        parameters=[{'port': LaunchConfiguration('video_server_port')}],
-        output='screen',
+    # GroupAction (scoped): rosbridge und web_video_server nutzen beide das
+    # Launch-Argument 'port' - ohne eigenen Scope koennte 8082 die 9090
+    # von rosbridge ueberschreiben (oder umgekehrt).
+    web_video_server_launch = GroupAction(
+        actions=[IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(
+                get_package_share_directory('web_video_server'),
+                'launch', 'web_video_server.launch.py')),
+            launch_arguments={'port': LaunchConfiguration('video_server_port')}.items()
+        )],
         condition=IfCondition(LaunchConfiguration('start_video_server'))
     )
 
@@ -103,6 +101,6 @@ def generate_launch_description():
         rosbridge_launch,
         TimerAction(
             period=0.5,
-            actions=[web_video_server_node, web_server_and_browser]
+            actions=[web_video_server_launch, web_server_and_browser]
         )
     ])
