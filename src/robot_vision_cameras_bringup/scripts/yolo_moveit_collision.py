@@ -90,10 +90,13 @@ class YoloMoveitCollision(Node):
 
         # End effector links that are allowed to collide with the objects
         # Freie Zone unter der Objektoberkante, in der die Seitenwaende fehlen
-        # (siehe open_box_walls). Muss groesser sein als der Servo-Haltabstand
-        # von 2 cm, sonst stoppt der Greifer ueber dem Objekt.
+        # (siehe open_box_walls). 1 cm: die Waende schuetzen fast die ganze
+        # Objekthoehe. Kleiner als der Servo-Haltabstand von 2 cm - beim
+        # Herunterjoggen direkt ueber dem Objekt kann Servo deshalb etwas
+        # frueher stoppen. "Approach from above" plant ueber MoveIt und ist
+        # davon nicht betroffen. Vorher 3 cm (Waende wirkten zu niedrig).
         self.top_clearance = float(
-            self.declare_parameter('top_clearance', 0.03).value)
+            self.declare_parameter('top_clearance', 0.01).value)
 
         self.eef_links = [
             'link5', 'link6', 'link_eef',
