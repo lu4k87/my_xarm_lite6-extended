@@ -64,7 +64,6 @@ class RobotMotionHandlerMovegroup(Node):
             10
         )
         
-        from std_msgs.msg import String
         self.ui_log_pub = self.create_publisher(String, '/ui/motion_status', 10)
         
         self.ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
@@ -223,7 +222,6 @@ class RobotMotionHandlerMovegroup(Node):
             self.reset_emergency_stop_cb,
             callback_group=self.stop_cb_group
         )
-        from std_msgs.msg import Bool
         latched_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.estop_state_pub = self.create_publisher(Bool, '/ui/emergency_stop_active', latched_qos)
 
@@ -284,7 +282,6 @@ class RobotMotionHandlerMovegroup(Node):
         self.startup_timer = self.create_timer(1.0, self._check_servo_ready, callback_group=self.cb_group)
         
     def ui_log(self, msg, level='info'):
-        from std_msgs.msg import String
         if level == 'info':
             self.get_logger().info(msg)
             self.ui_log_pub.publish(String(data=f"INFO: {msg}"))
@@ -372,7 +369,6 @@ class RobotMotionHandlerMovegroup(Node):
         return None
 
     def _publish_estop_state(self):
-        from std_msgs.msg import Bool
         self.estop_state_pub.publish(Bool(data=self.estop_latched))
 
     def _pause_servo(self, log_msg=None):
