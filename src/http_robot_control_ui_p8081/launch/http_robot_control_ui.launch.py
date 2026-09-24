@@ -15,8 +15,18 @@ def generate_launch_description():
         'launch',
         'rosbridge_websocket_launch.xml'
     )
+    # call_services_in_new_thread: Standard ist False - dann arbeitet rosbridge
+    # jeden Service-Aufruf im Hauptthread ab. Haengt dort ein langsamer Aufruf
+    # (z.B. /rosapi/nodes der Node-Pruefung alle 2,5 s), wartet ein MoveTo
+    # dahinter: gemessen 0,3-5 s bis zum Start der Planung, mit Threads
+    # konstant ~0,3 s. Der Timeout verhindert, dass ein fehlender Service
+    # einen Aufruf endlos offen haelt.
     rosbridge_launch = IncludeLaunchDescription(
-        AnyLaunchDescriptionSource(rosbridge_launch_path)
+        AnyLaunchDescriptionSource(rosbridge_launch_path),
+        launch_arguments={
+            'call_services_in_new_thread': 'true',
+            'default_call_service_timeout': '10.0',
+        }.items()
     )
 
     # 2. Robot Control UI Verzeichnis
