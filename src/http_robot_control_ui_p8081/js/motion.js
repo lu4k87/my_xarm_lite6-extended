@@ -1,6 +1,9 @@
 import { TOPICS, SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
-import { collisionDisabledSound, collisionEnabledSound, playPoseOutOfReachSound, playReachFailureSound, playVoice, scanPosSound } from './audio.js';
+import {
+  absolutePoseSound, collisionDisabledSound, collisionEnabledSound, initialPoseSound,
+  playPoseOutOfReachSound, playReachFailureSound, playVoice, scanPosSound,
+} from './audio.js';
 import { logMsg } from './log.js';
 import { createSrv, motionAllowed, ros, rosHooks } from './ros.js';
 import { floorGuard, readPoseInput, validatePose } from './util.js';
@@ -194,6 +197,7 @@ export function moveToPose() {
 
   if (!motionAllowed('MoveTo')) return;
   setButtonsLocked(true);
+  playVoice(absolutePoseSound, 'absolute pose');
   const srv = createSrv(SERVICES.executeMoveToPose, 'xarm_msgs/MoveCartesian');
 
   // speed und acc gehoeren zur srv-Definition, werden vom Handler aber nicht
@@ -224,6 +228,7 @@ export function moveToPose() {
 export function setInitialPose() {
   if (!motionAllowed('Initial pose')) return;
   setButtonsLocked(true);
+  playVoice(initialPoseSound, 'initial pose');
   const srv = createSrv(SERVICES.executeInitialPose, 'std_srvs/Trigger');
   logMsg('UI', '➤ Triggering Initial Pose...');
   srv.callService(new ROSLIB.ServiceRequest({}), (res) => {

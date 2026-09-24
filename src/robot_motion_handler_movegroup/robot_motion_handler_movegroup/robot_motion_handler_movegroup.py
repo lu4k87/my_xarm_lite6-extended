@@ -54,31 +54,9 @@ class RobotMotionHandlerMovegroup(Node):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.twist_pub = self.create_publisher(TwistStamped, '/servo_server/delta_twist_cmds', 10)
         
-        try:
-            import pygame
-            import os
-            pygame.mixer.init()
-            ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
-            sounds_dir = os.path.join(ws_root, 'sounds')
-            if not os.path.isdir(sounds_dir):
-                sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
-            self.sound_initial = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_initial_pose.mp3'))
-            self.sound_absolute = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_absolute_pose.mp3'))
-        except Exception as e:
-            self.get_logger().warning(f"Could not init audio: {e}")
-            self.sound_initial = None
-            self.sound_absolute = None
-
-
-        
-        from std_msgs.msg import Bool
-        self.sound_enabled = True
-        self.sound_sub = self.create_subscription(
-            Bool,
-            '/ui/sound_enabled',
-            self._sound_enabled_cb,
-            10
-        )
+        # Die Sprachansagen (Initial Pose, Absolute Pose) spielt die Robot
+        # Control UI im Browser ab - so hoert man sie auf jedem PC, auf dem die
+        # UI offen ist, nicht nur am Lautsprecher dieses Nodes.
 
         self.publisher_ = self.create_publisher(
             JointTrajectory, 
@@ -174,8 +152,8 @@ class RobotMotionHandlerMovegroup(Node):
             self.execute_move_to_pose_cb,
             callback_group=self.cb_group
         )
-        # Same MoveTo without the "robot moves to absolute pose" voice - used by
-        # the viewport TCP gizmo, where the announcement on every drag is noise.
+        # Alias fuer den Viewport-TCP-Gizmo. Frueher ohne Sprachansage; seit die
+        # Ansage im Browser liegt, verhalten sich beide Services gleich.
         self.move_silent_srv = self.create_service(
             MoveCartesian,
             '/ui/execute_move_to_pose_silent',
@@ -438,17 +416,6 @@ class RobotMotionHandlerMovegroup(Node):
         if self.xarm_state_client.service_is_ready():
             self.xarm_state_client.call_async(req)
 
-    def _sound_enabled_cb(self, msg):
-        self.sound_enabled = bool(msg.data)
-        if not self.sound_enabled:
-            try:
-                import pygame
-                if pygame.mixer.get_init():
-                    pygame.mixer.stop()
-            except Exception:
-                pass
-        self.get_logger().info(f"UI Sound State received: enabled={self.sound_enabled}")
-
     def execute_initial_pose_cb(self, request, response):
         rejection = self._estop_rejection()
         if rejection:
@@ -462,10 +429,7 @@ class RobotMotionHandlerMovegroup(Node):
 
         self._reset_hardware_state()
         self.stop_requested = False
-        
-        if self.sound_enabled and self.sound_initial:
-            self.sound_initial.play()
-        
+
         def _task():
             try:
                 # --- DIRECT MOVE TO INITIAL POSE ---
@@ -1181,9 +1145,9 @@ class RobotMotionHandlerMovegroup(Node):
         return response
 
     def execute_move_to_pose_silent_cb(self, request, response):
-        return self.execute_move_to_pose_cb(request, response, announce=False)
+        return self.execute_move_to_pose_cb(request, response)
 
-    def execute_move_to_pose_cb(self, request, response, announce=True):
+    def execute_move_to_pose_cb(self, request, response):
         rejection = self._estop_rejection()
         if rejection:
             response.ret = -1
@@ -1198,7 +1162,7 @@ class RobotMotionHandlerMovegroup(Node):
         self.stop_requested = False
         def _task():
             try:
-                self._execute_move_to_pose_core(request, response, announce)
+                self._execute_move_to_pose_core(request, response)
             finally:
                 self.is_executing = False
                 
@@ -1375,7 +1339,7 @@ class RobotMotionHandlerMovegroup(Node):
             p.velocities = [v / k for v in p.velocities]
             p.accelerations = [a / (k * k) for a in p.accelerations]
 
-    def _execute_move_to_pose_core(self, request, response, announce=True):
+    def _execute_move_to_pose_core(self, request, response):
         try:
             from geometry_msgs.msg import PoseStamped
             
@@ -1387,12 +1351,6 @@ class RobotMotionHandlerMovegroup(Node):
             target_r = request.pose[3]
             target_p = request.pose[4]
             target_yaw = request.pose[5]
-            
-            is_scan_pos = (abs(target_x - 0.3) < 0.001 and abs(target_y - 0.0) < 0.001 and abs(target_z - 0.4) < 0.001)
-            is_hover_pos = (abs(target_z - 0.04) < 0.001)
-            
-            if announce and self.sound_enabled and self.sound_absolute and not is_scan_pos and not is_hover_pos:
-                self.sound_absolute.play()
             
             self._moveit_begin(request.pose[:3])
             self.ui_log(f"MoveTo started: target X={request.pose[0]:.0f} Y={request.pose[1]:.0f} Z={request.pose[2]:.0f} mm", 'action')

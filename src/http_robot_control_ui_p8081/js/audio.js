@@ -11,6 +11,8 @@ export let errorSound = null;
 export let outOfReachSound = null;
 export let poseOutOfReachSound = null;
 export let movesToSelectedObjectSound = null;
+export let initialPoseSound = null;
+export let absolutePoseSound = null;
 try {
   uiClickSound = new Audio('sounds/ui_mouse_click.mp3');
   scanPosSound = new Audio('sounds/_voice_robot_moves_to_scan_pos.mp3');
@@ -20,6 +22,8 @@ try {
   outOfReachSound = new Audio('sounds/_voice_object_out_of_reach.mp3');
   poseOutOfReachSound = new Audio('sounds/_voice_pose_out_of_reach.mp3');
   movesToSelectedObjectSound = new Audio('sounds/_voice_robot_moves_to_selected_object.mp3');
+  initialPoseSound = new Audio('sounds/_voice_robot_moves_to_initial_pose.mp3');
+  absolutePoseSound = new Audio('sounds/_voice_robot_moves_to_absolute_pose.mp3');
 } catch (e) {}
 
 // ── Web Audio UI Click Sound Effect & Sound Toggle ───────────────────────
@@ -41,7 +45,8 @@ visibleInterval(publishSoundState, 2000);
 
 export function syncAudioElements() {
   const all = [uiClickSound, scanPosSound, collisionEnabledSound, collisionDisabledSound,
-    errorSound, outOfReachSound, poseOutOfReachSound, movesToSelectedObjectSound];
+    errorSound, outOfReachSound, poseOutOfReachSound, movesToSelectedObjectSound,
+    initialPoseSound, absolutePoseSound];
   for (const audio of all) {
     if (!audio) continue;
     audio.muted = !soundEnabled;
@@ -157,8 +162,11 @@ export function playButtonClick(btn) {
   }
 }
 
-// UI audio: scan position voice, MoveIt collision toggle voices and the safety
-// error sound (the other voices are played by robot_motion_handler_movegroup via pygame).
+// Alle Sprachansagen der Robot Control UI laufen hier im Browser (auch
+// Initial Pose / Absolute Pose), damit sie auf jedem PC mit offener UI zu hoeren
+// sind. Es spricht immer nur eine Stimme: eine neue Ansage beendet die
+// laufende, statt sich mit ihr zu ueberlagern.
+let currentVoice = null;
 export function playVoice(audio, what) {
   if (!soundEnabled) return;
   if (!audio) {
@@ -166,6 +174,11 @@ export function playVoice(audio, what) {
     return;
   }
   try {
+    if (currentVoice && currentVoice !== audio && !currentVoice.paused) {
+      currentVoice.pause();
+      currentVoice.currentTime = 0;
+    }
+    currentVoice = audio;
     audio.currentTime = 0;
     const pr = audio.play();
     if (pr && typeof pr.catch === 'function') {
