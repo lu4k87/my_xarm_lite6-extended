@@ -126,7 +126,7 @@
       "add_gripper:=true": false,
       "add_vacuum_gripper:=true": true,
       "attach_to:=linear_axis_link": false,
-      "rviz:=true": true,
+      "rviz:=true": false,
       "static_objects:=true": true
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link": {
@@ -144,7 +144,7 @@
       "add_gripper:=true": false,
       "add_vacuum_gripper:=true": true,
       "attach_to:=linear_axis_link": false,
-      "rviz:=true": true,
+      "rviz:=true": false,
       "static_objects:=true": true
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
@@ -455,7 +455,7 @@
         "add_gripper:=true": false,
         "attach_to:=linear_axis_link": false,
         "static_objects:=true": true,
-        "rviz:=true": true
+        "rviz:=true": false
       },
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link": {
         "add_vacuum_gripper:=true": true,
@@ -471,7 +471,7 @@
         "add_gripper:=true": false,
         "attach_to:=linear_axis_link": false,
         "static_objects:=true": true,
-        "rviz:=true": true
+        "rviz:=true": false
       },
       "ros2 run web_video_server web_video_server": {
         "--ros-args -r __node:=http_web_video_server_p8082": true,
