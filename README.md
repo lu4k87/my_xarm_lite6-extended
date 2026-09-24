@@ -1321,7 +1321,7 @@ flowchart TD
 > ```
 >
 > **Purpose & Task:** Provides immersive 6DoF Cartesian teleoperation using the Meta Quest 3 VR headset. Translates the VR controller's spatial movements via WebXR into smooth `TwistStamped` velocity commands for MoveIt Servo.
-> - Uses a web-based local UI served via **HTTPS** on port `8443` (from the `https_vr_webxr_p8443` package).
+> - Uses a web-based local UI served via **HTTPS** on port `8443` (from `https_vr_webxr_p8443/` inside the `vr_quest3_teleop` package).
 > - The launch file **automatically starts a secure ROSbridge instance (WSS)** on port `9091` using SSL certificates (`~/dev_ws/certs/cert.pem`). This is strictly required since WebXR (for spatial 6DoF tracking) mandates a Secure Context (HTTPS/WSS).
 > - Features an integrated WebGL rendering engine (`XRWebGLLayer`) to bypass the native Quest 3 "loading screen" (flying stars) and unlock the controller data streams.
 > - **Grip Trigger (middle finger):** Acts as a "clutch". Holding it maps the controller's exact positional delta directly to the robot's end effector (dynamically tracks whichever controller pressed the button).
@@ -2383,7 +2383,7 @@ The ZED Mini camera requires the official ZED SDK and a matching CUDA toolkit ve
  sudo apt install ros-humble-point-cloud-transport
  sudo apt install ros-humble-octomap-server
  ```
-8. **ZED SDK Source Code [CRITICAL]**: The ROS 2 Wrapper source code must precisely match the installed SDK version to avoid compilation errors. This repository already includes the correct source code (`humble-v4.1.4`) permanently embedded. You do **not** need to clone or check out any ZED repositories manually.
+8. **ZED SDK Source Code [CRITICAL]**: The ROS 2 Wrapper source code must precisely match the installed SDK version to avoid compilation errors. This repository already includes the matching source code permanently embedded: `zed-ros2-wrapper` and `zed-ros2-interfaces` both declare version `4.1.0` in their `package.xml` and target ZED SDK `4.1.x`. You do **not** need to clone or check out any ZED repositories manually.
 3. **Build the Wrapper**: 
  ```bash
  cd ~/dev_ws
@@ -2515,13 +2515,13 @@ graph TD
 
     subgraph "Robot PC (ROS 2 Nexus)"
         N_ROS[ROS 2 Nodes]:::ros
-        N_DDS[CycloneDDS<br>UDP Port 7410]:::dds
+        N_DDS[CycloneDDS<br>UDP 23900+ / Domain 66]:::dds
         N_ROS <--> N_DDS
     end
 
     subgraph "Operator PC (Dashboard/UI)"
         O_ROS[ROS 2 UI Nodes]:::ros
-        O_DDS[CycloneDDS<br>UDP Port 7410]:::dds
+        O_DDS[CycloneDDS<br>UDP 23900+ / Domain 66]:::dds
         O_ROS <--> O_DDS
     end
 
@@ -2543,7 +2543,7 @@ To run the complete system with both web interfaces (Nexus and Dashboard), multi
 | **`9090`** | WS (WebSocket) | **ROSBridge Server** | *Telemetry & service bridge for Web UIs.* |
 | **`9091`** | WSS (Secure WS)| **ROSBridge Secure** | *Encrypted WebSocket connection for WebXR.* |
 | **`502 / 7000`** | TCP/IP | **xArm Lite 6 Controller** | *Modbus TCP & hardware control interface.* |
-| **`7410+`** | UDP | **CycloneDDS Discovery** | *Discovery & data exchange in the local subnet.* |
+| **`23900+`** | UDP | **CycloneDDS Discovery** | *Discovery & data exchange in the local subnet. Derived from the domain: `7400 + 250 x ROS_DOMAIN_ID`, so `ROS_DOMAIN_ID=66` yields 23900 (discovery) and 23910+ (unicast).* |
 
 **Why strict port separation?** Ports 8080 and 9090 serve fundamentally different purposes and protocols. Port 8080 (HTTP) acts as a standard web server to deliver the static UI files (HTML/CSS) to the browser. Port 9090 (WebSocket via `rosbridge`) is a highly specialized data broker that exclusively streams live ROS telemetry and lacks the capability to serve web pages. Port 5000 (Flask) provides Nexus Web Backend business logic independent of ROS.
 
@@ -2624,6 +2624,15 @@ sudo systemctl enable lo-multicast.service
 sudo systemctl start lo-multicast.service
 ```
 
+**Alternative without `sudo` (`ros2_nexus/cyclonedds.xml`):** Where you cannot enable multicast on `lo`, the participant limit itself can be lifted instead. Without multicast CycloneDDS falls back to unicast discovery, where `MaxAutoParticipantIndex` (default 9) caps a domain at roughly eight participants - the xArm servo launch alone brings twelve nodes, so everything started afterwards dies. `ros2_nexus/cyclonedds.xml` raises that cap, and the Nexus Webapp exports `CYCLONEDDS_URI` for it automatically (the generated scripts do source `~/.bashrc`, but that returns early in non-interactive shells, so the variable would never arrive). For plain terminals, add this to your `~/.bashrc` - ideally at the very top, next to the other ROS variables:
+
+```bash
+[ -f "$HOME/dev_ws/ros2_nexus/cyclonedds.xml" ] && \
+    export CYCLONEDDS_URI="file://$HOME/dev_ws/ros2_nexus/cyclonedds.xml"
+```
+
+> Note that this only raises a limit - it does not restore multicast. The systemd service above remains the better fix; use the config where you have no root access.
+
 ---
 <br>
 
@@ -2634,7 +2643,7 @@ The buttons, categories, and commands in the ROS 2 Nexus web interface are fully
 
 **Interactive Drag & Drop:** The Nexus interface features a highly responsive, persistent 3-column drag & drop system. Individual action buttons can be freely arranged within their sections. Entire category sections can be seamlessly distributed across three vertical columns. Layout changes are immediately saved in the backend.
 
-**Hierarchical Launch Inspection:** Every action button in the Nexus UI features an interactive [CMD] indicator. Clicking the button opens a detailed modal that visually breaks down the exact hierarchical structure of the target launch file. This accurately mirrors deeply nested sub-launches and individual nodes (e.g., `ros2_control_node`, `spawner`, `robot_state_publisher`). A global 'Select All' checkbox enables quick toggling of all main components within the sequence. Dynamic launch arguments are displayed as interactive checkboxes right next to the corresponding launch files, allowing for intuitive, real-time parameterization before execution. **Furthermore, the action cards within these popups support persistent drag-and-drop sorting, allowing users to customize their execution order. By default, all actions are enabled (`active: true`). Any user checkbox selections and parameter chip adjustments (such as YOLO model selection or hardware toggles) are automatically and persistently saved per card in both `localStorage` and `launcher_config.json`, and restored every time the popup card is opened or the page is refreshed.** Launch arguments whose default is `true` are appended explicitly as `:=false` when unchecked (`rviz:=true`), otherwise the launch default would still apply. The **Speech Control** card shows a **Whisper CPU | GPU** radio toggle instead of parameter chips; the start always appends `use_gpu:=true` or `use_gpu:=false` (the CPU-mode card starts on CPU, each card remembers its own choice). The ineffective `silero_vad_use_cuda` argument is no longer offered.
+**Hierarchical Launch Inspection:** Every action button in the Nexus UI features an interactive [CMD] indicator. Clicking the button opens a detailed modal that visually breaks down the exact hierarchical structure of the target launch file. This accurately mirrors deeply nested sub-launches and individual nodes (e.g., `ros2_control_node`, `spawner`, `robot_state_publisher`). A global 'Select All' checkbox enables quick toggling of all main components within the sequence. Dynamic launch arguments are displayed as interactive checkboxes right next to the corresponding launch files, allowing for intuitive, real-time parameterization before execution. **Furthermore, the action cards within these popups support persistent drag-and-drop sorting, allowing users to customize their execution order. By default, all actions are enabled (`active: true`). Any user checkbox selections and parameter chip adjustments (such as YOLO model selection or hardware toggles) are automatically and persistently saved per card in both `localStorage` and `launcher_config.json`, and restored every time the popup card is opened or the page is refreshed.** Launch arguments whose default is `true` are appended explicitly as `:=false` when unchecked (`rviz:=true`), otherwise the launch default would still apply. The **Speech Control** card shows a **Whisper CPU | GPU** slide switch instead of parameter chips: clicking the track toggles it, clicking either side label selects that side directly, and arrow keys, Space or Enter operate it from the keyboard. The start always appends `use_gpu:=true` or `use_gpu:=false` (the CPU-mode card starts on CPU, each card remembers its own choice). The ineffective `silero_vad_use_cuda` argument is no longer offered.
 
 ![](_imgs/ros2_nexus_web_popup.png)
 
@@ -2749,6 +2758,7 @@ dev_ws/
 │   ├── ROS2_Nexus.desktop                                                 # Ubuntu application shortcut (.desktop entry)
 │   ├── install_app.sh                                                     # Setup script installing the .desktop shortcut & icon
 │   ├── kill_ros2.sh                                                       # Safe cleanup script stopping all ROS 2 nodes/daemons
+│   ├── cyclonedds.xml                                                     # Raises the CycloneDDS participant limit (unicast discovery)
 │   ├── launcher_config.json                                               # Master process & button configuration for Nexus
 │   ├── ros2_nexus_web_start.sh                                            # Nexus background daemon & browser launcher
 │   ├── ros2_nexus_web.py                                                  # Async HTTP daemon executing subprocesses
