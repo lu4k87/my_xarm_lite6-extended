@@ -722,7 +722,34 @@ flowchart TD
 > ros2 run robot_vision_cameras_bringup pointcloud_optimizer.py
 > ```
 >
-> **Purpose & Task:** Actively runs in the background during the 3D Vision Bringup. It intercepts the raw ZED point cloud and transforms the coordinate system from the optical frame (`Z=forward`) to the standard ROS frame (`X=forward`) while preserving RGB data.
+> **Purpose & Task:** Runs in the background during the 3D Vision Bringup and prepares the ZED point cloud for two consumers. The ZED already publishes the cloud in ROS convention (`X=forward`, `Z=up`) in `zed_left_camera_frame`, so nothing is rotated here - TF resolves the rest. Parsing uses the structured numpy arrays of `sensor_msgs_py` (Humble), ~13 ms per HD720 cloud; without any consumer the node does no work at all.
+> - **MoveIt OctoMap (`cloud_optimized`):** NaN points removed, frame unchanged. **Off by default** (`publish_moveit_cloud: false`): once enabled, MoveIt treats the whole camera cloud - including the objects to be grasped - as obstacles. No cropping: MoveIt uses points beyond `ros.max_range` to clear the OctoMap along those rays.
+> - **Web Digital Twin (`/zed/pointcloud_web`):** thinned to `web_max_points`, transformed to `world` via TF, at most `web_rate_hz`, and only while a client is subscribed (point cloud toggle in the SCENE panel of the Robot Control UI).
+>
+>
+> ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/zed/zed_node/point_cloud/cloud_registered`** | `sensor_msgs/PointCloud2` | *Raw ZED point cloud (sensor-data QoS).* |
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Description |
+>> |---|---|---|
+>> | **`/zed/zed_node/point_cloud/cloud_optimized`** | `sensor_msgs/PointCloud2` | *Dense cloud without NaN points for the MoveIt OctoMap - only with `publish_moveit_cloud:=true`.* |
+>> | **`/zed/pointcloud_web`** | `sensor_msgs/PointCloud2` | *Downsampled cloud in `world` for the digital twin of the Robot Control UI.* |
+>
+>
+> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
+>
+>> | Parameter | Default | Description |
+>> |---|---|---|
+>> | `publish_moveit_cloud` | `false` | *Publish the cloud for the MoveIt OctoMap.* |
+>> | `web_max_points` | `12000` | *Maximum number of points in the web cloud.* |
+>> | `web_rate_hz` | `4.0` | *Maximum publish rate of the web cloud.* |
+>> | `web_frame` | `world` | *Target frame of the web cloud.* |
 >
 >
 
@@ -776,6 +803,7 @@ flowchart TD
 > 💻 **Run Command:** *(Natively injected into MoveIt move_group_node via sensor_manager_parameters)*
 >
 > **Purpose & Task:** Dynamic 3D environment mapping. Generates a real-time voxel-based collision map (OctoMap) directly from the ZED point cloud, enabling MoveIt to avoid arbitrary, unrecognized obstacles (e.g., human hands, tools) during trajectory planning and servoing.
+>  * ⚠️ **Input disabled by default:** `pointcloud_optimizer.py` only publishes `cloud_optimized` with `publish_moveit_cloud:=true`. Until then MoveIt plans without the camera cloud (as before - an old parser bug meant the topic never carried data).
 >  * 🛠️ **Activation:** In the base repository (`src/xarm_ros2/xarm_moveit_config/launch/_robot_moveit_common.launch.py`), the OctoMap is configured via the `sensor_manager_parameters` dictionary (setting parameters like `octomap_resolution: 0.03` and `ros.point_cloud_topic`) and injected directly into the `move_group_node`.
 >
 >
@@ -1084,14 +1112,16 @@ flowchart TD
 > 💻 **Run Command:**
 > ```bash
 > # GPU Acceleration (CUDA - Default):
-> ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True
+> ros2 launch whisper_bringup bringup.launch.py use_gpu:=true
 > 
 > # CPU Fallback:
-> ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=False use_gpu:=False
+> ros2 launch whisper_bringup bringup.launch.py use_gpu:=false
 > ```
 >
-> **Purpose & Task:** Local Speech-to-Text AI. Runs Whisper AI continuously on the microphone stream and publishes spoken words as text. 
-> - **GPU Acceleration & Optimization:** The inference pipeline is natively optimized for **GPU Acceleration (CUDA)** utilizing the dedicated `base.en` model. This guarantees zero-latency "High-Performance" execution of voice commands and prevents runtime timeouts.
+> **Purpose & Task:** Local Speech-to-Text AI. Transcribes the microphone stream with Whisper and publishes the spoken words as text.
+> - **Listen Window Instead of Continuous Operation:** Inference only runs for `listen_window_ms` (default 7000 ms) after a `listen` trigger on `/ui/voice_listen_trigger` (the listener's recording lasts 5 s). Before, Whisper transcribed the full buffer every 250 ms even in silence (constant GPU load, log flood). `listen_window_ms: 0` restores continuous mode.
+> - **Model & Decoding (`whisper_server/config/whisper.yaml`):** Multilingual `small` model (EN/DE, noticeably cleaner than `base`, ~50-120 ms per pass on the RTX A5000; downloaded to `~/.cache/whisper.cpp` on first start), `language: "auto"`, greedy decoding (`beam_size: 1`), `temperature: 0.0`, `no_context: true`. `initial_prompt` stays empty on purpose: with a command prompt Whisper hallucinated text in silence and ran slower (tested). The bundled whisper.cpp version has no VAD - the old `silero_vad_use_cuda` argument has no effect.
+> - **GPU / CPU:** `use_gpu:=true|false`. In the Nexus Webapp the Speech Control card has a **Whisper CPU | GPU** toggle in the launch popup.
 > - **Performance & Thread-Safety:** The underlying C++ Action Server (`TranscriptManager`) has been heavily fortified with a strict `std::mutex` locking mechanism to entirely eliminate parallel data-race crashes during high-frequency token generation. Additionally, the `Inference` node features a hardened buffer clearing strategy (`audio_ring_->clear()`) which physicaly purges stale audio residuals from the microphone Ring Buffer the exact millisecond the user activates the UI button, mathematically guaranteeing zero "ghost commands" from previous speech.
 >
 >
@@ -1111,7 +1141,7 @@ flowchart TD
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 launch whisper_bringup bringup.launch.py silero_vad_use_cuda:=True use_gpu:=True
+> ros2 launch whisper_bringup bringup.launch.py use_gpu:=true
 > ```
 >
 > **Purpose & Task:** Handles microphone input for the voice command system. Features an automatic, system-aware fallback logic that explicitly scans for and prioritizes the system-default `pulse` or `default` audio devices, guaranteeing reliable voice capture across different hardware environments.
@@ -1136,7 +1166,7 @@ flowchart TD
 > ros2 run voice_command_listener voice_command_listener
 > ```
 >
-> **Purpose & Task:** Analyzes discrete single-shot raw text using regex patterns to extract defined action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose"). Implements a robust **3-layer deduplication state machine** to guarantee exactly-once command execution.
+> **Purpose & Task:** Analyzes discrete single-shot raw text using regex patterns to extract defined action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose"). Implements a robust **3-layer deduplication state machine** to guarantee exactly-once command execution. Whisper noise tags such as `[BLANK_AUDIO]`, `(sighs)` or `*music*` are stripped before matching. The node plays **no sound of its own**: the "robot moves to ..." announcement comes from `robot_motion_handler_movegroup` only once the motion really starts (previously it was played twice, and wrongly when the motion was rejected).
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1144,7 +1174,6 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/ui/voice_listen_trigger`** | `std_msgs/String` | *Trigger from Web UI or Gamepad to begin voice listening.* |
->> | **`/ui/sound_enabled`** | `std_msgs/Bool` | *Mutes the node's spoken feedback together with the Web UI sound toggle.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1171,7 +1200,7 @@ flowchart TD
 >> |---|---|---|
 >> | **`/voice_cmd/last`** | `std_srvs/srv/Trigger` (Server) | *Returns the last successfully recognized voice command.* |
 >
-> The `whisper_server` is configured to use `language: "auto"` (multilingual) along with a targeted bilingual `initial_prompt` inside `whisper.yaml` for reliable English and German voice recognition.
+> The `whisper_server` runs the multilingual `small` model with `language: "auto"` for English and German commands (see `whisper.yaml`; no `initial_prompt`, it causes hallucinations in silence).
 >
 >
 
@@ -1506,7 +1535,7 @@ flowchart TD
 > **Purpose & Task:** Adds the table surface as a flat collision box (2 × 2 m, top 1 mm below `link_base`) to the MoveIt planning scene. The box is sent as a `/planning_scene` diff, which both `move_group` and `servo_server` receive. It blocks MoveIt Servo while jogging (`HALT_FOR_COLLISION`), `/compute_ik` with `avoid_collisions` and all `move_group` planning (MoveTo, grasp sequence). It is republished every 2 s so a restarted `move_group`/`servo_server` gets it again. The Robot Control UI can switch it off and on via `/ui/set_moveit_collision_ground`. After a node restart it is always ON again.
 >
 >
-> ![Parameters](https://img.shields.io/badge/Parameters-8A2BE2?style=flat-square)
+> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 >
 >> | Parameter | Default | Description |
 >> |---|---|---|
@@ -1755,17 +1784,17 @@ flowchart TD
 >   - **Resizable & Collapsible Outer Columns:** A narrow divider sits between the left/right column and the middle (`js/columns.js`). Dragging changes the width of the outer column (min. 300 px, max. 42 % of the width, the middle keeps at least 480 px), a double-click restores the default layout, and the arrow button on the divider collapses the column completely and expands it again. The middle column with the 3D viewport always gets the freed space; widths and collapsed state are stored in the browser.
 >   - **Responsive Section Layout:** Sections adapt to their own width via container queries (not to the window), since depending on column and column width they can be 300 px or 700 px wide. Cartesian jogging wraps into rows (joystick + Z, rotation/frame, gripper buttons side by side), EEF telemetry shrinks, the viewport icon bar wraps within itself, and speech control, grasp target input, ZED mode bar and TF tuner dropdown adapt. When the viewport gets narrower than 780 px, the POSE panel gets its own row; on screens below 800 px height the viewport keeps at least 560 px height (the page scrolls, header and E-stop stay on top).
 >   - **YOLO Grasp Integration:** Direct visualization of the 3D YOLO object list alongside an input field to trigger the grasp execution sequence remotely.
->   - **3D Centerpiece (WebGL Digital Twin) & Clean White Typography:** Central, offline-capable 3D digital twin (three.js & urdf-loader) with live `/joint_states` and linear axis mirroring, orbit camera, navigation gizmo at the top left (click an axis ball = align view, drag = orbit), reset, top view, grid and CAD edges. In the **SCENE** panel, icons toggle the markers of each `rviz_marker_3d_scene_objects` node individually (`fa-cubes` objects & workspace circle, `fa-square` reference plane, `fa-shield-halved` safety zone - red the measured unreachable zone around the robot axis as a 3D body, orange flat the scan path clearance, `fa-video` ZED-M stand), plus the YOLO overlay, distance line and the MoveIt collision toggles. All section headers across panels, the 3D twin, and the TF tuner feature clean, uniform pure white typography and icons (`#ffffff`).
+>   - **3D Centerpiece (WebGL Digital Twin) & Clean White Typography:** Central, offline-capable 3D digital twin (three.js & urdf-loader) with live `/joint_states` and linear axis mirroring, orbit camera, navigation gizmo at the top left (click an axis ball = align view, drag = orbit), reset, top view, grid and CAD edges. In the **SCENE** panel, icons toggle the markers of each `rviz_marker_3d_scene_objects` node individually (`fa-cubes` objects & workspace circle, `fa-square` reference plane, `fa-shield-halved` safety zone - red the measured unreachable zone around the robot axis as a 3D body, orange flat the scan path clearance, `fa-video` ZED-M stand), plus the YOLO overlay, the **ZED point cloud** (`fa-braille`, off by default: subscribes to `/zed/pointcloud_web` only while switched on, drawn in `world` as colored points), distance line and the MoveIt collision toggles. All section headers across panels, the 3D twin, and the TF tuner feature clean, uniform pure white typography and icons (`#ffffff`).
 >   - **Collapsible Viewport HUD Panels:** The viewport carries five independently collapsible glass panels — **SCENE**, **MOTION**, **TELEMETRY**, **POSE** and **SPEED**. Each panel header collapses its content, one button in the viewport tab bar (`fa-window-minimize`) collapses or expands all of them; the state is stored per browser. A separate toggle (`fa-ruler-horizontal`) shows or hides the dashed distance line from the TCP to the nearest object. The TCP gizmo target coordinates live in the MoveIt popup (see below).
->   - **Acoustic Feedback & System-Wide Mute:** Every button click plays a short UI sound (`sounds/ui_mouse_click.mp3`), and motion commands are accompanied by pre-rendered German voice announcements (e.g. `_voice_robot_moves_to_scan_pos.mp3`). Dedicated voice cues alert the operator when an object or pose is out of reach (`_voice_object_out_of_reach.mp3` on IK failure, invalid workspace bounds, or rejected paths) and confirm execution when approaching a target (`_voice_robot_moves_to_selected_object.mp3`, strictly debounced to 1x per sequence). A single speaker button (`fa-volume-high` / `fa-volume-xmark`) in the status bar mutes the whole system: the state is stored per browser and published every 2 seconds on **`/ui/sound_enabled`** (`std_msgs/Bool`), which `voice_command_listener` and `yolo_planned_grasp_executor` subscribe to. Muting the Web UI therefore silences the robot-side voice output as well. If playback is blocked (e.g. by the browser autoplay policy), the failure is reported explicitly in the console log instead of failing silently. Toggling the MoveIt collision icons announces "collision detection enabled/disabled", and an error sound (`sounds/error_sound.mp3`) plays when the moving robot actually runs into a collision - singularities stay silent (live telemetry, not MoveIt planning; 2.5 s cooldown). Moves via the viewport TCP gizmo skip the "robot moves to absolute pose" announcement.
+>   - **Acoustic Feedback & System-Wide Mute:** Every button click plays a short UI sound (`sounds/ui_mouse_click.mp3`), and motion commands are accompanied by pre-rendered German voice announcements (e.g. `_voice_robot_moves_to_scan_pos.mp3`). Dedicated voice cues alert the operator when a target is out of reach: `_voice_object_out_of_reach.mp3` when approaching an object (red grasp sphere or entry of the detected object list), `_voice_pose_out_of_reach.mp3` for TCP gizmo and MoveTo pose targets (IK failure, collision/singularity during planning, invalid workspace bounds, rejected paths). MoveIt failures are taken from the structured `/ui/moveit_motion_state` (`phase: failed`), not from the wording of log lines; E-stop (`aborted`) and discarded plans stay silent. and confirm execution when approaching a target (`_voice_robot_moves_to_selected_object.mp3`, strictly debounced to 1x per sequence). A single speaker button (`fa-volume-high` / `fa-volume-xmark`) in the status bar mutes the whole system: the state is stored per browser and published every 2 seconds on **`/ui/sound_enabled`** (`std_msgs/Bool`), which `robot_motion_handler_movegroup`, `yolo_planned_grasp_executor` and `gaze_grasp_routine_tobii_glasses` subscribe to (the periodic publish lets nodes started later pick up the state). Muting the Web UI therefore silences the robot-side voice output as well. If playback is blocked (e.g. by the browser autoplay policy), the failure is reported explicitly in the console log instead of failing silently. Toggling the MoveIt collision icons announces "collision detection enabled/disabled", and an error sound (`sounds/error_sound.mp3`) plays when the moving robot actually runs into a collision - singularities stay silent (live telemetry, not MoveIt planning; 2.5 s cooldown). Moves via the viewport TCP gizmo skip the "robot moves to absolute pose" announcement.
 >   - **Gripper Controls (Vacuum & Lite 6 Gripper):** The three buttons now actually drive the gripper. The command goes via `/ui/gripper_cmd` to `joy_to_servo_node`, which also handles gamepad buttons A/B and is therefore the single owner of the gripper state (`/ui/gripper_state`, latched) - gamepad toggle and UI stay in sync. Which gripper is attached comes from the launch argument (`add_vacuum_gripper:=true` → vacuum via `/ufactory/set_vacuum_gripper`, buttons *Release / Suction / Off*; `add_gripper:=true` → Lite 6 gripper via `open/close/stop_lite6_gripper`, buttons *Open / Close / Off*). Without either, the buttons are locked.
 >   - **E-Stop in the Header + Space Bar:** The emergency stop sits fixed in the status bar - independent of the drag-and-drop layout and reachable above the offline overlay. The **space bar** triggers it everywhere (except in text fields). While latched, the button pulses and a *Reset* button appears next to it.
 >   - **Path Preview (Ghost Robot):** The ghost icon (`fa-ghost`) on the right of the viewport tab bar toggles the preview (`/ui/set_moveto_preview`). On: every MoveTo (Go, gizmo, scan position, "Approach from above") is only planned, a translucent cyan clone drives the path in the twin in real time on a loop, and a line shows the TCP path. The MoveIt popup offers *Execute path* / *Discard* with a countdown to automatic discard.
 >   - **Deadman Principle for Jogging:** Jog commands only run while something is actually held. Releasing anywhere on the page, losing focus, switching tabs, a context menu, closing the page or losing the connection stops every motion immediately (log entry `Deadman: jog stopped (...)`). MoveIt Servo additionally halts after 0.2 s without a command.
 >   - **Collision Walls & Servo Stop Distance:** The collision walls of detected objects appear red transparent in the twin (only while object collision is enabled, otherwise just the frame). When the TCP gets closer than 2 cm to a wall - MoveIt Servo's stop distance - that object's walls glow amber and pulse.
->   - **Object Context Menu & Viewport Grasp Spheres:** Clicking the red grasp sphere directly in the 3D viewport or selecting an entry from the detected object list opens the unified context menu: *Approach from above* (collision-free trajectory to 70 mm above grasp point, followed by straight descending to 10 mm above target), *Grasp* (in-progress placeholder with UI notification), and *Disable / Enable collision for this object* (`/ui/set_object_collision`).
+>   - **Object Context Menu & Viewport Grasp Spheres:** Clicking the red grasp sphere directly in the 3D viewport or selecting an entry from the detected object list opens the unified context menu: *Approach from above* (collision-free trajectory to 70 mm above grasp point, followed by straight descending to 10 mm above target), *Grasp* (in-progress placeholder with UI notification), and *Disable / Enable collision for this object* (`/ui/set_object_collision`). The header shows the grasp point coordinates in the axis colors (X red, Y green, Z blue, each with its `mm` unit).
 >   - **Connection Loss:** Without rosbridge an overlay covers the entire control surface (the header stays free) and every motion function is locked - showing offline duration, reconnect attempts and a reload button.
->   - **Architecture (ES Modules, three.js r186):** The former `app.js` is split into ES modules under `js/` (`ros`, `jog`, `safety`, `motion`, `gizmo`, `grasp`, `audio`, `layout`, `log`, `status`, `tf_tuner`, `voice`, `streams`, `persist`, `columns`), the digital twin lives in `js/twin/`. Instead of global `window.*` functions, elements carry `data-action` attributes dispatched by `js/main.js`. All topic and service names are centralised in `js/config.js`. three.js r186 and urdf-loader 0.13 are vendored under `lib/` (import map, offline-capable); the twin only renders on changes or running animations. The log is capped at 500 lines, polling intervals pause while the tab is hidden.
+>   - **Architecture (ES Modules, three.js r186):** The former `app.js` is split into ES modules under `js/` (`ros`, `jog`, `safety`, `motion`, `gizmo`, `grasp`, `audio`, `layout`, `log`, `status`, `tf_tuner`, `voice`, `streams`, `persist`, `columns`, `pointcloud`), the digital twin lives in `js/twin/`. Instead of global `window.*` functions, elements carry `data-action` attributes dispatched by `js/main.js`. All topic and service names are centralised in `js/config.js`. three.js r186 and urdf-loader 0.13 are vendored under `lib/` (import map, offline-capable); the twin only renders on changes or running animations. The log is capped at 500 lines, polling intervals pause while the tab is hidden.
 >   - **Web Server without Manual Cache Busting:** `server.py` replaces `python3 -m http.server`: HTML/JS/CSS are served with `Cache-Control: no-cache` (unchanged → 304), and `index.html` automatically gets `?v=<mtime>` on every script and stylesheet URL.
 >   - **Last UI State Is Kept:** Besides column layout, collapsed sections/HUD tabs, sound and overlays, `js/persist.js` also stores grid, CAD edges, TCP gizmo (on/off, mode), camera view, Auto-Move, base/TCP frame, SCENE toggles, all TF tuner values incl. the selected element, and section sizes changed by dragging (`localStorage`). Robot values (pose inputs, speed, linear axis) are intentionally not stored.
 >   - **Ground Collision Off = Z Collision Level Off:** When the MoveIt ground collision is switched off in the SCENE panel, the UI (jog, MoveTo, gizmo, warning banner) and `teleop_pre_collision_checker` (gamepad) no longer block downward motion either. If `moveit_floor_collision` is not running, the block stays active as a fallback.
@@ -1786,6 +1815,7 @@ flowchart TD
 >> | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | *TCP position and orientation for EEF telemetry, the Z collision level and the safety evaluation.* |
 >> | **`/servo_server/status`** | `std_msgs/Int8` | *Controls the green/red alert pulses in the Web UI.* |
 >> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Fills the object list and draws frames, grasp spheres and labels in the digital twin.* |
+>> | **`/zed/pointcloud_web`** | `sensor_msgs/PointCloud2` | *ZED point cloud (in `world`) for the digital twin - only subscribed while the SCENE toggle is on.* |
 >> | **`/ui/voice_feedback`** | `std_msgs/String` | *Flashes voice-triggered actions directly in the Web Log.* |
 >> | **`/ui/voice_status`** | `std_msgs/String` | *Displays real-time Whisper listening status and transcriptions.* |
 >> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Syncs UI speed sliders with the backend level.* |
@@ -2216,8 +2246,9 @@ The absolute core prerequisite for this workspace is the official UFactory ROS 2
 # Build Tools & Audio (Required for PyAudio & Whisper microphone)
 sudo apt update && sudo apt install -y python3-pip python3-pyaudio portaudio19-dev
 
-# Whisper Base.en Model Download (Required for voice commands)
-mkdir -p ~/.cache/whisper.cpp && wget --show-progress -O ~/.cache/whisper.cpp/ggml-base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+# Whisper "small" model download (multilingual EN/DE, required for voice commands;
+# otherwise downloaded automatically on the first start)
+mkdir -p ~/.cache/whisper.cpp && wget --show-progress -O ~/.cache/whisper.cpp/ggml-small.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin
 
 # MoveIt 2 & Servo
 sudo apt install ros-humble-moveit ros-humble-moveit-servo
@@ -2603,7 +2634,7 @@ The buttons, categories, and commands in the ROS 2 Nexus web interface are fully
 
 **Interactive Drag & Drop:** The Nexus interface features a highly responsive, persistent 3-column drag & drop system. Individual action buttons can be freely arranged within their sections. Entire category sections can be seamlessly distributed across three vertical columns. Layout changes are immediately saved in the backend.
 
-**Hierarchical Launch Inspection:** Every action button in the Nexus UI features an interactive [CMD] indicator. Clicking the button opens a detailed modal that visually breaks down the exact hierarchical structure of the target launch file. This accurately mirrors deeply nested sub-launches and individual nodes (e.g., `ros2_control_node`, `spawner`, `robot_state_publisher`). A global 'Select All' checkbox enables quick toggling of all main components within the sequence. Dynamic launch arguments are displayed as interactive checkboxes right next to the corresponding launch files, allowing for intuitive, real-time parameterization before execution. **Furthermore, the action cards within these popups support persistent drag-and-drop sorting, allowing users to customize their execution order. By default, all actions are enabled (`active: true`). Any user checkbox selections and parameter chip adjustments (such as YOLO model selection or hardware toggles) are automatically and persistently saved per card in both `localStorage` and `launcher_config.json`, and restored every time the popup card is opened or the page is refreshed.**
+**Hierarchical Launch Inspection:** Every action button in the Nexus UI features an interactive [CMD] indicator. Clicking the button opens a detailed modal that visually breaks down the exact hierarchical structure of the target launch file. This accurately mirrors deeply nested sub-launches and individual nodes (e.g., `ros2_control_node`, `spawner`, `robot_state_publisher`). A global 'Select All' checkbox enables quick toggling of all main components within the sequence. Dynamic launch arguments are displayed as interactive checkboxes right next to the corresponding launch files, allowing for intuitive, real-time parameterization before execution. **Furthermore, the action cards within these popups support persistent drag-and-drop sorting, allowing users to customize their execution order. By default, all actions are enabled (`active: true`). Any user checkbox selections and parameter chip adjustments (such as YOLO model selection or hardware toggles) are automatically and persistently saved per card in both `localStorage` and `launcher_config.json`, and restored every time the popup card is opened or the page is refreshed.** Launch arguments whose default is `true` are appended explicitly as `:=false` when unchecked (`rviz:=true`), otherwise the launch default would still apply. The **Speech Control** card shows a **Whisper CPU | GPU** radio toggle instead of parameter chips; the start always appends `use_gpu:=true` or `use_gpu:=false` (the CPU-mode card starts on CPU, each card remembers its own choice). The ineffective `silero_vad_use_cuda` argument is no longer offered.
 
 ![](_imgs/ros2_nexus_web_popup.png)
 
