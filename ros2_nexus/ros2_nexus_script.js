@@ -143,8 +143,13 @@
         } catch (e) {}
 
         const params = new URLSearchParams(window.location.search);
-        if (params.has('tab')) {
+        if (params.has('tab') && TABS[params.get('tab')]) {
             currentTab = params.get('tab');
+            // Karten lesen ihre Aktionen ueber window.currentTab, und der
+            // passende Tab-Button muss markiert sein.
+            window.currentTab = currentTab;
+            document.querySelectorAll('.tab-btn[data-tab]').forEach(b =>
+                b.classList.toggle('active', b.dataset.tab === currentTab));
         }
         renderTab(currentTab);
         if (params.has('open_sec')) {
@@ -457,9 +462,9 @@
       });
 
       let colHtml = [
-        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 15px; margin-top: 0; text-transform: uppercase;">Full Setups</h2><div class="col-divider-h" style="height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%); margin: 0 40px 30px 40px;"></div><div class="col" id="col-0" style="flex: 1;">',
-        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 15px; margin-top: 0; text-transform: uppercase;">Launches / Nodes</h2><div class="col-divider-h" style="height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%); margin: 0 40px 30px 40px;"></div><div class="col" id="col-1" style="flex: 1;">',
-        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 15px; margin-top: 0; text-transform: uppercase;">Web/-Server and more</h2><div class="col-divider-h" style="height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%); margin: 0 40px 30px 40px;"></div><div class="col" id="col-2" style="flex: 1;">'
+        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 26px; margin-top: 0; text-transform: uppercase;">Full Setups</h2><div class="col-divider-h" style="height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%); margin: 0 40px 30px 40px;"></div><div class="col" id="col-0" style="flex: 1;">',
+        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 26px; margin-top: 0; text-transform: uppercase;">Launches / Nodes</h2><div class="col-divider-h" style="height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%); margin: 0 40px 30px 40px;"></div><div class="col" id="col-1" style="flex: 1;">',
+        '<div class="col-wrapper" style="flex: 1; display: flex; flex-direction: column; position: relative;"><h2 style="text-align: center; color: rgba(255,255,255,0.9); font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 26px; margin-top: 0; text-transform: uppercase;">Web/-Server and more</h2><div class="col-divider-h" style="height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 15%, rgba(255, 255, 255, 0.35) 85%, transparent 100%); margin: 0 40px 30px 40px;"></div><div class="col" id="col-2" style="flex: 1;">'
       ];
 
       sections.forEach((sec, secIndex) => {
@@ -774,9 +779,12 @@
 
     // ─── TABS ─────────────────────────────────────────────────────────────────────
     let currentTab = 'nodes';
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    // Nur echte Tabs (mit data-tab). Reload- und Kill-Button tragen fuers
+    // Aussehen ebenfalls .tab-btn - ein Klick darauf schaltete sonst auf den
+    // Tab "undefined" und leerte die Seite bis auf den Header.
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentTab = btn.dataset.tab;
         window.currentTab = currentTab;
@@ -873,10 +881,20 @@
       if (!confirm("Wirklich ALLE ROS2 Prozesse UND die dazugehörigen Terminals beenden?")) return;
       try {
         await fetch('/api/kill_all_ros2', { method: 'POST' });
-        showToast('✓ Alle ROS2 Prozesse und Terminals werden beendet');
+        showToast('✓ Alle ROS2 Prozesse und Terminals beendet - Seite wird neu geladen...');
       } catch (err) {
         showToast('✗ Fehler beim Beenden der Prozesse', true);
+        return;
       }
+      // Danach frisch laden (Status, Logs, Karten), auf dem aktuellen Tab.
+      // open_sec/open_dev wuerden sonst ein Popup wieder oeffnen.
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('open_sec');
+        url.searchParams.delete('open_dev');
+        url.searchParams.set('tab', currentTab || 'nodes');
+        window.location.replace(url.toString());
+      }, 1200);
     }
 
     // ─── GLOBAL EXPORTS (required for inline onclick="..." attributes) ──────────────
