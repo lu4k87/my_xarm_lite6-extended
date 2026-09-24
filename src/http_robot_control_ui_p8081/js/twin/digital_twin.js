@@ -2886,6 +2886,54 @@ export function getDigitalTwinDetectionsVisible() {
   return detectionsVisible;
 }
 
+// ── ZED-Punktwolke (/zed/pointcloud_web) ───────────────────────────────
+// Kommt bereits im Frame "world" (pointcloud_optimizer.py rechnet per TF um),
+// also wie die YOLO-Marker 1:1 in die Szene. Ein Puffer fester Groesse wird
+// wiederverwendet - pro Nachricht aendert sich nur drawRange.
+const POINTCLOUD_CAPACITY = 20000;
+let pointCloud = null;
+
+function ensurePointCloud() {
+  if (!scene) return null;
+  if (!pointCloud) {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(POINTCLOUD_CAPACITY * 3), 3)
+      .setUsage(THREE.DynamicDrawUsage));
+    geom.setAttribute('color', new THREE.BufferAttribute(new Float32Array(POINTCLOUD_CAPACITY * 3), 3)
+      .setUsage(THREE.DynamicDrawUsage));
+    geom.setDrawRange(0, 0);
+    const mat = new THREE.PointsMaterial({ size: 0.006, sizeAttenuation: true, vertexColors: true });
+    pointCloud = new THREE.Points(geom, mat);
+    pointCloud.name = 'zed-pointcloud';
+    pointCloud.frustumCulled = false;   // Bounding-Sphere wird nicht pro Frame neu berechnet
+  }
+  if (pointCloud.parent !== scene) scene.add(pointCloud);
+  return pointCloud;
+}
+
+// positions/colors: Float32Array mit je 3 Werten pro Punkt (Farbe 0..1).
+export function setDigitalTwinPointCloud(positions, colors, count) {
+  const pc = ensurePointCloud();
+  if (!pc) return;
+  const n = Math.min(count, POINTCLOUD_CAPACITY);
+  const pos = pc.geometry.getAttribute('position');
+  const col = pc.geometry.getAttribute('color');
+  pos.array.set(positions.subarray(0, n * 3));
+  col.array.set(colors.subarray(0, n * 3));
+  pos.needsUpdate = true;
+  col.needsUpdate = true;
+  pc.geometry.setDrawRange(0, n);
+  pc.visible = true;
+  requestRender();
+}
+
+export function clearDigitalTwinPointCloud() {
+  if (!pointCloud) return;
+  pointCloud.geometry.setDrawRange(0, 0);
+  pointCloud.visible = false;
+  requestRender();
+}
+
 // Distanzlinie (gestrichelt, TCP -> naechste Greifkugel) ein-/ausschalten.
 // Beim Einschalten wird nicht blind sichtbar geschaltet: updateConnectingLine
 // entscheidet anhand von Gizmo-Zustand und Abstand, ob es etwas zu zeigen gibt.

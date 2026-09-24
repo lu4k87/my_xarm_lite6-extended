@@ -8,6 +8,8 @@ import { floorGuard, readPoseInput, validatePose } from './util.js';
 export let speedScale = 0.3;
 export let lastSpeedIndex = -1;
 
+const REACH_FAILURE_RE = /\b(?:reach|reachable|unreachable|ik|failed|nicht erreichbar)\b/i;
+
 export const logSub = new ROSLIB.Topic({
   ros: ros,
   name: TOPICS.graspStatus,
@@ -17,7 +19,8 @@ logSub.subscribe((msg) => {
   const txt = msg.data || '';
   const isErr = txt.includes('FAILED') || txt.includes('Error') || txt.includes('not reachable') || txt.includes('unreachable') || txt.includes('out of reach') || txt.includes('nicht erreichbar') || txt.includes('❌');
   logMsg('ROS', txt, isErr ? 'err' : 'info');
-  if (isErr && (txt.toLowerCase().includes('reach') || txt.toLowerCase().includes('ik') || txt.toLowerCase().includes('fail') || txt.toLowerCase().includes('error'))) {
+  // Grasp-Nodes melden nur Text - hier ganze Woerter pruefen, nicht Teilstrings wie "ik".
+  if (isErr && REACH_FAILURE_RE.test(txt)) {
     playReachFailureSound();
   }
 });
@@ -38,9 +41,8 @@ motionStatusSub.subscribe((msg) => {
   // MoveTo / MoveIt progress gets its own log source so the planning steps stand out.
   const source = (text.startsWith('MoveIt') || text.startsWith('MoveTo')) ? 'MoveIt' : 'Motion';
   logMsg(source, text, type);
-  if (type === 'err' && (text.toLowerCase().includes('reach') || text.toLowerCase().includes('ik') || text.toLowerCase().includes('out of reach') || text.toLowerCase().includes('unerreichbar') || text.toLowerCase().includes('collision') || text.toLowerCase().includes('failed'))) {
-    playReachFailureSound();
-  }
+  // Der Out-of-Reach-Sound kommt aus /ui/moveit_motion_state (phase "failed"),
+  // nicht mehr aus dem Wortlaut dieser Log-Zeilen.
 });
 
 export const speedIndexPub = new ROSLIB.Topic({
@@ -610,6 +612,9 @@ new ROSLIB.Topic({
   if (!st || !st.phase) return;
   mpState = st;
   mpReceivedAt = performance.now();
+  // IK, Planung (Kollision/Singularitaet) oder Ausfuehrung gescheitert.
+  // "aborted" (Not-Aus) und "discarded" (verworfen) sind kein Reichweitenproblem.
+  if (st.phase === 'failed') playReachFailureSound();
 
   const el = document.getElementById('moveit-popup');
   if (el) el.classList.remove('mp-hidden');

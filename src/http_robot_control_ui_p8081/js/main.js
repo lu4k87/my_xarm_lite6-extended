@@ -40,6 +40,7 @@ import {
 import { executeMoveToPoseFromGizmo } from './gizmo.js';
 import { executeGrasp, setGripper } from './grasp.js';
 import { startListening } from './voice.js';
+import { toggleTwinPointCloud } from './pointcloud.js';
 import {
   toggleAllHudTabs, toggleHudTab, toggleTFTunerCollapse, toggleTwinDetections, toggleTwinDistanceLine,
 } from './layout.js';
@@ -71,7 +72,7 @@ const ACTIONS = {
   // Digital Twin
   cycleTCPGizmoMode, resetDigitalTwinView, setDigitalTwinTopView, syncTCPGizmoToRobot,
   testDigitalTwinSafetyCycle, toggleDigitalTwinEdges, toggleDigitalTwinGrid, toggleTCPGizmo,
-  toggleTwinDetections, toggleTwinDistanceLine,
+  toggleTwinDetections, toggleTwinDistanceLine, toggleTwinPointCloud,
   // Layout
   toggleAllHudTabs, toggleHudTab, toggleTFTunerCollapse,
   // TF Tuner

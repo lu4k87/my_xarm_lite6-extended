@@ -3985,6 +3985,11 @@ header {
   color: var(--mut);
 }
 
+.obj-menu-ax { white-space: nowrap; }
+.obj-menu-ax-x { color: var(--rviz-x); }
+.obj-menu-ax-y { color: var(--rviz-y); }
+.obj-menu-ax-z { color: var(--rviz-z); }
+
 .obj-menu-item {
   display: flex;
   align-items: center;

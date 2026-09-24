@@ -40,44 +40,15 @@ export function publishSoundState() {
 visibleInterval(publishSoundState, 2000);
 
 export function syncAudioElements() {
-  if (uiClickSound) {
-    uiClickSound.muted = !soundEnabled;
-    uiClickSound.volume = soundEnabled ? 1.0 : 0.0;
+  const all = [uiClickSound, scanPosSound, collisionEnabledSound, collisionDisabledSound,
+    errorSound, outOfReachSound, poseOutOfReachSound, movesToSelectedObjectSound];
+  for (const audio of all) {
+    if (!audio) continue;
+    audio.muted = !soundEnabled;
+    audio.volume = soundEnabled ? 1.0 : 0.0;
     if (!soundEnabled) {
-      uiClickSound.pause();
-      uiClickSound.currentTime = 0;
-    }
-  }
-  if (scanPosSound) {
-    scanPosSound.muted = !soundEnabled;
-    scanPosSound.volume = soundEnabled ? 1.0 : 0.0;
-    if (!soundEnabled) {
-      scanPosSound.pause();
-      scanPosSound.currentTime = 0;
-    }
-  }
-  if (outOfReachSound) {
-    outOfReachSound.muted = !soundEnabled;
-    outOfReachSound.volume = soundEnabled ? 1.0 : 0.0;
-    if (!soundEnabled) {
-      outOfReachSound.pause();
-      outOfReachSound.currentTime = 0;
-    }
-  }
-  if (poseOutOfReachSound) {
-    poseOutOfReachSound.muted = !soundEnabled;
-    poseOutOfReachSound.volume = soundEnabled ? 1.0 : 0.0;
-    if (!soundEnabled) {
-      poseOutOfReachSound.pause();
-      poseOutOfReachSound.currentTime = 0;
-    }
-  }
-  if (movesToSelectedObjectSound) {
-    movesToSelectedObjectSound.muted = !soundEnabled;
-    movesToSelectedObjectSound.volume = soundEnabled ? 1.0 : 0.0;
-    if (!soundEnabled) {
-      movesToSelectedObjectSound.pause();
-      movesToSelectedObjectSound.currentTime = 0;
+      audio.pause();
+      audio.currentTime = 0;
     }
   }
 }

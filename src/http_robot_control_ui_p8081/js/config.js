@@ -41,6 +41,7 @@ export const TOPICS = Object.freeze({
   voiceStatus: '/ui/voice_status',
   visualizationMarkerArray: '/visualization_marker_array',
   zedBboxes3d: '/zed/bboxes_3d',
+  zedPointcloudWeb: '/zed/pointcloud_web',
   zedYoloCollisionMarkers: '/zed/yolo_collision_markers',
   zedVisualMarkers: '/zed_visual_markers',
 });

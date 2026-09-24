@@ -238,7 +238,14 @@ export function openDetectedObjectMenu(info, clientX, clientY) {
   if (info.grasp) {
     const coords = document.createElement('span');
     coords.className = 'obj-menu-coords';
-    coords.textContent = `X ${info.grasp.x} · Y ${info.grasp.y} · Z ${info.grasp.z} mm`;
+    // Achse, Wert und Einheit in der Achsenfarbe (wie EEF-Telemetrie), Trenner grau.
+    ['x', 'y', 'z'].forEach((ax, i) => {
+      if (i > 0) coords.appendChild(document.createTextNode(' · '));
+      const part = document.createElement('span');
+      part.className = `obj-menu-ax obj-menu-ax-${ax}`;
+      part.textContent = `${ax.toUpperCase()} ${info.grasp[ax]} mm`;
+      coords.appendChild(part);
+    });
     head.appendChild(coords);
   }
   objMenuEl.appendChild(head);
