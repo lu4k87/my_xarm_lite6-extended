@@ -95,7 +95,7 @@ class RobotMotionHandlerMovegroup(Node):
         self.execute_traj_client = ActionClient(
             self, ExecuteTrajectory, '/execute_trajectory', callback_group=self.cb_group)
         self.declare_parameter('moveto_preview', False)
-        self.declare_parameter('moveto_preview_timeout', 60.0)  # s bis zum automatischen Verwerfen
+        self.declare_parameter('moveto_preview_timeout', 15.0)  # s bis zum automatischen Verwerfen
         self.preview_enabled = bool(self.get_parameter('moveto_preview').value)
         self._preview_event = threading.Event()
         self._preview_decision = None
