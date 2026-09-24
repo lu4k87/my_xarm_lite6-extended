@@ -449,8 +449,8 @@
             match: /http_robot_control_ui/,
             ports: [
                 { port: 8081, icon: 'fa-solid fa-display', use: 'Robot Control UI (Webseite)' },
-                { port: 9090, icon: 'fa-solid fa-right-left', use: 'rosbridge WebSocket (UI \u2194 ROS 2)' },
-                { port: 8082, icon: 'fa-solid fa-video', use: 'Web Video Server (Kamera- & RViz-Streams)' }
+                { port: 9090, icon: 'fa-solid fa-right-left', use: 'ROS Bridge WebSocket (UI \u2194 ROS 2)' },
+                { port: 8082, icon: 'fa-solid fa-video', use: 'Web Video Server (Kamera)' }
             ]
         }
     ];
