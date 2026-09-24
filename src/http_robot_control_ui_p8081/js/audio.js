@@ -13,6 +13,8 @@ export let poseOutOfReachSound = null;
 export let movesToSelectedObjectSound = null;
 export let initialPoseSound = null;
 export let absolutePoseSound = null;
+export let objectSelectSound = null;
+export let robotMovesSound = null;
 try {
   uiClickSound = new Audio('sounds/ui_mouse_click.mp3');
   scanPosSound = new Audio('sounds/_voice_robot_moves_to_scan_pos.mp3');
@@ -24,6 +26,9 @@ try {
   movesToSelectedObjectSound = new Audio('sounds/_voice_robot_moves_to_selected_object.mp3');
   initialPoseSound = new Audio('sounds/_voice_robot_moves_to_initial_pose.mp3');
   absolutePoseSound = new Audio('sounds/_voice_robot_moves_to_absolute_pose.mp3');
+  objectSelectSound = new Audio('sounds/object_select_click_sound.mp3');
+  robotMovesSound = new Audio('sounds/robot_moves_sound.mp3');
+  robotMovesSound.loop = true;
 } catch (e) {}
 
 // ── Web Audio UI Click Sound Effect & Sound Toggle ───────────────────────
@@ -46,7 +51,7 @@ visibleInterval(publishSoundState, 2000);
 export function syncAudioElements() {
   const all = [uiClickSound, scanPosSound, collisionEnabledSound, collisionDisabledSound,
     errorSound, outOfReachSound, poseOutOfReachSound, movesToSelectedObjectSound,
-    initialPoseSound, absolutePoseSound];
+    initialPoseSound, absolutePoseSound, objectSelectSound, robotMovesSound];
   for (const audio of all) {
     if (!audio) continue;
     audio.muted = !soundEnabled;
@@ -187,6 +192,58 @@ export function playVoice(audio, what) {
   } catch (err) {
     reportClickSoundProblem(`${err && err.name ? err.name : 'Error'} while playing - ${what}`);
   }
+}
+
+// Klick auf ein erkanntes Objekt (Eintrag in "Detected Objects" oder
+// Greifpunkt im Viewport). Laeuft neben einer Sprachansage her, nicht
+// ueber playVoice, damit der Klick keine laufende Ansage abwuergt.
+export function playObjectSelectSound() {
+  if (!soundEnabled) return;
+  if (!objectSelectSound) {
+    reportClickSoundProblem('Sounddatei fehlt (object select)');
+    return;
+  }
+  try {
+    objectSelectSound.currentTime = 0;
+    const pr = objectSelectSound.play();
+    if (pr && typeof pr.catch === 'function') {
+      pr.catch(err => reportClickSoundProblem(`${err && err.name ? err.name : 'Error'} during play() - object select`));
+    }
+  } catch (err) {
+    reportClickSoundProblem(`${err && err.name ? err.name : 'Error'} while playing - object select`);
+  }
+}
+
+// Bewegungsgeraeusch in Schleife, solange sich der Roboter bewegt. Wird bei
+// jedem Bewegungs-Sample mit true aufgerufen (startet nur, wenn es steht).
+// Das Stoppen ist verzoegert, damit kurze Pausen zwischen zwei
+// Bahnsegmenten den Loop nicht zerhacken.
+const ROBOT_MOVES_STOP_DELAY_MS = 350;
+let robotMovesStopTimer = null;
+export function setRobotMovesSound(moving) {
+  if (!robotMovesSound) return;
+  if (moving) {
+    if (robotMovesStopTimer) {
+      clearTimeout(robotMovesStopTimer);
+      robotMovesStopTimer = null;
+    }
+    if (!soundEnabled || !robotMovesSound.paused) return;
+    try {
+      const pr = robotMovesSound.play();
+      if (pr && typeof pr.catch === 'function') {
+        pr.catch(err => reportClickSoundProblem(`${err && err.name ? err.name : 'Error'} during play() - robot moves`));
+      }
+    } catch (err) {
+      reportClickSoundProblem(`${err && err.name ? err.name : 'Error'} while playing - robot moves`);
+    }
+    return;
+  }
+  if (robotMovesStopTimer || robotMovesSound.paused) return;
+  robotMovesStopTimer = setTimeout(() => {
+    robotMovesStopTimer = null;
+    robotMovesSound.pause();
+    robotMovesSound.currentTime = 0;
+  }, ROBOT_MOVES_STOP_DELAY_MS);
 }
 
 // Gemeinsamer Cooldown fuer beide Out-of-Reach-Stimmen, damit sich

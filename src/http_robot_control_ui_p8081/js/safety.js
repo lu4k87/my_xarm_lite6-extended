@@ -1,6 +1,6 @@
 import { TOPICS, SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
-import { errorSound, playUiClickSound, playVoice } from './audio.js';
+import { errorSound, playUiClickSound, playVoice, setRobotMovesSound } from './audio.js';
 import { currentFrame, stopAllJogging } from './jog.js';
 import { logMsg } from './log.js';
 import { createSrv, noteEstopPressed, ros, setEstopLatched } from './ros.js';
@@ -79,6 +79,7 @@ jointStateSub.subscribe((msg) => {
   evaluateRobotSafety();
   
   if (moving) {
+    setRobotMovesSound(true);
     if (!isRobotMoving) {
       isRobotMoving = true;
       if (typeof updateMoveItBadge === 'function') updateMoveItBadge();
@@ -86,6 +87,7 @@ jointStateSub.subscribe((msg) => {
     if (movingTimeout) clearTimeout(movingTimeout);
     movingTimeout = setTimeout(() => {
       isRobotMoving = false;
+      setRobotMovesSound(false);
       if (typeof updateMoveItBadge === 'function') updateMoveItBadge();
     }, 150);   // ~5 Samples bei 30 Hz
   }

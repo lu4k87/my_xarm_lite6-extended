@@ -1,6 +1,6 @@
 import { TOPICS, SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
-import { playOutOfReachSound, playMovesToSelectedObjectSound, setObjectReachContext } from './audio.js';
+import { playObjectSelectSound, playOutOfReachSound, playMovesToSelectedObjectSound, setObjectReachContext } from './audio.js';
 import { logMsg } from './log.js';
 import { setButtonsLocked } from './motion.js';
 import { createSrv, motionAllowed, ros } from './ros.js';
@@ -219,6 +219,8 @@ export function setObjectCollision(info, enabled) {
 
 export function openDetectedObjectMenu(info, clientX, clientY) {
   if (!info || !info.name) return;
+  // Listeneintrag und Greifpunkt im Viewport landen beide hier.
+  playObjectSelectSound();
   if (!objMenuEl) {
     objMenuEl = document.createElement('div');
     objMenuEl.className = 'obj-menu is-hidden';
