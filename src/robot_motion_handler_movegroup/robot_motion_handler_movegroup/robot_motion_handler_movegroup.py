@@ -13,9 +13,10 @@ from builtin_interfaces.msg import Duration
 from std_msgs.msg import Bool, String
 from std_srvs.srv import SetBool, Trigger
 from xarm_msgs.srv import MoveCartesian, MoveJoint
-from moveit_msgs.srv import GetCartesianPath, GetPositionIK
+from moveit_msgs.srv import GetCartesianPath, GetPositionFK, GetPositionIK
 from moveit_msgs.action import ExecuteTrajectory, MoveGroup
 from moveit_msgs.msg import Constraints, DisplayTrajectory, JointConstraint, MotionPlanRequest, MoveItErrorCodes
+from visualization_msgs.msg import Marker, MarkerArray
 import math
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -67,6 +68,7 @@ class RobotMotionHandlerMovegroup(Node):
         self.ui_log_pub = self.create_publisher(String, '/ui/motion_status', 10)
         
         self.ik_client = self.create_client(GetPositionIK, '/compute_ik', callback_group=self.cb_group)
+        self.fk_client = self.create_client(GetPositionFK, '/compute_fk', callback_group=self.cb_group)
         self.cartesian_client = self.create_client(GetCartesianPath, '/compute_cartesian_path',
                                                    callback_group=self.cb_group)
         # Anfahrt von oben: erst kollisionsfrei auf eine Vorposition ueber dem
@@ -238,6 +240,14 @@ class RobotMotionHandlerMovegroup(Node):
         
         from sensor_msgs.msg import JointState
         self.current_joint_state = None
+
+        # Rote Greifkugeln der Object Detection (/zed/bboxes_3d, Frame "world").
+        # id -> {'pos': (x, y, z), 'name': str, 't': Empfangszeit}; der Objekt-Scan
+        # faehrt um diese Punkte statt um feste Objektpositionen.
+        self._grasp_spheres = {}
+        self._grasp_lock = threading.Lock()
+        self.create_subscription(MarkerArray, '/zed/bboxes_3d', self._bboxes_cb, 10,
+                                 callback_group=self.cb_group)
         self.joint_state_sub = self.create_subscription(
             JointState,
             '/joint_states',
@@ -428,8 +438,13 @@ class RobotMotionHandlerMovegroup(Node):
 
         def _task():
             try:
+                if self.preview_enabled:
+                    # Pfad-Vorschau an: wie MoveTo planen, als Geist zeigen und
+                    # erst nach Bestaetigung fahren.
+                    self._execute_joint_goal_core(self.INITIAL_JOINTS, 'Initial Pose')
+                    return
                 # --- DIRECT MOVE TO INITIAL POSE ---
-                self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], "Moving to Initial Pose...")
+                self._go_to_joints(self.INITIAL_JOINTS, "Moving to Initial Pose...")
                     
                 self.ui_log("Initial Pose reached.", 'success')
             except Exception as e:
@@ -613,6 +628,58 @@ class RobotMotionHandlerMovegroup(Node):
         response.message = "Joint Pose sequence started."
         return response
 
+    GRASP_SPHERE_NS = 'yolo_object_grasp_center_point'
+    GRASP_SPHERE_MAX_AGE = 2.5   # s - die Marker leben 2 s
+
+    def _bboxes_cb(self, msg):
+        now = time.time()
+        with self._grasp_lock:
+            for m in msg.markers:
+                if m.action == Marker.DELETEALL:
+                    self._grasp_spheres.clear()
+                    continue
+                if m.ns == self.GRASP_SPHERE_NS:
+                    if m.action == Marker.DELETE:
+                        self._grasp_spheres.pop(m.id, None)
+                    elif m.header.frame_id == 'world':
+                        rec = self._grasp_spheres.setdefault(m.id, {'name': f'object {m.id}'})
+                        p = m.pose.position
+                        rec['pos'] = (p.x, p.y, p.z)
+                        rec['t'] = now
+                elif m.ns == 'yolo_labels_class' and m.action == Marker.ADD:
+                    rec = self._grasp_spheres.get(m.id)
+                    if rec is not None and m.text:
+                        rec['name'] = m.text.replace('_', ' ')
+
+    def _detected_scan_targets(self):
+        """Aktuelle Greifkugeln in link_base, als kurzer Rundweg ab dem TCP geordnet."""
+        now = time.time()
+        with self._grasp_lock:
+            fresh = [(r['name'], r['pos']) for r in self._grasp_spheres.values()
+                     if 'pos' in r and now - r.get('t', 0) <= self.GRASP_SPHERE_MAX_AGE]
+        if not fresh:
+            return []
+        tf = self.tf_buffer.lookup_transform('link_base', 'world', rclpy.time.Time())
+        rot = R.from_quat([tf.transform.rotation.x, tf.transform.rotation.y,
+                           tf.transform.rotation.z, tf.transform.rotation.w])
+        off = np.array([tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z])
+        targets = [(name, tuple(rot.apply(np.array(pos)) + off)) for name, pos in fresh]
+
+        # Naechster-Nachbar-Reihenfolge ab der aktuellen TCP-Position
+        try:
+            t_tcp = self.tf_buffer.lookup_transform('link_base', 'link_tcp', rclpy.time.Time())
+            cur = (t_tcp.transform.translation.x, t_tcp.transform.translation.y)
+        except Exception:
+            cur = (0.0, 0.0)
+        ordered = []
+        while targets:
+            k = min(range(len(targets)),
+                    key=lambda i: math.hypot(targets[i][1][0] - cur[0], targets[i][1][1] - cur[1]))
+            name, pos = targets.pop(k)
+            ordered.append((name, pos))
+            cur = (pos[0], pos[1])
+        return ordered
+
     def joint_state_cb(self, msg):
         self.current_joint_state = msg
 
@@ -742,7 +809,7 @@ class RobotMotionHandlerMovegroup(Node):
             
         return waypoints
 
-    def generate_single_object_trajectory(self, obj_pos, prev_obj_pos=None, cross_size=0.08, approach_height=0.20, scan_height=0.14):
+    def generate_single_object_trajectory(self, obj_pos, prev_obj_pos=None, cross_size=0.08, approach_height=0.20, scan_height=0.14, center_z=0.0, prev_center_z=None):
         """
         Generiert eine Trajektorie (Anflug + Kreuz) fuer ein einzelnes Objekt.
         Fährt einen echten Bogen (Kugeloberfläche) über das Objekt, wobei die Kamera
@@ -767,7 +834,7 @@ class RobotMotionHandlerMovegroup(Node):
                 y = obj_y - R * math.sin(ty)
                 
                 active_theta = tx if abs(tx) > abs(ty) else ty
-                z = R * math.cos(active_theta)
+                z = center_z + R * math.cos(active_theta)
                 
                 # Sicherheitsabstand zur anpassbaren Safety Zone
                 r_base = math.hypot(x - self.safe_x, y - self.safe_y)
@@ -776,10 +843,10 @@ class RobotMotionHandlerMovegroup(Node):
                     x = self.safe_x + (x - self.safe_x) * scale
                     y = self.safe_y + (y - self.safe_y) * scale
                     
-                # Exakte Look-At Logik auf (obj_x, obj_y, 0)
+                # Exakte Look-At Logik auf (obj_x, obj_y, center_z)
                 dx = obj_x - x
                 dy = obj_y - y
-                dz = 0.0 - z
+                dz = center_z - z
                 
                 # Kompensation der Z-Rotation (yaw), damit Roll/Pitch weiterhin korrekt berechnet werden
                 dx_eff = dx * math.cos(yaw_angle) + dy * math.sin(yaw_angle)
@@ -817,7 +884,7 @@ class RobotMotionHandlerMovegroup(Node):
                 else:
                     dx = obj_x - x
                     dy = obj_y - y
-                    dz = 0.0 - z
+                    dz = center_z - z
                     
                     dx_eff = dx * math.cos(yaw) + dy * math.sin(yaw)
                     dy_eff = -dx * math.sin(yaw) + dy * math.cos(yaw)
@@ -829,12 +896,13 @@ class RobotMotionHandlerMovegroup(Node):
                 
                 waypoints.append([x, y, z, roll, pitch, yaw])
 
-        c_app = (obj_x, obj_y, approach_height)
-        c_scan = (obj_x, obj_y, scan_height)
+        c_app = (obj_x, obj_y, center_z + approach_height)
+        c_scan = (obj_x, obj_y, center_z + scan_height)
         
         # 1. Anflug zum Zentrum
         if prev_obj_pos is not None:
-            prev_app = (prev_obj_pos[0], prev_obj_pos[1], approach_height)
+            pz = center_z if prev_center_z is None else prev_center_z
+            prev_app = (prev_obj_pos[0], prev_obj_pos[1], pz + approach_height)
             add_linear_segment(prev_app, c_app, 15, is_transition=True)
         else:
             add_linear_segment(c_app, c_app, 1, is_transition=True)
@@ -984,6 +1052,20 @@ class RobotMotionHandlerMovegroup(Node):
             response.success = False
             response.message = rejection
             return response
+        # Gescannt wird um die roten Greifkugeln der Object Detection. Momentaufnahme
+        # beim Start: waehrend der Arm faehrt, verdeckt er Objekte vor der Kamera.
+        try:
+            scan_targets = self._detected_scan_targets()
+        except Exception as e:
+            response.success = False
+            response.message = f"No TF link_base <- world for the detected objects: {e}"
+            self.ui_log(f'Object scan: {response.message}', 'error')
+            return response
+        if not scan_targets:
+            response.success = False
+            response.message = "No detected objects (red grasp spheres) - nothing to scan."
+            self.ui_log(f'Object scan: {response.message}', 'warn')
+            return response
         if not self._begin_execution():
             response.success = False
             response.message = "System is already executing a move."
@@ -999,12 +1081,6 @@ class RobotMotionHandlerMovegroup(Node):
                 from sensor_msgs.msg import JointState
                 pass
                 
-                object_configs = [
-                    ("Blue Cube", "target_blue_cube", (0.300, 0.082), "var(--rviz-z)"),
-                    ("Red Rectangle", "target_red_rectangle", (0.219, -0.083), "var(--rviz-x)"),
-                    ("Green Cylinder", "target_green_cylinder", (0.274, 0.018), "var(--rviz-y)")
-                ]
-                
                 current_seed_joints = None
                 if self.current_joint_state is not None:
                     joint_names = self.current_joint_state.name
@@ -1014,30 +1090,25 @@ class RobotMotionHandlerMovegroup(Node):
                         j_name = f'joint{j}'
                         if j_name in joint_names:
                             current_seed_joints[j-1] = positions[joint_names.index(j_name)]
+                self.ui_log(f'Object scan: {len(scan_targets)} detected object(s) - '
+                            + ', '.join(f'"{n}"' for n, _ in scan_targets), 'info')
+                # Erst alle Bahnen berechnen, dann (mit Pfad-Vorschau nach
+                # Bestaetigung) abfahren.
+                preview = self.preview_enabled
+                plans = []
                 prev_obj_pos = None
-
-                for idx, (name, frame_id, default_pos, cvar) in enumerate(object_configs):
+                prev_center_z = None
+                for idx, (name, (obj_x, obj_y, obj_z)) in enumerate(scan_targets):
                     if self.stop_requested:
                         self.ui_log('Scan Loop interrupted by EMERGENCY STOP!', 'error')
                         break
-                        
-                    # Klartext: das UI-Log escaped HTML (frueher als Markup sichtbar).
                     name_html = f'"{name}"'
-                    self.ui_log(f'Fetching Live-Position for {name_html} via TF...', 'info')
-                    try:
-                        t = self.tf_buffer.lookup_transform('link_base', frame_id, rclpy.time.Time())
-                        obj_x = t.transform.translation.x
-                        obj_y = t.transform.translation.y
-                        self.ui_log(f'Live-Position {name_html}: X={obj_x:.3f}, Y={obj_y:.3f}', 'success')
-                    except Exception:
-                        self.ui_log(f'Live-Position for {name_html} not found. Using Fallback.', 'warn')
-                        obj_x = default_pos[0]
-                        obj_y = default_pos[1]
-                        
+                    self.ui_log(f'Grasp sphere {name_html}: X={obj_x*1000:.0f} Y={obj_y*1000:.0f} '
+                                f'Z={obj_z*1000:.0f} mm (link_base)', 'info')
                     obj_pos = (obj_x, obj_y)
-                    self.ui_log(f'Generating Cross Scan Path for {name_html}...', 'info')
-                    
-                    waypoints = self.generate_single_object_trajectory(obj_pos, prev_obj_pos)
+                    self.ui_log(f'Generating Cross Scan Path around {name_html}...', 'info')
+                    waypoints = self.generate_single_object_trajectory(
+                        obj_pos, prev_obj_pos, center_z=obj_z, prev_center_z=prev_center_z)
                     
                     trajectory_points = []
                     for i, wp in enumerate(waypoints):
@@ -1115,21 +1186,46 @@ class RobotMotionHandlerMovegroup(Node):
                             duration = 2.0 if i == 0 else 0.25
                         trajectory_points.append((target_joints, duration))
 
-                    if self.stop_requested:
-                        self.ui_log('Scan Loop interrupted by EMERGENCY STOP before execution!', 'error')
-                        break
+                    plans.append((name_html, trajectory_points))
+                    prev_obj_pos = obj_pos
+                    prev_center_z = obj_z
 
+                if self.stop_requested:
+                    self.ui_log('Scan Loop interrupted by EMERGENCY STOP before execution!', 'error')
+                    return
+
+                if preview:
+                    first = scan_targets[0][1]
+                    self._moveit_begin([first[0] * 1000.0, first[1] * 1000.0, first[2] * 1000.0])
+                    self._moveit_mark('t_ik')
+                    all_points = [pt for _, pts in plans for pt in pts] + [(self.INITIAL_JOINTS, 2.0)]
+                    self._confirm_preview(self._joint_points_as_robot_traj(all_points))
+                    self._moveit_phase('executing',
+                                       exec_expected=round(sum(d for _, d in all_points), 3))
+
+                for name_html, trajectory_points in plans:
+                    if self.stop_requested:
+                        self.ui_log('Scan Loop interrupted by EMERGENCY STOP!', 'error')
+                        break
                     self.ui_log(f'Executing Scan for {name_html}...', 'action')
                     self._go_to_joints_trajectory(trajectory_points, f"Executing Cross Scan for {name_html}...")
-                    
-                    prev_obj_pos = obj_pos
 
                 # Am Ende zurueck zur Initial Pose
                 if not self.stop_requested:
                     init_html = "Initial Pose"
-                    self._go_to_joints([0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0], f"Returning to {init_html}...")
-                
+                    self._go_to_joints(self.INITIAL_JOINTS, f"Returning to {init_html}...")
+                if preview:
+                    if self.stop_requested:
+                        self._moveit_finish('aborted', message='emergency stop')
+                    else:
+                        run = self._moveit_finish('succeeded')
+                        self.ui_log(f"Object scan finished ({self._moveit_timing_text(run)}).", 'success')
+
+            except PreviewDiscarded as e:
+                self._moveit_finish('discarded', message=str(e))
+                self.ui_log(f"Object scan cancelled: {e}", 'warn')
             except Exception as e:
+                self._moveit_finish('aborted' if self.stop_requested else 'failed', message=str(e))
                 self.ui_log(f"Error during scan path: {e}", 'error')
             finally:
                 self.is_executing = False
@@ -1507,6 +1603,64 @@ class RobotMotionHandlerMovegroup(Node):
         if best is None:
             raise Exception(f"IK calculation failed (Error Code: {last_err}). Target out of reach or in collision.")
         return best
+
+    INITIAL_JOINTS = [0.0, 0.4244, 0.5627, 0.0, 0.1383, 0.0]
+
+    def _fk_tcp_mm(self, joints):
+        """TCP-Position [mm] in link_base fuer eine Gelenkstellung (nur fuer die Anzeige)."""
+        try:
+            if not self.fk_client.wait_for_service(timeout_sec=1.0):
+                return [0.0, 0.0, 0.0]
+            from sensor_msgs.msg import JointState
+            req = GetPositionFK.Request()
+            req.header.frame_id = 'link_base'
+            req.fk_link_names = ['link_tcp']
+            req.robot_state.joint_state = JointState(
+                name=[f'joint{i}' for i in range(1, 7)], position=[float(v) for v in joints])
+            fut = self.fk_client.call_async(req)
+            t_end = time.time() + 2.0
+            while not fut.done() and time.time() < t_end:
+                time.sleep(0.01)
+            res = fut.result() if fut.done() else None
+            if res is None or res.error_code.val != 1 or not res.pose_stamped:
+                return [0.0, 0.0, 0.0]
+            p = res.pose_stamped[0].pose.position
+            return [p.x * 1000.0, p.y * 1000.0, p.z * 1000.0]
+        except Exception:
+            return [0.0, 0.0, 0.0]
+
+    def _joint_points_as_robot_traj(self, points):
+        """[(gelenke, dauer), ...] -> RobotTrajectory fuer die Pfad-Vorschau."""
+        from moveit_msgs.msg import RobotTrajectory
+        jt = JointTrajectory()
+        jt.joint_names = [f'joint{i}' for i in range(1, 7)]
+        t = 0.0
+        for joints, duration in points:
+            t += float(duration)
+            pt = JointTrajectoryPoint()
+            pt.positions = [float(v) for v in joints]
+            pt.time_from_start = Duration(sec=int(t), nanosec=int((t - int(t)) * 1e9))
+            jt.points.append(pt)
+        traj = RobotTrajectory()
+        traj.joint_trajectory = jt
+        return traj
+
+    def _execute_joint_goal_core(self, target_joints, label):
+        """Gelenkziel ueber MoveIt anfahren - mit Pfad-Vorschau und MoveIt-Popup wie MoveTo."""
+        try:
+            self._moveit_begin(self._fk_tcp_mm(target_joints))
+            self.ui_log(f"{label}: planning a collision-free path (path preview on)...", 'action')
+            self._moveit_mark('t_ik')   # Gelenkziel - keine IK noetig
+            self._plan_and_execute_joints(target_joints)
+            run = self._moveit_finish('succeeded')
+            self.ui_log(f"{label} reached ({self._moveit_timing_text(run)}).", 'success')
+        except PreviewDiscarded as e:
+            self._moveit_finish('discarded', message=str(e))
+            self.ui_log(f"{label} cancelled: {e}", 'warn')
+        except Exception as e:
+            aborted = self.stop_requested
+            self._moveit_finish('aborted' if aborted else 'failed', message=str(e))
+            self.ui_log(f"{label} {'aborted' if aborted else 'failed'}: {e}", 'error')
 
     def _plan_and_execute_joints(self, target_joints):
         """Plan a collision-free path to target_joints with move_group and execute it.
