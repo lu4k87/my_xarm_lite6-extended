@@ -2757,7 +2757,7 @@ dev_ws/
 ├── ros2_nexus/                                                            # Central web launcher & desktop app integration
 │   ├── ROS2_Nexus.desktop                                                 # Ubuntu application shortcut (.desktop entry)
 │   ├── install_app.sh                                                     # Setup script installing the .desktop shortcut & icon
-│   ├── kill_ros2.sh                                                       # Safe cleanup script stopping all ROS 2 nodes/daemons
+│   ├── kill_ros2.sh                                                       # Cleanup script stopping ros2 run/launch, rviz2 & terminal wrappers
 │   ├── cyclonedds.xml                                                     # Raises the CycloneDDS participant limit (unicast discovery)
 │   ├── launcher_config.json                                               # Master process & button configuration for Nexus
 │   ├── ros2_nexus_web_start.sh                                            # Nexus background daemon & browser launcher
@@ -2779,6 +2779,7 @@ dev_ws/
 │   │   └── dashboard_index.html                                           # Real-time reactive web dashboard UI (Port 8080)
 │   ├── http_robot_control_ui_p8081/                                       # 🎮 HTML/JS: Standalone Robot Control & Jogging Web UI
 │   │   ├── index.html                                                     # Robot control interface (Port 8081)
+│   │   ├── install_desktop_icon.sh                                        # Installs the Robot Control UI icon & .desktop entry
 │   │   ├── js/                                                            # ES modules (main.js, ros.js, jog.js, safety.js, motion.js, grasp.js, config.js …)
 │   │   │   └── twin/digital_twin.js                                       # Three.js 3D WebGL Digital Twin & scene objects
 │   │   ├── lib/                                                           # three.js r186 & urdf-loader (vendored, offline-capable)
