@@ -126,7 +126,7 @@
       "add_gripper:=true": false,
       "add_vacuum_gripper:=true": true,
       "attach_to:=linear_axis_link": false,
-      "rviz:=true": false,
+      "rviz:=true": true,
       "static_objects:=true": true
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link": {
@@ -144,7 +144,7 @@
       "add_gripper:=true": false,
       "add_vacuum_gripper:=true": true,
       "attach_to:=linear_axis_link": false,
-      "rviz:=true": false,
+      "rviz:=true": true,
       "static_objects:=true": true
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
@@ -243,7 +243,8 @@
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py",
       "ros2 launch web_video_server web_video_server.launch.py",
-      "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true"
+      "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true",
+      "ros2 launch voice_command_listener voice_listener.launch.py"
     ],
     "dev_real": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich static_objects:=true",
@@ -470,7 +471,7 @@
         "add_gripper:=true": false,
         "attach_to:=linear_axis_link": false,
         "static_objects:=true": true,
-        "rviz:=true": false
+        "rviz:=true": true
       },
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py add_vacuum_gripper:=true attach_to:=linear_axis_link": {
         "add_vacuum_gripper:=true": true,
@@ -486,7 +487,7 @@
         "add_gripper:=true": false,
         "attach_to:=linear_axis_link": false,
         "static_objects:=true": true,
-        "rviz:=true": false
+        "rviz:=true": true
       },
       "ros2 run web_video_server web_video_server": {
         "--ros-args -r __node:=http_web_video_server_p8082": true,
@@ -873,13 +874,13 @@
       "actions": [
         {
           "active": true,
-          "label": "RUN DEV SETUP (REAL)",
-          "type": "dev_real"
+          "label": "RUN DEV SETUP (FAKE)",
+          "type": "dev_fake"
         },
         {
           "active": true,
-          "label": "RUN DEV SETUP (FAKE)",
-          "type": "dev_fake"
+          "label": "RUN DEV SETUP (REAL)",
+          "type": "dev_real"
         }
       ],
       "col": 0,
