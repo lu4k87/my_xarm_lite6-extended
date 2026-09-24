@@ -231,6 +231,14 @@
                   <i class="fa-solid fa-ghost"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
+                <!-- WebXR (Meta Quest 3): nur sichtbar, wenn die Seite ueber HTTPS
+                     (Port 8443) laeuft und die Brille den Modus kann (js/twin/xr.js) -->
+                <button class="btn btn-icon-small" id="btn-twin-xr-vr" data-action="enterTwinXR" data-args='["vr"]' title="Enter VR (Meta Quest 3): 3D viewport with wrist panel" style="display: none; color: var(--cyan);">
+                  <i class="fa-solid fa-vr-cardboard"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-xr-ar" data-action="enterTwinXR" data-args='["ar"]' title="Enter Passthrough AR (Meta Quest 3) - prepared, calibration against the real robot pending" style="display: none; color: var(--mut);">
+                  <i class="fa-solid fa-glasses"></i>
+                </button>
                 <button class="btn btn-icon-small" id="btn-sound-toggle" data-action="toggleSound" title="Toggle sound effects" style="color: var(--cyan);">
                   <i class="fa-solid fa-volume-high" id="sound-toggle-icon"></i>
                 </button>

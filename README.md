@@ -1326,6 +1326,15 @@ flowchart TD
 > - Features an integrated WebGL rendering engine (`XRWebGLLayer`) to bypass the native Quest 3 "loading screen" (flying stars) and unlock the controller data streams.
 > - **Grip Trigger (middle finger):** Acts as a "clutch". Holding it maps the controller's exact positional delta directly to the robot's end effector (dynamically tracks whichever controller pressed the button).
 > - **Index Trigger (index finger):** Toggles the gripper. The node fires both end effectors in one go — the vacuum gripper via `/ufactory/set_vacuum_gripper` and the Lite 6 gripper via `open`/`close_lite6_gripper` — so the same trigger works whichever one is mounted.
+> - **Watchdog:** If controller data stops arriving for more than 0.3 s while grip is held (tracking lost, browser stalled, Wi-Fi drop), the node immediately sends a zero twist.
+>
+> 🥽 **VR viewport (Robot Control UI in the headset):** The `8443` server also serves the complete **Robot Control UI** over HTTPS (`https://<PC-IP>:8443/`), where it connects to the WSS rosbridge on `9091`. The viewport header then shows 🥽 **Enter VR** and 👓 **Passthrough (AR, prepared)**. The headset renders the same Digital Twin (`js/twin/xr.js`): live robot, objects, collision objects, ghost and MoveIt plan.
+> - **Wrist panel (left controller):** tabs `VIEW · SCENE · MOTION · MOVEIT · OBJEKT · VR` with the viewport's icons. Entries mirror the real DOM buttons (state and click), so desktop and headset stay in sync. Operated with the right controller's laser + trigger; **X** shows/hides it.
+> - **Modes (B, right):** `SERVO` – grip drives MoveIt Servo, trigger toggles the gripper, right stick X moves the linear axis. `PLAN` – grip drags the ghost (TCP gizmo, 1:1 to the hand, orientation too in rotate mode); release plans, Execute/Discard in the MOVEIT tab.
+> - **Select objects:** point the laser at the red grasp sphere + trigger → Target Object; the OBJEKT tab offers Approach / collision toggle.
+> - **E-stop:** red panel button **or** both grips + both triggers at once. Session end, hidden session (Quest menu) or tracking loss stop servo immediately.
+> - **Placement:** left stick = walk (VR only). VR tab: nudge robot X/Y/Z/Yaw, “Basis = Controller” puts the robot base at the right controller, saved per headset (`localStorage`). Passthrough calibration against the real robot is prepared but not yet tested on hardware.
+> - Not in the headset: camera/RViz streams (MJPEG over HTTP is blocked as mixed content on an HTTPS page).
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)

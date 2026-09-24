@@ -33,8 +33,31 @@ class VRTeleopNode(Node):
         self.servo_started = False
         
         self.linear_axis_pos = 0.0
-        
+
+        # Watchdog: Die Quest sendet bei gedruecktem Grip jeden Frame. Bleiben
+        # die Daten aus (Tracking weg, Browser haengt, WLAN weg), darf Servo
+        # nicht mit dem letzten Twist weiterfahren - dann Null-Twist.
+        self.last_msg_time = None
+        self.watchdog_timeout = 0.3  # s
+        self.create_timer(0.1, self.watchdog_cb)
+
         self.get_logger().info("VR Quest 3 Teleop Node started.")
+
+    def halt(self, reason):
+        twist_msg = TwistStamped()
+        twist_msg.header.stamp = self.get_clock().now().to_msg()
+        twist_msg.header.frame_id = 'link_base'
+        self.twist_pub.publish(twist_msg)
+        self.grip_pressed = False
+        self.initial_pos = None
+        self.get_logger().warn(f"Halting robot: {reason}")
+
+    def watchdog_cb(self):
+        if not self.grip_pressed or self.last_msg_time is None:
+            return
+        age = (self.get_clock().now() - self.last_msg_time).nanoseconds * 1e-9
+        if age > self.watchdog_timeout:
+            self.halt(f"no controller data for {age:.2f} s")
 
     def ensure_servo_started(self):
         if not self.servo_started:
@@ -68,6 +91,7 @@ class VRTeleopNode(Node):
         except json.JSONDecodeError:
             self.get_logger().error("Invalid JSON received")
             return
+        self.last_msg_time = self.get_clock().now()
             
         buttons = data.get('buttons', {})
         pos = data.get('position', {})

@@ -19,7 +19,7 @@
 //   streams.js   Kamera- und RViz-Streams
 //   persist.js   Letzten UI-Zustand speichern / wiederherstellen
 //   columns.js   Aussenspalten: Breite ziehen, ein-/ausklappen
-//   twin/        Digital Twin (three.js)
+//   twin/        Digital Twin (three.js), xr.js = VR-Viewport Quest 3 (WebXR)
 //
 // Statt globaler window.*-Funktionen fuer Inline-Handler tragen die Elemente
 // data-Attribute; die Zuordnung zur Funktion steht unten in ACTIONS.
@@ -60,6 +60,7 @@ import {
   setDigitalTwinTopView, syncTCPGizmoToRobot, testDigitalTwinSafetyCycle, toggleDigitalTwinEdges,
   toggleDigitalTwinGrid, toggleTCPGizmo,
 } from './twin/digital_twin.js';
+import { enterTwinXR } from './twin/xr.js';
 
 const ACTIONS = {
   // Sicherheit
@@ -74,7 +75,7 @@ const ACTIONS = {
   // Digital Twin
   cycleTCPGizmoMode, resetDigitalTwinView, setDigitalTwinTopView, syncTCPGizmoToRobot,
   testDigitalTwinSafetyCycle, toggleDigitalTwinEdges, toggleDigitalTwinGrid, toggleTCPGizmo,
-  toggleTwinDetections, toggleTwinDistanceLine, toggleTwinPointCloud,
+  toggleTwinDetections, toggleTwinDistanceLine, toggleTwinPointCloud, enterTwinXR,
   // Layout
   toggleAllHudTabs, toggleHeaderCollapsed, toggleHudTab, toggleTFTunerCollapse,
   // TF Tuner

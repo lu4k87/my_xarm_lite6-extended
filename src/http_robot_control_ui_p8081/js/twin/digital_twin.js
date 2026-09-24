@@ -191,6 +191,8 @@ function initDigitalTwin() {
   // PCFSoftShadowMap gibt es seit r18x nicht mehr; PCF mit shadow.radius
   // liefert die weichen Kanten.
   renderer.shadowMap.type = THREE.PCFShadowMap;
+  // WebXR (Quest 3, js/twin/xr.js). Wirkt nur waehrend einer XR-Session.
+  renderer.xr.enabled = true;
 
   container.replaceChildren(); // clear any placeholder
   container.appendChild(renderer.domElement);
@@ -284,6 +286,8 @@ function initDigitalTwin() {
 
   function animate() {
     animId = requestAnimationFrame(animate);
+    // Waehrend einer XR-Session rendert xr.js ueber setAnimationLoop.
+    if (renderer.xr.isPresenting) return;
     if (!isViewportVisible()) return;
     // Jede Funktion meldet, ob sie gerade animiert - dann wird weiter
     // gezeichnet. Steht alles still, bleibt die GPU unbeschaeftigt.
@@ -352,6 +356,8 @@ export function refitDigitalTwinHud() {
 function handleResize() {
   requestRender();
   if (!container || !renderer || !camera) return;
+  // In XR bestimmt die Brille Groesse und Projektion (setSize wuerde warnen).
+  if (renderer.xr.isPresenting) return;
   const w = container.clientWidth;
   const h = container.clientHeight;
   if (w > 0 && h > 0) {
@@ -3241,6 +3247,122 @@ export function setDigitalTwinLabelScale(factor) {
 export function getDigitalTwinLabelScale() {
   requestRender();
   return labelScale;
+}
+
+// ── WebXR-Anbindung (js/twin/xr.js) ────────────────────────────────────────
+// Der VR-Viewport nutzt dieselbe Szene, Kamera und denselben Renderer. Die
+// Welt bleibt im ROS-Frame (Z oben); xr.js haengt Kamera und Controller an
+// ein eigenes Rig, das den XR-Raum (Y oben) in den ROS-Frame dreht.
+export function getTwinXRHandles() {
+  if (!renderer || !scene || !camera) return null;
+  return { scene, camera, renderer, controls, gridHelper };
+}
+
+// Dieselben Aktualisierungen wie im normalen Loop. In XR wird jedes Frame
+// gerendert (Kopfbewegung), deshalb ohne requestRender-Logik.
+export function runTwinFrameUpdates() {
+  updateSafetyVisuals();
+  updateGraspSelection();
+  updatePathPreview();
+  updateWallProximity();
+  updateConnectingLine();
+}
+
+// Nach dem Ende der Session: Kamera wieder fuer OrbitControls herrichten.
+export function restoreTwinViewAfterXR() {
+  if (!camera) return;
+  camera.up.set(0, 0, 1);
+  camera.scale.set(1, 1, 1);
+  setHover(null);
+  handleResize();
+  resetDigitalTwinView();
+  requestRender();
+}
+
+// Greifkugel per Controller-Strahl. Die Kugeln sind klein - ein exakter
+// Treffer waere auf Armlaenge kaum moeglich. Deshalb zaehlt der kleinste
+// Abstand zum Strahl mit einer Toleranz, die mit der Entfernung waechst.
+const _xrPt = new THREE.Vector3();
+export function pickDetectedObjectByRay(ray) {
+  if (!detectionGroup || !detectionsVisible) return null;
+  let best = null;
+  for (const rec of sphereRecords()) {
+    if (!rec.obj || !rec.obj.parent || !rec.obj.visible) continue;
+    rec.obj.getWorldPosition(_xrPt);
+    const along = _xrPt.clone().sub(ray.origin).dot(ray.direction);
+    if (along <= 0) continue;
+    const off = ray.distanceToPoint(_xrPt);
+    const tol = Math.max(0.02, along * 0.025);
+    if (off > tol) continue;
+    if (!best || along < best.distance) best = { rec, distance: along };
+  }
+  if (!best) return null;
+  return { rec: best.rec, name: nameForSphere(best.rec), distance: best.distance };
+}
+
+export function setDetectedObjectHover(hit) {
+  setHover(hit ? hit.rec : null);
+}
+
+// Wie ein Klick auf die Greifkugel im Viewport - nur ohne DOM-Kontextmenue
+// (das ist in der Brille nicht sichtbar, xr.js zeigt eigene Eintraege).
+export function selectDetectedObject(name) {
+  if (!name) return null;
+  setDigitalTwinSelectedGrasp(name);
+  if (typeof twinHooks.setTargetObjectName === 'function') twinHooks.setTargetObjectName(name);
+  return getDetectedObjectInfo(name);
+}
+
+export function listDetectedObjects() {
+  const out = [];
+  for (const rec of sphereRecords()) {
+    const name = nameForSphere(rec);
+    if (name) out.push(objectInfoForSphere(rec, name));
+  }
+  return out;
+}
+
+// TCP-Gizmo von aussen ziehen (Controller im PLAN-Modus). Ablauf wie beim
+// Maus-Drag: Beginn -> Popup, jede Aenderung -> HUD/Eingabefelder,
+// Ende -> handleGizmoDragEnd (Ghost-Modus plant sofort).
+export function isTCPGizmoActive() {
+  return Boolean(isGizmoActive && gizmoTarget);
+}
+
+export function getTCPGizmoMode() {
+  return gizmoMode;
+}
+
+export function beginGizmoExternalDrag() {
+  if (!gizmoTarget || !isGizmoActive) return null;
+  isDraggingGizmo = true;
+  hasUserTargetOffset = true;
+  const mp = document.getElementById('moveit-popup');
+  if (mp) mp.classList.remove('mp-hidden');
+  return { position: gizmoTarget.position.clone(), quaternion: gizmoTarget.quaternion.clone() };
+}
+
+export function setGizmoTargetWorldPose(position, quaternion) {
+  if (!gizmoTarget || !isDraggingGizmo) return;
+  if (position) gizmoTarget.position.copy(position);
+  if (quaternion) gizmoTarget.quaternion.copy(quaternion);
+  if (transformControls) transformControls.getHelper().updateMatrixWorld();
+  handleGizmoChange(true);
+  requestRender();
+}
+
+// Abbruch ohne Planung (Session-Ende, Tracking weg, Not-Aus): das Ziel
+// bleibt stehen, es wird aber nichts ausgeloest.
+export function cancelGizmoExternalDrag() {
+  isDraggingGizmo = false;
+  requestRender();
+}
+
+export function endGizmoExternalDrag() {
+  if (!isDraggingGizmo) return;
+  isDraggingGizmo = false;
+  handleGizmoDragEnd();
+  requestRender();
 }
 
 // Initialize on DOM ready

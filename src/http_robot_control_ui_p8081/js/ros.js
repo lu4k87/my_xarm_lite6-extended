@@ -36,7 +36,12 @@ export let ros;
 // getrennten Scopes, und die Log-Ausgabe nannte fest "localhost", obwohl die
 // UI je nach Aufruf unter 127.0.0.2 laeuft.
 export const ROS_HOST = window.location.hostname || 'localhost';
-export const ROS_URL = 'ws://' + ROS_HOST + ':9090';
+// Ueber HTTPS (Port 8443, Quest 3 / WebXR) blockiert der Browser ws:// als
+// Mixed Content. Dann geht es an die SSL-rosbridge auf 9091 (vr_quest3_teleop)
+// - dasselbe ROS-Netz, nur verschluesselt.
+export const ROS_URL = window.location.protocol === 'https:'
+  ? 'wss://' + ROS_HOST + ':9091'
+  : 'ws://' + ROS_HOST + ':9090';
 
 try {
   ros = new ROSLIB.Ros({ url: ROS_URL });
