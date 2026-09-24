@@ -36,10 +36,18 @@ Inference::Inference(const rclcpp::NodeOptions& options)
   publisher_ = create_publisher<whisper_idl::msg::WhisperTokens>("tokens", 10);
 
   active_ = get_parameter("active").as_bool();
+  listen_window_ms_ = get_parameter("listen_window_ms").as_int();
 }
 
 void Inference::timer_callback()
 {
+  // Nur innerhalb des Hoerfensters nach einem UI-Trigger rechnen - sonst
+  // transkribiert Whisper dauerhaft Stille (GPU-Last, Log-Flut).
+  // listen_window_ms <= 0 schaltet zurueck auf Dauerbetrieb.
+  if ( active_ && listen_window_ms_ > 0 &&
+       std::chrono::steady_clock::now() >= listen_until_.load() ) {
+    return;
+  }
   if ( active_ ) {
     auto msg = create_message_();
     auto success = run_inference_(msg);
@@ -59,6 +67,7 @@ void Inference::declare_parameters_() {
   declare_parameter("buffer_capacity", 2);
   declare_parameter("callback_ms", 200);
   declare_parameter("active", false);
+  declare_parameter("listen_window_ms", 7000);
 
   // whisper parameters
   declare_parameter("model_name", "base.en");
@@ -137,7 +146,10 @@ void Inference::on_trigger_(const std_msgs::msg::String::SharedPtr msg) {
   if (msg->data == "listen") {
     audio_ring_->clear();
     clear_flag_ = true;
-    RCLCPP_INFO(get_logger(), "Audio buffer cleared by UI trigger.");
+    listen_until_ = std::chrono::steady_clock::now() +
+                    std::chrono::milliseconds(listen_window_ms_);
+    RCLCPP_INFO(get_logger(), "Audio buffer cleared by UI trigger - listening for %ld ms.",
+                static_cast<long>(listen_window_ms_));
   }
 }
 

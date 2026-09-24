@@ -30,3 +30,6 @@ whisper:
       # Reaktionsfreudigkeit (kannst Du feinjustieren)
       buffer_capacity: 8        # kleiner = schnellere Entscheidungen (z.B. 6–10)
       callback_ms: 250          # häufigere Rückmeldungen (z.B. 200–300 ms)
+      # Whisper rechnet nur so lange nach einem "listen"-Trigger der UI
+      # (Listener-Goal dauert 5 s). 0 = Dauerbetrieb wie früher.
+      listen_window_ms: 7000

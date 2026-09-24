@@ -10,7 +10,7 @@ def generate_launch_description():
     use_gpu = LaunchConfiguration('use_gpu', default='True')
 
     return LaunchDescription([
-        DeclareLaunchArgument('silero_vad_use_cuda', default_value='True', description='Use CUDA for Silero VAD'),
+        DeclareLaunchArgument('silero_vad_use_cuda', default_value='True', description='Unused: whisper_bringup has no Silero VAD (kept for launcher compatibility)'),
         DeclareLaunchArgument('use_gpu', default_value='True', description='Use GPU for Whisper inference'),
         
         IncludeLaunchDescription(

@@ -1,6 +1,7 @@
 #ifndef WHISPER_NODES__INFERENCE_NODE_HPP_
 #define WHISPER_NODES__INFERENCE_NODE_HPP_
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <numeric>
@@ -66,6 +67,10 @@ private:
   // Control if whisper is running
   bool active_;
   std::atomic<bool> clear_flag_{false};
+
+  // Hoerfenster nach "listen"-Trigger (0 = Dauerbetrieb)
+  int64_t listen_window_ms_{7000};
+  std::atomic<std::chrono::steady_clock::time_point> listen_until_{};
 
   // Helper/debug functions
   void on_audio_debug_print_(const std_msgs::msg::Int16MultiArray::SharedPtr msg);

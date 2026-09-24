@@ -391,6 +391,8 @@ class VoiceCommandListener(Node):
             self.get_logger().error(f"Error publishing voice feedback: {e}")
 
     def _sound_enabled_cb(self, msg):
+        # Die UI sendet den Zustand alle 2 s - nur Aenderungen loggen.
+        changed = bool(msg.data) != self.sound_enabled
         self.sound_enabled = bool(msg.data)
         if not self.sound_enabled:
             try:
@@ -399,7 +401,8 @@ class VoiceCommandListener(Node):
                     pygame.mixer.stop()
             except Exception:
                 pass
-        self.get_logger().info(f"UI Sound State received: enabled={self.sound_enabled}")
+        if changed:
+            self.get_logger().info(f"UI Sound State changed: enabled={self.sound_enabled}")
 
     # -------------------------------------------------------------------------
     # Service Callback
