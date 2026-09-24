@@ -359,48 +359,6 @@
        openLaunchModal(wrapper, [{cmd: btn.dataset.cmd, title: btn.dataset.label}], `🚀 ${btn.dataset.label} gestartet...`, popupKey);
     }
 
-    function alignModalArgs(container) {
-        if (!container) return;
-        const layouts = container.querySelectorAll('.modal-card-layout');
-        layouts.forEach(cardLayout => {
-            const leftCol = cardLayout.querySelector('.modal-card-left-col');
-            const middleCol = cardLayout.querySelector('.modal-card-middle-col');
-            if (!leftCol || !middleCol) return;
-
-            // Find element for zed_camera.launch.py in leftCol
-            const zedLaunchEl = Array.from(leftCol.querySelectorAll('li, span, div')).find(el => 
-                el.textContent && el.textContent.includes('zed_camera.launch.py') && (el.tagName === 'LI' || el.classList.contains('badge-launch'))
-            );
-
-            // Find use_zed_hardware label in middleCol
-            const zedHwLabel = Array.from(middleCol.querySelectorAll('label')).find(lbl => 
-                lbl.textContent && lbl.textContent.includes('use_zed_hardware')
-            );
-
-            if (zedLaunchEl && zedHwLabel) {
-                const targetLine = zedLaunchEl.tagName === 'LI' ? (zedLaunchEl.querySelector('.badge-launch') || zedLaunchEl) : zedLaunchEl;
-                
-                const middleColRect = middleCol.getBoundingClientRect();
-                const targetRect = targetLine.getBoundingClientRect();
-                const labelRect = zedHwLabel.getBoundingClientRect();
-
-                if (middleColRect.height > 0 && targetRect.height > 0) {
-                    const modalWindow = document.getElementById('launch-modal-window');
-                    const zoom = (modalWindow ? (parseFloat(getComputedStyle(modalWindow).zoom) || 1) : 1);
-                    const targetCenterY = ((targetRect.top + targetRect.height / 2) - middleColRect.top) / zoom;
-                    const labelHeight = (labelRect.height / zoom) || 32;
-                    const desiredTop = targetCenterY - (labelHeight / 2);
-
-                    zedHwLabel.style.position = 'absolute';
-                    zedHwLabel.style.top = desiredTop + 'px';
-                    zedHwLabel.style.left = '20px';
-                    zedHwLabel.style.margin = '0';
-                    middleCol.style.position = 'relative';
-                }
-            }
-        });
-     }
-
     let globalCmdTooltipEl = null;
 
     function getGlobalCmdTooltip() {
@@ -483,6 +441,23 @@
             });
         };
         return btn;
+    }
+
+    // Belegte Ports je Action Card und wofuer sie verwendet werden
+    const ACTION_PORTS = [
+        {
+            match: /http_robot_control_ui/,
+            ports: [
+                { port: 8081, icon: 'fa-solid fa-display', use: 'Robot Control UI (Webseite)' },
+                { port: 9090, icon: 'fa-solid fa-right-left', use: 'rosbridge WebSocket (UI \u2194 ROS 2)' },
+                { port: 8082, icon: 'fa-solid fa-video', use: 'Web Video Server (Kamera- & RViz-Streams)' }
+            ]
+        }
+    ];
+
+    function getActionPorts(cmd) {
+        const entry = ACTION_PORTS.find(e => e.match.test(cmd || ''));
+        return entry ? entry.ports : [];
     }
 
     function getActionIconMeta(action, fallbackCmd) {
@@ -596,11 +571,13 @@
         if (/gamepad|joy|keyboard|linear_axis|collision_check|teleop_pre_collision/.test(combined)) {
             return [{ path: '_imgs/icons/icon_gamepad.svg?v=6', label: 'Gamepad & Roboter-Steuerung' }];
         }
-        // Robot Control UI + WebSocket Server (kombinierte Action Card mit BEIDEN Icons)
+        // Robot Control UI + WebSocket Server + Web Video Server (kombinierte Action Card, startet alle drei)
         if (/http_robot_control_ui/.test(combined) || ((/robot_control|8081/.test(combined)) && (/websocket|rosbridge|9090/.test(combined)))) {
             return [
                 { path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Robot Control UI' },
-                { path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket' }
+                { path: '_imgs/icons/icon_analog_stick.svg?v=1', label: 'Analog Stick (virtueller Joystick)' },
+                { path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket' },
+                { path: '_imgs/icons/icon_server.svg?v=6', label: 'Web Video Server (Port 8082)' }
             ];
         }
         // 8. Web-UI / Dashboard / Overlays / Streams / OBS
@@ -616,6 +593,142 @@
             return [{ path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket Launch' }];
         }
         return [{ path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Komponente' }];
+    }
+
+    // ─── SEQUENZ-POPUP: Kategorien & Parameter-Gruppen ──────────────────────────
+    // Dieselben Bereiche (Farbe + Icon) wie in der Multimodal-Uebersicht
+    // (buildUserAppOverviewHtml), damit beide Popups eine Sprache sprechen.
+    // VR und Speech sind im Sequenz-Popup zusaetzlich eigene Sections.
+    const SEQ_CATEGORIES = {
+        robot:  { key: 'robot',  label: 'Robot & Motion Planning',        icon: 'fa-solid fa-robot',         color: '#38bdf8' },
+        teleop: { key: 'teleop', label: 'Multimodal Input & Teleop',      icon: 'fa-solid fa-gamepad',       color: '#c084fc' },
+        vr:     { key: 'vr',     label: 'VR Teleop (Quest 3)',            icon: 'fa-solid fa-vr-cardboard',  color: '#f472b6' },
+        speech: { key: 'speech', label: 'Speech Control',                 icon: 'fa-solid fa-microphone-lines', color: '#2dd4bf' },
+        vision: { key: 'vision', label: '3D Vision & Perception',         icon: 'fa-solid fa-camera',        color: '#4ade80' },
+        infra:  { key: 'infra',  label: 'UI (Web Interface)',             icon: 'fa-solid fa-network-wired', color: '#f59e0b' },
+        system: { key: 'system', label: 'System & Tools',                 icon: 'fa-solid fa-terminal',      color: '#94a3b8' }
+    };
+
+    function getSeqCategory(action, fallbackCmd) {
+        const cmd = ((action && (action.baseCmd || action.cmd)) || fallbackCmd || '').toLowerCase();
+        const title = ((action && action.title) || '').toLowerCase();
+        const s = cmd + ' ' + title;
+        // VR und Sprachsteuerung bekommen je eine eigene Section
+        if (/vr_quest|quest/.test(s)) return SEQ_CATEGORIES.vr;
+        if (/voice|whisper|speech/.test(s)) return SEQ_CATEGORIES.speech;
+        if (/gaze|tobii|joy_node|\bjoy\b|gamepad/.test(s)) return SEQ_CATEGORIES.teleop;
+        if (/robot_vision|zed|yolo|camera|aruco|pointcloud/.test(s)) return SEQ_CATEGORIES.vision;
+        if (/web_video_server|http_robot_control_ui|rosbridge|websocket|overlay|streamer|rviz_servo_status|http\.server|dashboard/.test(s)) return SEQ_CATEGORIES.infra;
+        if (/lite6|xarm|moveit|move_group|movegroup|servo|collision|rviz_marker|linear_axis|rviz2/.test(s)) return SEQ_CATEGORIES.robot;
+        return SEQ_CATEGORIES.system;
+    }
+
+    // Ordnet einen Parameter-Chip einer Gruppe zu. "exclusive" = genau/max. eine
+    // Option aktiv (die Logik dafuer steckt in den onchange-Handlern der Chips).
+    function getArgGroup(argObj) {
+        const t = String((argObj && argObj.text) || '');
+        if (argObj && argObj.kind === 'gpu-toggle') return { key: 'device', label: 'Inferenz', icon: 'fa-solid fa-microchip' };
+        if (t.startsWith('robot_ip:='))  return { key: 'ip', label: 'Roboter-Verbindung', icon: 'fa-solid fa-ethernet' };
+        if (t.startsWith('camera:='))    return { key: 'camera', label: 'Kamera', icon: 'fa-solid fa-camera', exclusive: 'genau 1' };
+        if (t.startsWith('yolo_model:=')) return { key: 'yolo', label: 'YOLO-Modell', icon: 'fa-solid fa-brain', exclusive: 'max. 1' };
+        if (t === 'add_vacuum_gripper:=true' || t === 'add_gripper:=true') return { key: 'gripper', label: 'Greifer', icon: 'fa-solid fa-hand', exclusive: 'genau 1' };
+        if (t.startsWith('report_type:=')) return { key: 'report', label: 'Report-Level', icon: 'fa-solid fa-file-lines', exclusive: 'genau 1' };
+        if (/(^|\s)-[rp](\s|$)/.test(t) || t.startsWith('--')) return { key: 'rosargs', label: 'ROS-Args', icon: 'fa-solid fa-gears' };
+        return { key: 'options', label: 'Optionen', icon: 'fa-solid fa-toggle-on' };
+    }
+
+    function buildUserAppOverviewHtml() {
+        const sections = [
+            {
+                title: "ROBOT & MOTION PLANNING",
+                icon: "fa-solid fa-robot",
+                color: "#38bdf8",
+                countBadge: "4 Module",
+                items: [
+                    { icon: "_imgs/icons/icon_robot_lite6_real.svg?v=6", title: "Real Arm (Lite 6)", subtitle: "Hardware Motion" },
+                    { icon: "_imgs/icons/icon_robot_lite6_sim.svg?v=6", title: "Sim Arm (Lite 6)", subtitle: "RViz Mock Twin" },
+                    { icon: "_imgs/icons/icon_moveit2.svg?v=6", title: "MoveIt 2", subtitle: "OMPL & Servo Planning" },
+                    { icon: "_imgs/icons/icon_dev.svg?v=6", title: "Dev Setup", subtitle: "Full Stack Bringup" }
+                ]
+            },
+            {
+                title: "MULTIMODAL INPUT & TELEOP",
+                icon: "fa-solid fa-gamepad",
+                color: "#c084fc",
+                countBadge: "5 Module",
+                items: [
+                    { icon: "_imgs/icons/icon_gamepad.svg?v=6", title: "Gamepad", subtitle: "Cartesian Jogging" },
+                    { icon: "_imgs/icons/icon_voice.svg?v=6", title: "Whisper Voice", subtitle: "Speech AI Control" },
+                    { icon: "_imgs/icons/icon_gaze.svg?v=6", title: "Tobii Glasses 3", subtitle: "Eye-Gaze Tracking" },
+                    { icon: "_imgs/icons/icon_vr_controller.svg?v=6", title: "VR Controller", subtitle: "Spatial 6DOF Jog" },
+                    { icon: "_imgs/icons/icon_vr_headsetVR.svg?v=6", title: "Quest 3 VR", subtitle: "WebXR Teleop Twin" }
+                ]
+            },
+            {
+                title: "3D VISION & PERCEPTION",
+                icon: "fa-solid fa-camera",
+                color: "#4ade80",
+                countBadge: "3 Module",
+                items: [
+                    { icon: "_imgs/icons/icon_zed_m.svg?v=6", title: "ZED Mini Camera", subtitle: "Stereo Pointcloud" },
+                    { icon: "_imgs/icons/icon_object_detection.svg?v=7", title: "YOLO 3D", subtitle: "Object Detection" },
+                    { icon: "_imgs/icons/icon_tf_tuner.svg?v=6", title: "TF Tuner", subtitle: "Coordinate Control" }
+                ]
+            },
+            {
+                title: "UI (WEB INTERFACE)",
+                icon: "fa-solid fa-network-wired",
+                color: "#f59e0b",
+                countBadge: "4 Module",
+                items: [
+                    { icon: "_imgs/icons/icon_robot_control_ui.svg?v=6", title: "Robot Control UI", subtitle: "Port 8081 Webapp" },
+                    { icon: "_imgs/icons/icon_rviz.svg?v=6", title: "RViz2 Visualizer", subtitle: "3D Motion Display" },
+                    { icon: "_imgs/icons/icon_websocket.svg?v=6", title: "ROS 2 Bridge", subtitle: "Port 9090 WS" },
+                    { icon: "_imgs/icons/icon_server.svg?v=6", title: "Video Server", subtitle: "Port 8082 Stream" }
+                ]
+            }
+        ];
+
+        const rows = [
+            [sections[0], sections[1]],
+            [sections[2], sections[3]]
+        ];
+
+        let html = `<div class="user-overview-container">`;
+        rows.forEach(rowSections => {
+            html += `<div class="user-overview-row">`;
+            rowSections.forEach(sec => {
+                html += `
+                    <div class="user-overview-section" style="--sec-color: ${sec.color};">
+                        <div class="user-overview-section-header">
+                            <div class="user-sec-title-wrap">
+                                <i class="${sec.icon}" style="color: ${sec.color}; font-size: 14px;"></i>
+                                <span class="user-sec-title">${sec.title}</span>
+                            </div>
+                            <span class="user-sec-badge" style="color: ${sec.color}; border-color: ${sec.color}40; background: ${sec.color}15;">${sec.countBadge}</span>
+                        </div>
+                        <div class="user-overview-icons-grid">
+                `;
+                sec.items.forEach(item => {
+                    html += `
+                        <div class="user-icon-card">
+                            <div class="user-icon-badge">
+                                <img src="${item.icon}" alt="${item.title}" class="user-icon-img">
+                            </div>
+                            <div class="user-icon-title">${item.title}</div>
+                            <div class="user-icon-desc">${item.subtitle}</div>
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        });
+        html += `</div>`;
+        return html;
     }
 
     function openLaunchModal(wrapper, actionsData, toastMsg, popupId) {
@@ -681,10 +794,18 @@
            }
        });
        
+       // Titel-Elemente der Sequenz-Karten (fuer den dynamischen "+ Linear Axis"-Titel).
+       // WeakMap statt Property am Action-Objekt, sonst landete ein DOM-Knoten in TABS/config.
+       const seqTitleEls = new WeakMap();
+
        // ── Action Card Collapse (Ein-/Ausklappen pro Card, je Popup persistiert) ──
        const COLLAPSE_LS_KEY = 'ros2_nexus_cards_collapsed';
 
+       // Primaer in launcher_config.json (__cards_collapsed), damit das Layout
+       // browser- und rechneruebergreifend erhalten bleibt; localStorage nur
+       // als Rueckfall, falls der Server nicht erreichbar ist.
        const readCollapsedStore = () => {
+           if (window.TABS && window.TABS['__cards_collapsed']) return window.TABS['__cards_collapsed'];
            try { return JSON.parse(localStorage.getItem(COLLAPSE_LS_KEY) || '{}'); } catch (e) { return {}; }
        };
 
@@ -699,13 +820,36 @@
 
        const saveCardCollapsed = (cardKey, collapsed) => {
            if (!cardKey) return;
-           const store = readCollapsedStore();
+           const store = JSON.parse(JSON.stringify(readCollapsedStore()));
            popupCandidateKeys.forEach(pKey => {
                if (!pKey) return;
                if (!store[pKey]) store[pKey] = {};
                store[pKey][cardKey] = collapsed;
            });
+           if (!window.TABS) window.TABS = {};
+           window.TABS['__cards_collapsed'] = store;
            try { localStorage.setItem(COLLAPSE_LS_KEY, JSON.stringify(store)); } catch (e) {}
+           saveLayoutDebounced();
+       };
+
+       // Mehrere Klicks kurz hintereinander -> ein Schreibvorgang, ein Hinweis.
+       let layoutSaveTimer = null;
+       const saveLayoutDebounced = () => {
+           clearTimeout(layoutSaveTimer);
+           layoutSaveTimer = setTimeout(async () => {
+               try {
+                   const res = await fetch('/api/config', {
+                       method: 'POST',
+                       headers: { 'Content-Type': 'application/json' },
+                       body: JSON.stringify(window.TABS)
+                   });
+                   const data = await res.json();
+                   if (data.ok) showToast('✓ Layout gespeichert');
+                   else showToast('✗ Layout konnte nicht gespeichert werden', true);
+               } catch (err) {
+                   showToast('✗ Layout konnte nicht gespeichert werden', true);
+               }
+           }, 400);
        };
 
        // Haengt den kleinen Chevron-Button oben rechts in die Card.
@@ -870,6 +1014,16 @@
             const selectAllCb = document.getElementById('modal-select-all-cb');
             const selectAllText = document.getElementById('modal-select-all-text');
             const footerStatsText = document.getElementById('modal-footer-stats-text');
+            const startBtn = document.getElementById('launch-modal-start-btn');
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+
+            if (!actionsData || actionsData.length === 0 || (typeof isOverviewOnly !== 'undefined' && isOverviewOnly)) {
+                if (selectAllLbl) selectAllLbl.style.display = 'none';
+                if (footerStatsText) footerStatsText.textContent = '16 Systemkomponenten verfügbar · Übersicht';
+                if (startBtn) startBtn.classList.add('is-hidden');
+                if (cancelBtn) cancelBtn.textContent = 'Schließen';
+                return;
+            }
 
             if (!topUl) {
                 if (selectAllLbl) selectAllLbl.style.display = 'none';
@@ -881,6 +1035,12 @@
             const total = allCbs.length;
             const activeCount = allCbs.filter(c => c.checked).length;
 
+            if (total === 0) {
+                if (selectAllLbl) selectAllLbl.style.display = 'none';
+                if (footerStatsText) footerStatsText.textContent = 'Keine Aktionen konfiguriert';
+                return;
+            }
+
             if (selectAllCb) {
                 selectAllCb.checked = (total > 0 && activeCount === total);
                 selectAllCb.indeterminate = (activeCount > 0 && activeCount < total);
@@ -891,6 +1051,7 @@
             if (footerStatsText) {
                 footerStatsText.textContent = `${activeCount} von ${total} Aktionen aktiv · Bereit zur Ausführung`;
             }
+            refreshSeqSummary();
         };
         
         function syncLinearAxisState(isLinearAxisActive) {
@@ -911,6 +1072,8 @@
                     } else if (!act.title.toLowerCase().includes('linear axis')) {
                         act.title += ' + Linear Axis';
                     }
+                    const titleEl = seqTitleEls.get(act);
+                    if (titleEl) { titleEl.textContent = act.title; titleEl.title = act.title; }
                 }
             });
 
@@ -1143,6 +1306,11 @@
                             row.classList.toggle('row-active', isStaticObjectsActive);
                             row.classList.toggle('card-inactive', !isStaticObjectsActive);
                             row.classList.toggle('row-inactive', !isStaticObjectsActive);
+                            const innerCard = row.querySelector('.modal-action-card');
+                            if (innerCard) {
+                                innerCard.classList.toggle('card-active', isStaticObjectsActive);
+                                innerCard.classList.toggle('card-inactive', !(isStaticObjectsActive));
+                            }
                             const matchedAct = actionsData.find(a => a.cmd === rowCmd || a.baseCmd === rowCmd);
                             if (matchedAct) matchedAct.active = isStaticObjectsActive;
                         }
@@ -1275,6 +1443,11 @@
                             row.classList.toggle('row-active', !isIpCam);
                             row.classList.toggle('card-inactive', isIpCam);
                             row.classList.toggle('row-inactive', isIpCam);
+                            const innerCard = row.querySelector('.modal-action-card');
+                            if (innerCard) {
+                                innerCard.classList.toggle('card-active', !isIpCam);
+                                innerCard.classList.toggle('card-inactive', !(!isIpCam));
+                            }
                             const matchedAct = actionsData.find(a => a.cmd === rowCmd || a.baseCmd === rowCmd);
                             if (matchedAct) matchedAct.active = !isIpCam;
                         }
@@ -1512,7 +1685,6 @@
             function createArgsDiv(action) {
              const argsDiv = document.createElement('div');
              argsDiv.className = 'modal-args-list';
-             argsDiv.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; min-width: 0;';
              
              if (action && action.args.length > 0) {
                  // Ensure exactly one camera:= arg is checked initially
@@ -1599,9 +1771,31 @@
 
                  const argLaunchKey = launchKeyOf(action.baseCmd || action.cmd);
 
+                 // Chips thematisch gruppieren (Kamera, Greifer, Report, ...).
+                 // Die Gruppen entstehen in der Reihenfolge der Sortierung oben.
+                 const groupChipHosts = {};
+                 const groupHostFor = (argObj) => {
+                     const g = getArgGroup(argObj);
+                     if (groupChipHosts[g.key]) return groupChipHosts[g.key];
+                     const groupEl = document.createElement('div');
+                     groupEl.className = 'param-group';
+                     groupEl.dataset.group = g.key;
+                     const head = document.createElement('div');
+                     head.className = 'param-group-head';
+                     head.innerHTML = `<i class="${g.icon}"></i><span>${g.label}</span>` +
+                         (g.exclusive ? `<span class="param-group-hint" title="Diese Optionen schliessen sich gegenseitig aus">${g.exclusive}</span>` : '');
+                     const chips = document.createElement('div');
+                     chips.className = 'param-group-chips';
+                     groupEl.appendChild(head);
+                     groupEl.appendChild(chips);
+                     argsDiv.appendChild(groupEl);
+                     groupChipHosts[g.key] = chips;
+                     return chips;
+                 };
+
                  action.args.forEach(argObj => {
                      if (argObj.kind === 'gpu-toggle') {
-                         argsDiv.appendChild(buildWhisperDeviceToggle(argObj, saveActiveState));
+                         groupHostFor(argObj).appendChild(buildWhisperDeviceToggle(argObj, saveActiveState));
                          return;
                      }
                      const argLbl = document.createElement('label');
@@ -1692,25 +1886,384 @@
                     
                     argLbl.appendChild(argCb);
                     argLbl.appendChild(txtSpan);
-                    argsDiv.appendChild(argLbl);
+                    groupHostFor(argObj).appendChild(argLbl);
                 });
             } else {
                 const noArgsEl = document.createElement('div');
-                noArgsEl.style.cssText = 'font-family:var(--font-mono); font-size:11px; color:#64748b; font-style:italic; padding:6px 0; user-select:none;';
+                noArgsEl.className = 'param-empty';
                 noArgsEl.textContent = 'Keine Parameter';
                 argsDiv.appendChild(noArgsEl);
             }
             return argsDiv;
         }
 
+
+       // ── Sequenz-Karten im Stil der Multimodal-Uebersicht ────────────────────
+       // Kopf: Checkbox · Icons · Kategorie/Titel/Datei · Kennzahlen & CMD
+       // Body (einklappbar): Launch-Struktur | Parameter (thematisch gruppiert)
+       const escHtml = (str) => String(str == null ? '' : str)
+           .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+       // Zaehlt Sub-Launches (Eintraege mit Kindern oder LAUNCH-Badge),
+       // Befehle (EXEC/KILL/SYS/PUB) und Nodes (alles andere) im Launch-Baum.
+       const countLaunchTree = (ul) => {
+           const res = { launches: 0, nodes: 0, cmds: 0 };
+           if (!ul) return res;
+           ul.querySelectorAll('li').forEach(item => {
+               const kids = Array.from(item.children);
+               const badge = kids.find(c => c.classList && c.classList.contains('badge'));
+               const bc = badge ? badge.className : '';
+               if (kids.some(c => c.tagName === 'UL') || /badge-launch/.test(bc)) res.launches++;
+               else if (/badge-(exec|kill|sys|pub)/.test(bc)) res.cmds++;
+               else res.nodes++;
+           });
+           return res;
+       };
+
+       function buildSeqCard(li, action, o) {
+           const cat = getSeqCategory(action, o.cmdToDisplay);
+           const iconMetas = getActionIconMeta(action, o.cmdToDisplay);
+           const argCount = (action && action.args) ? action.args.length : 0;
+           const cmdStr = o.cmdToDisplay || '';
+
+           // Kopf-Infos aus dem Tooltip-Eintrag: Badge, Datei/Node-Name, Beschreibung
+           let badgeEl = null, nameText = '', descText = '';
+           const extraEls = [];
+           (o.headNodes || []).forEach(node => {
+               if (node.nodeType === 3) {
+                   const t = node.textContent.trim();
+                   if (!t) return;
+                   const sp = document.createElement('span');
+                   sp.textContent = t;
+                   node = sp;
+               }
+               if (node.nodeType !== 1) return;
+               const txt = (node.textContent || '').trim();
+               if (!badgeEl && node.classList.contains('badge')) { badgeEl = node; return; }
+               if (node.classList.contains('modal-cmd-btn')) return;
+               const isDesc = node.style.float === 'right' || (txt.startsWith('(') && txt.endsWith(')'));
+               if (isDesc && !descText) { descText = txt.replace(/^\(|\)$/g, '').trim(); return; }
+               if (!nameText && txt) { nameText = txt; return; }
+               if (txt) extraEls.push(node);
+           });
+           // Config-Aktionen (Sektions-Popups) tragen ihren Namen in "label"
+           const headline = (action && (action.title || action.label)) || nameText || cmdStr;
+           // Typ-Badge "CMD" nicht mit dem CMD-Kopierknopf rechts verwechseln lassen
+           if (badgeEl && badgeEl.classList.contains('badge-sys') && badgeEl.textContent.trim() === 'CMD') {
+               badgeEl.innerHTML = '<i class="fa-solid fa-terminal"></i>SHELL';
+               badgeEl.title = 'Shell-Befehl';
+           }
+
+           const cardDiv = document.createElement('div');
+           cardDiv.className = 'modal-action-card seq-card ' + (o.isChecked ? 'card-active' : 'card-inactive');
+           cardDiv.style.setProperty('--sec-color', cat.color);
+           cardDiv.dataset.cat = cat.key;
+
+           // ── Kopf ──
+           const head = document.createElement('div');
+           head.className = 'seq-card-head';
+
+           const mainCb = document.createElement('input');
+           mainCb.type = 'checkbox';
+           mainCb.className = 'main-action-cb';
+           mainCb.checked = o.isChecked;
+           mainCb.title = 'Beim EXECUTE mitstarten';
+           const cbWrap = document.createElement('div');
+           cbWrap.className = 'modal-cb-wrap';
+           cbWrap.appendChild(mainCb);
+           head.appendChild(cbWrap);
+
+           if (iconMetas.length > 0) {
+               const icons = document.createElement('div');
+               icons.className = 'seq-card-icons';
+               iconMetas.forEach(meta => {
+                   const iconBadge = document.createElement('div');
+                   iconBadge.className = 'modal-card-icon-badge';
+                   iconBadge.title = meta.label;
+                   const img = document.createElement('img');
+                   img.src = meta.path;
+                   img.className = 'modal-card-side-img';
+                   img.alt = meta.label;
+                   iconBadge.appendChild(img);
+                   icons.appendChild(iconBadge);
+               });
+               head.appendChild(icons);
+           }
+
+           const titles = document.createElement('div');
+           titles.className = 'seq-card-titles';
+           const eyebrow = document.createElement('div');
+           eyebrow.className = 'seq-card-eyebrow';
+           eyebrow.innerHTML = `<i class="${cat.icon}"></i><span>${escHtml(cat.label)}</span>`;
+           const titleEl = document.createElement('div');
+           titleEl.className = 'seq-card-title';
+           titleEl.textContent = headline;
+           titleEl.title = headline;
+           if (action) seqTitleEls.set(action, titleEl);
+           const sub = document.createElement('div');
+           sub.className = 'seq-card-sub';
+           if (badgeEl) { badgeEl.removeAttribute('style'); sub.appendChild(badgeEl); }
+           if (nameText && nameText !== headline) {
+               const fileEl = document.createElement('span');
+               fileEl.className = 'seq-card-file';
+               fileEl.textContent = nameText;
+               fileEl.title = nameText;
+               sub.appendChild(fileEl);
+           }
+           if (descText && descText !== headline) {
+               const descEl = document.createElement('span');
+               descEl.className = 'seq-card-desc';
+               descEl.textContent = descText;
+               descEl.title = descText;
+               sub.appendChild(descEl);
+           }
+           extraEls.forEach(el => { el.removeAttribute('style'); el.classList.add('seq-card-desc'); sub.appendChild(el); });
+           titles.appendChild(eyebrow);
+           titles.appendChild(titleEl);
+           if (sub.childNodes.length) titles.appendChild(sub);
+           // Port-Zeile: welcher Port wofuer verwendet wird
+           const ports = getActionPorts(cmdStr);
+           if (ports.length) {
+               const portsEl = document.createElement('div');
+               portsEl.className = 'seq-card-ports';
+               ports.forEach(pt => {
+                   const chip = document.createElement('span');
+                   chip.className = 'seq-port';
+                   chip.title = `Port ${pt.port}: ${pt.use}`;
+                   chip.innerHTML = `<i class="${pt.icon}"></i><b>${pt.port}</b><span>${escHtml(pt.use)}</span>`;
+                   portsEl.appendChild(chip);
+               });
+               titles.appendChild(portsEl);
+           }
+           head.appendChild(titles);
+
+           // Rechts: Kennzahlen (Zeile 1), Technik-Badges + CMD + Chevron (Zeile 2)
+           const meta = document.createElement('div');
+           meta.className = 'seq-card-meta';
+           const stats = document.createElement('div');
+           stats.className = 'seq-card-stats';
+           const addStat = (icon, n, one, many, tip) => {
+               if (!n) return;
+               const st = document.createElement('span');
+               st.className = 'seq-stat';
+               st.title = tip;
+               st.innerHTML = `<i class="${icon}"></i>${n} ${n === 1 ? one : many}`;
+               stats.appendChild(st);
+           };
+           const tree = countLaunchTree(o.ulNode);
+           addStat('fa-solid fa-diagram-project', tree.launches, 'Sub-Launch', 'Sub-Launches', 'Eingebundene Launch-Dateien');
+           addStat('fa-solid fa-circle-nodes', tree.nodes, 'Node', 'Nodes', 'Gestartete Nodes & Server');
+           addStat('fa-solid fa-terminal', tree.cmds, 'Befehl', 'Befehle', 'Zusaetzliche Shell-Befehle');
+           addStat('fa-solid fa-sliders', argCount, 'Parameter', 'Parameter', 'Waehlbare Parameter & Launch-Argumente');
+
+           const actionsRow = document.createElement('div');
+           actionsRow.className = 'seq-card-actions';
+           const addTech = (cls, icon, label) => {
+               const b = document.createElement('span');
+               b.className = 'seq-tech ' + cls;
+               b.innerHTML = `<i class="${icon}"></i>${label}`;
+               actionsRow.appendChild(b);
+           };
+           if (cmdStr.startsWith('ros2 run')) addTech('seq-tech-ros', 'fa-solid fa-robot', 'ROS 2');
+           if (cmdStr.includes('python3')) addTech('seq-tech-py', 'fa-brands fa-python', 'Python3');
+           if (cmdStr.includes('google-chrome') || cmdStr.includes('chromium-browser')) addTech('seq-tech-chrome', 'fa-brands fa-chrome', '+Chrome');
+           actionsRow.appendChild(createCmdBadge(o.cmdToCopy || cmdStr));
+
+           if (stats.childNodes.length) meta.appendChild(stats);
+           meta.appendChild(actionsRow);
+           head.appendChild(meta);
+           cardDiv.appendChild(head);
+
+           // ── Body: Launch-Struktur | Parameter, sonst der Befehl ──
+           // Jede Karte bekommt einen Body und damit einen Chevron - sonst
+           // fehlt er bei einzelnen Nodes und die Karten wirken uneinheitlich.
+           const hasTree = !!o.ulNode;
+           const hasArgs = argCount > 0;
+           {
+               const body = document.createElement('div');
+               body.className = 'seq-card-body' + (hasTree ? ' has-tree' : '') + (hasArgs ? ' has-params' : '');
+
+               if (!hasTree && !hasArgs) {
+                   const pane = document.createElement('div');
+                   pane.className = 'seq-pane seq-pane-cmd';
+                   pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-terminal"></i><b>Befehl</b></div>`;
+                   const code = document.createElement('code');
+                   code.className = 'seq-cmd-line';
+                   code.textContent = o.cmdToCopy || cmdStr;
+                   pane.appendChild(code);
+                   body.appendChild(pane);
+               }
+
+               if (hasTree) {
+                   const pane = document.createElement('div');
+                   pane.className = 'seq-pane seq-pane-tree modal-card-left-col';
+                   pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-sitemap"></i><b>Launch-Struktur</b></div>`;
+                   o.ulNode.removeAttribute('style');
+                   o.ulNode.querySelectorAll('ul').forEach(subUl => subUl.classList.add('sub-launch-tree'));
+                   pane.appendChild(o.ulNode);
+                   body.appendChild(pane);
+               }
+               if (hasArgs) {
+                   const pane = document.createElement('div');
+                   pane.className = 'seq-pane seq-pane-params';
+                   pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-sliders"></i><b>Parameter &amp; Args</b></div>`;
+                   pane.appendChild(createArgsDiv(action));
+                   body.appendChild(pane);
+               }
+               cardDiv.appendChild(body);
+
+               attachCardCollapse(cardDiv, actionsRow,
+                   (action && (action.cmd || action.baseCmd)) || cmdStr || li.dataset.cmd,
+                   [body]);
+           }
+
+           li.className = 'modal-card-row ' + (o.isChecked ? 'row-active' : 'row-inactive');
+           li.innerHTML = '';
+           li.appendChild(cardDiv);
+
+           mainCb.onclick = (e) => e.stopPropagation();
+           mainCb.onchange = (e) => {
+               if (action) action.active = e.target.checked;
+               cardDiv.classList.toggle('card-active', e.target.checked);
+               cardDiv.classList.toggle('card-inactive', !e.target.checked);
+               li.classList.toggle('row-active', e.target.checked);
+               li.classList.toggle('row-inactive', !e.target.checked);
+
+               if (action && (action.cmd.includes('fake_linear_axis') || action.cmd.includes('linear_axis'))) {
+                   syncLinearAxisState(e.target.checked);
+               }
+
+               updateModalStats();
+               if (!e.simulated) saveActiveState();
+           };
+
+           li.onclick = (e) => {
+               if (e.target === mainCb || e.target.closest('label') || e.target.closest('a') || e.target.closest('.modal-cmd-btn') || e.target.closest('button') || e.target.closest('.param-device-switch')) return;
+               mainCb.checked = !mainCb.checked;
+               mainCb.dispatchEvent(new Event('change'));
+           };
+       }
+
+       // Leiste ueber den Karten: je Bereich aktive/gesamt, Klick springt hin.
+       // Ersetzt den alten Hinweis "Included Source Files:".
+       function buildSeqSummary(topUl) {
+           const container = topUl.parentElement;
+           if (!container) return;
+           Array.from(container.children).forEach(c => {
+               if (c !== topUl && c.tagName !== 'UL' && /Included Source Files/i.test(c.textContent || '')) c.remove();
+           });
+
+           const cats = [];
+           topUl.querySelectorAll('.seq-card').forEach(card => {
+               if (!cats.includes(card.dataset.cat)) cats.push(card.dataset.cat);
+           });
+           if (cats.length === 0) return;
+
+           const strip = document.createElement('div');
+           strip.className = 'seq-summary';
+           strip.innerHTML = `<span class="seq-summary-title"><i class="fa-solid fa-layer-group"></i>Komponenten</span>`;
+           cats.forEach(key => {
+               const cat = SEQ_CATEGORIES[key] || SEQ_CATEGORIES.system;
+               const chip = document.createElement('button');
+               chip.type = 'button';
+               chip.className = 'seq-cat-chip';
+               chip.dataset.cat = key;
+               chip.style.setProperty('--sec-color', cat.color);
+               chip.title = `Zu "${cat.label}" springen`;
+               chip.innerHTML = `<i class="${cat.icon}"></i><span class="seq-cat-label">${escHtml(cat.label)}</span><span class="seq-cat-count">–</span>`;
+               chip.onclick = (e) => {
+                   e.stopPropagation();
+                   const first = topUl.querySelector(`.seq-card[data-cat="${key}"]`);
+                   if (first) first.scrollIntoView({ behavior: 'smooth', block: 'start' });
+               };
+               strip.appendChild(chip);
+           });
+           container.insertBefore(strip, topUl);
+           refreshSeqSummary();
+       }
+
+       // Masonry fuer die zwei Kartenspalten: Grid mit 1px-Zeilen, jede Karte
+       // spannt so viele Zeilen wie sie hoch ist (+ Abstand). Dadurch rutscht
+       // die naechste Karte direkt unter die kuerzere Spalte statt an die
+       // Unterkante der hoeheren Nachbarkarte. Die <li> bleiben direkte Kinder
+       // der Liste, damit SortableJS weiter funktioniert. Der ResizeObserver
+       // haelt die Spans beim Ein-/Ausklappen und bei Breitenwechseln aktuell.
+       const SEQ_CARD_GAP_PX = 20;
+       function attachSeqMasonry(listEl) {
+           let queued = false;
+           const relayout = () => {
+               queued = false;
+               Array.from(listEl.children).forEach(li => {
+                   if (li.tagName !== 'LI') return;
+                   const card = li.firstElementChild || li;
+                   // offsetHeight statt getBoundingClientRect: das Popup-Fenster
+                   // hat CSS-zoom, das Grid rechnet in ungezoomten Pixeln.
+                   const h = card.offsetHeight;
+                   li.style.gridRowEnd = `span ${Math.max(1, Math.ceil(h + SEQ_CARD_GAP_PX))}`;
+               });
+           };
+           // Die Liste wird gebaut, bevor das Popup im DOM haengt; abgemeldet
+           // wird erst, wenn sie nach dem Schliessen wieder verschwunden ist.
+           let wasConnected = false;
+           const ro = new ResizeObserver(() => {
+               if (!listEl.isConnected) {
+                   if (wasConnected) { ro.disconnect(); mo.disconnect(); }
+                   return;
+               }
+               wasConnected = true;
+               if (queued) return;
+               queued = true;
+               requestAnimationFrame(relayout);
+           });
+           ro.observe(listEl);
+           Array.from(listEl.children).forEach(li => {
+               if (li.tagName === 'LI') ro.observe(li.firstElementChild || li);
+           });
+           // Nach Drag & Drop koennen <li> neu sortiert sein - Spans neu setzen.
+           const mo = new MutationObserver(() => {
+               Array.from(listEl.children).forEach(li => {
+                   if (li.tagName === 'LI') ro.observe(li.firstElementChild || li);
+               });
+               if (!queued) { queued = true; requestAnimationFrame(relayout); }
+           }).observe(listEl, { childList: true });
+       }
+
+       function refreshSeqSummary() {
+           const root = document.getElementById('launch-modal-body') || contentClone;
+           if (!root) return;
+           root.querySelectorAll('.seq-cat-chip').forEach(chip => {
+               const cards = Array.from(root.querySelectorAll(`.seq-card[data-cat="${chip.dataset.cat}"]`));
+               const active = cards.filter(c => { const cb = c.querySelector('.main-action-cb'); return cb && cb.checked; }).length;
+               const cnt = chip.querySelector('.seq-cat-count');
+               if (cnt) cnt.textContent = `${active}/${cards.length}`;
+               chip.classList.toggle('is-idle', active === 0);
+           });
+       }
+
+       const isOverviewOnly = (!actionsData || actionsData.length === 0 || popupId === 'sec_nodes_0' || effPopupId === 'sec_nodes_0' || (titleHTML && titleHTML.includes('Start - Multimodal Teleoperation')));
+       if (isOverviewOnly) {
+          contentClone.innerHTML = buildUserAppOverviewHtml();
+       } else {
        const topUls = Array.from(contentClone.children).filter(n => n.tagName === 'UL');
        if (topUls.length > 0) {
           const topUl = topUls[0];
-          topUl.style.cssText = 'width: 100%; max-width: 1380px; margin: 0 auto; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 14px;';
-          let hasAnyDual = false;
+          topUl.removeAttribute('style');
+          topUl.classList.add('seq-card-list');
           
           const topLis = Array.from(topUl.children).filter(n => n.tagName === 'LI');
           const matchedCmds = new Set();
+          if (topLis.length === 0) {
+              Array.from(contentClone.children).forEach(c => {
+                  if (c !== topUl) c.remove();
+              });
+              topUl.innerHTML = `
+                <div style="padding: 60px 20px; text-align: center; color: var(--dim); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
+                  <i class="fa-regular fa-folder-open" style="font-size: 42px; color: rgba(255,255,255,0.2);"></i>
+                  <div style="font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 0.5px;">Keine Launch Action Cards konfiguriert</div>
+                  <div style="font-size: 12px; color: var(--mut); max-width: 400px; line-height: 1.5;">Dieser Bereich ist derzeit leer. Launch Action Cards können hier später hinzugefügt werden.</div>
+                </div>
+              `;
+          } else {
           topLis.forEach(li => {
               let action = null;
               const actionIndex = li.dataset.actionIndex !== undefined ? parseInt(li.dataset.actionIndex, 10) : -1;
@@ -1748,224 +2301,17 @@
               
               const rawCmdData = li.getAttribute('data-raw-cmd');
               const cmdToDisplay = (action && action.cmd) ? action.cmd : (rawCmdData ? rawCmdData : (li.dataset.cmd || ''));
-              const isLaunchCard = (action && action.cmd && action.cmd.startsWith('ros2 launch')) || (cmdToDisplay && cmdToDisplay.startsWith('ros2 launch'));
-
-              // Build Flex Layout
-              const cardLayout = document.createElement('div');
-              cardLayout.className = 'modal-card-layout';
-              cardLayout.style.cssText = 'display: flex; width: 100%; justify-content: space-between; align-items: stretch; gap: 20px; flex: 1; min-width: 0;';
-              
-              const leftCol = document.createElement('div');
-              leftCol.className = 'modal-card-left-col';
-              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1 1 0%; min-width: 0; overflow: visible;';
-              
-              const titleDiv = document.createElement('div');
-              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0; width: 100%; overflow: visible;';
-              
-              const ulNode = Array.from(li.childNodes).find(n => n.tagName === 'UL');
-              Array.from(li.childNodes).forEach(node => {
-                  if (node !== ulNode) {
-                      if (node.nodeType === 1) {
-                          const textContent = (node.textContent || '').trim();
-                          const isDesc = (node.style.float === 'right') || 
-                                         (textContent.startsWith('(') && textContent.endsWith(')'));
-                          if (isDesc) {
-                              node.style.float = 'none';
-                              node.style.marginLeft = '6px';
-                              node.style.fontSize = '10.5px';
-                              node.style.color = '#64748b';
-                              node.style.whiteSpace = 'nowrap';
-                              node.style.overflow = 'hidden';
-                              node.style.textOverflow = 'ellipsis';
-                              node.style.flexShrink = '2';
-                              node.style.minWidth = '0';
-                          } else if (!node.classList.contains('badge') && !node.classList.contains('modal-cmd-btn')) {
-                              node.style.whiteSpace = 'nowrap';
-                              node.style.overflow = 'hidden';
-                              node.style.textOverflow = 'ellipsis';
-                              node.style.flexShrink = '1';
-                              node.style.minWidth = '0';
-                              node.style.fontSize = '12.5px';
-                              node.style.fontWeight = '600';
-                          }
-                      }
-                      titleDiv.appendChild(node);
-                  }
-              });
-              
-              leftCol.appendChild(titleDiv);
-              if (ulNode) {
-                  ulNode.style.cssText = 'margin-left: 6px; margin-top: 20px; margin-bottom: 2px; border: none; padding: 0;';
-                  ulNode.querySelectorAll('ul').forEach(subUl => {
-                      subUl.classList.add('sub-launch-tree');
-                  });
-                  leftCol.appendChild(ulNode);
-              }
-
-              const middleCol = document.createElement('div');
-              middleCol.className = 'modal-card-middle-col has-divider-v';
-              
-              const spacer = document.createElement('div');
-              spacer.className = 'modal-params-header';
-              spacer.style.cssText = 'height: 32px; min-height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 6px;';
-              spacer.innerHTML = `<i class="fa-solid fa-sliders" style="font-size:10px; color:var(--accent);"></i> <span>PARAMETERS &amp; ARGS</span>`;
-              middleCol.appendChild(spacer);
-              
-              const argsDiv = createArgsDiv(action);
-              argsDiv.style.marginTop = '20px';
-              middleCol.appendChild(argsDiv);
-              
-              const badgeContainer = document.createElement('div');
-              badgeContainer.style.cssText = 'display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0;';
-              titleDiv.appendChild(badgeContainer);
-
-              let isRos2 = (action && action.cmd && action.cmd.startsWith('ros2 run')) || (cmdToDisplay && cmdToDisplay.startsWith('ros2 run'));
-              if (isRos2) {
-                  const ros2Badge = document.createElement('div');
-                  ros2Badge.innerHTML = `<i class="fa-solid fa-robot"></i> ROS 2`;
-                  ros2Badge.style.cssText = 'background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#93c5fd; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
-                  badgeContainer.appendChild(ros2Badge);
-              }
-              
-              let hasPython3 = (action && action.cmd && action.cmd.includes('python3')) || (cmdToDisplay && cmdToDisplay.includes('python3'));
-              if (hasPython3) {
-                  const pythonBadge = document.createElement('div');
-                  pythonBadge.innerHTML = `<i class="fa-brands fa-python"></i> Python3`;
-                  pythonBadge.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#fde047; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
-                  badgeContainer.appendChild(pythonBadge);
-              }
-              
-              let hasChrome = (action && action.cmd && (action.cmd.includes('google-chrome') || action.cmd.includes('chromium-browser'))) || (cmdToDisplay && (cmdToDisplay.includes('google-chrome') || cmdToDisplay.includes('chromium-browser')));
-              if (hasChrome) {
-                  const chromeBadge = document.createElement('div');
-                  chromeBadge.innerHTML = `<i class="fa-brands fa-chrome"></i> +CHROME`;
-                  chromeBadge.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#4285F4; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
-                  badgeContainer.appendChild(chromeBadge);
-              }
-              
-              const cmdToCopy = rawCmdData ? rawCmdData : (action ? action.cmd : text);
-              const cmdBadge1 = createCmdBadge(cmdToCopy);
-              badgeContainer.appendChild(cmdBadge1);
-
-              let descText = 'Details zur Node / zum Launch-File';
-              const rightSpan = Array.from(titleDiv.children).find(n => n.tagName === 'SPAN' && (n.style.marginLeft === 'auto' || n.style.float === 'right'));
-              if (rightSpan) {
-                  descText = rightSpan.textContent.replace(/^\(|\)$/g, '').trim();
-                  rightSpan.style.color = '#94a3b8';
-                  rightSpan.style.fontSize = '12px';
-              } else if (action && action.title) {
-                  descText = action.title;
-              }
-              
-              const infoBadge = document.createElement('div');
-              infoBadge.innerHTML = `<i class="fa-solid fa-circle-info"></i><div class="info-tooltip" style="position:absolute; top:28px; right:0; background:rgba(15,23,42,0.96); border:1px solid rgba(56,189,248,0.4); border-radius:8px; padding:10px 14px; font-size:11px; color:#f8fafc; white-space:normal; width:max-content; max-width:280px; pointer-events:none; opacity:0; transition:opacity 0.2s ease; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:100; line-height:1.4;">${descText.replace(/"/g, '&quot;')}</div>`;
-              infoBadge.style.cssText = 'position:relative; width:22px; height:22px; background:rgba(255,255,255,0.06); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; color:#94a3b8; cursor:help; transition:all 0.2s ease; border:1px solid rgba(255,255,255,0.12); flex-shrink:0;';
-              infoBadge.onmouseover = () => {
-                  infoBadge.style.background = 'rgba(56,189,248,0.15)';
-                  infoBadge.style.borderColor = 'rgba(56,189,248,0.4)';
-                  infoBadge.style.color = '#38bdf8';
-                  infoBadge.querySelector('.info-tooltip').style.opacity = '1';
-              };
-              infoBadge.onmouseout = () => {
-                  infoBadge.style.background = 'rgba(255,255,255,0.06)';
-                  infoBadge.style.borderColor = 'rgba(255,255,255,0.12)';
-                  infoBadge.style.color = '#94a3b8';
-                  infoBadge.querySelector('.info-tooltip').style.opacity = '0';
-              };
-              badgeContainer.appendChild(infoBadge);
-              
-              const isChecked = action ? !!action.active : (activeSet ? (activeSet.has(li.dataset.cmd) || (action && action.baseCmd && activeSet.has(action.baseCmd))) : true);
+              const ulNode = Array.from(li.children).find(n => n.tagName === 'UL') || null;
+              const isChecked = action ? !!action.active : (activeSet ? activeSet.has(li.dataset.cmd) : true);
               if (action) action.active = isChecked;
 
-              const mainCb = document.createElement('input');
-              mainCb.type = 'checkbox';
-              mainCb.className = 'main-action-cb';
-              mainCb.checked = isChecked;
-
-              cardLayout.appendChild(leftCol);
-              cardLayout.appendChild(middleCol);
-
-              const iconMetas = getActionIconMeta(action, cmdToDisplay);
-              const isDual = iconMetas.length > 1;
-              if (isDual) hasAnyDual = true;
-
-              const iconCol = document.createElement('div');
-              iconCol.className = 'modal-card-icon-col' + (isDual ? ' is-vr-dual is-multiple-icons' : '') + (iconMetas.length === 0 ? ' is-empty-spacer' : '');
-
-              iconMetas.forEach(meta => {
-                  const iconBadge = document.createElement('div');
-                  iconBadge.className = 'modal-card-icon-badge';
-                  iconBadge.title = meta.label;
-
-                  const img = document.createElement('img');
-                  img.src = meta.path;
-                  img.className = 'modal-card-side-img';
-                  img.alt = meta.label;
-
-                  iconBadge.appendChild(img);
-                  iconCol.appendChild(iconBadge);
+              buildSeqCard(li, action, {
+                  ulNode,
+                  headNodes: Array.from(li.childNodes).filter(n => n !== ulNode),
+                  cmdToDisplay,
+                  cmdToCopy: rawCmdData || cmdToDisplay,
+                  isChecked
               });
-
-              const cbContainer = document.createElement('div');
-              cbContainer.className = 'modal-cb-wrap';
-              cbContainer.appendChild(mainCb);
-
-              const liInnerWrapper = document.createElement('div');
-              liInnerWrapper.style.cssText = 'display: flex; align-items: stretch; width: 100%; gap: 14px;';
-              liInnerWrapper.appendChild(cbContainer);
-              liInnerWrapper.appendChild(iconCol);
-              liInnerWrapper.appendChild(cardLayout);
-              
-              const cardDiv = document.createElement('div');
-              cardDiv.className = 'modal-action-card ' + (isChecked ? 'card-active' : 'card-inactive');
-              cardDiv.appendChild(liInnerWrapper);
-              
-              const hasBodyContent = !!ulNode || (action && action.args && action.args.length > 0);
-              if (hasBodyContent) {
-                  const hrLine = document.createElement('div');
-                  hrLine.className = 'modal-card-divider-h';
-                  hrLine.style.position = 'absolute';
-                  hrLine.style.top = '52px';
-                  hrLine.style.left = '142px';
-                  hrLine.style.width = 'calc(100% - 158px)';
-                  hrLine.style.height = '1px';
-                  hrLine.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
-                  hrLine.style.pointerEvents = 'none';
-                  cardDiv.appendChild(hrLine);
-              }
-
-              // Chevron nur, wenn es auch etwas einzuklappen gibt (Baum oder Args)
-              if (hasBodyContent) {
-                  attachCardCollapse(cardDiv, spacer,
-                      (action && (action.cmd || action.baseCmd)) || cmdToDisplay || li.dataset.cmd,
-                      [ulNode, argsDiv]);
-              }
-
-              li.className = 'modal-card-row ' + (isChecked ? 'row-active' : 'row-inactive');
-              li.innerHTML = '';
-              li.appendChild(cardDiv);
-
-              mainCb.onclick = (e) => e.stopPropagation();
-              mainCb.onchange = (e) => {
-                  if (action) action.active = e.target.checked;
-                  cardDiv.classList.toggle('card-active', e.target.checked);
-                  cardDiv.classList.toggle('card-inactive', !e.target.checked);
-                  li.classList.toggle('row-active', e.target.checked);
-                  li.classList.toggle('row-inactive', !e.target.checked);
-                  
-                  if (action && (action.cmd.includes('fake_linear_axis') || action.cmd.includes('linear_axis'))) {
-                      syncLinearAxisState(e.target.checked);
-                  }
-                  
-                  updateModalStats();
-                  if (!e.simulated) saveActiveState();
-              };
-              
-              li.onclick = (e) => {
-                  if (e.target === mainCb || e.target.closest('label') || e.target.closest('a') || e.target.closest('.modal-cmd-btn') || e.target.closest('button')) return;
-                  mainCb.checked = !mainCb.checked;
-                  mainCb.dispatchEvent(new Event('change'));
-              };
           });
           
               // Append any unmatched actions to the bottom to ensure nothing is missing
@@ -1974,170 +2320,38 @@
               const li = document.createElement('li');
               li.dataset.cmd = action.cmd;
               parseArgs(action);
-              let isActive = action ? !!action.active : (activeSet ? (activeSet.has(li.dataset.cmd) || (action && action.baseCmd && activeSet.has(action.baseCmd))) : true);
-              action.active = isActive;
-              
-              li.className = 'modal-action-card ' + (isActive ? 'card-active' : 'card-inactive');
-              
-              let baseHtml = `<span class="badge badge-node" style="margin-right: 6px;"><svg viewBox="0 0 100 100" style="width: 10px; height: 10px; margin-right: 4px; vertical-align: -0.15em;" fill="currentColor"><g stroke="currentColor" stroke-width="8"><line x1="61.3" y1="38.7" x2="80" y2="20"/><line x1="39.7" y1="37.7" x2="25" y2="20"/><line x1="34" y1="50" x2="15" y2="50"/><line x1="50" y1="66" x2="50" y2="85"/></g><circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="80" cy="20" r="11" fill="currentColor"/><circle cx="25" cy="20" r="11" fill="currentColor"/><circle cx="15" cy="50" r="11" fill="currentColor"/><circle cx="50" cy="85" r="11" fill="currentColor"/></svg> SCRIPT</span>`;
+              const isChecked = !!action.active;
+
+              let badgeHtml = `<span class="badge badge-node"><i class="fa-solid fa-code"></i>SCRIPT</span>`;
               if (action.cmd.startsWith('ros2 launch')) {
-                  baseHtml = `<span class="badge badge-launch" style="margin-right: 6px;"><i class="fa-solid fa-rocket" style="margin-right: 4px;"></i>LAUNCH</span>`;
+                  badgeHtml = `<span class="badge badge-launch"><i class="fa-solid fa-rocket"></i>LAUNCH</span>`;
+              } else if (action.cmd.startsWith('ros2 run')) {
+                  badgeHtml = `<span class="badge badge-node"><i class="fa-solid fa-circle-nodes"></i>NODE</span>`;
               } else if (action.cmd.includes('python3 -m http.server') || action.cmd.includes('http_robot_control_ui_p8081')) {
-                  baseHtml = `<span class="badge badge-server" style="margin-right: 6px;"><i class="fa-solid fa-server" style="margin-right: 4px;"></i>SERVER</span>`;
+                  badgeHtml = `<span class="badge badge-server"><i class="fa-solid fa-server"></i>SERVER</span>`;
               }
-              
-              let cmdName = action.title || action.cmd.split(' ').slice(0, 3).join(' ');
-              
-              const cardLayout = document.createElement('div');
-              cardLayout.className = 'modal-card-layout';
-              cardLayout.style.cssText = 'display: flex; width: 100%; justify-content: space-between; align-items: stretch; gap: 20px; flex: 1; min-width: 0;';
-              
-              const leftCol = document.createElement('div');
-              leftCol.className = 'modal-card-left-col';
-              leftCol.style.cssText = 'display: flex; flex-direction: column; gap: 0; flex: 1 1 0%; min-width: 0; overflow: visible;';
-              
-              const titleDiv = document.createElement('div');
-              titleDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; height: 32px; min-height: 32px; flex-wrap: nowrap; min-width: 0; width: 100%; overflow: visible;';
-              titleDiv.innerHTML = `${baseHtml}<span style="color: var(--c-launch); font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-shrink: 1;">${cmdName}</span> <span style="color: #64748b; font-size: 10.5px; margin-left: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 2; min-width: 0;">(Auto-Added)</span>`;
-              leftCol.appendChild(titleDiv);
-              
-              const isLaunchCard2 = action.cmd.startsWith('ros2 launch');
-              const middleCol = document.createElement('div');
-              middleCol.className = 'modal-card-middle-col has-divider-v';
-              
-              const spacer = document.createElement('div');
-              spacer.className = 'modal-params-header';
-              spacer.style.cssText = 'height: 32px; min-height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 6px;';
-              spacer.innerHTML = `<i class="fa-solid fa-sliders" style="font-size:10px; color:var(--accent);"></i> <span>PARAMETERS &amp; ARGS</span>`;
-              middleCol.appendChild(spacer);
-              
-              const argsDiv = createArgsDiv(action);
-              argsDiv.style.marginTop = '20px';
-              middleCol.appendChild(argsDiv);
-              
-              const badgeContainer = document.createElement('div');
-              badgeContainer.style.cssText = 'display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0;';
-              
-              if (action.cmd.startsWith('ros2 run')) {
-                  const ros2Badge2 = document.createElement('div');
-                  ros2Badge2.innerHTML = `<i class="fa-solid fa-robot"></i> ROS 2`;
-                  ros2Badge2.style.cssText = 'background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#93c5fd; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
-                  badgeContainer.appendChild(ros2Badge2);
-              }
-              if (action.cmd.includes('python3')) {
-                  const pythonBadge2 = document.createElement('div');
-                  pythonBadge2.innerHTML = `<i class="fa-brands fa-python"></i> Python3`;
-                  pythonBadge2.style.cssText = 'background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#fde047; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
-                  badgeContainer.appendChild(pythonBadge2);
-              }
-              if (action.cmd.includes('google-chrome') || action.cmd.includes('chromium-browser')) {
-                  const chromeBadge2 = document.createElement('div');
-                  chromeBadge2.innerHTML = `<i class="fa-brands fa-chrome"></i> +CHROME`;
-                  chromeBadge2.style.cssText = 'background:rgba(66,133,244,0.15); border:1px solid rgba(66,133,244,0.35); border-radius:5px; padding:2px 6px; font-size:9.5px; color:#4285F4; font-weight:bold; letter-spacing:0.5px; display:flex; align-items:center; gap:4px; flex-shrink:0;';
-                  badgeContainer.appendChild(chromeBadge2);
-              }
-              
-              const cmdBadge1 = createCmdBadge(action.cmd);
-              badgeContainer.appendChild(cmdBadge1);
-              
-              titleDiv.appendChild(badgeContainer);
-              
-              const isChecked2 = action ? !!action.active : (activeSet ? (activeSet.has(li.dataset.cmd) || (action && action.baseCmd && activeSet.has(action.baseCmd))) : true);
-              if (action) action.active = isChecked2;
+              // "ros2 launch <pkg> <file>" / "ros2 run <pkg> <exe>" -> Datei bzw. Executable
+              const cmdTokens = action.cmd.split(/\s+/);
+              const entryName = (/^ros2 (launch|run)$/.test(cmdTokens.slice(0, 2).join(' ')) && cmdTokens[3])
+                  ? cmdTokens[3] : cmdTokens.slice(0, 3).join(' ');
 
-              const mainCb = document.createElement('input');
-              mainCb.type = 'checkbox';
-              mainCb.className = 'main-action-cb';
-              mainCb.checked = isChecked2;
+              const headTmp = document.createElement('div');
+              headTmp.innerHTML = `${badgeHtml}<span></span><span style="float: right;">(Auto-Added)</span>`;
+              headTmp.children[1].textContent = entryName;
 
-              cardLayout.appendChild(leftCol);
-              cardLayout.appendChild(middleCol);
+              buildSeqCard(li, action, {
+                  ulNode: null,
+                  headNodes: Array.from(headTmp.childNodes),
+                  cmdToDisplay: action.cmd,
+                  cmdToCopy: action.cmd,
+                  isChecked
+              });
 
-                const iconMetas2 = getActionIconMeta(action, action.cmd);
-                const isDual2 = iconMetas2.length > 1;
-                if (isDual2) hasAnyDual = true;
+              topUl.appendChild(li);
+          });
 
-                const iconCol2 = document.createElement('div');
-                iconCol2.className = 'modal-card-icon-col' + (isDual2 ? ' is-vr-dual is-multiple-icons' : '') + (iconMetas2.length === 0 ? ' is-empty-spacer' : '');
-
-                iconMetas2.forEach(meta => {
-                    const iconBadge2 = document.createElement('div');
-                    iconBadge2.className = 'modal-card-icon-badge';
-                    iconBadge2.title = meta.label;
-
-                    const img2 = document.createElement('img');
-                    img2.src = meta.path;
-                    img2.className = 'modal-card-side-img';
-                    img2.alt = meta.label;
-
-                    iconBadge2.appendChild(img2);
-                    iconCol2.appendChild(iconBadge2);
-                });
-
-                const cbContainer = document.createElement('div');
-                cbContainer.className = 'modal-cb-wrap';
-                cbContainer.appendChild(mainCb);
-
-                const liInnerWrapper = document.createElement('div');
-                liInnerWrapper.style.cssText = 'display: flex; align-items: stretch; width: 100%; gap: 14px;';
-                liInnerWrapper.appendChild(cbContainer);
-                liInnerWrapper.appendChild(iconCol2);
-                liInnerWrapper.appendChild(cardLayout);
-
-                const cardDiv = document.createElement('div');
-                cardDiv.className = 'modal-action-card ' + (isChecked2 ? 'card-active' : 'card-inactive');
-                cardDiv.appendChild(liInnerWrapper);
-
-                const hasBodyContent2 = action && action.args && action.args.length > 0;
-                if (hasBodyContent2) {
-                    const hrLine2 = document.createElement('div');
-                    hrLine2.className = 'modal-card-divider-h';
-                    hrLine2.style.position = 'absolute';
-                    hrLine2.style.top = '52px';
-                    hrLine2.style.left = '142px';
-                    hrLine2.style.width = 'calc(100% - 158px)';
-                    hrLine2.style.height = '1px';
-                    hrLine2.style.background = 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.22) 15%, rgba(255, 255, 255, 0.22) 85%, transparent 100%)';
-                    hrLine2.style.pointerEvents = 'none';
-                    cardDiv.appendChild(hrLine2);
-                }
-
-                // Chevron nur, wenn es auch etwas einzuklappen gibt
-                if (hasBodyContent2) {
-                    attachCardCollapse(cardDiv, spacer,
-                        (action && (action.cmd || action.baseCmd)) || li.dataset.cmd,
-                        [argsDiv]);
-                }
-
-                li.className = 'modal-card-row ' + (isChecked2 ? 'row-active' : 'row-inactive');
-                li.innerHTML = '';
-                li.appendChild(cardDiv);
-
-               mainCb.onclick = (e) => e.stopPropagation();
-               mainCb.onchange = (e) => {
-                   action.active = e.target.checked;
-                   cardDiv.classList.toggle('card-active', e.target.checked);
-                   cardDiv.classList.toggle('card-inactive', !e.target.checked);
-                   li.classList.toggle('row-active', e.target.checked);
-                   li.classList.toggle('row-inactive', !e.target.checked);
-                   if (action && (action.cmd.includes("fake_linear_axis") || action.cmd.includes("linear_axis"))) {
-                       syncLinearAxisState(e.target.checked);
-                   }
-                   updateModalStats();
-                   if (!e.simulated) saveActiveState();
-               };
-               
-               li.onclick = (e) => {
-                   if (e.target === mainCb || e.target.closest('label') || e.target.closest('a') || e.target.closest('.modal-cmd-btn') || e.target.closest('button')) return;
-                   mainCb.checked = !mainCb.checked;
-                   mainCb.dispatchEvent(new Event('change'));
-               };
-
-               topUl.appendChild(li);
-           });
-
-          if (hasAnyDual) {
-              topUl.classList.add('has-dual-icons');
+          buildSeqSummary(topUl);
+          attachSeqMasonry(topUl);
           }
        } else {
            const action = actionsData[0];
@@ -2198,14 +2412,16 @@
             }
             contentClone.appendChild(cardDiv);
        }
+       }
        
-       let headerIconClass = 'fa-solid fa-rocket';
+       let headerIconClass = isOverviewOnly ? 'fa-solid fa-shapes' : 'fa-solid fa-rocket';
        let cleanTitleText = titleHTML;
        const iconMatch = titleHTML.match(/<i\s+class="([^"]+)"[^>]*><\/i>/i);
        if (iconMatch) {
            headerIconClass = iconMatch[1];
            cleanTitleText = titleHTML.replace(/<i\s+class="[^"]+"[^>]*><\/i>/i, '').trim();
        }
+       const modalTagText = isOverviewOnly ? 'Application Overview' : 'Sequence Config';
 
        const modalHtml = `
           <div id="launch-modal">
@@ -2217,12 +2433,12 @@
                       </div>
                       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                          <h2 class="modal-header-title">${cleanTitleText}</h2>
-                         <span class="modal-header-tag">Sequence Config</span>
+                         <span class="modal-header-tag">${modalTagText}</span>
                       </div>
                    </div>
                    
                    <div class="modal-header-right">
-                      <label class="modal-select-all-btn" id="modal-select-all-lbl" title="Alle Aktionen aktivieren/deaktivieren">
+                      <label class="modal-select-all-btn" id="modal-select-all-lbl" title="Alle Aktionen aktivieren/deaktivieren" ${isOverviewOnly ? 'style="display:none;"' : ''}>
                          <input type="checkbox" id="modal-select-all-cb">
                          <span id="modal-select-all-text">Alle auswählen</span>
                       </label>
@@ -2232,15 +2448,33 @@
                    </div>
 
                    <div class="modal-dds-bar">
-                      <label class="modal-select-all-btn modal-localhost-btn" id="modal-localhost-lbl" title="ROS_LOCALHOST_ONLY=1: DDS-Verkehr bleibt auf diesem Rechner und flutet nicht das LAN. Andere Rechner sehen die ROS-2-Topics dann nicht mehr (Quest 3 WebXR ist nicht betroffen).">
-                         <input type="checkbox" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}>
-                         <span>Nur localhost (DDS)</span>
-                      </label>
-                      <span class="dds-chip" title="ROS_DOMAIN_ID: nur Nodes mit derselben ID sehen sich"><i class="fa-solid fa-hashtag"></i><span class="dds-chip-key">Domain</span><span class="dds-chip-val" id="dds-chip-domain">–</span></span>
-                      <span class="dds-chip" title="RMW_IMPLEMENTATION: verwendete DDS-Middleware"><i class="fa-solid fa-diagram-project"></i><span class="dds-chip-key">RMW</span><span class="dds-chip-val" id="dds-chip-rmw">–</span></span>
-                      <span class="dds-chip" id="dds-chip-scope-wrap" title="Wohin der DDS-Verkehr der gestarteten Nodes geht"><i class="fa-solid fa-tower-broadcast"></i><span class="dds-chip-key">Scope</span><span class="dds-chip-val" id="dds-chip-scope">–</span></span>
-                      <span class="dds-chip" title="Netzwerk-Interface der Default-Route und IP dieses Rechners"><i class="fa-solid fa-ethernet"></i><span class="dds-chip-val" id="dds-chip-net">–</span></span>
-                      <span class="dds-chip" id="dds-chip-traffic-wrap" title="Aktueller Netzwerkverkehr auf dem LAN-Interface (Senden / Empfangen). Dauerhaft hohes TX bei wenig RX deutet auf DDS-Flut ins LAN hin."><i class="fa-solid fa-arrow-right-arrow-left"></i><span class="dds-chip-val" id="dds-chip-traffic">–</span></span>
+                      <div class="dds-item">
+                         <label class="modal-select-all-btn modal-localhost-btn" id="modal-localhost-lbl" title="ROS_LOCALHOST_ONLY=1: DDS traffic stays on this machine and does not flood the LAN. Other machines can no longer see the ROS 2 topics (Quest 3 WebXR is not affected).">
+                            <input type="checkbox" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}>
+                            <span>Localhost only (DDS)</span>
+                         </label>
+                         <span class="dds-cap">Traffic stays on this PC</span>
+                      </div>
+                      <div class="dds-item">
+                         <span class="dds-chip" title="ROS_DOMAIN_ID: only nodes with the same ID can see each other"><i class="fa-solid fa-hashtag"></i><span class="dds-chip-key">Domain</span><span class="dds-chip-val" id="dds-chip-domain">–</span></span>
+                         <span class="dds-cap">Node group (ID)</span>
+                      </div>
+                      <div class="dds-item">
+                         <span class="dds-chip" title="RMW_IMPLEMENTATION: DDS middleware in use"><i class="fa-solid fa-diagram-project"></i><span class="dds-chip-key">RMW</span><span class="dds-chip-val" id="dds-chip-rmw">–</span></span>
+                         <span class="dds-cap">DDS middleware</span>
+                      </div>
+                      <div class="dds-item">
+                         <span class="dds-chip" id="dds-chip-scope-wrap" title="Where the DDS traffic of the launched nodes goes"><i class="fa-solid fa-tower-broadcast"></i><span class="dds-chip-key">Scope</span><span class="dds-chip-val" id="dds-chip-scope">–</span></span>
+                         <span class="dds-cap">DDS traffic destination</span>
+                      </div>
+                      <div class="dds-item">
+                         <span class="dds-chip" title="Network interface of the default route and IP of this machine. Linux interface name: en… = Ethernet (cable), wl… = Wi-Fi. Example enp0s31f6: en = Ethernet, p0 = PCI bus 0, s31 = slot 31, f6 = function 6 → the LAN port built into the mainboard."><i class="fa-solid fa-ethernet"></i><span class="dds-chip-val" id="dds-chip-net">–</span></span>
+                         <span class="dds-cap" id="dds-cap-net">LAN Ethernet IP</span>
+                      </div>
+                      <div class="dds-item">
+                         <span class="dds-chip" id="dds-chip-traffic-wrap" title="Total current network traffic of this PC over the LAN interface – all programs combined (ROS 2/DDS, browser, updates …), not just ROS. ↑ TX = this PC sends to the LAN (transmit), ↓ RX = this PC receives from the LAN (receive). Sustained high TX with little RX indicates DDS flooding the LAN."><i class="fa-solid fa-arrow-right-arrow-left"></i><span class="dds-chip-val" id="dds-chip-traffic">–</span></span>
+                         <span class="dds-cap" id="dds-cap-traffic">Total LAN traffic of this PC · ↑ PC sends · ↓ PC receives</span>
+                      </div>
                    </div>
                 </div>
                 
@@ -2249,12 +2483,12 @@
                 <div id="launch-modal-footer">
                    <div class="modal-footer-status">
                       <div class="status-pulsing-dot"></div>
-                      <span id="modal-footer-stats-text">Bereit zur Ausführung</span>
+                      <span id="modal-footer-stats-text">${isOverviewOnly ? '16 Systemkomponenten verfügbar · Übersicht' : 'Bereit zur Ausführung'}</span>
                    </div>
                    
                    <div class="modal-footer-actions">
-                      <button class="modal-cancel-btn" id="modal-cancel-btn">Abbrechen</button>
-                      <button id="launch-modal-start-btn">
+                      <button class="modal-cancel-btn" id="modal-cancel-btn">${isOverviewOnly ? 'Schließen' : 'Abbrechen'}</button>
+                      <button id="launch-modal-start-btn" ${isOverviewOnly ? 'class="is-hidden"' : ''}>
                          <i class="fa-solid fa-play"></i> EXECUTE
                       </button>
                    </div>
@@ -2286,11 +2520,24 @@
            if (!el || !wrap) return;
            const uri = ddsStatus && ddsStatus.cyclonedds_uri;
            let text, cls;
-           if (localhostOnly) { text = 'nur localhost'; cls = 'ok'; }
+           if (localhostOnly) { text = 'localhost only'; cls = 'ok'; }
            else if (uri) { text = 'LAN · ' + uri.split('/').pop(); cls = 'info'; }
            else { text = 'LAN · Multicast'; cls = 'warn'; }
            el.textContent = text;
            wrap.dataset.state = cls;
+       };
+
+       // Linux-Interfacenamen lesbar machen, z. B. enp0s31f6 = Ethernet, PCI-Bus 0 / Slot 31 / Funktion 6
+       const describeIface = (name) => {
+           if (/^en/.test(name) || /^eth/.test(name)) {
+               return 'Ethernet (LAN)';
+           }
+           if (/^wl/.test(name)) return 'Wi-Fi (WLAN)';
+           if (/^ww/.test(name)) return 'cellular modem';
+           if (/^(tun|tap|wg)/.test(name)) return 'VPN tunnel';
+           if (/^(docker|br|virbr|veth)/.test(name)) return 'virtual bridge';
+           if (name === 'lo') return 'Loopback';
+           return 'network interface';
        };
 
        const refreshDdsStatus = async () => {
@@ -2301,7 +2548,7 @@
                const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
                set('dds-chip-domain', st.ros_domain_id || '–');
                set('dds-chip-rmw', (st.rmw_implementation || '–').replace(/^rmw_/, '').replace(/_cpp$/, ''));
-               set('dds-chip-net', st.net_iface ? `${st.net_iface} · ${st.net_ip || 'keine IP'}` : 'kein Netz');
+               set('dds-chip-net', st.net_iface ? `${describeIface(st.net_iface)} · IP: ${st.net_ip || '–'}` : 'no network');
                renderDdsScope();
 
                const trafficWrap = document.getElementById('dds-chip-traffic-wrap');
@@ -2315,7 +2562,7 @@
                } else if (st.tx_bytes == null) {
                    set('dds-chip-traffic', 'n/a');
                } else {
-                   set('dds-chip-traffic', 'misst …');
+                   set('dds-chip-traffic', 'measuring …');
                }
                if (st.tx_bytes != null) ddsLastSample = { ts: st.ts, tx: st.tx_bytes, rx: st.rx_bytes };
            } catch (e) {
@@ -2396,20 +2643,17 @@
         
         requestAnimationFrame(() => {
             const mBody = document.getElementById('launch-modal-body') || contentClone;
-            alignModalArgs(mBody);
             updateVisionTreeNodes(mBody, initialIsIpCam);
             updateStaticObjectsTreeNodes(mBody, initialIsStaticObjects);
             updateLinearAxisTreeNodes(mBody, initialIsLinearAxis);
             setTimeout(() => {
                 const mb = document.getElementById('launch-modal-body') || contentClone;
-                alignModalArgs(mb);
                 updateVisionTreeNodes(mb, initialIsIpCam);
                 updateStaticObjectsTreeNodes(mb, initialIsStaticObjects);
                 updateLinearAxisTreeNodes(mb, initialIsLinearAxis);
             }, 100);
             setTimeout(() => {
                 const mb = document.getElementById('launch-modal-body') || contentClone;
-                alignModalArgs(mb);
                 updateVisionTreeNodes(mb, initialIsIpCam);
                 updateStaticObjectsTreeNodes(mb, initialIsStaticObjects);
                 updateLinearAxisTreeNodes(mb, initialIsLinearAxis);
@@ -2452,7 +2696,7 @@
        startBtn.addEventListener('click', async () => {
           saveActiveState();
           closeModal();
-          if (toastMsg) showToast(toastMsg);
+          if (actionsData.length > 0 && toastMsg) showToast(toastMsg);
 
           const linearAxisNode = actionsData.find(a => a.cmd && a.cmd.includes('fake_linear_axis'));
           const isLinearAxisNodeActive = linearAxisNode ? linearAxisNode.active : true;
