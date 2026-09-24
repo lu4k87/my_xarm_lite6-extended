@@ -1,147 +1,149 @@
 #!/usr/bin/env python3
+"""Bereitet die ZED-Punktwolke fuer MoveIt und den Web Digital Twin auf.
+
+Eingang: /zed/zed_node/point_cloud/cloud_registered
+  Die ZED veroeffentlicht die Wolke bereits in ROS-Konvention (X vorne, Z oben)
+  im Frame zed_left_camera_frame - hier wird nichts gedreht, den Rest macht TF.
+
+Ausgang 1: /zed/zed_node/point_cloud/cloud_optimized  (MoveIt OctoMap)
+  Nur NaN-Punkte entfernt, Frame unveraendert. Standardmaessig AUS
+  (publish_moveit_cloud), weil MoveIt sonst die Kamerawolke - inklusive der
+  zu greifenden Objekte - als Hindernis in die Planung uebernimmt.
+  Kein Zuschnitt: MoveIt nutzt Punkte jenseits von ros.max_range, um die
+  OctoMap entlang dieser Strahlen freizuraeumen.
+
+Ausgang 2: /zed/pointcloud_web  (Robot Control UI, Digital Twin)
+  Ausgeduennt auf web_max_points, nach web_frame (world) transformiert,
+  hoechstens web_rate_hz - und nur, solange ein Client abonniert hat.
+"""
 
 import time
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import PointCloud2, PointField
-import sensor_msgs_py.point_cloud2 as pc2
-import numpy as np
 
+import numpy as np
+import rclpy
+import sensor_msgs_py.point_cloud2 as pc2
+from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
+from rclpy.time import Time
+from sensor_msgs.msg import PointCloud2, PointField
+from tf2_ros import Buffer, TransformException, TransformListener
+
+
+def quat_to_matrix(x, y, z, w):
+    return np.array([
+        [1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+        [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+        [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)],
+    ], dtype=np.float32)
 
 
 class PointCloudOptimizerNode(Node):
     def __init__(self):
         super().__init__('pointcloud_optimizer')
-        
 
-        
-        # Subscriber
+        self.declare_parameter('publish_moveit_cloud', False)
+        self.declare_parameter('web_max_points', 12000)
+        self.declare_parameter('web_rate_hz', 4.0)
+        self.declare_parameter('web_frame', 'world')
+
+        self.publish_moveit_cloud = bool(self.get_parameter('publish_moveit_cloud').value)
+        self.web_max_points = max(1, int(self.get_parameter('web_max_points').value))
+        self.web_period = 1.0 / max(0.1, float(self.get_parameter('web_rate_hz').value))
+        self.web_frame = str(self.get_parameter('web_frame').value)
+
         self.subscription = self.create_subscription(
             PointCloud2,
             '/zed/zed_node/point_cloud/cloud_registered',
             self.listener_callback,
-            10
+            qos_profile_sensor_data
         )
-        
-        # Publisher (Full cloud for MoveIt OctoMap)
+
+        # Full cloud for MoveIt OctoMap
         self.publisher = self.create_publisher(
             PointCloud2,
             '/zed/zed_node/point_cloud/cloud_optimized',
             10
         )
 
-        # Web Publisher: lightweight downsampled cloud for browser WebGL Digital Twin
+        # Lightweight downsampled cloud for the browser WebGL Digital Twin
         self.web_publisher = self.create_publisher(
             PointCloud2,
             '/zed/pointcloud_web',
             2
         )
         self.last_web_pub_time = 0.0
-        
-        self.get_logger().info('Point Cloud Optimizer Node (Pure Numpy & Web Stream) has been started.')
+
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+
+        self.get_logger().info(
+            f'Point Cloud Optimizer started (MoveIt cloud: '
+            f'{"on" if self.publish_moveit_cloud else "off"}, web stream: '
+            f'{self.web_max_points} pts @ {1.0 / self.web_period:.1f} Hz in "{self.web_frame}").')
 
     def listener_callback(self, msg):
-
-
-        # Read points
-        gen = pc2.read_points(msg, field_names=("x", "y", "z", "rgb"), skip_nans=True)
-        points_data = list(gen)
-        
-        if not points_data:
-            return
-            
-        points_data = np.array(points_data)
-        if len(points_data.shape) != 2 or points_data.shape[1] < 3:
+        want_moveit = self.publish_moveit_cloud
+        now = time.monotonic()
+        want_web = (self.web_publisher.get_subscription_count() > 0
+                    and now - self.last_web_pub_time >= self.web_period)
+        if not (want_moveit or want_web):
             return
 
-        xyz = points_data[:, :3]
-        
-        # --- Apply Optical to ROS Rotation ---
-        # Optical: Z=forward, X=right, Y=down
-        # ROS: X=forward, Y=left, Z=up
-        xyz_ros = np.empty_like(xyz)
-        xyz_ros[:, 0] = xyz[:, 2]   # X_ros = Z_opt
-        xyz_ros[:, 1] = -xyz[:, 0]  # Y_ros = -X_opt
-        xyz_ros[:, 2] = -xyz[:, 1]  # Z_ros = -Y_opt
-        xyz = xyz_ros
-        # -------------------------------------
-        
-        # Extract RGB if present
-        has_rgb = False
-        if points_data.shape[1] >= 4:
-            has_rgb = True
-            rgb_float = points_data[:, 3]
-            rgb_uint32 = rgb_float.view(np.uint32)
-            r = ((rgb_uint32 >> 16) & 0x000000FF) / 255.0
-            g = ((rgb_uint32 >> 8) & 0x000000FF) / 255.0
-            b = (rgb_uint32 & 0x000000FF) / 255.0
-            colors = np.vstack((r, g, b)).T
-
-        # NO CROP: Keep 100% of the camera pointcloud
-        optimized_xyz = xyz
-        if len(optimized_xyz) == 0:
+        names = [f.name for f in msg.fields]
+        has_rgb = 'rgb' in names
+        field_names = ('x', 'y', 'z', 'rgb') if has_rgb else ('x', 'y', 'z')
+        # Humble: strukturiertes numpy-Array (n,), NaN-Punkte entfernt
+        points = pc2.read_points(msg, field_names=field_names, skip_nans=True)
+        if len(points) == 0:
             return
-            
+
         fields = [
             PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
             PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
             PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
         ]
-        
         if has_rgb:
-            optimized_colors = colors * 255.0
-            optimized_colors = np.clip(optimized_colors, 0, 255).astype(np.uint32)
-            # Pack rgb
-            rgb = (optimized_colors[:, 0] << 16) | (optimized_colors[:, 1] << 8) | optimized_colors[:, 2]
-            rgb_float = rgb.view(np.float32)
-            
-            points_out = np.empty(len(optimized_xyz), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
-            points_out['x'] = optimized_xyz[:, 0]
-            points_out['y'] = optimized_xyz[:, 1]
-            points_out['z'] = optimized_xyz[:, 2]
-            points_out['rgb'] = rgb_float
-            
             fields.append(PointField(name='rgb', offset=12, datatype=PointField.FLOAT32, count=1))
-        else:
-            points_out = np.empty(len(optimized_xyz), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32)])
-            points_out['x'] = optimized_xyz[:, 0]
-            points_out['y'] = optimized_xyz[:, 1]
-            points_out['z'] = optimized_xyz[:, 2]
-            
-        header = msg.header
-        header.frame_id = 'zed_camera_link'
-        
-        msg_out = pc2.create_cloud(header, fields, points_out.tolist())
-        self.publisher.publish(msg_out)
 
-        # Web downsampled publication (only when web clients are active!)
-        if self.web_publisher.get_subscription_count() > 0:
-            now = time.time()
-            if (now - self.last_web_pub_time) >= 0.25:  # Rate limit: max ~3-4 Hz
-                self.last_web_pub_time = now
-                total_pts = len(optimized_xyz)
-                target_pts = 12000
-                stride = max(1, total_pts // target_pts)
-                
-                web_xyz = optimized_xyz[::stride]
-                if has_rgb:
-                    web_colors = optimized_colors[::stride]
-                    web_rgb = (web_colors[:, 0] << 16) | (web_colors[:, 1] << 8) | web_colors[:, 2]
-                    web_rgb_float = web_rgb.view(np.float32)
-                    
-                    web_pts = np.empty(len(web_xyz), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
-                    web_pts['x'] = web_xyz[:, 0]
-                    web_pts['y'] = web_xyz[:, 1]
-                    web_pts['z'] = web_xyz[:, 2]
-                    web_pts['rgb'] = web_rgb_float
-                else:
-                    web_pts = np.empty(len(web_xyz), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32)])
-                    web_pts['x'] = web_xyz[:, 0]
-                    web_pts['y'] = web_xyz[:, 1]
-                    web_pts['z'] = web_xyz[:, 2]
-                
-                msg_web = pc2.create_cloud(header, fields, web_pts)
-                self.web_publisher.publish(msg_web)
+        if want_moveit:
+            self.publisher.publish(pc2.create_cloud(msg.header, fields, points))
+
+        if want_web:
+            self.last_web_pub_time = now
+            self.publish_web_cloud(msg, points, fields, has_rgb)
+
+    def publish_web_cloud(self, msg, points, fields, has_rgb):
+        try:
+            tf = self.tf_buffer.lookup_transform(self.web_frame, msg.header.frame_id, Time())
+        except TransformException as e:
+            self.get_logger().warn(
+                f'Web cloud skipped: no TF {self.web_frame} <- {msg.header.frame_id} ({e})',
+                throttle_duration_sec=10.0)
+            return
+
+        stride = max(1, len(points) // self.web_max_points)
+        sub = points[::stride]
+        xyz = np.column_stack((sub['x'], sub['y'], sub['z'])).astype(np.float32)
+
+        q = tf.transform.rotation
+        t = tf.transform.translation
+        rot = quat_to_matrix(q.x, q.y, q.z, q.w)
+        xyz = xyz @ rot.T + np.array([t.x, t.y, t.z], dtype=np.float32)
+
+        dtype = [('x', np.float32), ('y', np.float32), ('z', np.float32)]
+        if has_rgb:
+            dtype.append(('rgb', np.float32))
+        out = np.empty(len(xyz), dtype=dtype)
+        out['x'] = xyz[:, 0]
+        out['y'] = xyz[:, 1]
+        out['z'] = xyz[:, 2]
+        if has_rgb:
+            out['rgb'] = sub['rgb']  # gepackte Farbe unveraendert uebernehmen
+
+        header = msg.header
+        header.frame_id = self.web_frame
+        self.web_publisher.publish(pc2.create_cloud(header, fields, out))
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -154,6 +156,7 @@ def main(args=None):
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
