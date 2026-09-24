@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import time
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2, PointField
@@ -22,14 +23,22 @@ class PointCloudOptimizerNode(Node):
             10
         )
         
-        # Publisher
+        # Publisher (Full cloud for MoveIt OctoMap)
         self.publisher = self.create_publisher(
             PointCloud2,
             '/zed/zed_node/point_cloud/cloud_optimized',
             10
         )
+
+        # Web Publisher: lightweight downsampled cloud for browser WebGL Digital Twin
+        self.web_publisher = self.create_publisher(
+            PointCloud2,
+            '/zed/pointcloud_web',
+            2
+        )
+        self.last_web_pub_time = 0.0
         
-        self.get_logger().info('Point Cloud Optimizer Node (Pure Numpy) has been started.')
+        self.get_logger().info('Point Cloud Optimizer Node (Pure Numpy & Web Stream) has been started.')
 
     def listener_callback(self, msg):
 
@@ -104,6 +113,35 @@ class PointCloudOptimizerNode(Node):
         
         msg_out = pc2.create_cloud(header, fields, points_out.tolist())
         self.publisher.publish(msg_out)
+
+        # Web downsampled publication (only when web clients are active!)
+        if self.web_publisher.get_subscription_count() > 0:
+            now = time.time()
+            if (now - self.last_web_pub_time) >= 0.25:  # Rate limit: max ~3-4 Hz
+                self.last_web_pub_time = now
+                total_pts = len(optimized_xyz)
+                target_pts = 12000
+                stride = max(1, total_pts // target_pts)
+                
+                web_xyz = optimized_xyz[::stride]
+                if has_rgb:
+                    web_colors = optimized_colors[::stride]
+                    web_rgb = (web_colors[:, 0] << 16) | (web_colors[:, 1] << 8) | web_colors[:, 2]
+                    web_rgb_float = web_rgb.view(np.float32)
+                    
+                    web_pts = np.empty(len(web_xyz), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
+                    web_pts['x'] = web_xyz[:, 0]
+                    web_pts['y'] = web_xyz[:, 1]
+                    web_pts['z'] = web_xyz[:, 2]
+                    web_pts['rgb'] = web_rgb_float
+                else:
+                    web_pts = np.empty(len(web_xyz), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32)])
+                    web_pts['x'] = web_xyz[:, 0]
+                    web_pts['y'] = web_xyz[:, 1]
+                    web_pts['z'] = web_xyz[:, 2]
+                
+                msg_web = pc2.create_cloud(header, fields, web_pts)
+                self.web_publisher.publish(msg_web)
 
 def main(args=None):
     rclpy.init(args=args)
