@@ -51,7 +51,7 @@ export function snapPanelToColumn(panel, silent = false) {
   if (!silent) {
     const titleEl = panel.querySelector(':scope > h2, :scope > .centerpiece-header');
     const name = titleEl ? titleEl.textContent.trim().split('\n')[0] : panel.id;
-    logMsg('UI', `⚡ [Snap] ${name} an Spaltenbreite angeheftet (100% responsive)`);
+    logMsg('UI', `⚡ [Snap] ${name} pinned to column width (100% responsive)`);
   }
 }
 
@@ -64,7 +64,7 @@ export function setupPanel(panel) {
   if (!leftGrip) {
     leftGrip = document.createElement('div');
     leftGrip.className = 'panel-resize-grip-left';
-    leftGrip.title = 'Ziehen zum Vergrößern/Verkleinern · Doppelklick zum Anheften (100% Spaltenbreite)';
+    leftGrip.title = 'Drag to resize · double-click to pin (100% column width)';
     leftGrip.innerHTML = '<span class="resize-grip-dots">⋰</span>';
     panel.appendChild(leftGrip);
   }

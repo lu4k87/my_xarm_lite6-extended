@@ -10,6 +10,63 @@ import { visibleInterval } from './util.js';
 // messbar: Anzahl geladener Bilder im gleitenden Fenster.
 const CAM_FPS_WINDOW_MS = 2000;
 
+// ── Gemeinsamer Abbruch fuer alle Streams ────────────────────────────────
+// Vorher versuchte jeder Stream ohne Kamera endlos weiter zu verbinden.
+// Jetzt gilt fuer alle drei: begrenzt oft mit wachsendem Abstand, danach
+// Overlay mit "Try again" statt stiller Dauerschleife.
+const STREAM_MAX_TRIES = 5;
+const STREAM_BACKOFF_MS = [3000, 6000, 12000, 24000, 24000];
+
+function createStreamRetry(errEl, restart) {
+  const textEl = errEl ? errEl.querySelector('[data-stream-err-text]') : null;
+  const iconEl = errEl ? errEl.querySelector('[data-stream-err-icon]') : null;
+  const btnEl  = errEl ? errEl.querySelector('[data-stream-retry]') : null;
+  let tries = 0, gaveUp = false, timer = null;
+
+  const clearTimer = () => { if (timer) { clearTimeout(timer); timer = null; } };
+
+  function overlay(text, showRetry) {
+    if (errEl) errEl.style.display = 'flex';
+    if (textEl) textEl.textContent = text;
+    if (iconEl) iconEl.className = showRetry ? 'fa-solid fa-plug-circle-xmark' : 'fa-solid fa-video-slash';
+    if (btnEl) btnEl.style.display = showRetry ? 'inline-flex' : 'none';
+  }
+
+  const ctl = {
+    get gaveUp() { return gaveUp; },
+    get tries() { return tries; },
+    // Erster Frame ist da: Zaehler zuruecksetzen und Overlay ausblenden.
+    succeeded() {
+      clearTimer();
+      tries = 0; gaveUp = false;
+      if (btnEl) btnEl.style.display = 'none';
+      if (errEl) errEl.style.display = 'none';
+    },
+    reset() { clearTimer(); tries = 0; gaveUp = false; },
+    waiting() {
+      overlay(tries > 0 ? `Stream Disconnected (${tries}/${STREAM_MAX_TRIES})` : 'Stream Disconnected', false);
+    },
+    // Ein Versuch ist gescheitert. Gibt true zurueck, wenn endgueltig aufgegeben.
+    failed(onGiveUp) {
+      clearTimer();
+      if (gaveUp) return true;
+      tries += 1;
+      if (tries >= STREAM_MAX_TRIES) {
+        gaveUp = true;
+        overlay('No camera', true);
+        if (typeof onGiveUp === 'function') onGiveUp();
+        return true;
+      }
+      overlay(`Stream Disconnected (${tries}/${STREAM_MAX_TRIES})`, false);
+      timer = setTimeout(() => { timer = null; restart(); },
+                         STREAM_BACKOFF_MS[Math.min(tries - 1, STREAM_BACKOFF_MS.length - 1)]);
+      return false;
+    }
+  };
+  if (btnEl) btnEl.onclick = () => { ctl.reset(); restart(); };
+  return ctl;
+}
+
 function setupPolledCam(imgId, errId, metaId, camHost) {
   const img = document.getElementById(imgId);
   const err = document.getElementById(errId);
@@ -39,22 +96,29 @@ function setupPolledCam(imgId, errId, metaId, camHost) {
       : `No frame from ${camHost} - camera not reachable`;
   }
 
+  const retry = createStreamRetry(err, () => { img.src = url(); });
+
   img.onload = () => {
     online = true;
     frameW = img.naturalWidth;
     frameH = img.naturalHeight;
     loads.push(performance.now());
-    if (err) err.style.display = 'none';
+    retry.succeeded();
     img.style.display = 'block';
     img.src = url();
   };
   img.onerror = () => {
     online = false;
     loads.length = 0;
-    if (err) err.style.display = 'flex';
     img.style.display = 'none';
-    setTimeout(() => { img.src = url(); }, 1000);
+    // Nach dem Aufgeben src loesen, damit der Browser die Anfrage fallen laesst.
+    retry.failed(() => {
+      img.removeAttribute('src');
+      logMsg('UI', `Camera ${camHost} unreachable after ${STREAM_MAX_TRIES} attempts - retries stopped`, 'warn');
+    });
+    renderMeta();
   };
+  retry.waiting();
   img.src = url();
   renderMeta();
   visibleInterval(renderMeta, 1000);
@@ -123,16 +187,16 @@ if (zedImg) {
   // unten per rosapi abgeglichen. "float: true" markiert 32FC1-Bilder;
   // web_video_server skaliert die automatisch, wenn min == max.
   const ZED_MODES = [
-    { topic: `${ZED_NS}/rgb/image_rect_color`,       label: 'RGB (rektifiziert)' },
+    { topic: `${ZED_NS}/rgb/image_rect_color`,       label: 'RGB (rectified)' },
     { topic: `${ZED_NS}/rgb_raw/image_raw_color`,    label: 'RGB (raw)' },
-    { topic: `${ZED_NS}/left/image_rect_color`,      label: 'Links (rektifiziert)' },
-    { topic: `${ZED_NS}/left_raw/image_raw_color`,   label: 'Links (raw)' },
-    { topic: `${ZED_NS}/right/image_rect_color`,     label: 'Rechts (rektifiziert)' },
-    { topic: `${ZED_NS}/right_raw/image_raw_color`,  label: 'Rechts (raw)' },
-    { topic: `${ZED_NS}/stereo/image_rect_color`,    label: 'Stereo (nebeneinander)' },
-    { topic: `${ZED_NS}/rgb_gray/image_rect_gray`,   label: 'Graustufen (rektifiziert)' },
-    { topic: `${ZED_NS}/depth/depth_registered`,     label: 'Tiefe', float: true },
-    { topic: `${ZED_NS}/confidence/confidence_map`,  label: 'Konfidenz', float: true },
+    { topic: `${ZED_NS}/left/image_rect_color`,      label: 'Left (rectified)' },
+    { topic: `${ZED_NS}/left_raw/image_raw_color`,   label: 'Left (raw)' },
+    { topic: `${ZED_NS}/right/image_rect_color`,     label: 'Right (rectified)' },
+    { topic: `${ZED_NS}/right_raw/image_raw_color`,  label: 'Right (raw)' },
+    { topic: `${ZED_NS}/stereo/image_rect_color`,    label: 'Stereo (side by side)' },
+    { topic: `${ZED_NS}/rgb_gray/image_rect_gray`,   label: 'Grayscale (rectified)' },
+    { topic: `${ZED_NS}/depth/depth_registered`,     label: 'Depth', float: true },
+    { topic: `${ZED_NS}/confidence/confidence_map`,  label: 'Confidence', float: true },
   ];
 
   const modeFor = (t) => ZED_MODES.find(m => m.topic === t) || null;
@@ -244,7 +308,7 @@ if (zedImg) {
     if (zedSel.options.length === 0) {
       const o = document.createElement('option');
       o.value = currentTopic;
-      o.textContent = 'Keine ZED-Bildtopics gefunden';
+      o.textContent = 'No ZED image topics found';
       zedSel.appendChild(o);
     }
     // Auswahl halten. Der gespeicherte Wunsch-Topic wird bevorzugt, falls
@@ -269,82 +333,42 @@ if (zedImg) {
   let zedWatch = null;
   const stopZedWatch = () => { if (zedWatch) { clearInterval(zedWatch); zedWatch = null; } };
 
-  // Ohne Kamera lief der Retry frueher endlos: onerror startete alle 3 s neu,
-  // der Watchdog alle 15 s, und jeder Versuch schrieb eine Logzeile. Jetzt
-  // wird mit wachsendem Abstand begrenzt oft probiert und danach aufgegeben.
-  const ZED_MAX_TRIES = 5;
-  const ZED_BACKOFF_MS = [3000, 6000, 12000, 24000, 24000];
-  const zedErrText  = document.getElementById('zed-cam-stream-err-text');
-  const zedErrIcon  = document.getElementById('zed-cam-stream-err-icon');
-  const zedRetryBtn = document.getElementById('zed-cam-stream-retry');
-  let zedTries = 0;
-  let zedGaveUp = false;
-  let zedRetryTimer = null;
+  // Begrenzte Versuche wie bei den Pi-Kameras; zusaetzlich schaltet
+  // refreshZedTopics() wieder scharf, sobald das Topic zurueckkommt.
+  const zedRetry = createStreamRetry(zedErr, () => applyTopic(currentTopic));
   let zedLoggedTopic = null;
-
-  const stopZedRetry = () => { if (zedRetryTimer) { clearTimeout(zedRetryTimer); zedRetryTimer = null; } };
-
-  function setZedOverlay(text, showRetry) {
-    if (zedErr) zedErr.style.display = 'flex';
-    if (zedErrText) zedErrText.textContent = text;
-    if (zedErrIcon) zedErrIcon.className = showRetry ? 'fa-solid fa-plug-circle-xmark' : 'fa-solid fa-video-slash';
-    if (zedRetryBtn) zedRetryBtn.style.display = showRetry ? 'inline-flex' : 'none';
-  }
 
   const zedShow = () => {
     stopZedWatch();
-    stopZedRetry();
-    zedTries = 0;
-    zedGaveUp = false;
-    if (zedRetryBtn) zedRetryBtn.style.display = 'none';
-    if (zedErr) zedErr.style.display = 'none';
+    zedRetry.succeeded();
     zedImg.style.display = 'block';
   };
 
-  // Aufgeben statt weiter zu pollen. refreshZedTopics() sieht ueber rosbridge,
-  // wenn das Topic zurueckkommt, und schaltet den Versuch wieder scharf.
-  function zedGiveUp() {
-    stopZedWatch();
-    stopZedRetry();
-    zedGaveUp = true;
-    zedImg.removeAttribute('src');
-    setZedOverlay('Keine Kamera', true);
-    if (typeof logMsg === 'function') {
-      logMsg('UI', `ZED stream unavailable after ${ZED_MAX_TRIES} attempts: ${currentTopic} - retries stopped`);
-    }
-  }
-
   function zedFailed() {
     stopZedWatch();
-    stopZedRetry();
-    if (zedGaveUp) return;
-    zedTries += 1;
-    if (zedTries >= ZED_MAX_TRIES) { zedGiveUp(); return; }
-    const wait = ZED_BACKOFF_MS[Math.min(zedTries - 1, ZED_BACKOFF_MS.length - 1)];
-    setZedOverlay(`Stream Disconnected (${zedTries}/${ZED_MAX_TRIES})`, false);
-    zedRetryTimer = setTimeout(() => { zedRetryTimer = null; applyTopic(currentTopic); }, wait);
+    zedRetry.failed(() => {
+      zedImg.removeAttribute('src');
+      logMsg('UI', `ZED stream unavailable after ${STREAM_MAX_TRIES} attempts: ${currentTopic} - retries stopped`, 'warn');
+    });
   }
 
   // Nach Nutzeraktion oder wiederaufgetauchtem Topic wieder von vorn.
   function zedRearm(topic) {
-    stopZedRetry();
-    zedTries = 0;
-    zedGaveUp = false;
+    zedRetry.reset();
     applyTopic(topic || currentTopic);
   }
 
   function applyTopic(topic) {
-    const topicChanged = topic !== currentTopic;
+    if (topic !== currentTopic) zedRetry.reset();
     currentTopic = topic;
     try { localStorage.setItem(ZED_LS_KEY, topic); } catch (e) {}
     if (zedTopicLbl) zedTopicLbl.textContent = topic.replace(ZED_NS + '/', '');
     renderZedMeta();
     stopZedWatch();
-    if (topicChanged) { zedTries = 0; zedGaveUp = false; }
     // Das Bild bleibt sichtbar. Das Overlay liegt (z-index 10) darueber und
     // verschwindet, sobald der erste Frame da ist.
     zedImg.style.display = 'block';
-    setZedOverlay(zedTries > 0 ? `Stream Disconnected (${zedTries}/${ZED_MAX_TRIES})` : 'Stream Disconnected', false);
+    zedRetry.waiting();
     zedImg.src = streamUrl(topic, true);
     let waited = 0;
     zedWatch = setInterval(() => {
@@ -354,7 +378,7 @@ if (zedImg) {
       if (waited >= 15000) zedFailed();
     }, 400);
     // Nur bei echtem Moduswechsel loggen - sonst flutete jeder Retry das Log.
-    if (topic !== zedLoggedTopic && typeof logMsg === 'function') {
+    if (topic !== zedLoggedTopic) {
       zedLoggedTopic = topic;
       logMsg('UI', `ZED stream mode: ${topic}`);
     }
@@ -366,7 +390,6 @@ if (zedImg) {
   // fest verdrahteten.
   zedImg.onerror = () => { zedFailed(); };
 
-  if (zedRetryBtn) zedRetryBtn.onclick = () => zedRearm(currentTopic);
   if (zedSel) zedSel.onchange = () => zedRearm(zedSel.value);
 
   renderOptions(null);          // sofort bedienbar, auch ohne rosbridge
@@ -395,7 +418,7 @@ if (zedImg) {
         const changed = renderOptions(new Set(zed));
         if (changed) { zedRearm(changed); return; }
         // Topic ist wieder da, nachdem wir aufgegeben hatten: erneut versuchen.
-        if (zedGaveUp && zed.includes(currentTopic)) zedRearm(currentTopic);
+        if (zedRetry.gaveUp && zed.includes(currentTopic)) zedRearm(currentTopic);
       };
 
       ['sensor_msgs/msg/Image', 'sensor_msgs/Image'].forEach(typeName => {

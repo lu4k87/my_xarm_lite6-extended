@@ -138,7 +138,7 @@ export function playButtonClick(btn) {
   const where = (btn && (btn.id || btn.title || btn.textContent.trim().slice(0, 24))) || 'button';
 
   if (!uiClickSound) {
-    reportClickSoundProblem(`Audio-Objekt fehlt (sounds/ui_mouse_click.mp3 nicht ladbar) - ${where}`);
+    reportClickSoundProblem(`Audio object missing (sounds/ui_mouse_click.mp3 could not be loaded) - ${where}`);
     return;
   }
   if (uiClickSound.muted || uiClickSound.volume === 0) {
@@ -150,10 +150,10 @@ export function playButtonClick(btn) {
     uiClickSound.currentTime = 0;
     const pr = uiClickSound.play();
     if (pr && typeof pr.catch === 'function') {
-      pr.catch(err => reportClickSoundProblem(`${err && err.name ? err.name : 'Fehler'} bei play() - ${where}`));
+      pr.catch(err => reportClickSoundProblem(`${err && err.name ? err.name : 'Error'} during play() - ${where}`));
     }
   } catch (err) {
-    reportClickSoundProblem(`${err && err.name ? err.name : 'Fehler'} beim Abspielen - ${where}`);
+    reportClickSoundProblem(`${err && err.name ? err.name : 'Error'} while playing - ${where}`);
   }
 }
 
@@ -169,10 +169,10 @@ export function playVoice(audio, what) {
     audio.currentTime = 0;
     const pr = audio.play();
     if (pr && typeof pr.catch === 'function') {
-      pr.catch(err => reportClickSoundProblem(`${err && err.name ? err.name : 'Fehler'} bei play() - ${what}`));
+      pr.catch(err => reportClickSoundProblem(`${err && err.name ? err.name : 'Error'} during play() - ${what}`));
     }
   } catch (err) {
-    reportClickSoundProblem(`${err && err.name ? err.name : 'Fehler'} beim Abspielen - ${what}`);
+    reportClickSoundProblem(`${err && err.name ? err.name : 'Error'} while playing - ${what}`);
   }
 }
 
@@ -225,7 +225,7 @@ export function playMovesToSelectedObjectSound() {
 export function reportClickSoundProblem(msg) {
   if (msg === lastClickSoundProblem) return;
   lastClickSoundProblem = msg;
-  if (typeof logMsg === 'function') logMsg('AUDIO', `🔇 Klick-Sound nicht abgespielt: ${msg}`, 'warn');
+  if (typeof logMsg === 'function') logMsg('AUDIO', `🔇 Click sound not played: ${msg}`, 'warn');
   else console.warn('[AUDIO]', msg);
 }
 
