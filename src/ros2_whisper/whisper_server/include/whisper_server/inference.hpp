@@ -54,6 +54,7 @@ protected:
   std::unique_ptr<Whisper> whisper_;
   std::mutex whisper_mutex_;
   std::string language_;
+  std::string initial_prompt_;  // muss leben, solange wparams darauf zeigt
   void initialize_whisper_();
   
   bool run_inference_(whisper_idl::msg::WhisperTokens &result);

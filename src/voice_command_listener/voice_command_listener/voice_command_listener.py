@@ -8,6 +8,7 @@ from collections import deque
 import functools
 
 import rclpy
+import rclpy.executors
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 
@@ -21,7 +22,7 @@ try:
 except Exception:
     HAS_WHISPER_IDL = False
 
-from std_msgs.msg import String as StringMsg, Bool as BoolMsg
+from std_msgs.msg import String as StringMsg
 from std_srvs.srv import Trigger
 from rclpy.action import ActionClient
 
@@ -40,6 +41,9 @@ SHOW_CURSOR = "\033[?25h"
 
 # <<< NEU: Topic fuer UI-Feedback >>>
 UI_VOICE_FEEDBACK_TOPIC = "/ui/voice_feedback"
+
+# Whisper-Markierungen fuer Nicht-Sprache: [BLANK_AUDIO], (sighs), *music* ...
+NOISE_TAGS = r'\[.*?\]|\(.*?\)|\*.*?\*'
 
 # -------------------------------------------------------------------------
 # Hilfsfunktion: Text-Normalisierung
@@ -107,29 +111,10 @@ class VoiceCommandListener(Node):
         # <<< Publisher fuer UI-Feedback >>>
         self.feedback_pub = self.create_publisher(StringMsg, UI_VOICE_FEEDBACK_TOPIC, 10)
 
-        # ---- Sound-Feedback ----
-        try:
-            import pygame
-            import os
-            pygame.mixer.init()
-            ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
-            sounds_dir = os.path.join(ws_root, 'sounds')
-            if not os.path.isdir(sounds_dir):
-                sounds_dir = os.path.expanduser('~/dev_ws/sounds/')
-            self._sound_initial  = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_initial_pose.mp3'))
-            self._sound_absolute = pygame.mixer.Sound(os.path.join(sounds_dir, '_voice_robot_moves_to_absolute_pose.mp3'))
-        except Exception as e:
-            self.get_logger().warning(f'Audio init failed (sounds disabled): {e}')
-            self._sound_initial  = None
-            self._sound_absolute = None
-
-        self.sound_enabled = True
-        self.sound_sub = self.create_subscription(
-            BoolMsg,
-            '/ui/sound_enabled',
-            self._sound_enabled_cb,
-            10
-        )
+        # Kein eigenes Sound-Feedback: Die Ansage "robot moves to ..." spielt
+        # robot_motion_handler_movegroup, und zwar erst, wenn die Fahrt wirklich
+        # startet. Hier zusaetzlich abzuspielen, ergab doppelte Ansagen - und
+        # eine falsche, wenn die Fahrt abgelehnt wurde (Not-Aus, laeuft schon).
 
         self.word_buffer = deque(maxlen=50)                     
         self.last_trigger_ts = 0.0                          
@@ -270,7 +255,7 @@ class VoiceCommandListener(Node):
             return
             
         # Strip Whisper bracket tags like [BLANK_AUDIO]
-        text = re.sub(r'\[.*?\]', '', text).strip()
+        text = re.sub(NOISE_TAGS, '', text).strip()
         if not text:
             return
         
@@ -314,7 +299,7 @@ class VoiceCommandListener(Node):
         if result and result.transcriptions and len(result.transcriptions) > 0:
             final_text = " ".join(result.transcriptions)
             # Remove Whisper bracket tags like [BLANK_AUDIO]
-            final_text = re.sub(r'\[.*?\]', '', final_text).strip()
+            final_text = re.sub(NOISE_TAGS, '', final_text).strip()
             
             if final_text:
                 self.get_logger().info(f'Transcription: {final_text}')
@@ -375,34 +360,10 @@ class VoiceCommandListener(Node):
         print(f"✅ Sprachbefehl erkannt: {cmd}")
         self.get_logger().info(f'Executing voice command: "{cmd}" (raw: "{original}")')
         
-        # Sound-Feedback sofort bei Erkennung abspielen
-        try:
-            if self.sound_enabled:
-                if cmd == 'MoveTo: initial' and self._sound_initial:
-                    self._sound_initial.play()
-                elif cmd == 'MoveTo: pose' and self._sound_absolute:
-                    self._sound_absolute.play()
-        except Exception as e:
-            self.get_logger().warning(f'Sound playback error: {e}')
-        
         try:
             self.feedback_pub.publish(StringMsg(data=cmd))
         except Exception as e:
             self.get_logger().error(f"Error publishing voice feedback: {e}")
-
-    def _sound_enabled_cb(self, msg):
-        # Die UI sendet den Zustand alle 2 s - nur Aenderungen loggen.
-        changed = bool(msg.data) != self.sound_enabled
-        self.sound_enabled = bool(msg.data)
-        if not self.sound_enabled:
-            try:
-                import pygame
-                if pygame.mixer.get_init():
-                    pygame.mixer.stop()
-            except Exception:
-                pass
-        if changed:
-            self.get_logger().info(f"UI Sound State changed: enabled={self.sound_enabled}")
 
     # -------------------------------------------------------------------------
     # Service Callback
@@ -434,10 +395,13 @@ def main():
     node = VoiceCommandListener()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
+        pass
     finally:
         print(SHOW_CURSOR, end='') # Cursor wieder anzeigen
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 if __name__ == "__main__":
     main()

@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "whisper_server/inference.hpp"
 
 namespace whisper {
@@ -76,6 +78,11 @@ void Inference::declare_parameters_() {
   declare_parameter("wparams.language", "en");
   declare_parameter("wparams.n_threads", 4);
   declare_parameter("wparams.print_progress", false);
+  declare_parameter("wparams.initial_prompt", "");
+  declare_parameter("wparams.temperature", 0.0);
+  declare_parameter("wparams.beam_size", 1);   // > 1 = Beam Search, sonst Greedy
+  declare_parameter("wparams.best_of", 1);
+  declare_parameter("wparams.no_context", true);
   declare_parameter("cparams.flash_attn", true);
   declare_parameter("cparams.gpu_device", 0);
   declare_parameter("cparams.use_gpu", true);
@@ -101,6 +108,23 @@ void Inference::initialize_whisper_() {
   whisper_->wparams.language = language_.c_str();
   whisper_->wparams.n_threads = get_parameter("wparams.n_threads").as_int();
   whisper_->wparams.print_progress = get_parameter("wparams.print_progress").as_bool();
+
+  const int beam_size = get_parameter("wparams.beam_size").as_int();
+  const int best_of = get_parameter("wparams.best_of").as_int();
+  whisper_->wparams.strategy = beam_size > 1 ? WHISPER_SAMPLING_BEAM_SEARCH
+                                             : WHISPER_SAMPLING_GREEDY;
+  whisper_->wparams.beam_search.beam_size = std::max(1, beam_size);
+  whisper_->wparams.greedy.best_of = std::max(1, best_of);
+  whisper_->wparams.temperature =
+      static_cast<float>(get_parameter("wparams.temperature").as_double());
+  whisper_->wparams.no_context = get_parameter("wparams.no_context").as_bool();
+  initial_prompt_ = get_parameter("wparams.initial_prompt").as_string();
+  whisper_->wparams.initial_prompt = initial_prompt_.empty() ? nullptr : initial_prompt_.c_str();
+  RCLCPP_INFO(get_logger(), "Decoding: %s (beam_size=%d, best_of=%d), temperature=%.2f, "
+              "language=%s, initial_prompt %s",
+              beam_size > 1 ? "beam search" : "greedy", beam_size, best_of,
+              whisper_->wparams.temperature, language_.c_str(),
+              initial_prompt_.empty() ? "off" : "on");
   whisper_->cparams.flash_attn = get_parameter("cparams.flash_attn").as_bool();
   whisper_->cparams.gpu_device = get_parameter("cparams.gpu_device").as_int();
   whisper_->cparams.use_gpu = get_parameter("cparams.use_gpu").as_bool();

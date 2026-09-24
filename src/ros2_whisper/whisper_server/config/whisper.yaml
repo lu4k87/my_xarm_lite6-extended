@@ -1,23 +1,21 @@
 whisper:
   inference:
     ros__parameters:
-      model_name: "base"         # Multilinguales Modell für Englisch und Deutsch
+      # Multilingual (EN/DE). "small" transkribiert deutlich sauberer als "base"
+      # und braucht auf der RTX A5000 ca. 50-120 ms pro Durchlauf.
+      # Fehlt das Modell, wird es beim Start nach ~/.cache/whisper.cpp geladen.
+      model_name: "small"
       wparams:
         language: "auto"         # Automatische Spracherkennung (Englisch/Deutsch)
-        task: "transcribe"
-        # Wichtig: Biasing auf Deine aktuellen Befehle als zusammenhängender Satz (funktioniert bei Whisper am besten)
-        initial_prompt: "Move to Absolute Pose. Move to Initial Pose. Faster. Slower. Scan objects. Fahre zur absoluten Position. Fahre zur Startposition. Schneller. Langsamer. Scanne Objekte."
-        # Für stabile, deterministische Erkennung (niedrige Latenz)
+        # Leer lassen! Mit Befehls-Prompt halluziniert Whisper bei Stille Text
+        # ("Transcription by www...") und rechnet laenger (getestet).
+        initial_prompt: ""
+        # Stabile, deterministische Erkennung
         temperature: 0.0
-        beam_size: 2             # Beam Size leicht erhöhen, um phonetische Alternativen besser abzuwägen
-        best_of: 1
-        no_timestamps: true
-        condition_on_previous_text: false   # vermeidet “Hängenbleiben” im Kontext
-        vad_filter: false                   # Deaktiviert, da es kurze Befehle oft abschneidet
-        # VAD-Feineinstellungen (vorerst wieder deaktiviert)
-        # vad_parameters:
-        #   min_silence_duration_ms: 250
-        #   speech_pad_ms: 100
+        beam_size: 1             # > 1 = Beam Search; zu langsam fuer den 250-ms-Takt (getestet) -> Greedy
+        best_of: 1               # nur bei Greedy
+        no_context: true         # kein Vorgaengertext als Kontext - vermeidet "Haengenbleiben"
+        # Hinweis: die eingebundene whisper.cpp-Version hat keinen VAD.
 
         print_progress: false
         n_threads: 4
@@ -27,9 +25,9 @@ whisper:
         gpu_device: 0
         use_gpu: true
 
-      # Reaktionsfreudigkeit (kannst Du feinjustieren)
-      buffer_capacity: 8        # kleiner = schnellere Entscheidungen (z.B. 6–10)
-      callback_ms: 250          # häufigere Rückmeldungen (z.B. 200–300 ms)
+      # Reaktionsfreudigkeit
+      buffer_capacity: 6        # Sekunden Audio; Listener-Aufnahme dauert max. 5 s
+      callback_ms: 250          # Takt der Inferenz (z.B. 200-300 ms)
       # Whisper rechnet nur so lange nach einem "listen"-Trigger der UI
-      # (Listener-Goal dauert 5 s). 0 = Dauerbetrieb wie früher.
+      # (Listener-Goal dauert 5 s). 0 = Dauerbetrieb wie frueher.
       listen_window_ms: 7000

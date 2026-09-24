@@ -1,7 +1,10 @@
 #include "whisper_util/whisper.hpp"
 
 namespace whisper {
-Whisper::Whisper() { wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY); }
+Whisper::Whisper() {
+  wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+  cparams = whisper_context_default_params();
+}
 
 Whisper::Whisper(const std::string &model_path) { initialize(model_path); }
 
