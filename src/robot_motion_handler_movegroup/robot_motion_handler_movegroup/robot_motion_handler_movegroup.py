@@ -75,6 +75,11 @@ class RobotMotionHandlerMovegroup(Node):
         # Ziel, dann geradlinig senkrecht nach unten.
         self.declare_parameter('approach_pre_height', 0.07)        # m ueber der Endpose
         self.declare_parameter('approach_descent_scaling', 0.15)   # Tempo des Absenkens
+        # Fuer den Abstieg nimmt yolo_moveit_collision das Zielobjekt aus der
+        # Kollisionswelt (gleicher Mechanismus wie der Grasp-Ablauf). Gesucht
+        # wird die Greifkugel, die hoechstens so weit (m, XY) vom Ziel liegt.
+        self.declare_parameter('approach_object_match_radius', 0.03)
+        self.ignore_collision_pub = self.create_publisher(String, '/ui/ignore_collision_object', 10)
 
         # MoveTo lets move_group (OMPL) plan a collision-free path to the IK goal
         # instead of sending the joint angles straight to the controller. Only
@@ -650,6 +655,7 @@ class RobotMotionHandlerMovegroup(Node):
                     rec = self._grasp_spheres.get(m.id)
                     if rec is not None and m.text:
                         rec['name'] = m.text.replace('_', ' ')
+                        rec['label'] = m.text
 
     def _detected_scan_targets(self):
         """Aktuelle Greifkugeln in link_base, als kurzer Rundweg ab dem TCP geordnet."""
@@ -1330,7 +1336,10 @@ class RobotMotionHandlerMovegroup(Node):
             if self.stop_requested:
                 raise Exception("Movement interrupted by EMERGENCY STOP!")
 
-            # Phase 2: geradlinig senkrecht nach unten, kollisionsgeprueft.
+            # Phase 2: geradlinig senkrecht nach unten, kollisionsgeprueft -
+            # gegen alles ausser dem Zielobjekt, sonst kaeme der Greifer nicht
+            # bis an dessen Oberseite bzw. die Finger nicht seitlich daran vorbei.
+            self._release_target_object(pose_mm)
             self._descend_straight(pose_mm)
 
             run = self._moveit_finish('succeeded')
@@ -1344,6 +1353,45 @@ class RobotMotionHandlerMovegroup(Node):
             aborted = self.stop_requested
             self._moveit_finish('aborted' if aborted else 'failed', message=str(e))
             self.ui_log(f"Approach {'aborted' if aborted else 'failed'}: {e}", 'error')
+
+    def _release_target_object(self, pose_mm):
+        """Kollision des Objekts unter dem Ziel fuer den Abstieg abschalten.
+
+        yolo_moveit_collision entfernt es sofort und legt es erst wieder an,
+        wenn sich der TCP nach dem Greifen mehr als 10 cm entfernt hat (oder
+        nach einem Timeout, falls er nie in seine Naehe kam). Alle anderen
+        Objekte und der Boden bleiben aktiv. Phase 1 lief noch MIT dem Objekt.
+        """
+        radius = float(self.get_parameter('approach_object_match_radius').value)
+        now = time.time()
+        with self._grasp_lock:
+            fresh = [(f"{r['label']}_{mid}".replace(' ', '_'), r['pos'])
+                     for mid, r in self._grasp_spheres.items()
+                     if 'pos' in r and 'label' in r
+                     and now - r.get('t', 0) <= self.GRASP_SPHERE_MAX_AGE]
+        if not fresh:
+            return
+        try:
+            tf = self.tf_buffer.lookup_transform('link_base', 'world', rclpy.time.Time())
+        except Exception as e:
+            self.ui_log(f"Approach: object collision stays active (TF world->link_base: {e}).", 'warn')
+            return
+        rot = R.from_quat([tf.transform.rotation.x, tf.transform.rotation.y,
+                           tf.transform.rotation.z, tf.transform.rotation.w])
+        off = np.array([tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z])
+        tx, ty = pose_mm[0] / 1000.0, pose_mm[1] / 1000.0
+        best, best_d = None, radius
+        for name, pos in fresh:
+            p = rot.apply(np.array(pos)) + off
+            d = math.hypot(p[0] - tx, p[1] - ty)
+            if d <= best_d:
+                best, best_d = name, d
+        if best is None:
+            return
+        self.ignore_collision_pub.publish(String(data=best))
+        self.ui_log(f"Approach: collision for '{best}' released for the descent "
+                    "(active again once the TCP is > 10 cm away).", 'info')
+        time.sleep(0.5)   # REMOVE bis move_group/Servo durchreichen
 
     def _call_ik_or_raise(self, pose, seed, what):
         sol, err = self._call_ik(pose, seed)

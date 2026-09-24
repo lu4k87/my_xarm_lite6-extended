@@ -43,8 +43,8 @@ export function executeMoveToPoseFromGizmo() {
   if (unreachableClearance(x, y, z) < 0) {
     logMsg('GIZMO', `⚠ Target lies inside the measured unreachable zone around the robot axis (r=${Math.hypot(x, y).toFixed(0)} mm < ${zoneR.toFixed(0)} mm at Z=${z.toFixed(0)} mm) - MoveIt will most likely reject it.`, 'warn');
   }
-  if (floorGuard.enabled && z <= 15.0) {
-    logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the table surface (Z=${z.toFixed(0)} mm ≤ 15 mm).`, 'err');
+  if (floorGuard.enabled && z <= floorGuard.levelMm) {
+    logMsg('GIZMO', `❌ MOVE BLOCKED: Target lies inside the table surface (Z=${z.toFixed(0)} mm ≤ ${floorGuard.levelMm} mm).`, 'err');
     playPoseOutOfReachSound();
     return;
   }

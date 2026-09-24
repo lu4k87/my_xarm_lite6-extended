@@ -578,6 +578,14 @@ body.col-resizing * {
 
 .centerpiece-header h2 {
   margin-bottom: 0 !important;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+
+#twin-section-title {
+  text-transform: none;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 .glass-panel h2:active,
@@ -589,6 +597,10 @@ body.col-resizing * {
 .centerpiece-header h2 i,
 .tf-tuner-header h2 i {
   color: #ffffff;
+}
+
+.centerpiece-header h2 i {
+  font-size: 15px;
 }
 
 .glass-panel h2 .panel-collapse-btn i {
@@ -1017,6 +1029,11 @@ body.col-resizing * {
   white-space: nowrap;
 }
 
+/* Nur im umgebrochenen Layout sichtbar (siehe Container-Query). */
+.jog-divider-joy {
+  display: none;
+}
+
 .gripper-area {
   display: flex;
   flex-direction: row;
@@ -1356,10 +1373,11 @@ input[type=range]:active::-moz-range-thumb {
      die Mitte - MoveIt-Popup, Warnbanner - exakt viewport-mittig sitzt. Die
      Mitte darf bis 0 schrumpfen und ragt so nie ueber Nav-Gizmo/SCENE. */
   grid-template-columns: minmax(152px, 1fr) minmax(0, auto) minmax(152px, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
   grid-template-areas:
     "tl tc tr"
     "ml ml mr"
+    "gc gc gc"
     "es es es"
     "bb bb bb";
   gap: 10px;
@@ -2530,12 +2548,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 #twin-status-badge {
-  font-size: 12px !important;
-  padding: 4px 10px !important;
-  border-radius: 12px !important;
-  font-weight: 600;
-  white-space: nowrap;
-  flex-shrink: 0;
+  display: none !important;
 }
 
 /* ── Digital Twin 3D Viewport HUD Overlays ── */
@@ -2580,15 +2593,15 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   box-sizing: border-box;
   /* Oben mittig im Viewport (Rasterbereich tc, zwischen Nav-Gizmo und
      SCENE-Panel). Abstand zum oberen Viewportrand: 10 px Raster + margin. */
-  width: 640px;
+  width: 740px;
   max-width: 100%;
   margin-top: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 16px 18px;
-  /* 80 % transparent (vorher 0.86 deckend); der Blur haelt den Text lesbar */
-  background: rgba(10, 14, 23, 0.2);
+  /* 60 % transparent (vorher 80 %); der Blur haelt den Text lesbar */
+  background: rgba(10, 14, 23, 0.4);
   border: 1px solid color-mix(in srgb, var(--mp-accent) 65%, rgba(255, 255, 255, 0.2));
   border-radius: 12px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px color-mix(in srgb, var(--mp-accent) 22%, transparent);
@@ -2670,6 +2683,28 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   min-width: 0;
 }
 
+.mp-object-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  padding: 3px 11px;
+  border-radius: 10px;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  white-space: nowrap;
+  min-width: 0;
+  text-transform: uppercase;
+}
+
+.mp-object-badge i {
+  font-size: 12px;
+  color: #38bdf8;
+}
+
 /* ── Integrierte TCP-Gizmo Zielpose & Auto-Move Zeile ── */
 .mp-target-row {
   display: flex;
@@ -2710,6 +2745,43 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .mp-target-right {
   display: flex;
   align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* Ghost-Schalter (Pfad-Vorschau) direkt rechts neben dem Delta; Abstand
+   zum Delta = gap der linken Gruppe (10 px). So hoch wie das Delta-Badge. */
+.mp-ghost-toggle {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--mut);
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+.mp-ghost-toggle:hover {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.45);
+  opacity: 1;
+}
+.mp-ghost-toggle.active {
+  color: var(--accent);
+  border-color: rgba(56, 189, 248, 0.6);
+  background: rgba(56, 189, 248, 0.16);
+  opacity: 1;
+}
+.mp-ghost-toggle.unavailable {
+  color: var(--dim);
+  opacity: 0.45;
 }
 
 .mp-timer {
@@ -3585,6 +3657,9 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
     gap: 10px;
     margin-top: 6px;
   }
+  #panel-jogging .jog-divider-joy {
+    margin-top: 0;
+  }
   .col-left, .col-middle, .col-right {
     gap: 10px !important;
   }
@@ -3922,8 +3997,8 @@ header {
 
 /* Nur Symbol, kein Text - Bedeutung steht im title/aria-label. */
 .mp-btn {
-  flex: 0 0 72px;
-  width: 72px;
+  flex: 0 0 88px;
+  width: 88px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4205,6 +4280,34 @@ header {
   .gripper-controls .btn {
     width: 84px;
   }
+  /* Joystick-Kreuz (X/Y + Stick) als eigene Zeile horizontal zentriert,
+     darunter Z+/Z- links neben Rotation + Frame. */
+  .joystick-assembly {
+    order: 1;
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+  .z-controls {
+    order: 2;
+    margin-left: 0;
+    margin-right: 10px;
+  }
+  /* Trennlinie unter X-: gespiegelt zur Linie ueber dem Greifer
+     (10 px zum Button, Zeilenabstand zur naechsten Gruppe). */
+  .jog-divider-joy {
+    display: block;
+    order: 1;
+    flex: 1 1 100%;
+    width: 100%;
+    height: 1px;
+    margin-top: -4px;
+  }
+  .rot-and-frame-group {
+    order: 3;
+  }
+  .gripper-area {
+    order: 4;
+  }
 }
 
 /* Sehr schmal: Z-Buttons nebeneinander unter den Joystick, Rotation +
@@ -4214,6 +4317,7 @@ header {
     order: 2;
     flex-direction: row;
     margin-left: 0;
+    margin-right: 0;
   }
   .joystick-assembly {
     order: 1;
@@ -4318,10 +4422,49 @@ header {
   min-width: 0;
 }
 
-.centerpiece-header #twin-status-badge,
-.centerpiece-header .panel-collapse-btn {
+.centerpiece-header #twin-status-badge {
   flex-shrink: 0;
   align-self: center;
+}
+
+/* Badge zeigt nur noch das Status-Icon, der Text steht im Tooltip. */
+.centerpiece-header #twin-status-badge {
+  gap: 0;
+  padding: 4px 7px !important;
+}
+
+/* Rechts aussen: "Collapse all viewport panels" oben, "Collapse 3D Viewport"
+   darunter ein Stück nach unten versetzt - sauber über-/untereinander angeordnet. */
+.centerpiece-collapse-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.centerpiece-collapse-stack .v-tab-hud-toggle {
+  align-self: center;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.centerpiece-collapse-stack .v-tab-hud-toggle #hud-tabs-toggle-icon.fa-window-minimize {
+  transform: translateY(-2px);
+}
+
+.centerpiece-collapse-stack .panel-collapse-btn {
+  align-self: center;
+  margin: 0;
+  margin-top: 4px; /* Collapse 3D Viewport ein Stück nach unten */
+  flex-shrink: 0;
+}
+
+.glass-panel.panel-collapsed .centerpiece-collapse-stack .v-tab-hud-toggle {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 /* ── Viewport-HUD bei schmalem Viewport ──
@@ -4392,11 +4535,12 @@ header {
    Popup und Warnbanner direkt im Raster liegen. */
 @container twinvp (max-width: 780px) {
   .twin-overlay-grid {
-    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
     grid-template-areas:
       "pp pp pp"
       "tl tc tr"
       "ml ml mr"
+      "gc gc gc"
       "es es es"
       "bb bb bb";
   }
@@ -4406,7 +4550,7 @@ header {
   .twin-ov-top-center > #moveit-popup {
     grid-area: pp;
     justify-self: center;
-    width: min(640px, 100%);
+    width: min(740px, 100%);
   }
   .twin-ov-top-center > #twin-warning-banner {
     grid-area: tc;
@@ -4967,7 +5111,7 @@ header .header-status {
   display: none;
 }
 .twin-ov-estop.is-hiding {
-  animation: estop-fade-out 0.25s ease-in forwards;
+  animation: estop-fade-out 0.15s ease-in forwards;
 }
 .twin-ov-estop .estop-header-btn,
 .twin-ov-estop .estop-header-reset {
@@ -4978,11 +5122,167 @@ header .header-status {
   font-size: 21px;
   border-radius: 6px;
 }
+/* Leicht transparent, damit die Szene dahinter durchscheint. */
+.twin-ov-estop .estop-header-btn {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.8), rgba(185, 28, 28, 0.8));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.twin-ov-estop .estop-header-btn:hover {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.88), rgba(220, 38, 38, 0.88));
+}
 .twin-ov-estop .estop-header-btn kbd {
   font-size: 15px;
   padding: 2px 8px;
   border-radius: 4px;
 }
+/* ── Ground-Collision-Popup (unten mittig, eigene Rasterzeile "gc") ─────
+   Ueber Not-Aus und POSE-Zeile, darum kein Ueberlappen; margin-bottom haelt
+   Abstand nach unten. Ausgeblendet (hidden) faellt die Zeile weg. */
+.twin-ov-ground {
+  --gc-accent: var(--green);
+  grid-area: gc;
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 100%;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  background: rgba(10, 14, 23, 0.4);
+  border: 1px solid color-mix(in srgb, var(--gc-accent) 60%, rgba(255, 255, 255, 0.2));
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 18px color-mix(in srgb, var(--gc-accent) 22%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-family: 'JetBrains Mono', monospace;
+  animation: estop-fade-in 0.2s ease-out;
+}
+.twin-ov-ground[hidden] {
+  display: none;
+}
+.twin-ov-ground.is-hiding {
+  animation: estop-fade-out 0.15s ease-in forwards;
+}
+.twin-ov-ground[data-state="off"] { --gc-accent: var(--red); }
+.twin-ov-ground[data-state="unknown"] { --gc-accent: var(--mut); }
+
+.gc-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.gc-icon {
+  color: var(--gc-accent);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.gc-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.gc-state {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--gc-accent);
+  background: color-mix(in srgb, var(--gc-accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gc-accent) 50%, transparent);
+}
+.gc-close {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--mut);
+  cursor: pointer;
+}
+.gc-close:hover {
+  color: var(--txt);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.gc-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.gc-axis {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--rviz-z);
+  margin-right: 4px;
+}
+.gc-step {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--txt);
+  font-size: 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.gc-step:hover {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+.gc-step:active {
+  transform: scale(0.95);
+}
+.gc-input {
+  width: 72px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--txt);
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.gc-input::-webkit-outer-spin-button,
+.gc-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.gc-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.gc-unit {
+  font-size: 14px;
+  color: var(--mut);
+}
+
 @keyframes estop-fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -5115,21 +5415,26 @@ header .header-status {
 #hud-tab-pose:not(.is-collapsed) > .hud-tab-body {
   justify-content: center;
 }
-#hud-tab-pose.is-collapsed {
+/* TELEMETRY (unten links) eingeklappt ebenso waagerecht. */
+#hud-tab-pose.is-collapsed,
+#hud-tab-telemetry.is-collapsed {
   flex-direction: column;
 }
-#hud-tab-pose.is-collapsed > .hud-tab-head {
+#hud-tab-pose.is-collapsed > .hud-tab-head,
+#hud-tab-telemetry.is-collapsed > .hud-tab-head {
   flex-direction: row;
   width: 100%;
   padding: 3px 6px;
   gap: 7px;
 }
-#hud-tab-pose.is-collapsed .hud-tab-title {
+#hud-tab-pose.is-collapsed .hud-tab-title,
+#hud-tab-telemetry.is-collapsed .hud-tab-title {
   writing-mode: horizontal-tb;
   transform: none;
   text-align: left;
 }
-#hud-tab-pose.is-collapsed .hud-tab-caret {
+#hud-tab-pose.is-collapsed .hud-tab-caret,
+#hud-tab-telemetry.is-collapsed .hud-tab-caret {
   margin-top: 0;
   margin-left: auto;
   transform: rotate(-90deg);

@@ -292,6 +292,9 @@ export function createYoloItem(item) {
   el.className = 'yolo-item';
   el.dataset.id = item.name;
   el.onclick = (ev) => {
+    if (typeof twin.setDigitalTwinSelectedGrasp === 'function') {
+      twin.setDigitalTwinSelectedGrasp(item.name);
+    }
     const info = (typeof twin.getDetectedObjectInfo === 'function' && twin.getDetectedObjectInfo(item.name)) ||
                  { name: item.name, collisionName: null, grasp: null };
     openDetectedObjectMenu(info, ev.clientX, ev.clientY);

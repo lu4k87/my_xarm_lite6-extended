@@ -196,14 +196,10 @@
         <section id="panel-3d-centerpiece" class="glass-panel">
           <div class="centerpiece-header panel-drag-handle">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <h2 style="margin: 0; cursor: grab;"><i class="fa-solid fa-cube"></i> Live Digital Twin</h2>
-              <button type="button" class="v-tab-hud-toggle" id="btn-hud-tabs-toggle" data-action="toggleAllHudTabs" title="Collapse / expand all viewport panels">
-                <i class="fa-solid fa-window-minimize" id="hud-tabs-toggle-icon"></i>
-              </button>
+              <h2 style="margin: 0; cursor: grab;" title="3D Digital Twin"><i class="fa-solid fa-cube"></i> <span id="twin-section-title">Digital Twin - Viewport | xArm Lite 6 (FAKE)</span></h2>
             </div>
             
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="badge badge-node" id="twin-status-badge"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
               <div class="twin-toolbar">
                 <button class="btn btn-icon-small" id="btn-twin-safety-test" data-action="testDigitalTwinSafetyCycle" title="Test safety warnings (Collision & Singularity Visuals)" style="color: var(--mut);">
                   <i class="fa-solid fa-shield-halved"></i>
@@ -239,6 +235,12 @@
                   <i class="fa-solid fa-volume-high" id="sound-toggle-icon"></i>
                 </button>
               </div>
+              <!-- Oben: alle Viewport-Panels einklappen, darunter: 3D Viewport einklappen (Pfeil kommt aus layout.js) -->
+              <div class="centerpiece-collapse-stack">
+                <button type="button" class="v-tab-hud-toggle" id="btn-hud-tabs-toggle" data-action="toggleAllHudTabs" title="Collapse / expand all viewport panels">
+                  <i class="fa-solid fa-window-minimize" id="hud-tabs-toggle-icon"></i>
+                </button>
+              </div>
             </div>
           </div>
           
@@ -264,6 +266,10 @@
                       <i class="fa-solid fa-route mp-icon" id="mp-icon"></i>
                       <span class="mp-title">MOVEIT</span>
                       <span class="mp-phase" id="mp-phase">IDLE</span>
+                      <span class="mp-object-badge" id="mp-object-badge" style="display: none;">
+                        <i class="fa-solid fa-cube"></i>
+                        <span id="mp-object-name"></span>
+                      </span>
                     </div>
                     <div class="mp-head-right">
                       <span class="mp-timer" id="mp-timer">0.0 s</span>
@@ -283,6 +289,14 @@
                         <span class="gizmo-ax gizmo-ax-z">Z:</span> <span id="gizmo-hud-z">200</span>
                       </span>
                       <span id="gizmo-hud-delta" class="gizmo-hud-delta">Δ 0 mm</span>
+                      <!-- Pfad-Vorschau (Ghost) - gleicher Schalter wie in der Viewport-Tableiste, rechts neben Δ -->
+                      <button type="button" class="mp-ghost-toggle" id="mp-btn-path-preview" data-action="toggleMoveToPreview" title="MoveTo path preview (node robot_motion_handler_movegroup inactive)">
+                        <i class="fa-solid fa-ghost"></i>
+                      </button>
+                      <!-- Distanzlinie - gleicher Schalter wie im SCENE-Panel -->
+                      <button type="button" class="mp-ghost-toggle" id="mp-btn-distance-line" data-action="toggleTwinDistanceLine" title="Distance line (dashed line from TCP to the nearest detected object)">
+                        <i class="fa-solid fa-ruler-horizontal"></i>
+                      </button>
                     </div>
                     <div class="mp-target-right">
                       <label class="gizmo-auto-toggle" title="Robot moves automatically when the gizmo is released">
@@ -331,13 +345,13 @@
                 </button>
                 <div class="hud-tab-body">
                 <div id="twin-scene-node-overlay" class="twin-scene-node-overlay">
-                <button class="btn btn-icon-small" id="btn-twin-scene-objects" data-action="toggleSceneNode" data-args='["objects"]' title="Interactive objects &amp; workspace circle (rviz_marker_3d_scene_objects)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small" id="btn-twin-scene-objects" data-action="toggleSceneNode" data-args='["objects"]' title="Interactive 3D scene objects (rviz_marker_3d_scene_objects)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-cubes"></i>
                 </button>
                 <button class="btn btn-icon-small" id="btn-twin-scene-plane" data-action="toggleSceneNode" data-args='["plane"]' title="White reference plane (rviz_marker_3d_scene_plane)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-square"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-scene-safety" data-action="toggleSceneNode" data-args='["safety"]' title="Safety Zone (rviz_marker_3d_scene_safety_zone)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small" id="btn-twin-scene-safety" data-action="toggleSceneNode" data-args='["safety"]' title="Safety &amp; Collision Zone, Singularity &amp; Workspace Limit (r=420 mm) (rviz_marker_3d_scene_safety_zone)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-shield-halved"></i>
                 </button>
                 <button class="btn btn-icon-small" id="btn-twin-scene-zedm" data-action="toggleSceneNode" data-args='["zedm"]' title="ZED-M camera stand (rviz_marker_3d_scene_zedm_stand)" style="color: var(--dim); opacity: 0.5;">
@@ -400,6 +414,30 @@
                 </button>
               </div>
 
+              <!-- Ground Collision: erscheint nach dem Umschalten des Boden-Icons
+                   (SCENE); Z Collision Level live einstellbar. -->
+              <div class="twin-ov-ground" id="ground-coll-popup" data-state="unknown" hidden>
+                <div class="gc-head">
+                  <i class="fa-solid fa-arrows-down-to-line gc-icon"></i>
+                  <span class="gc-title">GROUND COLLISION</span>
+                  <span class="gc-state" id="gc-state">ON</span>
+                  <button type="button" class="gc-close" data-action="hideGroundCollPopup" title="Close" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+                <div class="gc-row">
+                  <span class="gc-axis">Z</span>
+                  <button type="button" class="gc-step" data-action="stepGroundLevel" data-args="[-1]" title="Lower by 1 mm" aria-label="Lower by 1 mm">
+                    <i class="fa-solid fa-minus"></i>
+                  </button>
+                  <input type="number" class="gc-input" id="gc-level" min="0" max="200" step="1" value="10" inputmode="numeric" data-input="inputGroundLevel" data-change="commitGroundLevel" aria-label="Z Collision Level in mm">
+                  <button type="button" class="gc-step" data-action="stepGroundLevel" data-args="[1]" title="Raise by 1 mm" aria-label="Raise by 1 mm">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                  <span class="gc-unit">mm</span>
+                </div>
+              </div>
+
               <!-- bottom row (one line): Telemetry left · Pose Inputs center · Watermark right -->
               <div class="twin-ov-bottom-row">
                 <!-- bottom-left: Mini Safety Telemetry HUD -->
@@ -417,7 +455,7 @@
                       <div class="hud-bar-bg"><div id="hud-manip-bar" class="hud-bar-fill" style="width: 100%;"></div></div>
                       <span id="hud-manip-val" class="hud-val">100%</span>
                     </div>
-                    <div class="hud-safety-item" id="hud-floor-item" title="Distance to table surface (floor limit: 91 mm)">
+                    <div class="hud-safety-item" id="hud-floor-item" title="Distance to table surface (floor limit: Z Collision Level)">
                       <span class="hud-lbl">FLOOR</span>
                       <span id="hud-floor-val" class="hud-val">-- mm</span>
                     </div>
@@ -555,6 +593,8 @@
                 </button>
               </div>
             </div>
+
+            <div class="jog-divider jog-divider-joy"></div>
             
             <div class="rot-and-frame-group">
               <div class="rot-controls">

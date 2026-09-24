@@ -88,16 +88,17 @@ class YoloMoveitCollision(Node):
             String, '/ui/set_object_collision', self.set_object_collision_callback, 10)
         self._publish_disabled_objects()
 
-        # End effector links that are allowed to collide with the objects
         # Freie Zone unter der Objektoberkante, in der die Seitenwaende fehlen
         # (siehe open_box_walls). 1 cm: die Waende schuetzen fast die ganze
-        # Objekthoehe. Kleiner als der Servo-Haltabstand von 2 cm - beim
-        # Herunterjoggen direkt ueber dem Objekt kann Servo deshalb etwas
-        # frueher stoppen. "Approach from above" plant ueber MoveIt und ist
-        # davon nicht betroffen. Vorher 3 cm (Waende wirkten zu niedrig).
+        # Objekthoehe. Entspricht der Servo-Bremszone (scene_collision_
+        # proximity_threshold 1 cm) - beim Herunterjoggen direkt ueber einem
+        # schmalen Objekt bremst Servo trotzdem kurz vor der Oberkante.
+        # "Approach from above" nimmt das Zielobjekt fuer den Abstieg ganz
+        # heraus (/ui/ignore_collision_object). Vorher 3 cm.
         self.top_clearance = float(
             self.declare_parameter('top_clearance', 0.01).value)
 
+        # End effector links that are allowed to collide with the objects
         self.eef_links = [
             'link5', 'link6', 'link_eef',
             'uflite_vacuum_gripper_link', 'uflite_gripper_link',
@@ -335,7 +336,8 @@ class YoloMoveitCollision(Node):
                         if dist < 0.05:
                             self.ignored_objects[obj_name]['state'] = 'INSIDE'
                             self.get_logger().info(f"TCP nahe {obj_name} (< 5cm). Status -> INSIDE")
-                        elif (current_time - ign_info['timestamp']) > 20.0:
+                        # 30 s: Planung + Pfadvorschau (bis 15 s) + Abstieg
+                        elif (current_time - ign_info['timestamp']) > 30.0:
                             msg_str = f"⚠️ Timeout: Kollision fuer {obj_name} reaktiviert"
                             self.get_logger().info(msg_str)
                             self.pub_status.publish(String(data=msg_str))
@@ -362,8 +364,8 @@ class YoloMoveitCollision(Node):
             # --- 1. Collision Object for MoveIt ---
             # Offene Kiste aus 5 duennen Waenden (Boden + 4 Seiten), OHNE
             # Deckel. Die Seitenwaende enden top_clearance unter der
-            # Objektoberkante: MoveIt Servo haelt schon 2 cm vor jeder
-            # Kollisionsgeometrie an (min_allowable_collision_distance), und
+            # Objektoberkante: MoveIt Servo bremst schon 1 cm vor jeder
+            # Kollisionsgeometrie (scene_collision_proximity_threshold), und
             # Wandkanten genau auf Hoehe der Oberkante wirkten deshalb beim
             # Anfahren von oben wie ein Deckel. Seitlich und unten bleibt das
             # Objekt geschuetzt.

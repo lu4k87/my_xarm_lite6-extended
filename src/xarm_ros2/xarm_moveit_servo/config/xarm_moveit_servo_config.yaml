@@ -57,9 +57,12 @@ collision_check_rate: 10.0
 # UMGESCHALTET auf stop_distance (sanftes Abbremsen)
 collision_check_type: stop_distance
 
-# Parameter für "threshold_distance"
+# Humble kennt nur "threshold_distance": unterhalb dieser Abstaende bremst Servo
+# ALLE Richtungen exponentiell ab (bei 0 mm ~0,1 %). Szene 1 cm (vorher 2 cm):
+# sonst kroch der Arm an der Z Collision Level (TCP 10 mm ueber dem Tisch)
+# und direkt ueber einem Objekt nur noch mit wenigen Prozent - auch nach oben.
 self_collision_proximity_threshold: 0.01 
-scene_collision_proximity_threshold: 0.02 
+scene_collision_proximity_threshold: 0.01 
 
 # Parameter für "stop_distance" (Werte optimiert für 5cm Warnung, 2cm Halt)
 collision_distance_safety_factor: 0.5 

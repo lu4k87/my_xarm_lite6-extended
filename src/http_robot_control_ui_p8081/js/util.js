@@ -9,7 +9,10 @@ export const LIM = ROBOT_LIMITS;
 // Ist die Bodenkollision bewusst AUS, blockiert auch die UI nicht mehr nach
 // unten. Laeuft moveit_floor_collision nicht (Zustand unbekannt), bleibt die
 // Sperre als Rueckfallebene aktiv.
-export const floorGuard = { enabled: true };
+// levelMm = aktuelle Z Collision Level (TCP-Hoehe in mm). Kommt latched von
+// moveit_floor_collision (/ui/ground_collision_level) und laesst sich im
+// Ground-Collision-Popup im Viewport live verstellen.
+export const floorGuard = { enabled: true, levelMm: LIM.FLOOR_CLEARANCE_MM };
 
 // ── Kleine Helfer ─────────────────────────────────────────────────────────
 // localStorage wirft im Inkognito-Fenster und bei blockierten Site-Daten.
@@ -89,8 +92,8 @@ export function validatePose(pose) {
   }
   // Unterhalb der Z Collision Level bremst MoveIt Servo den Arm danach fast
   // auf null - ein manuelles Ziel dort ist fast immer ein Tippfehler.
-  if (floorGuard.enabled && pose[2] < LIM.FLOOR_CLEARANCE_MM) {
-    return `Z=${pose[2]} mm liegt unter der Z Collision Level (${LIM.FLOOR_CLEARANCE_MM} mm)`;
+  if (floorGuard.enabled && pose[2] < floorGuard.levelMm) {
+    return `Z=${pose[2]} mm liegt unter der Z Collision Level (${floorGuard.levelMm} mm)`;
   }
   return null;
 }

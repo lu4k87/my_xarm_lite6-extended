@@ -27,8 +27,9 @@ CONFIG = {
 # Statische Szene (aus der URDF extrahiert)
 # Dimensions für Zylinder in Rviz: (Durchmesser_X, Durchmesser_Y, Höhe_Z)
 SCENE_MARKERS = [
-    # Arbeitsbereich als weiße Kreislinie (Radius 0.44)
-    {"id": 10, "type": Marker.LINE_LIST, "radius": 0.44, "pos": (0.0, 0.0, -0.004), "dims": (0.001, 0.0, 0.0), "color": [1.0, 1.0, 1.0, 1.0]}
+    # Arbeitsbereich als weiße Kreisfläche (Radius 0.42 m / 420 mm, Dicke 3 mm)
+    {"id": 10, "type": Marker.CYLINDER, "pos": (0.0, 0.0, 0.0015), "dims": (0.84, 0.84, 0.003), "color": [1.0, 1.0, 1.0, 0.12]},
+    {"id": 11, "type": Marker.LINE_LIST, "radius": 0.42, "pos": (0.0, 0.0, 0.0031), "dims": (0.002, 0.0, 0.0), "color": [1.0, 1.0, 1.0, 0.45]}
 ]
 
 # =========================================================

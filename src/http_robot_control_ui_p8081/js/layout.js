@@ -27,6 +27,14 @@ export function applyTwinDetectionsBtn(visible) {
 export const TWIN_DISTLINE_LS_KEY = 'twin_distance_line_visible';
 
 export function applyTwinDistanceLineBtn(visible) {
+  // Gleicher Schalter im MoveIt-Popup (neben Ghost): Farben aus dem Stylesheet
+  const popupBtn = document.getElementById('mp-btn-distance-line');
+  if (popupBtn) {
+    popupBtn.classList.toggle('active', visible);
+    popupBtn.title = visible
+      ? 'Distance line: ON - click to hide'
+      : 'Distance line: OFF - click to show';
+  }
   const btn = document.getElementById('btn-twin-distance-line');
   if (!btn) return;
   btn.classList.toggle('active', visible);
@@ -355,7 +363,8 @@ export function initPanelCollapse() {
     let header, host;
     if (section.id === 'panel-3d-centerpiece') {
       header = section.querySelector(':scope > .centerpiece-header');
-      host = header ? header.lastElementChild : null;   // right-hand toolbar row
+      // Stapel rechts: unter dem "Collapse all viewport panels"-Button
+      host = header ? header.querySelector('.centerpiece-collapse-stack') : null;
     } else {
       header = section.querySelector(':scope > h2');
       host = header;

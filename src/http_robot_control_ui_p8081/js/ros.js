@@ -56,6 +56,13 @@ try {
 export let getNodesClient = null;
 export let paramClient = null;
 
+export function updateTwinSectionTitle(isReal) {
+  const titleEl = document.getElementById('twin-section-title');
+  if (titleEl) {
+    titleEl.textContent = `Digital Twin - Viewport | xArm Lite 6 (${isReal ? 'REAL' : 'FAKE'})`;
+  }
+}
+
 export function checkRosNodes() {
   if (!ros || !ros.isConnected) return;
   if (!getNodesClient) {
@@ -70,14 +77,16 @@ export function checkRosNodes() {
     // ── 3D Scene Objects Node Detection ──
     rosHooks.onNodeList.forEach(fn => fn(result ? result.nodes : null));
 
-    const dot = document.getElementById('mode-dot');
-    const text = document.getElementById('mode-status');
-    if (!dot || !text) return;
-
     let driverNode = null;
     if (result && result.nodes) {
       driverNode = result.nodes.find(n => n.includes('ufactory_driver'));
     }
+
+    updateTwinSectionTitle(!!driverNode);
+
+    const dot = document.getElementById('mode-dot');
+    const text = document.getElementById('mode-status');
+    if (!dot || !text) return;
 
     if (driverNode) {
       dot.className = 'dot glow-green';

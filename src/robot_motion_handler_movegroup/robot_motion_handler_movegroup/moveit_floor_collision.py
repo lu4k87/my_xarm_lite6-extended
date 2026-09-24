@@ -20,6 +20,13 @@ Die Robot Control UI kann den Boden ueber /ui/set_moveit_collision_ground
 (std_srvs/SetBool) fuer MoveIt aus- und wieder einschalten. Der Zustand geht
 latched auf /ui/moveit_collision_ground_enabled. Nach einem Neustart des Nodes
 ist der Boden immer wieder aktiv.
+
+Z Collision Level (TCP-Hoehe in mm, Standard 10) ist live einstellbar:
+/ui/set_ground_collision_level (std_msgs/Float64, mm), der gueltige Wert geht
+latched auf /ui/ground_collision_level. Die UI sperrt Joggen/MoveTo unter dieser
+Hoehe; die MoveIt-Box liegt servo_margin darunter (Servo bremst erst 1 cm vor
+Kollisionsgeometrie), hoechstens aber bei floor_z - hoeher wuerde sie link_base
+schneiden und jede Planung als START_STATE_IN_COLLISION abbrechen.
 """
 
 import rclpy
@@ -28,7 +35,7 @@ from rclpy.qos import QoSProfile, DurabilityPolicy
 from geometry_msgs.msg import Pose
 from moveit_msgs.msg import CollisionObject, ObjectColor, PlanningScene
 from shape_msgs.msg import SolidPrimitive
-from std_msgs.msg import Bool, ColorRGBA
+from std_msgs.msg import Bool, ColorRGBA, Float64
 from std_srvs.srv import SetBool
 
 
@@ -45,6 +52,11 @@ class MoveitFloorCollision(Node):
         self.declare_parameter('thickness', 0.02)
         self.declare_parameter('object_id', 'floor')
         self.declare_parameter('publish_period', 2.0)
+        self.declare_parameter('ground_level_mm', 10.0)
+        self.declare_parameter('ground_level_min_mm', 0.0)
+        self.declare_parameter('ground_level_max_mm', 200.0)
+        self.declare_parameter('servo_margin', 0.011)
+        self.level_mm = self._clamp_level(float(self.get_parameter('ground_level_mm').value))
 
         self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
 
@@ -55,14 +67,41 @@ class MoveitFloorCollision(Node):
         self.create_service(SetBool, '/ui/set_moveit_collision_ground', self.set_enabled_cb)
         self.state_pub.publish(Bool(data=self.enabled))
 
+        self.level_pub = self.create_publisher(
+            Float64, '/ui/ground_collision_level', latched_qos)
+        self.create_subscription(
+            Float64, '/ui/set_ground_collision_level', self.set_level_cb, 10)
+        self.level_pub.publish(Float64(data=self.level_mm))
+
         period = float(self.get_parameter('publish_period').value)
         self.timer = self.create_timer(period, self.publish_floor)
         self.publish_floor()
 
         self.get_logger().info(
             f"Floor collision object '{self.get_parameter('object_id').value}' active "
-            f"(top at z={self.get_parameter('floor_z').value:.3f} m in "
-            f"{self.get_parameter('frame_id').value}).")
+            f"(top at z={self.floor_top():.3f} m in "
+            f"{self.get_parameter('frame_id').value}, Z Collision Level {self.level_mm:.0f} mm).")
+
+    def _clamp_level(self, mm):
+        lo = float(self.get_parameter('ground_level_min_mm').value)
+        hi = float(self.get_parameter('ground_level_max_mm').value)
+        return min(hi, max(lo, mm))
+
+    def floor_top(self):
+        cap = float(self.get_parameter('floor_z').value)
+        margin = float(self.get_parameter('servo_margin').value)
+        return min(cap, self.level_mm / 1000.0 - margin)
+
+    def set_level_cb(self, msg):
+        mm = float(msg.data)
+        if mm != mm:   # NaN
+            self.get_logger().warn('Ignoring NaN on /ui/set_ground_collision_level')
+            return
+        self.level_mm = self._clamp_level(mm)
+        self.level_pub.publish(Float64(data=self.level_mm))
+        self.publish_floor()
+        self.get_logger().info(
+            f"Z Collision Level {self.level_mm:.0f} mm (MoveIt floor top z={self.floor_top():.3f} m).")
 
     def set_enabled_cb(self, request, response):
         self.enabled = bool(request.data)
@@ -96,7 +135,7 @@ class MoveitFloorCollision(Node):
             # und blockierte weiter Bewegungen nach unten.
             self.remove_floor()
             return
-        floor_z = float(self.get_parameter('floor_z').value)
+        floor_z = self.floor_top()
         size_xy = float(self.get_parameter('size_xy').value)
         thickness = float(self.get_parameter('thickness').value)
         object_id = self.get_parameter('object_id').value

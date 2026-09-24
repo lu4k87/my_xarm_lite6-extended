@@ -55,7 +55,9 @@ jointStateSub.subscribe((msg) => {
         fillEl.style.left = '0%';
       }
       if (msg.velocity && msg.velocity.length > idx) {
-        if (Math.abs(msg.velocity[idx]) > 0.005) {
+        // 0.01 rad/s (~0.6 Grad/s): das Auslaufen am Bahnende zaehlt nicht
+        // mehr als Bewegung, langsames Joggen aber weiterhin.
+        if (Math.abs(msg.velocity[idx]) > 0.01) {
           moving = true;
         }
       }
@@ -85,7 +87,7 @@ jointStateSub.subscribe((msg) => {
     movingTimeout = setTimeout(() => {
       isRobotMoving = false;
       if (typeof updateMoveItBadge === 'function') updateMoveItBadge();
-    }, 250);
+    }, 150);   // ~5 Samples bei 30 Hz
   }
 });
 
@@ -194,12 +196,12 @@ export function evaluateRobotSafety() {
     message = (lastServoStatus === 2) ? 'MOVEIT SINGULARITY HALT' : 'APPROACHING SINGULARITY (MOVEIT)';
   }
 
-  // B. Ground / Table Plane Clearance (Z <= 15.0 mm is table limit)
+  // B. Ground / Table Plane Clearance (Z <= floorGuard.levelMm is table limit)
   if (floorGuard.enabled && latestEEF_Z !== null && !isNaN(latestEEF_Z)) {
-    if (latestEEF_Z <= LIM.FLOOR_CLEARANCE_MM) {
+    if (latestEEF_Z <= floorGuard.levelMm) {
       isCollision = true;
       collidingLinks = ['link6', 'vacuum', 'gripper'];
-      message = `PLANE COLLISION (Z: ${latestEEF_Z.toFixed(1)} mm ≤ ${LIM.FLOOR_CLEARANCE_MM} mm)`;
+      message = `PLANE COLLISION (Z: ${latestEEF_Z.toFixed(1)} mm ≤ ${floorGuard.levelMm} mm)`;
     }
   }
 
@@ -328,7 +330,7 @@ export function setEstopResetVisible(active) {
 // oder er gerade gedrueckt wurde. Nach dem Stillstand erst ESTOP_HIDE_DELAY_MS
 // spaeter ausblenden, damit er zwischen zwei kurzen Bewegungen nicht flackert.
 // Die Leertaste loest den Not-Aus unabhaengig davon immer aus.
-export const ESTOP_HIDE_DELAY_MS = 1500;
+export const ESTOP_HIDE_DELAY_MS = 100;
 const ESTOP_PRESS_HOLD_MS = 3000;   // bis die latched-Meldung vom Node da ist
 let estopIsLatched = false;
 let estopPressedAt = 0;
@@ -359,7 +361,7 @@ function setEstopShown(show, instant = false) {
         wrap.classList.remove('is-hiding');
         if (typeof twin.refitDigitalTwinHud === 'function') twin.refitDigitalTwinHud();
       }
-    }, 250);
+    }, 150);   // = Dauer von estop-fade-out
   }
   if (typeof twin.refitDigitalTwinHud === 'function') twin.refitDigitalTwinHud();
 }

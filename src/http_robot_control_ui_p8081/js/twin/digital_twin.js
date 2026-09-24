@@ -26,6 +26,7 @@ export const twinHooks = {
   isApproachingObject: null,
   triggerApproachVoice: null,
   isPathPreviewOn: null,
+  setTargetObjectName: null,
 };
 
 // ── Rendern nur bei Bedarf ──────────────────────────────────────────────────
@@ -176,7 +177,8 @@ function initDigitalTwin() {
       console.error('[DigitalTwin] WebGL completely unavailable:', e2);
       const badge = document.getElementById('twin-status-badge');
       if (badge) {
-        setIconLabel(badge, 'fa-solid fa-triangle-exclamation', 'No WebGL');
+        setIconLabel(badge, 'fa-solid fa-triangle-exclamation');
+        badge.title = 'No WebGL';
         badge.className = 'badge badge-kill';
       }
       return;
@@ -667,14 +669,16 @@ function updateNavSnap() {
 function loadURDFModel() {
   const badge = document.getElementById('twin-status-badge');
   if (badge) {
-    setIconLabel(badge, 'fa-solid fa-circle-notch fa-spin', 'Loading URDF...');
+    setIconLabel(badge, 'fa-solid fa-circle-notch fa-spin');
+    badge.title = 'Loading URDF...';
     badge.className = 'badge badge-launch';
   }
 
   if (typeof URDFLoader !== 'function') {
     console.error('[DigitalTwin] URDFLoader is not loaded');
     if (badge) {
-      setIconLabel(badge, 'fa-solid fa-triangle-exclamation', 'Loader Missing');
+      setIconLabel(badge, 'fa-solid fa-triangle-exclamation');
+      badge.title = 'Loader Missing';
       badge.className = 'badge badge-kill';
     }
     return;
@@ -821,7 +825,8 @@ function loadURDFModel() {
       syncGizmoToRealTCP(true);
 
       if (badge) {
-        setIconLabel(badge, 'fa-solid fa-circle-check', 'Live Digital Twin');
+        setIconLabel(badge, 'fa-solid fa-circle-check');
+        badge.title = 'Live Digital Twin';
         badge.className = 'badge badge-node';
       }
       console.log('[DigitalTwin] xArm Lite 6 URDF successfully loaded with enhanced shading.');
@@ -832,7 +837,8 @@ function loadURDFModel() {
     (error) => {
       console.error('[DigitalTwin] Error loading URDF:', error);
       if (badge) {
-        setIconLabel(badge, 'fa-solid fa-circle-xmark', 'Load Error');
+        setIconLabel(badge, 'fa-solid fa-circle-xmark');
+        badge.title = 'Load Error';
         badge.className = 'badge badge-kill';
       }
     }
@@ -851,6 +857,9 @@ function applyJointValues() {
   // Update linear axis translation along Y axis
   if (robotModel.position) {
     robotModel.position.y = linearShiftY;
+  }
+  if (tunerSceneObjects['Workspace Circle']) {
+    tunerSceneObjects['Workspace Circle'].position.y = linearShiftY;
   }
 
   // Keep TCP Gizmo in sync if user is not actively dragging it
@@ -1075,7 +1084,7 @@ function handleGizmoChange(updateInputs = true) {
   const r_xy = Math.sqrt(posX_mm * posX_mm + posY_mm * posY_mm);
   const zoneClearance = unreachableClearance(posX_mm, posY_mm, posZ_mm);
   const isInsideDeadzone = zoneClearance < 0;    // nur Warnung, keine Sperre
-  const isBelowFloor = floorGuard.enabled && (posZ_mm <= 15.0);
+  const isBelowFloor = floorGuard.enabled && (posZ_mm <= floorGuard.levelMm);
 
   // Update floating HUD in viewport
   const hudCoords = document.getElementById('gizmo-hud-coords');
@@ -1095,7 +1104,7 @@ function handleGizmoChange(updateInputs = true) {
     if (isInsideDeadzone || isBelowFloor) {
       hudCoords.style.color = '#ef4444';
       hudCoords.classList.add('coords-alert');
-    } else if (zoneClearance < LIM.CAUTION_MARGIN_MM || posZ_mm < LIM.FLOOR_WARN_MM) {
+    } else if (zoneClearance < LIM.CAUTION_MARGIN_MM || posZ_mm < (floorGuard.levelMm + LIM.FLOOR_WARN_MARGIN_MM)) {
       hudCoords.style.color = '#f59e0b';
       hudCoords.classList.add('coords-alert');
     } else {
@@ -1109,7 +1118,7 @@ function handleGizmoChange(updateInputs = true) {
       hudDelta.style.color = '#ef4444';
       hudDelta.style.background = 'rgba(239, 68, 68, 0.25)';
     } else if (isBelowFloor) {
-      hudDelta.innerText = `⚠️ Z: ${posZ_mm} ≤ 15 mm`;
+      hudDelta.innerText = `⚠️ Z: ${posZ_mm} ≤ ${floorGuard.levelMm} mm`;
       hudDelta.style.color = '#ef4444';
       hudDelta.style.background = 'rgba(239, 68, 68, 0.25)';
     } else {
@@ -1141,7 +1150,7 @@ function handleGizmoDragEnd() {
   const posX_mm = Math.round(gizmoTarget.position.x * 1000.0);
   const posY_mm = Math.round((gizmoTarget.position.y - linearShiftY) * 1000.0);
   const posZ_mm = Math.round(gizmoTarget.position.z * 1000.0);
-  const isBelowFloor = floorGuard.enabled && (posZ_mm <= 15.0);
+  const isBelowFloor = floorGuard.enabled && (posZ_mm <= floorGuard.levelMm);
 
   // Nur die Tischebene blockiert noch. Ziele nahe der Roboterachse gehen an
   // MoveIt; executeMoveToPoseFromGizmo warnt dazu im Log.
@@ -1169,6 +1178,9 @@ function handleGizmoDragEnd() {
       if (phaseEl) phaseEl.textContent = 'GIZMO TARGET';
       const detailEl = document.getElementById('mp-detail');
       if (detailEl) detailEl.textContent = 'Target pose set. Click ▶ (Execute path) to plan and move.';
+      if (typeof twinHooks.setTargetObjectName === 'function') {
+        twinHooks.setTargetObjectName(selectedGraspName || null);
+      }
     }
   }
 }
@@ -1314,9 +1326,9 @@ export function updateDigitalTwinSafety(state) {
     if (safetyState.floorClearanceZ !== null && !isNaN(safetyState.floorClearanceZ)) {
       const fz = safetyState.floorClearanceZ;
       floorVal.innerText = Number(fz).toFixed(0) + ' mm';
-      if (Number(fz) <= 15.0) {
+      if (Number(fz) <= floorGuard.levelMm) {
         floorVal.style.color = '#ef4444';
-      } else if (Number(fz) < 35.0) {
+      } else if (Number(fz) < (floorGuard.levelMm + LIM.FLOOR_WARN_MARGIN_MM)) {
         floorVal.style.color = '#f59e0b';
       } else {
         floorVal.style.color = '#38bdf8';
@@ -1698,13 +1710,45 @@ function initTunerSceneObjects() {
   camGroup.visible = areTunerSceneObjectsVisible;
   scene.add(camGroup);
   tunerSceneObjects['Zed M Camera'] = camGroup;
+
+  // 7. Workspace Reach Limit Circle (r=420mm, 3mm dick, leicht weiß transparent über dem Boden)
+  // Maximaler Greifbereich des xArm Lite 6 auf Tischebene bei tcp_link Z = 0.
+  const reachMesh = new THREE.Group();
+  reachMesh.name = 'workspace-reach-circle';
+  const reachGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.003, 64);
+  reachGeo.rotateX(Math.PI / 2); // ROS Z is UP
+  const reachMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.12,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const reachCylinder = new THREE.Mesh(reachGeo, reachMat);
+  reachCylinder.position.z = 0.0015; // 3mm dicke Kreisfläche, liegt flach von Z=0 bis Z=0.003
+
+  // Feine weiße Randkontur auf der Oberkante (Z = 0.0031)
+  const reachRingPts = [];
+  for (let i = 0; i <= 64; i++) {
+    const a = (i / 64) * Math.PI * 2;
+    reachRingPts.push(new THREE.Vector3(Math.cos(a) * 0.42, Math.sin(a) * 0.42, 0.0031));
+  }
+  const reachRing = new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(reachRingPts),
+    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, depthWrite: false })
+  );
+  reachMesh.add(reachCylinder, reachRing);
+  reachMesh.position.y = linearShiftY;
+  reachMesh.visible = areTunerSceneObjectsVisible;
+  scene.add(reachMesh);
+  tunerSceneObjects['Workspace Circle'] = reachMesh;
 }
 
 // Mapping: node group key -> WebGL object names
 const sceneNodeGroups = {
   objects: ['Blue Cube', 'Red Rectangle', 'Green Cylinder'],
   plane:   ['White Plane'],
-  safety:  ['Safety Zone'],
+  safety:  ['Safety Zone', 'Workspace Circle'],
   zedm:    ['Zed M Camera']
 };
 // Per-group visibility state
@@ -1837,6 +1881,7 @@ const LABEL_REDRAW_MS = 200;
 let detectionGroup = null;
 let detectionObjects = {};            // "ns/id" -> { obj, lastSeen, ... }
 let detectionsVisible = true;
+let legacyCoordBuffer = {};           // m.id -> { x, y, z, pose, scale }
 
 function ensureDetectionGroup() {
   if (!scene) return null;
@@ -1897,7 +1942,7 @@ function applyMarkerPose(obj, m) {
 // bezeichnet - sonst wuerde pro Aktualisierung eine neue GPU-Textur anfallen.
 function makeLabelSprite() {
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
+  canvas.width = 1536;
   canvas.height = 128;
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearFilter;   // kein Mipmapping bei NPOT-Text
@@ -1913,34 +1958,76 @@ function makeLabelSprite() {
   return { sprite, canvas, texture, text: null, color: null, drawnAt: 0 };
 }
 
-const LABEL_FONT_PX = 72;
+const LABEL_FONT_PX = 56;
 
 // Verkleinert alle Labels gegenueber marker.scale.z (Klassenname wie auch
-// die X/Y/Z-Zeilen). 1.0 entspraeche exakt der RViz-Groesse, die im
+// die Koordinaten-Zeile). 1.0 entspraeche exakt der RViz-Groesse, die im
 // Viewport zu wuchtig wirkt. Zur Laufzeit ueber
 // setDigitalTwinLabelScale() nachjustierbar.
 let labelScale = 0.45;
+
+// Erkennt Koordinaten-Zeilen wie "X: 321 mm   Y: 84 mm   Z: 26 mm"
+function parseCoordSegments(text) {
+  const m = text.match(/X:\s*([^\s]+(?:\s*mm)?)\s+Y:\s*([^\s]+(?:\s*mm)?)\s+Z:\s*([^\s]+(?:\s*mm)?)/i);
+  if (!m) return null;
+  const cleanVal = (v) => {
+    const raw = v.replace(/mm/i, '').trim();
+    return `${raw} mm`;
+  };
+  return [
+    { text: `X: ${cleanVal(m[1])}`, color: '#ff4d4d' },
+    { text: '   ', color: 'transparent' },
+    { text: `Y: ${cleanVal(m[2])}`, color: '#4ade80' },
+    { text: '   ', color: 'transparent' },
+    { text: `Z: ${cleanVal(m[3])}`, color: '#60a5fa' },
+  ];
+}
 
 function drawLabel(entry, text, color) {
   const cv = entry.canvas;
   const ctx = cv.getContext('2d');
   ctx.clearRect(0, 0, cv.width, cv.height);
-  ctx.font = `bold ${LABEL_FONT_PX}px "JetBrains Mono", monospace`;
-  ctx.textAlign = 'center';
+  // Etwas dünnere Schrift (500 statt bold) und feine 3.5px Kontur für alle Zeilen
+  ctx.font = `500 ${LABEL_FONT_PX}px "JetBrains Mono", monospace`;
   ctx.textBaseline = 'middle';
-  // Dunkler Umriss, damit der Text auf hellem wie dunklem Grund steht
-  ctx.lineWidth = 10;
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
-  ctx.strokeText(text, cv.width / 2, cv.height / 2);
-  ctx.fillStyle = color;
-  ctx.fillText(text, cv.width / 2, cv.height / 2);
+  ctx.lineWidth = 3.5;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+  ctx.lineJoin = 'round';
+
+  const segments = parseCoordSegments(text);
+  let drawnWidth = 0;
+
+  if (segments) {
+    // Zeile 2 (X, Y, Z nebeneinander mit Farbakzenten): zentriert ausrichten
+    let totalW = 0;
+    const measured = segments.map((seg) => {
+      const w = ctx.measureText(seg.text).width;
+      totalW += w;
+      return { ...seg, width: w };
+    });
+    drawnWidth = totalW;
+    let curX = (cv.width - totalW) / 2;
+    const cy = cv.height / 2;
+    ctx.textAlign = 'left';
+    for (const seg of measured) {
+      if (seg.color !== 'transparent') {
+        ctx.strokeText(seg.text, curX, cy);
+        ctx.fillStyle = seg.color;
+        ctx.fillText(seg.text, curX, cy);
+      }
+      curX += seg.width;
+    }
+  } else {
+    // Zeile 1 (Klassenname, z. B. "sports ball"): zentral ausrichten
+    ctx.textAlign = 'center';
+    ctx.strokeText(text, cv.width / 2, cv.height / 2);
+    ctx.fillStyle = color;
+    ctx.fillText(text, cv.width / 2, cv.height / 2);
+    drawnWidth = ctx.measureText(text).width;
+  }
+
   entry.texture.needsUpdate = true;
 
-  // Echte Glyphenhoehe messen statt zu schaetzen. RViz interpretiert
-  // scale.z als Hoehe des Textes selbst - die vier Labels stehen nur 12 mm
-  // auseinander, ein zu grosszuegig geschaetzter Faktor laesst sie
-  // ineinanderlaufen. actualBoundingBox* fehlt in aelteren Engines,
-  // deshalb ein Fallback ueber die Schriftgroesse.
   const mt = ctx.measureText(text);
   const asc = mt.actualBoundingBoxAscent;
   const desc = mt.actualBoundingBoxDescent;
@@ -1948,7 +2035,7 @@ function drawLabel(entry, text, color) {
     ? (asc + desc)
     : LABEL_FONT_PX * 0.72;
   entry.glyphPx = glyphPx;
-  entry.widthPx = Math.max(mt.width, 1);
+  entry.widthPx = Math.max(drawnWidth, 1);
 }
 
 function disposeDetection(rec) {
@@ -2115,6 +2202,47 @@ function upsertDetection(m, now) {
     const rawText = String(m.text || '').trim();
     const text = rawText.replace(/_/g, ' ').trim();
     if (!text) return;
+
+    // Rueckwaertskompatibilitaet: Falls separate x/y/z-Marker ankommen,
+    // fassen wir sie zu einer einzigen 'coords'-Zeile fuer dieses Objekt zusammen
+    if (m.ns === 'yolo_labels_x' || m.ns === 'yolo_labels_y' || m.ns === 'yolo_labels_z') {
+      const axis = m.ns.replace('yolo_labels_', '');
+      const id = m.id || 0;
+      if (!legacyCoordBuffer[id]) legacyCoordBuffer[id] = {};
+      legacyCoordBuffer[id][axis] = text;
+      if (m.ns === 'yolo_labels_z' || !legacyCoordBuffer[id].pose) {
+        legacyCoordBuffer[id].pose = m.pose;
+      }
+      legacyCoordBuffer[id].scale = m.scale;
+
+      if (rec) {
+        disposeDetection(rec);
+        delete detectionObjects[key];
+      }
+
+      if (legacyCoordBuffer[id].x && legacyCoordBuffer[id].y && legacyCoordBuffer[id].z) {
+        const combinedText = `${legacyCoordBuffer[id].x}   ${legacyCoordBuffer[id].y}   ${legacyCoordBuffer[id].z}`;
+        const synthMarker = {
+          ns: 'yolo_labels_coords',
+          id: id,
+          type: MARKER_TEXT,
+          action: MARKER_ADD,
+          text: combinedText,
+          pose: legacyCoordBuffer[id].pose,
+          scale: legacyCoordBuffer[id].scale || { z: 0.012 },
+          color: { r: 1, g: 1, b: 1 },
+        };
+        upsertDetection(synthMarker, now);
+
+        // Class-Marker exakt zentriert darueber auf z + 0.013 positionieren
+        const classRec = detectionObjects[`yolo_labels_class/${id}`];
+        if (classRec && classRec.obj && legacyCoordBuffer[id].pose && legacyCoordBuffer[id].pose.position) {
+          classRec.obj.position.z = legacyCoordBuffer[id].pose.position.z + 0.013;
+        }
+      }
+      return;
+    }
+
     const col = markerColor(m);
     const css = `rgb(${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)})`;
 
@@ -2133,16 +2261,19 @@ function upsertDetection(m, now) {
       lbl.text = text; lbl.color = css; lbl.drawnAt = now;
     }
 
-    // scale.z ist die Texthoehe in Metern. Das Sprite ist groesser als die
-    // Glyphe (Leerraum im Canvas), deshalb wird ueber das gemessene
-    // Verhaeltnis hochgerechnet - so entspricht die sichtbare Texthoehe
-    // exakt scale.z und die vier Labels ueberlappen nicht.
+    // scale.z ist die Texthoehe in Metern.
     const textH = ((m.scale && m.scale.z) ? m.scale.z : 0.012) * labelScale;
     const glyphPx = lbl.glyphPx || (LABEL_FONT_PX * 0.72);
     const spriteH = textH * (rec.obj.material.map.image.height / glyphPx);
     const aspect = rec.obj.material.map.image.width / rec.obj.material.map.image.height;
     rec.obj.scale.set(spriteH * aspect, spriteH, 1);
-    applyMarkerPose(rec.obj, m);
+
+    // Bei alten class-Markern mit hohem z_offset (0.036): auf 0.013 ueber coords absenken
+    const markerCopy = (m.ns === 'yolo_labels_class' && legacyCoordBuffer[m.id] && legacyCoordBuffer[m.id].pose && legacyCoordBuffer[m.id].pose.position)
+      ? { ...m, pose: { ...m.pose, position: { ...m.pose.position, z: legacyCoordBuffer[m.id].pose.position.z + 0.013 } } }
+      : m;
+
+    applyMarkerPose(rec.obj, markerCopy);
     rec.rawText = rawText;
     rec.lastSeen = now;
   }
@@ -2522,6 +2653,10 @@ function ensureDetectionPicking() {
       }
       return;
     }
+    setDigitalTwinSelectedGrasp(name);
+    if (typeof twinHooks.setTargetObjectName === 'function') {
+      twinHooks.setTargetObjectName(name);
+    }
     // KEIN stopPropagation()/preventDefault() hier!
     // OrbitControls haengt pointermove/pointerup am ownerDocument (nicht am
     // Canvas) und entfernt den move-Listener erst in seinem pointerup.
@@ -2546,6 +2681,10 @@ function ensureDetectionPicking() {
     const name = nameForSphere(rec);
     if (!name || typeof twinHooks.openDetectedObjectMenu !== 'function') return;
     ev.preventDefault();
+    setDigitalTwinSelectedGrasp(name);
+    if (typeof twinHooks.setTargetObjectName === 'function') {
+      twinHooks.setTargetObjectName(name);
+    }
     twinHooks.openDetectedObjectMenu(objectInfoForSphere(rec, name), ev.clientX, ev.clientY);
   });
 
@@ -2918,6 +3057,9 @@ export function setDigitalTwinSelectedGrasp(name, hoverAboveM = 0) {
   if (graspHalo) setGraspHaloDone(false);
   selectedGraspHoverM = Number(hoverAboveM) || 0;
   ensureGraspHalo();
+  if (typeof twinHooks.setTargetObjectName === 'function') {
+    twinHooks.setTargetObjectName(clean || null);
+  }
   return selectedGraspName;
 }
 
@@ -2930,6 +3072,9 @@ export function completeDigitalTwinSelectedGrasp() {
 export function clearDigitalTwinSelectedGrasp() {
   requestRender();
   clearGraspSelection(null);
+  if (typeof twinHooks.setTargetObjectName === 'function') {
+    twinHooks.setTargetObjectName(null);
+  }
 }
 
 export function getDigitalTwinSelectedGrasp() {
@@ -2961,6 +3106,7 @@ function sweepDetections(now) {
 function clearDetections() {
   for (const key of Object.keys(detectionObjects)) disposeDetection(detectionObjects[key]);
   detectionObjects = {};
+  legacyCoordBuffer = {};
 }
 
 // Wird von grasp.js mit dem kompletten MarkerArray gefuettert.

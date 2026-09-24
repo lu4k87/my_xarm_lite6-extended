@@ -29,10 +29,14 @@ const LIMITS = {
   // Manipulierbarkeit (REACH) steigt von der Zonengrenze bis +60 mm auf 100 %.
   MANIP_FADE_MARGIN_MM: 60.0,
 
-  // Tischebene: darunter gilt der TCP als kollidiert (mm).
-  FLOOR_CLEARANCE_MM: 15.0,
-  // Zusaetzlicher Puffer fuer die Gizmo-Anzeige (mm).
-  FLOOR_WARN_MM: 35.0,
+  // Tischebene (Z Collision Level): darunter gilt der TCP als kollidiert (mm).
+  // Nur der Startwert - live einstellbar im Ground-Collision-Popup, der
+  // aktuelle Wert steht in floorGuard.levelMm (util.js).
+  FLOOR_CLEARANCE_MM: 10.0,
+  FLOOR_LEVEL_MIN_MM: 0.0,
+  FLOOR_LEVEL_MAX_MM: 200.0,
+  // Warnfarbe (Gizmo, HUD) so viel oberhalb der Z Collision Level (mm).
+  FLOOR_WARN_MARGIN_MM: 20.0,
 
   // ── Safety Zone (m) ──
   // Deckungsgleich mit safe_radius in robot_motion_handler_movegroup.py.

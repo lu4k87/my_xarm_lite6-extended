@@ -4,6 +4,7 @@ import {
   absolutePoseSound, collisionDisabledSound, collisionEnabledSound, initialPoseSound,
   playPoseOutOfReachSound, playReachFailureSound, playVoice, scanPosSound,
 } from './audio.js';
+import { setGroundCollPopupState, showGroundCollPopup } from './ground_popup.js';
 import { logMsg } from './log.js';
 import { createSrv, estopLatched, motionAllowed, ros, rosHooks } from './ros.js';
 import { floorGuard, readPoseInput, validatePose } from './util.js';
@@ -359,6 +360,7 @@ export function applyMoveitCollBtn(key) {
     }
   }
   const cfg = moveitCollCfg[key];
+  if (key === 'ground') setGroundCollPopupState(moveitCollState.ground);
   const btn = document.getElementById(cfg.btnId);
   if (!btn) return;
   const state = moveitCollState[key];
@@ -397,6 +399,8 @@ export function toggleMoveitCollision(key) {
       }
       moveitCollState[key] = enable;
       applyMoveitCollBtn(key);
+      // Boden: Popup im Viewport mit der Z Collision Level zum Nachstellen
+      if (key === 'ground') showGroundCollPopup(enable);
       // Erst nach bestaetigtem Umschalten ansagen - sonst hiesse es
       // "enabled", obwohl der Node den Befehl abgelehnt hat.
       playVoice(enable ? collisionEnabledSound : collisionDisabledSound,
@@ -417,6 +421,7 @@ export let movetoPreviewState = null;
 
 export function applyMoveToPreviewBtn() {
   applyPreviewPopupMode();
+  applyPopupPreviewBtn();
   const btn = document.getElementById('btn-twin-path-preview');
   if (!btn) return;
   const st = movetoPreviewState;
@@ -441,6 +446,20 @@ export function applyMoveToPreviewBtn() {
 // Groesse identisch bleibt.
 // Ghost-Modus: kein Auto-Move-Schalter im Popup - Gizmo und MOTION-Buttons
 // planen sofort, der Geist erscheint und Execute bestaetigt die Fahrt.
+// Ghost-Schalter im MoveIt-Popup (rechts neben dem Delta): Zustand wie in
+// der Tableiste, Farben kommen aus dem Stylesheet (.active/.unavailable).
+function applyPopupPreviewBtn() {
+  const btn = document.getElementById('mp-btn-path-preview');
+  if (!btn) return;
+  const st = movetoPreviewState;
+  btn.classList.toggle('active', st === true);
+  btn.classList.toggle('unavailable', st === null);
+  btn.title = st === null
+    ? `MoveTo path preview (node ${MOVETO_PREVIEW_NODE} inactive)`
+    : st ? 'Path preview: ON - click to disable (paths run immediately)'
+         : 'Path preview: OFF - click to enable (paths shown as a ghost, run after Execute)';
+}
+
 function applyPreviewPopupMode() {
   const popup = document.getElementById('moveit-popup');
   if (!popup) return;
@@ -580,10 +599,31 @@ export function mpLive() {
     ? (performance.now() - mpReceivedAt) / 1000 : 0;
 }
 
+export let currentTargetObjectName = null;
+
+export function setTargetObjectName(name) {
+  currentTargetObjectName = name ? String(name).trim() : null;
+  updateMoveitPopupObject();
+}
+
+export function updateMoveitPopupObject() {
+  const badge = document.getElementById('mp-object-badge');
+  const nameEl = document.getElementById('mp-object-name');
+  if (!badge || !nameEl) return;
+  if (currentTargetObjectName) {
+    nameEl.textContent = currentTargetObjectName.replace(/_/g, ' ');
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+    nameEl.textContent = '';
+  }
+}
+
 export function hideMoveitPopup() {
   const el = document.getElementById('moveit-popup');
   if (el) el.classList.add('mp-hidden');
   clearPendingMotion();
+  setTargetObjectName(null);
   if (mpTicker) { clearInterval(mpTicker); mpTicker = null; }
   if (mpHideTimer) { clearTimeout(mpHideTimer); mpHideTimer = null; }
 }
@@ -605,6 +645,7 @@ export function renderMoveitPopup() {
 
   document.getElementById('mp-phase').textContent = MP_PHASE_LABELS[phase] || phase.toUpperCase();
   document.getElementById('mp-timer').textContent = mpFmt((st.elapsed || 0) + live);
+  updateMoveitPopupObject();
 
   // Steps: IK (incl. servo pause), PLAN, EXECUTE
   const phaseElapsed = (st.phase_elapsed || 0) + live;
@@ -793,6 +834,7 @@ export function requestMotion(kind) {
 // die Buttons ueberfluessig. Als data-Attribut, weil renderMoveitPopup die
 // Klassen des Popups komplett neu setzt.
 twin.twinHooks.isPathPreviewOn = () => movetoPreviewState === true;
+twin.twinHooks.setTargetObjectName = setTargetObjectName;
 
 export function syncAutoMoveActions() {
   const el = document.getElementById('moveit-popup');

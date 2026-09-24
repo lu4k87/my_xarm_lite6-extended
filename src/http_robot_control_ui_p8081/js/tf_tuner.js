@@ -136,9 +136,9 @@ export const sceneGroupBtnIds = {
   zedm:    'btn-twin-scene-zedm'
 };
 export const sceneGroupLabels = {
-  objects: 'Hollow bodies & workspace',
+  objects: 'Interactive 3D scene objects',
   plane:   'DIN A4 template',
-  safety:  'Safety Zone',
+  safety:  'Safety Zone & Workspace Reach (r=420 mm)',
   zedm:    'ZED-M camera stand'
 };
 

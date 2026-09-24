@@ -179,7 +179,8 @@ class ZedYolo3DNode(Node):
                 del_array = MarkerArray()
                 for old_id in self.published_marker_ids:
                     for ns in ['yolo_bboxes', 'yolo_object_grasp_center_point',
-                               'yolo_labels_class', 'yolo_labels_x', 'yolo_labels_y', 'yolo_labels_z']:
+                               'yolo_labels_class', 'yolo_labels_coords',
+                               'yolo_labels_x', 'yolo_labels_y', 'yolo_labels_z']:
                         dm = Marker()
                         dm.header.frame_id = 'world'
                         dm.header.stamp = self.get_clock().now().to_msg()
@@ -517,10 +518,9 @@ class ZedYolo3DNode(Node):
                 tm.lifetime.nanosec = 0
                 return tm
                 
-            marker_array.markers.append(create_text_marker('class', i, safe_class_name, 1.0, 1.0, 1.0, 0.036))
-            marker_array.markers.append(create_text_marker('x', i, f"X:_{x_mm}_mm", 1.0, 0.2, 0.2, 0.024))
-            marker_array.markers.append(create_text_marker('y', i, f"Y:_{y_mm}_mm", 0.2, 1.0, 0.2, 0.012))
-            marker_array.markers.append(create_text_marker('z', i, f"Z:_{z_mm}_mm", 0.2, 0.5, 1.0, 0.000))
+            marker_array.markers.append(create_text_marker('class', i, safe_class_name, 1.0, 1.0, 1.0, 0.013))
+            coords_str = f"X:_{x_mm}_mm   Y:_{y_mm}_mm   Z:_{z_mm}_mm"
+            marker_array.markers.append(create_text_marker('coords', i, coords_str, 1.0, 1.0, 1.0, 0.000))
             
             current_frame_ids.add(i)
             
@@ -533,7 +533,8 @@ class ZedYolo3DNode(Node):
         removed_ids = self.published_marker_ids - current_frame_ids
         for old_id in removed_ids:
             for ns in ['yolo_bboxes', 'yolo_object_grasp_center_point',
-                       'yolo_labels_class', 'yolo_labels_x', 'yolo_labels_y', 'yolo_labels_z']:
+                       'yolo_labels_class', 'yolo_labels_coords',
+                       'yolo_labels_x', 'yolo_labels_y', 'yolo_labels_z']:
                 dm = Marker()
                 dm.header.frame_id = 'world'
                 dm.header.stamp = current_time

@@ -380,10 +380,9 @@ class IPCamYolo3DNode(Node):
                 tm.lifetime.sec = 1
                 return tm
                 
-            marker_array.markers.append(create_text_marker('class', i, safe_class_name, 1.0, 1.0, 1.0, 0.036))
-            marker_array.markers.append(create_text_marker('x', i, f"X:_{x_mm}_mm", 1.0, 0.2, 0.2, 0.024))
-            marker_array.markers.append(create_text_marker('y', i, f"Y:_{y_mm}_mm", 0.2, 1.0, 0.2, 0.012))
-            marker_array.markers.append(create_text_marker('z', i, f"Z:_{z_mm}_mm", 0.2, 0.5, 1.0, 0.000))
+            marker_array.markers.append(create_text_marker('class', i, safe_class_name, 1.0, 1.0, 1.0, 0.013))
+            coords_str = f"X:_{x_mm}_mm   Y:_{y_mm}_mm   Z:_{z_mm}_mm"
+            marker_array.markers.append(create_text_marker('coords', i, coords_str, 1.0, 1.0, 1.0, 0.000))
             
         self.pub_markers.publish(marker_array)
         

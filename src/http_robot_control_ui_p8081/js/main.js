@@ -41,6 +41,7 @@ import { executeMoveToPoseFromGizmo } from './gizmo.js';
 import { executeGrasp, setGripper } from './grasp.js';
 import { startListening } from './voice.js';
 import { toggleTwinPointCloud } from './pointcloud.js';
+import { commitGroundLevel, hideGroundCollPopup, inputGroundLevel, stepGroundLevel } from './ground_popup.js';
 import {
   toggleAllHudTabs, toggleHeaderCollapsed, toggleHudTab, toggleTFTunerCollapse, toggleTwinDetections, toggleTwinDistanceLine,
 } from './layout.js';
@@ -66,6 +67,7 @@ const ACTIONS = {
   // Bewegung
   moveToPose, requestMotion, setInitialPose, showScene, startObjectScan, executeMoveToPoseFromGizmo,
   confirmMoveToPreview, hideMoveitPopup, toggleMoveToPreview, toggleMoveitCollision,
+  commitGroundLevel, hideGroundCollPopup, inputGroundLevel, stepGroundLevel,
   updateSpeed, updateScanSpeed, setFrame, updateLinearAxis,
   // Greifen
   executeGrasp, setGripper,

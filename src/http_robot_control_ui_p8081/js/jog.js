@@ -106,7 +106,7 @@ export function setFrame(frame) {
 export const SERVO_MAX_LINEAR_MM_S = 400.0;  // scale.linear in xarm_moveit_servo_config.yaml
 // Bremsweg-Zeitkonstante: die erlaubte Geschwindigkeit nach unten ist
 // Restabstand / FLOOR_BRAKE_TIME_S. Der TCP naehert sich der Grenze dadurch
-// exponentiell und kommt bei jeder Jog-Geschwindigkeit bis knapp an 15 mm
+// exponentiell und kommt bei jeder Jog-Geschwindigkeit bis knapp an FLOOR_CLEARANCE_MM
 // heran. Muss deutlich groesser sein als die Latenz rosbridge + Servo (~0.08 s).
 export const FLOOR_BRAKE_TIME_S = 0.25;
 export let floorGuardActive = false;
@@ -140,7 +140,7 @@ export function applyFloorGuard(lx, ly, lz) {
   }
 
   // Erlaubte Abwaertsgeschwindigkeit (unitless) aus dem Restabstand.
-  const clearanceMm = Math.max(0, latestEEF_Z - LIM.FLOOR_CLEARANCE_MM);
+  const clearanceMm = Math.max(0, latestEEF_Z - floorGuard.levelMm);
   const maxDown = clearanceMm / (SERVO_MAX_LINEAR_MM_S * FLOOR_BRAKE_TIME_S);
   if (-base.z <= maxDown) {
     floorGuardActive = false;
@@ -149,7 +149,7 @@ export function applyFloorGuard(lx, ly, lz) {
 
   const reached = clearanceMm < 0.5;
   if (reached && !floorGuardActive) {
-    logMsg('SAFETY', `⛔ Z Collision Level erreicht (${latestEEF_Z.toFixed(1)} mm ≤ ${LIM.FLOOR_CLEARANCE_MM} mm) - Bewegung nach unten gesperrt.`, 'warn');
+    logMsg('SAFETY', `⛔ Z Collision Level erreicht (${latestEEF_Z.toFixed(1)} mm ≤ ${floorGuard.levelMm} mm) - Bewegung nach unten gesperrt.`, 'warn');
   }
   floorGuardActive = reached;
 
@@ -253,7 +253,7 @@ export let jointJogPrevZ = null;
 export let jointJogBlockedSign = 0;
 
 export function guardJointJogVelocity(vel) {
-  if (!floorGuard.enabled || latestEEF_Z === null || latestEEF_Z > LIM.FLOOR_CLEARANCE_MM) {
+  if (!floorGuard.enabled || latestEEF_Z === null || latestEEF_Z > floorGuard.levelMm) {
     jointJogBlockedSign = 0;
     jointJogPrevZ = latestEEF_Z;
     return vel;
