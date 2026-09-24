@@ -213,7 +213,50 @@
 
 
 
-    function getSavedArgState(popupId, cmd, baseCmd, argText) {
+    // ── Whisper CPU/GPU-Umschalter (Voice Command Listener) ─────────────────
+    const WHISPER_GPU_ARG = 'use_gpu:=true';
+    let whisperToggleSeq = 0;
+
+    function isWhisperLaunch(baseCmd) {
+        return /voice_listener\.launch\.py|whisper_bringup\s+bringup\.launch\.py/.test(baseCmd || '');
+    }
+
+    function buildWhisperDeviceToggle(argObj, onChange) {
+        const wrap = document.createElement('div');
+        wrap.className = 'param-device-toggle';
+        wrap.title = 'Whisper-Inferenz auf CPU oder GPU (CUDA) - startet mit use_gpu:=false bzw. use_gpu:=true';
+        const name = 'whisper-device-' + (++whisperToggleSeq);
+
+        const label = document.createElement('span');
+        label.className = 'param-device-label';
+        label.textContent = 'Whisper';
+        wrap.appendChild(label);
+
+        [['cpu', 'CPU', 'fa-microchip'], ['gpu', 'GPU', 'fa-bolt']].forEach(([value, text, icon]) => {
+            const opt = document.createElement('label');
+            opt.className = 'param-device-opt';
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = name;
+            input.value = value;
+            input.checked = (value === 'gpu') === !!argObj.checked;
+            input.onclick = (e) => e.stopPropagation();
+            input.onchange = () => {
+                if (!input.checked) return;
+                argObj.checked = (value === 'gpu');
+                if (typeof onChange === 'function') onChange();
+            };
+            const span = document.createElement('span');
+            span.innerHTML = `<i class="fa-solid ${icon}"></i> ${text}`;
+            opt.appendChild(input);
+            opt.appendChild(span);
+            opt.onclick = (e) => e.stopPropagation();
+            wrap.appendChild(opt);
+        });
+        return wrap;
+    }
+
+    function getSavedArgState(popupId, cmd, baseCmd, argText, fallback) {
         const keysToCheck = [cmd, baseCmd].filter(Boolean);
         const popupKeys = [popupId];
         if (popupId && popupId.startsWith('sec_')) {
@@ -265,6 +308,7 @@
         }
 
         // Default:
+        if (fallback !== undefined) return fallback;
         if (argText.startsWith('yolo_model:=')) {
             return argText === 'yolo_model:=yolov8l.pt';
         }
@@ -1322,6 +1366,20 @@
                action.postCmd = '';
            }
 
+            // Whisper (Sprachsteuerung): CPU/GPU als Umschalter statt Chips.
+            // silero_vad_use_cuda wirkt nicht (kein VAD in whisper_bringup) und
+            // wird nicht mehr angeboten. Ein abgewaehltes use_gpu:=true wuerde
+            // nur weggelassen und damit den Launch-Standard (GPU) behalten -
+            // deshalb haengt der Start immer use_gpu:=true oder :=false an.
+            if (isWhisperLaunch(action.baseCmd)) {
+                const gpuDefault = !action.args.some(a => /^use_gpu:=false$/i.test(a.text));
+                action.args = action.args.filter(a => !/^(silero_vad_use_cuda|use_gpu):=/i.test(a.text));
+                // Nur der exakte Befehl zaehlt: GPU- und CPU-Karte teilen sich den
+                // Grundbefehl, die Wahl der einen soll die andere nicht umstellen.
+                const useGpu = getSavedArgState(effPopupId, action.cmd, null, WHISPER_GPU_ARG, gpuDefault);
+                action.args.unshift({ text: WHISPER_GPU_ARG, checked: !!useGpu, kind: 'gpu-toggle' });
+            }
+
                // Ensure static_objects:=true is available for lite6_moveit_servo
             if (action.baseCmd && (action.baseCmd.includes('lite6_moveit_servo_realmove.launch.py') || action.baseCmd.includes('lite6_moveit_servo_fake.launch.py'))) {
                 const staticArgText = 'static_objects:=true';
@@ -1522,6 +1580,10 @@
                  const argLaunchKey = launchKeyOf(action.baseCmd || action.cmd);
 
                  action.args.forEach(argObj => {
+                     if (argObj.kind === 'gpu-toggle') {
+                         argsDiv.appendChild(buildWhisperDeviceToggle(argObj, saveActiveState));
+                         return;
+                     }
                      const argLbl = document.createElement('label');
                      const kind = classifyArg(argObj.text, argLaunchKey);
                      argLbl.className = 'param-chip'
@@ -2386,6 +2448,10 @@
                   // RViz also trotzdem starten. Deshalb explizit abschalten.
                   if (action.args.some(a => a.text === 'rviz:=true' && !a.checked)) {
                       activeArgs.push('rviz:=false');
+                  }
+                  // Whisper CPU: ohne explizites false bliebe der Launch-Standard (GPU).
+                  if (action.args.some(a => a.text === WHISPER_GPU_ARG && !a.checked)) {
+                      activeArgs.push('use_gpu:=false');
                   }
                   if (activeArgs.length > 0) {
                       finalCmd += ' ' + activeArgs.join(' ');
