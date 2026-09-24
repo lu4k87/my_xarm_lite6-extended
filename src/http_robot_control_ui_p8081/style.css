@@ -2637,7 +2637,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .mp-head-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;   /* schmaler Viewport: Badges umbrechen statt ueberlappen */
+  gap: 6px 10px;
   min-width: 0;
 }
 
@@ -2731,10 +2732,16 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   font-weight: 800;
   color: var(--accent);
   letter-spacing: 0.6px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 5px;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
+
+/* In der Kopfzeile: "TARGET:" sitzt direkt vor dem Objektnamen-Badge,
+   daher etwas engerer Abstand als der normale Head-Gap. */
+.mp-head-left .mp-target-label { margin-right: -4px; }
 
 /* Gizmo-Ziel im Popup etwas groesser als im HUD-Tab */
 .mp-target-row .gizmo-hud-val { font-size: 16.5px; }
