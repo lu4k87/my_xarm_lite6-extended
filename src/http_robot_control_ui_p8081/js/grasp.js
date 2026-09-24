@@ -4,7 +4,7 @@ import { playOutOfReachSound, playMovesToSelectedObjectSound, setObjectReachCont
 import { logMsg } from './log.js';
 import { setButtonsLocked } from './motion.js';
 import { createSrv, motionAllowed, ros } from './ros.js';
-import { validatePose } from './util.js';
+import { showCenterNotice, validatePose } from './util.js';
 
 // ── YOLO 3D Objects ─────────────────────────────────────────────────────
 // Kamerarate ist fuer eine Liste und ein 3D-Overlay deutlich mehr als noetig.
@@ -136,7 +136,8 @@ function endApproach(reason) {
   if (reason && typeof twin.clearDigitalTwinSelectedGrasp === 'function') {
     twin.clearDigitalTwinSelectedGrasp();
     logMsg('UI', `Approach ended: ${reason}`, 'warn');
-    if (!reason.includes('discard') && !reason.includes('cancel')) {
+    // Verworfen, abgebrochen oder Not-Aus: kein Reichweitenproblem.
+    if (!/discard|cancel|abort|emergency|e-stop|estop/i.test(reason)) {
       playOutOfReachSound();
     }
   }
@@ -156,7 +157,11 @@ new ROSLIB.Topic({
   if (st.phase === 'executing') {
     triggerApproachVoice();
   }
-  if (st.phase === 'succeeded') endApproach(null);   // Twin loest per TCP-Abstand
+  if (st.phase === 'succeeded') {
+    // Fahrt beendet: Markierung wird gruen, kurz groesser und blendet aus.
+    if (typeof twin.completeDigitalTwinSelectedGrasp === 'function') twin.completeDigitalTwinSelectedGrasp();
+    endApproach(null);
+  }
   else if (['failed', 'aborted', 'discarded'].includes(st.phase)) endApproach(st.message || st.phase);
 });
 
@@ -256,6 +261,7 @@ export function openDetectedObjectMenu(info, clientX, clientY) {
   objMenuEl.appendChild(objMenuItem('fa-hand-holding', 'Grasp', 'Not implemented',
     () => {
       logMsg('UI', 'ℹ️ Grasp function is not yet implemented.', 'info');
+      showGraspNotImplemented();
     },
     { title: 'Grasp function is not yet implemented' }));
 
@@ -500,8 +506,15 @@ export const graspPub = new ROSLIB.Topic({
   messageType: 'std_msgs/String'
 });
 
+function showGraspNotImplemented() {
+  showCenterNotice('Grasp not available yet',
+    'The grasp function is not implemented yet. Use "Approach from above" to move the gripper over the object.',
+    'fa-hand-holding');
+}
+
 export function executeGrasp() {
   logMsg('UI', 'ℹ️ Grasp function is not yet implemented.', 'info');
+  showGraspNotImplemented();
 }
 
 // Viewport: Linksklick auf die Greifkugel faehrt darueber, Rechtsklick oeffnet das Menue.

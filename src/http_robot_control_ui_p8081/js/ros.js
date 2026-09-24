@@ -1,6 +1,6 @@
 import { TOPICS, SERVICES } from './config.js';
 import { logMsg } from './log.js';
-import { visibleInterval } from './util.js';
+import { shortRmwName, visibleInterval } from './util.js';
 
 // ── ROS-Anbindung ───────────────────────────────────────────────────────
 // Basismodul: rosbridge-Verbindung, Offline-Overlay, Bewegungssperre und
@@ -18,6 +18,10 @@ export const rosHooks = {
 // /ui/emergency_stop_active). Solange er nicht quittiert ist, blockiert
 // motionAllowed() jede Bewegung - vor Sprachansage und Service-Aufruf.
 export let estopLatched = false;
+// Zeitpunkt des letzten E-Stop-Drucks (Date.now) - Folgefehler der
+// abgebrochenen Fahrt sollen keine "out of reach"-Ansage ausloesen.
+export let estopPressedAt = 0;
+export function noteEstopPressed() { estopPressedAt = Date.now(); }
 export function setEstopLatched(latched) {
   const next = !!latched;
   if (next === estopLatched) return;
@@ -150,7 +154,7 @@ try {
         }
         if (data.rmw_impl) {
           const el = document.getElementById('val-rmw-impl');
-          if (el) el.innerText = data.rmw_impl;
+          if (el) { el.innerText = shortRmwName(data.rmw_impl); el.title = data.rmw_impl; }
         }
         if (data.localhost_only !== undefined) {
           const el = document.getElementById('val-localhost-only');

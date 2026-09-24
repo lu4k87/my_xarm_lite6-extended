@@ -25,7 +25,7 @@ export const twinHooks = {
   approachDetectedObject: null,
   isApproachingObject: null,
   triggerApproachVoice: null,
-  refreshMoveitExecIcon: null,
+  isPathPreviewOn: null,
 };
 
 // ── Rendern nur bei Bedarf ──────────────────────────────────────────────────
@@ -240,7 +240,8 @@ function initDigitalTwin() {
   scene.add(fillLight);
 
   // 6. Grid, Helpers & Ground Shadow Receiver Plane
-  gridHelper = new THREE.GridHelper(1.2, 24, 0x38bdf8, 0x1e293b);
+  // 2,7 m (1,5-fach, vorher 1,8 m), Feldgroesse bleibt 5 cm.
+  gridHelper = new THREE.GridHelper(2.7, 54, 0x38bdf8, 0x1e293b);
   gridHelper.rotation.x = Math.PI / 2;
   gridHelper.position.z = -0.001;
   scene.add(gridHelper);
@@ -250,7 +251,7 @@ function initDigitalTwin() {
   scene.add(axesHelper);
 
   // Soft ground contact shadow plane
-  const shadowPlaneGeo = new THREE.PlaneGeometry(1.6, 1.6);
+  const shadowPlaneGeo = new THREE.PlaneGeometry(3.6, 3.6);
   const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.4 });
   shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
   shadowPlane.position.z = -0.0005;
@@ -1133,7 +1134,9 @@ function handleGizmoDragEnd() {
   handleGizmoChange(true);
 
   const autoDrop = /** @type {HTMLInputElement|null} */ (document.getElementById('chk-gizmo-auto-drop'));
-  const shouldAutoExecute = autoDrop ? Boolean(autoDrop.checked) : true;
+  // Im Ghost-Modus immer sofort planen: der Geist ist die Bestaetigung.
+  const previewOn = typeof twinHooks.isPathPreviewOn === 'function' && twinHooks.isPathPreviewOn();
+  const shouldAutoExecute = previewOn || (autoDrop ? Boolean(autoDrop.checked) : true);
 
   const posX_mm = Math.round(gizmoTarget.position.x * 1000.0);
   const posY_mm = Math.round((gizmoTarget.position.y - linearShiftY) * 1000.0);
@@ -1166,7 +1169,6 @@ function handleGizmoDragEnd() {
       if (phaseEl) phaseEl.textContent = 'GIZMO TARGET';
       const detailEl = document.getElementById('mp-detail');
       if (detailEl) detailEl.textContent = 'Target pose set. Click ▶ (Execute path) to plan and move.';
-      if (typeof twinHooks.refreshMoveitExecIcon === 'function') twinHooks.refreshMoveitExecIcon();
     }
   }
 }
@@ -2570,6 +2572,14 @@ let selectedGraspRec = null;
 let selectedGraspSince = 0;
 let selectedGraspHoverM = 0;      // Zielhoehe des TCP ueber der Kugel
 let graspHalo = null;
+const graspTex = { pingActive: null, reticleActive: null, pingDone: null, reticleDone: null };
+// Abschluss: Arm steht am Ziel -> gruen, kurz groesser, animiert ausblenden.
+let graspDoneSince = 0;
+const GRASP_DONE_MS = 1800;
+const GRASP_STILL_MS = 400;          // TCP so lange ruhig = Bewegung gestoppt
+const GRASP_STILL_M = 0.0005;
+const _graspLastTcp = new THREE.Vector3();
+let graspTcpMovedAt = 0;
 
 // Abstand, ab dem das Ziel als erreicht gilt, und Notbremse, falls die
 // Fahrt scheitert - sonst pulste die Kugel bis zum Reload weiter.
@@ -2591,14 +2601,18 @@ const GRASP_LOCK_MS = 380;        // Dauer des Einrastens beim Anklicken
 const RETICLE_PLANE = 3.0;
 const RETICLE_R = 1.08;
 
-function makeReticleTexture() {
+// Cyan waehrend der Anfahrt, Gruen, sobald der Arm am Ziel steht.
+const GRASP_RGB_ACTIVE = '56, 189, 248';
+const GRASP_RGB_DONE = '16, 185, 129';
+const GRASP_CORE_DONE = 0x10b981;
+
+function makeReticleTexture(rgb = GRASP_RGB_ACTIVE) {
   const size = 256;
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const g = c.getContext('2d');
   const mid = size / 2;
   const r = RETICLE_R / RETICLE_PLANE * size;
-  const rgb = '56, 189, 248';
 
   // Dezenter Grundring - verbindet die Boegen optisch.
   g.lineWidth = 3;
@@ -2641,7 +2655,7 @@ function graspTexMaterial(map) {
 // RingGeometry(0.9, 1.0), der Rand der Ebene laesst Platz fuers Ausblenden.
 const PING_PLANE = 2.4;
 
-function makePingTexture() {
+function makePingTexture(rgb = GRASP_RGB_ACTIVE) {
   const size = 256;
   const c = document.createElement('canvas');
   c.width = c.height = size;
@@ -2649,13 +2663,13 @@ function makePingTexture() {
   const mid = size / 2;
   const ring = 0.95 / (PING_PLANE / 2);   // Ringmitte relativ zum Canvas-Radius
   const grad = g.createRadialGradient(mid, mid, 0, mid, mid, mid);
-  grad.addColorStop(0, 'rgba(56, 189, 248, 0)');
-  grad.addColorStop(ring - 0.16, 'rgba(56, 189, 248, 0)');
-  grad.addColorStop(ring - 0.05, 'rgba(56, 189, 248, 0.45)');
-  grad.addColorStop(ring, 'rgba(56, 189, 248, 0.9)');
-  grad.addColorStop(ring + 0.06, 'rgba(56, 189, 248, 0.35)');
-  grad.addColorStop(Math.min(1, ring + 0.17), 'rgba(56, 189, 248, 0)');
-  grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+  grad.addColorStop(0, `rgba(${rgb}, 0)`);
+  grad.addColorStop(ring - 0.16, `rgba(${rgb}, 0)`);
+  grad.addColorStop(ring - 0.05, `rgba(${rgb}, 0.45)`);
+  grad.addColorStop(ring, `rgba(${rgb}, 0.9)`);
+  grad.addColorStop(ring + 0.06, `rgba(${rgb}, 0.35)`);
+  grad.addColorStop(Math.min(1, ring + 0.17), `rgba(${rgb}, 0)`);
+  grad.addColorStop(1, `rgba(${rgb}, 0)`);
   g.fillStyle = grad;
   g.fillRect(0, 0, size, size);
 
@@ -2691,6 +2705,7 @@ function ensureGraspHalo() {
   //    Textur statt RingGeometry: das Ringprofil laeuft nach innen und
   //    aussen weich aus, statt harte Kanten zu haben.
   const pingTex = makePingTexture();
+  graspTex.pingActive = pingTex;
   for (let i = 0; i < GRASP_PING_COUNT; i++) {
     const ping = new THREE.Mesh(
       new THREE.PlaneGeometry(PING_PLANE, PING_PLANE),
@@ -2704,9 +2719,10 @@ function ensureGraspHalo() {
   // 3) Zielkreuz: vier Boegen mit Luecken, die langsam kreisen. Als Textur
   //    statt RingGeometry - so bekommen die Boegen runde Enden, einen weichen
   //    Glow und einen dezenten durchgehenden Grundring statt harter Kanten.
+  graspTex.reticleActive = makeReticleTexture();
   const reticle = new THREE.Mesh(
     new THREE.PlaneGeometry(RETICLE_PLANE, RETICLE_PLANE),
-    graspTexMaterial(makeReticleTexture())
+    graspTexMaterial(graspTex.reticleActive)
   );
   reticle.name = 'reticle';
   reticle.renderOrder = 999;
@@ -2724,6 +2740,28 @@ function faceCamera(obj) {
   if (camera) obj.quaternion.copy(camera.quaternion);
 }
 
+function setGraspHaloDone(done) {
+  if (!graspHalo) return;
+  if (done && !graspTex.pingDone) {
+    graspTex.pingDone = makePingTexture(GRASP_RGB_DONE);
+    graspTex.reticleDone = makeReticleTexture(GRASP_RGB_DONE);
+  }
+  for (let i = 0; i < GRASP_PING_COUNT; i++) {
+    const ping = graspHalo.getObjectByName('ping' + i);
+    if (ping) { ping.material.map = done ? graspTex.pingDone : graspTex.pingActive; ping.material.needsUpdate = true; }
+  }
+  const reticle = graspHalo.getObjectByName('reticle');
+  if (reticle) { reticle.material.map = done ? graspTex.reticleDone : graspTex.reticleActive; reticle.material.needsUpdate = true; }
+  const core = graspHalo.getObjectByName('core');
+  if (core) core.material.color.setHex(done ? GRASP_CORE_DONE : GRASP_CORE);
+}
+
+function startGraspDone() {
+  if (!selectedGraspName || graspDoneSince) return;
+  graspDoneSince = Date.now();
+  setGraspHaloDone(true);
+}
+
 function restoreSphereLook(rec) {
   if (!rec || !rec.obj || !rec.obj.material) return;
   if (rec.baseScale) rec.obj.scale.setScalar(rec.baseScale);
@@ -2737,7 +2775,8 @@ function clearGraspSelection(reason) {
   restoreSphereLook(selectedGraspRec);
   selectedGraspName = null;
   selectedGraspRec = null;
-  if (graspHalo) graspHalo.visible = false;
+  graspDoneSince = 0;
+  if (graspHalo) { graspHalo.visible = false; setGraspHaloDone(false); }
   if (reason && typeof logMsg === 'function') {
     logMsg('WebGL 3D', `Grasp target "${name}": ${reason}`);
   }
@@ -2782,12 +2821,28 @@ function applyGraspSelection() {
 
   // Erreicht? Dann ist die Markierung ihre Aufgabe los. Ziel ist der Punkt
   // senkrecht ueber der Kugel, auf dem der TCP schweben soll.
+  // Bewegung gestoppt? Erst dann gilt das Ziel als erreicht - vorher lief
+  // die Markierung schon beim Absenken aus.
   const tcp = getRealRobotTCPPose();
   _graspGoal.copy(rec.obj.position);
   _graspGoal.z += selectedGraspHoverM;
-  if (tcp && tcp.position.distanceTo(_graspGoal) <= GRASP_REACHED_M) {
-    clearGraspSelection('reached');
-    return;
+  if (tcp) {
+    if (tcp.position.distanceTo(_graspLastTcp) > GRASP_STILL_M) {
+      _graspLastTcp.copy(tcp.position);
+      graspTcpMovedAt = now;
+    }
+    if (!graspDoneSince && tcp.position.distanceTo(_graspGoal) <= GRASP_REACHED_M
+        && now - graspTcpMovedAt >= GRASP_STILL_MS) {
+      startGraspDone();
+    }
+  }
+  // Abschluss-Animation: kurz groesser, dann langsam ausblenden.
+  let doneFade = 1, doneBump = 1;
+  if (graspDoneSince) {
+    const t = (now - graspDoneSince) / GRASP_DONE_MS;
+    if (t >= 1) { clearGraspSelection('reached'); return; }
+    doneBump = 1 + 0.35 * Math.sin(Math.PI * Math.min(1, t / 0.35));
+    doneFade = t < 0.25 ? 1 : 1 - Math.pow((t - 0.25) / 0.75, 1.5);
   }
 
   // 0 -> 1 -> 0 in 1.1 s, dieselbe Taktung wie der Hover-Ring in der UI.
@@ -2807,7 +2862,7 @@ function applyGraspSelection() {
   halo.position.copy(rec.obj.position);
   // Radius der Kugel: die Geometrie ist eine Einheitskugel mit r = 0.5,
   // skaliert auf den Marker-Durchmesser.
-  halo.scale.setScalar(base * 0.5);
+  halo.scale.setScalar(base * 0.5 * doneBump);
 
   // Einrasten: beim Anklicken faehrt das Zielkreuz von weit aussen auf die
   // Kugel zu und blendet dabei ein - kubisch ausklingend, damit es am Ende
@@ -2818,7 +2873,7 @@ function applyGraspSelection() {
   const core = halo.getObjectByName('core');
   if (core) {
     core.scale.setScalar(1.7 + 0.3 * k);
-    core.material.opacity = (0.22 + 0.2 * k) * lock;
+    core.material.opacity = (0.22 + 0.2 * k) * lock * doneFade;
   }
 
   for (let i = 0; i < GRASP_PING_COUNT; i++) {
@@ -2830,7 +2885,7 @@ function applyGraspSelection() {
     ping.scale.setScalar(2.0 + 7.5 * phase);
     // Quadratisch ausblenden: die Welle verliert sich zum Rand hin, statt
     // abrupt zu verschwinden.
-    ping.material.opacity = 0.7 * Math.pow(1 - phase, 2) * lock;
+    ping.material.opacity = 0.7 * Math.pow(1 - phase, 2) * lock * doneFade;
   }
 
   const reticle = halo.getObjectByName('reticle');
@@ -2842,7 +2897,7 @@ function applyGraspSelection() {
     reticle.rotateZ((now % 20000) / 20000 * Math.PI * 2);
     const r = 4.6 + 9.0 * (1 - lock) + 0.2 * k;
     reticle.scale.setScalar(r);
-    reticle.material.opacity = (0.6 + 0.2 * k) * lock;
+    reticle.material.opacity = (0.6 + 0.2 * k) * lock * doneFade;
   }
 }
 
@@ -2858,9 +2913,18 @@ export function setDigitalTwinSelectedGrasp(name, hoverAboveM = 0) {
   selectedGraspName = clean;
   selectedGraspRec = findSphereByName(clean);
   selectedGraspSince = Date.now();
+  graspDoneSince = 0;
+  graspTcpMovedAt = selectedGraspSince;
+  if (graspHalo) setGraspHaloDone(false);
   selectedGraspHoverM = Number(hoverAboveM) || 0;
   ensureGraspHalo();
   return selectedGraspName;
+}
+
+// MoveIt meldet die Anfahrt als erfolgreich: Arm steht - gruen abschliessen.
+export function completeDigitalTwinSelectedGrasp() {
+  requestRender();
+  startGraspDone();
 }
 
 export function clearDigitalTwinSelectedGrasp() {

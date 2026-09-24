@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=32">
+  <link rel="stylesheet" href="style.css?v=51">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -27,91 +27,82 @@
     
     <header>
       <div class="header-status">
-        <!-- Not-Aus: fest im Header, damit er unabhaengig vom Drag-and-Drop-
-             Layout und auch hinter dem Offline-Overlay immer erreichbar ist. -->
-        <div class="status-group estop-group">
-          <button type="button" class="estop-header-btn" id="btn-estop-header" data-action="emergencyStop" title="EMERGENCY STOP (Key: Space)">
-            <i class="fa-solid fa-hand"></i>
-            <span>E-STOP</span>
-            <kbd>Space</kbd>
-          </button>
-          <button type="button" class="estop-header-reset estop-reset-hidden" id="btn-estop-header-reset" data-action="resetEmergencyStop" title="Acknowledge Emergency Stop (reset robot state, resume MoveIt Servo)">
-            <i class="fa-solid fa-rotate-left"></i>
-            <span>Reset</span>
-          </button>
-        </div>
-
-        <div class="status-divider"></div>
-
+        <!-- Links: Reload, Eingabegeraete, Ports. Rechts (margin-left: auto an
+             der mode-divider): DDS-Einstellungen und Mode, dann der Pfeil. -->
         <div class="status-group">
           <button class="status-pill reload-btn" data-action="reloadPage" title="Reload Web Control">
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
-
-
-          <div class="status-pill" id="pill-port-9090" title="Port 9090: ROS 2 WebSocket Interface (rosbridge)">
-            <div id="connection-dot" class="dot glow-red"></div>
-            <span class="pill-label" id="connection-status">ROS 2 Bridge</span><span class="pill-val">9090</span>
+        <!-- Klappt den Header bis auf Reload und diesen Pfeil ein -->
+        <button type="button" class="header-collapse-btn" id="btn-header-collapse" data-action="toggleHeaderCollapsed" title="Collapse the header (reload stays visible)" aria-expanded="true">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+          <div class="status-pill" id="quest-pill" title="Meta Quest 3 (WebXR via rosbridge WSS on port 9091): online while controller data arrives on /vr_teleop/controller_data">
+            <div id="quest-dot" class="dot glow-red"></div>
+            <span class="pill-label" title="Meta Quest 3">Quest 3</span><span class="pill-proto">WSS</span><span class="pill-val" id="quest-status">Offline</span>
           </div>
-          <div class="status-pill" id="pill-port-8081" title="Port 8081: Robot Control UI (Webserver HTTP)">
-            <div id="dot-port-8081" class="dot glow-green"></div>
-            <span class="pill-label">Robot Control UI</span><span class="pill-val">8081</span>
-          </div>
-          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus Webapp & Web Backend (Flask API)" data-open-port="5000">
-            <div id="dot-port-5000" class="dot glow-red"></div>
-            <span class="pill-label">Nexus Webapp</span><span class="pill-val">5000</span>
-          </div>
-          <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node Topology (HTTP)" data-open-port="8080" data-open-path="/dashboard_index.html">
-            <div id="dot-port-8080" class="dot glow-red"></div>
-            <span class="pill-label">Dashboard</span><span class="pill-val">8080</span>
-          </div>
-          <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server for Camera & RViz Streams (HTTP)" data-open-port="8082">
-            <div id="dot-port-8082" class="dot glow-red"></div>
-            <span class="pill-label">Video Streams</span><span class="pill-val">8082</span>
-          </div>
-          <div class="status-pill" id="pill-port-9091" title="Port 9091: Meta Quest 3 VR Teleoperation (WebSocket)">
-            <div id="dot-port-9091" class="dot glow-red"></div>
-            <span class="pill-label">VR Teleop</span><span class="pill-val">9091</span>
-          </div>
-        </div>
-
-        <div class="status-divider"></div>
-
-        <div class="status-group">
           <div class="status-pill" id="gamepad-pill">
             <div id="gp-dot" class="dot glow-red"></div>
-            <span class="pill-label">Gamepad</span><span class="pill-val" id="gamepad-status">USB</span>
+            <span class="pill-label" title="Xbox One Controller">Xbox</span><span class="pill-proto">USB</span><span class="pill-val" id="gamepad-status">Offline</span>
           </div>
           <div class="status-pill" id="eye-pill">
             <div id="eye-dot" class="dot glow-red"></div>
-            <span class="pill-label">Eyetracking</span><span class="pill-val" id="eye-status">Offline</span>
+            <span class="pill-label" title="Tobii Pro Glasses 3">Tobii</span><span class="pill-proto">RTSP</span><span class="pill-val" id="eye-status">Offline</span>
           </div>
         </div>
 
         <div class="status-divider"></div>
 
         <div class="status-group">
-          <div class="status-pill" title="ROS 2 Domain ID">
-            <div class="dot glow-blue"></div>
-            <span class="pill-label">ROS_DOMAIN_ID</span><span class="pill-val" id="val-domain-id">66</span>
+          <div class="status-pill" id="pill-port-9090" title="Port 9090: ROS 2 WebSocket Interface (rosbridge)">
+            <div id="connection-dot" class="dot glow-red"></div>
+            <span class="pill-label" id="connection-status">ROS 2 Bridge</span><span class="pill-proto">WS</span><span class="pill-val">9090</span>
           </div>
-          <div class="status-pill" title="ROS 2 DDS Middleware">
-            <div class="dot glow-blue"></div>
-            <span class="pill-label">RMW</span><span class="pill-val" id="val-rmw-impl">rmw_cyclonedds_cpp</span>
+          <div class="status-pill" id="pill-port-8081" title="Port 8081: Robot Control UI (Webserver HTTP)">
+            <div id="dot-port-8081" class="dot glow-green"></div>
+            <span class="pill-label">Robot Control UI</span><span class="pill-proto">HTTP</span><span class="pill-val">8081</span>
           </div>
-          <div class="status-pill" id="pill-localhost-only" title="ROS_LOCALHOST_ONLY (0: Off / 1: On)">
-            <div class="dot glow-blue" id="dot-localhost-only"></div>
-            <span class="pill-label">Localhost Only</span><span class="pill-val" id="val-localhost-only">Off</span>
+          <div class="status-pill" id="pill-port-5000" title="Port 5000: Nexus Webapp & Web Backend (Flask API)" data-open-port="5000">
+            <div id="dot-port-5000" class="dot glow-red"></div>
+            <span class="pill-label">Nexus Webapp</span><span class="pill-proto">HTTP</span><span class="pill-val">5000</span>
+          </div>
+          <div class="status-pill" id="pill-port-8080" title="Port 8080: Dashboard Monitoring & Node Topology (HTTP)" data-open-port="8080" data-open-path="/dashboard_index.html">
+            <div id="dot-port-8080" class="dot glow-red"></div>
+            <span class="pill-label">Dashboard</span><span class="pill-proto">HTTP</span><span class="pill-val">8080</span>
+          </div>
+          <div class="status-pill" id="pill-port-8082" title="Port 8082: Web Video Server for Camera & RViz Streams (HTTP)" data-open-port="8082">
+            <div id="dot-port-8082" class="dot glow-red"></div>
+            <span class="pill-label">Video Streams</span><span class="pill-proto">HTTP</span><span class="pill-val">8082</span>
+          </div>
+          <div class="status-pill" id="pill-port-9091" title="Port 9091: Meta Quest 3 VR Teleoperation (WebSocket)">
+            <div id="dot-port-9091" class="dot glow-red"></div>
+            <span class="pill-label">VR Teleop</span><span class="pill-proto">WSS</span><span class="pill-val">9091</span>
           </div>
         </div>
 
-        <div class="status-divider"></div>
+        <div class="header-right">
+          <div class="status-divider mode-divider"></div>
 
-        <div class="status-group">
-          <div class="status-pill mode-badge" id="mode-pill">
-            <div id="mode-dot" class="dot glow-blue"></div>
-            <span class="pill-label">Mode</span><span class="pill-val" id="mode-status">Wait</span>
+          <div class="status-group">
+            <div class="status-pill" title="ROS_DOMAIN_ID: ROS 2 Domain ID">
+              <div class="dot glow-blue"></div>
+              <span class="pill-label">Domain</span><span class="pill-val" id="val-domain-id">66</span>
+            </div>
+            <div class="status-pill" title="ROS 2 DDS Middleware">
+              <div class="dot glow-blue"></div>
+              <span class="pill-label">RMW</span><span class="pill-val" id="val-rmw-impl" title="rmw_cyclonedds_cpp">cyclonedds</span>
+            </div>
+            <div class="status-pill" id="pill-localhost-only" title="ROS_LOCALHOST_ONLY (0: Off / 1: On)">
+              <div class="dot glow-blue" id="dot-localhost-only"></div>
+              <span class="pill-label" title="ROS_LOCALHOST_ONLY">Localhost</span><span class="pill-val" id="val-localhost-only">Off</span>
+            </div>
+            <div class="status-pill mode-badge" id="mode-pill">
+              <div id="mode-dot" class="dot glow-blue"></div>
+              <span class="pill-label">Mode</span><span class="pill-val" id="mode-status">Wait</span>
+            </div>
           </div>
+
+
         </div>
       </div>
     </header>
@@ -390,14 +381,23 @@
                 <button id="btn-scan-objects" class="btn btn-action motion-lockable" data-action="requestMotion" data-args='["scan"]' title="Create OctoMap of Objects">
                   <i class="fa-solid fa-cube"></i>
                 </button>
-                <button id="btn-emergency-stop" class="btn btn-danger" data-action="emergencyStop" title="Emergency Stop">
+              </div>
+              </div>
+              </div>
+
+              <!-- Not-Aus: nur sichtbar, solange sich der Roboter bewegt oder der
+                   Not-Aus verriegelt ist (dann mit Reset daneben). Die Leertaste
+                   loest ihn immer aus. -->
+              <div class="twin-ov-estop" id="twin-estop-wrap" hidden>
+                <button type="button" class="estop-header-btn" id="btn-estop" data-action="emergencyStop" title="EMERGENCY STOP (Key: Space)">
                   <i class="fa-solid fa-hand"></i>
+                  <span>E-STOP</span>
+                  <kbd>Space</kbd>
                 </button>
-                <button id="btn-estop-reset" class="btn btn-action estop-reset-hidden" data-action="resetEmergencyStop" title="Acknowledge Emergency Stop (reset robot state, resume MoveIt Servo)">
+                <button type="button" class="estop-header-reset estop-reset-hidden" id="btn-estop-reset" data-action="resetEmergencyStop" title="Acknowledge Emergency Stop (reset robot state, resume MoveIt Servo)">
                   <i class="fa-solid fa-rotate-left"></i>
+                  <span>Reset</span>
                 </button>
-              </div>
-              </div>
               </div>
 
               <!-- bottom row (one line): Telemetry left · Pose Inputs center · Watermark right -->
@@ -422,7 +422,7 @@
                       <span id="hud-floor-val" class="hud-val">-- mm</span>
                     </div>
                     <div class="hud-safety-item hud-moveit-item" title="MoveIt Servo status">
-                      <span id="moveit-badge" class="moveit-status">MoveIt: Off</span>
+                      <span id="moveit-badge" class="moveit-status">MoveIt (Base Frame): Off</span>
                     </div>
                   </div>
                   </div>
@@ -449,7 +449,7 @@
                         <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
                         <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
                         <div class="input-row-divider"></div>
-                        <button class="btn btn-action motion-lockable" data-action="moveToPose" title="Move to entered pose">
+                        <button class="btn btn-action motion-lockable" data-action="requestMotion" data-args='["pose"]' title="Move to entered pose">
                           <i class="fa-solid fa-crosshairs"></i> Go
                         </button>
                       </div>

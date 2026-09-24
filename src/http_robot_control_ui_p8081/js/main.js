@@ -42,7 +42,7 @@ import { executeGrasp, setGripper } from './grasp.js';
 import { startListening } from './voice.js';
 import { toggleTwinPointCloud } from './pointcloud.js';
 import {
-  toggleAllHudTabs, toggleHudTab, toggleTFTunerCollapse, toggleTwinDetections, toggleTwinDistanceLine,
+  toggleAllHudTabs, toggleHeaderCollapsed, toggleHudTab, toggleTFTunerCollapse, toggleTwinDetections, toggleTwinDistanceLine,
 } from './layout.js';
 import './status.js';
 import {
@@ -74,7 +74,7 @@ const ACTIONS = {
   testDigitalTwinSafetyCycle, toggleDigitalTwinEdges, toggleDigitalTwinGrid, toggleTCPGizmo,
   toggleTwinDetections, toggleTwinDistanceLine, toggleTwinPointCloud,
   // Layout
-  toggleAllHudTabs, toggleHudTab, toggleTFTunerCollapse,
+  toggleAllHudTabs, toggleHeaderCollapsed, toggleHudTab, toggleTFTunerCollapse,
   // TF Tuner
   onTunerElementChange, onTunerNumChange, onTunerSliderInput, resetCurrentTFElement,
   toggleSceneNode, toggleTFBroadcast,

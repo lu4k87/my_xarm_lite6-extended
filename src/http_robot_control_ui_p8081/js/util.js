@@ -94,3 +94,58 @@ export function validatePose(pose) {
   }
   return null;
 }
+
+
+// ── Hinweis-Popup mittig im Bildschirm ──────────────────────────────────
+// Die ganze UI verschwimmt NOTICE_BLUR_MS lang, der Hinweis selbst bleibt
+// NOTICE_SHOW_MS stehen oder bis er angeklickt wird. Die Unschaerfe ist rein
+// optisch (pointer-events: none) - der Not-Aus bleibt jederzeit klickbar.
+// "rmw_cyclonedds_cpp" -> "cyclonedds" (Header-Pill; voller Name im title).
+export function shortRmwName(rmw) {
+  return String(rmw || '').replace(/^rmw_/, '').replace(/_cpp$/, '');
+}
+
+export const NOTICE_BLUR_MS = 3000;
+export const NOTICE_SHOW_MS = 5000;
+let noticeEls = null;
+let noticeTimers = [];
+
+export function closeCenterNotice() {
+  noticeTimers.forEach(clearTimeout);
+  noticeTimers = [];
+  if (!noticeEls) return;
+  const { backdrop, box } = noticeEls;
+  noticeEls = null;
+  backdrop.classList.remove('is-on');
+  box.classList.remove('is-on');
+  setTimeout(() => { backdrop.remove(); box.remove(); }, 300);
+}
+
+export function showCenterNotice(title, text, icon = 'fa-circle-info') {
+  closeCenterNotice();
+  const backdrop = document.createElement('div');
+  backdrop.className = 'ui-notice-backdrop';
+  const box = document.createElement('div');
+  box.className = 'ui-notice';
+  box.setAttribute('role', 'alertdialog');
+  box.setAttribute('aria-live', 'assertive');
+  const i = document.createElement('i');
+  i.className = `fa-solid ${icon} ui-notice-icon`;
+  const t = document.createElement('div');
+  t.className = 'ui-notice-title';
+  t.textContent = title;
+  const p = document.createElement('div');
+  p.className = 'ui-notice-text';
+  p.textContent = text;
+  const hint = document.createElement('div');
+  hint.className = 'ui-notice-hint';
+  hint.textContent = 'Click to close';
+  box.append(i, t, p, hint);
+  box.addEventListener('click', closeCenterNotice);
+  document.body.append(backdrop, box);
+  noticeEls = { backdrop, box };
+  // Einen Frame spaeter einschalten, damit die Einblendung animiert.
+  requestAnimationFrame(() => { backdrop.classList.add('is-on'); box.classList.add('is-on'); });
+  noticeTimers.push(setTimeout(() => backdrop.classList.remove('is-on'), NOTICE_BLUR_MS));
+  noticeTimers.push(setTimeout(closeCenterNotice, NOTICE_SHOW_MS));
+}

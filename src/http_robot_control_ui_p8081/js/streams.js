@@ -21,9 +21,30 @@ function createStreamRetry(errEl, restart) {
   const textEl = errEl ? errEl.querySelector('[data-stream-err-text]') : null;
   const iconEl = errEl ? errEl.querySelector('[data-stream-err-icon]') : null;
   const btnEl  = errEl ? errEl.querySelector('[data-stream-retry]') : null;
-  let tries = 0, gaveUp = false, timer = null;
+  let tries = 0, gaveUp = false, timer = null, tick = null;
 
-  const clearTimer = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  const clearTimer = () => {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (tick) { clearInterval(tick); tick = null; }
+  };
+
+  // Sekunden bis zum naechsten Versuch rechts neben "(n/5)".
+  function countdown(ms) {
+    if (!textEl) return;
+    let cd = textEl.querySelector('.stream-countdown');
+    if (!cd) {
+      cd = document.createElement('span');
+      cd.className = 'stream-countdown';
+      textEl.appendChild(cd);
+    }
+    const end = Date.now() + ms;
+    const draw = () => {
+      const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+      cd.textContent = `${left} s`;
+    };
+    draw();
+    tick = setInterval(draw, 250);
+  }
 
   function overlay(text, showRetry) {
     if (errEl) errEl.style.display = 'flex';
@@ -58,8 +79,9 @@ function createStreamRetry(errEl, restart) {
         return true;
       }
       overlay(`Stream Disconnected (${tries}/${STREAM_MAX_TRIES})`, false);
-      timer = setTimeout(() => { timer = null; restart(); },
-                         STREAM_BACKOFF_MS[Math.min(tries - 1, STREAM_BACKOFF_MS.length - 1)]);
+      const delay = STREAM_BACKOFF_MS[Math.min(tries - 1, STREAM_BACKOFF_MS.length - 1)];
+      countdown(delay);
+      timer = setTimeout(() => { clearTimer(); restart(); }, delay);
       return false;
     }
   };

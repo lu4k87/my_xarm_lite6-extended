@@ -416,7 +416,7 @@ export const MOVETO_PREVIEW_NODE = 'robot_motion_handler_movegroup';
 export let movetoPreviewState = null;
 
 export function applyMoveToPreviewBtn() {
-  applyMoveitExecIcon();
+  applyPreviewPopupMode();
   const btn = document.getElementById('btn-twin-path-preview');
   if (!btn) return;
   const st = movetoPreviewState;
@@ -439,19 +439,13 @@ export function applyMoveToPreviewBtn() {
 // Execute-Button im MoveIt-Popup: bei aktiver Pfad-Vorschau das Ghost-Icon
 // statt Play - sonst unveraendert. Gleiches <i> im selben Button, damit die
 // Groesse identisch bleibt.
-// Ghost nur, solange der Klick erst die Vorschau erzeugt: Steht der Geist-Pfad
-// schon im Viewport (Phase "confirm"), fuehrt Execute die echte Bewegung aus
-// -> Play. Initialpose und Objekt-Scan planen nicht ueber MoveIt, also nie Ghost.
-export function applyMoveitExecIcon() {
-  const icon = document.querySelector('#moveit-popup .mp-btn-exec i');
-  if (!icon) return;
+// Ghost-Modus: kein Auto-Move-Schalter im Popup - Gizmo und MOTION-Buttons
+// planen sofort, der Geist erscheint und Execute bestaetigt die Fahrt.
+function applyPreviewPopupMode() {
   const popup = document.getElementById('moveit-popup');
-  const pathShown = !!(mpState && mpState.phase === 'confirm');
-  const pendingWithoutPreview = !!(popup && popup.dataset.pending === 'motion'
-                                   && pendingMotion && !pendingMotion.preview);
-  const ghost = movetoPreviewState === true && !pathShown && !pendingWithoutPreview;
-  icon.classList.toggle('fa-ghost', ghost);
-  icon.classList.toggle('fa-play', !ghost);
+  if (!popup) return;
+  if (movetoPreviewState === true) popup.dataset.preview = '1';
+  else delete popup.dataset.preview;
 }
 
 export function toggleMoveToPreview() {
@@ -692,7 +686,6 @@ export function renderMoveitPopup() {
       detail = `Failed${failedAt ? ` during ${MP_PHASE_LABELS[failedAt] || failedAt}` : ''}: ${st.message || 'unknown error'}`; break;
   }
   document.getElementById('mp-detail').textContent = detail;
-  applyMoveitExecIcon();
 }
 
 new ROSLIB.Topic({
@@ -755,9 +748,16 @@ rosHooks.onNodeList.push(checkMoveitCollNodes, checkMoveToPreviewNode);
 // Auto-Move an: sofort fahren. Aus: Confirm-Popup, gefahren wird erst nach
 // Execute (X verwirft). Sprachbefehle rufen setInitialPose & Co. direkt auf.
 const MOTION_REQUESTS = {
-  initial: { label: 'INITIAL POSE', what: 'Initial pose selected', run: () => setInitialPose(), preview: true },
-  scene:   { label: 'SCAN POSITION', what: 'Scan position selected', run: () => showScene(), preview: true },
-  scan:    { label: 'OBJECT SCAN', what: 'Object scan selected', run: () => startObjectScan(), preview: true },
+  initial: { label: 'INITIAL POSE', what: 'Initial pose selected', run: () => setInitialPose() },
+  scene:   { label: 'SCAN POSITION', what: 'Scan position selected', run: () => showScene() },
+  scan:    { label: 'OBJECT SCAN', what: 'Object scan selected', run: () => startObjectScan() },
+  // "Go" im POSE-Panel: Zielwerte gleich im Popup zeigen.
+  pose:    { label: 'ABSOLUTE POSE',
+             what: () => `Target X ${readPoseInput('inp-x')} · Y ${readPoseInput('inp-y')} · Z ${readPoseInput('inp-z')} mm`,
+             // Ungueltige Eingabe: gar nicht erst bestaetigen lassen - moveToPose
+             // meldet den Fehler selbst.
+             invalid: () => !!validatePose(['inp-x', 'inp-y', 'inp-z', 'inp-r', 'inp-p', 'inp-yw'].map(readPoseInput)),
+             run: () => moveToPose() },
 };
 let pendingMotion = null;
 
@@ -765,14 +765,14 @@ function clearPendingMotion() {
   pendingMotion = null;
   const el = document.getElementById('moveit-popup');
   if (el && el.dataset.pending === 'motion') delete el.dataset.pending;
-  applyMoveitExecIcon();
 }
 
 export function requestMotion(kind) {
   const req = MOTION_REQUESTS[kind];
   if (!req) return;
   const auto = document.getElementById('chk-gizmo-auto-drop');
-  if (!auto || auto.checked) { req.run(); return; }
+  // Im Ghost-Modus sofort planen - die Bestaetigung ist der Geist-Pfad selbst.
+  if (movetoPreviewState === true || !auto || auto.checked || (req.invalid && req.invalid())) { req.run(); return; }
   if (!motionAllowed(req.label)) return;
   const mp = document.getElementById('moveit-popup');
   if (!mp) { req.run(); return; }
@@ -783,8 +783,8 @@ export function requestMotion(kind) {
   mp.classList.remove('mp-hidden');
   mp.classList.add('mp-phase-confirm');
   document.getElementById('mp-phase').textContent = req.label;
-  document.getElementById('mp-detail').textContent = `${req.what}. Click ▶ (Execute path) to move.`;
-  applyMoveitExecIcon();
+  const what = typeof req.what === 'function' ? req.what() : req.what;
+  document.getElementById('mp-detail').textContent = `${what}. Click ▶ (Execute path) to move.`;
   logMsg('UI', `${req.label}: waiting for confirmation (Auto-Move off)`, 'info');
 }
 
@@ -792,7 +792,7 @@ export function requestMotion(kind) {
 // Faehrt der Roboter nach dem Loslassen des Gizmos ohnehin selbst los, sind
 // die Buttons ueberfluessig. Als data-Attribut, weil renderMoveitPopup die
 // Klassen des Popups komplett neu setzt.
-twin.twinHooks.refreshMoveitExecIcon = applyMoveitExecIcon;
+twin.twinHooks.isPathPreviewOn = () => movetoPreviewState === true;
 
 export function syncAutoMoveActions() {
   const el = document.getElementById('moveit-popup');

@@ -1,6 +1,6 @@
 import { logMsg } from './log.js';
-import { ROS_HOST } from './ros.js';
-import { visibleInterval } from './util.js';
+import { ROS_HOST, ros } from './ros.js';
+import { shortRmwName, visibleInterval } from './util.js';
 
 // ── Gamepad API Status ──────────────────────────────────────────────────
 window.addEventListener("gamepadconnected", (e) => {
@@ -20,10 +20,36 @@ window.addEventListener("gamepaddisconnected", (e) => {
   const status = document.getElementById('gamepad-status');
   if(dot && status) {
     dot.className = 'dot glow-red';
-    status.innerText = 'USB';
+    status.innerText = 'Offline';
     logMsg('System', 'Gamepad disconnected.', 'warn');
   }
 });
+
+// ── Meta Quest 3 ─────────────────────────────────────────────────────────
+// Online, solange die WebXR-Seite Controllerdaten schickt (ueber die zweite
+// rosbridge auf 9091, dasselbe ROS-Netz). Gedrosselt - es zaehlt nur, ob
+// ueberhaupt etwas ankommt.
+const QUEST_ONLINE_MS = 2500;
+let questLastSeen = 0;
+new ROSLIB.Topic({
+  ros: ros,
+  name: '/vr_teleop/controller_data',
+  messageType: 'std_msgs/String',
+  throttle_rate: 500,
+  queue_length: 1
+}).subscribe(() => { questLastSeen = Date.now(); });
+
+let questWasOnline = null;
+visibleInterval(() => {
+  const online = Date.now() - questLastSeen < QUEST_ONLINE_MS;
+  if (online === questWasOnline) return;
+  questWasOnline = online;
+  const dot = document.getElementById('quest-dot');
+  const val = document.getElementById('quest-status');
+  if (dot) dot.className = online ? 'dot glow-green' : 'dot glow-red';
+  if (val) val.textContent = online ? 'Online' : 'Offline';
+  if (questLastSeen) logMsg('System', `Meta Quest 3 ${online ? 'connected' : 'disconnected'}`, online ? 'info' : 'warn');
+}, 1000);
 
 // ── Dynamic Port & Connection Monitoring ──────────────────────────────────
 export function initPortMonitoring() {
@@ -70,7 +96,7 @@ export function initPortMonitoring() {
           }
           if (data.rmw_implementation) {
             const el = document.getElementById('val-rmw-impl');
-            if (el) el.innerText = data.rmw_implementation;
+            if (el) { el.innerText = shortRmwName(data.rmw_implementation); el.title = data.rmw_implementation; }
           }
         }
       })

@@ -1,9 +1,9 @@
 import { TOPICS, SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
 import { errorSound, playUiClickSound, playVoice } from './audio.js';
-import { stopAllJogging } from './jog.js';
+import { currentFrame, stopAllJogging } from './jog.js';
 import { logMsg } from './log.js';
-import { createSrv, ros, setEstopLatched } from './ros.js';
+import { createSrv, noteEstopPressed, ros, setEstopLatched } from './ros.js';
 import { unreachableClearance, unreachableRadiusAt } from './robot_limits.js';
 import { LIM, floorGuard } from './util.js';
 
@@ -292,6 +292,10 @@ export const emergencyStopPub = new ROSLIB.Topic({
 });
 
 export function emergencyStop() {
+  // Sichtbar lassen, bis der Node die Verriegelung meldet.
+  estopPressedAt = performance.now();
+  noteEstopPressed();
+  updateEstopVisibility();
   stopAllJogging('emergency stop');
   logMsg('UI', `🚨 EMERGENCY STOP TRIGGERED!`, 'err');
   if (!(ros && ros.isConnected)) {
@@ -308,12 +312,72 @@ export function emergencyStop() {
 // im Motion-HUD und im Header.
 export function setEstopResetVisible(active) {
   setEstopLatched(active);
-  ['btn-estop-reset', 'btn-estop-header-reset'].forEach((id) => {
-    const btn = document.getElementById(id);
-    if (btn) btn.classList.toggle('estop-reset-hidden', !active);
-  });
-  const hdr = document.getElementById('btn-estop-header');
-  if (hdr) hdr.classList.toggle('estop-latched', !!active);
+  estopIsLatched = !!active;
+  const reset = document.getElementById('btn-estop-reset');
+  if (reset) reset.classList.toggle('estop-reset-hidden', !active);
+  const btn = document.getElementById('btn-estop');
+  if (btn) btn.classList.toggle('estop-latched', !!active);
+  // Roter Puls-Rahmen am Viewport wie bei einer Kollision
+  const vp = document.getElementById('digital-twin-container');
+  if (vp) vp.classList.toggle('vignette-estop', !!active);
+  updateEstopVisibility();
+}
+
+// ── Not-Aus im Viewport: nur sichtbar, wenn er gebraucht wird ─────────────
+// Eingeblendet, solange sich der Roboter bewegt, der Not-Aus verriegelt ist
+// oder er gerade gedrueckt wurde. Nach dem Stillstand erst ESTOP_HIDE_DELAY_MS
+// spaeter ausblenden, damit er zwischen zwei kurzen Bewegungen nicht flackert.
+// Die Leertaste loest den Not-Aus unabhaengig davon immer aus.
+export const ESTOP_HIDE_DELAY_MS = 1500;
+const ESTOP_PRESS_HOLD_MS = 3000;   // bis die latched-Meldung vom Node da ist
+let estopIsLatched = false;
+let estopPressedAt = 0;
+let estopHideTimer = null;
+
+function setEstopShown(show, instant = false) {
+  const wrap = document.getElementById('twin-estop-wrap');
+  if (!wrap) return;
+  if (!show && instant) {
+    // Nach dem Quittieren: sofort weg, ohne Ausblend-Animation.
+    wrap.classList.remove('is-hiding');
+    if (!wrap.hidden) {
+      wrap.hidden = true;
+      if (typeof twin.refitDigitalTwinHud === 'function') twin.refitDigitalTwinHud();
+    }
+    return;
+  }
+  const shown = !wrap.hidden && !wrap.classList.contains('is-hiding');
+  if (show === shown) return;
+  if (show) {
+    wrap.classList.remove('is-hiding');
+    wrap.hidden = false;
+  } else {
+    wrap.classList.add('is-hiding');
+    setTimeout(() => {
+      if (wrap.classList.contains('is-hiding')) {
+        wrap.hidden = true;
+        wrap.classList.remove('is-hiding');
+        if (typeof twin.refitDigitalTwinHud === 'function') twin.refitDigitalTwinHud();
+      }
+    }, 250);
+  }
+  if (typeof twin.refitDigitalTwinHud === 'function') twin.refitDigitalTwinHud();
+}
+
+export function updateEstopVisibility() {
+  const needed = estopIsLatched || isRobotMoving ||
+                 performance.now() - estopPressedAt < ESTOP_PRESS_HOLD_MS;
+  if (needed) {
+    if (estopHideTimer) { clearTimeout(estopHideTimer); estopHideTimer = null; }
+    setEstopShown(true);
+  } else if (!estopHideTimer) {
+    estopHideTimer = setTimeout(() => {
+      estopHideTimer = null;
+      const stillNeeded = estopIsLatched || isRobotMoving ||
+                          performance.now() - estopPressedAt < ESTOP_PRESS_HOLD_MS;
+      if (!stillNeeded) setEstopShown(false);
+    }, ESTOP_HIDE_DELAY_MS);
+  }
 }
 
 new ROSLIB.Topic({
@@ -334,6 +398,14 @@ export function resetEmergencyStop() {
     (res) => {
       if (res.success) {
         setEstopResetVisible(false);
+        // Quittiert: E-Stop sofort ausblenden statt Haltezeit + Verzoegerung
+        // abzuwarten - ausser der Roboter faehrt noch.
+        estopIsLatched = false;
+        estopPressedAt = 0;
+        if (!isRobotMoving) {
+          if (estopHideTimer) { clearTimeout(estopHideTimer); estopHideTimer = null; }
+          setEstopShown(false, true);
+        }
         logMsg('SAFETY', `✓ ${res.message}`, 'info');
       } else {
         logMsg('SAFETY', `❌ Reset failed: ${res.message}`, 'err');
@@ -351,6 +423,10 @@ export const servoStatusSub = new ROSLIB.Topic({
   messageType: 'std_msgs/Int8'
 });
 
+function moveitPrefix() {
+  return `MoveIt (${currentFrame === 'link_tcp' ? 'TCP Frame' : 'Base Frame'}): `;
+}
+
 export function updateMoveItBadge() {
   // Gruener Puls-Rahmen am Viewport, solange sich der Roboter bewegt.
   // vignette-moving steht im Stylesheet VOR collision/singularity, damit eine
@@ -359,31 +435,33 @@ export function updateMoveItBadge() {
   if (twinContainer) {
     twinContainer.classList.toggle('vignette-moving', isRobotMoving);
   }
+  updateEstopVisibility();
 
   const badge = document.getElementById('moveit-badge');
   if(!badge) return;
 
   badge.className = 'moveit-status'; // Reset classes
+  // Aktiver Jog-Frame in Klammern: "MoveIt (Base Frame): Ready"
   
   if (currentServoStatus === 0) {
     if (isRobotMoving) {
-      badge.innerText = 'MoveIt: Moving';
+      badge.innerText = moveitPrefix() + 'Moving';
       badge.classList.add('moving');
     } else {
-      badge.innerText = 'MoveIt: Ready';
+      badge.innerText = moveitPrefix() + 'Ready';
       badge.classList.add('ready');
     }
   } else if (currentServoStatus === 1 || currentServoStatus === 3 || currentServoStatus === 6) {
     badge.classList.add('warn');
-    if (currentServoStatus === 1) badge.innerText = 'MoveIt: Sing. Near';
-    else if (currentServoStatus === 3) badge.innerText = 'MoveIt: Coll. Near';
-    else badge.innerText = 'MoveIt: Leav. Sing.';
+    if (currentServoStatus === 1) badge.innerText = moveitPrefix() + 'Sing. Near';
+    else if (currentServoStatus === 3) badge.innerText = moveitPrefix() + 'Coll. Near';
+    else badge.innerText = moveitPrefix() + 'Leav. Sing.';
   } else {
     badge.classList.add('error');
-    if (currentServoStatus === 2) badge.innerText = 'MoveIt: Sing. Halt';
-    else if (currentServoStatus === 4) badge.innerText = 'MoveIt: Coll. Halt';
-    else if (currentServoStatus === 5) badge.innerText = 'MoveIt: Limit';
-    else badge.innerText = 'MoveIt: Error';
+    if (currentServoStatus === 2) badge.innerText = moveitPrefix() + 'Sing. Halt';
+    else if (currentServoStatus === 4) badge.innerText = moveitPrefix() + 'Coll. Halt';
+    else if (currentServoStatus === 5) badge.innerText = moveitPrefix() + 'Limit';
+    else badge.innerText = moveitPrefix() + 'Error';
   }
 }
 

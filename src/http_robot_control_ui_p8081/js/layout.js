@@ -61,6 +61,32 @@ export function restoreTwinDistanceLine() {
 
 document.addEventListener('DOMContentLoaded', () => setTimeout(restoreTwinDistanceLine, 400));
 
+// ── Header einklappen ───────────────────────────────────────────────────
+// Eingeklappt bleiben nur der Reload-Button und der Pfeil selbst (der
+// Not-Aus sitzt im Viewport). Zustand ueberlebt den Reload.
+export const HEADER_COLLAPSED_LS_KEY = 'header_collapsed';
+
+export function setHeaderCollapsed(collapsed, persist = true) {
+  const bar = document.querySelector('.header-status');
+  const btn = document.getElementById('btn-header-collapse');
+  if (!bar) return;
+  bar.classList.toggle('header-collapsed', !!collapsed);
+  if (btn) {
+    btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    btn.title = collapsed ? 'Expand the header' : 'Collapse the header (reload stays visible)';
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = collapsed ? 'fa-solid fa-chevron-left' : 'fa-solid fa-chevron-right';
+  }
+  if (persist) lsSet(HEADER_COLLAPSED_LS_KEY, collapsed ? '1' : '0');
+}
+
+export function toggleHeaderCollapsed() {
+  const bar = document.querySelector('.header-status');
+  if (bar) setHeaderCollapsed(!bar.classList.contains('header-collapsed'));
+}
+
+document.addEventListener('DOMContentLoaded', () => setHeaderCollapsed(lsGet(HEADER_COLLAPSED_LS_KEY) === '1', false));
+
 // ── Einklappbare HUD-Tabs im Viewport ───────────────────────────────────
 // Jedes Overlay am Viewportrand (Gizmo-HUD, Scene-Icons, Motion, Telemetrie,
 // Pose, Speed) sitzt in einem .twin-hud-tab mit eigener Kopfzeile. Der

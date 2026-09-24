@@ -86,9 +86,47 @@ export const LOG_SRC_CLASSES = {
   'VOICE': 'log-src-voice',
   'AUDIO': 'log-src-audio',
   'MoveIt': 'log-src-moveit',
+  'SAFETY': 'log-src-safety',
 };
 
 export const LOG_MAX_ENTRIES = 500;
+
+// ── Neueste Log-Zeile immer sichtbar ─────────────────────────────────────
+// Die Section waechst nicht mit, also muss das Fenster am Ende kleben -
+// auch nachdem sich seine Hoehe geaendert hat (Fenstergroesse, Layout,
+// Aufklappen, spaet geladene Schrift). Frueher reichte eine solche Aenderung,
+// damit es dauerhaft nicht mehr mitlief. Nur wer selbst hochscrollt, wird
+// LOG_READ_HOLD_MS lang nicht zurueckgerissen.
+export const LOG_READ_HOLD_MS = 15000;
+let logUserScrolledAt = 0;
+let logWinWired = null;
+
+function logAtEnd(win) {
+  return win.scrollHeight - win.scrollTop - win.clientHeight < 4;
+}
+
+function logUserIsReading() {
+  return logUserScrolledAt > 0 && Date.now() - logUserScrolledAt < LOG_READ_HOLD_MS;
+}
+
+function scrollLogToEnd(win) {
+  win.scrollTop = win.scrollHeight;
+}
+
+function wireLogWindow(win) {
+  if (logWinWired === win) return;
+  logWinWired = win;
+  // Programmatisches Scrollen landet immer am Ende - steht die Ansicht
+  // nicht am Ende, hat der Nutzer gescrollt.
+  win.addEventListener('scroll', () => {
+    logUserScrolledAt = logAtEnd(win) ? 0 : Date.now();
+  }, { passive: true });
+  if (window.ResizeObserver) {
+    new ResizeObserver(() => {
+      if (!logUserIsReading()) scrollLogToEnd(win);
+    }).observe(win);
+  }
+}
 
 export function logMsg(source, text, type='info') {
   const win = document.getElementById('log-window');
@@ -118,10 +156,9 @@ export function logMsg(source, text, type='info') {
   // <span class="log-..."> - das ist die einzige Stelle mit HTML-Aufbau.
   msgEl.innerHTML = highlightLog(text);
   div.append(srcEl, ' ', msgEl);
-  // Nur ans Ende scrollen, wenn der Nutzer nicht gerade weiter oben liest.
-  const atBottom = win.scrollHeight - win.scrollTop - win.clientHeight < 40;
+  wireLogWindow(win);
   win.appendChild(div);
   // Obergrenze: sonst waechst das DOM bei laengerem Betrieb endlos.
   while (win.childElementCount > LOG_MAX_ENTRIES) win.firstElementChild.remove();
-  if (atBottom) win.scrollTop = win.scrollHeight;
+  if (!logUserIsReading()) scrollLogToEnd(win);
 }

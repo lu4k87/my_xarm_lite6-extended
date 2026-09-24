@@ -1,6 +1,6 @@
 import { TOPICS } from './config.js';
 import { logMsg } from './log.js';
-import { ros, rosHooks } from './ros.js';
+import { estopLatched, estopPressedAt, ros, rosHooks } from './ros.js';
 import { lsGet, lsSet, visibleInterval } from './util.js';
 
 export let uiClickSound = null;
@@ -207,14 +207,23 @@ export function setObjectReachContext(active, graceMs = 3000) {
   objectReachContextUntil = active ? Infinity : (graceMs > 0 ? Date.now() + graceMs : 0);
 }
 
+// Nach einem Not-Aus scheitern laufende Fahrten zwangslaeufig - das ist kein
+// Reichweitenproblem, also keine "out of reach"-Ansage.
+const ESTOP_QUIET_MS = 5000;
+function estopQuiet() {
+  return estopLatched || Date.now() - estopPressedAt < ESTOP_QUIET_MS;
+}
+
 // Objekt nicht erreichbar (rote Kugel / Detected Objects).
 export function playOutOfReachSound() {
+  if (estopQuiet()) return;
   if (outOfReachCooldown()) return;
   playVoice(outOfReachSound, 'object out of reach');
 }
 
 // Gizmo- bzw. Pose-Ziel nicht erreichbar (Singularitaet, Kollision, IK).
 export function playPoseOutOfReachSound() {
+  if (estopQuiet()) return;
   if (outOfReachCooldown()) return;
   playVoice(poseOutOfReachSound, 'pose out of reach');
 }

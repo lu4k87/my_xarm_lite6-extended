@@ -4,7 +4,7 @@ import { playUiClickSound } from './audio.js';
 import { logMsg } from './log.js';
 import { speedScale } from './motion.js';
 import { motionAllowed, ros, rosHooks } from './ros.js';
-import { latestEEF_Q, latestEEF_Z } from './safety.js';
+import { latestEEF_Q, latestEEF_Z, updateMoveItBadge } from './safety.js';
 import { LIM, floorGuard } from './util.js';
 import { startListening } from './voice.js';
 
@@ -92,6 +92,7 @@ export function setFrame(frame) {
   if(btn) btn.classList.add('active', 'btn-primary');
   
   twistMsg.header.frame_id = currentFrame;
+  updateMoveItBadge();
   logMsg('UI', `Control Frame set to ${frame}`);
 }
 
