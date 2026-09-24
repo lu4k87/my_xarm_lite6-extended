@@ -215,7 +215,6 @@
 
     // ── Whisper CPU/GPU-Umschalter (Voice Command Listener) ─────────────────
     const WHISPER_GPU_ARG = 'use_gpu:=true';
-    let whisperToggleSeq = 0;
 
     function isWhisperLaunch(baseCmd) {
         return /voice_listener\.launch\.py|whisper_bringup\s+bringup\.launch\.py/.test(baseCmd || '');
@@ -223,36 +222,57 @@
 
     function buildWhisperDeviceToggle(argObj, onChange) {
         const wrap = document.createElement('div');
-        wrap.className = 'param-device-toggle';
+        wrap.className = 'param-device-switch';
         wrap.title = 'Whisper-Inferenz auf CPU oder GPU (CUDA) - startet mit use_gpu:=false bzw. use_gpu:=true';
-        const name = 'whisper-device-' + (++whisperToggleSeq);
+        wrap.onclick = (e) => e.stopPropagation();
 
         const label = document.createElement('span');
         label.className = 'param-device-label';
         label.textContent = 'Whisper';
         wrap.appendChild(label);
 
-        [['cpu', 'CPU', 'fa-microchip'], ['gpu', 'GPU', 'fa-bolt']].forEach(([value, text, icon]) => {
-            const opt = document.createElement('label');
-            opt.className = 'param-device-opt';
-            const input = document.createElement('input');
-            input.type = 'radio';
-            input.name = name;
-            input.value = value;
-            input.checked = (value === 'gpu') === !!argObj.checked;
-            input.onclick = (e) => e.stopPropagation();
-            input.onchange = () => {
-                if (!input.checked) return;
-                argObj.checked = (value === 'gpu');
-                if (typeof onChange === 'function') onChange();
-            };
-            const span = document.createElement('span');
-            span.innerHTML = `<i class="fa-solid ${icon}"></i> ${text}`;
-            opt.appendChild(input);
-            opt.appendChild(span);
-            opt.onclick = (e) => e.stopPropagation();
-            wrap.appendChild(opt);
-        });
+        const track = document.createElement('div');
+        track.className = 'param-device-track';
+        track.setAttribute('role', 'switch');
+        track.tabIndex = 0;
+
+        const cpuSpan = document.createElement('span');
+        cpuSpan.className = 'param-device-opt-label param-device-opt-cpu';
+        cpuSpan.innerHTML = '<i class="fa-solid fa-microchip"></i> CPU';
+
+        const knob = document.createElement('span');
+        knob.className = 'param-device-knob';
+
+        const gpuSpan = document.createElement('span');
+        gpuSpan.className = 'param-device-opt-label param-device-opt-gpu';
+        gpuSpan.innerHTML = '<i class="fa-solid fa-bolt"></i> GPU';
+
+        function setChecked(isGpu, fire) {
+            argObj.checked = !!isGpu;
+            track.classList.toggle('is-gpu', !!isGpu);
+            track.setAttribute('aria-checked', String(!!isGpu));
+            if (fire && typeof onChange === 'function') onChange();
+        }
+
+        cpuSpan.onclick = (e) => { e.stopPropagation(); setChecked(false, true); };
+        gpuSpan.onclick = (e) => { e.stopPropagation(); setChecked(true, true); };
+        track.onclick = (e) => { e.stopPropagation(); setChecked(!argObj.checked, true); };
+        track.onkeydown = (e) => {
+            if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.key === 'ArrowLeft') setChecked(false, true);
+                else if (e.key === 'ArrowRight') setChecked(true, true);
+                else setChecked(!argObj.checked, true);
+            }
+        };
+
+        track.appendChild(cpuSpan);
+        track.appendChild(knob);
+        track.appendChild(gpuSpan);
+        wrap.appendChild(track);
+
+        setChecked(!!argObj.checked, false);
         return wrap;
     }
 

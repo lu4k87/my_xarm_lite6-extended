@@ -1231,11 +1231,11 @@
     }
 
     /* Whisper CPU/GPU-Umschalter (Voice Command Listener) */
-    .param-device-toggle {
+    .param-device-switch {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 8px;
       max-width: 100%;
       font-family: var(--font-mono);
       font-size: 11px;
@@ -1247,47 +1247,61 @@
       font-weight: 600;
     }
 
-    .param-device-opt {
+    .param-device-track {
+      position: relative;
       display: flex;
       align-items: center;
-      cursor: pointer;
-    }
-
-    .param-device-opt input {
-      position: absolute;
-      opacity: 0;
-      width: 0;
-      height: 0;
-      pointer-events: none;
-    }
-
-    .param-device-opt span {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
-      border-radius: 6px;
+      width: 118px;
+      height: 26px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.08);
       border: 1px solid rgba(148, 163, 184, 0.25);
-      background: rgba(148, 163, 184, 0.06);
-      color: #64748b;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .param-device-track:focus-visible {
+      outline: 2px solid #38bdf8;
+      outline-offset: 2px;
+    }
+
+    .param-device-knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: calc(50% - 3px);
+      height: calc(100% - 4px);
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(16, 185, 129, 0.55);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s, border-color 0.25s;
+    }
+
+    .param-device-track.is-gpu .param-device-knob {
+      transform: translateX(100%);
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.55);
+    }
+
+    .param-device-opt-label {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
       font-weight: 600;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      color: #64748b;
+      transition: color 0.2s;
     }
 
-    .param-device-opt:hover span {
-      border-color: rgba(148, 163, 184, 0.45);
-      color: #cbd5e1;
-    }
-
-    .param-device-opt input:checked + span {
-      background: rgba(16, 185, 129, 0.15);
-      border-color: rgba(16, 185, 129, 0.55);
+    .param-device-track:not(.is-gpu) .param-device-opt-cpu {
       color: #34d399;
     }
 
-    .param-device-opt input:focus-visible + span {
-      outline: 2px solid #38bdf8;
-      outline-offset: 1px;
+    .param-device-track.is-gpu .param-device-opt-gpu {
+      color: #38bdf8;
     }
 
     .param-chip:hover {
