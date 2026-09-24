@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Ohne MULTICAST-Flag auf lo (haeufig auf Laptops) faellt CycloneDDS bei
+  ROS_LOCALHOST_ONLY=1 auf Unicast-Discovery zurueck. Dort gilt
+  MaxAutoParticipantIndex (Default 9), also ~8-10 Nodes pro Domain - der
+  xArm-Servo-Launch allein startet 12 und laesst alles danach mit
+  "Failed to find a free participant index" sterben.
+
+  Hier nur den Index anheben: <Interfaces> gehoert NICHT hier rein, weil
+  ROS_LOCALHOST_ONLY lo bereits selbst setzt und Cyclone sonst mit
+  "the same interface may not be selected twice" abbricht.
+-->
+<CycloneDDS xmlns="https://cdds.io/config">
+  <Domain id="any">
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>200</MaxAutoParticipantIndex>
+    </Discovery>
+  </Domain>
+</CycloneDDS>

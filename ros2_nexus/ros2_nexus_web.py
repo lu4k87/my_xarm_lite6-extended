@@ -142,9 +142,31 @@ def _localhost_only_value(override) -> str:
     return "1" if override else "0"
 
 
+def _cyclonedds_uri() -> str:
+    # Die generierten Skripte sourcen zwar ~/.bashrc, die kehrt in nicht-
+    # interaktiven Shells aber sofort zurueck. Ohne diese Config limitiert
+    # Cyclone auf lo (kein MULTICAST-Flag) auf ~8 Nodes pro Domain.
+    uri = os.environ.get("CYCLONEDDS_URI", "").strip()
+    if uri:
+        return uri
+    default_cfg = os.path.join(BASE_DIR, "cyclonedds.xml")
+    return f"file://{default_cfg}" if os.path.isfile(default_cfg) else ""
+
+
+def _cyclonedds_export_line() -> str:
+    uri = _cyclonedds_uri()
+    if not uri:
+        return ""
+    return (
+        "# Nicht-interaktive Shells brechen ~/.bashrc frueh ab -> hier explizit setzen\n"
+        f'export CYCLONEDDS_URI="{uri}"\n'
+    )
+
+
 def _build_ros_script(command: str, ws_path: str, localhost_only_override=None) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
+    cyclone_export = _cyclonedds_export_line()
     localhost_only = _localhost_only_value(localhost_only_override)
     ros_setup = "source /opt/ros/humble/setup.bash"
     ws_setup  = f"source {ws_path}/install/setup.bash"
@@ -162,7 +184,7 @@ def _build_ros_script(command: str, ws_path: str, localhost_only_override=None) 
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
 source ~/.bashrc 2>/dev/null || true
-# Nach der .bashrc exportieren, sonst setzt deren ROS_LOCALHOST_ONLY=0 den Wert zurueck
+{cyclone_export}# Nach der .bashrc exportieren, sonst setzt deren ROS_LOCALHOST_ONLY=0 den Wert zurueck
 export ROS_LOCALHOST_ONLY={localhost_only}
 {ros_setup} 2>/dev/null || true
 {ws_setup} 2>/dev/null || true
@@ -189,6 +211,7 @@ trap 'send_log "stop" &' EXIT
 def _build_interactive_script(command: str, localhost_only_override=None) -> str:
     domain_id = os.environ.get("ROS_DOMAIN_ID", "66")
     rmw_impl  = os.environ.get("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
+    cyclone_export = _cyclonedds_export_line()
     localhost_only = _localhost_only_value(localhost_only_override)
     ros_setup = "source /opt/ros/humble/setup.bash"
 
@@ -204,7 +227,7 @@ def _build_interactive_script(command: str, localhost_only_override=None) -> str
     return f"""export ROS_DOMAIN_ID={domain_id}
 export RMW_IMPLEMENTATION={rmw_impl}
 source ~/.bashrc 2>/dev/null || true
-# Nach der .bashrc exportieren, sonst setzt deren ROS_LOCALHOST_ONLY=0 den Wert zurueck
+{cyclone_export}# Nach der .bashrc exportieren, sonst setzt deren ROS_LOCALHOST_ONLY=0 den Wert zurueck
 export ROS_LOCALHOST_ONLY={localhost_only}
 {ros_setup} 2>/dev/null || true
 clear
