@@ -102,7 +102,7 @@
     },
     "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": {
       "silero_vad_use_cuda:=true": true,
-      "use_gpu:=true": true
+      "use_gpu:=true": false
     },
     "ros2 launch web_video_server web_video_server.launch.py": {
       "port:=8082": true
@@ -441,12 +441,10 @@
         "yolo_model:=yolov8s.pt": false
       },
       "ros2 launch voice_command_listener voice_listener.launch.py": {
-        "silero_vad_use_cuda:=true": true,
-        "use_gpu:=true": true
+        "use_gpu:=true": false
       },
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": {
-        "silero_vad_use_cuda:=true": true,
-        "use_gpu:=true": true
+        "use_gpu:=true": false
       },
       "ros2 launch web_video_server web_video_server.launch.py": {
         "port:=8082": true

@@ -1,0 +1,14 @@
+# CPU-Profil - wird von whisper_bringup bei use_gpu:=false ueber whisper.yaml gelegt.
+# Gemessen auf dem i9-12900K (6 s Audio, Sprachbefehl):
+#   small, 4 Threads             ~11000 ms  (laenger als die 5-s-Aufnahme -> unbrauchbar)
+#   base,  12 Threads            ~ 1800 ms
+#   base,  12 Threads, ctx 320   ~ 350-750 ms, Erkennung korrekt
+whisper:
+  inference:
+    ros__parameters:
+      model_name: "base"
+      wparams:
+        n_threads: 12
+        # Encoder nur ueber 6,4 s statt 30 s rechnen (50 pro Sekunde);
+        # muss >= buffer_capacity * 50 bleiben, sonst wird Audio abgeschnitten.
+        audio_ctx: 320

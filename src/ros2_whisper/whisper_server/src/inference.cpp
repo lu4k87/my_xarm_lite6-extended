@@ -83,6 +83,9 @@ void Inference::declare_parameters_() {
   declare_parameter("wparams.beam_size", 1);   // > 1 = Beam Search, sonst Greedy
   declare_parameter("wparams.best_of", 1);
   declare_parameter("wparams.no_context", true);
+  // Encoder-Fenster begrenzen (1500 = volle 30 s, 50 pro Sekunde). Der Puffer
+  // haelt nur buffer_capacity Sekunden - auf der CPU spart das ~80 % Rechenzeit.
+  declare_parameter("wparams.audio_ctx", 0);   // 0 = volle 30 s
   declare_parameter("cparams.flash_attn", true);
   declare_parameter("cparams.gpu_device", 0);
   declare_parameter("cparams.use_gpu", true);
@@ -118,16 +121,18 @@ void Inference::initialize_whisper_() {
   whisper_->wparams.temperature =
       static_cast<float>(get_parameter("wparams.temperature").as_double());
   whisper_->wparams.no_context = get_parameter("wparams.no_context").as_bool();
+  whisper_->wparams.audio_ctx = get_parameter("wparams.audio_ctx").as_int();
   initial_prompt_ = get_parameter("wparams.initial_prompt").as_string();
   whisper_->wparams.initial_prompt = initial_prompt_.empty() ? nullptr : initial_prompt_.c_str();
-  RCLCPP_INFO(get_logger(), "Decoding: %s (beam_size=%d, best_of=%d), temperature=%.2f, "
-              "language=%s, initial_prompt %s",
-              beam_size > 1 ? "beam search" : "greedy", beam_size, best_of,
-              whisper_->wparams.temperature, language_.c_str(),
-              initial_prompt_.empty() ? "off" : "on");
   whisper_->cparams.flash_attn = get_parameter("cparams.flash_attn").as_bool();
   whisper_->cparams.gpu_device = get_parameter("cparams.gpu_device").as_int();
   whisper_->cparams.use_gpu = get_parameter("cparams.use_gpu").as_bool();
+  RCLCPP_INFO(get_logger(), "Decoding: %s (beam_size=%d, best_of=%d), temperature=%.2f, "
+              "language=%s, initial_prompt %s, n_threads=%d, audio_ctx=%d, %s",
+              beam_size > 1 ? "beam search" : "greedy", beam_size, best_of,
+              whisper_->wparams.temperature, language_.c_str(),
+              initial_prompt_.empty() ? "off" : "on", whisper_->wparams.n_threads,
+              whisper_->wparams.audio_ctx, whisper_->cparams.use_gpu ? "GPU" : "CPU");
 
   RCLCPP_INFO(get_logger(), "Initializing model %s...", model_name.c_str());
   whisper_->initialize(model_manager_->get_model_path(model_name));
@@ -224,7 +229,10 @@ bool Inference::run_inference_(whisper_idl::msg::WhisperTokens &result) {
     whisper_mutex_.unlock();
     return true;
   } else {
-    RCLCPP_INFO(get_logger(), "Whisper.cpp busy, skipping inference");
+    // Auf der CPU dauert ein Durchlauf laenger als der Takt - das ist erwartet
+    // und soll das Log nicht fluten.
+    auto& clk = *get_clock();
+    RCLCPP_INFO_THROTTLE(get_logger(), clk, 5000, "Whisper.cpp busy, skipping inference");
     return false;
   }
 }

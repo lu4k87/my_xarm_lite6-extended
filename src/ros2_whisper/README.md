@@ -62,7 +62,9 @@ ros2 param set /whisper/inference active false # false/true
 
 **Listen window (this workspace):** Inference only runs for `listen_window_ms` (default `7000`) after a `listen` message on `/ui/voice_listen_trigger`; otherwise whisper would transcribe silence every `callback_ms`. Set `listen_window_ms: 0` for the original continuous mode.
 
-Decoding parameters read from `whisper_server/config/whisper.yaml`: `model_name`, `wparams.language`, `wparams.initial_prompt`, `wparams.temperature`, `wparams.beam_size` (> 1 = beam search, else greedy), `wparams.best_of`, `wparams.no_context`, `wparams.n_threads`, `cparams.use_gpu`, `cparams.gpu_device`, `cparams.flash_attn`, `buffer_capacity`, `callback_ms`.
+Decoding parameters read from `whisper_server/config/whisper.yaml`: `model_name`, `wparams.language`, `wparams.initial_prompt`, `wparams.temperature`, `wparams.beam_size` (> 1 = beam search, else greedy), `wparams.best_of`, `wparams.no_context`, `wparams.audio_ctx` (encoder window, 0 = full 30 s), `wparams.n_threads`, `cparams.use_gpu`, `cparams.gpu_device`, `cparams.flash_attn`, `buffer_capacity`, `callback_ms`.
+
+**CPU profile:** `ros2 launch whisper_bringup bringup.launch.py use_gpu:=false` additionally loads `whisper_server/config/whisper_cpu.yaml` (`base`, 12 threads, `audio_ctx: 320`), because `small` is far too slow on the CPU.
 
 ## Available Actions
 
