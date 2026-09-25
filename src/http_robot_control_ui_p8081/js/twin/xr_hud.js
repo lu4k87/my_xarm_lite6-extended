@@ -11,8 +11,9 @@
 //     [ TELEMETRY ]            [  POSE   ]              [ SPEED ]
 //
 // Jede Flaeche ist ein Canvas auf einer Ebene. Alle liegen auf einer
-// Kugelschale um den Kopf, zur Mitte gedreht, in Winkel-Slots mit Abstand -
-// nichts ueberlappt (AGENTS.md), egal wie viel Inhalt ein Tab hat.
+// Kugelschale um den Kopf, zur Mitte gedreht und mit waagerechter Oberkante,
+// in Winkel-Slots mit Abstand - nichts ueberlappt (AGENTS.md), egal wie viel
+// Inhalt ein Tab hat.
 //
 // Verschieben: Trigger rechts auf der Kopfzeile, dem Griff (⋮⋮) oder einer
 // freien Stelle einer Flaeche halten und ziehen. Die Flaeche gleitet auf der
@@ -110,11 +111,11 @@ let enabled = true;              // Nutzerwahl (Y links), bleibt ueber Sessions
 let placed = false;
 let following = false, posFollowing = false;
 let hudYaw = 0, hudPitch = 0;
+let leveledPitch = 0;            // hudPitch, fuer den die Flaechen ausgerichtet sind
 let hoverKey = '';
 let dirty = true, lastRefresh = 0;
 let drag = null;                 // { s, hitAz, hitEl, az0, el0 } waehrend des Verschiebens
 
-const ORIGIN = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0);
 const _m = new THREE.Matrix4();
 const _head = new THREE.Vector3();
@@ -124,6 +125,12 @@ const _rc = new THREE.Raycaster();
 const _inv = new THREE.Matrix4();
 const _o = new THREE.Vector3();
 const _d = new THREE.Vector3();
+const _up = new THREE.Vector3();
+const _x = new THREE.Vector3();
+const _y = new THREE.Vector3();
+const _z = new THREE.Vector3();
+const _xs = new THREE.Vector3();
+const _qi = new THREE.Quaternion();
 
 // ── Aufbau ──────────────────────────────────────────────────────────────────
 export function createHud(parent, xrRenderer, xrApi) {
@@ -171,8 +178,27 @@ function makeSurface(slot) {
 function placeSurface(s) {
   const az = DEG(s.az), el = DEG(s.el);
   s.mesh.position.set(HUD_DIST * Math.sin(az) * Math.cos(el), HUD_DIST * Math.sin(el), -HUD_DIST * Math.cos(az) * Math.cos(el));
-  // Vorderseite (+Z) zeigt zum Kopf, ohne Rollen.
-  _m.lookAt(ORIGIN, s.mesh.position, UP);
+  orientSurface(s);
+}
+
+// Vorderseite (+Z) zeigt zum Kopf, die Oberkante bleibt im XR-Raum waagerecht.
+// Die Schale kippt beim Nachziehen mit dem Blick (hudPitch); richtete sich
+// eine Flaeche nach dem Oben der Schale, rollten die seitlichen dabei mit
+// (Telemetry/Speed bei 45° Blick nach unten um ~54°). Nur die Drehung aendert
+// sich, der Platz auf der Schale bleibt.
+function orientSurface(s) {
+  _z.copy(s.mesh.position).normalize().negate();
+  _xs.crossVectors(UP, _z).normalize();          // waagerecht in der Schale
+  _up.copy(UP);
+  if (hud) _up.applyQuaternion(_qi.copy(hud.quaternion).invert());
+  _x.crossVectors(_up, _z);
+  if (_x.lengthSq() < 1e-6) _x.copy(_xs);        // Flaeche genau im Lot
+  else {
+    _x.normalize();
+    if (_x.dot(_xs) < 0) _x.negate();            // unter dem Kopf hindurch nicht umklappen
+  }
+  _y.crossVectors(_z, _x);
+  _m.makeBasis(_x, _y, _z);
   s.mesh.quaternion.setFromRotationMatrix(_m);
 }
 
@@ -445,6 +471,11 @@ function follow(frame, dt) {
     }
   }
   hud.rotation.set(hudPitch, hudYaw, 0, 'YXZ');
+  // Das Gieren um die Senkrechte laesst die Flaechen waagerecht, nur Kippen nicht.
+  if (hudPitch !== leveledPitch) {
+    leveledPitch = hudPitch;
+    surfaces.forEach(orientSurface);
+  }
   hud.updateMatrixWorld(true);
 }
 
