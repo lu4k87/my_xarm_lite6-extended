@@ -2,7 +2,7 @@
   "__cards_collapsed": {
     "dev_fake": {
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": true,
-      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": true,
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": false,
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": true,
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py": true,
       "ros2 launch web_video_server web_video_server.launch.py": true,
@@ -22,6 +22,9 @@
     }
   },
   "__cmd_args": {
+    "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": {
+      "val:start_video_server": "false"
+    },
     "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py": {
       "add_gripper:=true": false,
       "add_vacuum_gripper:=true": true,
@@ -85,9 +88,19 @@
       "tf_z:=0.368": false,
       "use_zed_hardware:=false": false,
       "use_zed_hardware:=true": false,
-      "val:confidence_threshold": "0.35",
-      "val:tf_x": "0.473",
-      "val:tf_z": "0.368",
+      "val:acceleration_scaling": null,
+      "val:camera_model": null,
+      "val:confidence_threshold": null,
+      "val:ema_alpha": null,
+      "val:grasp_z_offset": null,
+      "val:safe_z_hover_height": null,
+      "val:tf_pitch": null,
+      "val:tf_roll": null,
+      "val:tf_x": null,
+      "val:tf_y": null,
+      "val:tf_yaw": null,
+      "val:tf_z": null,
+      "val:velocity_scaling": null,
       "yolo_model:=my_yolo_model.pt": false,
       "yolo_model:=yolov8l.pt": true,
       "yolo_model:=yolov8s.pt": false
@@ -137,11 +150,16 @@
       "silero_vad_use_cuda:=true": true,
       "use_gpu:=false": false,
       "use_gpu:=true": true,
-      "val:device_index": "-1"
+      "val:device_index": null,
+      "val:language": null,
+      "val:model_name": null
     },
     "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": {
       "silero_vad_use_cuda:=true": true,
-      "use_gpu:=true": false
+      "use_gpu:=true": false,
+      "val:model_name": null,
+      "val:language": null,
+      "val:device_index": null
     },
     "ros2 launch web_video_server web_video_server.launch.py": {
       "port:=8082": true
@@ -270,7 +288,7 @@
       "sound_enabled:=true": false,
       "tobii_ip:=192.168.100.2": true,
       "val:dwell_threshold": "1.5",
-      "val:tobii_ip": "192.168.100.2"
+      "val:tobii_ip": null
     },
     "ros2 run web_video_server web_video_server": {
       "--ros-args -r __node:=http_web_video_server_p8082": true,
@@ -456,6 +474,9 @@
   },
   "__popups_args": {
     "dev_fake": {
+      "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": {
+        "val:start_video_server": "false"
+      },
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py": {
         "add_vacuum_gripper:=true": true,
         "attach_to:=linear_axis_link": true
@@ -485,7 +506,20 @@
         "camera:=ip_cam": false,
         "yolo_model:=yolov8l.pt": true,
         "yolo_model:=yolov8s.pt": false,
-        "yolo_model:=my_yolo_model.pt": false
+        "yolo_model:=my_yolo_model.pt": false,
+        "val:camera_model": null,
+        "val:confidence_threshold": null,
+        "val:ema_alpha": null,
+        "val:safe_z_hover_height": null,
+        "val:grasp_z_offset": null,
+        "val:velocity_scaling": null,
+        "val:acceleration_scaling": null,
+        "val:tf_x": null,
+        "val:tf_y": null,
+        "val:tf_z": null,
+        "val:tf_roll": null,
+        "val:tf_pitch": null,
+        "val:tf_yaw": null
       },
       "ros2 launch robot_vision_cameras_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py": {
         "yolo_model:=yolov8l.pt": true,
@@ -512,10 +546,16 @@
         "yolo_model:=yolov8s.pt": false
       },
       "ros2 launch voice_command_listener voice_listener.launch.py": {
-        "use_gpu:=true": false
+        "use_gpu:=true": false,
+        "val:model_name": null,
+        "val:language": null,
+        "val:device_index": null
       },
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": {
-        "use_gpu:=true": false
+        "use_gpu:=true": false,
+        "val:model_name": null,
+        "val:language": null,
+        "val:device_index": null
       },
       "ros2 launch web_video_server web_video_server.launch.py": {
         "port:=8082": true
@@ -560,7 +600,9 @@
       },
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses": {
         "gaze_mode:=real_world": true,
-        "gaze_mode:=ui_gaze": false
+        "gaze_mode:=ui_gaze": false,
+        "val:dwell_threshold": "1.5",
+        "val:tobii_ip": null
       },
       "ros2 run web_video_server web_video_server": {
         "--ros-args -r __node:=http_web_video_server_p8082": true,

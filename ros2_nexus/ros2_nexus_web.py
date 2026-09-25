@@ -14,6 +14,8 @@ import json
 
 import uuid
 import signal
+import getpass
+import socket
 import re
 
 app     = Flask(__name__)
@@ -342,6 +344,13 @@ def _iface_bytes(iface):
         return None, None
 
 
+def _current_user():
+    try:
+        return getpass.getuser()
+    except Exception:
+        return None
+
+
 @app.route("/api/ping")
 @app.route("/api/status")
 def ping():
@@ -358,6 +367,8 @@ def ping():
         "rmw_implementation": rmw_impl,
         "localhost_only": localhost_only,
         "cyclonedds_uri": os.environ.get("CYCLONEDDS_URI", ""),
+        "user": _current_user(),
+        "hostname": socket.gethostname(),
         "net_iface": iface,
         "net_ip": ip,
         "tx_bytes": tx_bytes,
@@ -523,22 +534,22 @@ _SERVO_CONFIG = {
     "pkg": "xarm_moveit_servo", "file": "config/xarm_moveit_servo_config.yaml",
     "title": "MoveIt Servo",
     "keys": [
-        {"key": "scale.linear", "label": "Max. Lineargeschw.", "unit": "m/s"},
-        {"key": "scale.rotational", "label": "Max. Drehgeschw.", "unit": "rad/s"},
-        {"key": "scale.joint", "label": "Joint-Skalierung"},
-        {"key": "publish_period", "label": "Publish-Periode", "unit": "s", "hz": True},
-        {"key": "incoming_command_timeout", "label": "Befehls-Timeout", "unit": "s"},
-        {"key": "low_pass_filter_coeff", "label": "Tiefpass-Koeffizient"},
-        {"key": "check_collisions", "label": "Kollisionsprüfung"},
-        {"key": "collision_check_rate", "label": "Kollisions-Rate", "unit": "Hz"},
-        {"key": "scene_collision_proximity_threshold", "label": "Mindestabstand Szene", "unit": "m"},
-        {"key": "self_collision_proximity_threshold", "label": "Mindestabstand Eigenkollision", "unit": "m"},
-        {"key": "lower_singularity_threshold", "label": "Singularität: bremsen"},
-        {"key": "hard_stop_singularity_threshold", "label": "Singularität: Stopp"},
+        {"key": "scale.linear", "label": "Max. linear speed", "unit": "m/s"},
+        {"key": "scale.rotational", "label": "Max. rotational speed", "unit": "rad/s"},
+        {"key": "scale.joint", "label": "Joint scale"},
+        {"key": "publish_period", "label": "Publish period", "unit": "s", "hz": True},
+        {"key": "incoming_command_timeout", "label": "Command timeout", "unit": "s"},
+        {"key": "low_pass_filter_coeff", "label": "Low-pass coefficient"},
+        {"key": "check_collisions", "label": "Collision check"},
+        {"key": "collision_check_rate", "label": "Collision check rate", "unit": "Hz"},
+        {"key": "scene_collision_proximity_threshold", "label": "Min. distance scene", "unit": "m"},
+        {"key": "self_collision_proximity_threshold", "label": "Min. distance self-collision", "unit": "m"},
+        {"key": "lower_singularity_threshold", "label": "Singularity: slow down"},
+        {"key": "hard_stop_singularity_threshold", "label": "Singularity: stop"},
     ],
     "overridden": {
-        "move_group_name": "setzt der Launch auf die Lite-6-Gruppe",
-        "command_out_topic": "setzt der Launch auf den Lite-6-Trajectory-Controller",
+        "move_group_name": "set by the launch to the Lite 6 group",
+        "command_out_topic": "set by the launch to the Lite 6 trajectory controller",
     },
 }
 
@@ -546,23 +557,23 @@ _WHISPER_CONFIGS = [
     {
         "pkg": "whisper_server", "file": "config/whisper.yaml", "title": "Whisper",
         "keys": [
-            {"key": "whisper.inference.ros__parameters.model_name", "label": "Modell", "arg": "model_name"},
-            {"key": "whisper.inference.ros__parameters.wparams.language", "label": "Sprache", "arg": "language"},
+            {"key": "whisper.inference.ros__parameters.model_name", "label": "Model", "arg": "model_name"},
+            {"key": "whisper.inference.ros__parameters.wparams.language", "label": "Language", "arg": "language"},
             {"key": "whisper.inference.ros__parameters.wparams.n_threads", "label": "Threads"},
             {"key": "whisper.inference.ros__parameters.wparams.beam_size", "label": "Beam Size"},
-            {"key": "whisper.inference.ros__parameters.callback_ms", "label": "Inferenz-Takt", "unit": "ms"},
-            {"key": "whisper.inference.ros__parameters.buffer_capacity", "label": "Audio-Puffer", "unit": "s"},
-            {"key": "whisper.inference.ros__parameters.listen_window_ms", "label": "Hörfenster", "unit": "ms"},
+            {"key": "whisper.inference.ros__parameters.callback_ms", "label": "Inference interval", "unit": "ms"},
+            {"key": "whisper.inference.ros__parameters.buffer_capacity", "label": "Audio buffer", "unit": "s"},
+            {"key": "whisper.inference.ros__parameters.listen_window_ms", "label": "Listen window", "unit": "ms"},
             {"key": "whisper.inference.ros__parameters.cparams.use_gpu", "label": "GPU", "arg": "use_gpu"},
         ],
     },
     {
-        "pkg": "whisper_server", "file": "config/whisper_cpu.yaml", "title": "Whisper CPU-Profil",
+        "pkg": "whisper_server", "file": "config/whisper_cpu.yaml", "title": "Whisper CPU profile",
         "when": {"arg": "use_gpu", "equals": "false"},
         "keys": [
-            {"key": "whisper.inference.ros__parameters.model_name", "label": "Modell", "arg": "model_name"},
+            {"key": "whisper.inference.ros__parameters.model_name", "label": "Model", "arg": "model_name"},
             {"key": "whisper.inference.ros__parameters.wparams.n_threads", "label": "Threads"},
-            {"key": "whisper.inference.ros__parameters.wparams.audio_ctx", "label": "Audio-Kontext"},
+            {"key": "whisper.inference.ros__parameters.wparams.audio_ctx", "label": "Audio context"},
         ],
     },
 ]
@@ -573,36 +584,36 @@ _LAUNCH_CONFIGS = {
     "robot_vision_cameras_bringup/robot_vision_cameras_bringup.launch.py": [
         {
             "pkg": "robot_vision_cameras_bringup", "file": "config/perception_params.yaml",
-            "title": "YOLO-Erkennung (ZED)", "when": {"arg": "camera", "equals": "zed_m"},
+            "title": "YOLO Detection (ZED)", "when": {"arg": "camera", "equals": "zed_m"},
             "keys": [
-                {"key": "yolo_3d_bbox_for_zed_m.ros__parameters.model_path", "label": "Modell", "arg": "yolo_model"},
-                {"key": "yolo_3d_bbox_for_zed_m.ros__parameters.confidence_threshold", "label": "Konfidenz-Schwelle", "arg": "confidence_threshold"},
-                {"key": "yolo_3d_bbox_for_zed_m.ros__parameters.ema_alpha", "label": "Glättung (EMA)", "arg": "ema_alpha"},
+                {"key": "yolo_3d_bbox_for_zed_m.ros__parameters.model_path", "label": "Model", "arg": "yolo_model"},
+                {"key": "yolo_3d_bbox_for_zed_m.ros__parameters.confidence_threshold", "label": "Confidence threshold", "arg": "confidence_threshold"},
+                {"key": "yolo_3d_bbox_for_zed_m.ros__parameters.ema_alpha", "label": "Smoothing (EMA)", "arg": "ema_alpha"},
             ],
         },
         {
             "pkg": "robot_vision_cameras_bringup", "file": "config/grasping_params.yaml",
-            "title": "Greifen",
+            "title": "Grasping",
             "keys": [
-                {"key": "yolo_planned_grasp_executor.ros__parameters.safe_z_hover_height", "label": "Hover-Höhe", "unit": "m", "arg": "safe_z_hover_height"},
-                {"key": "yolo_planned_grasp_executor.ros__parameters.grasp_z_offset", "label": "Greif-Offset Z", "unit": "m", "arg": "grasp_z_offset"},
-                {"key": "yolo_planned_grasp_executor.ros__parameters.velocity_scaling", "label": "Geschw.-Skalierung", "arg": "velocity_scaling"},
-                {"key": "yolo_planned_grasp_executor.ros__parameters.acceleration_scaling", "label": "Beschl.-Skalierung", "arg": "acceleration_scaling"},
-                {"key": "yolo_planned_grasp_executor.ros__parameters.target_roll", "label": "Ziel-Roll", "unit": "rad"},
-                {"key": "yolo_planned_grasp_executor.ros__parameters.target_pitch", "label": "Ziel-Pitch", "unit": "rad"},
-                {"key": "yolo_planned_grasp_executor.ros__parameters.target_yaw", "label": "Ziel-Yaw", "unit": "rad"},
-                {"key": "yolo_planned_grasp_executor.ros__parameters.ik_tolerance_position", "label": "IK-Toleranz Position", "unit": "m"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.safe_z_hover_height", "label": "Hover height", "unit": "m", "arg": "safe_z_hover_height"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.grasp_z_offset", "label": "Grasp offset Z", "unit": "m", "arg": "grasp_z_offset"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.velocity_scaling", "label": "Velocity scaling", "arg": "velocity_scaling"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.acceleration_scaling", "label": "Acceleration scaling", "arg": "acceleration_scaling"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.target_roll", "label": "Target roll", "unit": "rad"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.target_pitch", "label": "Target pitch", "unit": "rad"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.target_yaw", "label": "Target yaw", "unit": "rad"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.ik_tolerance_position", "label": "IK tolerance position", "unit": "m"},
             ],
         },
         {
             "pkg": "robot_vision_cameras_bringup", "file": "config/zed_override.yaml",
-            "title": "ZED-Kamera", "when": {"arg": "camera", "equals": "zed_m"},
+            "title": "ZED Camera", "when": {"arg": "camera", "equals": "zed_m"},
             "keys": [
-                {"key": "/**.ros__parameters.general.grab_resolution", "label": "Auflösung"},
-                {"key": "/**.ros__parameters.depth.depth_mode", "label": "Tiefenmodus"},
-                {"key": "/**.ros__parameters.depth.depth_confidence", "label": "Tiefen-Konfidenz"},
-                {"key": "/**.ros__parameters.depth.min_depth", "label": "Min. Tiefe", "unit": "m"},
-                {"key": "/**.ros__parameters.depth.max_depth", "label": "Max. Tiefe", "unit": "m"},
+                {"key": "/**.ros__parameters.general.grab_resolution", "label": "Resolution"},
+                {"key": "/**.ros__parameters.depth.depth_mode", "label": "Depth mode"},
+                {"key": "/**.ros__parameters.depth.depth_confidence", "label": "Depth confidence"},
+                {"key": "/**.ros__parameters.depth.min_depth", "label": "Min. depth", "unit": "m"},
+                {"key": "/**.ros__parameters.depth.max_depth", "label": "Max. depth", "unit": "m"},
             ],
         },
     ],
@@ -699,13 +710,13 @@ def _read_config(spec, pkg_dirs):
         "when": spec.get("when"), "path": path, "values": [], "all": [],
     }
     if not path or not os.path.isfile(path):
-        res["error"] = "Datei nicht gefunden"
+        res["error"] = "File not found"
         return res
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
     except (OSError, yaml.YAMLError) as e:
-        res["error"] = f"YAML nicht lesbar: {e}"
+        res["error"] = f"YAML not readable: {e}"
         return res
     flat = dict(_flatten_yaml(data))
     for k in spec.get("keys", []):

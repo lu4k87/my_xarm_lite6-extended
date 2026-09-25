@@ -615,22 +615,37 @@
     }
 
     /* Netzwerk-Leiste: eine zusammenhaengende Leiste mit gleich aufgebauten
-       Zellen (Label oben, Wert unten). Die Trennlinien sind der 1px-gap auf
-       dem Rahmen-farbigen Hintergrund; die Zellen wachsen, damit jede Zeile
-       beim Umbrechen voll bleibt. Erklaerungen stehen im Tooltip (title). */
+       Zellen (Label oben, Wert unten), normal in einer Zeile. Die Trennlinien
+       sind der 1px-gap auf dem Rahmen-farbigen Hintergrund; erst bei schmalem
+       Popup bricht sie um, die Zellen wachsen dann, damit jede Zeile voll
+       bleibt. Erklaerungen stehen im Tooltip (title).
+       Zwei Gruppen (Rechner: User/LAN/Traffic | ROS: Scope/RMW/Domain/DDS),
+       getrennt durch eine breitere, hellere Linie (3px-gap der Leiste). */
     .dds-bar {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
       min-width: 0;
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: #2b3445;
+      border: 1px solid #161b25;
       border-radius: 12px;
       overflow: hidden;
     }
 
-    .dds-cell {
+    .dds-group {
+      flex: 1 1 auto;
       min-width: 0;
+      max-width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1px;
+      background: #161b25;
+    }
+
+    .dds-cell {
+      flex: 1 0 auto;
+      min-width: 0;
+      max-width: 100%;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -695,14 +710,6 @@
       text-overflow: ellipsis;
     }
 
-    /* Schmale Popups: 2 Spalten (3 Zeilen), ganz schmal 1 Spalte */
-    @media (max-width: 900px) {
-      .dds-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 520px) {
-      .dds-bar { grid-template-columns: 1fr; }
-    }
-
     .dds-cell[data-state="ok"] .dds-val { color: #6ee7b7; }
     .dds-cell[data-state="ok"] .dds-key i { color: #10b981; }
     .dds-cell[data-state="info"] .dds-key i { color: #38bdf8; }
@@ -748,6 +755,7 @@
 
     /* Traffic: Werte links, Mini-Kurve rechts */
     .dds-cell-traffic {
+      flex: 1.6 0 auto;
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
@@ -761,10 +769,17 @@
       min-width: 0;
     }
 
+    /* Feste Mindestbreite, damit die Leiste beim Wechsel 2 kB/s -> 245 kB/s
+       nicht springt */
+    .dds-cell-traffic .dds-val {
+      min-width: 19ch;
+    }
+
     .dds-spark {
       flex-shrink: 0;
-      width: 64px;
+      width: 120px;
       height: 24px;
+      margin-right: 10px;
       overflow: visible;
     }
 
@@ -3537,10 +3552,17 @@
       gap: 10px;
     }
 
+    /* Parameter-Bereich als leicht abgehobenes Panel */
+    .seq-pane-params {
+      box-sizing: border-box;
+      padding: 12px 14px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      background: rgba(148, 163, 184, 0.045);
+    }
+
     .seq-card-body.has-tree.has-params .seq-pane-params {
       margin-left: 18px;
-      padding-left: 18px;
-      border-left: 1px solid rgba(255, 255, 255, 0.07);
     }
 
     /* Halbe Popup-Breite reicht nicht fuer Baum und Parameter nebeneinander */
@@ -3550,9 +3572,6 @@
       }
       .seq-card-body.has-tree.has-params .seq-pane-params {
         margin: 14px 0 0;
-        padding: 14px 0 0;
-        border-left: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.07);
       }
     }
 
@@ -3602,9 +3621,6 @@
       }
       .seq-card-body.has-tree.has-params .seq-pane-params {
         margin: 14px 0 0;
-        padding: 14px 0 0;
-        border-left: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.07);
       }
     }
 
@@ -4051,9 +4067,11 @@
 
 /* Netzwerk-Leiste */
 #launch-modal[data-theme="light"] .dds-bar {
-  background: var(--pl-line);
+  background: var(--pl-faint);
   border-color: var(--pl-line);
 }
+
+#launch-modal[data-theme="light"] .dds-group { background: var(--pl-line); }
 
 #launch-modal[data-theme="light"] .dds-cell { background: var(--pl-window); }
 #launch-modal[data-theme="light"] .dds-cell-toggle:hover { background: var(--pl-raised); }
@@ -4211,7 +4229,7 @@
 #launch-modal[data-theme="light"] .seq-card-body,
 #launch-modal[data-theme="light"] .seq-card-body.has-tree .seq-pane-cmd,
 #launch-modal[data-theme="light"] .seq-card-body.has-params .seq-pane-cmd { border-top-color: var(--pl-line); }
-#launch-modal[data-theme="light"] .seq-card-body.has-tree.has-params .seq-pane-params { border-color: var(--pl-line); }
+#launch-modal[data-theme="light"] .seq-pane-params { border-color: var(--pl-line); background: #f6f8fb; }
 #launch-modal[data-theme="light"] .seq-pane-head { color: var(--pl-faint); }
 
 #launch-modal[data-theme="light"] .seq-cmd-line {
@@ -4390,8 +4408,8 @@
 }
 
 /* ── Wert-Parameter (Eingabefeld statt Chip) ─────────────────────────────────
-   Herkunft als Badge: ARG = Launch-Argument (gruen wie die Launch-Chips),
-   PARAM = Node-Parameter (blau), CONFIG = Wert aus einer YAML-Config (orange).
+   Herkunft als Badge: PARAM = Node-Parameter (blau), CONFIG = Wert aus einer
+   YAML-Config (orange). Launch-Argumente sind der Normalfall und ohne Badge.
    Reines Flex-Layout mit gap: zu schmale Karten brechen um statt zu ueberlappen. */
 .param-value {
   display: flex;
@@ -4856,3 +4874,90 @@ select.param-value-input {
 #launch-modal[data-theme="light"] .cfg-override { color: #c2410c; }
 #launch-modal[data-theme="light"] .cfg-all summary { color: var(--pl-faint); }
 #launch-modal[data-theme="light"] .cfg-all-list { background: var(--pl-raised); }
+
+/* ── Hover-Tooltip der Wert-Parameter (fixed am body, kein Abschneiden) ───── */
+.param-floating-tooltip {
+  position: fixed;
+  z-index: 99999999;
+  display: none;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  background: rgba(10, 16, 30, 0.98);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.param-floating-tooltip.visible {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.param-floating-tooltip .ptip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.param-floating-tooltip .ptip-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.param-floating-tooltip .ptip-src {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+}
+
+.param-floating-tooltip .ptip-info {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.45;
+  color: #e2e8f0;
+}
+
+.param-floating-tooltip .ptip-meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 3px 10px;
+  font-size: 10.5px;
+}
+
+.param-floating-tooltip .ptip-meta span {
+  color: #64748b;
+}
+
+.param-floating-tooltip .ptip-meta code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  color: #cbd5e1;
+}
+
+.param-floating-tooltip .ptip-state {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.param-floating-tooltip .ptip-state.mod { color: #fb923c; }
+.param-floating-tooltip .ptip-state.off { color: #f87171; }

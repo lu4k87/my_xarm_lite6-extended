@@ -22,10 +22,10 @@
       const t = String(text || '').trim();
 
       if (/(^|\s)-r(\s|$)/.test(t) || t.includes('__node:=') || /^__[a-z]+:=/.test(t)) {
-        return { cls: 'chip-kind-remap', title: 'ROS-2-Remapping (--ros-args -r) - benennt Node/Topic um' };
+        return { cls: 'chip-kind-remap', title: 'ROS 2 remapping (--ros-args -r): renames node/topic' };
       }
       if (/(^|\s)-p(\s|$)/.test(t)) {
-        return { cls: 'chip-kind-param', title: 'ROS-2-Node-Parameter (--ros-args -p) - wird an den Node gesetzt' };
+        return { cls: 'chip-kind-param', title: 'ROS 2 node parameter (--ros-args -p)' };
       }
 
       const m = t.match(/^([A-Za-z_][A-Za-z0-9_]*):=/);
@@ -34,19 +34,19 @@
 
       if (!launchKey) {
         // Kein "ros2 launch" - z.B. "ros2 run" oder ein Shell-Kommando.
-        return { cls: '', title: 'Argument (kein ros2-launch-Kommando - nicht pruefbar)' };
+        return { cls: '', title: 'Argument (no ros2 launch command, not checked)' };
       }
       const map = window.NEXUS_LAUNCH_ARGS;
       if (!map) return { cls: '', title: '' };   // noch nicht geladen
 
       const declared = map[launchKey];
       if (!declared) {
-        return { cls: 'chip-kind-unknown', title: `Launch-Datei "${launchKey}" nicht gefunden - Paket oder Datei existiert nicht` };
+        return { cls: 'chip-kind-unknown', title: `Launch file "${launchKey}" not found` };
       }
       if (declared.indexOf(name) !== -1) {
-        return { cls: 'chip-kind-launch', title: `Echtes Launch-Argument von ${launchKey}` };
+        return { cls: 'chip-kind-launch', title: `Launch argument of ${launchKey}` };
       }
-      return { cls: 'chip-kind-dead', title: `"${name}" wird von ${launchKey} nicht deklariert - dieser Parameter bleibt wirkungslos` };
+      return { cls: 'chip-kind-dead', title: `"${name}" is not declared by ${launchKey}, no effect` };
     }
 
     // ─── CONSOLE LOGIC ────────────────────────────────────────────────────────────
@@ -223,7 +223,7 @@
     function buildWhisperDeviceToggle(argObj, onChange) {
         const wrap = document.createElement('div');
         wrap.className = 'param-device-switch';
-        wrap.title = 'Whisper-Inferenz auf CPU oder GPU (CUDA) - startet mit use_gpu:=false bzw. use_gpu:=true';
+        wrap.title = 'Whisper inference on CPU or GPU (CUDA): use_gpu:=false / true';
         wrap.onclick = (e) => e.stopPropagation();
 
         const label = document.createElement('span');
@@ -483,8 +483,8 @@
 
         tip.innerHTML = `
             <div class="cmd-tip-header">
-                <span><i class="fa-solid fa-terminal" style="color:#38bdf8; margin-right:5px;"></i>Befehl</span>
-                <span class="cmd-tip-hint"><i class="fa-regular fa-copy"></i> Klick zum Kopieren</span>
+                <span><i class="fa-solid fa-terminal" style="color:#38bdf8; margin-right:5px;"></i>Command</span>
+                <span class="cmd-tip-hint"><i class="fa-regular fa-copy"></i> Click to copy</span>
             </div>
             <div class="cmd-tip-code">${safeCmd}</div>
         `;
@@ -534,7 +534,7 @@
                     icon.className = 'fa-solid fa-check';
                     icon.style.color = '#10b981';
                 }
-                showToast('✓ Befehl in Zwischenablage kopiert');
+                showToast('✓ Command copied to clipboard');
                 setTimeout(() => {
                     if (icon) {
                         icon.className = 'fa-solid fa-terminal';
@@ -553,7 +553,7 @@
             ports: [
                 { port: 8081, icon: 'fa-solid fa-display', use: 'Robot Control UI' },
                 { port: 9090, icon: 'fa-solid fa-right-left', use: 'ROS Bridge WebSocket (UI \u2194 ROS 2)' },
-                { port: 8082, icon: 'fa-solid fa-video', use: 'Web Video Server (Kamera)' }
+                { port: 8082, icon: 'fa-solid fa-video', use: 'Web Video Server (camera)' }
             ]
         },
         {
@@ -653,14 +653,14 @@
         // z.B. robot_vision_cameras_bringup oder zed_cam_eef_rviz_octomap_yolo
         if ((firstCmd.includes('zed') || firstCmd.includes('robot_vision') || /robot_vision|zed_camera|zed_wrapper|zed m camera/.test(combined)) && (/yolo/.test(combined) || /camera/.test(combined))) {
             return [
-                { path: '_imgs/icons/icon_zed_m.svg?v=6', label: 'ZED-M Stereo-Kamera' },
+                { path: '_imgs/icons/icon_zed_m.svg?v=6', label: 'ZED-M stereo camera' },
                 { path: '_imgs/icons/icon_object_detection.svg?v=7', label: 'YOLO 3D Object Detection' }
             ];
         }
 
         // ZED-M Stereo-Kamera Launcher (ohne YOLO)
         if (/zed_camera|zed_wrapper|zed m camera/.test(combined) || (firstCmd.includes('zed') && !firstCmd.includes('gaze'))) {
-            return [{ path: '_imgs/icons/icon_zed_m.svg?v=6', label: 'ZED-M Stereo-Kamera' }];
+            return [{ path: '_imgs/icons/icon_zed_m.svg?v=6', label: 'ZED-M stereo camera' }];
         }
 
         // xArm Lite 6 Launch mit MoveIt, RViz & Gamepad Controller (lite6_moveit_servo_fake / lite6_moveit_servo_realmove):
@@ -674,8 +674,8 @@
                     label: isSim ? 'xArm Lite 6 (Simulation)' : 'xArm Lite 6 (Physischer Roboter)' 
                 },
                 { path: '_imgs/icons/icon_moveit2.svg?v=2', label: 'MoveIt Motion Planning' },
-                { path: '_imgs/icons/icon_rviz.svg', label: 'RViz 3D-Visualisierung' },
-                { path: '_imgs/icons/icon_gamepad.svg?v=6', label: 'Gamepad Roboter-Steuerung' }
+                { path: '_imgs/icons/icon_rviz.svg', label: 'RViz 3D visualization' },
+                { path: '_imgs/icons/icon_gamepad.svg?v=6', label: 'Gamepad robot control' }
             ];
         }
 
@@ -690,7 +690,7 @@
 
         // 1. RViz / RViz2 3D-Visualisierung (eigenes weißes SVG Icon mit 3D Frame & rviz2 Schriftzug)
         if (/\brviz\b|\brviz2\b/.test(firstCmd) || /\brviz\b|\brviz2\b/.test(title)) {
-            return [{ path: '_imgs/icons/icon_rviz.svg', label: 'RViz 3D-Visualisierung' }];
+            return [{ path: '_imgs/icons/icon_rviz.svg', label: 'RViz 3D visualization' }];
         }
         // 2. MoveIt / Motion Planning (eigenes weißes SVG Icon mit Roboterarm & moveit2 Schriftzug)
         if (/moveit|move_group|movegroup|moveit_servo|lite6_moveit|xarm_moveit/.test(combined)) {
@@ -704,17 +704,17 @@
         }
         // 3. Voice / Whisper / Speech Audio
         if (/voice|whisper|speech|audio|listener|silero/.test(combined)) {
-            return [{ path: '_imgs/icons/icon_voice.svg?v=6', label: 'Sprachsteuerung & Audio' }];
+            return [{ path: '_imgs/icons/icon_voice.svg?v=6', label: 'Voice control & audio' }];
         }
         // 4. Gaze / Tobii Eye Tracking (mit oder ohne YOLO)
         if (/gaze|tobii|glasses/.test(combined)) {
             if (/yolo/.test(combined)) {
                 return [
-                    { path: '_imgs/icons/icon_gaze.svg?v=6', label: 'Blickerfassung (Tobii Gaze)' },
+                    { path: '_imgs/icons/icon_gaze.svg?v=6', label: 'Eye tracking (Tobii Gaze)' },
                     { path: '_imgs/icons/icon_object_detection.svg?v=7', label: 'YOLO 3D Object Detection' }
                 ];
             }
-            return [{ path: '_imgs/icons/icon_gaze.svg?v=6', label: 'Blickerfassung (Tobii Gaze)' }];
+            return [{ path: '_imgs/icons/icon_gaze.svg?v=6', label: 'Eye tracking (Tobii Gaze)' }];
         }
         // YOLO 3D Objekterkennung (eigenes weißes SVG Icon mit 3D Bounding Box & Sucher-Ecken)
         if (/yolo|object_detection|detection_3d|bbox_3d/.test(combined)) {
@@ -730,20 +730,20 @@
         }
         // 7. Gamepad / Joystick / Keyboard / Collision Checker
         if (/gamepad|joy|keyboard|linear_axis|collision_check|teleop_pre_collision/.test(combined)) {
-            return [{ path: '_imgs/icons/icon_gamepad.svg?v=6', label: 'Gamepad & Roboter-Steuerung' }];
+            return [{ path: '_imgs/icons/icon_gamepad.svg?v=6', label: 'Gamepad & robot control' }];
         }
         // Robot Control UI + WebSocket Server + Web Video Server (kombinierte Action Card, startet alle drei)
         if (/http_robot_control_ui/.test(combined) || ((/robot_control|8081/.test(combined)) && (/websocket|rosbridge|9090/.test(combined)))) {
             return [
                 { path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Robot Control UI' },
-                { path: '_imgs/icons/icon_analog_stick.svg?v=4', label: 'Analog Stick (virtueller Joystick)' },
+                { path: '_imgs/icons/icon_analog_stick.svg?v=4', label: 'Analog stick (virtual joystick)' },
                 { path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket' },
                 { path: '_imgs/icons/icon_server.svg?v=6', label: 'Web Video Server (Port 8082)' }
             ];
         }
         // 8. Web-UI / Dashboard / Overlays / Streams / OBS
         if (/robot_control|dashboard|rqt|overlay|streamer|obs|8080|8081|ui_node/.test(combined)) {
-            return [{ path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Web-UI & Visualisierung' }];
+            return [{ path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Web UI & visualization' }];
         }
         // 9. ROS WebSocket / ROS Bridge / Backend
         if (/rosbridge|websocket|analyzer|vision|pointcloud|aruco|server|kill|pkill/.test(combined)) {
@@ -753,7 +753,7 @@
         if (firstCmd.startsWith('ros2 launch')) {
             return [{ path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket Launch' }];
         }
-        return [{ path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Komponente' }];
+        return [{ path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Component' }];
     }
 
     // ─── SEQUENZ-POPUP: Kategorien & Parameter-Gruppen ──────────────────────────
@@ -791,18 +791,18 @@
     function getArgGroup(argObj) {
         const t = String((argObj && argObj.text) || '');
         if (argObj && argObj.kind === 'value') {
-            const g = VALUE_GROUPS[argObj.def.group] || { label: 'Werte', icon: 'fa-solid fa-sliders' };
+            const g = VALUE_GROUPS[argObj.def.group] || { label: 'Values', icon: 'fa-solid fa-sliders' };
             return { key: 'val_' + argObj.def.group, label: g.label, icon: g.icon };
         }
-        if (argObj && argObj.kind === 'gpu-toggle') return { key: 'device', label: 'Inferenz', icon: 'fa-solid fa-microchip' };
-        if (argObj && argObj.kind === 'gaze-mode') return { key: 'gaze', label: 'Gaze-Modus', icon: 'fa-solid fa-eye', exclusive: 'genau 1' };
-        if (t.startsWith('robot_ip:='))  return { key: 'ip', label: 'Roboter-Verbindung', icon: 'fa-solid fa-ethernet' };
-        if (t.startsWith('camera:='))    return { key: 'camera', label: 'Kamera', icon: 'fa-solid fa-camera', exclusive: 'genau 1' };
-        if (t.startsWith('yolo_model:=')) return { key: 'yolo', label: 'YOLO-Modell', icon: 'fa-solid fa-brain', exclusive: 'max. 1' };
-        if (t === 'add_vacuum_gripper:=true' || t === 'add_gripper:=true') return { key: 'gripper', label: 'Greifer', icon: 'fa-solid fa-hand', exclusive: 'genau 1' };
-        if (t.startsWith('report_type:=')) return { key: 'report', label: 'Report-Level', icon: 'fa-solid fa-file-lines', exclusive: 'genau 1' };
+        if (argObj && argObj.kind === 'gpu-toggle') return { key: 'device', label: 'Inference', icon: 'fa-solid fa-microchip' };
+        if (argObj && argObj.kind === 'gaze-mode') return { key: 'gaze', label: 'Gaze Mode', icon: 'fa-solid fa-eye', exclusive: 'exactly 1' };
+        if (t.startsWith('robot_ip:='))  return { key: 'ip', label: 'Robot Connection', icon: 'fa-solid fa-ethernet' };
+        if (t.startsWith('camera:='))    return { key: 'camera', label: 'Camera', icon: 'fa-solid fa-camera', exclusive: 'exactly 1' };
+        if (t.startsWith('yolo_model:=')) return { key: 'yolo', label: 'YOLO Model', icon: 'fa-solid fa-brain', exclusive: 'max. 1' };
+        if (t === 'add_vacuum_gripper:=true' || t === 'add_gripper:=true') return { key: 'gripper', label: 'Gripper', icon: 'fa-solid fa-hand', exclusive: 'exactly 1' };
+        if (t.startsWith('report_type:=')) return { key: 'report', label: 'Report-Level', icon: 'fa-solid fa-file-lines', exclusive: 'exactly 1' };
         if (/(^|\s)-[rp](\s|$)/.test(t) || t.startsWith('--')) return { key: 'rosargs', label: 'ROS-Args', icon: 'fa-solid fa-gears' };
-        return { key: 'options', label: 'Optionen', icon: 'fa-solid fa-toggle-on' };
+        return { key: 'options', label: 'Options', icon: 'fa-solid fa-toggle-on' };
     }
 
     // ─── WERT-PARAMETER (Eingabefeld statt Chip) ────────────────────────────────
@@ -816,68 +816,86 @@
     function loadLaunchDetails() {
         return fetch('/api/launch_details')
             .then(r => r.json())
-            .then(d => { if (d && d.ok) window.NEXUS_LAUNCH_DETAILS = d.launch || {}; })
+            .then(d => {
+                if (!d || !d.ok) return;
+                window.NEXUS_LAUNCH_DETAILS = d.launch || {};
+                // Schon gebaute Wert-Zeilen zeigen jetzt die echten Standardwerte
+                document.querySelectorAll('.param-value').forEach(r => { if (r._update) r._update(); });
+            })
             .catch(() => { /* ohne Backend gelten die Defaults unten */ });
     }
     loadLaunchDetails();
 
     const ZED_ONLY = { arg: 'camera', equals: 'zed_m' };
     const GAZE_REAL_ONLY = { arg: 'gaze_mode', equals: 'real_world' };
+    // "info" = kurze Beschreibung (Englisch) fuer den Hover-Tooltip der Zeile
     const WHISPER_VALUE_PARAMS = [
-        { name: 'model_name', label: 'Modell', type: 'choice', choices: ['tiny', 'base', 'small', 'medium'], group: 'whisper',
-          hint: 'Größer = genauer, aber langsamer. Fehlende Modelle werden beim Start geladen.' },
-        { name: 'language', label: 'Sprache', type: 'choice', choices: ['auto', 'de', 'en'], group: 'whisper' },
-        { name: 'device_index', label: 'Geräte-Index', type: 'int', min: -1, max: 64, step: 1, group: 'mic',
-          hint: '-1 = Standard-Mikrofon des Systems' }
+        { name: 'model_name', label: 'Model', type: 'choice', choices: ['tiny', 'base', 'small', 'medium'], group: 'whisper',
+          info: 'Whisper model size. Larger models transcribe more accurately but take longer per phrase. Missing models are downloaded at start.' },
+        { name: 'language', label: 'Language', type: 'choice', choices: ['auto', 'de', 'en'], group: 'whisper',
+          info: 'Spoken language for speech recognition. "auto" detects it per phrase (slightly slower and less reliable).' },
+        { name: 'device_index', label: 'Device index', type: 'int', min: -1, max: 64, step: 1, group: 'mic',
+          info: 'Audio input device used as microphone. -1 = system default input.' }
     ];
     const VALUE_PARAMS = {
         'xarm_moveit_servo/lite6_moveit_servo_realmove.launch.py': [
-            { name: 'robot_ip', label: 'Roboter-IP', type: 'ip', group: 'ip' }
+            { name: 'robot_ip', label: 'Robot IP', type: 'ip', group: 'ip',
+              info: 'IP address of the xArm Lite 6 control box the driver connects to.' }
         ],
         'robot_vision_cameras_bringup/robot_vision_cameras_bringup.launch.py': [
-            { name: 'camera_model', label: 'Modell', type: 'choice', choices: ['zedm', 'zed2', 'zed2i', 'zedx', 'zedxm'], group: 'zed', when: ZED_ONLY },
-            { name: 'confidence_threshold', label: 'Konfidenz', type: 'float', min: 0.05, max: 0.95, step: 0.05, group: 'detect', when: ZED_ONLY,
-              hint: 'Erkennungen unter dieser Sicherheit werden verworfen' },
-            { name: 'ema_alpha', label: 'EMA-Glättung', type: 'float', min: 0.05, max: 1, step: 0.05, group: 'detect', when: ZED_ONLY,
-              hint: 'Kleiner = ruhigere, aber trägere 3D-Boxen' },
-            { name: 'safe_z_hover_height', label: 'Hover-Höhe', unit: 'm', type: 'float', min: 0.02, max: 0.4, step: 0.01, group: 'grasp' },
+            { name: 'camera_model', label: 'Model', type: 'choice', choices: ['zedm', 'zed2', 'zed2i', 'zedx', 'zedxm'], group: 'zed', when: ZED_ONLY,
+              info: 'Connected ZED camera model. Selects the matching camera profile of the ZED wrapper - must match the hardware.' },
+            { name: 'confidence_threshold', label: 'Confidence', type: 'float', min: 0.05, max: 0.95, step: 0.05, group: 'detect', when: ZED_ONLY,
+              info: 'Minimum YOLO confidence. Detections below it are discarded - higher = fewer false detections, but objects may be missed.' },
+            { name: 'ema_alpha', label: 'EMA smoothing', type: 'float', min: 0.05, max: 1, step: 0.05, group: 'detect', when: ZED_ONLY,
+              info: 'Smoothing of the 3D bounding boxes over time. Lower = steadier boxes but slower to follow movement, 1 = no smoothing.' },
+            { name: 'safe_z_hover_height', label: 'Hover height', unit: 'm', type: 'float', min: 0.02, max: 0.4, step: 0.01, group: 'grasp',
+              info: 'Height above the object the gripper moves to before descending and returns to after grasping.' },
             { name: 'grasp_z_offset', label: 'Offset Z', unit: 'm', type: 'float', min: -0.05, max: 0.1, step: 0.005, group: 'grasp',
-              hint: 'Zusätzliche Höhe über der Objekt-Oberkante beim Greifen' },
-            { name: 'velocity_scaling', label: 'Tempo', type: 'float', min: 0.01, max: 1, step: 0.05, group: 'grasp',
-              hint: 'MoveIt-Geschwindigkeitsfaktor der Greifbewegung (1 = Maximum)' },
-            { name: 'acceleration_scaling', label: 'Beschl.', type: 'float', min: 0.01, max: 1, step: 0.05, group: 'grasp',
-              hint: 'MoveIt-Beschleunigungsfaktor der Greifbewegung (1 = Maximum)' },
-            { name: 'tf_x', label: 'X', unit: 'm', type: 'float', min: -2, max: 2, step: 0.005, group: 'tf', when: ZED_ONLY },
-            { name: 'tf_y', label: 'Y', unit: 'm', type: 'float', min: -2, max: 2, step: 0.005, group: 'tf', when: ZED_ONLY },
-            { name: 'tf_z', label: 'Z', unit: 'm', type: 'float', min: -2, max: 2, step: 0.005, group: 'tf', when: ZED_ONLY },
-            { name: 'tf_roll', label: 'Roll', unit: 'rad', type: 'float', min: -3.1416, max: 3.1416, step: 0.01, group: 'tf', when: ZED_ONLY },
-            { name: 'tf_pitch', label: 'Pitch', unit: 'rad', type: 'float', min: -3.1416, max: 3.1416, step: 0.01, group: 'tf', when: ZED_ONLY },
-            { name: 'tf_yaw', label: 'Yaw', unit: 'rad', type: 'float', min: -3.1416, max: 3.1416, step: 0.01, group: 'tf', when: ZED_ONLY }
+              info: 'Extra height above the object top at the grasp point. Increase if the gripper pushes into the object, decrease if it misses it.' },
+            { name: 'velocity_scaling', label: 'Velocity', type: 'float', min: 0.01, max: 1, step: 0.05, group: 'grasp',
+              info: 'MoveIt velocity factor for the grasp motion (1 = full joint speed).' },
+            { name: 'acceleration_scaling', label: 'Accel.', type: 'float', min: 0.01, max: 1, step: 0.05, group: 'grasp',
+              info: 'MoveIt acceleration factor for the grasp motion (1 = full acceleration). Lower = smoother starts and stops.' },
+            { name: 'tf_x', label: 'X', unit: 'm', type: 'float', min: -2, max: 2, step: 0.005, group: 'tf', when: ZED_ONLY,
+              info: 'Camera X position relative to link_base. Shifts where detected objects end up in the robot frame.' },
+            { name: 'tf_y', label: 'Y', unit: 'm', type: 'float', min: -2, max: 2, step: 0.005, group: 'tf', when: ZED_ONLY,
+              info: 'Camera Y position relative to link_base. Shifts where detected objects end up in the robot frame.' },
+            { name: 'tf_z', label: 'Z', unit: 'm', type: 'float', min: -2, max: 2, step: 0.005, group: 'tf', when: ZED_ONLY,
+              info: 'Camera height relative to link_base. Wrong values make grasps too high or too low.' },
+            { name: 'tf_roll', label: 'Roll', unit: 'rad', type: 'float', min: -3.1416, max: 3.1416, step: 0.01, group: 'tf', when: ZED_ONLY,
+              info: 'Camera rotation around its viewing axis relative to link_base.' },
+            { name: 'tf_pitch', label: 'Pitch', unit: 'rad', type: 'float', min: -3.1416, max: 3.1416, step: 0.01, group: 'tf', when: ZED_ONLY,
+              info: 'Camera tilt relative to link_base (positive = looking down). Small errors shift objects noticeably with distance.' },
+            { name: 'tf_yaw', label: 'Yaw', unit: 'rad', type: 'float', min: -3.1416, max: 3.1416, step: 0.01, group: 'tf', when: ZED_ONLY,
+              info: 'Camera heading relative to link_base (3.14159 = facing the robot).' }
         ],
         'voice_command_listener/voice_listener.launch.py': WHISPER_VALUE_PARAMS,
         'whisper_bringup/bringup.launch.py': WHISPER_VALUE_PARAMS,
         'http_robot_control_ui_p8081/http_robot_control_ui.launch.py': [
-            { name: 'start_video_server', label: 'Video-Server + Window Capture', type: 'bool', group: 'video',
-              hint: 'Aus = kein Kamera-/RViz-Stream auf Port 8082 (spart CPU)' }
+            { name: 'start_video_server', label: 'Video server + window capture', type: 'bool', group: 'video',
+              info: 'Starts the video server and window capture for camera / RViz streams on port 8082. Off saves CPU, but the Robot Control UI shows no video.' }
         ],
         // "ros2 run": Node-Parameter, angehaengt als --ros-args -p name:=wert
         [GAZE_REAL_CMD]: [
-            { name: 'dwell_threshold', label: 'Verweilzeit', unit: 's', type: 'float', min: 0.3, max: 5, step: 0.1, def: '2.0',
-              source: 'node', group: 'gazeparam', when: GAZE_REAL_ONLY, hint: 'So lange muss der Blick auf einem Objekt ruhen, bis gegriffen wird' },
-            { name: 'tobii_ip', label: 'Tobii-IP', type: 'ip', def: '192.168.100.2', source: 'node', group: 'gazeparam', when: GAZE_REAL_ONLY }
+            { name: 'dwell_threshold', label: 'Dwell time', unit: 's', type: 'float', min: 0.3, max: 5, step: 0.1, def: '2.0',
+              source: 'node', group: 'gazeparam', when: GAZE_REAL_ONLY,
+              info: 'How long the gaze must rest on an object before the grasp is triggered. Lower = faster, but more accidental grasps.' },
+            { name: 'tobii_ip', label: 'Tobii IP', type: 'ip', def: '192.168.100.2', source: 'node', group: 'gazeparam', when: GAZE_REAL_ONLY,
+              info: 'IP address of the Tobii eye-tracking glasses.' }
         ]
     };
 
     const VALUE_GROUPS = {
-        ip:        { label: 'Roboter-Verbindung', icon: 'fa-solid fa-ethernet' },
-        zed:       { label: 'ZED-Kamera',         icon: 'fa-solid fa-camera' },
-        detect:    { label: 'Erkennung (YOLO)',   icon: 'fa-solid fa-crosshairs' },
-        grasp:     { label: 'Greif-Bewegung',     icon: 'fa-solid fa-hand-holding' },
-        tf:        { label: 'Kamera-Pose (TF)',   icon: 'fa-solid fa-up-down-left-right' },
+        ip:        { label: 'Robot Connection',   icon: 'fa-solid fa-ethernet' },
+        zed:       { label: 'ZED Camera',         icon: 'fa-solid fa-camera' },
+        detect:    { label: 'Detection (YOLO)',   icon: 'fa-solid fa-crosshairs' },
+        grasp:     { label: 'Grasp Motion',       icon: 'fa-solid fa-hand-holding' },
+        tf:        { label: 'Camera Pose (TF)',   icon: 'fa-solid fa-up-down-left-right' },
         whisper:   { label: 'Whisper',            icon: 'fa-solid fa-language' },
-        mic:       { label: 'Mikrofon',           icon: 'fa-solid fa-microphone' },
+        mic:       { label: 'Microphone',         icon: 'fa-solid fa-microphone' },
         video:     { label: 'Video-Streaming',    icon: 'fa-solid fa-video' },
-        gazeparam: { label: 'Gaze-Routine',       icon: 'fa-solid fa-stopwatch' }
+        gazeparam: { label: 'Gaze Routine',       icon: 'fa-solid fa-stopwatch' }
     };
 
     const PARAM_SRC_BADGES = {
@@ -989,6 +1007,59 @@
         else target[argObj.text] = !!argObj.checked;
     }
 
+    // Hover-Tooltip der Wert-Zeilen: fixed am body wie der CMD-Tooltip, damit
+    // er nicht von Karte oder Popup abgeschnitten wird.
+    let paramTipEl = null;
+    let paramTipRow = null;
+
+    function escHtml(v) {
+        return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showParamTip(row) {
+        const t = row._tip;
+        if (!t || !row.isConnected) return hideParamTip();
+        if (!paramTipEl) {
+            paramTipEl = document.createElement('div');
+            paramTipEl.className = 'param-floating-tooltip';
+            document.body.appendChild(paramTipEl);
+        }
+        paramTipRow = row;
+        const unit = t.unit ? ` ${escHtml(t.unit)}` : '';
+        paramTipEl.innerHTML = `
+            <div class="ptip-head">
+                <span class="ptip-name">${escHtml(t.name)}</span>
+                <span class="ptip-src">${escHtml(t.source)}</span>
+            </div>
+            ${t.info ? `<div class="ptip-info">${escHtml(t.info)}</div>` : ''}
+            <div class="ptip-meta">
+                <span>Value</span><code>${escHtml(t.value || '(empty)')}${unit}</code>
+                <span>Default</span><code>${escHtml(t.def)}${unit}</code>
+                <span>Source</span><code>${escHtml(t.origin)}</code>
+            </div>
+            <div class="ptip-state ${t.stateCls}">${escHtml(t.state)}</div>`;
+
+        paramTipEl.style.left = '-9999px';
+        paramTipEl.style.top = '-9999px';
+        paramTipEl.classList.add('visible');
+        const rect = row.getBoundingClientRect();
+        const tipRect = paramTipEl.getBoundingClientRect();
+        let left = rect.left + rect.width / 2 - tipRect.width / 2;
+        left = Math.max(12, Math.min(left, window.innerWidth - tipRect.width - 12));
+        let top = rect.bottom + 8;
+        if (top + tipRect.height > window.innerHeight - 12) top = Math.max(12, rect.top - tipRect.height - 8);
+        paramTipEl.style.left = Math.round(left) + 'px';
+        paramTipEl.style.top = Math.round(top) + 'px';
+    }
+
+    function hideParamTip() {
+        paramTipRow = null;
+        if (paramTipEl) paramTipEl.classList.remove('visible');
+    }
+    // Beim Scrollen wuerde der Tooltip an der alten Stelle stehen bleiben
+    window.addEventListener('scroll', hideParamTip, true);
+
     // Eine Zeile: Herkunfts-Badge · Label · Eingabe · Einheit · Zuruecksetzen
     function buildValueParamRow(action, argObj, onChange) {
         const def = argObj.def;
@@ -1058,21 +1129,29 @@
             const src = PARAM_SRC_BADGES[info.source] || PARAM_SRC_BADGES.launch;
             badge.className = 'param-src-badge src-' + info.source;
             badge.innerHTML = `<i class="${src.icon}"></i>${src.text}`;
+            // Launch-Argumente sind der Normalfall - nur CONFIG/PARAM markieren
+            badge.style.display = info.source === 'launch' ? 'none' : '';
             row.dataset.src = info.source;
 
-            const origin = info.source === 'config' ? `Config: ${info.file} (${info.pkg}) → ${info.key}`
-                : info.source === 'node' ? 'Node-Parameter (--ros-args -p)' : 'Launch-Argument';
-            reset.title = `Zurücksetzen auf ${info.value || '(leer)'}`;
-            row.title = [
-                `${def.name}:=${shown}`,
-                origin,
-                `Standard: ${info.value || '(leer)'}`,
-                info.desc,
-                def.hint,
-                whenOk ? '' : `Nur wirksam bei ${def.when.arg}:=${def.when.equals}`,
-                (modified && whenOk) ? 'Geändert – wird beim Start angehängt' : 'Standardwert – wird nicht angehängt'
-            ].filter(Boolean).join('\n');
+            reset.title = `Reset to ${info.value || '(empty)'}`;
+            row._tip = {
+                name: def.name,
+                info: def.info || info.desc || '',
+                source: src.text,
+                origin: info.source === 'config' ? `${info.pkg}/${info.file} → ${info.key}`
+                    : info.source === 'node' ? 'Node parameter (--ros-args -p)' : 'Launch argument',
+                value: shown,
+                def: info.value || '(empty)',
+                unit: def.unit || '',
+                state: !whenOk ? `Only used with ${def.when.arg}:=${def.when.equals}`
+                    : modified ? 'Changed – appended to the start command' : 'Default – not appended',
+                stateCls: !whenOk ? 'off' : modified ? 'mod' : ''
+            };
+            if (paramTipRow === row) showParamTip(row);
         };
+
+        row.addEventListener('mouseenter', () => showParamTip(row));
+        row.addEventListener('mouseleave', hideParamTip);
 
         input.addEventListener('input', () => {
             row.classList.toggle('is-invalid', parseParamInput(def, input.value) === null);
@@ -1136,10 +1215,10 @@
     }
 
     const CFG_STATUS = {
-        linked:  { text: 'Live',          cls: 'ok',   title: 'install/ verlinkt auf src/ - Änderungen an der YAML wirken beim nächsten Start' },
-        copy:    { text: 'Kopie',         cls: 'info', title: 'install/ enthält eine Kopie (identisch mit src/) - nach Änderungen ist colcon build nötig' },
-        stale:   { text: 'Build nötig',   cls: 'warn', title: 'install/ enthält eine ältere Kopie - der Start nutzt NICHT den Stand aus src/. colcon build ausführen' },
-        missing: { text: 'Nicht gebaut',  cls: 'warn', title: 'Datei fehlt in install/ - Paket mit colcon build bauen' }
+        linked:  { text: 'Live',          cls: 'ok',   title: 'install/ links to src/: YAML edits apply on next start' },
+        copy:    { text: 'Copy',          cls: 'info', title: 'install/ holds a copy: run colcon build after edits' },
+        stale:   { text: 'Build needed',  cls: 'warn', title: 'install/ holds an outdated copy: run colcon build' },
+        missing: { text: 'Not built',     cls: 'warn', title: 'Missing in install/: run colcon build' }
     };
 
     function formatCfgValue(v) {
@@ -1174,8 +1253,8 @@
 
             const active = configs.map(cfg => !cfg.when ||
                 actionArgValue(action, cfg.when.arg).toLowerCase() === String(cfg.when.equals).toLowerCase());
-            head.innerHTML = `<i class="fa-solid fa-file-code"></i><b>Config-Dateien</b>`
-                + `<span class="cfg-head-count">${active.filter(Boolean).length}/${configs.length} geladen</span>`;
+            head.innerHTML = `<i class="fa-solid fa-file-code"></i><b>Config Files</b>`
+                + `<span class="cfg-head-count">${active.filter(Boolean).length}/${configs.length} loaded</span>`;
 
             // Spaeter geladene aktive Configs ueberschreiben gleiche Schluessel
             const lastActiveIdx = {};
@@ -1212,15 +1291,15 @@
                 if (cfg.when) {
                     const b = document.createElement('span');
                     b.className = 'cfg-badge ' + (active[i] ? 'cfg-badge-ok' : 'cfg-badge-off');
-                    b.textContent = active[i] ? 'geladen' : 'nicht geladen';
-                    b.title = `Wird nur bei ${cfg.when.arg}:=${cfg.when.equals} geladen`;
+                    b.textContent = active[i] ? 'loaded' : 'not loaded';
+                    b.title = `Only loaded with ${cfg.when.arg}:=${cfg.when.equals}`;
                     badges.appendChild(b);
                 }
                 if (cfg.path) {
                     const copyBtn = document.createElement('button');
                     copyBtn.type = 'button';
                     copyBtn.className = 'cfg-copy-btn';
-                    copyBtn.title = `Pfad kopieren: ${cfg.path}`;
+                    copyBtn.title = `Copy path: ${cfg.path}`;
                     copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i>';
                     copyBtn.onclick = (e) => { e.stopPropagation(); copyCmd(cfg.path, copyBtn); };
                     badges.appendChild(copyBtn);
@@ -1265,23 +1344,23 @@
                             const ov = document.createElement('span');
                             ov.className = 'cfg-override';
                             ov.textContent = `${eff}${v.unit && !v.hz ? ' ' + v.unit : ''}`;
-                            ov.title = `Überschrieben durch ${v.arg}:=${eff}`;
+                            ov.title = `Overridden by ${v.arg}:=${eff}`;
                             val.appendChild(ov);
-                            tips.push(`Überschrieben durch ${v.arg}:=${eff}`);
+                            tips.push(`Overridden by ${v.arg}:=${eff}`);
                         } else {
-                            tips.push(`Einstellbar über ${v.arg}:=`);
+                            tips.push(`Set via ${v.arg}:=`);
                         }
                     }
                     // ... oder eine spaeter geladene Config (z.B. Whisper CPU-Profil)?
                     if (active[i] && lastActiveIdx[v.key] !== undefined && lastActiveIdx[v.key] > i && !row.classList.contains('is-overridden')) {
                         row.classList.add('is-overridden');
                         const later = configs[lastActiveIdx[v.key]];
-                        tips.push(`Überschrieben durch ${later.file.split('/').pop()}`);
+                        tips.push(`Overridden by ${later.file.split('/').pop()}`);
                         const ov = document.createElement('span');
                         ov.className = 'cfg-override';
                         const laterVal = (later.all || []).find(e => e.key === v.key);
                         ov.textContent = laterVal ? formatCfgValue(laterVal.value) : '?';
-                        ov.title = `Überschrieben durch ${later.file.split('/').pop()}`;
+                        ov.title = `Overridden by ${later.file.split('/').pop()}`;
                         val.appendChild(ov);
                     }
                     row.title = tips.join('\n');
@@ -1296,7 +1375,7 @@
                     det.className = 'cfg-all';
                     det.onclick = (e) => e.stopPropagation();
                     const sum = document.createElement('summary');
-                    sum.textContent = `Alle Werte (${cfg.all.length})`;
+                    sum.textContent = `All values (${cfg.all.length})`;
                     det.appendChild(sum);
                     const list = document.createElement('div');
                     list.className = 'cfg-all-list';
@@ -1782,7 +1861,7 @@
     function toggleDevSetupArg(action, argObj, checked) {
         const g = getArgGroup(argObj);
         const peers = action.args.filter(a => a !== argObj && getArgGroup(a).key === g.key);
-        if (g.exclusive === 'genau 1') {
+        if (g.exclusive === 'exactly 1') {
             let target = argObj;
             if (!checked) target = peers.length === 1 ? peers[0] : argObj;
             [argObj].concat(peers).forEach(a => { a.checked = (a === target); });
@@ -1808,7 +1887,7 @@
             groupEl.className = 'param-group';
             groupEl.dataset.group = g.key;
             groupEl.innerHTML = `<div class="param-group-head"><i class="${g.icon}"></i><span>${g.label}</span>`
-                + (g.exclusive ? `<span class="param-group-hint" title="Diese Optionen schliessen sich gegenseitig aus">${g.exclusive}</span>` : '')
+                + (g.exclusive ? `<span class="param-group-hint" title="Mutually exclusive options">${g.exclusive}</span>` : '')
                 + `</div>`;
             const chips = document.createElement('div');
             chips.className = 'param-group-chips';
@@ -2158,9 +2237,9 @@
         if (!pair || !findSeqModeCard(pair.other)) return '';
         const opt = (mode, icon, label, tip) =>
             `<button type="button" class="seq-mode-opt${pair.mode === mode ? ' is-active' : ''}" data-mode="${mode}" role="radio" aria-checked="${pair.mode === mode}" title="${tip}"><i class="${icon}"></i>${label}</button>`;
-        return `<div class="seq-mode-switch mode-${pair.mode}" id="seq-mode-switch" role="radiogroup" aria-label="Modus">`
-            + opt('fake', 'fa-solid fa-flask', 'FAKE', 'Simulation: MoveIt Fake-Hardware, kein Roboter noetig')
-            + opt('real', 'fa-solid fa-bolt', 'REAL', 'Hardware: physischer xArm Lite 6 (robot_ip)')
+        return `<div class="seq-mode-switch mode-${pair.mode}" id="seq-mode-switch" role="radiogroup" aria-label="Mode">`
+            + opt('fake', 'fa-solid fa-flask', 'FAKE', 'Simulation: MoveIt fake hardware, no robot needed')
+            + opt('real', 'fa-solid fa-bolt', 'REAL', 'Hardware: physical xArm Lite 6 (robot_ip)')
             + `</div>`;
     }
 
@@ -2277,10 +2356,10 @@
                        body: JSON.stringify(window.TABS)
                    });
                    const data = await res.json();
-                   if (data.ok) showToast('✓ Layout gespeichert');
-                   else showToast('✗ Layout konnte nicht gespeichert werden', true);
+                   if (data.ok) showToast('✓ Layout saved');
+                   else showToast('✗ Could not save layout', true);
                } catch (err) {
-                   showToast('✗ Layout konnte nicht gespeichert werden', true);
+                   showToast('✗ Could not save layout', true);
                }
            }, 400);
        };
@@ -2448,15 +2527,15 @@
 
             if (!actionsData || actionsData.length === 0 || (typeof isOverviewOnly !== 'undefined' && isOverviewOnly)) {
                 if (selectAllLbl) selectAllLbl.style.display = 'none';
-                if (footerStatsText) footerStatsText.textContent = '16 Systemkomponenten verfügbar · Übersicht';
+                if (footerStatsText) footerStatsText.textContent = '16 system components available · Overview';
                 if (startBtn) startBtn.classList.add('is-hidden');
-                if (cancelBtn) cancelBtn.textContent = 'Schließen';
+                if (cancelBtn) cancelBtn.textContent = 'Close';
                 return;
             }
 
             if (!topUl) {
                 if (selectAllLbl) selectAllLbl.style.display = 'none';
-                if (footerStatsText) footerStatsText.textContent = '1 Aktion bereit zur Ausführung';
+                if (footerStatsText) footerStatsText.textContent = '1 action ready to run';
                 return;
             }
 
@@ -2466,7 +2545,7 @@
 
             if (total === 0) {
                 if (selectAllLbl) selectAllLbl.style.display = 'none';
-                if (footerStatsText) footerStatsText.textContent = 'Keine Aktionen konfiguriert';
+                if (footerStatsText) footerStatsText.textContent = 'No actions configured';
                 return;
             }
 
@@ -2475,10 +2554,10 @@
                 selectAllCb.indeterminate = (activeCount > 0 && activeCount < total);
             }
             if (selectAllText) {
-                selectAllText.textContent = activeCount === total ? 'Alle abwählen' : 'Alle auswählen';
+                selectAllText.textContent = activeCount === total ? 'Deselect all' : 'Select all';
             }
             const headerCount = document.getElementById('modal-header-count');
-            if (headerCount) headerCount.textContent = ` · ${total} ${total === 1 ? 'Aktion' : 'Aktionen'}`;
+            if (headerCount) headerCount.textContent = ` · ${total} ${total === 1 ? 'action' : 'actions'}`;
             // Zaehler in den Filter-Chips (Alle / Aktiv / Inaktiv)
             [['seq-filter-n-all', total], ['seq-filter-n-on', activeCount], ['seq-filter-n-off', total - activeCount]]
                 .forEach(([id, n]) => { const el = document.getElementById(id); if (el) el.textContent = n; });
@@ -2494,7 +2573,7 @@
             });
             if (footerStatsText) {
                 footerStatsText.innerHTML =
-                    `<span><b>${activeCount}/${total}</b> aktiv</span>`
+                    `<span><b>${activeCount}/${total}</b> active</span>`
                     + `<span class="modal-footer-sep"></span>`
                     + `<span><b>${nodes}</b> ${nodes === 1 ? 'Node' : 'Nodes'}</span>`
                     + `<span><b>${launches}</b> ${launches === 1 ? 'Sub-Launch' : 'Sub-Launches'}</span>`;
@@ -2775,21 +2854,19 @@
                 item.classList.remove('camera-node-inactive');
                 item.classList.add('camera-node-active');
                 item.removeAttribute('aria-disabled');
-                item.title = (type === 'common') ? "Aktiv (wird in beiden Modi gestartet)" : "Aktiv (wird gestartet)";
+                item.title = (type === 'common') ? "Active (started in both modes)" : "Active (will be started)";
                 
                 const descSpan = Array.from(item.querySelectorAll('span')).find(s => 
-                    s.style.float === 'right' || s.textContent.includes('camera:=') || s.textContent.includes('inaktiv') || s.textContent.includes('aktiv')
+                    s.style.float === 'right' || s.textContent.includes('camera:=') || /aktiv|active/i.test(s.textContent)
                 );
                 if (descSpan) {
                     if (!descSpan.dataset.origText) descSpan.dataset.origText = descSpan.textContent;
                     let clean = descSpan.dataset.origText
-                        .replace(/\s*·\s*inaktiv/gi, '')
-                        .replace(/\s*·\s*aktiv/gi, '')
-                        .replace(/\s*·\s*wird nicht gestartet/gi, '')
-                        .replace(/\s*·\s*wird gestartet/gi, '')
+                        .replace(/\s*·\s*(inaktiv|inactive)/gi, '')
+                        .replace(/\s*·\s*(aktiv|active)/gi, '')
                         .trim();
-                    if (type !== 'common' && !clean.includes('aktiv')) {
-                        clean = clean.replace(/\)$/, ' · aktiv)');
+                    if (type !== 'common' && !/aktiv|active/i.test(clean)) {
+                        clean = clean.replace(/\)$/, ' · active)');
                     }
                     descSpan.textContent = clean;
                     descSpan.style.removeProperty('color');
@@ -2799,20 +2876,18 @@
                 item.classList.add('camera-node-inactive');
                 item.classList.remove('camera-node-active');
                 item.setAttribute('aria-disabled', 'true');
-                item.title = (type === 'zed' || type === 'ip') ? "Inaktiv im aktuellen Kamera-Modus (wird nicht gestartet)" : "Inaktiv (wird nicht gestartet)";
+                item.title = (type === 'zed' || type === 'ip') ? "Inactive in current camera mode (not started)" : "Inactive (not started)";
                 
                 const descSpan = Array.from(item.querySelectorAll('span')).find(s => 
-                    s.style.float === 'right' || s.textContent.includes('camera:=') || s.textContent.includes('inaktiv') || s.textContent.includes('aktiv')
+                    s.style.float === 'right' || s.textContent.includes('camera:=') || /aktiv|active/i.test(s.textContent)
                 );
                 if (descSpan) {
                     if (!descSpan.dataset.origText) descSpan.dataset.origText = descSpan.textContent;
                     let clean = descSpan.dataset.origText
-                        .replace(/\s*·\s*inaktiv/gi, '')
-                        .replace(/\s*·\s*aktiv/gi, '')
-                        .replace(/\s*·\s*wird nicht gestartet/gi, '')
-                        .replace(/\s*·\s*wird gestartet/gi, '')
+                        .replace(/\s*·\s*(inaktiv|inactive)/gi, '')
+                        .replace(/\s*·\s*(aktiv|active)/gi, '')
                         .trim();
-                    clean = clean.replace(/\)$/, ' · inaktiv)');
+                    clean = clean.replace(/\)$/, ' · inactive)');
                     descSpan.textContent = clean;
                     descSpan.style.setProperty('color', '#64748b', 'important');
                     descSpan.style.setProperty('opacity', '0.6', 'important');
@@ -2935,7 +3010,7 @@
                      const head = document.createElement('div');
                      head.className = 'param-group-head';
                      head.innerHTML = `<i class="${g.icon}"></i><span>${g.label}</span>` +
-                         (g.exclusive ? `<span class="param-group-hint" title="Diese Optionen schliessen sich gegenseitig aus">${g.exclusive}</span>` : '');
+                         (g.exclusive ? `<span class="param-group-hint" title="Mutually exclusive options">${g.exclusive}</span>` : '');
                      const chips = document.createElement('div');
                      chips.className = 'param-group-chips';
                      groupEl.appendChild(head);
@@ -3066,7 +3141,7 @@
             } else {
                 const noArgsEl = document.createElement('div');
                 noArgsEl.className = 'param-empty';
-                noArgsEl.textContent = 'Keine Parameter';
+                noArgsEl.textContent = 'No parameters';
                 argsDiv.appendChild(noArgsEl);
             }
             watchValueParamRows(argsDiv);
@@ -3127,7 +3202,7 @@
            // Typ-Badge "CMD" nicht mit dem CMD-Kopierknopf rechts verwechseln lassen
            if (badgeEl && badgeEl.classList.contains('badge-sys') && badgeEl.textContent.trim() === 'CMD') {
                badgeEl.innerHTML = '<i class="fa-solid fa-terminal"></i>SHELL';
-               badgeEl.title = 'Shell-Befehl';
+               badgeEl.title = 'Shell command';
            }
 
            const cardDiv = document.createElement('div');
@@ -3260,10 +3335,10 @@
                stats.appendChild(st);
            };
            const tree = countLaunchTree(o.ulNode);
-           addStat(tree.launches, 'Sub-Launch', 'Sub-Launches', 'Eingebundene Launch-Dateien');
-           addStat(tree.nodes, 'Node', 'Nodes', 'Gestartete Nodes & Server');
-           addStat(tree.cmds, 'Befehl', 'Befehle', 'Zusaetzliche Shell-Befehle');
-           addStat(argCount, 'Parameter', 'Parameter', 'Waehlbare Parameter & Launch-Argumente');
+           addStat(tree.launches, 'Sub-Launch', 'Sub-Launches', 'Included launch files');
+           addStat(tree.nodes, 'Node', 'Nodes', 'Launched nodes & servers');
+           addStat(tree.cmds, 'Command', 'Commands', 'Extra shell commands');
+           addStat(argCount, 'Parameter', 'Parameters', 'Selectable parameters & launch args');
            cardDiv.dataset.nodes = tree.nodes;
            cardDiv.dataset.launches = tree.launches;
            // Status rechts in der Kennzahl-Zeile; welcher Text sichtbar ist,
@@ -3272,7 +3347,7 @@
            const state = document.createElement('span');
            state.className = 'seq-card-state';
            state.innerHTML = '<span class="seq-card-state-dot"></span>'
-               + '<span class="seq-state-on">Bereit</span><span class="seq-state-off">Übersprungen</span>';
+               + '<span class="seq-state-on">Ready</span><span class="seq-state-off">Skipped</span>';
            stats.appendChild(state);
            head.appendChild(stats);
            cardDiv.appendChild(head);
@@ -3295,7 +3370,7 @@
                    treeCol.className = 'seq-col-tree';
                    const pane = document.createElement('div');
                    pane.className = 'seq-pane seq-pane-tree modal-card-left-col';
-                   pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-sitemap"></i><b>Launch-Struktur</b></div>`;
+                   pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-sitemap"></i><b>Launch Structure</b></div>`;
                    o.ulNode.removeAttribute('style');
                    o.ulNode.querySelectorAll('ul').forEach(subUl => subUl.classList.add('sub-launch-tree'));
                    pane.appendChild(o.ulNode);
@@ -3319,7 +3394,7 @@
                    cmdList.className = 'seq-cmd-list';
                    const renderCmds = () => {
                        const lines = splitCmdLines(action ? buildFinalCmd(action) : (o.cmdToCopy || cmdStr));
-                       headEl.innerHTML = `<i class="fa-solid fa-terminal"></i><b>${lines.length > 1 ? `Befehle (${lines.length})` : 'Befehl'}</b>`;
+                       headEl.innerHTML = `<i class="fa-solid fa-terminal"></i><b>${lines.length > 1 ? `Commands (${lines.length})` : 'Command'}</b>`;
                        cmdList.innerHTML = '';
                        lines.forEach(line => {
                            const code = document.createElement('code');
@@ -3456,8 +3531,8 @@
               topUl.innerHTML = `
                 <div style="padding: 60px 20px; text-align: center; color: var(--dim); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
                   <i class="fa-regular fa-folder-open" style="font-size: 42px; color: rgba(255,255,255,0.2);"></i>
-                  <div style="font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 0.5px;">Keine Launch Action Cards konfiguriert</div>
-                  <div style="font-size: 12px; color: var(--mut); max-width: 400px; line-height: 1.5;">Dieser Bereich ist derzeit leer. Launch Action Cards können hier später hinzugefügt werden.</div>
+                  <div style="font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 0.5px;">No launch action cards configured</div>
+                  <div style="font-size: 12px; color: var(--mut); max-width: 400px; line-height: 1.5;">This section is empty. Launch action cards can be added here later.</div>
                 </div>
               `;
           } else {
@@ -3635,16 +3710,16 @@
        // Suche + Filter ueber den Karten (nur im Sequenz-Popup)
        const toolbarHtml = isOverviewOnly ? '' : `
                    <div class="seq-toolbar" id="seq-toolbar">
-                      <label class="seq-search" title="Karten nach Titel, Datei, Kategorie oder Port filtern">
+                      <label class="seq-search" title="Filter cards by title, file, category or port">
                          <i class="fa-solid fa-magnifying-glass"></i>
-                         <input type="search" id="seq-search-input" placeholder="Aktion, Launch-File oder Port suchen" autocomplete="off" spellcheck="false">
+                         <input type="search" id="seq-search-input" placeholder="Search action, launch file or port" autocomplete="off" spellcheck="false">
                       </label>
                       <div class="seq-filter" id="seq-filter" role="radiogroup" aria-label="Filter">
-                         <button type="button" class="seq-filter-opt is-active" data-filter="all" role="radio" aria-checked="true">Alle <b id="seq-filter-n-all">0</b></button>
-                         <button type="button" class="seq-filter-opt" data-filter="on" role="radio" aria-checked="false">Aktiv <b id="seq-filter-n-on">0</b></button>
-                         <button type="button" class="seq-filter-opt" data-filter="off" role="radio" aria-checked="false">Inaktiv <b id="seq-filter-n-off">0</b></button>
+                         <button type="button" class="seq-filter-opt is-active" data-filter="all" role="radio" aria-checked="true">All <b id="seq-filter-n-all">0</b></button>
+                         <button type="button" class="seq-filter-opt" data-filter="on" role="radio" aria-checked="false">Active <b id="seq-filter-n-on">0</b></button>
+                         <button type="button" class="seq-filter-opt" data-filter="off" role="radio" aria-checked="false">Inactive <b id="seq-filter-n-off">0</b></button>
                       </div>
-                      <span class="seq-toolbar-hint"><i class="fa-solid fa-grip-vertical"></i>Karten per Drag &amp; Drop umsortieren</span>
+                      <span class="seq-toolbar-hint"><i class="fa-solid fa-grip-vertical"></i>Drag &amp; drop cards to reorder</span>
                    </div>`;
 
        const modalHtml = `
@@ -3665,50 +3740,59 @@
 
                       <div class="modal-header-right">
                          ${themeSwitchHtml}
-                         <label class="modal-select-all-btn" id="modal-select-all-lbl" title="Alle Aktionen aktivieren/deaktivieren" ${isOverviewOnly ? 'style="display:none;"' : ''}>
+                         <label class="modal-select-all-btn" id="modal-select-all-lbl" title="Enable/disable all actions" ${isOverviewOnly ? 'style="display:none;"' : ''}>
                             <input type="checkbox" id="modal-select-all-cb">
                             <i class="fa-solid fa-check-double"></i>
-                            <span id="modal-select-all-text">Alle auswählen</span>
+                            <span id="modal-select-all-text">Select all</span>
                          </label>
-                         <button class="modal-close-btn" id="modal-close-btn" title="Schließen (ESC)">
+                         <button class="modal-close-btn" id="modal-close-btn" title="Close (ESC)">
                             <i class="fa-solid fa-xmark"></i>
                          </button>
                       </div>
                    </div>
 
                    <div class="dds-bar">
-                      <label class="dds-cell dds-cell-toggle" id="modal-localhost-lbl" title="Traffic stays on this PC. ROS_LOCALHOST_ONLY=1: DDS traffic stays on this machine and does not flood the LAN. Other machines can no longer see the ROS 2 topics (Quest 3 WebXR is not affected).">
-                         <span class="dds-key"><i class="fa-solid fa-shield-halved"></i>DDS</span>
-                         <span class="dds-val"><input type="checkbox" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}><span>Localhost only</span></span>
-                         <span class="dds-desc">Traffic stays on PC</span>
-                      </label>
-                      <div class="dds-cell" title="Node group (ID). ROS_DOMAIN_ID: only nodes with the same ID can see each other">
-                         <span class="dds-key"><i class="fa-solid fa-hashtag"></i>Domain</span>
-                         <span class="dds-val" id="dds-chip-domain">–</span>
-                         <span class="dds-desc">Node group ID</span>
-                      </div>
-                      <div class="dds-cell" title="DDS middleware. RMW_IMPLEMENTATION: DDS middleware in use">
-                         <span class="dds-key"><i class="fa-solid fa-diagram-project"></i>RMW</span>
-                         <span class="dds-val" id="dds-chip-rmw">–</span>
-                         <span class="dds-desc">DDS middleware</span>
-                      </div>
-                      <div class="dds-cell" id="dds-chip-scope-wrap" title="DDS traffic destination: where the DDS traffic of the launched nodes goes">
-                         <span class="dds-key"><i class="fa-solid fa-tower-broadcast"></i>Scope</span>
-                         <span class="dds-val" id="dds-chip-scope">–</span>
-                         <span class="dds-desc">Traffic destination</span>
-                      </div>
-                      <div class="dds-cell" title="Network interface of the default route and IP of this machine. Linux interface name: en… = Ethernet (cable), wl… = Wi-Fi. Example enp0s31f6: en = Ethernet, p0 = PCI bus 0, s31 = slot 31, f6 = function 6 → the LAN port built into the mainboard.">
-                         <span class="dds-key"><i class="fa-solid fa-ethernet"></i><span id="dds-net-key">LAN</span></span>
-                         <span class="dds-val" id="dds-chip-net">–</span>
-                         <span class="dds-desc">Interface &amp; IP</span>
-                      </div>
-                      <div class="dds-cell dds-cell-traffic" id="dds-chip-traffic-wrap" title="Total LAN traffic of this PC over the LAN interface – all programs combined (ROS 2/DDS, browser, updates …), not just ROS. ↑ TX = this PC sends to the LAN (transmit), ↓ RX = this PC receives from the LAN (receive). Sustained high TX with little RX indicates DDS flooding the LAN.">
-                         <div class="dds-cell-text">
-                            <span class="dds-key"><i class="fa-solid fa-arrow-right-arrow-left"></i>Traffic</span>
-                            <span class="dds-val" id="dds-chip-traffic">–</span>
-                            <span class="dds-desc">Whole PC · ↑ TX ↓ RX</span>
+                      <div class="dds-group">
+                         <div class="dds-cell" title="Linux user running the Nexus Webapp. Launched terminals run as this user.">
+                            <span class="dds-key"><i class="fa-solid fa-user"></i>User</span>
+                            <span class="dds-val" id="dds-chip-user">–</span>
+                            <span class="dds-desc" id="dds-chip-host">Host</span>
                          </div>
-                         <svg class="dds-spark" id="dds-traffic-spark" viewBox="0 0 64 24" preserveAspectRatio="none" aria-hidden="true"></svg>
+                         <div class="dds-cell" id="dds-chip-net-wrap" title="Default-route interface and IP. en… = Ethernet, wl… = Wi-Fi.">
+                            <span class="dds-key"><i class="fa-solid fa-ethernet"></i><span id="dds-net-key">LAN</span></span>
+                            <span class="dds-val" id="dds-chip-net">–</span>
+                            <span class="dds-desc">Interface &amp; IP</span>
+                         </div>
+                         <div class="dds-cell dds-cell-traffic" id="dds-chip-traffic-wrap" title="Total LAN traffic of this PC (all programs, not just ROS). ↑ Send, ↓ Response.">
+                            <div class="dds-cell-text">
+                               <span class="dds-key"><i class="fa-solid fa-arrow-right-arrow-left"></i>Traffic</span>
+                               <span class="dds-val" id="dds-chip-traffic">–</span>
+                               <span class="dds-desc">Ethernet · ↑ Send ↓ Response</span>
+                            </div>
+                            <svg class="dds-spark" id="dds-traffic-spark" viewBox="0 0 120 24" preserveAspectRatio="none" aria-hidden="true"></svg>
+                         </div>
+                      </div>
+                      <div class="dds-group">
+                         <div class="dds-cell" id="dds-chip-scope-wrap" title="Where the DDS traffic of launched nodes goes.">
+                            <span class="dds-key"><i class="fa-solid fa-tower-broadcast"></i>Scope</span>
+                            <span class="dds-val" id="dds-chip-scope">–</span>
+                            <span class="dds-desc">Traffic destination</span>
+                         </div>
+                         <div class="dds-cell" title="RMW_IMPLEMENTATION: DDS middleware in use.">
+                            <span class="dds-key"><i class="fa-solid fa-diagram-project"></i>RMW</span>
+                            <span class="dds-val" id="dds-chip-rmw">–</span>
+                            <span class="dds-desc">DDS middleware</span>
+                         </div>
+                         <div class="dds-cell" title="ROS_DOMAIN_ID: only nodes with the same ID see each other.">
+                            <span class="dds-key"><i class="fa-solid fa-hashtag"></i>Domain ID</span>
+                            <span class="dds-val" id="dds-chip-domain">–</span>
+                            <span class="dds-desc">Node group ID</span>
+                         </div>
+                         <label class="dds-cell dds-cell-toggle" id="modal-localhost-lbl" title="ROS_LOCALHOST_ONLY=1: DDS traffic stays on this PC and does not flood the LAN.">
+                            <span class="dds-key"><i class="fa-solid fa-shield-halved"></i>DDS</span>
+                            <span class="dds-val"><input type="checkbox" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}><span>Localhost only</span></span>
+                            <span class="dds-desc">Traffic stays on PC</span>
+                         </label>
                       </div>
                    </div>
                    ${toolbarHtml}
@@ -3719,21 +3803,21 @@
                 <div id="launch-modal-footer">
                    <div class="modal-footer-status">
                       <div class="status-pulsing-dot"></div>
-                      <span id="modal-footer-stats-text">${isOverviewOnly ? '16 Systemkomponenten verfügbar · Übersicht' : 'Bereit zur Ausführung'}</span>
+                      <span id="modal-footer-stats-text">${isOverviewOnly ? '16 system components available · Overview' : 'Ready to run'}</span>
                    </div>
                    
                    <div class="modal-footer-actions">
-                      <button class="modal-cancel-btn" id="modal-cancel-btn">${isOverviewOnly ? 'Schließen' : 'Abbrechen'}</button>
+                      <button class="modal-cancel-btn" id="modal-cancel-btn">${isOverviewOnly ? 'Close' : 'Cancel'}</button>
                       <button id="launch-modal-start-btn" class="${isOverviewOnly ? 'is-hidden' : ''}${execMode ? ` is-${execMode}` : ''}">
                          <i class="fa-solid fa-play"></i> EXECUTE${execMode ? `<span class="exec-mode">${execMode.toUpperCase()}</span>` : ''}
                       </button>
                    </div>
 
                    <div class="modal-footer-tools">
-                      <label class="modal-layout-lock-btn" id="modal-layout-lock-lbl" title="Layout sperren/entsperren (Drag & Drop der Karten)">
+                      <label class="modal-layout-lock-btn" id="modal-layout-lock-lbl" title="Lock/unlock card layout (drag & drop)">
                          <input type="checkbox" id="modal-layout-lock-cb">
                          <i class="fa-solid fa-lock-open" id="modal-layout-lock-icon"></i>
-                         <span id="modal-layout-lock-text">Layout frei</span>
+                         <span id="modal-layout-lock-text">Layout unlocked</span>
                       </label>
                    </div>
                 </div>
@@ -3763,12 +3847,12 @@
            const svg = document.getElementById('dds-traffic-spark');
            if (!svg || ddsTrafficHistory.length < 2) return;
            const max = Math.max(...ddsTrafficHistory, 1);
-           const step = 64 / (ddsTrafficHistory.length - 1);
+           const step = 120 / (ddsTrafficHistory.length - 1);
            const pts = ddsTrafficHistory.map((v, i) =>
                [+(i * step).toFixed(1), +(22 - (v / max) * 19).toFixed(1)]);
            const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ' ' + p[1]).join(' ');
            const last = pts[pts.length - 1];
-           svg.innerHTML = `<path class="dds-spark-area" d="${line} L64 24 L0 24 Z"></path>`
+           svg.innerHTML = `<path class="dds-spark-area" d="${line} L120 24 L0 24 Z"></path>`
                + `<path class="dds-spark-line" d="${line}"></path>`
                + `<circle class="dds-spark-dot" cx="${last[0]}" cy="${last[1]}" r="1.8"></circle>`;
        };
@@ -3815,6 +3899,10 @@
                set('dds-chip-rmw', (st.rmw_implementation || '–').replace(/^rmw_/, '').replace(/_cpp$/, ''));
                set('dds-net-key', st.net_iface ? describeIface(st.net_iface) : 'LAN');
                set('dds-chip-net', st.net_iface ? (st.net_ip || '–') : 'no network');
+               const netWrap = document.getElementById('dds-chip-net-wrap');
+               if (netWrap && st.net_iface) netWrap.title = `Default route: ${st.net_iface}. en… = Ethernet, wl… = Wi-Fi.`;
+               set('dds-chip-user', st.user || '–');
+               set('dds-chip-host', st.hostname ? '@ ' + st.hostname : 'Host');
                renderDdsScope();
 
                const trafficWrap = document.getElementById('dds-chip-traffic-wrap');
@@ -3947,7 +4035,7 @@
                    empty.className = 'seq-filter-empty';
                    list.after(empty);
                }
-               empty.textContent = q ? `Keine Aktion passt zu „${q}“.` : 'Keine Aktion in diesem Filter.';
+               empty.textContent = q ? `No action matches "${q}".` : 'No actions in this filter.';
            } else if (empty) {
                empty.remove();
            }
@@ -4051,10 +4139,10 @@
                                body: JSON.stringify(window.TABS)
                            });
                            const data = await res.json();
-                           if (data.ok) showToast('✓ Layout gespeichert');
-                           else showToast('✗ Speichern fehlgeschlagen', true);
+                           if (data.ok) showToast('✓ Layout saved');
+                           else showToast('✗ Save failed', true);
                        } catch (err) {
-                           showToast('✗ Speichern fehlgeschlagen', true);
+                           showToast('✗ Save failed', true);
                        }
                        if (window.renderTab && typeof window.currentTab !== 'undefined') {
                            window.renderTab(window.currentTab);
@@ -4071,7 +4159,7 @@
                        const icon = document.getElementById('modal-layout-lock-icon');
                        const txt = document.getElementById('modal-layout-lock-text');
                        if (icon) icon.className = locked ? 'fa-solid fa-lock' : 'fa-solid fa-lock-open';
-                       if (txt) txt.textContent = locked ? 'Layout gesperrt' : 'Layout frei';
+                       if (txt) txt.textContent = locked ? 'Layout locked' : 'Layout unlocked';
                    };
                    let locked = false;
                    try { locked = localStorage.getItem('ros2_nexus_popup_layout_locked') === '1'; } catch (e) {}
