@@ -276,6 +276,70 @@
         return wrap;
     }
 
+    // ── Eyetracker Gaze Control: Real World <-> UI Gaze ─────────────────────
+    // Eine Karte, zwei Nodes. Die Chips "gaze_mode:=..." sind keine echten
+    // Argumente: beim Start ersetzen sie den Befehl durch den gewaehlten Node.
+    const GAZE_REAL_CMD = 'ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses';
+    const GAZE_MODES = {
+        'gaze_mode:=real_world': { cmd: GAZE_REAL_CMD, title: 'Eyetracker - Gaze Control (Real World)' },
+        'gaze_mode:=ui_gaze': { cmd: 'ros2 run gaze_control_ui_tobii_glasses gaze_ui', title: 'Eyetracker - Gaze Control (UI Gaze)' }
+    };
+
+    function isGazeModeCard(baseCmd) {
+        return (baseCmd || '').trim() === GAZE_REAL_CMD;
+    }
+
+    // Gewaehlter Modus einer Aktion (oder null, wenn die Karte keinen hat)
+    function getGazeMode(action) {
+        const arg = action && action.args && action.args.find(a => a.kind === 'gaze-mode' && a.checked);
+        return arg ? GAZE_MODES[arg.text] : null;
+    }
+
+    // Befehl so, wie der Start-Button ihn ausfuehrt (Basis + aktive Args + Rest)
+    function buildFinalCmd(action) {
+        let finalCmd = action.baseCmd || action.cmd || '';
+        // Eyetracker: der Gaze-Modus bestimmt den Node, nicht ein Argument
+        const gazeMode = getGazeMode(action);
+        if (gazeMode) finalCmd = gazeMode.cmd;
+        if (action.args && action.args.length > 0) {
+            const activeArgs = action.args.filter(a => a.checked && a.kind !== 'gaze-mode').map(a => a.text);
+            // rviz ist standardmaessig an - ein fehlendes Argument wuerde
+            // RViz also trotzdem starten. Deshalb explizit abschalten.
+            if (action.args.some(a => a.text === 'rviz:=true' && !a.checked)) {
+                activeArgs.push('rviz:=false');
+            }
+            // Whisper CPU: ohne explizites false bliebe der Launch-Standard (GPU).
+            if (action.args.some(a => a.text === WHISPER_GPU_ARG && !a.checked)) {
+                activeArgs.push('use_gpu:=false');
+            }
+            if (activeArgs.length > 0) {
+                finalCmd += ' ' + activeArgs.join(' ');
+            }
+        }
+        if (action.postCmd) {
+            finalCmd += action.postCmd;
+        }
+        return finalCmd;
+    }
+
+    // Verkettete Befehle (&, &&, ;) in Einzelbefehle zerlegen - eine Zeile je Befehl
+    function splitCmdLines(cmd) {
+        return String(cmd || '').split(/\s*(?:&&|;|&(?!&))\s*/).map(c => c.trim()).filter(Boolean);
+    }
+
+    // Befehl-Bloecke im Sequenz-Popup: bei jeder Parameter-Aenderung neu
+    // zeichnen (auch gekoppelte Karten, z.B. Kamera-Sync, aendern sich mit).
+    const seqCmdRefreshers = new Set();
+    document.addEventListener('change', (e) => {
+        if (!e.target.closest('#launch-modal-body')) return;
+        requestAnimationFrame(() => {
+            seqCmdRefreshers.forEach(fn => {
+                if (!fn.el.isConnected) { seqCmdRefreshers.delete(fn); return; }
+                fn();
+            });
+        });
+    });
+
     function getSavedArgState(popupId, cmd, baseCmd, argText, fallback) {
         const keysToCheck = [cmd, baseCmd].filter(Boolean);
         const popupKeys = [popupId];
@@ -420,12 +484,14 @@
         btn.style.cssText = 'padding: 2px 6px; font-size: 9.5px;';
         btn.innerHTML = `<i class="fa-solid fa-terminal" style="font-size:9px; color:#38bdf8;"></i> CMD`;
 
-        btn.onmouseenter = () => showGlobalCmdTooltip(btn, cmdText);
+        // cmdText darf eine Funktion sein, wenn sich der Befehl mit den Parametern aendert
+        const resolveCmd = () => (typeof cmdText === 'function' ? cmdText() : cmdText);
+        btn.onmouseenter = () => showGlobalCmdTooltip(btn, resolveCmd());
         btn.onmouseleave = () => hideGlobalCmdTooltip();
 
         btn.onclick = (e) => {
             e.stopPropagation();
-            navigator.clipboard.writeText(cmdText).then(() => {
+            navigator.clipboard.writeText(resolveCmd()).then(() => {
                 const icon = btn.querySelector('i');
                 if (icon) {
                     icon.className = 'fa-solid fa-check';
@@ -448,9 +514,16 @@
         {
             match: /http_robot_control_ui/,
             ports: [
-                { port: 8081, icon: 'fa-solid fa-display', use: 'Robot Control UI (Webseite)' },
+                { port: 8081, icon: 'fa-solid fa-display', use: 'Robot Control UI' },
                 { port: 9090, icon: 'fa-solid fa-right-left', use: 'ROS Bridge WebSocket (UI \u2194 ROS 2)' },
                 { port: 8082, icon: 'fa-solid fa-video', use: 'Web Video Server (Kamera)' }
+            ]
+        },
+        {
+            match: /vr_quest3_teleop/,
+            ports: [
+                { port: 9091, icon: 'fa-solid fa-right-left', use: 'ROS Bridge WebSocket (SSL)' },
+                { port: 8443, icon: 'fa-solid fa-vr-cardboard', use: 'HTTPS / WebXR (Quest 3)' }
             ]
         }
     ];
@@ -458,6 +531,57 @@
     function getActionPorts(cmd) {
         const entry = ACTION_PORTS.find(e => e.match.test(cmd || ''));
         return entry ? entry.ports : [];
+    }
+
+    // Kartentitel aufteilen: "(Port …)" faellt weg (die Ports stehen als Chips
+    // darunter), eine Komma-Liste am Ende wird zu Tags, restliche Klammern am
+    // Ende werden als gedaempfter Zusatz dargestellt.
+    function splitSeqTitle(text) {
+        let main = String(text || '').replace(/\s*\(\s*Ports?\b[^()]*\)/gi, '').trim();
+        let tags = [];
+        const list = main.match(/^(.+?)\s*\(([^()]*,[^()]*)\)\s*$/);
+        if (list) {
+            main = list[1].trim();
+            tags = list[2].split(',').map(s => s.trim()).filter(Boolean);
+        }
+        let sub = '';
+        const tail = main.match(/^(.+?)\s*((?:[|·]?\s*\([^()]*\)\s*)+)$/);
+        if (tail) {
+            main = tail[1].trim();
+            sub = tail[2].trim();
+        }
+        return { main, sub, tags };
+    }
+
+    // "(Real)" / "(Fake)" wird als "(REAL)" / "(FAKE)" in der Farbe des
+    // FAKE|REAL-Umschalters hervorgehoben, der restliche Text bleibt Text.
+    function appendSeqTitleText(parent, str) {
+        str.split(/(\((?:Real|Fake)\))/i).forEach(seg => {
+            if (!seg) return;
+            const m = seg.match(/^\((Real|Fake)\)$/i);
+            if (m) {
+                const tag = document.createElement('span');
+                tag.className = 'seq-title-mode is-' + m[1].toLowerCase();
+                tag.textContent = '(' + m[1].toUpperCase() + ')';
+                parent.appendChild(tag);
+            } else {
+                parent.appendChild(document.createTextNode(seg));
+            }
+        });
+    }
+
+    function renderSeqTitle(titleEl, text) {
+        const parts = splitSeqTitle(text);
+        titleEl.textContent = '';
+        appendSeqTitleText(titleEl, parts.main);
+        if (parts.sub) {
+            const sub = document.createElement('span');
+            sub.className = 'seq-card-title-sub';
+            appendSeqTitleText(sub, ' ' + parts.sub);
+            titleEl.appendChild(sub);
+        }
+        titleEl.title = text;
+        return parts;
     }
 
     function getActionIconMeta(action, fallbackCmd) {
@@ -468,7 +592,7 @@
         const combined = (firstCmd + ' ' + title + ' ' + type + ' ' + rawCmd.toLowerCase());
 
         // 0. Ausdrücklich KEINE Icons für Helper/Tuner/Overlay/Streamer-Nodes (web_video_server ausgenommen!)
-        if (!/web_video_server/.test(combined) && (/fake_linear_axis|yolo_3d_bbox_for_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_servo_status|rviz_overlay_servo_status|rviz_window_streamer/.test(firstCmd) ||
+        if (!/web_video_server/.test(combined) && (/fake_linear_axis|yolo_3d_bbox_for_ip_cam|rviz_marker_3d_scene_objects|servo_status_overlay|rviz_servo_status|rviz_overlay_servo_status|window_x11_streamer/.test(firstCmd) ||
             /linear axis tuner|yolo 3d bbox|rviz marker|servo status warning|rviz streamer/.test(title))) {
             if (!/lite6_moveit|xarm_moveit|standalone_move_group|zed_cam|robot_vision/.test(firstCmd)) {
                 return [];
@@ -575,7 +699,7 @@
         if (/http_robot_control_ui/.test(combined) || ((/robot_control|8081/.test(combined)) && (/websocket|rosbridge|9090/.test(combined)))) {
             return [
                 { path: '_imgs/icons/icon_robot_control_ui.svg?v=6', label: 'Robot Control UI' },
-                { path: '_imgs/icons/icon_analog_stick.svg?v=1', label: 'Analog Stick (virtueller Joystick)' },
+                { path: '_imgs/icons/icon_analog_stick.svg?v=4', label: 'Analog Stick (virtueller Joystick)' },
                 { path: '_imgs/icons/icon_websocket.svg?v=6', label: 'ROS WebSocket' },
                 { path: '_imgs/icons/icon_server.svg?v=6', label: 'Web Video Server (Port 8082)' }
             ];
@@ -600,8 +724,8 @@
     // (buildUserAppOverviewHtml), damit beide Popups eine Sprache sprechen.
     // VR und Speech sind im Sequenz-Popup zusaetzlich eigene Sections.
     const SEQ_CATEGORIES = {
-        robot:  { key: 'robot',  label: 'Robot & Motion Planning',        icon: 'fa-solid fa-robot',         color: '#38bdf8' },
-        teleop: { key: 'teleop', label: 'Multimodal Input & Teleop',      icon: 'fa-solid fa-gamepad',       color: '#c084fc' },
+        robot:  { key: 'robot',  label: 'Robot + Motion Planning + Teleop (Gamepad)', icon: 'fa-solid fa-robot',         color: '#38bdf8' },
+        teleop: { key: 'teleop', label: 'Eyetracker - Gaze Control', icon: 'fa-solid fa-eye', color: '#c084fc' },
         vr:     { key: 'vr',     label: 'VR Teleop (Quest 3)',            icon: 'fa-solid fa-vr-cardboard',  color: '#f472b6' },
         speech: { key: 'speech', label: 'Speech Control',                 icon: 'fa-solid fa-microphone-lines', color: '#2dd4bf' },
         vision: { key: 'vision', label: '3D Vision & Perception',         icon: 'fa-solid fa-camera',        color: '#4ade80' },
@@ -616,7 +740,9 @@
         // VR und Sprachsteuerung bekommen je eine eigene Section
         if (/vr_quest|quest/.test(s)) return SEQ_CATEGORIES.vr;
         if (/voice|whisper|speech/.test(s)) return SEQ_CATEGORIES.speech;
-        if (/gaze|tobii|joy_node|\bjoy\b|gamepad/.test(s)) return SEQ_CATEGORIES.teleop;
+        if (/gaze|tobii/.test(s)) return SEQ_CATEGORIES.teleop;
+        // Gamepad gehoert zu "Robot + Motion Planning + Teleop (Gamepad)"
+        if (/joy_node|\bjoy\b|gamepad/.test(s)) return SEQ_CATEGORIES.robot;
         if (/robot_vision|zed|yolo|camera|aruco|pointcloud/.test(s)) return SEQ_CATEGORIES.vision;
         if (/web_video_server|http_robot_control_ui|rosbridge|websocket|overlay|streamer|rviz_servo_status|http\.server|dashboard/.test(s)) return SEQ_CATEGORIES.infra;
         if (/lite6|xarm|moveit|move_group|movegroup|servo|collision|rviz_marker|linear_axis|rviz2/.test(s)) return SEQ_CATEGORIES.robot;
@@ -628,6 +754,7 @@
     function getArgGroup(argObj) {
         const t = String((argObj && argObj.text) || '');
         if (argObj && argObj.kind === 'gpu-toggle') return { key: 'device', label: 'Inferenz', icon: 'fa-solid fa-microchip' };
+        if (argObj && argObj.kind === 'gaze-mode') return { key: 'gaze', label: 'Gaze-Modus', icon: 'fa-solid fa-eye', exclusive: 'genau 1' };
         if (t.startsWith('robot_ip:='))  return { key: 'ip', label: 'Roboter-Verbindung', icon: 'fa-solid fa-ethernet' };
         if (t.startsWith('camera:='))    return { key: 'camera', label: 'Kamera', icon: 'fa-solid fa-camera', exclusive: 'genau 1' };
         if (t.startsWith('yolo_model:=')) return { key: 'yolo', label: 'YOLO-Modell', icon: 'fa-solid fa-brain', exclusive: 'max. 1' };
@@ -729,6 +856,37 @@
         });
         html += `</div>`;
         return html;
+    }
+
+    // Popup-Theme (Dark / Light) - localStorage-Schluessel
+    const POPUP_THEME_KEY = 'ros2_nexus_popup_theme';
+
+    // ─── FAKE / REAL Umschalter ─────────────────────────────────────────────────
+    // Beide Modi sind eigene Sequenzen (eigene Nodes, Launch-Struktur und
+    // Parameter, eigener gespeicherter Zustand). Der Umschalter speichert den
+    // aktuellen Modus und oeffnet die Sequenz des anderen Modus an derselben Stelle.
+    const SEQ_MODE_PAIRS = {
+        dev_fake: { mode: 'fake', other: 'dev_real' },
+        dev_real: { mode: 'real', other: 'dev_fake' },
+        server_fake: { mode: 'fake', other: 'server_real' },
+        server_real: { mode: 'real', other: 'server_fake' }
+    };
+
+    // Karte auf der Seite, die die Sequenz mit dieser popupId oeffnet
+    function findSeqModeCard(popupId) {
+        return Array.from(document.querySelectorAll('.action-card[onclick]'))
+            .find(el => el.getAttribute('onclick').includes(`'${popupId}')`)) || null;
+    }
+
+    function buildSeqModeSwitchHtml(popupId) {
+        const pair = SEQ_MODE_PAIRS[popupId];
+        if (!pair || !findSeqModeCard(pair.other)) return '';
+        const opt = (mode, icon, label, tip) =>
+            `<button type="button" class="seq-mode-opt${pair.mode === mode ? ' is-active' : ''}" data-mode="${mode}" role="radio" aria-checked="${pair.mode === mode}" title="${tip}"><i class="${icon}"></i>${label}</button>`;
+        return `<div class="seq-mode-switch mode-${pair.mode}" id="seq-mode-switch" role="radiogroup" aria-label="Modus">`
+            + opt('fake', 'fa-solid fa-flask', 'FAKE', 'Simulation: MoveIt Fake-Hardware, kein Roboter noetig')
+            + opt('real', 'fa-solid fa-bolt', 'REAL', 'Hardware: physischer xArm Lite 6 (robot_ip)')
+            + `</div>`;
     }
 
     function openLaunchModal(wrapper, actionsData, toastMsg, popupId) {
@@ -1046,12 +1204,32 @@
                 selectAllCb.indeterminate = (activeCount > 0 && activeCount < total);
             }
             if (selectAllText) {
-                selectAllText.textContent = `Alle auswählen (${activeCount}/${total})`;
+                selectAllText.textContent = activeCount === total ? 'Alle abwählen' : 'Alle auswählen';
             }
+            const headerCount = document.getElementById('modal-header-count');
+            if (headerCount) headerCount.textContent = ` · ${total} ${total === 1 ? 'Aktion' : 'Aktionen'}`;
+            // Zaehler in den Filter-Chips (Alle / Aktiv / Inaktiv)
+            [['seq-filter-n-all', total], ['seq-filter-n-on', activeCount], ['seq-filter-n-off', total - activeCount]]
+                .forEach(([id, n]) => { const el = document.getElementById(id); if (el) el.textContent = n; });
+
+            // Summen ueber die aktiven Karten (Werte setzt buildSeqCard)
+            let nodes = 0, launches = 0;
+            allCbs.forEach(cb => {
+                if (!cb.checked) return;
+                const card = cb.closest('.seq-card');
+                if (!card) return;
+                nodes += parseInt(card.dataset.nodes, 10) || 0;
+                launches += parseInt(card.dataset.launches, 10) || 0;
+            });
             if (footerStatsText) {
-                footerStatsText.textContent = `${activeCount} von ${total} Aktionen aktiv · Bereit zur Ausführung`;
+                footerStatsText.innerHTML =
+                    `<span><b>${activeCount}/${total}</b> aktiv</span>`
+                    + `<span class="modal-footer-sep"></span>`
+                    + `<span><b>${nodes}</b> ${nodes === 1 ? 'Node' : 'Nodes'}</span>`
+                    + `<span><b>${launches}</b> ${launches === 1 ? 'Sub-Launch' : 'Sub-Launches'}</span>`;
             }
-            refreshSeqSummary();
+            const dot = document.querySelector('#launch-modal-footer .status-pulsing-dot');
+            if (dot) dot.classList.toggle('is-idle', activeCount === 0);
         };
         
         function syncLinearAxisState(isLinearAxisActive) {
@@ -1073,7 +1251,7 @@
                         act.title += ' + Linear Axis';
                     }
                     const titleEl = seqTitleEls.get(act);
-                    if (titleEl) { titleEl.textContent = act.title; titleEl.title = act.title; }
+                    if (titleEl) renderSeqTitle(titleEl, act.title);
                 }
             });
 
@@ -1573,6 +1751,21 @@
                 action.args.unshift({ text: WHISPER_GPU_ARG, checked: !!useGpu, kind: 'gpu-toggle' });
             }
 
+            // Eyetracker: genau ein Gaze-Modus (Standard: Real World)
+            if (isGazeModeCard(action.baseCmd)) {
+                action.args = action.args.filter(a => !a.text.startsWith('gaze_mode:='));
+                Object.keys(GAZE_MODES).forEach(modeArg => {
+                    const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, modeArg, modeArg === 'gaze_mode:=real_world');
+                    action.args.push({ text: modeArg, checked: !!isChecked, kind: 'gaze-mode' });
+                });
+                const gazeArgs = action.args.filter(a => a.kind === 'gaze-mode');
+                const checkedGaze = gazeArgs.filter(a => a.checked);
+                if (checkedGaze.length !== 1) {
+                    const preferred = checkedGaze[0] || gazeArgs[0];
+                    gazeArgs.forEach(a => { a.checked = (a === preferred); });
+                }
+            }
+
                // Ensure static_objects:=true is available for lite6_moveit_servo
             if (action.baseCmd && (action.baseCmd.includes('lite6_moveit_servo_realmove.launch.py') || action.baseCmd.includes('lite6_moveit_servo_fake.launch.py'))) {
                 const staticArgText = 'static_objects:=true';
@@ -1685,6 +1878,7 @@
             function createArgsDiv(action) {
              const argsDiv = document.createElement('div');
              argsDiv.className = 'modal-args-list';
+
              
              if (action && action.args.length > 0) {
                  // Ensure exactly one camera:= arg is checked initially
@@ -1856,6 +2050,21 @@
                              syncReportTypeState(targetReportType);
                          }
 
+                        // Gaze-Modus: genau einer aktiv (Abwaehlen schaltet auf den anderen)
+                        if (argObj.kind === 'gaze-mode') {
+                            const gazeArgs = action.args.filter(a => a.kind === 'gaze-mode');
+                            const target = e.target.checked ? argObj : (gazeArgs.find(a => a !== argObj) || argObj);
+                            gazeArgs.forEach(a => { a.checked = (a === target); });
+                            argsDiv.querySelectorAll('label.param-chip').forEach(lbl => {
+                                const matchArg = gazeArgs.find(a => a.text === lbl.dataset.argText);
+                                const cb = lbl.querySelector('input');
+                                if (matchArg && cb) {
+                                    cb.checked = matchArg.checked;
+                                    lbl.classList.toggle('chip-inactive', !matchArg.checked);
+                                }
+                            });
+                        }
+
                         // Static Objects sync
                         if (argObj.text === 'static_objects:=true' || argObj.text === 'static_onjects:=true') {
                             syncStaticObjectsState(e.target.checked);
@@ -1876,10 +2085,10 @@
                     
                     if (argObj.text.includes(':=')) {
                         const parts = argObj.text.split(':=');
-                        txtSpan.innerHTML = `<span style="color:#38bdf8;opacity:0.9;">${parts[0]}:=</span><span style="color:#f8fafc;font-weight:600;">${parts.slice(1).join(':=')}</span>`;
+                        txtSpan.innerHTML = `<span class="arg-key">${parts[0]}:=</span><span class="arg-val">${parts.slice(1).join(':=')}</span>`;
                     } else if (argObj.text.includes('=')) {
                         const parts = argObj.text.split('=');
-                        txtSpan.innerHTML = `<span style="color:#38bdf8;opacity:0.9;">${parts[0]}=</span><span style="color:#f8fafc;font-weight:600;">${parts.slice(1).join('=')}</span>`;
+                        txtSpan.innerHTML = `<span class="arg-key">${parts[0]}=</span><span class="arg-val">${parts.slice(1).join('=')}</span>`;
                     } else {
                         txtSpan.textContent = argObj.text;
                     }
@@ -1960,8 +2169,14 @@
            cardDiv.dataset.cat = cat.key;
 
            // ── Kopf ──
+           // Zeile 1: Checkbox · Kategorie · (Technik-Badges, CMD, Chevron)
+           // Zeile 2: Icon-Kacheln | Titel, Datei, Ports
+           // Zeile 3: Kennzahlen als Text
            const head = document.createElement('div');
            head.className = 'seq-card-head';
+
+           const top = document.createElement('div');
+           top.className = 'seq-card-top';
 
            const mainCb = document.createElement('input');
            mainCb.type = 'checkbox';
@@ -1971,11 +2186,36 @@
            const cbWrap = document.createElement('div');
            cbWrap.className = 'modal-cb-wrap';
            cbWrap.appendChild(mainCb);
-           head.appendChild(cbWrap);
+           top.appendChild(cbWrap);
+
+           const eyebrow = document.createElement('div');
+           eyebrow.className = 'seq-card-eyebrow';
+           eyebrow.title = cat.label;
+           eyebrow.innerHTML = `<i class="${cat.icon}"></i><span>${escHtml(cat.label.split(' + ').join(' · '))}</span>`;
+           top.appendChild(eyebrow);
+
+           const actionsRow = document.createElement('div');
+           actionsRow.className = 'seq-card-actions';
+           const addTech = (cls, icon, label) => {
+               const b = document.createElement('span');
+               b.className = 'seq-tech ' + cls;
+               b.innerHTML = `<i class="${icon}"></i>${label}`;
+               actionsRow.appendChild(b);
+           };
+           if (cmdStr.startsWith('ros2 run')) addTech('seq-tech-ros', 'fa-solid fa-robot', 'ROS 2');
+           if (cmdStr.includes('python3')) addTech('seq-tech-py', 'fa-brands fa-python', 'Python3');
+           if (cmdStr.includes('google-chrome') || cmdStr.includes('chromium-browser')) addTech('seq-tech-chrome', 'fa-brands fa-chrome', '+Chrome');
+           const staticCmd = o.cmdToCopy || cmdStr;
+           actionsRow.appendChild(createCmdBadge(getGazeMode(action) ? () => (getGazeMode(action) || {}).cmd || staticCmd : staticCmd));
+           top.appendChild(actionsRow);
+           head.appendChild(top);
+
+           const main = document.createElement('div');
+           main.className = 'seq-card-main';
 
            if (iconMetas.length > 0) {
                const icons = document.createElement('div');
-               icons.className = 'seq-card-icons';
+               icons.className = 'seq-card-icons' + (iconMetas.length > 1 ? ' is-multi' : '');
                iconMetas.forEach(meta => {
                    const iconBadge = document.createElement('div');
                    iconBadge.className = 'modal-card-icon-badge';
@@ -1987,18 +2227,14 @@
                    iconBadge.appendChild(img);
                    icons.appendChild(iconBadge);
                });
-               head.appendChild(icons);
+               main.appendChild(icons);
            }
 
            const titles = document.createElement('div');
            titles.className = 'seq-card-titles';
-           const eyebrow = document.createElement('div');
-           eyebrow.className = 'seq-card-eyebrow';
-           eyebrow.innerHTML = `<i class="${cat.icon}"></i><span>${escHtml(cat.label)}</span>`;
            const titleEl = document.createElement('div');
            titleEl.className = 'seq-card-title';
-           titleEl.textContent = headline;
-           titleEl.title = headline;
+           const titleParts = renderSeqTitle(titleEl, headline);
            if (action) seqTitleEls.set(action, titleEl);
            const sub = document.createElement('div');
            sub.className = 'seq-card-sub';
@@ -2018,12 +2254,12 @@
                sub.appendChild(descEl);
            }
            extraEls.forEach(el => { el.removeAttribute('style'); el.classList.add('seq-card-desc'); sub.appendChild(el); });
-           titles.appendChild(eyebrow);
            titles.appendChild(titleEl);
            if (sub.childNodes.length) titles.appendChild(sub);
-           // Port-Zeile: welcher Port wofuer verwendet wird
+           // Port-Zeile: welcher Port wofuer verwendet wird, danach die
+           // Bestandteile aus dem Titel, z. B. "(cam, tf, yolo3d)"
            const ports = getActionPorts(cmdStr);
-           if (ports.length) {
+           if (ports.length || titleParts.tags.length) {
                const portsEl = document.createElement('div');
                portsEl.className = 'seq-card-ports';
                ports.forEach(pt => {
@@ -2033,45 +2269,45 @@
                    chip.innerHTML = `<i class="${pt.icon}"></i><b>${pt.port}</b><span>${escHtml(pt.use)}</span>`;
                    portsEl.appendChild(chip);
                });
+               if (titleParts.tags.length) {
+                   const chip = document.createElement('span');
+                   chip.className = 'seq-port seq-port-tags';
+                   chip.title = titleParts.tags.join(', ');
+                   chip.innerHTML = `<i class="fa-solid fa-layer-group"></i><span>${titleParts.tags.map(escHtml).join(' · ')}</span>`;
+                   portsEl.appendChild(chip);
+               }
                titles.appendChild(portsEl);
            }
-           head.appendChild(titles);
+           main.appendChild(titles);
+           head.appendChild(main);
 
-           // Rechts: Kennzahlen (Zeile 1), Technik-Badges + CMD + Chevron (Zeile 2)
-           const meta = document.createElement('div');
-           meta.className = 'seq-card-meta';
+           // Kennzahlen als Textzeile; die Summen der aktiven Karten zeigt der Footer
            const stats = document.createElement('div');
            stats.className = 'seq-card-stats';
-           const addStat = (icon, n, one, many, tip) => {
+           const addStat = (n, one, many, tip) => {
                if (!n) return;
                const st = document.createElement('span');
                st.className = 'seq-stat';
                st.title = tip;
-               st.innerHTML = `<i class="${icon}"></i>${n} ${n === 1 ? one : many}`;
+               st.innerHTML = `<b>${n}</b>${n === 1 ? one : many}`;
                stats.appendChild(st);
            };
            const tree = countLaunchTree(o.ulNode);
-           addStat('fa-solid fa-diagram-project', tree.launches, 'Sub-Launch', 'Sub-Launches', 'Eingebundene Launch-Dateien');
-           addStat('fa-solid fa-circle-nodes', tree.nodes, 'Node', 'Nodes', 'Gestartete Nodes & Server');
-           addStat('fa-solid fa-terminal', tree.cmds, 'Befehl', 'Befehle', 'Zusaetzliche Shell-Befehle');
-           addStat('fa-solid fa-sliders', argCount, 'Parameter', 'Parameter', 'Waehlbare Parameter & Launch-Argumente');
-
-           const actionsRow = document.createElement('div');
-           actionsRow.className = 'seq-card-actions';
-           const addTech = (cls, icon, label) => {
-               const b = document.createElement('span');
-               b.className = 'seq-tech ' + cls;
-               b.innerHTML = `<i class="${icon}"></i>${label}`;
-               actionsRow.appendChild(b);
-           };
-           if (cmdStr.startsWith('ros2 run')) addTech('seq-tech-ros', 'fa-solid fa-robot', 'ROS 2');
-           if (cmdStr.includes('python3')) addTech('seq-tech-py', 'fa-brands fa-python', 'Python3');
-           if (cmdStr.includes('google-chrome') || cmdStr.includes('chromium-browser')) addTech('seq-tech-chrome', 'fa-brands fa-chrome', '+Chrome');
-           actionsRow.appendChild(createCmdBadge(o.cmdToCopy || cmdStr));
-
-           if (stats.childNodes.length) meta.appendChild(stats);
-           meta.appendChild(actionsRow);
-           head.appendChild(meta);
+           addStat(tree.launches, 'Sub-Launch', 'Sub-Launches', 'Eingebundene Launch-Dateien');
+           addStat(tree.nodes, 'Node', 'Nodes', 'Gestartete Nodes & Server');
+           addStat(tree.cmds, 'Befehl', 'Befehle', 'Zusaetzliche Shell-Befehle');
+           addStat(argCount, 'Parameter', 'Parameter', 'Waehlbare Parameter & Launch-Argumente');
+           cardDiv.dataset.nodes = tree.nodes;
+           cardDiv.dataset.launches = tree.launches;
+           // Status rechts in der Kennzahl-Zeile; welcher Text sichtbar ist,
+           // entscheidet das CSS ueber card-active / card-inactive der Karte
+           // (die Klassen setzen auch die Sync-Funktionen, z. B. Linear Axis).
+           const state = document.createElement('span');
+           state.className = 'seq-card-state';
+           state.innerHTML = '<span class="seq-card-state-dot"></span>'
+               + '<span class="seq-state-on">Bereit</span><span class="seq-state-off">Übersprungen</span>';
+           stats.appendChild(state);
+           head.appendChild(stats);
            cardDiv.appendChild(head);
 
            // ── Body: Launch-Struktur | Parameter, sonst der Befehl ──
@@ -2083,16 +2319,6 @@
                const body = document.createElement('div');
                body.className = 'seq-card-body' + (hasTree ? ' has-tree' : '') + (hasArgs ? ' has-params' : '');
 
-               if (!hasTree && !hasArgs) {
-                   const pane = document.createElement('div');
-                   pane.className = 'seq-pane seq-pane-cmd';
-                   pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-terminal"></i><b>Befehl</b></div>`;
-                   const code = document.createElement('code');
-                   code.className = 'seq-cmd-line';
-                   code.textContent = o.cmdToCopy || cmdStr;
-                   pane.appendChild(code);
-                   body.appendChild(pane);
-               }
 
                if (hasTree) {
                    const pane = document.createElement('div');
@@ -2108,6 +2334,32 @@
                    pane.className = 'seq-pane seq-pane-params';
                    pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-sliders"></i><b>Parameter &amp; Args</b></div>`;
                    pane.appendChild(createArgsDiv(action));
+                   body.appendChild(pane);
+               }
+               // Befehl(e) jeder Karte - verkettete Befehle zeilenweise
+               {
+                   const pane = document.createElement('div');
+                   pane.className = 'seq-pane seq-pane-cmd';
+                   const headEl = document.createElement('div');
+                   headEl.className = 'seq-pane-head';
+                   const cmdList = document.createElement('div');
+                   cmdList.className = 'seq-cmd-list';
+                   const renderCmds = () => {
+                       const lines = splitCmdLines(action ? buildFinalCmd(action) : (o.cmdToCopy || cmdStr));
+                       headEl.innerHTML = `<i class="fa-solid fa-terminal"></i><b>${lines.length > 1 ? `Befehle (${lines.length})` : 'Befehl'}</b>`;
+                       cmdList.innerHTML = '';
+                       lines.forEach(line => {
+                           const code = document.createElement('code');
+                           code.className = 'seq-cmd-line';
+                           code.textContent = line;
+                           cmdList.appendChild(code);
+                       });
+                   };
+                   renderCmds();
+                   renderCmds.el = pane;
+                   seqCmdRefreshers.add(renderCmds);
+                   pane.appendChild(headEl);
+                   pane.appendChild(cmdList);
                    body.appendChild(pane);
                }
                cardDiv.appendChild(body);
@@ -2144,42 +2396,13 @@
            };
        }
 
-       // Leiste ueber den Karten: je Bereich aktive/gesamt, Klick springt hin.
-       // Ersetzt den alten Hinweis "Included Source Files:".
-       function buildSeqSummary(topUl) {
+       // Entfernt den alten Hinweis "Included Source Files:" ueber den Karten.
+       function removeIncludedSourcesHint(topUl) {
            const container = topUl.parentElement;
            if (!container) return;
            Array.from(container.children).forEach(c => {
                if (c !== topUl && c.tagName !== 'UL' && /Included Source Files/i.test(c.textContent || '')) c.remove();
            });
-
-           const cats = [];
-           topUl.querySelectorAll('.seq-card').forEach(card => {
-               if (!cats.includes(card.dataset.cat)) cats.push(card.dataset.cat);
-           });
-           if (cats.length === 0) return;
-
-           const strip = document.createElement('div');
-           strip.className = 'seq-summary';
-           strip.innerHTML = `<span class="seq-summary-title"><i class="fa-solid fa-layer-group"></i>Komponenten</span>`;
-           cats.forEach(key => {
-               const cat = SEQ_CATEGORIES[key] || SEQ_CATEGORIES.system;
-               const chip = document.createElement('button');
-               chip.type = 'button';
-               chip.className = 'seq-cat-chip';
-               chip.dataset.cat = key;
-               chip.style.setProperty('--sec-color', cat.color);
-               chip.title = `Zu "${cat.label}" springen`;
-               chip.innerHTML = `<i class="${cat.icon}"></i><span class="seq-cat-label">${escHtml(cat.label)}</span><span class="seq-cat-count">–</span>`;
-               chip.onclick = (e) => {
-                   e.stopPropagation();
-                   const first = topUl.querySelector(`.seq-card[data-cat="${key}"]`);
-                   if (first) first.scrollIntoView({ behavior: 'smooth', block: 'start' });
-               };
-               strip.appendChild(chip);
-           });
-           container.insertBefore(strip, topUl);
-           refreshSeqSummary();
        }
 
        // Masonry fuer die zwei Kartenspalten: Grid mit 1px-Zeilen, jede Karte
@@ -2220,24 +2443,15 @@
                if (li.tagName === 'LI') ro.observe(li.firstElementChild || li);
            });
            // Nach Drag & Drop koennen <li> neu sortiert sein - Spans neu setzen.
+           // observe() liefert undefined - den Observer daher erst speichern,
+           // sonst scheitert mo.disconnect() oben beim Schliessen des Popups.
            const mo = new MutationObserver(() => {
                Array.from(listEl.children).forEach(li => {
                    if (li.tagName === 'LI') ro.observe(li.firstElementChild || li);
                });
                if (!queued) { queued = true; requestAnimationFrame(relayout); }
-           }).observe(listEl, { childList: true });
-       }
-
-       function refreshSeqSummary() {
-           const root = document.getElementById('launch-modal-body') || contentClone;
-           if (!root) return;
-           root.querySelectorAll('.seq-cat-chip').forEach(chip => {
-               const cards = Array.from(root.querySelectorAll(`.seq-card[data-cat="${chip.dataset.cat}"]`));
-               const active = cards.filter(c => { const cb = c.querySelector('.main-action-cb'); return cb && cb.checked; }).length;
-               const cnt = chip.querySelector('.seq-cat-count');
-               if (cnt) cnt.textContent = `${active}/${cards.length}`;
-               chip.classList.toggle('is-idle', active === 0);
            });
+           mo.observe(listEl, { childList: true });
        }
 
        const isOverviewOnly = (!actionsData || actionsData.length === 0 || popupId === 'sec_nodes_0' || effPopupId === 'sec_nodes_0' || (titleHTML && titleHTML.includes('Start - Multimodal Teleoperation')));
@@ -2350,7 +2564,7 @@
               topUl.appendChild(li);
           });
 
-          buildSeqSummary(topUl);
+          removeIncludedSourcesHint(topUl);
           attachSeqMasonry(topUl);
           }
        } else {
@@ -2422,60 +2636,93 @@
            cleanTitleText = titleHTML.replace(/<i\s+class="[^"]+"[^>]*><\/i>/i, '').trim();
        }
        const modalTagText = isOverviewOnly ? 'Application Overview' : 'Sequence Config';
+       // FAKE/REAL steht im Umschalter und im EXECUTE-Button - im Titel doppelt
+       const modeSwitchHtml = buildSeqModeSwitchHtml(effPopupId);
+       const execMode = (modeSwitchHtml && SEQ_MODE_PAIRS[effPopupId]) ? SEQ_MODE_PAIRS[effPopupId].mode : '';
+       const headerTitleText = execMode ? cleanTitleText.replace(/\s*\((?:FAKE|REAL)\)\s*$/i, '') : cleanTitleText;
+
+       // Popup-Theme (Dark / Light), bleibt im Browser gespeichert
+       let popupTheme = 'dark';
+       try { if (localStorage.getItem(POPUP_THEME_KEY) === 'light') popupTheme = 'light'; } catch (e) {}
+       const themeOpt = (t, icon, label) =>
+           `<button type="button" class="seq-theme-opt${t === popupTheme ? ' is-active' : ''}" data-theme="${t}" role="radio" aria-checked="${t === popupTheme}" title="${label} Theme"><i class="${icon}"></i><span>${label}</span></button>`;
+       const themeSwitchHtml = `<div class="seq-theme-switch" id="seq-theme-switch" role="radiogroup" aria-label="Theme">`
+           + themeOpt('dark', 'fa-solid fa-moon', 'Dark') + themeOpt('light', 'fa-solid fa-sun', 'Light') + `</div>`;
+
+       // Suche + Filter ueber den Karten (nur im Sequenz-Popup)
+       const toolbarHtml = isOverviewOnly ? '' : `
+                   <div class="seq-toolbar" id="seq-toolbar">
+                      <label class="seq-search" title="Karten nach Titel, Datei, Kategorie oder Port filtern">
+                         <i class="fa-solid fa-magnifying-glass"></i>
+                         <input type="search" id="seq-search-input" placeholder="Aktion, Launch-File oder Port suchen" autocomplete="off" spellcheck="false">
+                      </label>
+                      <div class="seq-filter" id="seq-filter" role="radiogroup" aria-label="Filter">
+                         <button type="button" class="seq-filter-opt is-active" data-filter="all" role="radio" aria-checked="true">Alle <b id="seq-filter-n-all">0</b></button>
+                         <button type="button" class="seq-filter-opt" data-filter="on" role="radio" aria-checked="false">Aktiv <b id="seq-filter-n-on">0</b></button>
+                         <button type="button" class="seq-filter-opt" data-filter="off" role="radio" aria-checked="false">Inaktiv <b id="seq-filter-n-off">0</b></button>
+                      </div>
+                      <span class="seq-toolbar-hint"><i class="fa-solid fa-grip-vertical"></i>Karten per Drag &amp; Drop umsortieren</span>
+                   </div>`;
 
        const modalHtml = `
-          <div id="launch-modal">
+          <div id="launch-modal" data-theme="${popupTheme}">
              <div id="launch-modal-window">
                 <div id="launch-modal-header">
-                   <div class="modal-header-left">
-                      <div class="modal-header-icon">
-                         <i class="${headerIconClass}"></i>
+                   <div class="modal-header-top">
+                      <div class="modal-header-left">
+                         <div class="modal-header-icon">
+                            <i class="${headerIconClass}"></i>
+                         </div>
+                         <div class="modal-header-titles">
+                            <h2 class="modal-header-title">${headerTitleText}</h2>
+                            <span class="modal-header-sub">${modalTagText}<span id="modal-header-count"></span></span>
+                         </div>
+                         ${modeSwitchHtml}
                       </div>
-                      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                         <h2 class="modal-header-title">${cleanTitleText}</h2>
-                         <span class="modal-header-tag">${modalTagText}</span>
+
+                      <div class="modal-header-right">
+                         ${themeSwitchHtml}
+                         <label class="modal-select-all-btn" id="modal-select-all-lbl" title="Alle Aktionen aktivieren/deaktivieren" ${isOverviewOnly ? 'style="display:none;"' : ''}>
+                            <input type="checkbox" id="modal-select-all-cb">
+                            <i class="fa-solid fa-check-double"></i>
+                            <span id="modal-select-all-text">Alle auswählen</span>
+                         </label>
+                         <button class="modal-close-btn" id="modal-close-btn" title="Schließen (ESC)">
+                            <i class="fa-solid fa-xmark"></i>
+                         </button>
                       </div>
-                   </div>
-                   
-                   <div class="modal-header-right">
-                      <label class="modal-select-all-btn" id="modal-select-all-lbl" title="Alle Aktionen aktivieren/deaktivieren" ${isOverviewOnly ? 'style="display:none;"' : ''}>
-                         <input type="checkbox" id="modal-select-all-cb">
-                         <span id="modal-select-all-text">Alle auswählen</span>
-                      </label>
-                      <button class="modal-close-btn" id="modal-close-btn" title="Schließen (ESC)">
-                         <i class="fa-solid fa-xmark"></i>
-                      </button>
                    </div>
 
-                   <div class="modal-dds-bar">
-                      <div class="dds-item">
-                         <label class="modal-select-all-btn modal-localhost-btn" id="modal-localhost-lbl" title="ROS_LOCALHOST_ONLY=1: DDS traffic stays on this machine and does not flood the LAN. Other machines can no longer see the ROS 2 topics (Quest 3 WebXR is not affected).">
-                            <input type="checkbox" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}>
-                            <span>Localhost only (DDS)</span>
-                         </label>
-                         <span class="dds-cap">Traffic stays on this PC</span>
+                   <div class="dds-bar">
+                      <label class="dds-cell dds-cell-toggle" id="modal-localhost-lbl" title="Traffic stays on this PC. ROS_LOCALHOST_ONLY=1: DDS traffic stays on this machine and does not flood the LAN. Other machines can no longer see the ROS 2 topics (Quest 3 WebXR is not affected).">
+                         <span class="dds-key"><i class="fa-solid fa-shield-halved"></i>DDS</span>
+                         <span class="dds-val"><input type="checkbox" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}><span>Localhost only</span></span>
+                      </label>
+                      <div class="dds-cell" title="Node group (ID). ROS_DOMAIN_ID: only nodes with the same ID can see each other">
+                         <span class="dds-key"><i class="fa-solid fa-hashtag"></i>Domain</span>
+                         <span class="dds-val" id="dds-chip-domain">–</span>
                       </div>
-                      <div class="dds-item">
-                         <span class="dds-chip" title="ROS_DOMAIN_ID: only nodes with the same ID can see each other"><i class="fa-solid fa-hashtag"></i><span class="dds-chip-key">Domain</span><span class="dds-chip-val" id="dds-chip-domain">–</span></span>
-                         <span class="dds-cap">Node group (ID)</span>
+                      <div class="dds-cell" title="DDS middleware. RMW_IMPLEMENTATION: DDS middleware in use">
+                         <span class="dds-key"><i class="fa-solid fa-diagram-project"></i>RMW</span>
+                         <span class="dds-val" id="dds-chip-rmw">–</span>
                       </div>
-                      <div class="dds-item">
-                         <span class="dds-chip" title="RMW_IMPLEMENTATION: DDS middleware in use"><i class="fa-solid fa-diagram-project"></i><span class="dds-chip-key">RMW</span><span class="dds-chip-val" id="dds-chip-rmw">–</span></span>
-                         <span class="dds-cap">DDS middleware</span>
+                      <div class="dds-cell" id="dds-chip-scope-wrap" title="DDS traffic destination: where the DDS traffic of the launched nodes goes">
+                         <span class="dds-key"><i class="fa-solid fa-tower-broadcast"></i>Scope</span>
+                         <span class="dds-val" id="dds-chip-scope">–</span>
                       </div>
-                      <div class="dds-item">
-                         <span class="dds-chip" id="dds-chip-scope-wrap" title="Where the DDS traffic of the launched nodes goes"><i class="fa-solid fa-tower-broadcast"></i><span class="dds-chip-key">Scope</span><span class="dds-chip-val" id="dds-chip-scope">–</span></span>
-                         <span class="dds-cap">DDS traffic destination</span>
+                      <div class="dds-cell" title="Network interface of the default route and IP of this machine. Linux interface name: en… = Ethernet (cable), wl… = Wi-Fi. Example enp0s31f6: en = Ethernet, p0 = PCI bus 0, s31 = slot 31, f6 = function 6 → the LAN port built into the mainboard.">
+                         <span class="dds-key"><i class="fa-solid fa-ethernet"></i><span id="dds-net-key">LAN</span></span>
+                         <span class="dds-val" id="dds-chip-net">–</span>
                       </div>
-                      <div class="dds-item">
-                         <span class="dds-chip" title="Network interface of the default route and IP of this machine. Linux interface name: en… = Ethernet (cable), wl… = Wi-Fi. Example enp0s31f6: en = Ethernet, p0 = PCI bus 0, s31 = slot 31, f6 = function 6 → the LAN port built into the mainboard."><i class="fa-solid fa-ethernet"></i><span class="dds-chip-val" id="dds-chip-net">–</span></span>
-                         <span class="dds-cap" id="dds-cap-net">LAN Ethernet IP</span>
-                      </div>
-                      <div class="dds-item">
-                         <span class="dds-chip" id="dds-chip-traffic-wrap" title="Total current network traffic of this PC over the LAN interface – all programs combined (ROS 2/DDS, browser, updates …), not just ROS. ↑ TX = this PC sends to the LAN (transmit), ↓ RX = this PC receives from the LAN (receive). Sustained high TX with little RX indicates DDS flooding the LAN."><i class="fa-solid fa-arrow-right-arrow-left"></i><span class="dds-chip-val" id="dds-chip-traffic">–</span></span>
-                         <span class="dds-cap" id="dds-cap-traffic">Total LAN traffic of this PC · ↑ PC sends · ↓ PC receives</span>
+                      <div class="dds-cell dds-cell-traffic" id="dds-chip-traffic-wrap" title="Total LAN traffic of this PC over the LAN interface – all programs combined (ROS 2/DDS, browser, updates …), not just ROS. ↑ TX = this PC sends to the LAN (transmit), ↓ RX = this PC receives from the LAN (receive). Sustained high TX with little RX indicates DDS flooding the LAN.">
+                         <div class="dds-cell-text">
+                            <span class="dds-key"><i class="fa-solid fa-arrow-right-arrow-left"></i>Traffic</span>
+                            <span class="dds-val" id="dds-chip-traffic">–</span>
+                         </div>
+                         <svg class="dds-spark" id="dds-traffic-spark" viewBox="0 0 64 24" preserveAspectRatio="none" aria-hidden="true"></svg>
                       </div>
                    </div>
+                   ${toolbarHtml}
                 </div>
                 
                 <div id="launch-modal-body"></div>
@@ -2488,9 +2735,17 @@
                    
                    <div class="modal-footer-actions">
                       <button class="modal-cancel-btn" id="modal-cancel-btn">${isOverviewOnly ? 'Schließen' : 'Abbrechen'}</button>
-                      <button id="launch-modal-start-btn" ${isOverviewOnly ? 'class="is-hidden"' : ''}>
-                         <i class="fa-solid fa-play"></i> EXECUTE
+                      <button id="launch-modal-start-btn" class="${isOverviewOnly ? 'is-hidden' : ''}${execMode ? ` is-${execMode}` : ''}">
+                         <i class="fa-solid fa-play"></i> EXECUTE${execMode ? `<span class="exec-mode">${execMode.toUpperCase()}</span>` : ''}
                       </button>
+                   </div>
+
+                   <div class="modal-footer-tools">
+                      <label class="modal-layout-lock-btn" id="modal-layout-lock-lbl" title="Layout sperren/entsperren (Drag & Drop der Karten)">
+                         <input type="checkbox" id="modal-layout-lock-cb">
+                         <i class="fa-solid fa-lock-open" id="modal-layout-lock-icon"></i>
+                         <span id="modal-layout-lock-text">Layout frei</span>
+                      </label>
                    </div>
                 </div>
              </div>
@@ -2498,6 +2753,11 @@
        `;
        
        document.body.insertAdjacentHTML('beforeend', modalHtml);
+       if (window.__seqModeSwitching) {
+           window.__seqModeSwitching = false;
+           const m = document.getElementById('launch-modal');
+           if (m) m.classList.add('is-mode-switch');
+       }
        const modalBodyEl = document.getElementById('launch-modal-body');
        if (modalBodyEl) {
            modalBodyEl.appendChild(contentClone);
@@ -2507,6 +2767,22 @@
        let ddsStatusTimer = null;
        let ddsLastSample = null;
        let ddsStatus = null;
+
+       // Verlauf des Gesamt-Traffics (TX + RX) fuer die Mini-Kurve im Header
+       const ddsTrafficHistory = [];
+       const renderTrafficSpark = () => {
+           const svg = document.getElementById('dds-traffic-spark');
+           if (!svg || ddsTrafficHistory.length < 2) return;
+           const max = Math.max(...ddsTrafficHistory, 1);
+           const step = 64 / (ddsTrafficHistory.length - 1);
+           const pts = ddsTrafficHistory.map((v, i) =>
+               [+(i * step).toFixed(1), +(22 - (v / max) * 19).toFixed(1)]);
+           const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ' ' + p[1]).join(' ');
+           const last = pts[pts.length - 1];
+           svg.innerHTML = `<path class="dds-spark-area" d="${line} L64 24 L0 24 Z"></path>`
+               + `<path class="dds-spark-line" d="${line}"></path>`
+               + `<circle class="dds-spark-dot" cx="${last[0]}" cy="${last[1]}" r="1.8"></circle>`;
+       };
 
        const fmtRate = (bps) => {
            if (bps >= 1e6) return (bps / 1e6).toFixed(1) + ' MB/s';
@@ -2548,7 +2824,8 @@
                const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
                set('dds-chip-domain', st.ros_domain_id || '–');
                set('dds-chip-rmw', (st.rmw_implementation || '–').replace(/^rmw_/, '').replace(/_cpp$/, ''));
-               set('dds-chip-net', st.net_iface ? `${describeIface(st.net_iface)} · IP: ${st.net_ip || '–'}` : 'no network');
+               set('dds-net-key', st.net_iface ? describeIface(st.net_iface) : 'LAN');
+               set('dds-chip-net', st.net_iface ? (st.net_ip || '–') : 'no network');
                renderDdsScope();
 
                const trafficWrap = document.getElementById('dds-chip-traffic-wrap');
@@ -2557,6 +2834,9 @@
                    const tx = (st.tx_bytes - ddsLastSample.tx) / dt;
                    const rx = (st.rx_bytes - ddsLastSample.rx) / dt;
                    set('dds-chip-traffic', `↑ ${fmtRate(tx)}  ↓ ${fmtRate(rx)}`);
+                   ddsTrafficHistory.push(tx + rx);
+                   if (ddsTrafficHistory.length > 30) ddsTrafficHistory.shift();
+                   renderTrafficSpark();
                    // > 5 MB/s Senden bei deutlich weniger Empfang: typisches DDS-Flut-Muster
                    if (trafficWrap) trafficWrap.dataset.state = (tx > 5e6 && tx > rx * 5) ? 'warn' : 'ok';
                } else if (st.tx_bytes == null) {
@@ -2582,6 +2862,11 @@
 
        const handleEsc = (e) => {
            if (e.key === 'Escape') closeModal();
+           // Strg+Enter (Mac: Cmd+Enter) startet die Sequenz wie der EXECUTE-Button
+           else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+               const btn = document.getElementById('launch-modal-start-btn');
+               if (btn && !btn.classList.contains('is-hidden')) { e.preventDefault(); btn.click(); }
+           }
        };
        document.addEventListener('keydown', handleEsc);
 
@@ -2606,6 +2891,104 @@
                saveActiveState();
            };
        }
+       // Startseite (START-Button / App-Start) oeffnet den zuletzt genutzten DEV-Modus
+       if (effPopupId === 'dev_fake' || effPopupId === 'dev_real') {
+           try { localStorage.setItem('ros2_nexus_start_popup', effPopupId); } catch (err) {}
+       }
+
+       const modeSwitch = document.getElementById('seq-mode-switch');
+       if (modeSwitch) {
+           modeSwitch.querySelectorAll('.seq-mode-opt').forEach(optBtn => {
+               optBtn.onclick = (e) => {
+                   e.stopPropagation();
+                   const pair = SEQ_MODE_PAIRS[effPopupId];
+                   if (!pair || optBtn.dataset.mode === pair.mode) return;
+                   const otherCard = findSeqModeCard(pair.other);
+                   if (!otherCard) return;
+                   closeModal();                      // speichert den aktuellen Modus
+                   window.__seqModeSwitching = true;
+                   otherCard.click();                 // oeffnet den anderen Modus
+               };
+           });
+       }
+
+       // Theme-Umschalter Dark / Light
+       const themeSwitch = document.getElementById('seq-theme-switch');
+       if (themeSwitch && modalRoot) {
+           themeSwitch.querySelectorAll('.seq-theme-opt').forEach(optBtn => {
+               optBtn.onclick = (e) => {
+                   e.stopPropagation();
+                   const t = optBtn.dataset.theme === 'light' ? 'light' : 'dark';
+                   modalRoot.dataset.theme = t;
+                   themeSwitch.querySelectorAll('.seq-theme-opt').forEach(b => {
+                       const on = b === optBtn;
+                       b.classList.toggle('is-active', on);
+                       b.setAttribute('aria-checked', on);
+                   });
+                   try { localStorage.setItem(POPUP_THEME_KEY, t); } catch (err) {}
+               };
+           });
+       }
+
+       // Suche + Filter: blendet <li> nur aus (hidden), Reihenfolge und
+       // Drag & Drop bleiben unberuehrt. Beim Abhaken einer Karte wird nicht
+       // sofort neu gefiltert, damit sie nicht unter dem Mauszeiger verschwindet.
+       const seqSearchInput = document.getElementById('seq-search-input');
+       const seqFilter = document.getElementById('seq-filter');
+       let seqFilterMode = 'all';
+       const applySeqFilter = () => {
+           const list = modalBodyEl ? modalBodyEl.querySelector('ul.seq-card-list') : null;
+           if (!list) return;
+           const q = (seqSearchInput ? seqSearchInput.value : '').trim().toLowerCase();
+           let shown = 0;
+           Array.from(list.children).forEach(li => {
+               if (li.tagName !== 'LI') return;
+               const cb = li.querySelector('.main-action-cb');
+               const on = cb ? cb.checked : true;
+               const head = li.querySelector('.seq-card-head');
+               const hay = ((head ? head.textContent : li.textContent) + ' ' + (li.dataset.cmd || '')).toLowerCase();
+               const visible = (seqFilterMode === 'all' || (seqFilterMode === 'on') === on) && (!q || hay.includes(q));
+               li.hidden = !visible;
+               if (visible) shown++;
+           });
+           let empty = modalBodyEl.querySelector('.seq-filter-empty');
+           if (!shown) {
+               if (!empty) {
+                   empty = document.createElement('div');
+                   empty.className = 'seq-filter-empty';
+                   list.after(empty);
+               }
+               empty.textContent = q ? `Keine Aktion passt zu „${q}“.` : 'Keine Aktion in diesem Filter.';
+           } else if (empty) {
+               empty.remove();
+           }
+       };
+       if (seqSearchInput) {
+           seqSearchInput.addEventListener('input', applySeqFilter);
+           // ESC im Suchfeld leert erst die Suche, statt das Popup zu schliessen
+           seqSearchInput.addEventListener('keydown', (e) => {
+               if (e.key === 'Escape' && seqSearchInput.value) {
+                   e.stopPropagation();
+                   seqSearchInput.value = '';
+                   applySeqFilter();
+               }
+           });
+       }
+       if (seqFilter) {
+           seqFilter.querySelectorAll('.seq-filter-opt').forEach(optBtn => {
+               optBtn.onclick = (e) => {
+                   e.stopPropagation();
+                   seqFilterMode = optBtn.dataset.filter;
+                   seqFilter.querySelectorAll('.seq-filter-opt').forEach(b => {
+                       const on = b === optBtn;
+                       b.classList.toggle('is-active', on);
+                       b.setAttribute('aria-checked', on);
+                   });
+                   applySeqFilter();
+               };
+           });
+       }
+
        renderDdsScope();
        refreshDdsStatus();
        ddsStatusTimer = setInterval(refreshDdsStatus, 2000);
@@ -2663,7 +3046,7 @@
        if (popupId) {
            const actualTopUl = contentClone.querySelector('ul');
            if (actualTopUl) {
-               new Sortable(actualTopUl, {
+               const seqSortable = new Sortable(actualTopUl, {
                    animation: 200,
                    ghostClass: 'sortable-ghost',
                    onEnd: async function (evt) {
@@ -2689,7 +3072,32 @@
                        }
                    }
                });
+
+               // Layout-Lock: sperrt Drag & Drop der Karten, Zustand bleibt im Browser.
+               const lockCb = document.getElementById('modal-layout-lock-cb');
+               if (lockCb) {
+                   const applyLock = (locked) => {
+                       seqSortable.option('disabled', locked);
+                       actualTopUl.classList.toggle('is-layout-locked', locked);
+                       const icon = document.getElementById('modal-layout-lock-icon');
+                       const txt = document.getElementById('modal-layout-lock-text');
+                       if (icon) icon.className = locked ? 'fa-solid fa-lock' : 'fa-solid fa-lock-open';
+                       if (txt) txt.textContent = locked ? 'Layout gesperrt' : 'Layout frei';
+                   };
+                   let locked = false;
+                   try { locked = localStorage.getItem('ros2_nexus_popup_layout_locked') === '1'; } catch (e) {}
+                   lockCb.checked = locked;
+                   applyLock(locked);
+                   lockCb.addEventListener('change', () => {
+                       applyLock(lockCb.checked);
+                       try { localStorage.setItem('ros2_nexus_popup_layout_locked', lockCb.checked ? '1' : '0'); } catch (e) {}
+                   });
+               }
            }
+       }
+       if (!popupId) {
+           const lockLbl = document.getElementById('modal-layout-lock-lbl');
+           if (lockLbl) lockLbl.style.display = 'none';
        }
        
        const startBtn = document.getElementById('launch-modal-start-btn');
@@ -2705,28 +3113,11 @@
               if (!action.active) continue;
               
               // Reconstruct command based on checked args
-              let finalCmd = action.baseCmd;
-              if (action.args.length > 0) {
-                  const activeArgs = action.args.filter(a => a.checked).map(a => a.text);
-                  // rviz ist standardmaessig an - ein fehlendes Argument wuerde
-                  // RViz also trotzdem starten. Deshalb explizit abschalten.
-                  if (action.args.some(a => a.text === 'rviz:=true' && !a.checked)) {
-                      activeArgs.push('rviz:=false');
-                  }
-                  // Whisper CPU: ohne explizites false bliebe der Launch-Standard (GPU).
-                  if (action.args.some(a => a.text === WHISPER_GPU_ARG && !a.checked)) {
-                      activeArgs.push('use_gpu:=false');
-                  }
-                  if (activeArgs.length > 0) {
-                      finalCmd += ' ' + activeArgs.join(' ');
-                  }
-              }
-              if (action.postCmd) {
-                  finalCmd += action.postCmd;
-              }
+              let finalCmd = buildFinalCmd(action);
+              const gazeMode = getGazeMode(action);
 
               // Dynamically compute terminal window title based on linear axis active state
-              let finalTitle = action.title || 'Launch';
+              let finalTitle = (gazeMode && gazeMode.title) || action.title || 'Launch';
               const hasLinearAxisArgChecked = action.args && action.args.some(a => a.text.includes('linear_axis') && a.checked);
               const cmdHasLinearAxis = finalCmd.includes('linear_axis');
               const isLinearAxisEnabled = isLinearAxisNodeActive && (cmdHasLinearAxis || hasLinearAxisArgChecked);
