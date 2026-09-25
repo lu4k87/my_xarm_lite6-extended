@@ -2,7 +2,7 @@ import { TOPICS, SERVICES } from './config.js';
 import * as twin from './twin/digital_twin.js';
 import { playObjectSelectSound, playOutOfReachSound, playMovesToSelectedObjectSound, setObjectReachContext } from './audio.js';
 import { logMsg } from './log.js';
-import { setButtonsLocked } from './motion.js';
+import { MP_ACTIVE_PHASES, setButtonsLocked } from './motion.js';
 import { uiZoom } from './util.js';
 import { createSrv, motionAllowed, ros } from './ros.js';
 import { showCenterNotice, validatePose } from './util.js';
@@ -117,6 +117,7 @@ export function objMenuItem(icon, label, hint, onClick, opts = {}) {
 // MoveIt-Fahrt ohne Erfolg, wird die Markierung der Kugel wieder geloest -
 // sonst pulste sie bis zum Timeout weiter.
 let approachTarget = null;
+let approachSeq = null;   // Lauf-Nummer (seq) der eigenen MoveIt-Fahrt
 let approachVoicePlayed = false;
 
 export function isApproachingObject() {
@@ -132,6 +133,7 @@ export function triggerApproachVoice() {
 function endApproach(reason) {
   if (!approachTarget) return;
   approachTarget = null;
+  approachSeq = null;
   approachVoicePlayed = false;
   setObjectReachContext(false, reason ? 3000 : 0);
   if (reason && typeof twin.clearDigitalTwinSelectedGrasp === 'function') {
@@ -155,6 +157,12 @@ new ROSLIB.Topic({
   if (!st || !Array.isArray(st.target)) return;
   // Nur auf die eigene Fahrt reagieren (Ziel auf 1 mm genau).
   if (st.target.some((v, i) => Math.abs(v - approachTarget[i]) > 1)) return;
+  // Dieselbe Kugel erneut angeklickt: das "discarded" des verworfenen
+  // Vorgaengers hat dasselbe Ziel - erst der neue Lauf zaehlt.
+  if (approachSeq === null) {
+    if (!MP_ACTIVE_PHASES.includes(st.phase)) return;
+    approachSeq = st.seq;
+  } else if (st.seq !== approachSeq) return;
   if (st.phase === 'executing') {
     triggerApproachVoice();
   }
@@ -179,19 +187,28 @@ export function approachObjectFromAbove(info) {
     return;
   }
   if (!motionAllowed('Approach from above')) return;
+  // Wie beim TCP-Gizmo: ohne Auto-Move erst planen, gefahren wird nach Execute
+  // im MoveIt-Popup. Im Ghost-Modus bestaetigt ohnehin der Geist-Pfad.
+  const auto = document.getElementById('chk-gizmo-auto-drop');
+  const confirm = !!auto && !auto.checked;
   if (typeof twin.setDigitalTwinSelectedGrasp === 'function') {
     twin.setDigitalTwinSelectedGrasp(info.name, APPROACH_ABOVE_MM / 1000);
   }
   approachTarget = pose.slice(0, 3);
+  approachSeq = null;
   approachVoicePlayed = false;
   setObjectReachContext(true);
   setButtonsLocked(true);
-  logMsg('UI', `➤ Approach ${info.name} from above: X=${pose[0]} Y=${pose[1]} Z=${pose[2]} mm (${APPROACH_ABOVE_MM} mm above grasp point)`, 'action');
-  createSrv(SERVICES.approachFromAbove, 'xarm_msgs/MoveCartesian').callService(
+  logMsg('UI', `➤ Approach ${info.name} from above: X=${pose[0]} Y=${pose[1]} Z=${pose[2]} mm (${APPROACH_ABOVE_MM} mm above grasp point)` +
+               (confirm ? ' - moves after Execute' : ''), 'action');
+  createSrv(confirm ? SERVICES.approachFromAboveConfirm : SERVICES.approachFromAbove,
+            'xarm_msgs/MoveCartesian').callService(
     new ROSLIB.ServiceRequest({ pose, speed: 100.0, acc: 1000.0, mvtime: 0.0 }),
     (res) => {
       setButtonsLocked(false);
-      if (res.ret === 0) logMsg('ROS', 'Approach accepted - collision-free path to the pre-position, then straight down.', 'info');
+      if (res.ret === 0) logMsg('ROS', confirm
+        ? 'Approach accepted - planning the path to the pre-position, then waits for Execute.'
+        : 'Approach accepted - collision-free path to the pre-position, then straight down.', 'info');
       else {
         logMsg('ROS', `❌ Approach rejected (ret=${res.ret}): ${res.message || 'Error'}`, 'err');
         endApproach(res.message || 'rejected');

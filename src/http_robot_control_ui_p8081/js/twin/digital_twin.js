@@ -1194,11 +1194,15 @@ function handleGizmoDragEnd() {
 
   const realTCP = getRealRobotTCPPose();
   let deltaDist_mm = realTCP ? (gizmoTarget.position.distanceTo(realTCP.position) * 1000.0) : 999;
+  // Gizmo-Quaternion stammt aus link_tcp (syncGizmoToRealTCP) - direkt vergleichbar.
+  const deltaAngle_deg = realTCP ? THREE.MathUtils.radToDeg(gizmoTarget.quaternion.angleTo(realTCP.quaternion)) : 999;
 
-  // Trigger auto-move if offset is greater than 3 mm or orientation adjusted
-  if (shouldAutoExecute && deltaDist_mm > 3.0) {
+  // Trigger auto-move if offset is greater than 3 mm or orientation adjusted (> 2 deg).
+  // Ohne Auto-Move trotzdem sofort IK + Planung - Execute faehrt nur noch;
+  // im Ghost-Modus zeigt die Planung den Geist, Execute bestaetigt ihn.
+  if (deltaDist_mm > 3.0 || deltaAngle_deg > 2.0) {
     if (typeof twinHooks.executeMoveToPoseFromGizmo === 'function') {
-      twinHooks.executeMoveToPoseFromGizmo();
+      twinHooks.executeMoveToPoseFromGizmo({ confirm: !shouldAutoExecute });
     }
   } else if (!shouldAutoExecute) {
     const mp = document.getElementById('moveit-popup');

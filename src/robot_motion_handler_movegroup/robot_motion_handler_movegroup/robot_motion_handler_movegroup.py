@@ -170,6 +170,15 @@ class RobotMotionHandlerMovegroup(Node):
             self.execute_move_to_pose_silent_cb,
             callback_group=self.cb_group
         )
+        # Gizmo ohne Auto-Move: IK + Planung sofort, gefahren wird erst nach
+        # Execute (/ui/confirm_moveto_preview) - wie die Pfad-Vorschau, nur
+        # ohne Geist-Pfad im Viewport.
+        self.plan_move_confirm_srv = self.create_service(
+            MoveCartesian,
+            '/ui/plan_move_to_pose_confirm',
+            self.plan_move_to_pose_confirm_cb,
+            callback_group=self.cb_group
+        )
         # Anfahrt eines erkannten Objekts von oben (Klick auf die Greifkugel).
         # pose = Endpose in mm/rad; der Arm faehrt erst auf eine Vorposition
         # darueber und senkt sich dann geradlinig ab.
@@ -177,6 +186,14 @@ class RobotMotionHandlerMovegroup(Node):
             MoveCartesian,
             '/ui/approach_from_above',
             self.approach_from_above_cb,
+            callback_group=self.cb_group
+        )
+        # Wie oben, aber ohne Auto-Move: Pfad zur Vorposition wird geplant,
+        # gefahren wird erst nach Execute (/ui/confirm_moveto_preview).
+        self.approach_confirm_srv = self.create_service(
+            MoveCartesian,
+            '/ui/approach_from_above_confirm',
+            self.approach_from_above_confirm_cb,
             callback_group=self.cb_group
         )
         self.move_joint_srv = self.create_service(
@@ -1255,12 +1272,29 @@ class RobotMotionHandlerMovegroup(Node):
     def execute_move_to_pose_silent_cb(self, request, response):
         return self.execute_move_to_pose_cb(request, response)
 
-    def execute_move_to_pose_cb(self, request, response):
+    def _discard_waiting_preview(self):
+        """Neues Ziel, waehrend ein geplanter Pfad noch auf Execute wartet
+        (Gizmo erneut gezogen, andere Kugel angeklickt): alten Pfad verwerfen
+        und auf das Ende seines Laufs warten, damit neu geplant werden kann."""
+        if not self._preview_waiting:
+            return
+        self._preview_decision = False
+        self._preview_event.set()
+        # Verworfener Lauf gibt erst nach dem Servo-Neustart frei (~0.6-1.6 s).
+        t_end = time.time() + 3.0
+        while self.is_executing and time.time() < t_end:
+            time.sleep(0.02)
+
+    def plan_move_to_pose_confirm_cb(self, request, response):
+        return self.execute_move_to_pose_cb(request, response, confirm=True)
+
+    def execute_move_to_pose_cb(self, request, response, confirm=False):
         rejection = self._estop_rejection()
         if rejection:
             response.ret = -1
             response.message = rejection
             return response
+        self._discard_waiting_preview()
         if not self._begin_execution():
             response.ret = -1
             response.message = "Already executing."
@@ -1270,7 +1304,7 @@ class RobotMotionHandlerMovegroup(Node):
         self.stop_requested = False
         def _task():
             try:
-                self._execute_move_to_pose_core(request, response)
+                self._execute_move_to_pose_core(request, response, confirm)
             finally:
                 self.is_executing = False
                 
@@ -1280,7 +1314,10 @@ class RobotMotionHandlerMovegroup(Node):
         response.message = "Move to pose started."
         return response
 
-    def approach_from_above_cb(self, request, response):
+    def approach_from_above_confirm_cb(self, request, response):
+        return self.approach_from_above_cb(request, response, confirm=True)
+
+    def approach_from_above_cb(self, request, response, confirm=False):
         rejection = self._estop_rejection()
         if rejection:
             response.ret = -1
@@ -1290,6 +1327,7 @@ class RobotMotionHandlerMovegroup(Node):
             response.ret = -1
             response.message = "pose needs 6 values (x, y, z in mm, roll, pitch, yaw in rad)."
             return response
+        self._discard_waiting_preview()
         if not self._begin_execution():
             response.ret = -1
             response.message = "Already executing."
@@ -1301,7 +1339,7 @@ class RobotMotionHandlerMovegroup(Node):
 
         def _task():
             try:
-                self._execute_approach_core(pose)
+                self._execute_approach_core(pose, confirm)
             finally:
                 self.is_executing = False
 
@@ -1324,7 +1362,7 @@ class RobotMotionHandlerMovegroup(Node):
         ps.pose.orientation.w = float(q[3])
         return ps
 
-    def _execute_approach_core(self, pose_mm):
+    def _execute_approach_core(self, pose_mm, confirm=False):
         pre_mm = list(pose_mm)
         pre_mm[2] += float(self.get_parameter('approach_pre_height').value) * 1000.0
         try:
@@ -1342,7 +1380,9 @@ class RobotMotionHandlerMovegroup(Node):
             self._moveit_mark('t_ik')
 
             # Phase 1: kollisionsfreier Pfad zur Vorposition ueber dem Objekt.
-            self._plan_and_execute_joints(pre_joints)
+            # confirm: Execute im Popup gibt die ganze Anfahrt frei - das
+            # Absenken folgt ohne zweite Rueckfrage (im Ghost-Modus wie bisher mit).
+            self._plan_and_execute_joints(pre_joints, confirm=confirm)
             if self.stop_requested:
                 raise Exception("Movement interrupted by EMERGENCY STOP!")
 
@@ -1489,7 +1529,7 @@ class RobotMotionHandlerMovegroup(Node):
             p.velocities = [v / k for v in p.velocities]
             p.accelerations = [a / (k * k) for a in p.accelerations]
 
-    def _execute_move_to_pose_core(self, request, response):
+    def _execute_move_to_pose_core(self, request, response, confirm=False):
         try:
             from geometry_msgs.msg import PoseStamped
             
@@ -1533,7 +1573,7 @@ class RobotMotionHandlerMovegroup(Node):
             self._moveit_mark('t_ik')
 
             # 5. Plan and execute a collision-free path
-            self._plan_and_execute_joints(target_joints)
+            self._plan_and_execute_joints(target_joints, confirm=confirm)
 
             run = self._moveit_finish('succeeded')
             self.ui_log(f"MoveTo target reached ({self._moveit_timing_text(run)}).", 'success')
@@ -1720,10 +1760,11 @@ class RobotMotionHandlerMovegroup(Node):
             self._moveit_finish('aborted' if aborted else 'failed', message=str(e))
             self.ui_log(f"{label} {'aborted' if aborted else 'failed'}: {e}", 'error')
 
-    def _plan_and_execute_joints(self, target_joints):
+    def _plan_and_execute_joints(self, target_joints, confirm=False):
         """Plan a collision-free path to target_joints with move_group and execute it.
 
-        If move_group is unreachable there is deliberately NO fallback to the
+        confirm=True waits for Execute in the UI even with the path preview
+        off (no ghost path). If move_group is unreachable there is deliberately NO fallback to the
         direct, unchecked joint motion.
         """
         if not self.move_group_client.wait_for_server(timeout_sec=2.0):
@@ -1753,7 +1794,8 @@ class RobotMotionHandlerMovegroup(Node):
         req.goal_constraints.append(goal)
 
         # Mit Vorschau nur planen - ausgefuehrt wird erst nach Bestaetigung.
-        preview = self.preview_enabled
+        show_ghost = self.preview_enabled
+        preview = show_ghost or confirm
 
         goal_msg = MoveGroup.Goal()
         goal_msg.request = req
@@ -1812,7 +1854,7 @@ class RobotMotionHandlerMovegroup(Node):
                 # Servo bleibt waehrend der Wartezeit pausiert: der Arm darf
                 # sich nicht bewegen, sonst passt der Startzustand des Pfads
                 # nicht mehr.
-                self._confirm_preview(result.planned_trajectory)
+                self._confirm_preview(result.planned_trajectory, show_path=show_ghost)
                 self._execute_trajectory(result.planned_trajectory)
         finally:
             self._move_goal_handle = None
@@ -1831,8 +1873,11 @@ class RobotMotionHandlerMovegroup(Node):
         }
         self.preview_path_pub.publish(String(data=json.dumps(msg)))
 
-    def _confirm_preview(self, robot_traj):
-        """Pfad an die UI schicken und auf Ausfuehren / Verwerfen warten."""
+    def _confirm_preview(self, robot_traj, show_path=True):
+        """Pfad an die UI schicken und auf Ausfuehren / Verwerfen warten.
+
+        show_path=False: nur warten, kein Geist-Pfad im Viewport.
+        """
         jt = robot_traj.joint_trajectory
         if not jt.points:
             raise Exception("MoveIt returned an empty path.")
@@ -1846,10 +1891,11 @@ class RobotMotionHandlerMovegroup(Node):
         self._preview_waiting = True
         confirmed = False
         try:
-            self._publish_preview_path(jt)
-            self._moveit_phase('confirm', waypoints=len(jt.points),
+            if show_path:
+                self._publish_preview_path(jt)
+            self._moveit_phase('confirm', waypoints=len(jt.points), ghost=show_path,
                                exec_expected=round(expected, 3), confirm_timeout=timeout)
-            self.ui_log(f"MoveIt path preview ready ({len(jt.points)} waypoints, est. {expected:.1f} s) - "
+            self.ui_log(f"MoveIt {'path preview' if show_path else 'path'} ready ({len(jt.points)} waypoints, est. {expected:.1f} s) - "
                         f"confirm in the Robot Control UI (auto-discard after {timeout:.0f} s).", 'action')
             t_end = time.time() + timeout
             while not self._preview_event.wait(0.05):
@@ -1864,12 +1910,12 @@ class RobotMotionHandlerMovegroup(Node):
             confirmed = True
         finally:
             self._preview_waiting = False
-            if confirmed:
+            if show_path and confirmed:
                 # Geist bleibt am Ziel stehen, bis der Arm dort ist
                 # (geloescht in _moveit_finish).
                 self._preview_executing = True
                 self._publish_preview_path(jt, executing=True)
-            else:
+            elif show_path:
                 self._clear_preview_path()
         self._moveit_mark('t_confirm')
 

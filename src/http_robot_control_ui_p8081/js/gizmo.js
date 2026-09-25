@@ -10,7 +10,10 @@ import { LIM, floorGuard, readPoseInput, setIconLabel, validatePose } from './ut
 // ── Interactive 3D TCP Gizmo Execution ───────────────────────────────────────
 export let isExecutingGizmoMove = false;
 
-export function executeMoveToPoseFromGizmo() {
+// confirm: sofort IK + Planung, gefahren wird erst nach Execute im MoveIt-Popup
+// (Gizmo losgelassen, Auto-Move aus, Ghost aus).
+export function executeMoveToPoseFromGizmo(opts) {
+  const confirm = Boolean(opts && opts.confirm);
   if (isExecutingGizmoMove) {
     console.warn('[Gizmo] Motion execution already in progress.');
     return;
@@ -62,7 +65,8 @@ export function executeMoveToPoseFromGizmo() {
   }
 
   // Silent variant: no "robot moves to absolute pose" voice for gizmo moves.
-  const srv = createSrv(SERVICES.executeMoveToPoseSilent, 'xarm_msgs/MoveCartesian');
+  const srv = createSrv(confirm ? SERVICES.planMoveToPoseConfirm : SERVICES.executeMoveToPoseSilent,
+                        'xarm_msgs/MoveCartesian');
   const req = new ROSLIB.ServiceRequest({
     pose: [x, y, z, r, p, yw],
     speed: 100.0,
@@ -70,7 +74,7 @@ export function executeMoveToPoseFromGizmo() {
     mvtime: 0.0
   });
 
-  logMsg('GIZMO', `🎯 TCP gizmo move: X=${x} Y=${y} Z=${z} mm (R=${r} P=${p} Yw=${yw})`, 'action');
+  logMsg('GIZMO', `🎯 TCP gizmo ${confirm ? 'target (plan, then Execute)' : 'move'}: X=${x} Y=${y} Z=${z} mm (R=${r} P=${p} Yw=${yw})`, 'action');
 
   srv.callService(req, (res) => {
     isExecutingGizmoMove = false;
@@ -82,9 +86,11 @@ export function executeMoveToPoseFromGizmo() {
     }
 
     if (res.ret === 0) {
-      logMsg('GIZMO', 'Gizmo move accepted - MoveIt is planning the path.', 'info');
+      logMsg('GIZMO', confirm ? 'Gizmo target accepted - MoveIt is planning, then waits for Execute.'
+                              : 'Gizmo move accepted - MoveIt is planning the path.', 'info');
       const isPreview = typeof twin.twinHooks.isPathPreviewOn === 'function' && twin.twinHooks.isPathPreviewOn();
-      if (!isPreview && typeof twin.syncTCPGizmoToRobot === 'function') {
+      // Gizmo bleibt am Ziel stehen, solange der Pfad auf Execute wartet.
+      if (!isPreview && !confirm && typeof twin.syncTCPGizmoToRobot === 'function') {
         twin.syncTCPGizmoToRobot();
       }
     } else {

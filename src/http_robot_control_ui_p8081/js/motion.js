@@ -729,7 +729,8 @@ export function renderMoveitPopup() {
       break;
     case 'confirm': {
       const left = Math.max(0, (st.confirm_timeout || 0) - phaseElapsed);
-      detail = `Path ready (ghost in viewport) · ${st.waypoints || '?'} waypoints · est. ${mpFmt(st.exec_expected)}` +
+      detail = `Path ready${st.ghost === false ? ' - click ▶ to move' : ' (ghost in viewport)'}` +
+               ` · ${st.waypoints || '?'} waypoints · est. ${mpFmt(st.exec_expected)}` +
                ` · auto-discard in ${left.toFixed(0)} s`;
       break;
     }
