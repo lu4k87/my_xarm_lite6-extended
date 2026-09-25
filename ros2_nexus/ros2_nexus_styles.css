@@ -3516,7 +3516,8 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .seq-stat + .seq-stat::before {
+    .seq-stat + .seq-stat::before,
+    .seq-card-state + .seq-stat::before {
       content: "";
       align-self: center;
       width: 3px;
@@ -3544,6 +3545,16 @@
       background: transparent;
       font-size: 10px !important;
       color: #8a93a8;
+    }
+
+    /* Chevron unten rechts in der Kennzahl-Zeile */
+    .seq-card-stats .modal-card-collapse-btn {
+      margin-left: auto;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      border-color: rgba(255, 255, 255, 0.1);
+      background: transparent;
     }
 
     .seq-card-actions .modal-card-collapse-btn {
@@ -3965,11 +3976,9 @@
 
 /* Status rechts in der Kennzahl-Zeile */
 .seq-card-state {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding-left: 12px;
   font-size: 11px;
   font-weight: 500;
   color: #6ee7b7;
@@ -4262,14 +4271,16 @@
 #launch-modal[data-theme="light"] .seq-card-stats { border-top-color: var(--pl-line); }
 #launch-modal[data-theme="light"] .seq-stat { color: var(--pl-muted); }
 #launch-modal[data-theme="light"] #launch-modal-body .seq-stat b { color: var(--pl-text); }
-#launch-modal[data-theme="light"] .seq-stat + .seq-stat::before { background: var(--pl-line-strong); }
+#launch-modal[data-theme="light"] .seq-stat + .seq-stat::before,
+#launch-modal[data-theme="light"] .seq-card-state + .seq-stat::before { background: var(--pl-line-strong); }
 #launch-modal[data-theme="light"] .seq-card-state { color: #047857; }
 #launch-modal[data-theme="light"] .seq-card.card-inactive .seq-card-state { color: var(--pl-faint); }
 
 #launch-modal[data-theme="light"] .modal-cmd-btn,
 #launch-modal[data-theme="light"] .seq-card-actions .modal-cmd-btn,
 #launch-modal[data-theme="light"] .modal-card-collapse-btn,
-#launch-modal[data-theme="light"] .seq-card-actions .modal-card-collapse-btn {
+#launch-modal[data-theme="light"] .seq-card-actions .modal-card-collapse-btn,
+#launch-modal[data-theme="light"] .seq-card-stats .modal-card-collapse-btn {
   background: var(--pl-surface);
   border-color: var(--pl-line-strong);
   color: var(--pl-muted);

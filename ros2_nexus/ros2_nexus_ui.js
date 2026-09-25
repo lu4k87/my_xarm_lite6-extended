@@ -2364,7 +2364,8 @@
            }, 400);
        };
 
-       // Haengt den kleinen Chevron-Button oben rechts in die Card.
+       // Haengt den kleinen Chevron-Button in die Card (bei den Sequenz-Karten
+       // unten rechts in die Kennzahl-Zeile, sonst oben rechts).
        // headerHost bleibt immer sichtbar, alles in bodyEls klappt weg.
        // Die Hoehe wird per JS gesetzt: im offenen Zustand steht max-height wieder
        // auf '' (natuerliche Hoehe) und overflow auf visible, damit die
@@ -3334,6 +3335,15 @@
                st.innerHTML = `<b>${n}</b>${n === 1 ? one : many}`;
                stats.appendChild(st);
            };
+           // Status links in der Kennzahl-Zeile, die Zahlen folgen rechts daneben;
+           // welcher Text sichtbar ist, entscheidet das CSS ueber card-active /
+           // card-inactive der Karte (die Klassen setzen auch die Sync-Funktionen,
+           // z. B. Linear Axis). Der Einklapp-Chevron sitzt ganz rechts.
+           const state = document.createElement('span');
+           state.className = 'seq-card-state';
+           state.innerHTML = '<span class="seq-card-state-dot"></span>'
+               + '<span class="seq-state-on">Ready</span><span class="seq-state-off">Skipped</span>';
+           stats.appendChild(state);
            const tree = countLaunchTree(o.ulNode);
            addStat(tree.launches, 'Sub-Launch', 'Sub-Launches', 'Included launch files');
            addStat(tree.nodes, 'Node', 'Nodes', 'Launched nodes & servers');
@@ -3341,14 +3351,6 @@
            addStat(argCount, 'Parameter', 'Parameters', 'Selectable parameters & launch args');
            cardDiv.dataset.nodes = tree.nodes;
            cardDiv.dataset.launches = tree.launches;
-           // Status rechts in der Kennzahl-Zeile; welcher Text sichtbar ist,
-           // entscheidet das CSS ueber card-active / card-inactive der Karte
-           // (die Klassen setzen auch die Sync-Funktionen, z. B. Linear Axis).
-           const state = document.createElement('span');
-           state.className = 'seq-card-state';
-           state.innerHTML = '<span class="seq-card-state-dot"></span>'
-               + '<span class="seq-state-on">Ready</span><span class="seq-state-off">Skipped</span>';
-           stats.appendChild(state);
            head.appendChild(stats);
            cardDiv.appendChild(head);
 
@@ -3421,7 +3423,7 @@
                }
                cardDiv.appendChild(body);
 
-               attachCardCollapse(cardDiv, actionsRow,
+               attachCardCollapse(cardDiv, stats,
                    (action && (action.cmd || action.baseCmd)) || cmdStr || li.dataset.cmd,
                    [body]);
            }
