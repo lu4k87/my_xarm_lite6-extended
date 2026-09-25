@@ -31,12 +31,27 @@ def generate_launch_description() -> LaunchDescription:
     )
     device_index = LaunchConfiguration('device_index')
 
+    # Optionale Ueberschreibungen von whisper.yaml (leer = Wert aus der YAML
+    # bzw. dem CPU-Profil whisper_cpu.yaml). Gesetzt z.B. von der Nexus Webapp.
+    model_name_arg = DeclareLaunchArgument(
+        'model_name',
+        default_value="",
+        description='Whisper-Modell (tiny, base, small, medium) - leer = whisper.yaml'
+    )
+    language_arg = DeclareLaunchArgument(
+        'language',
+        default_value="",
+        description='Sprache (auto, de, en) - leer = whisper.yaml'
+    )
+
     ld = LaunchDescription()
 
     # ARGUMENTS MUST GO FIRST!
     ld.add_action(active_arg)
     ld.add_action(device_index_arg)
     ld.add_action(use_gpu_arg)
+    ld.add_action(model_name_arg)
+    ld.add_action(language_arg)
 
     # launch audio listener
     ld.add_action(
@@ -48,11 +63,12 @@ def generate_launch_description() -> LaunchDescription:
         )
     )
 
-    ld.add_action(OpaqueFunction(function=_whisper_container, args=[active, use_gpu]))
+    ld.add_action(OpaqueFunction(function=_whisper_container, args=[
+        active, use_gpu, LaunchConfiguration('model_name'), LaunchConfiguration('language')]))
     return ld
 
 
-def _whisper_container(context, active, use_gpu):
+def _whisper_container(context, active, use_gpu, model_name, language):
     config_dir = os.path.join(get_package_share_directory("whisper_server"), "config")
     whisper_config = os.path.join(config_dir, "whisper.yaml")
     gpu = use_gpu.perform(context).strip().lower() not in ("false", "0", "no", "off")
@@ -62,6 +78,14 @@ def _whisper_container(context, active, use_gpu):
         # als die 5-s-Aufnahme des Listeners. base + 12 Threads + audio_ctx: ~0,4-0,8 s.
         parameters.append(os.path.join(config_dir, "whisper_cpu.yaml"))
     parameters.append({'active': active, 'cparams.use_gpu': gpu})
+    # Nach dem CPU-Profil, damit eine explizite Wahl auch dort gilt
+    overrides = {}
+    if model_name.perform(context).strip():
+        overrides['model_name'] = model_name.perform(context).strip()
+    if language.perform(context).strip():
+        overrides['wparams.language'] = language.perform(context).strip()
+    if overrides:
+        parameters.append(overrides)
 
     container = ComposableNodeContainer(
             name='whisper_container',

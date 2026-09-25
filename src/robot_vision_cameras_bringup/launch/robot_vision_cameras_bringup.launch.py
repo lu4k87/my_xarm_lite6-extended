@@ -32,6 +32,26 @@ from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory, PackageNotFoundError
 import os
+import yaml
+
+
+def _yaml_params(path, node):
+    """ros__parameters eines Nodes aus einer Config-YAML ({} bei Fehler)."""
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return (yaml.safe_load(f) or {}).get(node, {}).get('ros__parameters', {}) or {}
+    except (OSError, yaml.YAMLError):
+        return {}
+
+
+def _yaml_arg(name, params, fallback, description):
+    """Launch-Argument, dessen Standard aus der Config-YAML kommt.
+
+    Die YAML bleibt die Quelle der Werte; das Argument erlaubt nur ein
+    gezieltes Ueberschreiben beim Start (z.B. aus der Nexus Webapp).
+    """
+    return DeclareLaunchArgument(name, default_value=str(params.get(name, fallback)),
+                                 description=description)
 
 
 def generate_launch_description():
@@ -75,6 +95,24 @@ def generate_launch_description():
 
     yolo_model_arg = DeclareLaunchArgument('yolo_model', default_value='yolov8l.pt',
         description='YOLO Modell-Datei (z.B. yolov8l.pt, yolov8s.pt, my_yolo_model.pt)')
+
+    # Config-Parameter (Standard aus perception_params.yaml / grasping_params.yaml)
+    perception = _yaml_params(perception_params_file, 'yolo_3d_bbox_for_zed_m')
+    grasping = _yaml_params(grasping_params_file, 'yolo_planned_grasp_executor')
+    config_args = [
+        _yaml_arg('confidence_threshold', perception, 0.35,
+                  'YOLO Konfidenz-Schwelle (0..1) - perception_params.yaml'),
+        _yaml_arg('ema_alpha', perception, 0.4,
+                  'EMA-Glaettung der 3D-Boxen (0..1, kleiner = ruhiger) - perception_params.yaml'),
+        _yaml_arg('safe_z_hover_height', grasping, 0.15,
+                  'Sichere Hover-Hoehe ueber dem Objekt [m] - grasping_params.yaml'),
+        _yaml_arg('grasp_z_offset', grasping, 0.02,
+                  'Z-Offset auf die Objekt-Oberkante beim Greifen [m] - grasping_params.yaml'),
+        _yaml_arg('velocity_scaling', grasping, 0.2,
+                  'MoveIt Geschwindigkeits-Skalierung der Greifbewegung (0..1) - grasping_params.yaml'),
+        _yaml_arg('acceleration_scaling', grasping, 0.1,
+                  'MoveIt Beschleunigungs-Skalierung der Greifbewegung (0..1) - grasping_params.yaml'),
+    ]
 
     # Path to parameter override
     config_override_path = os.path.join(
@@ -145,7 +183,11 @@ def generate_launch_description():
         output='screen',
         parameters=[
             perception_params_file,
-            {'model_path': LaunchConfiguration('yolo_model')},
+            {
+                'model_path': LaunchConfiguration('yolo_model'),
+                'confidence_threshold': LaunchConfiguration('confidence_threshold'),
+                'ema_alpha': LaunchConfiguration('ema_alpha'),
+            },
         ],
         condition=LaunchConfigurationEquals('camera', 'zed_m')
     )
@@ -190,7 +232,15 @@ def generate_launch_description():
         executable='yolo_planned_grasp_executor.py',
         name='yolo_planned_grasp_executor',
         output='screen',
-        parameters=[grasping_params_file]
+        parameters=[
+            grasping_params_file,
+            {
+                'safe_z_hover_height': LaunchConfiguration('safe_z_hover_height'),
+                'grasp_z_offset': LaunchConfiguration('grasp_z_offset'),
+                'velocity_scaling': LaunchConfiguration('velocity_scaling'),
+                'acceleration_scaling': LaunchConfiguration('acceleration_scaling'),
+            },
+        ]
     )
 
     grasp_action_bridge_node = Node(
@@ -225,6 +275,7 @@ def generate_launch_description():
         tf_roll_arg,
         tf_pitch_arg,
         tf_yaw_arg,
+        *config_args,
         # Camera-specific Nodes
         static_tf_node,
         pointcloud_optimizer_node,

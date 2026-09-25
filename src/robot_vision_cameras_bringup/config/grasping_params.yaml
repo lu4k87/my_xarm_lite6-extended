@@ -16,3 +16,7 @@ yolo_planned_grasp_executor:
     ik_tolerance_position: 0.005
     # Orientation tolerance (in radians)
     ik_tolerance_orientation: 0.001
+
+    # MoveIt Skalierung der Greifbewegung (0..1)
+    velocity_scaling: 0.2
+    acceleration_scaling: 0.1

@@ -68,7 +68,8 @@ class TobiiYoloToGraspRoutine(Node):
         self.state = 0  # 0: wait for dwell, 1: moving to scene, 2: capturing eef & localizing, 3: moving to hover, 4: done/cooldown
         
         self.selected_object_class = None
-        self.tobii_ip = "192.168.100.2"
+        # Per --ros-args -p ueberschreibbar (z.B. aus der Nexus Webapp)
+        self.tobii_ip = str(self.declare_parameter('tobii_ip', "192.168.100.2").value)
         self.script_running = True
         
         self.last_valid_gaze = None
@@ -80,7 +81,7 @@ class TobiiYoloToGraspRoutine(Node):
         # Dwell time variables
         self.current_gazed_class = None
         self.dwell_start_time = None
-        self.DWELL_THRESHOLD = 2.0  # seconds
+        self.DWELL_THRESHOLD = float(self.declare_parameter('dwell_threshold', 2.0).value)  # seconds
         
         # Aruco setup for EEF camera
         try:
