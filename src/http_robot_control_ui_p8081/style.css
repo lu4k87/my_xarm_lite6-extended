@@ -343,6 +343,9 @@ button.status-pill.sound-btn.sound-muted:hover {
 .status-group {
   display: flex;
   align-items: center;
+  /* Laengere Werte ("VR · USB+WLAN", Gamepad-Name): Pills brechen um statt
+     ueber den Rand zu laufen. */
+  flex-wrap: wrap;
   gap: 8px;
 }
 .status-divider {
