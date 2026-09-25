@@ -12,6 +12,9 @@
 //   └─────────────────────────┘           │ STICK    Fliegen            │
 //                                         └─────────────────────────────┘
 //
+// Farben: Rahmen und Kopfpunkt der Karte = Controller (Ring am Modell), jede
+// Taste = ihre Funktionsgruppe (GROUP in xr_ui.js) - Greifen amber, Roboter
+// fuehren blau, Planen violett, VR-Bedienung pink, Not-Aus rot.
 // Die Zeilen folgen dem Zustand (SERVO/PLAN, VR/Passthrough/Nozzle, Laser
 // auf UI oder Objekt, Not-Aus): was gerade nicht geht, ist abgeblendet und
 // sagt warum. Gedrueckte Tasten leuchten in der Farbe des Controllers.
@@ -24,7 +27,7 @@
 // Laserpunkt hinter einer Karte, blendet sie aus - sie verdeckt nie das Ziel.
 
 import * as THREE from 'three';
-import { COL, FONT, FA_FONT, XR_ORDER, glyphFor, roundRect, fitText, pill } from './xr_ui.js';
+import { COL, GROUP, groupColor, FONT, FA_FONT, XR_ORDER, glyphFor, roundRect, fitText, pill } from './xr_ui.js';
 import { lsGet, lsSet } from '../util.js';
 
 const LS_KEY = 'robot_control_xr_hints_v1';
@@ -72,39 +75,63 @@ export function legendRows(hand, st) {
       : st.view === 'ar' ? 'nur in der VR-Ansicht'
         : st.holding ? 'gesperrt, solange die rechte Hand führt' : '';
     return [
-      { input: 'X', label: 'Handpanel ein/aus', sub: st.panel ? 'Panel ist offen' : 'Menü mit allen Tabs', pressed: pad.btnA },
-      { input: 'Y', label: 'HUD ein/aus', sub: st.hud ? 'HUD ist an' : 'HUD ist aus', pressed: pad.btnB },
-      { input: 'STICK', label: 'Gehen', sub: walk || 'in Blickrichtung', dim: !!walk, pressed: stick && !walk },
-      { input: 'ESTOP', label: 'NOT-AUS', sub: 'beide Grips + beide Trigger zugleich', danger: true,
+      { input: 'X', group: 'xr', label: 'Handpanel ein/aus', sub: st.panel ? 'Panel ist offen' : 'Menü mit allen Tabs', pressed: pad.btnA },
+      { input: 'Y', group: 'xr', label: 'HUD ein/aus', sub: st.hud ? 'HUD ist an' : 'HUD ist aus', pressed: pad.btnB },
+      { input: 'STICK', group: 'xr', label: 'Gehen', sub: walk || 'in Blickrichtung', dim: !!walk, pressed: stick && !walk },
+      { input: 'ESTOP', group: 'safety', label: 'NOT-AUS', sub: 'beide Grips + beide Trigger zugleich', danger: true,
         pressed: pad.grip && pad.trigger },
     ];
   }
   const servo = st.mode === 'servo';
   const other = servo ? 'PLAN' : 'SERVO';
   let trig;
-  if (st.aim === 'ui') trig = { label: 'Klicken', sub: 'Laser zeigt auf Panel/HUD' };
-  else if (st.aim === 'object') trig = { label: 'Objekt wählen', sub: st.aimName || 'rote Greifkugel' };
-  else if (servo) trig = { label: 'Greifer auf/zu', sub: st.locked ? 'gesperrt: Not-Aus aktiv' : 'Laser auf UI: klicken', dim: st.locked };
-  else trig = { label: 'Klicken / Objekt wählen', sub: 'Laser auf UI oder Greifkugel' };
+  if (st.aim === 'ui') trig = { group: 'xr', label: 'Klicken', sub: 'Laser zeigt auf Panel/HUD' };
+  else if (st.aim === 'object') trig = { group: 'grip', label: 'Objekt wählen', sub: st.aimName || 'rote Greifkugel' };
+  else if (servo) trig = { group: 'grip', label: 'Greifer auf/zu', sub: st.locked ? 'gesperrt: Not-Aus aktiv' : 'Laser auf UI: klicken', dim: st.locked };
+  else trig = { group: 'xr', label: 'Klicken / Objekt wählen', sub: 'Laser auf UI oder Greifkugel' };
   const grip = servo
-    ? { label: 'Roboter führen', sub: 'halten: TCP folgt der Hand' }
-    : { label: 'Ghost ziehen', sub: 'loslassen: Bahn wird geplant' };
+    ? { group: 'robot', label: 'Roboter führen', sub: 'halten: TCP folgt der Hand' }
+    : { group: 'plan', label: 'Ghost ziehen', sub: 'loslassen: Bahn wird geplant' };
   if (st.locked) { grip.sub = 'gesperrt: Not-Aus aktiv'; grip.dim = true; }
   // Rechter Stick: mit Grip Linearachse (SERVO), ohne Grip fliegen (nur VR).
   const fly = st.view === 'vr';
   let stk;
-  if (servo && pad.grip && !st.locked) stk = { label: 'Linearachse', sub: '← → verfahren' };
-  else if (!fly && servo) stk = { label: 'Linearachse', sub: st.locked ? 'gesperrt: Not-Aus aktiv' : 'nur mit gedrücktem Grip', dim: true };
-  else if (!fly) stk = { label: 'Fliegen', sub: st.view === 'nozzle' ? 'aus in der Kamera Nozzle' : 'nur in der VR-Ansicht', dim: true };
-  else if (pad.grip) stk = { label: 'Fliegen', sub: 'erst Grip loslassen', dim: true };
-  else stk = { label: 'Fliegen', sub: servo && !st.locked ? '↔ kreisen · ↕ Höhe · Grip: Linearachse' : '↔ um den Roboter · ↕ Höhe' };
+  if (servo && pad.grip && !st.locked) stk = { group: 'robot', label: 'Linearachse', sub: '← → verfahren' };
+  else if (!fly && servo) stk = { group: 'robot', label: 'Linearachse', sub: st.locked ? 'gesperrt: Not-Aus aktiv' : 'nur mit gedrücktem Grip', dim: true };
+  else if (!fly) stk = { group: 'xr', label: 'Fliegen', sub: st.view === 'nozzle' ? 'aus in der Kamera Nozzle' : 'nur in der VR-Ansicht', dim: true };
+  else if (pad.grip) stk = { group: 'xr', label: 'Fliegen', sub: 'erst Grip loslassen', dim: true };
+  else stk = { group: 'xr', label: 'Fliegen', sub: servo && !st.locked ? '↔ kreisen · ↕ Höhe · Grip: Linearachse' : '↔ um den Roboter · ↕ Höhe' };
   return [
     { input: 'TRIGGER', ...trig, pressed: pad.trigger },
     { input: 'GRIP', ...grip, pressed: pad.grip },
-    { input: 'A', label: 'Zentrieren', sub: st.view === 'nozzle' ? 'HUD + Kamerasicht vor den Blick' : 'HUD vor den Blick holen', pressed: pad.btnA },
-    { input: 'B', label: `Modus → ${other}`, sub: `aktiv: ${MODE_NAME[st.mode] || st.mode}`, pressed: pad.btnB },
+    { input: 'A', group: 'xr', label: 'Zentrieren', sub: st.view === 'nozzle' ? 'HUD + Kamerasicht vor den Blick' : 'HUD vor den Blick holen', pressed: pad.btnA },
+    { input: 'B', group: servo ? 'plan' : 'robot', label: `Modus → ${other}`, sub: `aktiv: ${MODE_NAME[st.mode] || st.mode}`, pressed: pad.btnB },
     { input: 'STICK', ...stk, pressed: stick && !stk.dim },
   ];
+}
+
+// Farblegende (Punkt + Name je Gruppe), rechtsbuendig bis xRight. Gibt die
+// linke Kante zurueck; passt nicht alles, entfallen Eintraege von links.
+export const LEGEND_GROUPS = ['robot', 'plan', 'grip', 'xr', 'safety'];
+export function drawGroupLegend(ctx, xRight, cy, minX, groups = LEGEND_GROUPS) {
+  ctx.font = `700 18px ${FONT}`;
+  const items = groups.map(g => ({ g, w: 16 + 8 + ctx.measureText(GROUP[g].label).width }));
+  const gap = 18;
+  while (items.length && items.reduce((a, it) => a + it.w, 0) + (items.length - 1) * gap > xRight - minX) items.shift();
+  let x = xRight - (items.reduce((a, it) => a + it.w, 0) + Math.max(0, items.length - 1) * gap);
+  const left = x;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  for (const it of items) {
+    ctx.beginPath();
+    ctx.arc(x + 7, cy, 7, 0, Math.PI * 2);
+    ctx.fillStyle = GROUP[it.g].color;
+    ctx.fill();
+    ctx.fillStyle = COL.mut;
+    ctx.fillText(GROUP[it.g].label, x + 22, cy + 1);
+    x += it.w + gap;
+  }
+  return left;
 }
 
 // ── Zeichnen (auch fuer den Tab TASTEN im Panel) ────────────────────────────
@@ -147,19 +174,28 @@ function drawBadge(ctx, x, cy, input, color, pressed, danger) {
   ctx.fillText(text, cx, cy + 1);
 }
 
-// Eine Zeile: Badge links, Aktion und Erklaerung rechts daneben.
+// Eine Zeile: Akzentleiste + Badge in der Farbe der Funktionsgruppe links,
+// Aktion und Erklaerung rechts daneben.
 export function drawLegendRow(ctx, r, row, color) {
-  const tint = row.danger ? COL.red : color;
+  const tint = row.danger ? COL.red : (row.group ? groupColor(row.group) : color);
   roundRect(ctx, r.x, r.y, r.w, r.h, 12);
   ctx.fillStyle = row.pressed ? tint + '33' : COL.panel;
   ctx.fill();
+  ctx.save();
+  roundRect(ctx, r.x, r.y, r.w, r.h, 12);
+  ctx.clip();
+  ctx.globalAlpha = row.dim ? 0.35 : 1;
+  ctx.fillStyle = tint;
+  ctx.fillRect(r.x, r.y, 6, r.h);
+  ctx.restore();
+  roundRect(ctx, r.x, r.y, r.w, r.h, 12);
   ctx.lineWidth = 2;
   ctx.strokeStyle = row.pressed ? tint : COL.border;
   ctx.stroke();
   const cy = r.y + r.h / 2;
   ctx.globalAlpha = row.dim ? 0.4 : 1;
-  drawBadge(ctx, r.x + 6, cy, row.input, color, row.pressed, row.danger);
-  const tx = r.x + 6 + BADGE_W + 12, maxW = r.x + r.w - 12 - tx;
+  drawBadge(ctx, r.x + 10, cy, row.input, tint, row.pressed, row.danger);
+  const tx = r.x + 10 + BADGE_W + 12, maxW = r.x + r.w - 12 - tx;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.font = `700 25px ${FONT}`;
@@ -196,8 +232,8 @@ export function drawHandHead(ctx, x, cy, w, hand, badge, badgeColor) {
 const legendHeight = (n) => n * ROW_H + Math.max(0, n - 1) * ROW_GAP;
 
 function viewBadge(st) {
-  if (st.view === 'nozzle') return ['NOZZLE', COL.green];
-  return st.view === 'ar' ? ['PASSTHROUGH', COL.cyan] : ['VR', COL.cyan];
+  if (st.view === 'nozzle') return ['NOZZLE', GROUP.xr.color];
+  return st.view === 'ar' ? ['PASSTHROUGH', GROUP.xr.color] : ['VR', GROUP.xr.color];
 }
 
 function drawCard(c, st) {
@@ -211,7 +247,7 @@ function drawCard(c, st) {
   ctx.strokeStyle = HAND_COL[c.hand];
   ctx.stroke();
   const [badge, badgeColor] = c.hand === 'right'
-    ? [MODE_NAME[st.mode] || '', st.mode === 'plan' ? COL.orange : COL.cyan]
+    ? [MODE_NAME[st.mode] || '', groupColor(st.mode === 'plan' ? 'plan' : 'robot')]
     : viewBadge(st);
   drawHandHead(ctx, P, P + HEAD_H / 2, c.cw - 2 * P, c.hand, badge, badgeColor);
   let y = P + HEAD_H + G;

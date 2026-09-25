@@ -28,7 +28,8 @@ import * as THREE from 'three';
 import * as twin from './digital_twin.js';
 import { estopLatched, ros } from '../ros.js';
 import {
-  COL, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, shortLabel, q, qa, txt, stepSpeed,
+  COL, groupColor, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, q, qa, txt, stepSpeed,
+  GRIPPER_LABELS, poseLabel,
   roundRect, fitText, drawButton, pill, drawInfoLine,
   moveitActionsVisible, moveitTargetLine, moveitProgressLines,
 } from './xr_ui.js';
@@ -67,10 +68,13 @@ const HEAD_H = 60, INFO_H = 42, BANNER_H = 48, BTN_H = 124, FLAT_BTN_H = 84;
 const LABEL_COL_W = 150;
 const TB_DIV_W = 20;
 
+// Farben: jede Karte und jeder Toolbar-Button traegt die Farbe seiner
+// Funktionsgruppe (GROUP in xr_ui.js) - dieselbe wie im Handgelenk-Panel.
+
 // Kurze Namen fuer die SCENE-Icons (die Tooltips am Desktop sind lang).
 const SCENE_LABELS = {
   'btn-twin-scene-objects': 'Objekte',
-  'btn-twin-scene-plane': 'Ebene',
+  'btn-twin-scene-plane': 'A4-Vorlage',
   'btn-twin-scene-safety': 'Safety-Zone',
   'btn-twin-scene-zedm': 'ZED-Stativ',
   'btn-twin-detections': 'YOLO',
@@ -279,32 +283,31 @@ function tabCard(key, title, fa, rest) {
 
 const MODELS = {
   toolbar(st) {
-    const d = (sel, label) => domItem(q(sel), label);
+    const d = (sel, label, group) => domItem(q(sel), label, { group });
     const plan = st.ctrlMode === 'plan';
     const ar = st.xrKind === 'ar';
+    const xrOpts = (on) => ({ active: on, group: 'xr', color: on ? groupColor('xr') : COL.mut });
     return {
       toolbar: true,
       items: [
-        d('#btn-twin-grid', 'Grid'),
-        d('#btn-twin-edges', 'Kanten'),
-        d('#btn-twin-gizmo', 'Gizmo'),
-        d('#btn-twin-gizmo-mode', twin.getTCPGizmoMode() === 'rotate' ? 'Rotation' : 'Transl.'),
-        d('#btn-twin-gizmo-sync', 'Sync'),
-        d('#btn-twin-path-preview', 'Ghost'),
-        d('#btn-hud-tabs-toggle', 'Panels'),
-        d('#btn-sound-toggle', 'Sound'),
+        d('#btn-twin-grid', 'Raster', 'scene'),
+        d('#btn-twin-edges', 'Kanten', 'scene'),
+        d('#btn-hud-tabs-toggle', 'Panels', 'scene'),
+        d('#btn-sound-toggle', 'Sound', 'scene'),
+        DIV,
+        d('#btn-twin-gizmo', 'Gizmo', 'plan'),
+        d('#btn-twin-gizmo-mode', twin.getTCPGizmoMode() === 'rotate' ? 'Rotation' : 'Schieben', 'plan'),
+        d('#btn-twin-gizmo-sync', 'Sync', 'plan'),
+        d('#btn-twin-path-preview', 'Ghost', 'plan'),
         DIV,
         ownItem('mode', plan ? 'fa-ghost' : 'fa-gamepad', plan ? 'PLAN' : 'SERVO', api.toggleCtrlMode,
-          { active: true, color: plan ? COL.orange : COL.cyan }),
+          { active: true, group: plan ? 'plan' : 'robot' }),
         DIV,
-        ownItem('view-vr', 'fa-vr-cardboard', 'VR', () => api.setViewMode('vr'),
-          { active: !ar, color: ar ? COL.mut : COL.cyan }),
+        ownItem('view-vr', 'fa-vr-cardboard', 'VR', () => api.setViewMode('vr'), xrOpts(!ar)),
         { ...ownItem('view-ar', 'fa-glasses', 'Passthrough', () => api.setViewMode('ar'),
-          { active: ar, color: ar ? COL.cyan : COL.mut, disabled: !st.canSwitch }), span: 1.35 },
-        DIV,
-        { ...ownItem('wrist', 'fa-hand', 'Handpanel', api.togglePanel,
-          { active: st.panelVisible, color: st.panelVisible ? COL.cyan : COL.mut }), span: 1.2 },
-        ownItem('exit', 'fa-right-from-bracket', 'Beenden', api.exit, { color: COL.red }),
+          { ...xrOpts(ar), disabled: !st.canSwitch }), span: 1.35 },
+        { ...ownItem('wrist', 'fa-hand', 'Handpanel', api.togglePanel, xrOpts(st.panelVisible)), span: 1.2 },
+        ownItem('exit', 'fa-right-from-bracket', 'Beenden', api.exit, { group: 'xr', color: COL.red }),
       ].filter(Boolean),
     };
   },
@@ -326,27 +329,32 @@ const MODELS = {
     if (detail) info.push({ label: 'INFO', value: detail });
     const actions = moveitActionsVisible();
     return {
-      title: 'MOVEIT', fa: 'fa-route',
-      badge: `${txt('#mp-phase')} · ${txt('#mp-timer')}`, badgeColor: COL.cyan,
+      title: 'MOVEIT', fa: 'fa-route', group: 'plan',
+      badge: `${txt('#mp-phase')} · ${txt('#mp-timer')}`, badgeColor: groupColor('plan'),
       close: domItem(q('#moveit-popup .mp-close'), 'Schliessen'),
       banner, info,
-      items: actions ? [domItem(q('#moveit-popup .mp-btn-exec'), 'Execute'), domItem(q('#moveit-popup .mp-btn-discard'), 'Discard')].filter(Boolean) : [],
+      items: actions ? [
+        domItem(q('#moveit-popup .mp-btn-exec'), 'Ausführen', { group: 'plan', color: COL.green }),
+        domItem(q('#moveit-popup .mp-btn-discard'), 'Verwerfen', { group: 'plan', color: COL.red }),
+      ].filter(Boolean) : [],
       cols: 2, btnH: FLAT_BTN_H,
     };
   },
 
   motion() {
     return tabCard('motion', 'MOTION', 'fa-bolt', {
+      group: 'robot',
       items: [
-        ...qa('#hud-tab-motion .hud-tab-body button').map(b => domItem(b)),
-        ...qa('[data-action="setGripper"]').map(b => domItem(b, `Greifer ${shortLabel(b.textContent)}`)),
+        ...qa('#hud-tab-motion .hud-tab-body button').map(b => domItem(b, poseLabel(b), { group: 'robot' })),
+        ...qa('[data-action="setGripper"]').map(b => domItem(b, GRIPPER_LABELS[b.id], { group: 'grip' })),
       ].filter(Boolean),
     });
   },
 
   scene() {
     return tabCard('scene', 'SCENE', 'fa-layer-group', {
-      items: qa('#hud-tab-scene .hud-tab-body button').map(b => domItem(b, SCENE_LABELS[b.id])).filter(Boolean),
+      group: 'scene',
+      items: qa('#hud-tab-scene .hud-tab-body button').map(b => domItem(b, SCENE_LABELS[b.id], { group: 'scene' })).filter(Boolean),
       cols: 3,
     });
   },
@@ -359,6 +367,7 @@ const MODELS = {
     const bar = q('#hud-manip-bar');
     const online = !!(ros && ros.isConnected);
     return tabCard('telemetry', 'TELEMETRY', 'fa-gauge-high', {
+      group: 'help',
       info: [
         { label: 'REACH', value: txt('#hud-manip-val'),
           bar: bar ? { pct: parseFloat(bar.style.width) || 0, color: getComputedStyle(bar).backgroundColor } : null },
@@ -371,21 +380,23 @@ const MODELS = {
 
   pose() {
     return tabCard('pose', 'POSE', 'fa-location-crosshairs', {
+      group: 'robot',
       info: [
         { label: 'XYZ', value: `X ${val('#inp-x')}   Y ${val('#inp-y')}   Z ${val('#inp-z')} mm` },
         { label: 'RPY', value: `R ${val('#inp-r')}   P ${val('#inp-p')}   Y ${val('#inp-yw')}` },
       ],
-      items: [domItem(q('#hud-tab-pose button[data-action="requestMotion"]'), 'Go (Pose)')].filter(Boolean),
+      items: [domItem(q('#hud-tab-pose button[data-action="requestMotion"]'), 'Pose anfahren', { group: 'robot' })].filter(Boolean),
       cols: 1, btnH: FLAT_BTN_H,
     });
   },
 
   speed() {
     return tabCard('speed', 'SPEED', 'fa-gauge', {
-      badge: txt('#speed-val'), badgeColor: COL.cyan,
+      group: 'robot',
+      badge: txt('#speed-val'), badgeColor: groupColor('robot'),
       items: [
-        ownItem('speed-', 'fa-minus', 'Langsamer', () => stepSpeed(-1)),
-        ownItem('speed+', 'fa-plus', 'Schneller', () => stepSpeed(1)),
+        ownItem('speed-', 'fa-minus', 'Langsamer', () => stepSpeed(-1), { group: 'robot' }),
+        ownItem('speed+', 'fa-plus', 'Schneller', () => stepSpeed(1), { group: 'robot' }),
       ],
       btnH: FLAT_BTN_H,
     });
@@ -406,11 +417,11 @@ function addHit(s, r, key, onClick) {
   s.hits.push({ ...r, key: `hud:${s.id}:${key}`, onClick });
 }
 
-function cardBackground(ctx, x, y, w, hgt) {
+function cardBackground(ctx, x, y, w, hgt, group) {
   roundRect(ctx, x, y, w, hgt, 28);
   ctx.fillStyle = 'rgba(11, 17, 32, 0.86)';
   ctx.fill();
-  ctx.strokeStyle = COL.border;
+  ctx.strokeStyle = group ? groupColor(group) + '99' : COL.border;
   ctx.lineWidth = 3;
   ctx.stroke();
 }
@@ -506,7 +517,7 @@ function drawCard(s, m, hov) {
   while (rows > 0 && cardHeight(s, { ...m, btnH }, rows) > s.ch) rows--;
   const hgt = cardHeight(s, { ...m, btnH }, rows);
   const y0 = s.anchor === 'bottom' ? s.ch - hgt : 0;
-  cardBackground(ctx, 0, y0, s.cw, hgt);
+  cardBackground(ctx, 0, y0, s.cw, hgt, m.group);
   s.drawn = { x: 0, y: y0, w: s.cw, h: hgt };
 
   let y = y0 + P;
@@ -560,9 +571,10 @@ function drawHeader(s, m, y, hov) {
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
   ctx.font = `900 30px ${FA_FONT}`;
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = m.group ? groupColor(m.group) : '#ffffff';
   ctx.fillText(glyphFor(m.fa), x + 12, cy);
   ctx.font = `800 26px ${FONT}`;
+  ctx.fillStyle = '#ffffff';
   ctx.fillText(m.title, x + 58, cy);
   const titleEnd = x + 58 + ctx.measureText(m.title).width;
 

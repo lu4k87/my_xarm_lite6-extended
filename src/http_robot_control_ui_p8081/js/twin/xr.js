@@ -44,14 +44,16 @@
 
 import * as THREE from 'three';
 import * as twin from './digital_twin.js';
-import { estopLatched, motionAllowed, ros, rosHooks } from '../ros.js';
+import { estopLatched, motionAllowed, ros, rosHooks, createSrv } from '../ros.js';
+import { SERVICES } from '../config.js';
 import { logMsg } from '../log.js';
 import { lsGet, lsSet } from '../util.js';
 import { emergencyStop, resetEmergencyStop } from '../safety.js';
 import { approachObjectFromAbove, disabledCollisionObjects, setObjectCollision } from '../grasp.js';
 import { playButtonClick, playObjectSelectSound } from '../audio.js';
 import {
-  COL, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, shortLabel, q, qa, txt, stepSpeed,
+  COL, GROUP, groupColor, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, q, qa, txt, stepSpeed,
+  GRIPPER_LABELS, poseLabel,
   roundRect, fitText, drawButton, pill, drawInfoLine,
   moveitActionsVisible, moveitTargetLine, moveitProgressLines,
 } from './xr_ui.js';
@@ -66,7 +68,7 @@ import {
 } from './xr_nozzle_cam.js';
 import {
   HAND_COL, ROW_H, ROW_GAP, createControlHints, controlHintsOnSessionEnd, updateControlHints,
-  isControlHintsEnabled, toggleControlHints, legendRows, drawLegendRow, drawHandHead,
+  isControlHintsEnabled, toggleControlHints, legendRows, drawLegendRow, drawHandHead, drawGroupLegend,
 } from './xr_controls.js';
 
 // ── Konstanten ──────────────────────────────────────────────────────────────
@@ -115,14 +117,14 @@ const hands = { left: null, right: null };   // { ctrl, grip, source, prev }
 let laser = null, reticle = null;
 let panel = null, panelCanvas = null, panelCtx = null, panelTex = null;
 let panelVisible = false;       // HUD zeigt das Wichtigste; X blendet das Panel ein
-let activeTab = 'moveit';
+let activeTab = 'robot';
 let hitRects = [];
 let hoverKey = null;
 let panelDirty = true, lastPanelDraw = 0;
 let hoverObject = null;
 let triggerConsumed = false;
 let estopGestureArmed = true;
-let servoGrip = false, servoIndex = false, lastServoSent = false;
+let servoGrip = false, servoIndex = false, lastServoSent = false, lastIdleSentAt = 0;
 let planDrag = null;            // { gizmo:{position,quaternion}, ctrlPos, ctrlQuat }
 let lastFrameT = 0;
 let vrTopic = null;
@@ -356,7 +358,15 @@ function setCtrlMode(mode) {
   if (mode === ctrlMode) return;
   stopMotion(null);
   ctrlMode = mode;
-  if (mode === 'plan' && !twin.isTCPGizmoActive()) twin.toggleTCPGizmo(true);
+  if (mode === 'plan') {
+    if (!twin.isTCPGizmoActive()) twin.toggleTCPGizmo(true);
+    try {
+      createSrv(SERVICES.setMovetoPreview, 'std_srvs/SetBool').callService(
+        new ROSLIB.ServiceRequest({ data: true }),
+        () => {}
+      );
+    } catch (_) {}
+  }
   flash(mode === 'plan' ? 'Modus PLAN: Grip zieht den Ghost' : 'Modus SERVO: Grip steuert den Roboter');
   pulse('right', 0.6, 60);
   panelDirty = true;
@@ -386,40 +396,97 @@ function attachPanel(grip) {
   panelDirty = true;
 }
 
+// Sechs Tabs, je einer Funktionsgruppe (Farbe siehe GROUP in xr_ui.js). Jede
+// Funktion gibt es genau einmal - frueher standen Gizmo & Co. doppelt in VIEW
+// und MOVEIT. Reihenfolge: was man am haeufigsten braucht, zuerst.
 const TABS = [
-  { id: 'view',   fa: 'fa-cube',        label: 'VIEW' },
-  { id: 'scene',  fa: 'fa-layer-group', label: 'SCENE' },
-  { id: 'motion', fa: 'fa-bolt',        label: 'MOTION' },
-  { id: 'moveit', fa: 'fa-route',       label: 'MOVEIT' },
-  { id: 'object', fa: 'fa-bullseye',    label: 'OBJEKT' },
-  { id: 'xr',     fa: 'fa-vr-cardboard', label: 'VR' },
-  { id: 'keys',   fa: 'fa-circle-question', label: 'TASTEN' },
+  { id: 'robot',  fa: 'fa-robot',           label: 'ROBOTER', group: 'robot' },
+  { id: 'plan',   fa: 'fa-route',           label: 'PLANEN',  group: 'plan' },
+  { id: 'object', fa: 'fa-bullseye',        label: 'OBJEKTE', group: 'grip' },
+  { id: 'scene',  fa: 'fa-layer-group',     label: 'SZENE',   group: 'scene' },
+  { id: 'xr',     fa: 'fa-vr-cardboard',    label: 'VR',      group: 'xr' },
+  { id: 'keys',   fa: 'fa-circle-question', label: 'TASTEN',  group: 'help' },
 ];
 
+// Kurze deutsche Namen statt der langen Desktop-Tooltips. Der Zustand steht
+// in der AN/AUS-Pille, nicht mehr im Namen ("Hide ..."/"Show ...").
+const SCENE_TOGGLES = [
+  ['#btn-twin-scene-objects', 'Szenen-Objekte'],
+  ['#btn-twin-scene-plane', 'A4-Vorlage'],
+  ['#btn-twin-scene-safety', 'Safety-Zone'],
+  ['#btn-twin-scene-zedm', 'ZED-Stativ'],
+  ['#btn-twin-detections', 'YOLO-Boxen'],
+  ['#btn-twin-pointcloud', 'Punktwolke'],
+  ['#btn-twin-distance-line', 'Distanzlinie'],
+  ['#btn-twin-grid', 'Bodenraster'],
+  ['#btn-twin-edges', 'CAD-Kanten'],
+];
+
+const toggleOpts = (on, group) => ({ active: on, group, color: on ? groupColor(group) : COL.mut });
+const span = (item, n) => item && ({ ...item, span: n });
+
+// Zelle mit [−] Name/Wert [+], z. B. fuer Speed oder die Achsen-Justage.
+function stepperItem(key, label, sub, onMinus, onPlus, n = 2) {
+  return {
+    key, label, sub, stepper: true, span: n,
+    minus: { key: `${key}:-`, onClick: onMinus },
+    plus: { key: `${key}:+`, onClick: onPlus },
+  };
+}
+
+// MoveIt-Kollisionsschalter: gruen = aktiv, rot = MoveIt ignoriert sie
+// (Warnung), ohne Node INAKTIV.
+function collisionItem(sel, label) {
+  const el = q(sel);
+  if (!el) return null;
+  const on = el.classList.contains('coll-on');
+  const off = el.classList.contains('coll-off');
+  return domItem(el, label, { group: 'scene', toggle: true, on,
+    state: on ? 'AN' : (off ? 'AUS' : 'INAKTIV'), warn: off });
+}
+
+// Pfad-Vorschau (Ghost): AN/AUS, ohne erkannten Node INAKTIV - klickbar
+// bleibt sie trotzdem (toggleMoveToPreview schaltet dann ein).
+function previewItem() {
+  const el = q('#btn-twin-path-preview');
+  if (!el) return null;
+  const unknown = parseFloat(getComputedStyle(el).opacity) < 0.5 && !el.classList.contains('active');
+  return domItem(el, 'Ghost-Vorschau', { group: 'plan', toggle: true,
+    state: unknown ? 'INAKTIV' : undefined });
+}
+
+// Inhalt eines Tabs: Infozeilen oben, darunter Sektionen (drawSections).
 function tabContent(id) {
   const info = [];
-  let items = [];
-  if (id === 'view') {
-    // Kamera-Ansichten (Reset/Top) steuert in der Brille der Kopf - weggelassen.
-    items = qa('.twin-toolbar button')
-      .filter(b => !['resetDigitalTwinView', 'setDigitalTwinTopView', 'enterTwinXR', 'openVRMirror'].includes(b.dataset.action))
-      .map(b => domItem(b));
-  } else if (id === 'scene') {
-    items = qa('#hud-tab-scene .hud-tab-body button').map(b => domItem(b));
-  } else if (id === 'motion') {
-    info.push({ label: 'SPEED', value: txt('#speed-val') });
-    info.push({ label: 'REACH', value: txt('#hud-manip-val') });
-    info.push({ label: 'FLOOR', value: txt('#hud-floor-val') });
+  const sections = [];
+  if (id === 'robot') {
+    const plan = ctrlMode === 'plan';
     info.push({ label: 'SERVO', value: txt('#moveit-badge') });
-    items = qa('#hud-tab-motion .hud-tab-body button').map(b => domItem(b));
-    items.push(domItem(q('#hud-tab-pose button[data-action="requestMotion"]'), 'Go (Pose)'));
-    items.push(ownItem('speed-', 'fa-minus', 'Speed −', () => stepSpeed(-1)));
-    items.push(ownItem('speed+', 'fa-plus', 'Speed +', () => stepSpeed(1)));
-    qa('[data-action="setGripper"]').forEach(b => items.push(domItem(b, `Greifer ${shortLabel(b.textContent)}`)));
-  } else if (id === 'moveit') {
+    info.push({ label: 'REACH', value: txt('#hud-manip-val') });
+    sections.push({
+      title: 'STEUERMODUS', fa: 'fa-gamepad', group: 'robot', cols: 2, btnH: 84,
+      meta: plan ? 'Grip zieht den Ghost · B wechselt' : 'Grip führt den Roboter · B wechselt',
+      items: [
+        ownItem('mode-servo', 'fa-gamepad', 'SERVO', () => setCtrlMode('servo'), toggleOpts(!plan, 'robot')),
+        ownItem('mode-plan', 'fa-ghost', 'PLAN', () => setCtrlMode('plan'), toggleOpts(plan, 'plan')),
+      ],
+    });
+    const poses = qa('#hud-tab-motion .hud-tab-body button').map(b => domItem(b, poseLabel(b), { group: 'robot' }));
+    poses.push(domItem(q('#hud-tab-pose button[data-action="requestMotion"]'), 'Pose anfahren', { group: 'robot' }));
+    sections.push({ title: 'POSEN ANFAHREN', fa: 'fa-location-arrow', group: 'robot', cols: 4, btnH: 108, items: poses });
+    sections.push({
+      title: 'GESCHWINDIGKEIT', fa: 'fa-gauge', group: 'robot', cols: 4, btnH: 72,
+      items: [stepperItem('speed', 'Speed', txt('#speed-val'), () => stepSpeed(-1), () => stepSpeed(1), 4)],
+    });
+    sections.push({
+      title: 'GREIFER', fa: 'fa-hand', group: 'grip', cols: 3, btnH: 84,
+      meta: ctrlMode === 'servo' ? 'Trigger rechts: auf/zu' : '',
+      items: qa('[data-action="setGripper"]').map(b => domItem(b, GRIPPER_LABELS[b.id], { group: 'grip' })),
+    });
+  } else if (id === 'plan') {
     const mp = q('#moveit-popup');
     const hidden = !mp || mp.classList.contains('mp-hidden');
-    info.push({ label: 'PHASE', value: hidden ? '– (Popup zu)' : txt('#mp-phase') });
+    info.push({ label: 'PHASE', value: hidden ? '– (keine Planung)' : txt('#mp-phase') });
     const obj = txt('#mp-object-name');
     if (obj) info.push({ label: 'OBJEKT', value: obj });
     info.push(moveitTargetLine());
@@ -428,16 +495,29 @@ function tabContent(id) {
     if (detail && !hidden) info.push({ label: 'INFO', value: detail });
     // Execute/Discard nur, wenn sie auch am Desktop sichtbar sind.
     const actions = moveitActionsVisible();
-    items = [
-      actions && domItem(q('#moveit-popup .mp-btn-exec'), 'Execute'),
-      actions && domItem(q('#moveit-popup .mp-btn-discard'), 'Discard'),
-      domItem(q('#mp-btn-path-preview'), 'Ghost-Vorschau'),
-      domItem(q('#chk-gizmo-auto-drop'), 'Auto-Move'),
-      domItem(q('#btn-twin-gizmo-mode'), twin.getTCPGizmoMode() === 'rotate' ? 'Gizmo: Rotation' : 'Gizmo: Translation'),
-      domItem(q('#btn-twin-gizmo-sync'), 'Gizmo → TCP'),
-      domItem(q('#mp-btn-distance-line'), 'Distanzlinie'),
-      domItem(q('#btn-twin-gizmo'), 'TCP-Gizmo'),
-    ];
+    sections.push(actions ? {
+      title: 'BAHN BESTÄTIGEN', fa: 'fa-circle-check', group: 'plan', cols: 2, btnH: 84,
+      items: [
+        domItem(q('#moveit-popup .mp-btn-exec'), 'Ausführen', { group: 'plan', color: COL.green }),
+        domItem(q('#moveit-popup .mp-btn-discard'), 'Verwerfen', { group: 'plan', color: COL.red }),
+      ],
+    } : {
+      title: 'BAHN', fa: 'fa-circle-check', group: 'plan', cols: 2, btnH: 84, items: [],
+      notes: ctrlMode === 'plan'
+        ? ['Grip halten: Ghost ziehen · loslassen: Bahn wird geplant.']
+        : ['Modus PLAN (B rechts), dann mit Grip den Ghost ziehen.'],
+    });
+    const rot = twin.getTCPGizmoMode() === 'rotate';
+    sections.push({
+      title: 'GHOST & TCP-GIZMO', fa: 'fa-ghost', group: 'plan', cols: 2, btnH: 72,
+      items: [
+        domItem(q('#btn-twin-gizmo'), 'TCP-Gizmo', { group: 'plan', toggle: true }),
+        previewItem(),
+        domItem(q('#chk-gizmo-auto-drop'), 'Auto-Move', { group: 'plan', toggle: true }),
+        domItem(q('#btn-twin-gizmo-mode'), rot ? 'Gizmo: Rotation' : 'Gizmo: Verschieben', { group: 'plan' }),
+        span(domItem(q('#btn-twin-gizmo-sync'), 'Gizmo auf TCP zurücksetzen', { group: 'plan' }), 2),
+      ],
+    });
   } else if (id === 'object') {
     const sel = twin.getDigitalTwinSelectedGrasp();
     const infoSel = sel ? twin.getDetectedObjectInfo(sel) : null;
@@ -447,76 +527,81 @@ function tabContent(id) {
     }
     if (infoSel) {
       const off = infoSel.collisionName && disabledCollisionObjects.has(infoSel.collisionName);
-      items.push(ownItem('obj-approach', 'fa-arrow-down', 'Approach von oben', () => approachObjectFromAbove(infoSel),
-        { disabled: !infoSel.grasp, color: COL.cyan }));
-      items.push(ownItem('obj-grasp', 'fa-hand-holding', 'Grasp (n. impl.)',
-        () => logMsg('UI', 'ℹ️ Grasp function is not yet implemented.', 'info'), { color: COL.dim }));
-      items.push(ownItem('obj-coll', off ? 'fa-shield-halved' : 'fa-shield',
-        off ? 'Kollision an' : 'Kollision aus', () => setObjectCollision(infoSel, !!off),
-        { disabled: !infoSel.collisionName, color: off ? COL.green : COL.orange }));
+      sections.push({
+        title: 'AKTION', fa: 'fa-hand-holding', group: 'grip', cols: 3, btnH: 84,
+        items: [
+          ownItem('obj-approach', 'fa-arrow-down', 'Anfahren', () => approachObjectFromAbove(infoSel),
+            { disabled: !infoSel.grasp, group: 'grip' }),
+          ownItem('obj-grasp', 'fa-hand-holding', 'Greifen (n. impl.)',
+            () => logMsg('UI', 'ℹ️ Grasp function is not yet implemented.', 'info'), { group: 'grip', color: COL.dim }),
+          ownItem('obj-coll', off ? 'fa-shield-halved' : 'fa-shield', 'Kollision', () => setObjectCollision(infoSel, !!off),
+            { disabled: !infoSel.collisionName, group: 'grip', toggle: true, on: !off, warn: !!off }),
+        ],
+      });
     }
-    for (const o of twin.listDetectedObjects().slice(0, 8)) {
-      items.push(ownItem(`obj:${o.name}`, 'fa-cube', o.name.replace(/_/g, ' '), () => selectObject(o.name),
-        { active: o.name === sel, color: o.name === sel ? COL.red : COL.text }));
-    }
+    const objs = twin.listDetectedObjects().slice(0, 8);
+    sections.push({
+      title: 'ERKANNTE OBJEKTE', fa: 'fa-cubes', group: 'grip', cols: 2, btnH: 72,
+      meta: objs.length ? 'Klick = auswählen' : '',
+      items: objs.map(o => ownItem(`obj:${o.name}`, 'fa-cube', o.name.replace(/_/g, ' '), () => selectObject(o.name),
+        { active: o.name === sel, group: 'grip' })),
+      notes: objs.length ? undefined : ['Keine Objekte erkannt (YOLO / Szene).'],
+    });
+  } else if (id === 'scene') {
+    sections.push({
+      title: 'EINBLENDEN', fa: 'fa-eye', group: 'scene', cols: 2, btnH: 64,
+      items: SCENE_TOGGLES.map(([sel, label]) => domItem(q(sel), label, { group: 'scene', toggle: true })),
+    });
+    sections.push({
+      title: 'MOVEIT-KOLLISION', fa: 'fa-shield-halved', group: 'scene', cols: 2, btnH: 64,
+      meta: 'AUS = MoveIt ignoriert sie',
+      items: [collisionItem('#btn-moveit-coll-objects', 'Objekte'), collisionItem('#btn-moveit-coll-ground', 'Boden')],
+    });
+    sections.push({
+      title: 'SYSTEM', fa: 'fa-sliders', group: 'help', cols: 2, btnH: 64,
+      items: [
+        domItem(q('#btn-sound-toggle'), 'Sound', { group: 'scene', toggle: true }),
+        domItem(q('#btn-twin-safety-test'), 'Warnungen testen', { group: 'safety' }),
+      ],
+    });
   } else if (id === 'xr') {
-    return { info, items, sections: xrSections() };
+    sections.push(...xrSections());
   }
-  return { info, items: items.filter(Boolean) };
+  for (const sec of sections) sec.items = sec.items.filter(Boolean);
+  return { info, sections };
 }
 
 // ── VR-Tab: Sektionen ───────────────────────────────────────────────────────
-// Von oft (oben) nach selten (unten). Umschalter einer Gruppe schliessen sich
-// gegenseitig aus (SERVO/PLAN, VR/Passthrough/Nozzle). Solange die Nozzle-
-// Kamera laeuft, ersetzt ihre Einstellung den Block ROBOTER AUSRICHTEN - das
-// Rig haengt dann am Roboter, eine Standort-Justage waere wirkungslos.
-const toggleOpts = (on, color) => ({ active: on, color: on ? color : COL.mut });
-const span = (item, n) => ({ ...item, span: n });
-
-// Zelle mit [−] Name/Wert [+], z. B. fuer die Achsen-Justage.
-function stepperItem(key, label, sub, onMinus, onPlus) {
-  return {
-    key, label, sub, stepper: true, span: 2,
-    minus: { key: `${key}:-`, onClick: onMinus },
-    plus: { key: `${key}:+`, onClick: onPlus },
-  };
-}
-
+// Umschalter einer Gruppe schliessen sich gegenseitig aus (VR/Passthrough/
+// Nozzle). Solange die Nozzle-Kamera laeuft, ersetzt ihre Einstellung den
+// Block ROBOTER AUSRICHTEN - das Rig haengt dann am Roboter, eine
+// Standort-Justage waere wirkungslos. SERVO/PLAN steht im Tab ROBOTER.
 function xrSections() {
-  const plan = ctrlMode === 'plan';
   const ar = xrKind === 'ar';
   const cam = isNozzleCamActive();
   const deg = (rad) => THREE.MathUtils.radToDeg(rad).toFixed(0);
   const c = rigCal[xrKind];
   const sections = [
     {
-      title: 'STEUERMODUS', fa: 'fa-gamepad', cols: 2, btnH: 84,
-      meta: plan ? 'Grip zieht den Ghost · B wechselt' : 'Grip steuert den Roboter · B wechselt',
-      items: [
-        ownItem('mode-servo', 'fa-gamepad', 'SERVO', () => setCtrlMode('servo'), toggleOpts(!plan, COL.cyan)),
-        ownItem('mode-plan', 'fa-ghost', 'PLAN', () => setCtrlMode('plan'), toggleOpts(plan, COL.orange)),
-      ],
-    },
-    {
-      title: 'ANSICHT', fa: 'fa-eye', cols: 3, btnH: 108,
+      title: 'ANSICHT', fa: 'fa-eye', group: 'xr', cols: 3, btnH: 108,
       meta: cam ? 'Sicht folgt dem Endeffektor' : (ar ? 'Kalibrierung ungetestet' : 'Freier Standort'),
       items: [
-        ownItem('view-vr', 'fa-vr-cardboard', 'VR', () => setViewMode('vr'), toggleOpts(!ar && !cam, COL.cyan)),
+        ownItem('view-vr', 'fa-vr-cardboard', 'VR', () => setViewMode('vr'), toggleOpts(!ar && !cam, 'xr')),
         ownItem('view-ar', 'fa-glasses', 'Passthrough', () => setViewMode('ar'),
-          { ...toggleOpts(ar, COL.cyan), disabled: !canSwitchView() }),
-        ownItem('view-nozzle', 'fa-video', 'Kamera Nozzle', toggleNozzleView, toggleOpts(cam, COL.green)),
+          { ...toggleOpts(ar, 'xr'), disabled: !canSwitchView() }),
+        ownItem('view-nozzle', 'fa-video', 'Kamera Nozzle', toggleNozzleView, toggleOpts(cam, 'xr')),
       ],
     },
   ];
   if (cam) {
     const tilt = getNozzleTiltDeg();
     sections.push({
-      title: 'KAMERA NOZZLE', fa: 'fa-video', color: COL.green, cols: 3, btnH: 72,
+      title: 'KAMERA NOZZLE', fa: 'fa-video', group: 'xr', cols: 3, btnH: 72,
       meta: `Neigung ${tilt}° zur Düsenachse`,
       items: [
         stepperItem('nozzle-tilt', 'Neigung', `${tilt}°`, () => stepNozzleTilt(-5), () => stepNozzleTilt(5)),
         ownItem('nozzle-tilt-std', 'fa-rotate-left', `Standard ${TILT_DEFAULT_DEG}°`, () => setNozzleTilt(TILT_DEFAULT_DEG),
-          { disabled: tilt === TILT_DEFAULT_DEG }),
+          { disabled: tilt === TILT_DEFAULT_DEG, group: 'xr' }),
       ],
       notes: [
         'Oben im Bild die Düse, darunter der Bereich unter dem Greifer.',
@@ -525,27 +610,27 @@ function xrSections() {
     });
   } else {
     sections.push({
-      title: 'ROBOTER AUSRICHTEN', fa: 'fa-street-view', cols: 4, btnH: 72,
+      title: 'ROBOTER AUSRICHTEN', fa: 'fa-street-view', group: 'xr', cols: 4, btnH: 72,
       meta: `X ${c.x.toFixed(2)}  Y ${c.y.toFixed(2)}  Z ${c.z.toFixed(2)} m · ${deg(c.yaw)}°`,
       items: [
         stepperItem('rig-x', 'X', '1 cm', () => nudgeRobot(-0.01, 0, 0, 0), () => nudgeRobot(0.01, 0, 0, 0)),
         stepperItem('rig-y', 'Y', '1 cm', () => nudgeRobot(0, -0.01, 0, 0), () => nudgeRobot(0, 0.01, 0, 0)),
         stepperItem('rig-z', 'Z', '1 cm', () => nudgeRobot(0, 0, -0.01, 0), () => nudgeRobot(0, 0, 0.01, 0)),
         stepperItem('rig-yaw', 'Yaw', '1°', () => nudgeRobot(0, 0, 0, -1), () => nudgeRobot(0, 0, 0, 1)),
-        span(ownItem('rig-place', 'fa-anchor', 'Basis = Controller', placeBaseAtController, { color: COL.cyan }), 2),
-        ownItem('rig-reset', 'fa-rotate-left', 'Reset', resetRig),
-        ownItem('rig-save', 'fa-floppy-disk', 'Speichern', saveRigCal, { color: COL.green }),
+        span(ownItem('rig-place', 'fa-anchor', 'Basis = Controller', placeBaseAtController, { group: 'xr' }), 2),
+        ownItem('rig-reset', 'fa-rotate-left', 'Reset', resetRig, { group: 'xr' }),
+        ownItem('rig-save', 'fa-floppy-disk', 'Speichern', saveRigCal, { group: 'xr', color: COL.green }),
       ],
     });
   }
   sections.push({
-    title: 'HUD & SESSION', fa: 'fa-table-cells-large', cols: 4, btnH: 72, dock: 'bottom',
+    title: 'HUD & SESSION', fa: 'fa-table-cells-large', group: 'xr', cols: 2, btnH: 64, dock: 'bottom',
     meta: 'X Panel · Y HUD · A zentrieren',
     items: [
-      ownItem('hud', 'fa-table-cells-large', 'HUD', toggleHudVisible, toggleOpts(isHudEnabled(), COL.cyan)),
-      ownItem('hints', 'fa-circle-question', 'Tastenhilfe', toggleHints, toggleOpts(isControlHintsEnabled(), COL.cyan)),
-      ownItem('recenter', 'fa-crosshairs', 'Zentrieren', recenterView),
-      ownItem('xr-exit', 'fa-right-from-bracket', 'Beenden', () => session && session.end(), { color: COL.red }),
+      ownItem('hud', 'fa-table-cells-large', 'HUD', toggleHudVisible, toggleOpts(isHudEnabled(), 'xr')),
+      ownItem('hints', 'fa-circle-question', 'Tastenhilfe', toggleHints, toggleOpts(isControlHintsEnabled(), 'xr')),
+      ownItem('recenter', 'fa-crosshairs', 'Zentrieren', recenterView, { group: 'xr' }),
+      ownItem('xr-exit', 'fa-right-from-bracket', 'Beenden', () => session && session.end(), { group: 'xr', color: COL.red }),
     ],
   });
   return sections;
@@ -613,10 +698,8 @@ function drawKeysTab(ctx) {
   const w = CW - 2 * PAD;
   const colW = (w - GAP) / 2;
   let y = CONTENT_Y;
-  drawSectionHead(ctx, {
-    title: 'CONTROLLER', fa: 'fa-gamepad',
-    meta: isControlHintsEnabled() ? 'Controller ansehen = Karte daneben' : 'Laser + Trigger = klicken',
-  }, y);
+  // Kopf mit Farblegende statt Hinweistext: die Tastenfarben = Funktionsgruppen.
+  drawSectionHead(ctx, { title: 'CONTROLLER', fa: 'fa-gamepad', group: 'help', legend: true }, y);
   y += SEC_HEAD_H + SEC_HEAD_GAP;
   let rowsEnd = y;
   for (const [hand, x] of [['left', PAD], ['right', PAD + colW + GAP]]) {
@@ -632,7 +715,7 @@ function drawKeysTab(ctx) {
   const toggleR = { x: PAD, y: CONTENT_BOTTOM - KEYS_TOGGLE_H, w, h: KEYS_TOGGLE_H };
   y = rowsEnd + SEC_GAP;
   if (y + SEC_HEAD_H + SEC_HEAD_GAP + MODE_CARD_H + SEC_GAP <= toggleR.y) {
-    drawSectionHead(ctx, { title: 'MODI', fa: 'fa-shuffle', meta: 'B wechselt · Karte klicken' }, y);
+    drawSectionHead(ctx, { title: 'MODI', fa: 'fa-shuffle', group: 'help', meta: 'B wechselt · Karte klicken' }, y);
     y += SEC_HEAD_H + SEC_HEAD_GAP;
     drawModeCard(ctx, { x: PAD, y, w: colW, h: MODE_CARD_H }, 'servo');
     drawModeCard(ctx, { x: PAD + colW + GAP, y, w: colW, h: MODE_CARD_H }, 'plan');
@@ -640,17 +723,17 @@ function drawKeysTab(ctx) {
 
   const on = isControlHintsEnabled();
   drawSectionButton(ctx, toggleR, ownItem('keys-hints', 'fa-circle-question',
-    `Tastenhilfe an den Controllern: ${on ? 'AN' : 'AUS'}`, toggleHints, toggleOpts(on, COL.cyan)));
+    'Tastenhilfe an den Controllern', toggleHints, { ...toggleOpts(on, 'xr'), toggle: true }));
 }
 
 const MODE_INFO = {
   servo: {
-    fa: 'fa-gamepad', color: COL.cyan, title: 'SERVO',
+    fa: 'fa-gamepad', color: GROUP.robot.color, title: 'SERVO',
     lines: [['GRIP', 'halten: Roboter folgt der Hand'], ['TRIGGER', 'Greifer auf/zu'], ['GRIP + STICK', '← → Linearachse']],
   },
   plan: {
-    fa: 'fa-ghost', color: COL.orange, title: 'PLAN',
-    lines: [['GRIP', 'Ghost (TCP-Ziel) ziehen'], ['LOSLASSEN', 'Bahn wird geplant'], ['EXECUTE', 'Tab MOVEIT oder HUD']],
+    fa: 'fa-ghost', color: GROUP.plan.color, title: 'PLAN',
+    lines: [['GRIP', 'Ghost (TCP-Ziel) ziehen'], ['LOSLASSEN', 'Bahn wird geplant'], ['AUSFÜHREN', 'Tab PLANEN oder HUD']],
   },
 };
 
@@ -718,7 +801,7 @@ function drawPanel() {
   const flashing = flashText && performance.now() < flashUntil;
   let xr = CW - PAD;
   xr = pill(ctx, xr, PAD + 14, ros && ros.isConnected ? 'ROS' : 'ROS OFF', ros && ros.isConnected ? COL.green : COL.red);
-  xr = pill(ctx, xr, PAD + 14, ctrlMode === 'plan' ? 'PLAN' : 'SERVO', ctrlMode === 'plan' ? COL.orange : COL.cyan);
+  xr = pill(ctx, xr, PAD + 14, ctrlMode === 'plan' ? 'PLAN' : 'SERVO', groupColor(ctrlMode === 'plan' ? 'plan' : 'robot'));
   if (estopLatched) xr = pill(ctx, xr, PAD + 14, 'E-STOP', COL.red);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
@@ -731,24 +814,42 @@ function drawPanel() {
   // Tabs
   const tabW = (CW - 2 * PAD - (TABS.length - 1) * GAP) / TABS.length;
   const tabY = PAD + HEADER_H + GAP;
+  // Jeder Tab zeigt seine Gruppenfarbe immer (Icon + Leiste oben), aktiv
+  // zusaetzlich getoent und umrandet - so lernt man die Farben nebenbei.
   TABS.forEach((t, i) => {
     const r = { x: PAD + i * (tabW + GAP), y: tabY, w: tabW, h: TAB_H };
     const key = `tab:${t.id}`;
     const on = activeTab === t.id;
+    const gc = groupColor(t.group);
     roundRect(ctx, r.x, r.y, r.w, r.h, 14);
-    ctx.fillStyle = on ? '#0c4a6e' : (hoverKey === key ? COL.btnHover : COL.panel);
+    ctx.fillStyle = hoverKey === key && !on ? COL.btnHover : COL.panel;
     ctx.fill();
-    ctx.strokeStyle = on ? COL.cyan : COL.border;
+    if (on) {
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = gc;
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.save();
+    roundRect(ctx, r.x, r.y, r.w, r.h, 14);
+    ctx.clip();
+    ctx.fillStyle = gc;
+    ctx.globalAlpha = on ? 1 : 0.6;
+    ctx.fillRect(r.x, r.y, r.w, on ? 8 : 5);
+    ctx.restore();
+    roundRect(ctx, r.x, r.y, r.w, r.h, 14);
+    ctx.strokeStyle = on ? gc : COL.border;
     ctx.lineWidth = on ? 3 : 2;
     ctx.stroke();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `900 34px ${FA_FONT}`;
-    ctx.fillStyle = on ? COL.cyan : COL.mut;
-    ctx.fillText(glyphFor(t.fa), r.x + r.w / 2, r.y + 34);
+    ctx.fillStyle = on ? gc : gc + 'b3';
+    ctx.fillText(glyphFor(t.fa), r.x + r.w / 2, r.y + 38);
     ctx.font = `700 20px ${FONT}`;
     ctx.fillStyle = on ? COL.text : COL.mut;
-    ctx.fillText(t.label, r.x + r.w / 2, r.y + 74);
+    ctx.fillText(t.label, r.x + r.w / 2, r.y + 76);
     hitRects.push({ ...r, key, onClick: () => { activeTab = t.id; panelDirty = true; } });
   });
 
@@ -757,9 +858,8 @@ function drawPanel() {
   if (activeTab === 'keys') {
     drawKeysTab(ctx);
   } else {
-    const { info, items, sections } = tabContent(activeTab);
-    if (sections) drawSections(ctx, sections);
-    else drawFlatContent(ctx, info, items);
+    const { info, sections } = tabContent(activeTab);
+    drawSections(ctx, sections, info);
   }
 
   // Not-Aus immer unten; ist er verriegelt, daneben Reset.
@@ -790,31 +890,6 @@ function drawPanel() {
   lastPanelDraw = performance.now();
 }
 
-function drawFlatContent(ctx, info, items) {
-  let y = CONTENT_Y;
-  ctx.textBaseline = 'middle';
-  for (const line of info) {
-    drawInfoLine(ctx, line, PAD, y, CW - 2 * PAD, INFO_LINE_H, INFO_LABEL_W);
-    y += INFO_LINE_H;
-  }
-  if (info.length) y += GAP;
-
-  const btnW = (CW - 2 * PAD - (GRID_COLS - 1) * GAP) / GRID_COLS;
-  const rowsFit = Math.max(0, Math.floor((CONTENT_BOTTOM - y + GAP) / (BTN_H + GAP)));
-  const maxItems = rowsFit * GRID_COLS;
-  items.slice(0, maxItems).forEach((it, i) => {
-    const r = { x: PAD + (i % GRID_COLS) * (btnW + GAP), y: y + Math.floor(i / GRID_COLS) * (BTN_H + GAP), w: btnW, h: BTN_H };
-    drawButton(ctx, r, it, hoverKey === it.key);
-    if (!it.disabled) hitRects.push({ ...r, key: it.key, onClick: it.onClick });
-  });
-  if (items.length > maxItems) {
-    ctx.textAlign = 'right';
-    ctx.font = `500 20px ${FONT}`;
-    ctx.fillStyle = COL.dim;
-    ctx.fillText(`+${items.length - maxItems} weitere am Desktop`, CW - PAD, CONTENT_BOTTOM + 4);
-  }
-}
-
 // Zellen zeilenweise fuellen; ein Eintrag mit span belegt mehrere Spalten und
 // rutscht in die naechste Zeile, wenn er in der aktuellen nicht mehr passt.
 function gridCells(items, cols) {
@@ -840,8 +915,15 @@ function sectionHeight(s, rows) {
 // ein Raster. dock 'bottom' sitzt fest ueber dem Not-Aus und springt nicht,
 // wenn sich die Sektionen darueber aendern. Passt eine Sektion nicht mehr
 // ganz hinein, entfaellt sie mit Hinweis - es ueberlappt nie etwas.
-function drawSections(ctx, sections) {
+function drawSections(ctx, sections, info = []) {
   const w = CW - 2 * PAD;
+  let top = CONTENT_Y;
+  ctx.textBaseline = 'middle';
+  for (const line of info) {
+    drawInfoLine(ctx, line, PAD, top, w, INFO_LINE_H, INFO_LABEL_W);
+    top += INFO_LINE_H;
+  }
+  if (info.length) top += GAP;
   const laid = sections.map((sec) => {
     const s = { ...sec, btnH: sec.btnH || SEC_BTN_H, cols: sec.cols || GRID_COLS };
     const grid = gridCells(s.items.filter(Boolean), s.cols);
@@ -852,7 +934,7 @@ function drawSections(ctx, sections) {
     l.y = bottom - l.hgt;
     bottom = l.y - SEC_GAP;
   }
-  let y = CONTENT_Y;
+  let y = top;
   let skipped = 0;
   for (const l of laid) {
     if (l.s.dock === 'bottom') continue;
@@ -862,7 +944,7 @@ function drawSections(ctx, sections) {
   }
   for (const l of laid) {
     if (l.y === undefined) continue;
-    if (l.y < CONTENT_Y) { skipped++; continue; }     // angedockt, aber zu hoch
+    if (l.y < top) { skipped++; continue; }           // angedockt, aber zu hoch
     drawSection(ctx, l, w);
   }
   if (skipped) {
@@ -880,7 +962,7 @@ function drawSection(ctx, { s, cells, rows, y }, w) {
   const colW = (w - (s.cols - 1) * GAP) / s.cols;
   for (const { it, col, row, n } of cells) {
     const r = { x: PAD + col * (colW + GAP), y: gy + row * (s.btnH + GAP), w: n * colW + (n - 1) * GAP, h: s.btnH };
-    if (it.stepper) drawStepper(ctx, r, it);
+    if (it.stepper) drawStepper(ctx, r, it, s.group);
     else drawSectionButton(ctx, r, it);
   }
   gy += rows * s.btnH + Math.max(0, rows - 1) * GAP;
@@ -901,20 +983,22 @@ function drawSectionHead(ctx, s, y) {
   let x = PAD + 4;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
+  const gc = s.group ? groupColor(s.group) : (s.color || COL.cyan);
   if (s.fa) {
     const g = glyphFor(s.fa);
     ctx.font = `900 22px ${FA_FONT}`;
-    ctx.fillStyle = s.color || COL.cyan;
+    ctx.fillStyle = gc;
     ctx.fillText(g, x, cy);
     x += ctx.measureText(g).width + 12;
   }
   ctx.font = `800 21px ${FONT}`;
-  ctx.fillStyle = COL.text;
+  ctx.fillStyle = s.group ? gc : COL.text;
   if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
   ctx.fillText(s.title, x, cy);
   x += ctx.measureText(s.title).width + 16;
   if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
   let xr = CW - PAD - 4;
+  if (s.legend) xr = drawGroupLegend(ctx, xr, cy, x + 40) - 16;
   if (s.meta) {
     ctx.font = `500 19px ${FONT}`;
     const t = fitText(ctx, s.meta, Math.max(0, xr - x - 40));
@@ -926,7 +1010,7 @@ function drawSectionHead(ctx, s, y) {
     }
   }
   if (xr - x > 16) {
-    ctx.strokeStyle = COL.border;
+    ctx.strokeStyle = s.group ? gc + '55' : COL.border;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(x, cy);
@@ -935,25 +1019,16 @@ function drawSectionHead(ctx, s, y) {
   }
 }
 
-// Wie drawButton, aktive Umschalter zusaetzlich leicht in ihrer Farbe getoent.
 function drawSectionButton(ctx, r, it) {
   drawButton(ctx, r, it, hoverKey === it.key);
-  if (it.active && !it.disabled) {
-    ctx.save();
-    roundRect(ctx, r.x, r.y, r.w, r.h, 16);
-    ctx.globalAlpha = 0.14;
-    ctx.fillStyle = it.color || COL.cyan;
-    ctx.fill();
-    ctx.restore();
-  }
   if (!it.disabled) hitRects.push({ ...r, key: it.key, onClick: it.onClick });
 }
 
-function drawStepper(ctx, r, it) {
+function drawStepper(ctx, r, it, group) {
   roundRect(ctx, r.x, r.y, r.w, r.h, 16);
   ctx.fillStyle = COL.panel;
   ctx.fill();
-  ctx.strokeStyle = COL.border;
+  ctx.strokeStyle = group ? groupColor(group) + '66' : COL.border;
   ctx.lineWidth = 2;
   ctx.stroke();
   const inset = 6, bw = Math.min(96, Math.round(r.w * 0.24));
@@ -970,7 +1045,7 @@ function drawStepper(ctx, r, it) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `900 28px ${FA_FONT}`;
-    ctx.fillStyle = COL.text;
+    ctx.fillStyle = group ? groupColor(group) : COL.text;
     ctx.fillText(glyphFor(fa), br.x + br.w / 2, br.y + br.h / 2);
     hitRects.push({ ...br, key: sub.key, onClick: sub.onClick });
   }
@@ -1005,6 +1080,17 @@ export function renderXRPanelPreview(tab = activeTab) {
   activeTab = tab;
   drawPanel();
   return panelCanvas;
+}
+
+// Tests/Diagnose: Trefferflaechen des zuletzt gezeichneten Panels und Klick
+// auf einen Eintrag per Schluessel - derselbe Weg wie Laser + Trigger.
+export const xrPanelPreviewHits = () => hitRects.map(({ onClick, ...r }) => r);
+export function clickXRPanelPreview(key) {
+  const hit = hitRects.find(r => r.key === key);
+  if (!hit) return false;
+  clickPanelHit(hit);
+  panelDirty = true;
+  return true;
 }
 
 // ── Frame-Schleife ──────────────────────────────────────────────────────────
@@ -1253,6 +1339,10 @@ function handleServo(R, rp, tracked) {
   if (active || lastServoSent) {
     const { pos, quat } = controlPose(R.grip, servoGrip);
     publishController(pos, quat, grip, index, thumbX);
+    lastIdleSentAt = performance.now();
+  } else if (performance.now() - lastIdleSentAt > 1000) {
+    lastIdleSentAt = performance.now();
+    publishController(null, null, false, false, 0);
   }
   lastServoSent = active;
   if (grip !== servoGrip) panelDirty = true;
@@ -1268,9 +1358,9 @@ function handlePlan(R, rp, tracked) {
   const { pos, quat } = controlPose(R.grip, Boolean(planDrag));
   if (rp.grip && !R.prev.grip && !planDrag) {
     const start = twin.beginGizmoExternalDrag();
-    if (!start) { flash('TCP-Gizmo ist aus (VIEW)'); return; }
+    if (!start) { flash('TCP-Gizmo ist aus (Tab PLANEN)'); return; }
     planDrag = { gizmo: start, ctrlPos: pos.clone(), ctrlQuat: quat.clone() };
-    activeTab = 'moveit';
+    activeTab = 'plan';
     panelDirty = true;
     pulse('right', 0.4, 30);
   } else if (rp.grip && planDrag) {

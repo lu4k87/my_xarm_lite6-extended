@@ -11,6 +11,21 @@ export const COL = {
   cyan: '#38bdf8', green: '#10b981', orange: '#f59e0b', red: '#ef4444',
 };
 
+// Funktionsgruppen: zusammengehoerige Funktionen tragen in Handgelenk-Panel,
+// HUD und Tastenhilfe dieselbe Farbe - Tab, Sektionskopf, Akzentleiste am
+// Button und Tasten-Badge. So findet man z. B. alles zum Greifen (Greifer,
+// Objekte, Trigger im SERVO) ueber die Farbe, egal auf welcher Flaeche.
+export const GROUP = {
+  robot:  { color: '#38bdf8', label: 'Roboter' },     // Servo, Posen, Speed, Linearachse
+  plan:   { color: '#a78bfa', label: 'Planen' },      // MoveIt, Ghost, TCP-Gizmo, PLAN-Modus
+  grip:   { color: '#f59e0b', label: 'Greifen' },     // Greifer, Objekte, Greifkugeln
+  scene:  { color: '#2dd4bf', label: 'Szene' },       // Einblendungen, Kollision, Sound
+  xr:     { color: '#f472b6', label: 'VR' },          // Ansicht, Standort, HUD, Panel, Gehen
+  safety: { color: '#ef4444', label: 'Sicherheit' },  // Not-Aus
+  help:   { color: '#94a3b8', label: 'Hilfe' },
+};
+export const groupColor = (g) => (g && GROUP[g] ? GROUP[g].color : COL.cyan);
+
 export const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 export const FA_FONT = '"Font Awesome 6 Free"';
 
@@ -47,25 +62,54 @@ export function shortLabel(text) {
 }
 
 // Ein Eintrag, der einen echten Button der Seite spiegelt.
-export function domItem(el, label) {
+// Gesperrt ist er nur, wenn er es am Desktop auch ist (disabled bzw. keine
+// Pointer-Events waehrend einer Bewegung). Die gedimmte Darstellung der
+// Anzeige-Schalter (Opazitaet 0,5 = AUS) ist KEINE Sperre - frueher galt
+// alles unter 0,5 als gesperrt, dann liessen sich ausgeschaltete Schalter
+// (Punktwolke, Sound, Pfad-Vorschau ...) in der Brille nicht mehr einschalten.
+// opts.group: Funktionsgruppe (Farbe), opts.toggle: Schalter mit AN/AUS-Pille.
+export function domItem(el, label, opts = {}) {
   if (!el) return null;
   const cs = getComputedStyle(el);
   const isCheck = el.tagName === 'INPUT' && el.type === 'checkbox';
   const active = isCheck ? el.checked : (el.classList.contains('active') || el.getAttribute('aria-pressed') === 'true');
-  return {
+  const item = {
     key: el.id || `${el.dataset.action || ''}:${el.dataset.args || ''}:${label || ''}`,
     glyph: isCheck ? glyphFor(el.checked ? 'fa-square-check' : 'fa-square') : glyphOfEl(el.querySelector('i')),
     label: label || shortLabel(el.getAttribute('title') || el.textContent),
     color: isCheck ? (el.checked ? COL.cyan : COL.mut) : cs.color,
     active,
-    disabled: el.disabled || parseFloat(cs.opacity) < 0.5,
+    disabled: el.disabled || cs.pointerEvents === 'none',
     onClick: () => el.click(),
   };
+  return withOpts(item, opts);
 }
 
 export function ownItem(key, fa, label, onClick, opts = {}) {
-  return { key, glyph: glyphFor(fa), label, onClick, color: opts.color || COL.text, active: !!opts.active,
-           disabled: !!opts.disabled, danger: !!opts.danger };
+  return withOpts({ key, glyph: glyphFor(fa), label, onClick, color: opts.color || COL.text, active: !!opts.active,
+                    disabled: !!opts.disabled, danger: !!opts.danger }, opts);
+}
+
+// Gruppe/Schalter-Zustand anhaengen. state: eigener Pillen-Text (z. B.
+// 'INAKTIV'), sonst bei toggle AN/AUS aus active.
+function withOpts(item, opts) {
+  if (opts.group) item.group = opts.group;
+  if (opts.toggle) {
+    item.toggle = true;
+    if (opts.on !== undefined) item.active = !!opts.on;
+    item.state = opts.state || (item.active ? 'AN' : 'AUS');
+  }
+  if (opts.warn) item.warn = true;
+  if (opts.group && opts.color) item.iconColor = opts.color;   // z. B. Ausfuehren gruen
+  return item;
+}
+
+// Kurze deutsche Namen fuer gespiegelte Buttons (Panel und HUD gleich).
+export const GRIPPER_LABELS = { 'btn-grip-open': 'Lösen', 'btn-grip-close': 'Saugen', 'btn-grip-off': 'Greifer aus' };
+const POSE_LABELS = { 'btn-show-scene': 'Scan-Position', 'btn-scan-objects': 'OctoMap scannen' };
+export function poseLabel(btn) {
+  if (POSE_LABELS[btn.id]) return POSE_LABELS[btn.id];
+  return (btn.getAttribute('title') || '').toLowerCase().includes('initial') ? 'Grundstellung' : undefined;
 }
 
 export const q = (sel) => document.querySelector(sel);
@@ -190,25 +234,51 @@ export function pill(ctx, xRight, y, text, color) {
 // Icon oben, Beschriftung (max. zwei Zeilen) darunter. Die Positionen skalieren
 // mit der Button-Hoehe (Referenz 132 px), damit auch flachere Buttons (HUD-
 // Toolbar) sauber in ihrem Rahmen bleiben. Unter 100 px Hoehe stehen Icon und
-// eine Zeile Text nebeneinander.
+// eine Zeile Text nebeneinander, ein Schalter zeigt rechts AN/AUS.
+// item.group: Akzentleiste links und Icon in der Farbe der Funktionsgruppe;
+// aktiv = Rahmen + leichte Toenung in dieser Farbe. Ein ausgeschalteter
+// Schalter zeigt sein Icon grau - der Zustand steht in der Pille.
 export function drawButton(ctx, r, item, hovered) {
+  const accent = item.group ? groupColor(item.group) : (item.color || COL.cyan);
+  const on = item.active && !item.disabled;
   roundRect(ctx, r.x, r.y, r.w, r.h, 16);
   ctx.fillStyle = item.danger ? '#7f1d1d' : (hovered && !item.disabled ? COL.btnHover : COL.btn);
   ctx.fill();
-  ctx.lineWidth = item.active ? 4 : 2;
-  ctx.strokeStyle = item.active ? (item.color || COL.cyan) : (hovered ? COL.cyan : COL.border);
+  if (on) {
+    ctx.save();
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = accent;
+    ctx.fill();
+    ctx.restore();
+  }
+  if (item.group && !item.danger) {
+    // Akzentleiste, in den abgerundeten Rahmen geschnitten
+    ctx.save();
+    roundRect(ctx, r.x, r.y, r.w, r.h, 16);
+    ctx.clip();
+    ctx.fillStyle = accent;
+    ctx.globalAlpha = item.disabled ? 0.35 : (on || !item.toggle ? 1 : 0.55);
+    ctx.fillRect(r.x, r.y, 7, r.h);
+    ctx.restore();
+  }
+  roundRect(ctx, r.x, r.y, r.w, r.h, 16);
+  ctx.lineWidth = on ? 4 : 2;
+  ctx.strokeStyle = on ? accent : (hovered && !item.disabled ? COL.cyan : COL.border);
   ctx.stroke();
+  const iconColor = item.group
+    ? (item.toggle && !item.active ? COL.mut : (item.iconColor || accent))
+    : (item.color || COL.text);
   ctx.globalAlpha = item.disabled ? 0.35 : 1;
   ctx.textBaseline = 'middle';
   if (r.h < 100) {
-    drawFlatContent(ctx, r, item);
+    drawFlatContent(ctx, r, item, iconColor);
     ctx.globalAlpha = 1;
     return;
   }
   ctx.textAlign = 'center';
   if (item.glyph) {
     ctx.font = `900 46px ${FA_FONT}`;
-    ctx.fillStyle = item.color || COL.text;
+    ctx.fillStyle = iconColor;
     ctx.fillText(item.glyph, r.x + r.w / 2, r.y + r.h * 0.333);
   }
   ctx.font = `600 22px ${FONT}`;
@@ -216,27 +286,54 @@ export function drawButton(ctx, r, item, hovered) {
   const lines = wrap2(ctx, item.label, r.w - 20);
   lines.forEach((ln, i) => ctx.fillText(ln, r.x + r.w / 2,
     r.y + (lines.length === 1 ? r.h * 0.742 : r.h * 0.667 + i * 26)));
+  if (item.state) statePill(ctx, r.x + r.w - 10, r.y + 10, item, accent, 32);
   ctx.globalAlpha = 1;
 }
 
-function drawFlatContent(ctx, r, item) {
+// Kleine Zustands-Pille (AN/AUS/INAKTIV) rechtsbuendig an xRight.
+function statePill(ctx, xRight, y, item, accent, hgt) {
+  ctx.font = `800 ${Math.round(hgt * 0.56)}px ${FONT}`;
+  const w = ctx.measureText(item.state).width + hgt * 0.7;
+  const x = xRight - w;
+  const c = item.warn ? COL.red : (item.active ? accent : COL.dim);
+  roundRect(ctx, x, y, w, hgt, hgt / 2);
+  ctx.fillStyle = item.active ? c : 'rgba(255, 255, 255, 0.04)';
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = c;
+  ctx.stroke();
+  ctx.fillStyle = item.active ? '#0b1120' : c;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(item.state, x + w / 2, y + hgt / 2 + 1);
+  return w;
+}
+
+function drawFlatContent(ctx, r, item, iconColor) {
+  const inset = item.group ? 18 : 16;
+  const pillW = item.state ? (ctx.font = `800 20px ${FONT}`, ctx.measureText(item.state).width + 25 + 12) : 0;
   const gap = item.glyph ? 14 : 0;
   ctx.font = `900 34px ${FA_FONT}`;
   const gw = item.glyph ? ctx.measureText(item.glyph).width : 0;
   ctx.font = `600 24px ${FONT}`;
-  const label = fitText(ctx, item.label, r.w - 32 - gw - gap);
+  const label = fitText(ctx, item.label, r.w - 2 * inset - gw - gap - pillW);
   const lw = ctx.measureText(label).width;
-  const x0 = r.x + (r.w - (gw + gap + lw)) / 2;
+  // Mit Pille: Icon + Text linksbuendig, Pille rechts. Sonst mittig.
+  const x0 = item.state ? r.x + inset + 4 : r.x + (r.w - (gw + gap + lw)) / 2;
   const cy = r.y + r.h / 2;
   ctx.textAlign = 'left';
   if (item.glyph) {
     ctx.font = `900 34px ${FA_FONT}`;
-    ctx.fillStyle = item.color || COL.text;
+    ctx.fillStyle = iconColor;
     ctx.fillText(item.glyph, x0, cy);
   }
   ctx.font = `600 24px ${FONT}`;
   ctx.fillStyle = COL.text;
   ctx.fillText(label, x0 + gw + gap, cy);
+  if (item.state) {
+    const accent = item.group ? groupColor(item.group) : (item.color || COL.cyan);
+    statePill(ctx, r.x + r.w - inset + 4, cy - 18, item, accent, 36);
+  }
 }
 
 // ── Infozeilen (HUD-Karten und Handgelenk-Panel) ───────────────────────────
