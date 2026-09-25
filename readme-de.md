@@ -1360,11 +1360,16 @@ flowchart TD
 > - **Watchdog:** Bleiben die Controller-Daten bei gedrücktem Grip länger als 0,3 s aus (Tracking weg, Browser hängt, WLAN weg), sendet der Node sofort einen Null-Twist.
 >
 > 🥽 **VR-Viewport (Robot Control UI in der Brille):** Der Server auf `8443` liefert zusätzlich die komplette **Robot Control UI** über HTTPS aus (`https://<PC-IP>:8443/`). Die UI verbindet sich dort automatisch mit der WSS-rosbridge auf `9091`. Im Viewport-Header erscheinen dann zwei Icons: 🥽 **Enter VR** und 👓 **Passthrough (AR, vorbereitet)**. Die Brille zeigt denselben Digital Twin (`js/twin/xr.js`) mit Live-Roboter, Objekten, Kollisionsobjekten, Ghost und MoveIt-Plan.
-> - **Handgelenk-Panel (linker Controller):** Tabs `VIEW · SCENE · MOTION · MOVEIT · OBJEKT · VR` mit denselben Icons wie im Viewport. Die Einträge spiegeln die echten Buttons (Zustand und Klick), sodass Desktop und Brille immer synchron sind. Bedient wird es mit dem Laser des rechten Controllers und dem Trigger. **X** blendet das Panel ein und aus.
-> - **Modi (Taste B rechts):** `SERVO` – Grip steuert MoveIt Servo, Trigger schaltet den Greifer, rechter Stick X bewegt die Linearachse. `PLAN` – Grip zieht den Ghost (TCP-Gizmo, 1:1 zur Hand, im Rotationsmodus auch die Orientierung). Beim Loslassen wird geplant, Execute und Discard liegen im Tab MOVEIT.
+> - **HUD (`js/twin/xr_hud.js`):** Die Overlays des Viewports liegen am Sichtrand, in derselben Anordnung wie am Desktop: oben die Toolbar (Grid, Kanten, Gizmo, Sync, Ghost, Panels, Sound · SERVO/PLAN · **VR / Passthrough** · Handpanel · Beenden), darunter MoveIt-Status und Warnungen (nur solange aktiv), links MOTION, rechts SCENE, unten Not-Aus sowie TELEMETRY · POSE · SPEED. Eingeklappte Tabs sind wie am Desktop eingeklappt; ein Klick auf die Kopfzeile klappt beide um. Das HUD bleibt stehen, solange man nur zu einem Seitenpanel schaut, und zieht weich nach, wenn man sich weiter dreht. **Y** (links) blendet es aus und ein, **A** (rechts) holt es vor den Blick.
+> - **VR ⇄ Passthrough in der laufenden Session:** Kann die Brille `immersive-ar`, läuft jede Session als AR. Die VR-Ansicht deckt die Kamera dann mit einem blickdichten Hintergrund vollständig ab. Beim Umschalten werden Servo und Ghost-Drag zuerst gestoppt, weil das Rig springt (VR und Passthrough haben je einen eigenen Standort).
+> - **Handgelenk-Panel (linker Controller, standardmäßig aus):** Tabs `VIEW · SCENE · MOTION · MOVEIT · OBJEKT · VR · TASTEN` mit denselben Icons wie im Viewport, inklusive Objektauswahl und Rig-Kalibrierung. Die Einträge spiegeln die echten Buttons (Zustand und Klick), sodass Desktop und Brille immer synchron sind. Bedient wird es mit dem Laser des rechten Controllers und dem Trigger. **X** blendet das Panel ein und aus.
+> - **Tab VR (gegliedert):** beschriftete Sektionen mit Trennlinie – `STEUERMODUS` (SERVO/PLAN), `ANSICHT` (VR / Passthrough / Kamera Nozzle), `ROBOTER AUSRICHTEN` (X/Y/Z/Yaw als −/+-Stepper, Basis = Controller, Reset, Speichern) und unten fest `HUD & SESSION` (HUD, Tastenhilfe, Zentrieren, Beenden). Aktive Umschalter sind farbig hinterlegt.
+> - **Tastenhilfe (`js/twin/xr_controls.js`):** Schaut man auf einen Controller, erscheint daneben (außen, zum Kopf gedreht) eine Karte mit seiner aktuellen Belegung: Badges wie auf dem Controller (**X/Y/A/B** rund, **TRIGGER/GRIP/STICK** als Pille, Not-Aus rot) plus Aktion und kurzer Erklärung. Die Zeilen folgen dem Zustand (SERVO/PLAN, VR/Passthrough/Kamera Nozzle, Laser auf UI oder Greifkugel, Not-Aus verriegelt): Was gerade nicht geht, ist abgeblendet und nennt den Grund, gedrückte Tasten leuchten in der Farbe des Controllers. Die Karte bleibt, solange man sie liest, blendet beim Wegschauen aus, verdeckt nie den Laserpunkt, und die linke entfällt, solange das Handgelenk-Panel offen ist. Der Tab `TASTEN` im Handgelenk-Panel zeigt beide Controller nebeneinander, beide Modi (Karte klicken = Modus wählen) und den An/Aus-Schalter (auch im Tab VR, pro Brille gespeichert).
+> - **Kamera Nozzle (`js/twin/xr_nozzle_cam.js`):** Button im Tab VR. Die Sicht sitzt in der Kamera am Endeffektor (am Flansch `link_eef`, 7,5 cm hinter der Düsenachse, schräg in +X geneigt) und folgt dem Roboter, solange der Button aktiv ist: oben im Bild die Düse, darunter der Bereich unter dem Greifer. Die Neigung (Standard 30° zur Düsenachse) lässt sich in der Brille einstellen und wird gespeichert; **A** bzw. „Zentrieren“ richtet die Kamerasicht auf die aktuelle Blickrichtung aus. Gehen und Fliegen sind in dieser Ansicht aus; Servo und Ghost-Drag rechnen im Rig vom Beginn des Griffs, damit die mitfahrende Sicht den Roboter nicht weiterzieht. VR oder Passthrough wählen beendet die Ansicht.
+> - **Modi (Taste B rechts):** `SERVO` – Grip steuert MoveIt Servo, Trigger schaltet den Greifer, rechter Stick X **bei gedrücktem Grip** bewegt die Linearachse. `PLAN` – Grip zieht den Ghost (TCP-Gizmo, 1:1 zur Hand, im Rotationsmodus auch die Orientierung). Beim Loslassen wird geplant, Execute und Discard liegen im Tab MOVEIT.
 > - **Objekt wählen:** Laser auf die rote Greifkugel und Trigger drücken. Das Objekt wird zum Target Object, und der Tab OBJEKT bietet Approach und das Umschalten der Kollision.
 > - **Not-Aus:** roter Button im Panel **oder** beide Grips und beide Trigger gleichzeitig. Das Ende der Session, eine verdeckte Session (Quest-Menü) oder Tracking-Verlust stoppen Servo sofort.
-> - **Standort:** linker Stick = gehen (nur VR). Im Tab VR lassen sich Robot X/Y/Z/Yaw verschieben, „Basis = Controller“ setzt die Roboterbasis auf den rechten Controller, und alles wird pro Brille gespeichert (`localStorage`). Die Passthrough-Kalibrierung auf den echten Roboter ist vorbereitet, aber noch nicht am echten Roboter getestet.
+> - **Standort:** linker Stick = gehen (nur VR). Rechter Stick **ohne Grip** = um den Roboter fliegen (nur VR): X kreist um die Roboterbasis, der Blick dreht mit, Y hebt und senkt. Im Tab VR lassen sich Robot X/Y/Z/Yaw verschieben, „Basis = Controller“ setzt die Roboterbasis auf den rechten Controller, und alles wird pro Brille gespeichert (`localStorage`). Die Passthrough-Kalibrierung auf den echten Roboter ist vorbereitet, aber noch nicht am echten Roboter getestet.
 > - Nicht in der Brille: Kamera- und RViz-Streams (MJPEG über HTTP werden auf einer HTTPS-Seite als Mixed Content blockiert).
 >
 > 🛠️ **System Setup & Nutzung:**
@@ -1674,22 +1679,22 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_window_streamer_node.py` (`rviz_window_streamer`) &nbsp;&nbsp; <sub><i>[`/src/rviz_window_streamer/rviz_window_streamer/rviz_window_streamer_node.py`](./src/rviz_window_streamer/rviz_window_streamer/rviz_window_streamer_node.py)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `window_capture_node.py` (`window_x11_streamer`) &nbsp;&nbsp; <sub><i>[`/src/window_x11_streamer/window_x11_streamer/window_capture_node.py`](./src/window_x11_streamer/window_x11_streamer/window_capture_node.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
-> ros2 run rviz_window_streamer rviz_window_streamer_node
+> ros2 run window_x11_streamer window_capture_node
 > ```
 > *(Wird automatisch über das Nexus Web Bringup gestartet)*
 >
-> **Zweck & Aufgabe:** Erfasst in Echtzeit das native laufende X11-RViz-Fenster via `xwininfo` und `mss`, konvertiert die Screen-Buffer in standardisierte BGR8-ROS-Image-Messages und publiziert diese mit 15 FPS auf `/rviz_video/image_raw`. Dadurch kann die vollständige 3D-RViz-Szene via `web_video_server` (Port 8082) direkt und ohne aufwendiges clientseitiges 3D-WebGL-Rendering in das Web-UI gestreamt werden.
+> **Zweck & Aufgabe:** Erfasst in Echtzeit ein natives laufendes X11-Fenster (Default: RViz2, wählbar über den Parameter `window_name`) via `xwininfo` und `mss`, konvertiert die Screen-Buffer in standardisierte BGR8-ROS-Image-Messages und publiziert diese mit 15 FPS auf `/window_capture/image_raw`. Dadurch kann die vollständige 3D-RViz-Szene via `web_video_server` (Port 8082) direkt und ohne aufwendiges clientseitiges 3D-WebGL-Rendering in das Web-UI gestreamt werden.
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/rviz_video/image_raw`** | `sensor_msgs/Image` | *Publiziert den Live-Bildschirm-Stream des RViz2-Fensters.* |
+>> | **`/window_capture/image_raw`** | `sensor_msgs/Image` | *Publiziert den Live-Bildschirm-Stream des RViz2-Fensters.* |
 
 <br>
 
@@ -2333,7 +2338,7 @@ pip install pynput==1.6.1 # Keyboard/Mouse Listener
 pip install "Flask>=2.2.0" # ROS 2 Nexus Web Backend
 pip install Flask-SocketIO==3.4.1 # WebSockets für Nexus Backend
 pip install "PyQt5>=5.15.6" # Python UI (Gaze-Control & Pointcloud Tuner)
-pip install mss==10.2.0 # Screen Recording für RViz Streamer
+pip install mss==10.2.0 # Screen Recording für Window Capture
 
 # Computer Vision & Perception
 pip install "opencv-python>=4.9.0" # Computer Vision
@@ -2844,7 +2849,7 @@ dev_ws/
 │   ├── web_video_server/                                                  # 📹 ROS 2 HTTP/MJPEG Streaming-Bridge (Port 8082)
 │   │   ├── CMakeLists.txt
 │   │   ├── package.xml
-│   │   └── launch/web_video_server.launch.py                              # Startet web_video_server & rviz_window_streamer
+│   │   └── launch/web_video_server.launch.py                              # Startet web_video_server & window_x11_streamer
 │   ├── robot_vision_cameras_bringup/                                      # 🌟 Vision-Pipeline, TF-Kalibrierung & Greif-Ausführung
 │   │   ├── action/
 │   │   │   └── GraspObject.action                                         # ROS 2 Action-Definition für autonomes Greifen
@@ -2886,8 +2891,8 @@ dev_ws/
 │   │   └── rviz_overlay_servo_status/
 │   │       └── rviz_servo_status.py                                       # MoveIt Servo-Status & Warn-HUD Overlay
 │   ├── rviz_tab_robot_control_panel/                                      # 🖥️ C++: Benutzerdefiniertes RViz2 Control Panel Plugin (rviz_common)
-│   ├── rviz_window_streamer/                                               # 📹 Python/FFmpeg: X11 RViz-Fenstererfassung zu MJPEG-Stream
-│   │   └── rviz_window_streamer/rviz_window_streamer_node.py
+│   ├── window_x11_streamer/                                                # 📹 Python/mss: X11-Fenstererfassung (Default: RViz2) → /window_capture/image_raw
+│   │   └── window_x11_streamer/window_capture_node.py
 │   ├── tcp_laser_pointer/                                                 # 🔴 Python: Automatische Steuerung des TCP-Laserpointers
 │   │   └── tcp_laser_pointer/laser_pointer_node.py
 │   ├── teleop_pre_collision_checker/                                      # 🛡️ Python: Prädiktiver Kollisionswächter & Geschwindigkeitsskalierer

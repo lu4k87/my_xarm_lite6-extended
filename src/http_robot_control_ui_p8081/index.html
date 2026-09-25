@@ -7,7 +7,7 @@
   
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=51">
+  <link rel="stylesheet" href="style.css?v=54">
   
   <script src="roslib.min.js"></script>
   <script src="sortable.min.js"></script>
@@ -233,11 +233,15 @@
                 <div class="twin-toolbar-divider"></div>
                 <!-- WebXR (Meta Quest 3): nur sichtbar, wenn die Seite ueber HTTPS
                      (Port 8443) laeuft und die Brille den Modus kann (js/twin/xr.js) -->
-                <button class="btn btn-icon-small" id="btn-twin-xr-vr" data-action="enterTwinXR" data-args='["vr"]' title="Enter VR (Meta Quest 3): 3D viewport with wrist panel" style="display: none; color: var(--cyan);">
+                <button class="btn btn-icon-small" id="btn-twin-xr-vr" data-action="enterTwinXR" data-args='["vr"]' title="Enter VR (Meta Quest 3): 3D viewport with HUD panels - switch to passthrough inside the headset" style="display: none; color: var(--cyan);">
                   <i class="fa-solid fa-vr-cardboard"></i>
                 </button>
                 <button class="btn btn-icon-small" id="btn-twin-xr-ar" data-action="enterTwinXR" data-args='["ar"]' title="Enter Passthrough AR (Meta Quest 3) - prepared, calibration against the real robot pending" style="display: none; color: var(--mut);">
                   <i class="fa-solid fa-glasses"></i>
+                </button>
+                <!-- VR-Spiegel: neues Fenster mit der aktuellen Ansicht der Quest 3 (vr_mirror.html) -->
+                <button class="btn btn-icon-small" id="btn-twin-vr-mirror" data-action="openVRMirror" title="VR mirror: open a new window showing exactly what the Quest 3 headset sees" style="color: var(--cyan);">
+                  <i class="fa-solid fa-display"></i>
                 </button>
                 <button class="btn btn-icon-small" id="btn-sound-toggle" data-action="toggleSound" title="Toggle sound effects" style="color: var(--cyan);">
                   <i class="fa-solid fa-volume-high" id="sound-toggle-icon"></i>
@@ -354,16 +358,16 @@
                 </button>
                 <div class="hud-tab-body">
                 <div id="twin-scene-node-overlay" class="twin-scene-node-overlay">
-                <button class="btn btn-icon-small" id="btn-twin-scene-objects" data-action="toggleSceneNode" data-args='["objects"]' title="Interactive 3D scene objects (rviz_marker_3d_scene_objects)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small active" id="btn-twin-scene-objects" data-action="toggleSceneNode" data-args='["objects"]' title="Interactive 3D scene objects (rviz_marker_3d_scene_objects)" style="color: var(--cyan);">
                   <i class="fa-solid fa-cubes"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-scene-plane" data-action="toggleSceneNode" data-args='["plane"]' title="White reference plane (rviz_marker_3d_scene_plane)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small active" id="btn-twin-scene-plane" data-action="toggleSceneNode" data-args='["plane"]' title="White reference plane (rviz_marker_3d_scene_plane)" style="color: var(--cyan);">
                   <i class="fa-solid fa-square"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-scene-safety" data-action="toggleSceneNode" data-args='["safety"]' title="Safety &amp; Collision Zone, Singularity &amp; Workspace Limit (r=420 mm) (rviz_marker_3d_scene_safety_zone)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small active" id="btn-twin-scene-safety" data-action="toggleSceneNode" data-args='["safety"]' title="Safety &amp; Collision Zone, Singularity &amp; Workspace Limit (r=420 mm) (rviz_marker_3d_scene_safety_zone)" style="color: var(--cyan);">
                   <i class="fa-solid fa-shield-halved"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-scene-zedm" data-action="toggleSceneNode" data-args='["zedm"]' title="ZED-M camera stand (rviz_marker_3d_scene_zedm_stand)" style="color: var(--dim); opacity: 0.5;">
+                <button class="btn btn-icon-small active" id="btn-twin-scene-zedm" data-action="toggleSceneNode" data-args='["zedm"]' title="ZED-M camera stand (rviz_marker_3d_scene_zedm_stand)" style="color: var(--cyan);">
                   <i class="fa-solid fa-video"></i>
                 </button>
                 <button class="btn btn-icon-small" id="btn-twin-detections" data-action="toggleTwinDetections" title="YOLO detections in 3D view: bounding box, red grasp point and labels (/zed/bboxes_3d)">
@@ -469,7 +473,7 @@
                       <span id="hud-floor-val" class="hud-val">-- mm</span>
                     </div>
                     <div class="hud-safety-item hud-moveit-item" title="MoveIt Servo status">
-                      <span id="moveit-badge" class="moveit-status">MoveIt (Base Frame): Off</span>
+                      <span id="moveit-badge" class="moveit-status">MoveIt (<span class="moveit-frame-tag frame-base">Base Frame</span>): Off</span>
                     </div>
                   </div>
                   </div>
@@ -931,7 +935,7 @@
       }
     }
   </script>
-  <script type="module" src="js/main.js?v=2"></script>
+  <script type="module" src="js/main.js?v=4"></script>
   
 </body>
 </html>

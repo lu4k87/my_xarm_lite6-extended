@@ -84,6 +84,10 @@ const ACTIONS = {
   // Sonstiges
   startListening, toggleSound,
   reloadPage: () => location.reload(),
+  // VR-Spiegel: zeigt in einem eigenen Fenster, was die Quest 3 sieht.
+  // Fester Fenstername - ein zweiter Klick holt dasselbe Fenster nach vorn.
+  // Etwa das Seitenverhaeltnis der Brille - so bleibt kaum Rand.
+  openVRMirror: () => window.open('vr_mirror.html', 'vr_mirror', 'popup,width=1120,height=900'),
 };
 
 function argsOf(el) {

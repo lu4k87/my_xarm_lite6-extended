@@ -428,7 +428,10 @@ export const servoStatusSub = new ROSLIB.Topic({
 });
 
 function moveitPrefix() {
-  return `MoveIt (${currentFrame === 'link_tcp' ? 'TCP Frame' : 'Base Frame'}): `;
+  const isTcp = (currentFrame === 'link_tcp');
+  const frameText = isTcp ? 'TCP Frame' : 'Base Frame';
+  const frameClass = isTcp ? 'frame-tcp' : 'frame-base';
+  return `MoveIt (<span class="moveit-frame-tag ${frameClass}">${frameText}</span>): `;
 }
 
 export function updateMoveItBadge() {
@@ -449,23 +452,23 @@ export function updateMoveItBadge() {
   
   if (currentServoStatus === 0) {
     if (isRobotMoving) {
-      badge.innerText = moveitPrefix() + 'Moving';
+      badge.innerHTML = moveitPrefix() + 'Moving';
       badge.classList.add('moving');
     } else {
-      badge.innerText = moveitPrefix() + 'Ready';
+      badge.innerHTML = moveitPrefix() + 'Ready';
       badge.classList.add('ready');
     }
   } else if (currentServoStatus === 1 || currentServoStatus === 3 || currentServoStatus === 6) {
     badge.classList.add('warn');
-    if (currentServoStatus === 1) badge.innerText = moveitPrefix() + 'Sing. Near';
-    else if (currentServoStatus === 3) badge.innerText = moveitPrefix() + 'Coll. Near';
-    else badge.innerText = moveitPrefix() + 'Leav. Sing.';
+    if (currentServoStatus === 1) badge.innerHTML = moveitPrefix() + 'Sing. Near';
+    else if (currentServoStatus === 3) badge.innerHTML = moveitPrefix() + 'Coll. Near';
+    else badge.innerHTML = moveitPrefix() + 'Leav. Sing.';
   } else {
     badge.classList.add('error');
-    if (currentServoStatus === 2) badge.innerText = moveitPrefix() + 'Sing. Halt';
-    else if (currentServoStatus === 4) badge.innerText = moveitPrefix() + 'Coll. Halt';
-    else if (currentServoStatus === 5) badge.innerText = moveitPrefix() + 'Limit';
-    else badge.innerText = moveitPrefix() + 'Error';
+    if (currentServoStatus === 2) badge.innerHTML = moveitPrefix() + 'Sing. Halt';
+    else if (currentServoStatus === 4) badge.innerHTML = moveitPrefix() + 'Coll. Halt';
+    else if (currentServoStatus === 5) badge.innerHTML = moveitPrefix() + 'Limit';
+    else badge.innerHTML = moveitPrefix() + 'Error';
   }
 }
 

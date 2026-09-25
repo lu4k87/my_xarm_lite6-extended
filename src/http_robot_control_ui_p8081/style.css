@@ -294,6 +294,23 @@ button.status-pill.sound-btn.sound-muted:hover {
   animation: moveit-text-pulse-red 1s ease-in-out infinite;
 }
 
+.moveit-frame-tag {
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  display: inline-block;
+  transition: color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.moveit-frame-tag.frame-base {
+  color: #ef4444 !important;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.6), 0 0 16px rgba(239, 68, 68, 0.25) !important;
+}
+
+.moveit-frame-tag.frame-tcp {
+  color: #00f0ff !important;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6), 0 0 16px rgba(0, 240, 255, 0.25) !important;
+}
+
 @keyframes moveit-text-pulse {
   0%, 100% {
     text-shadow: 0 0 6px rgba(16, 185, 129, 0.4), 0 0 14px rgba(16, 185, 129, 0.15);
@@ -3449,6 +3466,21 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   align-items: center !important;
   justify-content: center !important;
   line-height: 1 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.twin-scene-node-overlay .btn-icon-small:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-1px);
+}
+
+.twin-scene-node-overlay .btn-icon-small.active {
+  background: rgba(56, 189, 248, 0.18) !important;
+  border-color: var(--accent) !important;
+  color: var(--cyan) !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25) !important;
 }
 
 /* Trennt die Anzeige-Toggles von den MoveIt-Kollisions-Toggles */

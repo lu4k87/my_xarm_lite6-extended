@@ -57,6 +57,8 @@ let linearShiftY = 0.0;
 let isGridVisible = true;
 let isEdgesVisible = true;
 let edgeLines = [];
+let externalRender = false;         // VR-Spiegel rendert selbst (setTwinExternalRender)
+let tunerElementsSnapshot = null;   // letzte Szenenobjekt-Posen (fuer den VR-Spiegel)
 
 // ── Interactive 3D TCP Gizmo State ──
 let transformControls = null;
@@ -286,8 +288,9 @@ function initDigitalTwin() {
 
   function animate() {
     animId = requestAnimationFrame(animate);
-    // Waehrend einer XR-Session rendert xr.js ueber setAnimationLoop.
-    if (renderer.xr.isPresenting) return;
+    // Waehrend einer XR-Session rendert xr.js ueber setAnimationLoop, im
+    // VR-Spiegel (vr_mirror.html) dessen eigene Schleife.
+    if (renderer.xr.isPresenting || externalRender) return;
     if (!isViewportVisible()) return;
     // Jede Funktion meldet, ob sie gerade animiert - dann wird weiter
     // gezeichnet. Steht alles still, bleibt die GPU unbeschaeftigt.
@@ -1803,6 +1806,7 @@ export function getTunerSceneObjectsVisibility() {
 export function updateTunerSceneObjects(elements) {
   requestRender();
   if (!elements || !scene) return;
+  tunerElementsSnapshot = snapshotTunerElements(elements);
 
   if (Object.keys(tunerSceneObjects).length === 0) {
     initTunerSceneObjects();
@@ -3258,6 +3262,19 @@ export function getTwinXRHandles() {
   return { scene, camera, renderer, controls, gridHelper };
 }
 
+// Weltmatrix des ersten vorhandenen Roboter-Links (z. B. Nozzle-Kamera am
+// Flansch). Live-Referenz - der Aufrufer kopiert sie. null ohne Modell.
+export function getTwinLinkWorldMatrix(names) {
+  if (!robotModel) return null;
+  for (const n of names) {
+    const link = robotModel.getObjectByName(n);
+    if (!link) continue;
+    link.updateWorldMatrix(true, false);
+    return link.matrixWorld;
+  }
+  return null;
+}
+
 // Dieselben Aktualisierungen wie im normalen Loop. In XR wird jedes Frame
 // gerendert (Kopfbewegung), deshalb ohne requestRender-Logik.
 export function runTwinFrameUpdates() {
@@ -3362,6 +3379,110 @@ export function endGizmoExternalDrag() {
   if (!isDraggingGizmo) return;
   isDraggingGizmo = false;
   handleGizmoDragEnd();
+  requestRender();
+}
+
+// ── VR-Spiegel (xr_mirror_send.js auf der Quest, vr_mirror.js am PC) ───────
+// Die Quest schickt, was ihr Twin gerade zeigt; das Spiegelfenster stellt
+// damit dieselbe Szene nach. Schnell (jedes Sende-Frame): Gelenke,
+// Linearachse, Gizmo-Ziel. Langsam (bei Aenderung): Schalter, Auswahl,
+// Sicherheitszustand, Szenenobjekte. Erkennungen, Punktwolke und Pfad-
+// Vorschau abonniert der Spiegel selbst - das sind dieselben ROS-Daten.
+const mirrorApplied = {};      // zuletzt angewendete Teilzustaende (JSON)
+
+export function setTwinExternalRender(on) {
+  externalRender = !!on;
+  requestRender();
+}
+
+function snapshotTunerElements(elements) {
+  const out = {};
+  for (const [name, d] of Object.entries(elements)) {
+    if (!d) continue;
+    out[name] = { x: Number(d.x), y: Number(d.y), z: Number(d.z), roll: Number(d.roll), pitch: Number(d.pitch), yaw: Number(d.yaw) };
+    if (d.radius !== undefined) out[name].radius = Number(d.radius);
+  }
+  return out;
+}
+
+const r4 = (v) => Math.round(v * 1e4) / 1e4;
+const r5 = (v) => Math.round(v * 1e5) / 1e5;
+
+export function getTwinMirrorPose() {
+  const out = { joints: currentJoints.map(r5), axis: r4(linearShiftY) };
+  if (gizmoTarget) {
+    const p = gizmoTarget.position, q = gizmoTarget.quaternion;
+    out.gizmo = [r4(p.x), r4(p.y), r4(p.z), r5(q.x), r5(q.y), r5(q.z), r5(q.w)];
+  }
+  return out;
+}
+
+export function applyTwinMirrorPose(st) {
+  if (!st) return;
+  updateDigitalTwinJoints(st.joints, typeof st.axis === 'number' ? st.axis : undefined);
+  const g = st.gizmo;
+  if (gizmoTarget && Array.isArray(g) && g.length === 7 && g.every(Number.isFinite)) {
+    // Das Ziel gibt die Quest vor - nicht selbst zum TCP nachfuehren.
+    hasUserTargetOffset = true;
+    gizmoTarget.position.set(g[0], g[1], g[2]);
+    gizmoTarget.quaternion.set(g[3], g[4], g[5], g[6]);
+    if (transformControls) transformControls.getHelper().updateMatrixWorld();
+    updateConnectingLine();
+  }
+}
+
+export function getTwinMirrorState() {
+  return {
+    grid: isGridVisible,
+    edges: isEdgesVisible,
+    gizmo: isGizmoActive,
+    gizmoMode,
+    detections: detectionsVisible,
+    flip: detectionFlip,
+    labelScale,
+    distLine: distanceLineEnabled,
+    grasp: selectedGraspName ? { name: selectedGraspName, above: selectedGraspHoverM } : null,
+    hover: hoveredKey,
+    safety: { ...safetyState },
+    sceneGroups: { ...sceneGroupVisible },
+    sceneElements: tunerElementsSnapshot,
+  };
+}
+
+function mirrorChanged(key, value) {
+  const s = JSON.stringify(value === undefined ? null : value);
+  if (mirrorApplied[key] === s) return false;
+  mirrorApplied[key] = s;
+  return true;
+}
+
+export function applyTwinMirrorState(st) {
+  if (!st || !scene) return;
+  if (typeof st.grid === 'boolean') setDigitalTwinGrid(st.grid);
+  if (typeof st.edges === 'boolean') setDigitalTwinEdges(st.edges);
+  if (st.gizmoMode !== gizmoMode && (st.gizmoMode === 'translate' || st.gizmoMode === 'rotate')) setTCPGizmoMode(st.gizmoMode);
+  if (typeof st.gizmo === 'boolean' && st.gizmo !== isGizmoActive) {
+    isGizmoActive = st.gizmo;
+    updateGizmoVisibility();
+  }
+  if (typeof st.detections === 'boolean' && st.detections !== detectionsVisible) setDigitalTwinDetectionsVisible(st.detections);
+  if (typeof st.flip === 'string' && st.flip !== detectionFlip) setDigitalTwinDetectionFlip(st.flip);
+  if (typeof st.labelScale === 'number' && st.labelScale !== labelScale) setDigitalTwinLabelScale(st.labelScale);
+  if (typeof st.distLine === 'boolean' && st.distLine !== distanceLineEnabled) setDigitalTwinDistanceLine(st.distLine);
+  if (mirrorChanged('grasp', st.grasp)) {
+    if (st.grasp && st.grasp.name) setDigitalTwinSelectedGrasp(st.grasp.name, st.grasp.above);
+    else clearGraspSelection(null);
+  }
+  // Hover per Marker-Id; fehlt die Kugel hier noch, greift der naechste Stand.
+  const hover = st.hover == null ? null : String(st.hover);
+  if (hover !== hoveredKey) setHover(hover === null ? null : (sphereRecords().find(r => `${r.markerId}` === hover) || null));
+  if (st.safety && mirrorChanged('safety', st.safety)) updateDigitalTwinSafety(st.safety);
+  if (st.sceneGroups && mirrorChanged('sceneGroups', st.sceneGroups)) {
+    for (const [k, v] of Object.entries(st.sceneGroups)) {
+      if (k in sceneGroupVisible) setSceneGroupVisibility(k, v);
+    }
+  }
+  if (st.sceneElements && mirrorChanged('sceneElements', st.sceneElements)) updateTunerSceneObjects(st.sceneElements);
   requestRender();
 }
 

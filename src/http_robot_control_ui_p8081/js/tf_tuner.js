@@ -145,22 +145,19 @@ export const sceneGroupLabels = {
 export function updateSceneNodeBtn(groupKey, isNodeRunning) {
   const btn = document.getElementById(sceneGroupBtnIds[groupKey]);
   if (!btn) return;
-  const isUserVisible = sceneGroupUserVisible[groupKey];
-  if (!isNodeRunning) {
-    btn.classList.remove('active');
-    btn.style.color = 'var(--dim)';
-    btn.style.opacity = '0.45';
-    btn.title = `${sceneGroupLabels[groupKey]} (node inactive)`;
-  } else if (isUserVisible) {
+  const isUserVisible = !!sceneGroupUserVisible[groupKey];
+  const nodeSuffix = isNodeRunning ? ' (node active)' : '';
+
+  if (isUserVisible) {
     btn.classList.add('active');
     btn.style.color = 'var(--cyan)';
     btn.style.opacity = '1.0';
-    btn.title = `Hide ${sceneGroupLabels[groupKey]} (node active)`;
+    btn.title = `Hide ${sceneGroupLabels[groupKey]}${nodeSuffix}`;
   } else {
     btn.classList.remove('active');
     btn.style.color = 'var(--mut)';
-    btn.style.opacity = '0.8';
-    btn.title = `Show ${sceneGroupLabels[groupKey]} (node active)`;
+    btn.style.opacity = '0.65';
+    btn.title = `Show ${sceneGroupLabels[groupKey]}${nodeSuffix}`;
   }
 }
 
@@ -174,22 +171,14 @@ export function toggleSceneNode(groupKey) {
   sceneGroupUserVisible[groupKey] = !sceneGroupUserVisible[groupKey];
   const vis = sceneGroupUserVisible[groupKey];
 
-  if (isSceneObjectsNodeRunning) {
-    if (twin.setSceneGroupVisibility) {
-      twin.setSceneGroupVisibility(groupKey, vis);
-    }
-    if (vis && twin.updateTunerSceneObjects) {
-      twin.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
-    }
-    updateSceneNodeBtn(groupKey, true);
-    logMsg('WebGL 3D', `${vis ? '🟢' : '⚪'} ${sceneGroupLabels[groupKey]} ${vis ? 'shown' : 'hidden'}`, vis ? 'info' : 'warn');
-  } else {
-    if (twin.setSceneGroupVisibility) {
-      twin.setSceneGroupVisibility(groupKey, false);
-    }
-    updateSceneNodeBtn(groupKey, false);
-    logMsg('WebGL 3D', `ℹ️ ${sceneGroupLabels[groupKey]}: ${vis ? 'Queued' : 'Disabled'} (scene nodes are not running)`, 'warn');
+  if (twin.setSceneGroupVisibility) {
+    twin.setSceneGroupVisibility(groupKey, vis);
   }
+  if (vis && twin.updateTunerSceneObjects) {
+    twin.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
+  }
+  updateSceneNodeBtn(groupKey, isSceneObjectsNodeRunning);
+  logMsg('WebGL 3D', `${vis ? '🟢' : '⚪'} ${sceneGroupLabels[groupKey]} ${vis ? 'shown' : 'hidden'}`, vis ? 'info' : 'warn');
 
   // Update global flag
   isSceneObjectsUserVisible = Object.values(sceneGroupUserVisible).some(v => v);
@@ -218,13 +207,16 @@ export function applySceneObjectsActiveState(isActive, reason) {
     }
   } else {
     isTFBroadcastActive = false;
-    if (twin.setTunerSceneObjectsVisibility) {
-      twin.setTunerSceneObjectsVisibility(false);
+    // Keep 3D twin objects visible in WebGL if user enabled them
+    for (const key of Object.keys(sceneGroupUserVisible)) {
+      if (twin.setSceneGroupVisibility) {
+        twin.setSceneGroupVisibility(key, sceneGroupUserVisible[key]);
+      }
     }
     updateTunerUI();
     updateAllSceneNodeBtns(false);
     if (wasRunning) {
-      logMsg('TF-Tuner', '⚪ 3D scene objects hidden (node inactive)', 'warn');
+      logMsg('TF-Tuner', '⚪ 3D scene objects node disconnected (manual 3D mode)', 'warn');
     }
   }
 }
@@ -507,10 +499,8 @@ export function applyTunerState(st) {
       if (typeof st.scene[k] === 'boolean') sceneGroupUserVisible[k] = st.scene[k];
     }
     isSceneObjectsUserVisible = Object.values(sceneGroupUserVisible).some(v => v);
-    if (isSceneObjectsNodeRunning) {
-      for (const k of Object.keys(sceneGroupUserVisible)) {
-        if (twin.setSceneGroupVisibility) twin.setSceneGroupVisibility(k, sceneGroupUserVisible[k]);
-      }
+    for (const k of Object.keys(sceneGroupUserVisible)) {
+      if (twin.setSceneGroupVisibility) twin.setSceneGroupVisibility(k, sceneGroupUserVisible[k]);
     }
     updateAllSceneNodeBtns(isSceneObjectsNodeRunning);
   }
@@ -524,3 +514,14 @@ if (tfBroadcasterInterval) clearInterval(tfBroadcasterInterval);
 tfBroadcasterInterval = setInterval(broadcastAllTFTunerTransforms, 100);
 
 rosHooks.onNodeList.push(checkSceneObjectsNodeState);
+
+// Sync scene objects & buttons on startup
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    for (const k of Object.keys(sceneGroupUserVisible)) {
+      if (twin.setSceneGroupVisibility) twin.setSceneGroupVisibility(k, sceneGroupUserVisible[k]);
+    }
+    if (twin.updateTunerSceneObjects) twin.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
+    updateAllSceneNodeBtns(isSceneObjectsNodeRunning);
+  }, 400);
+});

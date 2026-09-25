@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VR-Spiegel · Quest 3</title>
+  <!-- Zeigt am PC, was die Quest 3 in der VR-Session sieht (js/vr_mirror.js).
+       Geoeffnet ueber den Spiegel-Button im Viewport-Header der Robot Control UI. -->
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="icon" type="image/png" sizes="64x64" href="icon-64.png">
+  <script src="roslib.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --panel: rgba(11, 17, 32, 0.82);
+      --brd: rgba(56, 189, 248, 0.22);
+      --txt: #f8fafc;
+      --mut: #94a3b8;
+      --cyan: #38bdf8;
+      --green: #10b981;
+      --orange: #f59e0b;
+      --red: #ef4444;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--txt);
+      font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    }
+    /* Der Twin sitzt mittig im Fenster; js/vr_mirror.js setzt seine Groesse
+       (Seitenverhaeltnis der Brille oder ganzes Fenster). Der Canvas nimmt
+       keine Maus an - das Spiegelbild wird nur betrachtet, nichts im Twin
+       ist bedienbar. */
+    #mirror-stage {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+    #digital-twin-viewport {
+      flex: none;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+    }
+    #digital-twin-viewport canvas {
+      display: block;
+      pointer-events: none;
+    }
+    /* Overlay als Flow-Layout (Spalte): Leiste oben, Hinweis darunter mittig.
+       Nichts ist absolut gegeneinander verschoben - keine Ueberlappung. */
+    .mirror-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px 16px;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .mirror-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.4s ease;
+    }
+    body.mirror-idle .mirror-bar { opacity: 0; }
+    .mirror-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.3px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: var(--panel);
+      border: 1px solid var(--brd);
+      white-space: nowrap;
+    }
+    .mirror-title i { color: var(--cyan); }
+    .mirror-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: var(--panel);
+      border: 1px solid var(--brd);
+      color: var(--mut);
+      white-space: nowrap;
+    }
+    .mirror-status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--orange);
+      flex-shrink: 0;
+    }
+    .mirror-status.is-live { color: var(--txt); }
+    .mirror-status.is-live .dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .mirror-status.is-off .dot { background: var(--red); }
+    .mirror-spacer { flex: 1 1 auto; }
+    .mirror-btn {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 36px;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: var(--panel);
+      color: var(--txt);
+      font: 600 13px 'Plus Jakarta Sans', 'Inter', sans-serif;
+      cursor: pointer;
+    }
+    .mirror-btn:hover { border-color: var(--cyan); background: rgba(56, 189, 248, 0.18); }
+    .mirror-center {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mirror-msg {
+      max-width: min(520px, 100%);
+      box-sizing: border-box;
+      padding: 16px 20px;
+      border-radius: 12px;
+      background: var(--panel);
+      border: 1px solid var(--brd);
+      color: var(--mut);
+      font-size: 14px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .mirror-msg[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <div id="mirror-stage">
+    <div id="digital-twin-viewport"></div>
+  </div>
+
+  <div class="mirror-overlay">
+    <div class="mirror-bar">
+      <span class="mirror-title"><i class="fa-solid fa-vr-cardboard"></i> VR-Spiegel · Quest 3</span>
+      <span class="mirror-chip mirror-status is-wait" id="mirror-status" title="Posen von /vr_teleop/mirror_pose">
+        <span class="dot"></span><span id="mirror-status-text">Verbinde…</span>
+      </span>
+      <span class="mirror-chip" id="mirror-view" title="Ansicht in der Brille">VR</span>
+      <span class="mirror-chip" id="mirror-rate" title="Empfangene Posen pro Sekunde">– Hz</span>
+      <span class="mirror-chip" id="mirror-zoom" title="Mausrad: Zoom · Doppelklick oder 0: Sichtfeld der Brille">Zoom 1.00×</span>
+      <span class="mirror-spacer"></span>
+      <button type="button" class="mirror-btn" id="btn-mirror-fit" title="Ganzes Sichtfeld der Brille (dunkler Rand) oder Fenster füllen (Rand beschnitten)">Fenster füllen</button>
+      <button type="button" class="mirror-btn" id="btn-mirror-reset" title="Sichtfeld wie in der Brille (Doppelklick / Taste 0)">1:1</button>
+      <button type="button" class="mirror-btn" id="btn-mirror-fullscreen" title="Vollbild (Taste F)"><i class="fa-solid fa-expand"></i></button>
+    </div>
+    <div class="mirror-center">
+      <div class="mirror-msg" id="mirror-msg">Verbinde mit ROS…</div>
+    </div>
+  </div>
+
+  <!-- Wie index.html: three.js r186 und urdf-loader liegen lokal. -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./lib/three/three.module.js",
+        "three/addons/": "./lib/three/addons/",
+        "three/examples/jsm/": "./lib/three/addons/",
+        "urdf-loader": "./lib/urdf-loader/URDFLoader.js"
+      }
+    }
+  </script>
+  <script type="module" src="js/vr_mirror.js"></script>
+</body>
+</html>

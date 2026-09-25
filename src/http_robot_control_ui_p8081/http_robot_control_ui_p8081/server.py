@@ -8,7 +8,7 @@ Ersetzt `python3 -m http.server`. Zwei Dinge sind anders:
    unveraendert kommt ein 304 ohne Inhalt, geaendert sofort die neue Fassung.
    Das gilt auch fuer Dateien, die per ES-Modul-`import` nachgeladen werden und
    deshalb keinen ?v=-Parameter bekommen koennen.
-2. In index.html bekommt jedes lokale <script src> und <link href> auf eine
+2. In index.html (und vr_mirror.html) bekommt jedes lokale <script src> und <link href> auf eine
    .js/.css-Datei ein `?v=<Aenderungszeit>`. Das manuelle Hochzaehlen von
    ?v=28 usw. entfaellt.
 
@@ -24,6 +24,8 @@ import sys
 
 NO_CACHE_EXT = ('.html', '.js', '.mjs', '.css', '.json', '.urdf')
 ASSET_RE = re.compile(r'''(\s(?:src|href)=")([^"#?:]+\.(?:js|mjs|css))(?:\?v=[^"]*)?(")''')
+# Seiten, deren <script src>/<link href> automatisch ?v=<mtime> bekommen.
+VERSIONED_PAGES = {'/': 'index.html', '/index.html': 'index.html', '/vr_mirror.html': 'vr_mirror.html'}
 
 
 class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -71,8 +73,9 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def send_head(self):
         path = self.path.split('?', 1)[0]
-        if path in ('/', '/index.html'):
-            full = os.path.join(self.directory, 'index.html')
+        page = VERSIONED_PAGES.get(path)
+        if page:
+            full = os.path.join(self.directory, page)
             try:
                 with open(full, encoding='utf-8') as f:
                     body = self._versioned_html(f.read()).encode('utf-8')

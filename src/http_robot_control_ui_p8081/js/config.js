@@ -42,6 +42,11 @@ export const TOPICS = Object.freeze({
   voiceListenTrigger: '/ui/voice_listen_trigger',
   voiceStatus: '/ui/voice_status',
   visualizationMarkerArray: '/visualization_marker_array',
+  // VR-Spiegel: Quest -> PC-Fenster (vr_mirror.html), PC -> Quest (Nachsenden)
+  vrTeleopMirrorPose: '/vr_teleop/mirror_pose',
+  vrTeleopMirrorState: '/vr_teleop/mirror_state',
+  vrTeleopMirrorUi: '/vr_teleop/mirror_ui',
+  vrTeleopMirrorRequest: '/vr_teleop/mirror_request',
   zedBboxes3d: '/zed/bboxes_3d',
   zedPointcloudWeb: '/zed/pointcloud_web',
   zedYoloCollisionMarkers: '/zed/yolo_collision_markers',

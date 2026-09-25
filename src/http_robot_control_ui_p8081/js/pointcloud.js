@@ -108,6 +108,10 @@ export function setTwinPointCloud(visible) {
   applyTwinPointCloudBtn(pointCloudEnabled);
 }
 
+export function isTwinPointCloudOn() {
+  return pointCloudEnabled;
+}
+
 export function toggleTwinPointCloud() {
   const now = !pointCloudEnabled;
   setTwinPointCloud(now);

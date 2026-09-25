@@ -9,15 +9,33 @@
 //     Welt bleibt im ROS-Frame (Z oben, Meter). Kamera und Controller haengen
 //     an einem Rig, das den XR-Raum (Y oben, -Z vorne) in den ROS-Frame dreht
 //     und verschiebt. Rig-Pose = Standort des Nutzers (bzw. AR-Kalibrierung).
-//   * Linker Controller: Handgelenk-Panel mit den Tabs und Icons des
-//     Viewports. Die Eintraege spiegeln die echten DOM-Buttons (Zustand,
-//     Farbe, Klick) - dieselbe Logik wie auf dem Desktop, nichts doppelt.
+//   * HUD (xr_hud.js): die Overlays des Desktop-Viewports am Sichtrand in
+//     derselben Anordnung - Toolbar, MoveIt, MOTION, SCENE, Not-Aus,
+//     TELEMETRY, POSE, SPEED. Standardmaessig an, Y (links) blendet es aus.
+//   * Ansicht VR <-> Passthrough ohne die Session zu verlassen: kann die
+//     Brille immersive-ar, laeuft jede Session so. In der VR-Ansicht deckt
+//     eine blickdichte Kugel um den Nutzer die Kamera komplett ab (three.js
+//     erzwingt in AR-Sessions einen transparenten Hintergrund).
+//   * Linker Controller: Handgelenk-Panel mit allen Tabs (auch OBJEKT und
+//     VR-Kalibrierung). Die Eintraege spiegeln die echten DOM-Buttons
+//     (Zustand, Farbe, Klick) - dieselbe Logik wie auf dem Desktop. Der
+//     VR-Tab ist in beschriftete Sektionen gegliedert.
+//   * Nozzle-Kamera (VR-Tab, xr_nozzle_cam.js): das Rig haengt an der Kamera
+//     am Endeffektor, die Sicht folgt dem Roboter. Gehen/Fliegen sind dann
+//     aus; Servo und Ghost-Drag rechnen im Rig vom Beginn des Griffs.
 //   * Rechter Controller: Laser (Panel bedienen, Greifkugel waehlen).
 //     Modus SERVO: Grip = MoveIt Servo (wie controller_reader.html),
 //     Trigger = Greifer.  Modus PLAN: Grip zieht den Ghost (TCP-Gizmo),
 //     Loslassen plant; Execute/Discard im Panel (Tab MOVEIT).
-//   * Tasten: X (links) Panel ein/aus, B (rechts) SERVO <-> PLAN,
-//     linker Stick = gehen (nur VR), rechter Stick X = Linearachse (SERVO).
+//   * Tasten: X (links) Handgelenk-Panel ein/aus, Y (links) HUD ein/aus,
+//     A (rechts) HUD vor den Blick holen (Nozzle-Kamera: auch den Blick
+//     zentrieren), B (rechts) SERVO <-> PLAN,
+//     linker Stick = gehen (nur VR), rechter Stick ohne Grip = um den
+//     Roboter fliegen (nur VR), rechter Stick X mit Grip = Linearachse (SERVO).
+//   * Tastenhilfe (xr_controls.js): schaut man auf einen Controller, zeigt
+//     eine Karte daneben seine aktuelle Belegung, gedrueckte Tasten leuchten.
+//     Vollstaendig mit beiden Modi im Panel-Tab TASTEN; an/aus dort und im
+//     VR-Tab.
 //   * Not-Aus: roter Button im Panel, beide Grips + beide Trigger zugleich.
 //     Session-Ende, verdeckte Session oder Tracking-Verlust stoppen Servo.
 
@@ -29,6 +47,23 @@ import { lsGet, lsSet } from '../util.js';
 import { emergencyStop, resetEmergencyStop } from '../safety.js';
 import { approachObjectFromAbove, disabledCollisionObjects, setObjectCollision } from '../grasp.js';
 import { playObjectSelectSound } from '../audio.js';
+import {
+  COL, FONT, FA_FONT, domItem, ownItem, glyphFor, shortLabel, q, qa, txt, stepSpeed,
+  roundRect, fitText, drawButton, pill,
+} from './xr_ui.js';
+import {
+  createHud, hudOnSessionStart, hudOnSessionEnd, toggleHud, isHudEnabled, hudRecenter,
+  markHudDirty, setHudHover, hudPick, updateHud,
+} from './xr_hud.js';
+import { publishMirrorEnd, publishMirrorFrame } from './xr_mirror_send.js';
+import {
+  TILT_DEFAULT_DEG, isNozzleCamActive, isNozzleCamAvailable, setNozzleCam, recenterNozzleCam,
+  getNozzleTiltDeg, stepNozzleTilt, setNozzleTilt, updateNozzleCam,
+} from './xr_nozzle_cam.js';
+import {
+  HAND_COL, ROW_H, ROW_GAP, createControlHints, controlHintsOnSessionEnd, updateControlHints,
+  isControlHintsEnabled, toggleControlHints, legendRows, drawLegendRow, drawHandHead,
+} from './xr_controls.js';
 
 // ── Konstanten ──────────────────────────────────────────────────────────────
 const VR_TOPIC = '/vr_teleop/controller_data';
@@ -37,6 +72,9 @@ const RIG_LS_KEY = 'robot_control_xr_rig_v1';
 // die Tischplatte (ROS z = 0) liegt 75 cm ueber dem Boden.
 const RIG_DEFAULT = { x: -0.65, y: 0.0, z: -0.75, yaw: 0.0 };
 const WALK_SPEED = 0.8;              // m/s, linker Stick (nur VR)
+const ORBIT_SPEED = Math.PI / 3;     // rad/s, rechter Stick X ohne Grip (nur VR)
+const FLY_SPEED = 0.6;               // m/s, rechter Stick Y ohne Grip (nur VR)
+const RIG_Z_MIN = -2.5, RIG_Z_MAX = 2.0;   // Flughoehe des Rigs im ROS-Frame [m]
 const STICK_DEADZONE = 0.15;
 const PANEL_W_M = 0.27;              // Panelbreite in der Brille [m]
 const PANEL_REDRAW_MS = 200;         // Zustand der DOM-Buttons nachziehen
@@ -48,12 +86,10 @@ const HEADER_H = 72, TAB_H = 96, ESTOP_H = 140;
 const CONTENT_Y = PAD + HEADER_H + GAP + TAB_H + GAP;
 const CONTENT_BOTTOM = CH - PAD - ESTOP_H - GAP;
 const GRID_COLS = 4, BTN_H = 132, INFO_LINE_H = 40;
-
-const COL = {
-  bg: '#0b1120', panel: '#111827', btn: '#1a2335', btnHover: '#27344d',
-  border: '#2c3a52', text: '#e2e8f0', mut: '#94a3b8', dim: '#64748b',
-  cyan: '#38bdf8', green: '#10b981', orange: '#f59e0b', red: '#ef4444',
-};
+// Sektionen (VR-Tab): Beschriftung mit Trennlinie, darunter ein Raster.
+const SEC_HEAD_H = 34, SEC_HEAD_GAP = 10, SEC_GAP = 18, SEC_BTN_H = 84, NOTE_LINE_H = 30;
+// Tab TASTEN: Spaltenkopf je Hand, Modus-Karten, Schalter unten.
+const KEYS_HEAD_H = 36, MODE_CARD_H = 156, MODE_LINE_H = 28, KEYS_TOGGLE_H = 72;
 
 // Basis-Drehung XR -> ROS: XR +X (rechts) -> ROS -Y, XR +Y (oben) -> ROS +Z,
 // XR +Z (hinten) -> ROS -X. Blickrichtung (-Z) zeigt damit bei yaw = 0 in +X.
@@ -66,13 +102,15 @@ let h = null;                   // { scene, camera, renderer, controls, gridHelp
 let session = null;
 let xrKind = 'vr';              // 'vr' | 'ar'
 let ctrlMode = 'servo';         // 'servo' | 'plan'
-let rig = null, floorDisc = null;
+let rig = null, floorDisc = null, vrBackdrop = null;
+let sessionMode = '';           // 'immersive-vr' | 'immersive-ar'
+const xrSupport = { 'immersive-vr': false, 'immersive-ar': false };
 let rigCal = loadRigCal();
 let savedBackground = null, savedClearAlpha = 1;
 const hands = { left: null, right: null };   // { ctrl, grip, source, prev }
 let laser = null, reticle = null;
 let panel = null, panelCanvas = null, panelCtx = null, panelTex = null;
-let panelVisible = true;
+let panelVisible = false;       // HUD zeigt das Wichtigste; X blendet das Panel ein
 let activeTab = 'moveit';
 let hitRects = [];
 let hoverKey = null;
@@ -85,12 +123,16 @@ let planDrag = null;            // { gizmo:{position,quaternion}, ctrlPos, ctrlQ
 let lastFrameT = 0;
 let vrTopic = null;
 let flashText = '', flashUntil = 0;
+const pads = { left: null, right: null };   // letzter readPad-Stand (Tastenhilfe)
+let padSig = '';
 
 const _v = new THREE.Vector3();
+const _aim = new THREE.Vector3();
 const _q = new THREE.Quaternion();
 const _s = new THREE.Vector3();
 const _m = new THREE.Matrix4();
 const _ray = new THREE.Raycaster();
+const ctrlFrame = new THREE.Matrix4();   // Bezugsrahmen Servo/Ghost-Drag (Nozzle-Kamera)
 
 // ── Rig / Kalibrierung ──────────────────────────────────────────────────────
 function loadRigCal() {
@@ -165,6 +207,12 @@ function makeControllerMesh(color) {
     new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.6 }));
   ring.position.z = -0.03;
   g.add(ring);
+  // Das HUD liegt ohne Tiefentest ueber der Szene. Die Controller sollen
+  // davor bleiben: transparent (Opazitaet 1) und nach dem HUD gezeichnet.
+  g.traverse((o) => {
+    if (o.material) o.material.transparent = true;
+    o.renderOrder = 950;
+  });
   return g;
 }
 
@@ -203,6 +251,7 @@ function attachLaser(ctrl) {
     const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]);
     laser = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.8 }));
     laser.scale.z = 1.5;
+    laser.renderOrder = 950;           // ueber dem HUD (800)
   }
   if (!reticle) {
     reticle = new THREE.Mesh(
@@ -238,6 +287,18 @@ function worldPose(obj) {
   obj.updateMatrixWorld(true);
   const pos = new THREE.Vector3(), quat = new THREE.Quaternion();
   obj.matrixWorld.decompose(pos, quat, _s);
+  return { pos, quat };
+}
+
+// Controller-Pose fuer Servo und Ghost-Drag. In der Nozzle-Ansicht haengt das
+// Rig am Roboter: im Weltframe wanderte die Hand mit dem Roboter mit und zoege
+// ihn weiter (Rueckkopplung). Dort gilt deshalb das Rig vom Beginn des Griffs,
+// eingefroren bis zum Loslassen (holding).
+function controlPose(obj, holding) {
+  if (!isNozzleCamActive()) return worldPose(obj);
+  if (!holding) ctrlFrame.copy(rig.matrixWorld);
+  const pos = new THREE.Vector3(), quat = new THREE.Quaternion();
+  _m.multiplyMatrices(ctrlFrame, obj.matrix).decompose(pos, quat, _s);
   return { pos, quat };
 }
 
@@ -321,58 +382,6 @@ function attachPanel(grip) {
   panelDirty = true;
 }
 
-const glyphCache = new Map();
-function glyphFor(faName) {
-  if (glyphCache.has(faName)) return glyphCache.get(faName);
-  const i = document.createElement('i');
-  i.className = `fa-solid ${faName}`;
-  i.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none';
-  document.body.appendChild(i);
-  const g = glyphOfEl(i);
-  i.remove();
-  glyphCache.set(faName, g);
-  return g;
-}
-
-function glyphOfEl(iEl) {
-  if (!iEl) return '';
-  const c = getComputedStyle(iEl, '::before').content || '';
-  if (!c || c === 'none' || c === 'normal') return '';
-  return c.replace(/^["']|["']$/g, '');
-}
-
-function shortLabel(text) {
-  let t = String(text || '').replace(/\s+/g, ' ').trim();
-  t = t.split(/ \(| \[| - /)[0];
-  return t.length > 30 ? t.slice(0, 29) + '…' : t;
-}
-
-// Ein Panel-Eintrag, der einen echten Button der Seite spiegelt.
-function domItem(el, label) {
-  if (!el) return null;
-  const cs = getComputedStyle(el);
-  const isCheck = el.tagName === 'INPUT' && el.type === 'checkbox';
-  const active = isCheck ? el.checked : (el.classList.contains('active') || el.getAttribute('aria-pressed') === 'true');
-  return {
-    key: el.id || `${el.dataset.action || ''}:${el.dataset.args || ''}:${label || ''}`,
-    glyph: isCheck ? glyphFor(el.checked ? 'fa-square-check' : 'fa-square') : glyphOfEl(el.querySelector('i')),
-    label: label || shortLabel(el.getAttribute('title') || el.textContent),
-    color: isCheck ? (el.checked ? COL.cyan : COL.mut) : cs.color,
-    active,
-    disabled: el.disabled || parseFloat(cs.opacity) < 0.5,
-    onClick: () => el.click(),
-  };
-}
-
-function ownItem(key, fa, label, onClick, opts = {}) {
-  return { key, glyph: glyphFor(fa), label, onClick, color: opts.color || COL.text, active: !!opts.active,
-           disabled: !!opts.disabled, danger: !!opts.danger };
-}
-
-const q = (sel) => document.querySelector(sel);
-const qa = (sel) => Array.from(document.querySelectorAll(sel));
-const txt = (sel) => { const el = q(sel); return el ? el.textContent.replace(/\s+/g, ' ').trim() : ''; };
-
 const TABS = [
   { id: 'view',   fa: 'fa-cube',        label: 'VIEW' },
   { id: 'scene',  fa: 'fa-layer-group', label: 'SCENE' },
@@ -380,6 +389,7 @@ const TABS = [
   { id: 'moveit', fa: 'fa-route',       label: 'MOVEIT' },
   { id: 'object', fa: 'fa-bullseye',    label: 'OBJEKT' },
   { id: 'xr',     fa: 'fa-vr-cardboard', label: 'VR' },
+  { id: 'keys',   fa: 'fa-circle-question', label: 'TASTEN' },
 ];
 
 function tabContent(id) {
@@ -388,7 +398,7 @@ function tabContent(id) {
   if (id === 'view') {
     // Kamera-Ansichten (Reset/Top) steuert in der Brille der Kopf - weggelassen.
     items = qa('.twin-toolbar button')
-      .filter(b => !['resetDigitalTwinView', 'setDigitalTwinTopView', 'enterTwinXR'].includes(b.dataset.action))
+      .filter(b => !['resetDigitalTwinView', 'setDigitalTwinTopView', 'enterTwinXR', 'openVRMirror'].includes(b.dataset.action))
       .map(b => domItem(b));
   } else if (id === 'scene') {
     items = qa('#hud-tab-scene .hud-tab-body button').map(b => domItem(b));
@@ -443,36 +453,95 @@ function tabContent(id) {
         { active: o.name === sel, color: o.name === sel ? COL.red : COL.text }));
     }
   } else if (id === 'xr') {
-    const c = rigCal[xrKind];
-    info.push({ label: 'SESSION', value: xrKind === 'ar' ? 'Passthrough (AR, Vorbereitung)' : 'Voll-VR' });
-    info.push({ label: 'RIG', value: `X ${c.x.toFixed(2)}  Y ${c.y.toFixed(2)}  Z ${c.z.toFixed(2)} m  Yaw ${THREE.MathUtils.radToDeg(c.yaw).toFixed(0)}°` });
-    items = [
-      ownItem('mode-servo', 'fa-gamepad', 'SERVO', () => setCtrlMode('servo'), { active: ctrlMode === 'servo', color: ctrlMode === 'servo' ? COL.cyan : COL.mut }),
-      ownItem('mode-plan', 'fa-ghost', 'PLAN', () => setCtrlMode('plan'), { active: ctrlMode === 'plan', color: ctrlMode === 'plan' ? COL.orange : COL.mut }),
-      ownItem('rig-place', 'fa-anchor', 'Basis = Controller', placeBaseAtController, { color: COL.cyan }),
-      ownItem('rig-reset', 'fa-street-view', 'Standort reset', resetRig),
-      ownItem('rig-x+', 'fa-arrow-up', 'Robot X +1 cm', () => nudgeRobot(0.01, 0, 0, 0)),
-      ownItem('rig-x-', 'fa-arrow-down', 'Robot X −1 cm', () => nudgeRobot(-0.01, 0, 0, 0)),
-      ownItem('rig-y+', 'fa-arrow-left', 'Robot Y +1 cm', () => nudgeRobot(0, 0.01, 0, 0)),
-      ownItem('rig-y-', 'fa-arrow-right', 'Robot Y −1 cm', () => nudgeRobot(0, -0.01, 0, 0)),
-      ownItem('rig-z+', 'fa-angles-up', 'Robot Z +1 cm', () => nudgeRobot(0, 0, 0.01, 0)),
-      ownItem('rig-z-', 'fa-angles-down', 'Robot Z −1 cm', () => nudgeRobot(0, 0, -0.01, 0)),
-      ownItem('rig-yaw+', 'fa-rotate-left', 'Yaw +1°', () => nudgeRobot(0, 0, 0, 1)),
-      ownItem('rig-yaw-', 'fa-rotate-right', 'Yaw −1°', () => nudgeRobot(0, 0, 0, -1)),
-      ownItem('rig-save', 'fa-floppy-disk', 'Speichern', saveRigCal, { color: COL.green }),
-      ownItem('xr-exit', 'fa-right-from-bracket', 'VR beenden', () => session && session.end(), { color: COL.red }),
-    ];
+    return { info, items, sections: xrSections() };
   }
   return { info, items: items.filter(Boolean) };
 }
 
-function stepSpeed(delta) {
-  const s = /** @type {HTMLInputElement|null} */ (q('#speed-slider'));
-  if (!s) return;
-  const v = Math.max(Number(s.min), Math.min(Number(s.max), Number(s.value) + delta));
-  if (String(v) === s.value) return;
-  s.value = String(v);
-  s.dispatchEvent(new Event('input', { bubbles: true }));
+// ── VR-Tab: Sektionen ───────────────────────────────────────────────────────
+// Von oft (oben) nach selten (unten). Umschalter einer Gruppe schliessen sich
+// gegenseitig aus (SERVO/PLAN, VR/Passthrough/Nozzle). Solange die Nozzle-
+// Kamera laeuft, ersetzt ihre Einstellung den Block ROBOTER AUSRICHTEN - das
+// Rig haengt dann am Roboter, eine Standort-Justage waere wirkungslos.
+const toggleOpts = (on, color) => ({ active: on, color: on ? color : COL.mut });
+const span = (item, n) => ({ ...item, span: n });
+
+// Zelle mit [−] Name/Wert [+], z. B. fuer die Achsen-Justage.
+function stepperItem(key, label, sub, onMinus, onPlus) {
+  return {
+    key, label, sub, stepper: true, span: 2,
+    minus: { key: `${key}:-`, onClick: onMinus },
+    plus: { key: `${key}:+`, onClick: onPlus },
+  };
+}
+
+function xrSections() {
+  const plan = ctrlMode === 'plan';
+  const ar = xrKind === 'ar';
+  const cam = isNozzleCamActive();
+  const deg = (rad) => THREE.MathUtils.radToDeg(rad).toFixed(0);
+  const c = rigCal[xrKind];
+  const sections = [
+    {
+      title: 'STEUERMODUS', fa: 'fa-gamepad', cols: 2, btnH: 84,
+      meta: plan ? 'Grip zieht den Ghost · B wechselt' : 'Grip steuert den Roboter · B wechselt',
+      items: [
+        ownItem('mode-servo', 'fa-gamepad', 'SERVO', () => setCtrlMode('servo'), toggleOpts(!plan, COL.cyan)),
+        ownItem('mode-plan', 'fa-ghost', 'PLAN', () => setCtrlMode('plan'), toggleOpts(plan, COL.orange)),
+      ],
+    },
+    {
+      title: 'ANSICHT', fa: 'fa-eye', cols: 3, btnH: 108,
+      meta: cam ? 'Sicht folgt dem Endeffektor' : (ar ? 'Kalibrierung ungetestet' : 'Freier Standort'),
+      items: [
+        ownItem('view-vr', 'fa-vr-cardboard', 'VR', () => setViewMode('vr'), toggleOpts(!ar && !cam, COL.cyan)),
+        ownItem('view-ar', 'fa-glasses', 'Passthrough', () => setViewMode('ar'),
+          { ...toggleOpts(ar, COL.cyan), disabled: !canSwitchView() }),
+        ownItem('view-nozzle', 'fa-video', 'Kamera Nozzle', toggleNozzleView, toggleOpts(cam, COL.green)),
+      ],
+    },
+  ];
+  if (cam) {
+    const tilt = getNozzleTiltDeg();
+    sections.push({
+      title: 'KAMERA NOZZLE', fa: 'fa-video', color: COL.green, cols: 3, btnH: 72,
+      meta: `Neigung ${tilt}° zur Düsenachse`,
+      items: [
+        stepperItem('nozzle-tilt', 'Neigung', `${tilt}°`, () => stepNozzleTilt(-5), () => stepNozzleTilt(5)),
+        ownItem('nozzle-tilt-std', 'fa-rotate-left', `Standard ${TILT_DEFAULT_DEG}°`, () => setNozzleTilt(TILT_DEFAULT_DEG),
+          { disabled: tilt === TILT_DEFAULT_DEG }),
+      ],
+      notes: [
+        'Oben im Bild die Düse, darunter der Bereich unter dem Greifer.',
+        'Gehen/Fliegen aus · Servo rechnet im Rig vom Griffbeginn.',
+      ],
+    });
+  } else {
+    sections.push({
+      title: 'ROBOTER AUSRICHTEN', fa: 'fa-street-view', cols: 4, btnH: 72,
+      meta: `X ${c.x.toFixed(2)}  Y ${c.y.toFixed(2)}  Z ${c.z.toFixed(2)} m · ${deg(c.yaw)}°`,
+      items: [
+        stepperItem('rig-x', 'X', '1 cm', () => nudgeRobot(-0.01, 0, 0, 0), () => nudgeRobot(0.01, 0, 0, 0)),
+        stepperItem('rig-y', 'Y', '1 cm', () => nudgeRobot(0, -0.01, 0, 0), () => nudgeRobot(0, 0.01, 0, 0)),
+        stepperItem('rig-z', 'Z', '1 cm', () => nudgeRobot(0, 0, -0.01, 0), () => nudgeRobot(0, 0, 0.01, 0)),
+        stepperItem('rig-yaw', 'Yaw', '1°', () => nudgeRobot(0, 0, 0, -1), () => nudgeRobot(0, 0, 0, 1)),
+        span(ownItem('rig-place', 'fa-anchor', 'Basis = Controller', placeBaseAtController, { color: COL.cyan }), 2),
+        ownItem('rig-reset', 'fa-rotate-left', 'Reset', resetRig),
+        ownItem('rig-save', 'fa-floppy-disk', 'Speichern', saveRigCal, { color: COL.green }),
+      ],
+    });
+  }
+  sections.push({
+    title: 'HUD & SESSION', fa: 'fa-table-cells-large', cols: 4, btnH: 72, dock: 'bottom',
+    meta: 'X Panel · Y HUD · A zentrieren',
+    items: [
+      ownItem('hud', 'fa-table-cells-large', 'HUD', toggleHudVisible, toggleOpts(isHudEnabled(), COL.cyan)),
+      ownItem('hints', 'fa-circle-question', 'Tastenhilfe', toggleHints, toggleOpts(isControlHintsEnabled(), COL.cyan)),
+      ownItem('recenter', 'fa-crosshairs', 'Zentrieren', recenterView),
+      ownItem('xr-exit', 'fa-right-from-bracket', 'Beenden', () => session && session.end(), { color: COL.red }),
+    ],
+  });
+  return sections;
 }
 
 function selectObject(name) {
@@ -483,83 +552,128 @@ function selectObject(name) {
   panelDirty = true;
 }
 
-function flash(text) {
+function flash(text, ms = 2500) {
   flashText = text;
-  flashUntil = performance.now() + 2500;
+  flashUntil = performance.now() + ms;
+  panelDirty = true;
+  markHudDirty();
+}
+
+// ── Tastenhilfe (xr_controls.js) ────────────────────────────────────────────
+function hintState() {
+  return {
+    mode: ctrlMode,
+    view: isNozzleCamActive() ? 'nozzle' : xrKind,
+    hud: isHudEnabled(),
+    panel: panelVisible,
+    aim: hoverKey ? 'ui' : (hoverObject ? 'object' : ''),
+    aimName: hoverObject && hoverObject.name ? hoverObject.name.replace(/_/g, ' ') : '',
+    holding: servoGrip || Boolean(planDrag),
+    locked: Boolean(estopLatched),
+    pads,
+  };
+}
+
+function toggleHints() {
+  const on = toggleControlHints();
+  flash(on ? 'Tastenhilfe an: auf einen Controller schauen' : 'Tastenhilfe aus (Tab TASTEN)');
   panelDirty = true;
 }
 
-function roundRect(ctx, x, y, w, hgt, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + hgt, r);
-  ctx.arcTo(x + w, y + hgt, x, y + hgt, r);
-  ctx.arcTo(x, y + hgt, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
-function fitText(ctx, text, maxW) {
-  if (ctx.measureText(text).width <= maxW) return text;
-  let t = text;
-  while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
-  return t + '…';
-}
-
-// Zwei Zeilen, an Leerzeichen umbrochen, Rest mit Auslassungszeichen.
-function wrap2(ctx, text, maxW) {
-  const words = String(text).split(' ');
-  let l1 = '';
-  let i = 0;
-  for (; i < words.length; i++) {
-    const t = l1 ? `${l1} ${words[i]}` : words[i];
-    if (ctx.measureText(t).width > maxW && l1) break;
-    l1 = t;
+// Tab TASTEN: beide Controller nebeneinander mit ihrer aktuellen Belegung,
+// darunter die zwei Modi (Karte klicken = Modus waehlen) und unten der
+// Schalter fuer die Karten an den Controllern. Feste Hoehen - passt der
+// Modus-Block nicht, entfaellt er, statt zu ueberlappen.
+function drawKeysTab(ctx) {
+  const st = hintState();
+  const w = CW - 2 * PAD;
+  const colW = (w - GAP) / 2;
+  let y = CONTENT_Y;
+  drawSectionHead(ctx, {
+    title: 'CONTROLLER', fa: 'fa-gamepad',
+    meta: isControlHintsEnabled() ? 'Controller ansehen = Karte daneben' : 'Laser + Trigger = klicken',
+  }, y);
+  y += SEC_HEAD_H + SEC_HEAD_GAP;
+  let rowsEnd = y;
+  for (const [hand, x] of [['left', PAD], ['right', PAD + colW + GAP]]) {
+    drawHandHead(ctx, x, y + KEYS_HEAD_H / 2, colW, hand);
+    let ry = y + KEYS_HEAD_H + GAP / 2;
+    for (const row of legendRows(hand, st)) {
+      drawLegendRow(ctx, { x, y: ry, w: colW, h: ROW_H }, row, HAND_COL[hand]);
+      ry += ROW_H + ROW_GAP;
+    }
+    rowsEnd = Math.max(rowsEnd, ry - ROW_GAP);
   }
-  const rest = words.slice(i).join(' ');
-  return rest ? [fitText(ctx, l1, maxW), fitText(ctx, rest, maxW)] : [fitText(ctx, l1, maxW)];
+
+  const toggleR = { x: PAD, y: CONTENT_BOTTOM - KEYS_TOGGLE_H, w, h: KEYS_TOGGLE_H };
+  y = rowsEnd + SEC_GAP;
+  if (y + SEC_HEAD_H + SEC_HEAD_GAP + MODE_CARD_H + SEC_GAP <= toggleR.y) {
+    drawSectionHead(ctx, { title: 'MODI', fa: 'fa-shuffle', meta: 'B wechselt · Karte klicken' }, y);
+    y += SEC_HEAD_H + SEC_HEAD_GAP;
+    drawModeCard(ctx, { x: PAD, y, w: colW, h: MODE_CARD_H }, 'servo');
+    drawModeCard(ctx, { x: PAD + colW + GAP, y, w: colW, h: MODE_CARD_H }, 'plan');
+  }
+
+  const on = isControlHintsEnabled();
+  drawSectionButton(ctx, toggleR, ownItem('keys-hints', 'fa-circle-question',
+    `Tastenhilfe an den Controllern: ${on ? 'AN' : 'AUS'}`, toggleHints, toggleOpts(on, COL.cyan)));
 }
 
-const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
-const FA_FONT = '"Font Awesome 6 Free"';
+const MODE_INFO = {
+  servo: {
+    fa: 'fa-gamepad', color: COL.cyan, title: 'SERVO',
+    lines: [['GRIP', 'halten: Roboter folgt der Hand'], ['TRIGGER', 'Greifer auf/zu'], ['GRIP + STICK', '← → Linearachse']],
+  },
+  plan: {
+    fa: 'fa-ghost', color: COL.orange, title: 'PLAN',
+    lines: [['GRIP', 'Ghost (TCP-Ziel) ziehen'], ['LOSLASSEN', 'Bahn wird geplant'], ['EXECUTE', 'Tab MOVEIT oder HUD']],
+  },
+};
 
-function pill(ctx, xRight, y, text, color) {
-  ctx.font = `700 24px ${FONT}`;
-  const w = ctx.measureText(text).width + 28;
-  const x = xRight - w;
-  roundRect(ctx, x, y, w, 44, 22);
-  ctx.fillStyle = color + '33';
-  ctx.fill();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.fillStyle = color;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, x + w / 2, y + 23);
-  return x - 12;   // naechste Pille links davon, mit Abstand
-}
-
-function drawButton(ctx, r, item, hovered) {
+function drawModeCard(ctx, r, mode) {
+  const m = MODE_INFO[mode];
+  const on = ctrlMode === mode;
+  const key = `mode-card:${mode}`;
   roundRect(ctx, r.x, r.y, r.w, r.h, 16);
-  ctx.fillStyle = item.danger ? '#7f1d1d' : (hovered && !item.disabled ? COL.btnHover : COL.btn);
+  ctx.fillStyle = hoverKey === key ? COL.btnHover : COL.btn;
   ctx.fill();
-  ctx.lineWidth = item.active ? 4 : 2;
-  ctx.strokeStyle = item.active ? (item.color || COL.cyan) : (hovered ? COL.cyan : COL.border);
-  ctx.stroke();
-  ctx.globalAlpha = item.disabled ? 0.35 : 1;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  if (item.glyph) {
-    ctx.font = `900 46px ${FA_FONT}`;
-    ctx.fillStyle = item.color || COL.text;
-    ctx.fillText(item.glyph, r.x + r.w / 2, r.y + 44);
+  if (on) {
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.fillStyle = m.color;
+    ctx.fill();
+    ctx.restore();
   }
-  ctx.font = `600 22px ${FONT}`;
+  ctx.lineWidth = on ? 4 : 2;
+  ctx.strokeStyle = on ? m.color : (hoverKey === key ? COL.cyan : COL.border);
+  ctx.stroke();
+  // Kopf: Icon + Name links, AKTIV rechts
+  const hy = r.y + 12, hc = hy + 22;
+  let xr = r.x + r.w - 14;
+  if (on) xr = pill(ctx, xr, hy, 'AKTIV', m.color);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.font = `900 28px ${FA_FONT}`;
+  ctx.fillStyle = m.color;
+  const g = glyphFor(m.fa);
+  ctx.fillText(g, r.x + 16, hc);
+  const tx = r.x + 16 + ctx.measureText(g).width + 12;
+  ctx.font = `800 26px ${FONT}`;
   ctx.fillStyle = COL.text;
-  const lines = wrap2(ctx, item.label, r.w - 20);
-  lines.forEach((ln, i) => ctx.fillText(ln, r.x + r.w / 2, r.y + (lines.length === 1 ? 98 : 88 + i * 26)));
-  ctx.globalAlpha = 1;
+  ctx.fillText(fitText(ctx, m.title, xr - tx - 8), tx, hc);
+  // Zeilen: Taste in Modusfarbe, dahinter die Wirkung
+  let ly = r.y + 62 + MODE_LINE_H / 2;
+  for (const [k, text] of m.lines) {
+    ctx.font = `800 18px ${FONT}`;
+    ctx.fillStyle = m.color;
+    ctx.fillText(k, r.x + 16, ly);
+    const kx = r.x + 16 + ctx.measureText(k).width + 10;
+    ctx.font = `500 21px ${FONT}`;
+    ctx.fillStyle = on ? COL.text : COL.mut;
+    ctx.fillText(fitText(ctx, text, r.x + r.w - 14 - kx), kx, ly);
+    ly += MODE_LINE_H;
+  }
+  hitRects.push({ ...r, key, onClick: () => setCtrlMode(mode) });
 }
 
 function drawPanel() {
@@ -586,7 +700,8 @@ function drawPanel() {
   ctx.textBaseline = 'middle';
   ctx.font = `700 28px ${FONT}`;
   ctx.fillStyle = warn ? COL.red : (flashing ? COL.orange : COL.cyan);
-  const title = warn ? `⚠ ${warn}` : (flashing ? flashText : `XR · ${xrKind === 'ar' ? 'PASSTHROUGH' : 'VR'} VIEWPORT`);
+  const view = isNozzleCamActive() ? 'KAMERA NOZZLE' : `${xrKind === 'ar' ? 'PASSTHROUGH' : 'VR'} VIEWPORT`;
+  const title = warn ? `⚠ ${warn}` : (flashing ? flashText : `XR · ${view}`);
   ctx.fillText(fitText(ctx, title, xr - PAD - 8), PAD + 8, PAD + 36);
 
   // Tabs
@@ -613,35 +728,14 @@ function drawPanel() {
     hitRects.push({ ...r, key, onClick: () => { activeTab = t.id; panelDirty = true; } });
   });
 
-  // Inhalt: Infozeilen, darunter das Button-Raster
-  const { info, items } = tabContent(activeTab);
-  let y = CONTENT_Y;
-  ctx.textBaseline = 'middle';
-  for (const line of info) {
-    ctx.textAlign = 'left';
-    ctx.font = `700 20px ${FONT}`;
-    ctx.fillStyle = COL.dim;
-    ctx.fillText(line.label, PAD + 8, y + INFO_LINE_H / 2);
-    ctx.font = `500 24px ${FONT}`;
-    ctx.fillStyle = COL.text;
-    ctx.fillText(fitText(ctx, line.value || '–', CW - 2 * PAD - 180), PAD + 180, y + INFO_LINE_H / 2);
-    y += INFO_LINE_H;
-  }
-  if (info.length) y += GAP;
-
-  const btnW = (CW - 2 * PAD - (GRID_COLS - 1) * GAP) / GRID_COLS;
-  const rowsFit = Math.max(0, Math.floor((CONTENT_BOTTOM - y + GAP) / (BTN_H + GAP)));
-  const maxItems = rowsFit * GRID_COLS;
-  items.slice(0, maxItems).forEach((it, i) => {
-    const r = { x: PAD + (i % GRID_COLS) * (btnW + GAP), y: y + Math.floor(i / GRID_COLS) * (BTN_H + GAP), w: btnW, h: BTN_H };
-    drawButton(ctx, r, it, hoverKey === it.key);
-    if (!it.disabled) hitRects.push({ ...r, key: it.key, onClick: it.onClick });
-  });
-  if (items.length > maxItems) {
-    ctx.textAlign = 'right';
-    ctx.font = `500 20px ${FONT}`;
-    ctx.fillStyle = COL.dim;
-    ctx.fillText(`+${items.length - maxItems} weitere am Desktop`, CW - PAD, CONTENT_BOTTOM + 4);
+  // Inhalt: Tastenbelegung, Sektionen (VR-Tab) oder Infozeilen mit
+  // Button-Raster darunter
+  if (activeTab === 'keys') {
+    drawKeysTab(ctx);
+  } else {
+    const { info, items, sections } = tabContent(activeTab);
+    if (sections) drawSections(ctx, sections);
+    else drawFlatContent(ctx, info, items);
   }
 
   // Not-Aus immer unten; ist er verriegelt, daneben Reset.
@@ -672,6 +766,210 @@ function drawPanel() {
   lastPanelDraw = performance.now();
 }
 
+function drawFlatContent(ctx, info, items) {
+  let y = CONTENT_Y;
+  ctx.textBaseline = 'middle';
+  for (const line of info) {
+    ctx.textAlign = 'left';
+    ctx.font = `700 20px ${FONT}`;
+    ctx.fillStyle = COL.dim;
+    ctx.fillText(line.label, PAD + 8, y + INFO_LINE_H / 2);
+    ctx.font = `500 24px ${FONT}`;
+    ctx.fillStyle = COL.text;
+    ctx.fillText(fitText(ctx, line.value || '–', CW - 2 * PAD - 180), PAD + 180, y + INFO_LINE_H / 2);
+    y += INFO_LINE_H;
+  }
+  if (info.length) y += GAP;
+
+  const btnW = (CW - 2 * PAD - (GRID_COLS - 1) * GAP) / GRID_COLS;
+  const rowsFit = Math.max(0, Math.floor((CONTENT_BOTTOM - y + GAP) / (BTN_H + GAP)));
+  const maxItems = rowsFit * GRID_COLS;
+  items.slice(0, maxItems).forEach((it, i) => {
+    const r = { x: PAD + (i % GRID_COLS) * (btnW + GAP), y: y + Math.floor(i / GRID_COLS) * (BTN_H + GAP), w: btnW, h: BTN_H };
+    drawButton(ctx, r, it, hoverKey === it.key);
+    if (!it.disabled) hitRects.push({ ...r, key: it.key, onClick: it.onClick });
+  });
+  if (items.length > maxItems) {
+    ctx.textAlign = 'right';
+    ctx.font = `500 20px ${FONT}`;
+    ctx.fillStyle = COL.dim;
+    ctx.fillText(`+${items.length - maxItems} weitere am Desktop`, CW - PAD, CONTENT_BOTTOM + 4);
+  }
+}
+
+// Zellen zeilenweise fuellen; ein Eintrag mit span belegt mehrere Spalten und
+// rutscht in die naechste Zeile, wenn er in der aktuellen nicht mehr passt.
+function gridCells(items, cols) {
+  const cells = [];
+  let col = 0, row = 0;
+  for (const it of items) {
+    const n = Math.min(cols, it.span || 1);
+    if (col + n > cols) { col = 0; row++; }
+    cells.push({ it, col, row, n });
+    col += n;
+    if (col >= cols) { col = 0; row++; }
+  }
+  return { cells, rows: cells.length ? cells[cells.length - 1].row + 1 : 0 };
+}
+
+function sectionHeight(s, rows) {
+  const notes = s.notes ? s.notes.length : 0;
+  return SEC_HEAD_H + SEC_HEAD_GAP + rows * s.btnH + Math.max(0, rows - 1) * GAP
+    + (notes ? SEC_HEAD_GAP + notes * NOTE_LINE_H : 0);
+}
+
+// Sektionen untereinander: Kopf (Icon, Titel, Trennlinie, Info rechts), darunter
+// ein Raster. dock 'bottom' sitzt fest ueber dem Not-Aus und springt nicht,
+// wenn sich die Sektionen darueber aendern. Passt eine Sektion nicht mehr
+// ganz hinein, entfaellt sie mit Hinweis - es ueberlappt nie etwas.
+function drawSections(ctx, sections) {
+  const w = CW - 2 * PAD;
+  const laid = sections.map((sec) => {
+    const s = { ...sec, btnH: sec.btnH || SEC_BTN_H, cols: sec.cols || GRID_COLS };
+    const grid = gridCells(s.items.filter(Boolean), s.cols);
+    return { s, ...grid, hgt: sectionHeight(s, grid.rows) };
+  });
+  let bottom = CONTENT_BOTTOM;
+  for (const l of laid.filter(l => l.s.dock === 'bottom').reverse()) {
+    l.y = bottom - l.hgt;
+    bottom = l.y - SEC_GAP;
+  }
+  let y = CONTENT_Y;
+  let skipped = 0;
+  for (const l of laid) {
+    if (l.s.dock === 'bottom') continue;
+    if (y + l.hgt > bottom) { skipped++; continue; }
+    l.y = y;
+    y += l.hgt + SEC_GAP;
+  }
+  for (const l of laid) {
+    if (l.y === undefined) continue;
+    if (l.y < CONTENT_Y) { skipped++; continue; }     // angedockt, aber zu hoch
+    drawSection(ctx, l, w);
+  }
+  if (skipped) {
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.font = `500 20px ${FONT}`;
+    ctx.fillStyle = COL.dim;
+    ctx.fillText(`+${skipped} Sektion(en) ohne Platz`, CW - PAD, CONTENT_BOTTOM + 4);
+  }
+}
+
+function drawSection(ctx, { s, cells, rows, y }, w) {
+  drawSectionHead(ctx, s, y);
+  let gy = y + SEC_HEAD_H + SEC_HEAD_GAP;
+  const colW = (w - (s.cols - 1) * GAP) / s.cols;
+  for (const { it, col, row, n } of cells) {
+    const r = { x: PAD + col * (colW + GAP), y: gy + row * (s.btnH + GAP), w: n * colW + (n - 1) * GAP, h: s.btnH };
+    if (it.stepper) drawStepper(ctx, r, it);
+    else drawSectionButton(ctx, r, it);
+  }
+  gy += rows * s.btnH + Math.max(0, rows - 1) * GAP;
+  if (!s.notes) return;
+  gy += SEC_HEAD_GAP;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.font = `500 20px ${FONT}`;
+  ctx.fillStyle = COL.mut;
+  for (const line of s.notes) {
+    ctx.fillText(fitText(ctx, line, w - 16), PAD + 8, gy + NOTE_LINE_H / 2);
+    gy += NOTE_LINE_H;
+  }
+}
+
+function drawSectionHead(ctx, s, y) {
+  const cy = y + SEC_HEAD_H / 2;
+  let x = PAD + 4;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  if (s.fa) {
+    const g = glyphFor(s.fa);
+    ctx.font = `900 22px ${FA_FONT}`;
+    ctx.fillStyle = s.color || COL.cyan;
+    ctx.fillText(g, x, cy);
+    x += ctx.measureText(g).width + 12;
+  }
+  ctx.font = `800 21px ${FONT}`;
+  ctx.fillStyle = COL.text;
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
+  ctx.fillText(s.title, x, cy);
+  x += ctx.measureText(s.title).width + 16;
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+  let xr = CW - PAD - 4;
+  if (s.meta) {
+    ctx.font = `500 19px ${FONT}`;
+    const t = fitText(ctx, s.meta, Math.max(0, xr - x - 40));
+    if (t && t !== '…') {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = COL.dim;
+      ctx.fillText(t, xr, cy);
+      xr -= ctx.measureText(t).width + 16;
+    }
+  }
+  if (xr - x > 16) {
+    ctx.strokeStyle = COL.border;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, cy);
+    ctx.lineTo(xr, cy);
+    ctx.stroke();
+  }
+}
+
+// Wie drawButton, aktive Umschalter zusaetzlich leicht in ihrer Farbe getoent.
+function drawSectionButton(ctx, r, it) {
+  drawButton(ctx, r, it, hoverKey === it.key);
+  if (it.active && !it.disabled) {
+    ctx.save();
+    roundRect(ctx, r.x, r.y, r.w, r.h, 16);
+    ctx.globalAlpha = 0.14;
+    ctx.fillStyle = it.color || COL.cyan;
+    ctx.fill();
+    ctx.restore();
+  }
+  if (!it.disabled) hitRects.push({ ...r, key: it.key, onClick: it.onClick });
+}
+
+function drawStepper(ctx, r, it) {
+  roundRect(ctx, r.x, r.y, r.w, r.h, 16);
+  ctx.fillStyle = COL.panel;
+  ctx.fill();
+  ctx.strokeStyle = COL.border;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  const inset = 6, bw = Math.min(96, Math.round(r.w * 0.24));
+  const minus = { x: r.x + inset, y: r.y + inset, w: bw, h: r.h - 2 * inset };
+  const plus = { x: r.x + r.w - inset - bw, y: minus.y, w: bw, h: minus.h };
+  for (const [br, sub, fa] of [[minus, it.minus, 'fa-minus'], [plus, it.plus, 'fa-plus']]) {
+    const hov = hoverKey === sub.key;
+    roundRect(ctx, br.x, br.y, br.w, br.h, 12);
+    ctx.fillStyle = hov ? COL.btnHover : COL.btn;
+    ctx.fill();
+    ctx.strokeStyle = hov ? COL.cyan : COL.border;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `900 28px ${FA_FONT}`;
+    ctx.fillStyle = COL.text;
+    ctx.fillText(glyphFor(fa), br.x + br.w / 2, br.y + br.h / 2);
+    hitRects.push({ ...br, key: sub.key, onClick: sub.onClick });
+  }
+  const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+  const maxW = plus.x - (minus.x + minus.w) - 16;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `700 26px ${FONT}`;
+  ctx.fillStyle = COL.text;
+  ctx.fillText(fitText(ctx, it.label, maxW), cx, it.sub ? cy - 11 : cy);
+  if (it.sub) {
+    ctx.font = `500 19px ${FONT}`;
+    ctx.fillStyle = COL.mut;
+    ctx.fillText(fitText(ctx, it.sub, maxW), cx, cy + 16);
+  }
+}
+
 function panelHitAt(uv) {
   const x = uv.x * CW, y = (1 - uv.y) * CH;
   return hitRects.find(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) || null;
@@ -692,19 +990,73 @@ export function renderXRPanelPreview(tab = activeTab) {
 }
 
 // ── Frame-Schleife ──────────────────────────────────────────────────────────
-function onXRFrame(time) {
+function onXRFrame(time, frame) {
   const dt = lastFrameT ? Math.min(0.1, (time - lastFrameT) / 1000) : 0;
   lastFrameT = time;
-  rig.updateMatrixWorld(true);
-  handleInput(dt);
-  twin.runTwinFrameUpdates();
-  if (panel && panel.visible && (panelDirty || performance.now() - lastPanelDraw > PANEL_REDRAW_MS)) drawPanel();
-  h.renderer.render(h.scene, h.camera);
+  // Ein Fehler in der Logik darf das Rendern nie verhindern - sonst bleibt
+  // die Brille komplett schwarz. Jeder Fehlertext wird einmal gemeldet.
+  try {
+    updateNozzleCam(frame, h.renderer, rig, dt);   // nur bei aktiver Nozzle-Kamera
+    rig.updateMatrixWorld(true);
+    handleInput(dt);
+    twin.runTwinFrameUpdates();
+  } catch (e) {
+    reportFrameError('frame', e);
+    stopMotion('Fehler im XR-Frame');
+  }
+  try {
+    updateHud(frame, dt);
+  } catch (e) {
+    reportFrameError('hud', e);
+  }
+  try {
+    const aimPoint = reticle && reticle.visible ? rig.worldToLocal(_aim.copy(reticle.position)) : null;
+    updateControlHints(frame, h.renderer,
+      { left: hands.left && hands.left.grip, right: hands.right && hands.right.grip },
+      hintState(), { hide: { left: panelVisible }, aimPoint }, dt);
+  } catch (e) {
+    reportFrameError('hints', e);
+  }
+  try {
+    if (panel && panel.visible && (panelDirty || performance.now() - lastPanelDraw > PANEL_REDRAW_MS)) drawPanel();
+  } catch (e) {
+    reportFrameError('panel', e);
+  }
+  try {
+    h.renderer.render(h.scene, h.camera);
+  } catch (e) {
+    reportFrameError('render', e);
+  }
+  // VR-Spiegel am PC (vr_mirror.html): nach dem Rendern stimmen Kopf-Pose
+  // und Sichtfeld der Kamera fuer genau dieses Bild.
+  try {
+    publishMirrorFrame({ h, rig, hands, laser, reticle, floorDisc, xrKind });
+  } catch (e) {
+    reportFrameError('mirror', e);
+  }
+}
+
+const reportedFrameErrors = new Set();
+function reportFrameError(where, e) {
+  const text = `${where}: ${e && e.message ? e.message : e}`;
+  if (reportedFrameErrors.has(text)) return;
+  reportedFrameErrors.add(text);
+  console.error('[xr]', where, e);
+  logMsg('VR', `❌ XR ${text}`, 'err');
+  flash(`Fehler ${text}`.slice(0, 60));
 }
 
 function handleInput(dt) {
   const L = hands.left, R = hands.right;
   const lp = readPad(L), rp = readPad(R);
+  pads.left = lp;
+  pads.right = rp;
+  // Tab TASTEN zeigt gedrueckte Tasten - bei jeder Aenderung neu zeichnen.
+  const sig = [lp, rp].map(p => (p ? `${+p.trigger}${+p.grip}${+p.btnA}${+p.btnB}${+(Math.abs(p.sx) > STICK_DEADZONE || Math.abs(p.sy) > STICK_DEADZONE)}` : '-')).join('|');
+  if (sig !== padSig) {
+    padSig = sig;
+    if (activeTab === 'keys') panelDirty = true;
+  }
 
   // Not-Aus-Geste: beide Grips + beide Trigger zugleich (Flanke).
   const gesture = lp && rp && lp.grip && lp.trigger && rp.grip && rp.trigger;
@@ -721,14 +1073,20 @@ function handleInput(dt) {
     return;
   }
 
-  // Linke Hand: X = Panel ein/aus, Stick = gehen (nur VR)
+  // Linke Hand: X = Handgelenk-Panel, Y = HUD, Stick = gehen (nur VR). Gehen
+  // nicht, waehrend die rechte Hand den Roboter/Ghost fuehrt - das bewegte
+  // Rig wuerde ihn sonst mitziehen.
   if (L && lp) {
     if (lp.btnA && !L.prev.btnA) {
-      panelVisible = !panelVisible;
-      if (panel) panel.visible = panelVisible;
+      togglePanel();
       pulse('left', 0.3, 20);
     }
-    if (xrKind === 'vr' && (Math.abs(lp.sx) > STICK_DEADZONE || Math.abs(lp.sy) > STICK_DEADZONE)) walk(lp.sx, lp.sy, dt);
+    if (lp.btnB && !L.prev.btnB) {
+      toggleHudVisible();
+      pulse('left', 0.3, 20);
+    }
+    if (xrKind === 'vr' && !isNozzleCamActive() && !servoGrip && !planDrag
+        && (Math.abs(lp.sx) > STICK_DEADZONE || Math.abs(lp.sy) > STICK_DEADZONE)) walk(lp.sx, lp.sy, dt);
     L.prev = lp;
   }
 
@@ -738,8 +1096,17 @@ function handleInput(dt) {
     return;
   }
 
-  // B = SERVO <-> PLAN
+  // B = SERVO <-> PLAN, A = HUD vor den Blick holen
   if (rp.btnB && !R.prev.btnB) setCtrlMode(ctrlMode === 'servo' ? 'plan' : 'servo');
+  if (rp.btnA && !R.prev.btnA) { recenterView(); pulse('right', 0.3, 20); }
+
+  // Rechter Stick ohne Grip = fliegen (nur VR). Mit Grip fuehrt die Hand den
+  // Roboter bzw. den Ghost - ein bewegtes Rig wuerde ihn dann mitziehen.
+  if (xrKind === 'vr' && !isNozzleCamActive() && !rp.grip && !planDrag) {
+    const sx = Math.abs(rp.sx) > STICK_DEADZONE ? rp.sx : 0;
+    const sy = Math.abs(rp.sy) > STICK_DEADZONE ? rp.sy : 0;
+    if (sx || sy) orbit(sx, sy, dt);
+  }
 
   // Laser: Panel hat Vorrang, sonst Greifkugeln
   const ray = updateLaser(R);
@@ -751,6 +1118,7 @@ function handleInput(dt) {
       pulse('right', 0.5, 30);
       ray.panelHit.onClick();
       panelDirty = true;
+      markHudDirty();
     } else if (ray.object && ray.object.name) {
       triggerConsumed = true;
       pulse('right', 0.6, 40);
@@ -783,6 +1151,22 @@ function walk(sx, sy, dt) {
   applyRig();
 }
 
+// Um den Roboter fliegen: Stick X kreist um die senkrechte Achse durch die
+// Roboterbasis (ROS-Ursprung), der Blick dreht mit und bleibt zur Mitte
+// gerichtet. Stick Y hebt/senkt. Das Rig dreht sich dafuer als Ganzes um den
+// Ursprung - auch wenn der Nutzer im Raum schon herumgelaufen ist.
+function orbit(sx, sy, dt) {
+  const c = rigCal[xrKind];
+  const a = sx * ORBIT_SPEED * dt;
+  if (a) {
+    const x = c.x * Math.cos(a) - c.y * Math.sin(a);
+    const y = c.x * Math.sin(a) + c.y * Math.cos(a);
+    c.x = x; c.y = y; c.yaw += a;
+  }
+  c.z = THREE.MathUtils.clamp(c.z - sy * FLY_SPEED * dt, RIG_Z_MIN, RIG_Z_MAX);
+  applyRig();
+}
+
 function updateLaser(R) {
   if (!laser || !R.ctrl.visible) {
     if (reticle) reticle.visible = false;
@@ -794,21 +1178,30 @@ function updateLaser(R) {
   _ray.near = 0;
   _ray.far = 5;
 
-  let panelHit = null, object = null, dist = 1.5;
+  let panelHit = null, object = null, dist = 1.5, onUi = false;
   if (panel && panel.visible) {
     const hits = _ray.intersectObject(panel, false);
     if (hits.length && hits[0].uv) {
       panelHit = panelHitAt(hits[0].uv);
       dist = hits[0].distance;
+      onUi = true;
     }
+  }
+  // HUD nur, wenn es naeher liegt als das Handgelenk-Panel.
+  const hudHit = hudPick(_ray.ray, onUi ? dist : Infinity);
+  if (hudHit) {
+    panelHit = hudHit.hit;
+    dist = hudHit.distance;
+    onUi = true;
   }
   const pk = panelHit ? panelHit.key : null;
   if (pk !== hoverKey) {
     hoverKey = pk;
     panelDirty = true;
+    setHudHover(pk);
     if (pk) pulse('right', 0.15, 10);
   }
-  if (!panelHit && !(panel && panel.visible && dist < 1.5)) {
+  if (!onUi) {
     object = twin.pickDetectedObjectByRay(_ray.ray);
     if (object) dist = object.distance;
   }
@@ -834,12 +1227,13 @@ function handleServo(R, rp, tracked) {
   const grip = rp.grip && tracked && allowed;
   // Trigger nur fuer den Greifer, wenn Laser/Panel ihn nicht verbraucht hat.
   const index = rp.trigger && !triggerConsumed && allowed;
-  const thumbX = allowed && Math.abs(rp.sx) > 0.05 ? rp.sx : 0;
+  // Linearachse nur mit Grip - ohne Grip fliegt der rechte Stick (orbit).
+  const thumbX = grip && Math.abs(rp.sx) > 0.05 ? rp.sx : 0;
   if (rp.grip && !tracked && servoGrip) logMsg('VR', '⏹ Tracking lost - servo stopped', 'warn');
 
   const active = grip || index || thumbX !== 0;
   if (active || lastServoSent) {
-    const { pos, quat } = worldPose(R.grip);
+    const { pos, quat } = controlPose(R.grip, servoGrip);
     publishController(pos, quat, grip, index, thumbX);
   }
   lastServoSent = active;
@@ -853,7 +1247,7 @@ function handlePlan(R, rp, tracked) {
     if (planDrag) { twin.cancelGizmoExternalDrag(); planDrag = null; flash('Tracking verloren - Ghost-Drag abgebrochen'); }
     return;
   }
-  const { pos, quat } = worldPose(R.grip);
+  const { pos, quat } = controlPose(R.grip, Boolean(planDrag));
   if (rp.grip && !R.prev.grip && !planDrag) {
     const start = twin.beginGizmoExternalDrag();
     if (!start) { flash('TCP-Gizmo ist aus (VIEW)'); return; }
@@ -876,20 +1270,120 @@ function handlePlan(R, rp, tracked) {
   }
 }
 
+// ── Ansicht VR <-> Passthrough ──────────────────────────────────────────────
+const canSwitchView = () => sessionMode === 'immersive-ar';
+
+function applyViewMode() {
+  const r = h.renderer;
+  const pt = xrKind === 'ar';
+  if (pt) {
+    h.scene.background = null;
+    r.setClearAlpha(0);
+  } else {
+    h.scene.background = savedBackground;
+    r.setClearAlpha(savedClearAlpha);
+  }
+  // In einer AR-Session erzwingt three.js einen transparenten Hintergrund -
+  // die VR-Ansicht braucht dort die Kugel, sonst schimmert die Kamera durch.
+  if (vrBackdrop) vrBackdrop.visible = !pt && sessionMode === 'immersive-ar';
+  if (floorDisc) floorDisc.visible = !pt && !isNozzleCamActive();
+  applyRig();                 // VR und Passthrough haben je ein eigenes Rig
+  markHudDirty();
+}
+
+function setViewMode(kind) {
+  const next = kind === 'ar' ? 'ar' : 'vr';
+  if (!session) return;
+  // VR bzw. Passthrough waehlen beendet die Nozzle-Kamera (auch aus dem HUD).
+  if (isNozzleCamActive()) setNozzleView(false);
+  if (next === xrKind) return;
+  if (!canSwitchView()) { flash('Passthrough: Brille kann kein immersive-ar'); return; }
+  // Das Rig springt - eine laufende Servo-Bewegung oder ein Ghost-Drag
+  // wuerde den Sprung sonst an den Roboter weitergeben.
+  stopMotion('Ansicht gewechselt');
+  xrKind = next;
+  applyViewMode();
+  pulse('right', 0.5, 40);
+  flash(next === 'ar' ? 'Ansicht: Passthrough' : 'Ansicht: VR');
+  logMsg('VR', `🥽 View: ${next === 'ar' ? 'Passthrough (AR)' : 'VR'}`, 'info');
+}
+
+// Kamera Nozzle an/aus (Button im VR-Tab). Aus Passthrough heraus erst auf VR
+// umschalten - im Passthrough zaehlt die echte Umgebung.
+function toggleNozzleView() {
+  if (isNozzleCamActive()) { setNozzleView(false); return; }
+  if (xrKind === 'ar') setViewMode('vr');
+  setNozzleView(true);
+}
+
+function setNozzleView(on) {
+  if (on === isNozzleCamActive()) return;
+  if (on && !isNozzleCamAvailable()) { flash('Kamera Nozzle: Robotermodell noch nicht geladen'); return; }
+  // Das Rig springt - wie beim Ansichtswechsel vorher Servo/Ghost-Drag stoppen.
+  stopMotion(on ? 'Kamera Nozzle an' : 'Kamera Nozzle aus');
+  setNozzleCam(on);
+  if (floorDisc) floorDisc.visible = !on && xrKind !== 'ar';
+  if (!on) applyRig();
+  pulse('right', 0.5, 40);
+  flash(on ? 'Kamera Nozzle: Sicht folgt dem Endeffektor' : 'Kamera Nozzle aus');
+  logMsg('VR', `🎥 Nozzle camera view ${on ? 'on' : 'off'}`, 'info');
+  panelDirty = true;
+  markHudDirty();
+}
+
+// A (rechts) bzw. "Zentrieren": HUD vor den Blick, in der Nozzle-Ansicht auch
+// die Kamerasicht auf die aktuelle Blickrichtung.
+function recenterView() {
+  hudRecenter();
+  if (isNozzleCamActive()) recenterNozzleCam();
+}
+
+function togglePanel() {
+  panelVisible = !panelVisible;
+  if (panel) panel.visible = panelVisible;
+  panelDirty = true;
+  markHudDirty();
+}
+
+function toggleHudVisible() {
+  const on = toggleHud();
+  flash(on ? 'HUD an' : 'HUD aus (Y: wieder an)');
+  panelDirty = true;
+}
+
+// Zustand und Aktionen fuer das HUD (xr_hud.js)
+const hudApi = {
+  state: () => ({
+    xrKind, ctrlMode, panelVisible,
+    canSwitch: canSwitchView(),
+    flash: flashText && performance.now() < flashUntil ? flashText : '',
+  }),
+  setViewMode,
+  toggleCtrlMode: () => setCtrlMode(ctrlMode === 'servo' ? 'plan' : 'servo'),
+  togglePanel,
+  exit: () => { if (session) session.end(); },
+  estop: (src) => fireEstop(src),
+  estopReset: () => resetEmergencyStop(),
+};
+
 // ── Session ─────────────────────────────────────────────────────────────────
 function onSessionEnd() {
   stopMotion('XR-Session beendet');
+  publishMirrorEnd();
+  setNozzleCam(false);
   const r = h.renderer;
   r.setAnimationLoop(null);
   if (h.camera.parent === rig) rig.remove(h.camera);
   if (reticle) reticle.visible = false;
   twin.setDetectedObjectHover(null);
   hoverObject = null;
-  if (xrKind === 'ar') {
-    h.scene.background = savedBackground;
-    r.setClearAlpha(savedClearAlpha);
-  }
+  h.scene.background = savedBackground;
+  r.setClearAlpha(savedClearAlpha);
   if (floorDisc) floorDisc.visible = false;
+  if (vrBackdrop) vrBackdrop.visible = false;
+  hudOnSessionEnd();
+  controlHintsOnSessionEnd();
+  sessionMode = '';
   if (h.controls) h.controls.enabled = true;
   session = null;
   twin.restoreTwinViewAfterXR();
@@ -901,16 +1395,28 @@ function onVisibilityChange() {
   if (session && session.visibilityState !== 'visible') stopMotion('Session verdeckt');
 }
 
+// Fehler beim Start zusaetzlich als Popup: im Quest-Browser ist das
+// Log-Fenster meist nicht im Blick, sonst "passiert einfach nichts".
+function xrFail(text) {
+  logMsg('VR', `❌ ${text}`, 'err');
+  console.error('[xr]', text);
+  alert(`VR: ${text}`);
+}
+
 export function enterTwinXR(kind = 'vr') {
   h = twin.getTwinXRHandles();
-  if (!h) { logMsg('VR', '❌ Digital Twin not ready', 'err'); return; }
-  if (session) return;
-  if (!navigator.xr) { logMsg('VR', '❌ WebXR not available - open https://<host>:8443/ in the Quest browser', 'err'); return; }
-  const mode = kind === 'ar' ? 'immersive-ar' : 'immersive-vr';
+  if (!h) { xrFail('Digital Twin not ready'); return; }
+  if (session) { xrFail('XR session already active'); return; }
+  if (!navigator.xr) { xrFail('WebXR not available - open https://<host>:8443/ in the Quest browser'); return; }
+  // Kann die Brille Passthrough, laeuft auch die VR-Ansicht als AR-Session
+  // (mit blickdichtem Hintergrund) - nur so laesst sich in der Session
+  // zwischen VR und Passthrough umschalten.
+  const mode = kind === 'ar' || xrSupport['immersive-ar'] ? 'immersive-ar' : 'immersive-vr';
   // requestSession muss direkt im Klick passieren (User-Aktivierung).
-  navigator.xr.requestSession(mode, { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] })
+  navigator.xr.requestSession(mode, { optionalFeatures: ['local-floor', 'hand-tracking'] })
     .then(async (s) => {
       session = s;
+      sessionMode = mode;
       xrKind = kind === 'ar' ? 'ar' : 'vr';
       const r = h.renderer;
       // Rig und Controller VOR setSession anlegen - sonst koennen die
@@ -927,29 +1433,38 @@ export function enterTwinXR(kind = 'vr') {
         floorDisc.rotation.x = -Math.PI / 2;
         floorDisc.position.y = -0.002;
         rig.add(floorDisc);
+        // VR-Ansicht in einer AR-Session: blickdichte Kugel um den Nutzer,
+        // zuerst gezeichnet, ohne Tiefe - alles andere liegt davor. Radius
+        // unter camera.far (20 m), damit sie nie abgeschnitten wird.
+        vrBackdrop = new THREE.Mesh(
+          new THREE.SphereGeometry(12, 32, 16),
+          new THREE.MeshBasicMaterial({ color: 0x0a0e17, side: THREE.BackSide, depthTest: false, depthWrite: false, toneMapped: false }));
+        vrBackdrop.name = 'xr_vr_backdrop';
+        vrBackdrop.renderOrder = -1000;
+        vrBackdrop.frustumCulled = false;
+        rig.add(vrBackdrop);
       }
-      applyRig();
+      savedBackground = h.scene.background;
+      savedClearAlpha = r.getClearAlpha();
       r.xr.setReferenceSpaceType('local-floor');
       await r.xr.setSession(s);
-      floorDisc.visible = xrKind === 'vr';
       rig.add(h.camera);
       if (h.controls) h.controls.enabled = false;
-      if (xrKind === 'ar') {
-        savedBackground = h.scene.background;
-        savedClearAlpha = r.getClearAlpha();
-        h.scene.background = null;
-        r.setClearAlpha(0);
-      }
+      createHud(rig, r, hudApi);
+      createControlHints(rig);
+      applyViewMode();
+      hudOnSessionStart();
+      flash(isControlHintsEnabled() ? 'Tipp: auf einen Controller schauen = Tastenbelegung' : 'Tastenbelegung: X → Tab TASTEN', 8000);
       if (document.fonts) document.fonts.load(`900 46px ${FA_FONT}`).then(() => { panelDirty = true; }).catch(() => {});
       s.addEventListener('end', onSessionEnd, { once: true });
       s.addEventListener('visibilitychange', onVisibilityChange);
       lastFrameT = 0;
       panelDirty = true;
       r.setAnimationLoop(onXRFrame);
-      logMsg('VR', `🥽 ${xrKind === 'ar' ? 'Passthrough (AR)' : 'VR'} session started - X: panel, B: SERVO/PLAN, both grips + triggers: E-STOP`, 'info');
+      logMsg('VR', `🥽 ${xrKind === 'ar' ? 'Passthrough (AR)' : 'VR'} session started (${mode}) - look at a controller for its button map (full list: X → tab TASTEN); both grips + triggers: E-STOP`, 'info');
     })
     .catch((e) => {
-      logMsg('VR', `❌ XR session failed: ${e && e.message ? e.message : e}`, 'err');
+      xrFail(`XR session failed: ${e && e.name ? e.name + ': ' : ''}${e && e.message ? e.message : e}`);
       if (session) { try { session.end(); } catch (err) { /* schon beendet */ } }
       session = null;
     });
@@ -968,7 +1483,10 @@ function initXRButtons() {
   [['btn-twin-xr-vr', 'immersive-vr'], ['btn-twin-xr-ar', 'immersive-ar']].forEach(([id, mode]) => {
     const btn = document.getElementById(id);
     if (!btn) return;
-    navigator.xr.isSessionSupported(mode).then((ok) => { btn.style.display = ok ? '' : 'none'; }).catch(() => {});
+    navigator.xr.isSessionSupported(mode).then((ok) => {
+      xrSupport[mode] = ok;
+      btn.style.display = ok ? '' : 'none';
+    }).catch(() => {});
   });
 }
 
