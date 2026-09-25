@@ -26,7 +26,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'vr_quest3_teleop_node = vr_quest3_teleop.vr_quest3_teleop_node:main'
+            'vr_quest3_teleop_node = vr_quest3_teleop.vr_quest3_teleop_node:main',
+            'rosapi_guard = vr_quest3_teleop.rosapi_guard:main',
         ],
     },
 )

@@ -917,6 +917,11 @@
       <div class="ros-offline-title" id="ros-offline-title">Connecting to ROS 2 Bridge...</div>
       <div class="ros-offline-text" id="ros-offline-text">Motion controls are locked until the connection is established.</div>
       <div class="ros-offline-meta" id="ros-offline-meta"></div>
+      <!-- Nur ueber HTTPS (8443, Quest): die SSL-rosbridge 9091 braucht eine
+           eigene Zertifikat-Freigabe, sonst scheitert wss:// stumm. -->
+      <a class="ros-offline-cert is-hidden" id="ros-offline-cert" target="_blank" rel="noopener">
+        <i class="fa-solid fa-certificate"></i> Zertifikat für Port 9091 freigeben
+      </a>
       <button type="button" class="btn ros-offline-reload" data-action="reloadPage">
         <i class="fa-solid fa-arrows-rotate"></i> Reload page
       </button>

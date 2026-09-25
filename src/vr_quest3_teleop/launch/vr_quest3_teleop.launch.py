@@ -1,29 +1,43 @@
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, TimerAction
+from launch.actions import ExecuteProcess
 from launch_ros.actions import Node
-from launch.launch_description_sources import AnyLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
 import subprocess
+import socket
+
+
+def get_san_ips():
+    ips = {'127.0.0.1'}
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ips.add(s.getsockname()[0])
+        s.close()
+    except Exception:
+        pass
+    return ips
 
 
 def ensure_self_signed_cert(cert_path, key_path):
-    """Legt ein selbstsigniertes Zertifikat an, falls keins da ist.
-
-    certs/ liegt nicht mehr im Git-Repo (ein privater Schluessel gehoert da
-    nicht hinein). Auf einem frischen Klon oder nach dem Loeschen entsteht es
-    hier beim ersten Start neu. Die Quest muss ein neues Zertifikat einmal im
-    Browser akzeptieren.
-    """
+    """Legt ein selbstsigniertes Zertifikat an bzw. erneuert es, falls die aktuelle IP fehlt."""
+    san_ips = get_san_ips()
     if os.path.exists(cert_path) and os.path.exists(key_path):
-        return
+        try:
+            res = subprocess.run(['openssl', 'x509', '-in', cert_path, '-noout', '-text'],
+                                 capture_output=True, text=True)
+            if all(ip in res.stdout for ip in san_ips):
+                return
+        except Exception:
+            return
     os.makedirs(os.path.dirname(cert_path), exist_ok=True)
-    print(f'[vr_quest3_teleop] Kein Zertifikat gefunden - erzeuge {cert_path}')
+    san_str = 'DNS:localhost,' + ','.join(f'IP:{ip}' for ip in sorted(san_ips))
+    print(f'[vr_quest3_teleop] Erzeuge/aktualisiere Zertifikat mit SAN: {san_str} ({cert_path})')
     try:
         subprocess.run([
             'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes',
             '-days', '825', '-subj', '/CN=localhost',
-            '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1',
+            '-addext', f'subjectAltName={san_str}',
             '-keyout', key_path, '-out', cert_path,
         ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         os.chmod(key_path, 0o600)
@@ -35,21 +49,21 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('vr_quest3_teleop')
     driver_script_path = os.path.join(pkg_dir, 'https_vr_webxr_p8443', 'https_vr_webxr_p8443.py')
     
-    # Kill any existing https_server to avoid port conflicts (8443)
-    kill_existing = ExecuteProcess(
-        cmd=['bash', '-c', 'pkill -9 -f https_vr_webxr_p8443.py || true'],
-        output='screen'
-    )
+    # 1. Beende eventuell alte Server-Prozesse auf Port 8443
+    try:
+        subprocess.run(['fuser', '-k', '8443/tcp'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
 
-    adb_rev_9091 = ExecuteProcess(
-        cmd=['adb', 'reverse', 'tcp:9091', 'tcp:9091'],
-        output='screen'
-    )
-    
-    adb_rev_8443 = ExecuteProcess(
-        cmd=['adb', 'reverse', 'tcp:8443', 'tcp:8443'],
-        output='screen'
-    )
+    # 2. Richte ADB Reverse ein, falls eine Meta Quest per USB angeschlossen ist
+    try:
+        if subprocess.run(['which', 'adb'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            res = subprocess.run(['adb', 'get-state'], capture_output=True, text=True)
+            if 'device' in res.stdout:
+                subprocess.run(['adb', 'reverse', 'tcp:9091', 'tcp:9091'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run(['adb', 'reverse', 'tcp:8443', 'tcp:8443'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
 
     ws_root = os.environ.get("ROS2_WS", os.path.expanduser('~/dev_ws'))
     cert_path = os.path.join(ws_root, 'certs', 'cert.pem')
@@ -59,16 +73,37 @@ def generate_launch_description():
         key_path = os.path.expanduser('~/dev_ws/certs/key.pem')
     ensure_self_signed_cert(cert_path, key_path)
 
-    rosbridge = IncludeLaunchDescription(
-        AnyLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('rosbridge_server'), 'launch', 'rosbridge_websocket_launch.xml')
-        ),
-        launch_arguments={
-            'port': '9091',
-            'ssl': 'true',
+    # SSL-rosbridge fuer die Quest (wss://<host>:9091). Direkt als Node statt
+    # ueber rosbridge_websocket_launch.xml: das XML startet immer auch einen
+    # eigenen /rosapi. Laeuft daneben die Robot Control UI (9090), gibt es
+    # zwei /rosapi - dann haengt /rosapi/nodes. rosapi_guard startet deshalb
+    # nur dann einen, wenn keiner da ist.
+    # Eigener Node-Name: zwei Nodes namens /rosbridge_websocket teilen sich
+    # sonst Parameter und Services.
+    # call_services_in_new_thread + Timeout wie in der UI (9090): ohne sie
+    # arbeitet rosbridge Service-Aufrufe im Hauptthread ab - ein haengender
+    # Aufruf blockiert dann alles Weitere der VR-Seite (Topics, Buttons).
+    rosbridge = Node(
+        package='rosbridge_server',
+        executable='rosbridge_websocket',
+        name='rosbridge_websocket_ssl_9091',
+        output='screen',
+        parameters=[{
+            'port': 9091,
+            'address': '',
             'certfile': cert_path,
-            'keyfile': key_path
-        }.items()
+            'keyfile': key_path,
+            'call_services_in_new_thread': True,
+            'send_action_goals_in_new_thread': True,
+            'default_call_service_timeout': 10.0,
+        }],
+    )
+
+    rosapi_guard = Node(
+        package='vr_quest3_teleop',
+        executable='rosapi_guard',
+        name='vr_rosapi_guard',
+        output='screen',
     )
 
     https_server = ExecuteProcess(
@@ -84,11 +119,8 @@ def generate_launch_description():
     )
     
     return LaunchDescription([
-        kill_existing,
-        adb_rev_9091,
-        adb_rev_8443,
-        TimerAction(
-            period=1.5,
-            actions=[rosbridge, https_server, teleop_node]
-        )
+        rosbridge,
+        rosapi_guard,
+        https_server,
+        teleop_node
     ])

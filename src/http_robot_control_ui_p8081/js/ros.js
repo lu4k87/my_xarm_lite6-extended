@@ -225,6 +225,15 @@ export function setRosOnline(online) {
       ? 'All motion controls are locked. Commands from this page no longer reach the robot - use the hardware emergency stop if the arm is still moving.'
       : 'Motion controls are locked until the connection is established.';
   }
+  // Ueber HTTPS scheitert wss://:9091 still, solange der Browser das
+  // selbstsignierte Zertifikat dort nicht akzeptiert hat (jede Port-Nummer
+  // einzeln, auch nach jedem neu erzeugten Zertifikat). Link oeffnet 9091
+  // direkt: Warnung bestaetigen, zurueck, neu laden.
+  const cert = document.getElementById('ros-offline-cert');
+  if (cert && window.location.protocol === 'https:') {
+    cert.href = 'https://' + ROS_HOST + ':9091/';
+    cert.classList.remove('is-hidden');
+  }
   renderRosOfflineOverlay();
   if (!rosOfflineTicker) rosOfflineTicker = setInterval(renderRosOfflineOverlay, 1000);
 }

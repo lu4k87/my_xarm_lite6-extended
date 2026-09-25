@@ -3996,6 +3996,19 @@ header {
   overflow-wrap: anywhere;
 }
 
+.ros-offline-cert {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.ros-offline-cert.is-hidden { display: none; }
+
 .ros-offline-reload {
   margin-top: 4px;
   display: inline-flex;
