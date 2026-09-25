@@ -1,8 +1,8 @@
 {
   "__cards_collapsed": {
     "dev_fake": {
-      "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": true,
-      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": false,
+      "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": false,
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": true,
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": true,
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py": true,
       "ros2 launch web_video_server web_video_server.launch.py": true,
@@ -10,12 +10,12 @@
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses": true
     },
     "dev_real": {
-      "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": false,
-      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": false,
+      "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": true,
+      "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": true,
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": true,
-      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py": false,
-      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich static_objects:=true": false,
-      "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses": false
+      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py": true,
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich static_objects:=true": true,
+      "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses": true
     },
     "extras_legacy": {
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich": true
@@ -216,7 +216,7 @@
       "robot_ip:=192.168.1.175": true,
       "rviz:=true": false,
       "static_objects:=true": true,
-      "val:robot_ip": "192.168.1.175",
+      "val:robot_ip": null,
       "velocity_control:=true": false
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev": {
@@ -259,7 +259,7 @@
       "robot_ip:=192.168.1.175": true,
       "rviz:=true": false,
       "static_objects:=true": true,
-      "val:robot_ip": "192.168.1.175",
+      "val:robot_ip": null,
       "velocity_control:=true": false
     },
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true report_type:=dev": {
@@ -310,8 +310,8 @@
     ],
     "dev_real": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich static_objects:=true",
-      "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true",
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
+      "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true",
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt"
@@ -346,11 +346,10 @@
     "dev_real": [
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich static_objects:=true",
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py",
+      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true",
       "ros2 launch voice_command_listener voice_listener.launch.py",
-      "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py",
       "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py",
-      "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt",
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py"
     ],
@@ -546,7 +545,7 @@
         "yolo_model:=yolov8s.pt": false
       },
       "ros2 launch voice_command_listener voice_listener.launch.py": {
-        "use_gpu:=true": false,
+        "use_gpu:=true": true,
         "val:model_name": null,
         "val:language": null,
         "val:device_index": null
@@ -614,6 +613,9 @@
       }
     },
     "dev_real": {
+      "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": {
+        "val:start_video_server": null
+      },
       "ros2 launch robot_motion_handler_movegroup standalone_move_group.launch.py": {
         "add_vacuum_gripper:=true": true,
         "robot_ip:=192.168.1.175": true
@@ -645,7 +647,20 @@
         "camera:=ip_cam": false,
         "yolo_model:=yolov8l.pt": true,
         "yolo_model:=yolov8s.pt": false,
-        "yolo_model:=my_yolo_model.pt": false
+        "yolo_model:=my_yolo_model.pt": false,
+        "val:camera_model": null,
+        "val:confidence_threshold": null,
+        "val:ema_alpha": null,
+        "val:safe_z_hover_height": null,
+        "val:grasp_z_offset": null,
+        "val:velocity_scaling": null,
+        "val:acceleration_scaling": null,
+        "val:tf_x": null,
+        "val:tf_y": null,
+        "val:tf_z": null,
+        "val:tf_roll": null,
+        "val:tf_pitch": null,
+        "val:tf_yaw": null
       },
       "ros2 launch robot_vision_cameras_bringup zed_cam_rviz_pointcloud_tf_yolo_planned_grasp.launch.py": {
         "use_zed_hardware:=false": false,
@@ -662,10 +677,16 @@
         "yolo_model:=yolov8s.pt": false
       },
       "ros2 launch voice_command_listener voice_listener.launch.py": {
-        "use_gpu:=true": true
+        "use_gpu:=true": true,
+        "val:model_name": null,
+        "val:language": null,
+        "val:device_index": null
       },
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": {
-        "use_gpu:=true": true
+        "use_gpu:=true": true,
+        "val:model_name": null,
+        "val:language": null,
+        "val:device_index": null
       },
       "ros2 launch web_video_server web_video_server.launch.py": {
         "port:=8082": true
@@ -686,7 +707,7 @@
         "use_gpu:=true": true
       },
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py": {
-        "robot_ip:=192.168.1.175": true,
+        "val:robot_ip": null,
         "add_vacuum_gripper:=true": false,
         "add_gripper:=true": true,
         "report_type:=dev": true,
@@ -710,7 +731,7 @@
         "robot_ip:=192.168.1.175": false
       },
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_realmove.launch.py robot_ip:=192.168.1.175 add_vacuum_gripper:=true add_gripper:=true report_type:=dev report_type:=normal report_type:=rich static_objects:=true": {
-        "robot_ip:=192.168.1.175": true,
+        "val:robot_ip": null,
         "add_vacuum_gripper:=true": false,
         "add_gripper:=true": true,
         "report_type:=dev": true,
@@ -726,7 +747,9 @@
       },
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses": {
         "gaze_mode:=real_world": true,
-        "gaze_mode:=ui_gaze": false
+        "gaze_mode:=ui_gaze": false,
+        "val:dwell_threshold": "1.5",
+        "val:tobii_ip": null
       },
       "ros2 run web_video_server web_video_server": {
         "--ros-args -r __node:=http_web_video_server_p8082": true,
@@ -1182,11 +1205,11 @@
               "text": "attach_to:=linear_axis_link"
             },
             {
-              "checked": false,
+              "checked": true,
               "text": "static_objects:=true"
             },
             {
-              "checked": false,
+              "checked": true,
               "text": "rviz:=true"
             }
           ],

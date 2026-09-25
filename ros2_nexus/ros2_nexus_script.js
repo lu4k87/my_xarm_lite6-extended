@@ -40,7 +40,7 @@
       const actions = [
         { cmd: servoCmd, title: servoTitle },
         { cmd: zedBringupCmd, title: "Robot Vision Cameras Bringup (cam, tf, yolo3d, pc_opt, grasp, status/warn)" },
-        { cmd: "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=True use_gpu:=True", title: "Speech Control (Voice AI & Listener)" },
+        { cmd: "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true", title: "Speech Control (Voice AI & Listener)" },
         { cmd: "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py", title: "Robot Control UI, WebSocket & Video Server (Port 8081 / 9090 / 8082)" },
         { cmd: "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses", title: "Eyetracker - Gaze Control (Real World) | (UI Gaze)" },
         { cmd: "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py", title: "VR Quest 3 Teleop (Port 9091 / 8443)" }

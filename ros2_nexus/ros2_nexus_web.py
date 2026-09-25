@@ -251,13 +251,35 @@ trap 'send_log "stop" &' EXIT
 """
 
 
+def _clean_terminal_env() -> dict:
+    env = os.environ.copy()
+    # Snap variables (e.g. from VSCode/Claude snap) poison host system binaries like gnome-terminal,
+    # causing "/snap/core20/.../libpthread.so.0: undefined symbol: __libc_pthread_init" crashes.
+    snap_keys = [k for k in env.keys() if k.startswith("SNAP") or k in (
+        "GIO_MODULE_DIR", "GTK_PATH", "GDK_PIXBUF_MODULEDIR", "LOCPATH",
+        "GTK_IM_MODULE_FILE", "GIO_LAUNCHED_DESKTOP_FILE", "GIO_LAUNCHED_DESKTOP_FILE_PID",
+        "BASH_ENV", "ENV"
+    )]
+    for k in snap_keys:
+        env.pop(k, None)
+    if "XDG_DATA_DIRS" in env:
+        dirs = [d for d in env["XDG_DATA_DIRS"].split(":") if "/snap/" not in d]
+        env["XDG_DATA_DIRS"] = ":".join(dirs)
+    if not env.get("DISPLAY"):
+        if os.path.exists("/tmp/.X11-unix/X1"):
+            env["DISPLAY"] = ":1"
+        elif os.path.exists("/tmp/.X11-unix/X0"):
+            env["DISPLAY"] = ":0"
+    return env
+
+
 def _open_terminal(script: str, title: str):
     # Als Argumentliste statt Shell-String: der Titel kommt aus dem Request
     # und landete vorher ungequotet in einer Shell-Zeile.
     subprocess.Popen([
         "gnome-terminal", "--geometry=120x30", f"--title={title}", "--",
         "bash", "-c", 'eval "$1"; exec bash', "_", script,
-    ])
+    ], env=_clean_terminal_env())
 
 
 # ── Routes ──────────────────────────────────────────────────────────────────
@@ -827,8 +849,7 @@ def api_run():
 
     try:
         if mode == "bg":
-            env = os.environ.copy()
-            env.setdefault("DISPLAY", ":0")
+            env = _clean_terminal_env()
             if localhost_only is not None:
                 env["ROS_LOCALHOST_ONLY"] = "1" if localhost_only else "0"
             process = subprocess.Popen(command, shell=True, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, preexec_fn=os.setsid)
