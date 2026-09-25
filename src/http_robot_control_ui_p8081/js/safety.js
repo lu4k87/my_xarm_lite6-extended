@@ -5,7 +5,7 @@ import { currentFrame, stopAllJogging } from './jog.js';
 import { logMsg } from './log.js';
 import { createSrv, noteEstopPressed, ros, setEstopLatched } from './ros.js';
 import { unreachableClearance, unreachableRadiusAt } from './robot_limits.js';
-import { LIM, floorGuard } from './util.js';
+import { LIM, floorGuard, fmtDeg } from './util.js';
 
 export let currentServoStatus = 0;
 export let isRobotMoving = false;
@@ -46,7 +46,7 @@ jointStateSub.subscribe((msg) => {
       currentJointVals.push(val);
       const valEl = document.getElementById(`j${i+1}-val`);
       const fillEl = document.getElementById(`j${i+1}-fill`);
-      if(valEl) valEl.innerText = val.toFixed(2);
+      if(valEl) valEl.innerText = `${fmtDeg(val)}°`;
       if(fillEl) {
         // J1/J4/J6 koennen +-360 Grad (limited:=false), die uebrigen +-180.
         const range = (i === 0 || i === 3 || i === 5) ? 2 * Math.PI : Math.PI;
@@ -131,9 +131,10 @@ eefSub.subscribe((msg) => {
     const tr = document.getElementById('telem-r');
     const tp = document.getElementById('telem-p');
     const tyaw = document.getElementById('telem-yaw');
-    if(tr) tr.innerText = roll.toFixed(2);
-    if(tp) tp.innerText = pitch.toFixed(2);
-    if(tyaw) tyaw.innerText = yaw.toFixed(2);
+    // Anzeige in Grad wie die POSE-Felder
+    if(tr) tr.innerText = fmtDeg(roll);
+    if(tp) tp.innerText = fmtDeg(pitch);
+    if(tyaw) tyaw.innerText = fmtDeg(yaw);
   }
 });
 

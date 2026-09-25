@@ -91,16 +91,18 @@ const HANDLE_W = 48;                  // Griff zum Verschieben (Toolbar, Not-Aus
 // Funktionsgruppe (GROUP in xr_ui.js) - dieselbe wie im Handgelenk-Panel.
 
 // Kurze Namen fuer die SCENE-Icons (die Tooltips am Desktop sind lang).
+// Die Punktwolke gibt es in VR nicht (HUD_HIDDEN).
+const HUD_HIDDEN = new Set(['btn-twin-pointcloud']);
 const SCENE_LABELS = {
-  'btn-twin-scene-objects': 'Objekte',
-  'btn-twin-scene-plane': 'A4-Vorlage',
+  'btn-twin-scene-objects': 'Objects',
+  'btn-twin-scene-plane': 'A4 template',
   'btn-twin-scene-safety': 'Safety-Zone',
-  'btn-twin-scene-zedm': 'ZED-Stativ',
+  'btn-twin-scene-zedm': 'ZED stand',
   'btn-twin-detections': 'YOLO',
-  'btn-twin-pointcloud': 'Punktwolke',
-  'btn-twin-distance-line': 'Distanzlinie',
-  'btn-moveit-coll-objects': 'Koll. Objekte',
-  'btn-moveit-coll-ground': 'Koll. Boden',
+  'btn-twin-virtual-objects': 'Virt. objects',
+  'btn-twin-distance-line': 'Distance line',
+  'btn-moveit-coll-objects': 'Coll. objects',
+  'btn-moveit-coll-ground': 'Coll. ground',
 };
 
 let hud = null;                  // THREE.Group, Kind des Rigs (XR-Raum, Y oben)
@@ -503,13 +505,13 @@ const MODELS = {
     return {
       toolbar: true,
       items: [
-        d('#btn-twin-grid', 'Raster', 'scene'),
-        d('#btn-twin-edges', 'Kanten', 'scene'),
+        d('#btn-twin-grid', 'Grid', 'scene'),
+        d('#btn-twin-edges', 'Edges', 'scene'),
         d('#btn-hud-tabs-toggle', 'Panels', 'scene'),
         d('#btn-sound-toggle', 'Sound', 'scene'),
         DIV,
         d('#btn-twin-gizmo', 'Gizmo', 'plan'),
-        d('#btn-twin-gizmo-mode', twin.getTCPGizmoMode() === 'rotate' ? 'Rotation' : 'Schieben', 'plan'),
+        d('#btn-twin-gizmo-mode', twin.getTCPGizmoMode() === 'rotate' ? 'Rotation' : 'Translate', 'plan'),
         d('#btn-twin-gizmo-sync', 'Sync', 'plan'),
         d('#btn-twin-path-preview', 'Ghost', 'plan'),
         DIV,
@@ -521,8 +523,8 @@ const MODELS = {
         ownItem('view-vr', 'fa-vr-cardboard', 'VR', () => api.setViewMode('vr'), xrOpts(!ar)),
         { ...ownItem('view-ar', 'fa-glasses', 'Passthrough', () => api.setViewMode('ar'),
           { ...xrOpts(ar), disabled: !st.canSwitch }), span: 1.35 },
-        { ...ownItem('wrist', 'fa-hand', 'Handpanel', api.togglePanel, xrOpts(st.panelVisible)), span: 1.2 },
-        ownItem('exit', 'fa-right-from-bracket', 'Beenden', api.exit, { group: 'xr', color: COL.red }),
+        { ...ownItem('wrist', 'fa-hand', 'Hand panel', api.togglePanel, xrOpts(st.panelVisible)), span: 1.2 },
+        ownItem('exit', 'fa-right-from-bracket', 'Exit', api.exit, { group: 'xr', color: COL.red }),
       ].filter(Boolean),
     };
   },
@@ -550,7 +552,7 @@ const MODELS = {
   scene() {
     return tabCard('scene', 'SCENE', 'fa-layer-group', {
       group: 'scene',
-      items: qa('#hud-tab-scene .hud-tab-body button').map(b => domItem(b, SCENE_LABELS[b.id], { group: 'scene' })).filter(Boolean),
+      items: qa('#hud-tab-scene .hud-tab-body button').filter(b => !HUD_HIDDEN.has(b.id)).map(b => domItem(b, SCENE_LABELS[b.id], { group: 'scene' })).filter(Boolean),
       cols: 3,
     });
   },
@@ -573,7 +575,7 @@ const MODELS = {
           bar: bar ? { pct: parseFloat(bar.style.width) || 0, color: getComputedStyle(bar).backgroundColor } : null },
         { label: 'FLOOR', value: txt('#hud-floor-val') },
         { label: 'SERVO', value: txt('#moveit-badge') },
-        { label: 'ROS', value: online ? 'verbunden' : 'GETRENNT', color: online ? COL.green : COL.red },
+        { label: 'ROS', value: online ? 'verbunden' : 'DISCONNECTED', color: online ? COL.green : COL.red },
       ],
     });
   },
@@ -583,9 +585,9 @@ const MODELS = {
       group: 'robot',
       info: [
         { label: 'XYZ', value: `X ${val('#inp-x')}   Y ${val('#inp-y')}   Z ${val('#inp-z')} mm` },
-        { label: 'RPY', value: `R ${val('#inp-r')}   P ${val('#inp-p')}   Y ${val('#inp-yw')}` },
+        { label: 'RPY', value: `R ${val('#inp-r')}   P ${val('#inp-p')}   Yw ${val('#inp-yw')} °` },
       ],
-      items: [domItem(q('#hud-tab-pose button[data-action="requestMotion"]'), 'Pose anfahren', { group: 'robot' })].filter(Boolean),
+      items: [domItem(q('#hud-tab-pose button[data-action="requestMotion"]'), 'Move to pose', { group: 'robot' })].filter(Boolean),
       cols: 1, btnH: FLAT_BTN_H,
     });
   },
@@ -595,8 +597,8 @@ const MODELS = {
       group: 'robot',
       badge: txt('#speed-val'), badgeColor: groupColor('robot'),
       items: [
-        ownItem('speed-', 'fa-minus', 'Langsamer', () => stepSpeed(-1), { group: 'robot', repeat: true }),
-        ownItem('speed+', 'fa-plus', 'Schneller', () => stepSpeed(1), { group: 'robot', repeat: true }),
+        ownItem('speed-', 'fa-minus', 'Slower', () => stepSpeed(-1), { group: 'robot', repeat: true }),
+        ownItem('speed+', 'fa-plus', 'Faster', () => stepSpeed(1), { group: 'robot', repeat: true }),
       ],
       btnH: FLAT_BTN_H,
     });
@@ -703,7 +705,7 @@ function drawEstop(s, m, hov) {
   const glyph = glyphFor('fa-hand');
   const gw = ctx.measureText(glyph).width;
   ctx.font = `800 40px ${FONT}`;
-  const label = 'NOT-AUS';
+  const label = 'E-STOP';
   const lw = ctx.measureText(label).width;
   const lx = r.x + (r.w - (gw + 18 + lw)) / 2;
   ctx.fillStyle = '#fff';

@@ -1,8 +1,10 @@
 // ── VR-Viewport fuer die Meta Quest 3 (WebXR) ──────────────────────────────
 //
-// Laeuft nur in einem sicheren Kontext, also ueber https://<host>:8443/
-// (vr_quest3_teleop liefert die Robot Control UI dort aus). Auf Port 8081
-// (HTTP) gibt es kein navigator.xr - die VR-Buttons bleiben dann versteckt.
+// Laeuft nur in einem sicheren Kontext: https://<host>:8443/ (so oeffnet die
+// Quest die Robot Control UI, vr_quest3_teleop liefert sie dort aus) oder
+// localhost. Ueber http://<IP>:8081 gibt es kein navigator.xr, die VR-Buttons
+// bleiben versteckt. http://localhost:8081 zaehlt dagegen als sicher - meldet
+// der Desktop-Browser immersive-vr/-ar, erscheinen die Buttons auch dort.
 //
 // Aufbau:
 //   * Dieselbe Szene, Kamera und derselbe Renderer wie der Digital Twin. Die
@@ -70,6 +72,7 @@ import {
   hudDragBegin, hudDragMove, hudDragEnd, hudDragCancel, hudResetLayout,
 } from './xr_hud.js';
 import { publishMirrorEnd, publishMirrorFrame } from './xr_mirror_send.js';
+import { restoreTwinPointCloud, setTwinPointCloud } from '../pointcloud.js';
 import {
   TILT_DEFAULT_DEG, isNozzleCamActive, isNozzleCamAvailable, setNozzleCam, recenterNozzleCam,
   getNozzleTiltDeg, stepNozzleTilt, setNozzleTilt, updateNozzleCam,
@@ -164,7 +167,7 @@ function loadRigCal() {
 
 function saveRigCal() {
   lsSet(RIG_LS_KEY, JSON.stringify(rigCal));
-  flash('Kalibrierung gespeichert');
+  flash('Calibration saved');
 }
 
 function applyRig() {
@@ -195,7 +198,7 @@ function nudgeRobot(dx, dy, dz, dyawDeg) {
 // (Vorbereitet fuer Passthrough-AR, am echten Roboter noch nicht getestet.)
 function placeBaseAtController() {
   const r = hands.right;
-  if (!r || !r.grip.visible) { flash('Rechter Controller nicht getrackt'); return; }
+  if (!r || !r.grip.visible) { flash('Right controller not tracked'); return; }
   const local = r.grip.position.clone();                         // XR-Raum
   const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(r.grip.quaternion).applyQuaternion(Q_BASE);
   const yaw = -Math.atan2(fwd.y, fwd.x);
@@ -204,13 +207,13 @@ function placeBaseAtController() {
   const c = rigCal[xrKind];
   c.x = -p.x; c.y = -p.y; c.z = -p.z; c.yaw = yaw;
   applyRig();
-  flash('Basis auf Controller gesetzt');
+  flash('Base set to controller');
 }
 
 function resetRig() {
   rigCal[xrKind] = { ...RIG_DEFAULT };
   applyRig();
-  flash('Standort zurueckgesetzt');
+  flash('Position reset');
 }
 
 // ── Controller ──────────────────────────────────────────────────────────────
@@ -259,7 +262,7 @@ function setupControllers() {
     });
     ctrl.addEventListener('disconnected', () => {
       if (entry.hand && hands[entry.hand] === entry) hands[entry.hand] = null;
-      if (entry.hand === 'right') stopMotion('Controller getrennt');
+      if (entry.hand === 'right') stopMotion('controller disconnected');
       entry.source = null;
       panelDirty = true;
     });
@@ -372,7 +375,7 @@ function fireEstop(source) {
   emergencyStop();
   pulse('left', 1.0, 250);
   pulse('right', 1.0, 250);
-  flash(`NOT-AUS (${source})`);
+  flash(`E-STOP (${source})`);
   logMsg('VR', `🚨 Emergency stop from VR (${source})`, 'err');
 }
 
@@ -389,7 +392,7 @@ function setCtrlMode(mode) {
       );
     } catch (_) {}
   }
-  flash(mode === 'plan' ? 'Modus PLAN: Laser + Trigger auf das Gizmo, Grip zieht den Ghost' : 'Modus SERVO: Grip steuert den Roboter');
+  flash(mode === 'plan' ? 'PLAN mode: laser + trigger on the gizmo, grip drags the ghost' : 'SERVO mode: grip controls the robot');
   announceCtrlMode(mode);         // Ansage hier und in jeder Desktop-UI
   pulse('right', 0.6, 60);
   panelDirty = true;
@@ -423,26 +426,26 @@ function attachPanel(grip) {
 // Funktion gibt es genau einmal - frueher standen Gizmo & Co. doppelt in VIEW
 // und MOVEIT. Reihenfolge: was man am haeufigsten braucht, zuerst.
 const TABS = [
-  { id: 'robot',  fa: 'fa-robot',           label: 'ROBOTER', group: 'robot' },
-  { id: 'plan',   fa: 'fa-route',           label: 'PLANEN',  group: 'plan' },
-  { id: 'object', fa: 'fa-bullseye',        label: 'OBJEKTE', group: 'grip' },
-  { id: 'scene',  fa: 'fa-layer-group',     label: 'SZENE',   group: 'scene' },
+  { id: 'robot',  fa: 'fa-robot',           label: 'ROBOT', group: 'robot' },
+  { id: 'plan',   fa: 'fa-route',           label: 'PLAN',  group: 'plan' },
+  { id: 'object', fa: 'fa-bullseye',        label: 'OBJECTS', group: 'grip' },
+  { id: 'scene',  fa: 'fa-layer-group',     label: 'SCENE',   group: 'scene' },
   { id: 'xr',     fa: 'fa-vr-cardboard',    label: 'VR',      group: 'xr' },
-  { id: 'keys',   fa: 'fa-circle-question', label: 'TASTEN',  group: 'help' },
+  { id: 'keys',   fa: 'fa-circle-question', label: 'BUTTONS',  group: 'help' },
 ];
 
 // Kurze deutsche Namen statt der langen Desktop-Tooltips. Der Zustand steht
 // in der AN/AUS-Pille, nicht mehr im Namen ("Hide ..."/"Show ...").
 const SCENE_TOGGLES = [
-  ['#btn-twin-scene-objects', 'Szenen-Objekte'],
-  ['#btn-twin-scene-plane', 'A4-Vorlage'],
+  ['#btn-twin-scene-objects', 'Scene objects'],
+  ['#btn-twin-scene-plane', 'A4 template'],
   ['#btn-twin-scene-safety', 'Safety-Zone'],
-  ['#btn-twin-scene-zedm', 'ZED-Stativ'],
-  ['#btn-twin-detections', 'YOLO-Boxen'],
-  ['#btn-twin-pointcloud', 'Punktwolke'],
-  ['#btn-twin-distance-line', 'Distanzlinie'],
-  ['#btn-twin-grid', 'Bodenraster'],
-  ['#btn-twin-edges', 'CAD-Kanten'],
+  ['#btn-twin-scene-zedm', 'ZED stand'],
+  ['#btn-twin-detections', 'YOLO boxes'],
+  ['#btn-twin-virtual-objects', 'Virtual objects'],
+  ['#btn-twin-distance-line', 'Distance line'],
+  ['#btn-twin-grid', 'Ground grid'],
+  ['#btn-twin-edges', 'CAD edges'],
 ];
 
 const toggleOpts = (on, group) => ({ active: on, group, color: on ? groupColor(group) : COL.mut });
@@ -465,7 +468,7 @@ function collisionItem(sel, label) {
   const on = el.classList.contains('coll-on');
   const off = el.classList.contains('coll-off');
   return domItem(el, label, { group: 'scene', toggle: true, on,
-    state: on ? 'AN' : (off ? 'AUS' : 'INAKTIV'), warn: off });
+    state: on ? 'ON' : (off ? 'OFF' : 'INACTIVE'), warn: off });
 }
 
 // Pfad-Vorschau (Ghost): AN/AUS, ohne erkannten Node INAKTIV - klickbar
@@ -473,9 +476,9 @@ function collisionItem(sel, label) {
 function previewItem() {
   const el = q('#btn-twin-path-preview');
   if (!el) return null;
-  const unknown = parseFloat(getComputedStyle(el).opacity) < 0.5 && !el.classList.contains('active');
-  return domItem(el, 'Ghost-Vorschau', { group: 'plan', toggle: true,
-    state: unknown ? 'INAKTIV' : undefined });
+  const unknown = el.classList.contains('unavailable');
+  return domItem(el, 'Ghost preview', { group: 'plan', toggle: true,
+    state: unknown ? 'INACTIVE' : undefined });
 }
 
 // Inhalt eines Tabs: Infozeilen oben, darunter Sektionen (drawSections).
@@ -487,31 +490,31 @@ function tabContent(id) {
     info.push({ label: 'SERVO', value: txt('#moveit-badge') });
     info.push({ label: 'REACH', value: txt('#hud-manip-val') });
     sections.push({
-      title: 'STEUERMODUS', fa: 'fa-gamepad', group: 'robot', cols: 2, btnH: 84,
-      meta: plan ? 'Grip zieht den Ghost · B wechselt' : 'Grip führt den Roboter · B wechselt',
+      title: 'CONTROL MODE', fa: 'fa-gamepad', group: 'robot', cols: 2, btnH: 84,
+      meta: plan ? 'Grip drags the ghost · B switches' : 'Grip guides the robot · B switches',
       items: [
         ownItem('mode-servo', 'fa-gamepad', 'SERVO', () => setCtrlMode('servo'), { active: !plan, group: 'robot', solid: true }),
         ownItem('mode-plan', 'fa-ghost', 'PLAN', () => setCtrlMode('plan'), { active: plan, group: 'plan', solid: true }),
       ],
     });
     const poses = qa('#hud-tab-motion .hud-tab-body button').map(b => domItem(b, poseLabel(b), { group: 'robot' }));
-    poses.push(domItem(q('#hud-tab-pose button[data-action="requestMotion"]'), 'Pose anfahren', { group: 'robot' }));
-    sections.push({ title: 'POSEN ANFAHREN', fa: 'fa-location-arrow', group: 'robot', cols: 4, btnH: 108, items: poses });
+    poses.push(domItem(q('#hud-tab-pose button[data-action="requestMotion"]'), 'Move to pose', { group: 'robot' }));
+    sections.push({ title: 'MOVE TO POSE', fa: 'fa-location-arrow', group: 'robot', cols: 4, btnH: 108, items: poses });
     sections.push({
-      title: 'GESCHWINDIGKEIT', fa: 'fa-gauge', group: 'robot', cols: 4, btnH: 72,
+      title: 'SPEED', fa: 'fa-gauge', group: 'robot', cols: 4, btnH: 72,
       items: [stepperItem('speed', 'Speed', txt('#speed-val'), () => stepSpeed(-1), () => stepSpeed(1), 4)],
     });
     sections.push({
-      title: 'GREIFER', fa: 'fa-hand', group: 'grip', cols: 3, btnH: 84,
-      meta: ctrlMode === 'servo' ? 'Trigger rechts: auf/zu' : '',
+      title: 'GRIPPER', fa: 'fa-hand', group: 'grip', cols: 3, btnH: 84,
+      meta: ctrlMode === 'servo' ? 'Right trigger: open/close' : '',
       items: qa('[data-action="setGripper"]').map(b => domItem(b, GRIPPER_LABELS[b.id], { group: 'grip' })),
     });
   } else if (id === 'plan') {
     const mp = q('#moveit-popup');
     const hidden = !mp || mp.classList.contains('mp-hidden');
-    info.push({ label: 'PHASE', value: hidden ? '– (keine Planung)' : txt('#mp-phase') });
+    info.push({ label: 'PHASE', value: hidden ? '– (no planning)' : txt('#mp-phase') });
     const obj = txt('#mp-object-name');
-    if (obj) info.push({ label: 'OBJEKT', value: obj });
+    if (obj) info.push({ label: 'OBJECT', value: obj });
     info.push(moveitTargetLine());
     if (!hidden) info.push(...moveitProgressLines());
     const detail = txt('#mp-detail');
@@ -519,16 +522,16 @@ function tabContent(id) {
     // Execute/Discard nur, wenn sie auch am Desktop sichtbar sind.
     const actions = moveitActionsVisible();
     sections.push(actions ? {
-      title: 'BAHN BESTÄTIGEN', fa: 'fa-circle-check', group: 'plan', cols: 2, btnH: 84,
+      title: 'CONFIRM PATH', fa: 'fa-circle-check', group: 'plan', cols: 2, btnH: 84,
       items: [
-        domItem(q('#moveit-popup .mp-btn-exec'), 'Ausführen', { group: 'plan', color: COL.green }),
-        domItem(q('#moveit-popup .mp-btn-discard'), 'Verwerfen', { group: 'plan', color: COL.red }),
+        domItem(q('#moveit-popup .mp-btn-exec'), 'Execute', { group: 'plan', color: COL.green }),
+        domItem(q('#moveit-popup .mp-btn-discard'), 'Discard', { group: 'plan', color: COL.red }),
       ],
     } : {
-      title: 'BAHN', fa: 'fa-circle-check', group: 'plan', cols: 2, btnH: 84, items: [],
+      title: 'PATH', fa: 'fa-circle-check', group: 'plan', cols: 2, btnH: 84, items: [],
       notes: ctrlMode === 'plan'
-        ? ['Grip halten: Ghost ziehen · loslassen: Bahn wird geplant.']
-        : ['Modus PLAN (B rechts), dann mit Grip den Ghost ziehen.'],
+        ? ['Hold grip: drag the ghost · release: the path is planned.']
+        : ['PLAN mode (right B), then drag the ghost with the grip.'],
     });
     const rot = twin.getTCPGizmoMode() === 'rotate';
     sections.push({
@@ -537,54 +540,54 @@ function tabContent(id) {
         domItem(q('#btn-twin-gizmo'), 'TCP-Gizmo', { group: 'plan', toggle: true }),
         previewItem(),
         domItem(q('#chk-gizmo-auto-drop'), 'Auto-Move', { group: 'plan', toggle: true }),
-        domItem(q('#btn-twin-gizmo-mode'), rot ? 'Gizmo: Rotation' : 'Gizmo: Verschieben', { group: 'plan' }),
-        span(domItem(q('#btn-twin-gizmo-sync'), 'Gizmo auf TCP zurücksetzen', { group: 'plan' }), 2),
+        domItem(q('#btn-twin-gizmo-mode'), rot ? 'Gizmo: Rotation' : 'Gizmo: Translate', { group: 'plan' }),
+        span(domItem(q('#btn-twin-gizmo-sync'), 'Reset gizmo to TCP', { group: 'plan' }), 2),
       ],
     });
   } else if (id === 'object') {
     const sel = twin.getDigitalTwinSelectedGrasp();
     const infoSel = sel ? twin.getDetectedObjectInfo(sel) : null;
-    info.push({ label: 'AUSWAHL', value: sel ? sel.replace(/_/g, ' ') : '– (Laser auf Greifkugel + Trigger)' });
+    info.push({ label: 'SELECTION', value: sel ? sel.replace(/_/g, ' ') : '– (laser on grasp sphere + trigger)' });
     if (infoSel && infoSel.grasp) {
-      info.push({ label: 'GREIFPUNKT', value: `X ${infoSel.grasp.x}  Y ${infoSel.grasp.y}  Z ${infoSel.grasp.z} mm` });
+      info.push({ label: 'GRASP POINT', value: `X ${infoSel.grasp.x}  Y ${infoSel.grasp.y}  Z ${infoSel.grasp.z} mm` });
     }
     if (infoSel) {
       const off = infoSel.collisionName && disabledCollisionObjects.has(infoSel.collisionName);
       sections.push({
-        title: 'AKTION', fa: 'fa-hand-holding', group: 'grip', cols: 3, btnH: 84,
+        title: 'ACTION', fa: 'fa-hand-holding', group: 'grip', cols: 3, btnH: 84,
         items: [
-          ownItem('obj-approach', 'fa-arrow-down', 'Anfahren', () => approachObjectFromAbove(infoSel),
+          ownItem('obj-approach', 'fa-arrow-down', 'Move to', () => approachObjectFromAbove(infoSel),
             { disabled: !infoSel.grasp, group: 'grip' }),
-          ownItem('obj-grasp', 'fa-hand-holding', 'Greifen (n. impl.)',
+          ownItem('obj-grasp', 'fa-hand-holding', 'Grasp (not impl.)',
             () => logMsg('UI', 'ℹ️ Grasp function is not yet implemented.', 'info'), { group: 'grip', color: COL.dim }),
-          ownItem('obj-coll', off ? 'fa-shield-halved' : 'fa-shield', 'Kollision', () => setObjectCollision(infoSel, !!off),
+          ownItem('obj-coll', off ? 'fa-shield-halved' : 'fa-shield', 'Collision', () => setObjectCollision(infoSel, !!off),
             { disabled: !infoSel.collisionName, group: 'grip', toggle: true, on: !off, warn: !!off }),
         ],
       });
     }
     const objs = twin.listDetectedObjects().slice(0, 8);
     sections.push({
-      title: 'ERKANNTE OBJEKTE', fa: 'fa-cubes', group: 'grip', cols: 2, btnH: 72,
-      meta: objs.length ? 'Klick = auswählen' : '',
+      title: 'DETECTED OBJECTS', fa: 'fa-cubes', group: 'grip', cols: 2, btnH: 72,
+      meta: objs.length ? 'Click = select' : '',
       items: objs.map(o => ownItem(`obj:${o.name}`, 'fa-cube', o.name.replace(/_/g, ' '), () => selectObject(o.name),
         { active: o.name === sel, group: 'grip' })),
-      notes: objs.length ? undefined : ['Keine Objekte erkannt (YOLO / Szene).'],
+      notes: objs.length ? undefined : ['No objects detected (YOLO / scene).'],
     });
   } else if (id === 'scene') {
     sections.push({
-      title: 'EINBLENDEN', fa: 'fa-eye', group: 'scene', cols: 2, btnH: 64,
+      title: 'SHOW', fa: 'fa-eye', group: 'scene', cols: 2, btnH: 64,
       items: SCENE_TOGGLES.map(([sel, label]) => domItem(q(sel), label, { group: 'scene', toggle: true })),
     });
     sections.push({
-      title: 'MOVEIT-KOLLISION', fa: 'fa-shield-halved', group: 'scene', cols: 2, btnH: 64,
-      meta: 'AUS = MoveIt ignoriert sie',
-      items: [collisionItem('#btn-moveit-coll-objects', 'Objekte'), collisionItem('#btn-moveit-coll-ground', 'Boden')],
+      title: 'MOVEIT COLLISION', fa: 'fa-shield-halved', group: 'scene', cols: 2, btnH: 64,
+      meta: 'OFF = MoveIt ignores them',
+      items: [collisionItem('#btn-moveit-coll-objects', 'Objects'), collisionItem('#btn-moveit-coll-ground', 'Ground')],
     });
     sections.push({
       title: 'SYSTEM', fa: 'fa-sliders', group: 'help', cols: 2, btnH: 64,
       items: [
         domItem(q('#btn-sound-toggle'), 'Sound', { group: 'scene', toggle: true }),
-        domItem(q('#btn-twin-safety-test'), 'Warnungen testen', { group: 'safety' }),
+        domItem(q('#btn-twin-safety-test'), 'Test warnings', { group: 'safety' }),
       ],
     });
   } else if (id === 'xr') {
@@ -606,55 +609,55 @@ function xrSections() {
   const c = rigCal[xrKind];
   const sections = [
     {
-      title: 'ANSICHT', fa: 'fa-eye', group: 'xr', cols: 3, btnH: 108,
-      meta: cam ? 'Sicht folgt dem Endeffektor' : (ar ? 'Kalibrierung ungetestet' : 'Freier Standort'),
+      title: 'VIEW', fa: 'fa-eye', group: 'xr', cols: 3, btnH: 108,
+      meta: cam ? 'View follows the end effector' : (ar ? 'Calibration untested' : 'Free position'),
       items: [
         ownItem('view-vr', 'fa-vr-cardboard', 'VR', () => setViewMode('vr'), toggleOpts(!ar && !cam, 'xr')),
         ownItem('view-ar', 'fa-glasses', 'Passthrough', () => setViewMode('ar'),
           { ...toggleOpts(ar, 'xr'), disabled: !canSwitchView() }),
-        ownItem('view-nozzle', 'fa-video', 'Kamera Nozzle', toggleNozzleView, toggleOpts(cam, 'xr')),
+        ownItem('view-nozzle', 'fa-video', 'Nozzle camera', toggleNozzleView, toggleOpts(cam, 'xr')),
       ],
     },
   ];
   if (cam) {
     const tilt = getNozzleTiltDeg();
     sections.push({
-      title: 'KAMERA NOZZLE', fa: 'fa-video', group: 'xr', cols: 3, btnH: 72,
-      meta: `Neigung ${tilt}° zur Düsenachse`,
+      title: 'NOZZLE CAMERA', fa: 'fa-video', group: 'xr', cols: 3, btnH: 72,
+      meta: `Tilt ${tilt}° to the nozzle axis`,
       items: [
-        stepperItem('nozzle-tilt', 'Neigung', `${tilt}°`, () => stepNozzleTilt(-5), () => stepNozzleTilt(5)),
+        stepperItem('nozzle-tilt', 'Tilt', `${tilt}°`, () => stepNozzleTilt(-5), () => stepNozzleTilt(5)),
         ownItem('nozzle-tilt-std', 'fa-rotate-left', `Standard ${TILT_DEFAULT_DEG}°`, () => setNozzleTilt(TILT_DEFAULT_DEG),
           { disabled: tilt === TILT_DEFAULT_DEG, group: 'xr' }),
       ],
       notes: [
-        'Oben im Bild die Düse, darunter der Bereich unter dem Greifer.',
-        'Gehen/Fliegen aus · Servo rechnet im Rig vom Griffbeginn.',
+        'Nozzle at the top of the image, the area below the gripper underneath.',
+        'Walk/fly off · servo uses the rig from grip start.',
       ],
     });
   } else {
     sections.push({
-      title: 'ROBOTER AUSRICHTEN', fa: 'fa-street-view', group: 'xr', cols: 4, btnH: 72,
+      title: 'ALIGN ROBOT', fa: 'fa-street-view', group: 'xr', cols: 4, btnH: 72,
       meta: `X ${c.x.toFixed(2)}  Y ${c.y.toFixed(2)}  Z ${c.z.toFixed(2)} m · ${deg(c.yaw)}°`,
       items: [
         stepperItem('rig-x', 'X', '1 cm', () => nudgeRobot(-0.01, 0, 0, 0), () => nudgeRobot(0.01, 0, 0, 0)),
         stepperItem('rig-y', 'Y', '1 cm', () => nudgeRobot(0, -0.01, 0, 0), () => nudgeRobot(0, 0.01, 0, 0)),
         stepperItem('rig-z', 'Z', '1 cm', () => nudgeRobot(0, 0, -0.01, 0), () => nudgeRobot(0, 0, 0.01, 0)),
         stepperItem('rig-yaw', 'Yaw', '1°', () => nudgeRobot(0, 0, 0, -1), () => nudgeRobot(0, 0, 0, 1)),
-        span(ownItem('rig-place', 'fa-anchor', 'Basis = Controller', placeBaseAtController, { group: 'xr' }), 2),
+        span(ownItem('rig-place', 'fa-anchor', 'Base = controller', placeBaseAtController, { group: 'xr' }), 2),
         ownItem('rig-reset', 'fa-rotate-left', 'Reset', resetRig, { group: 'xr' }),
-        ownItem('rig-save', 'fa-floppy-disk', 'Speichern', saveRigCal, { group: 'xr', color: COL.green }),
+        ownItem('rig-save', 'fa-floppy-disk', 'Save', saveRigCal, { group: 'xr', color: COL.green }),
       ],
     });
   }
   sections.push({
     title: 'HUD & SESSION', fa: 'fa-table-cells-large', group: 'xr', cols: 3, btnH: 64, dock: 'bottom',
-    meta: 'X Panel · Y HUD · A zentrieren',
+    meta: 'X panel · Y HUD · A center',
     items: [
       ownItem('hud', 'fa-table-cells-large', 'HUD', toggleHudVisible, toggleOpts(isHudEnabled(), 'xr')),
-      ownItem('hints', 'fa-circle-question', 'Tastenhilfe', toggleHints, toggleOpts(isControlHintsEnabled(), 'xr')),
-      ownItem('recenter', 'fa-crosshairs', 'Zentrieren', recenterView, { group: 'xr' }),
-      span(ownItem('hud-layout', 'fa-rotate-left', 'HUD-Layout zurücksetzen', resetHudLayout, { group: 'xr' }), 2),
-      ownItem('xr-exit', 'fa-right-from-bracket', 'Beenden', () => session && session.end(), { group: 'xr', color: COL.red }),
+      ownItem('hints', 'fa-circle-question', 'Button help', toggleHints, toggleOpts(isControlHintsEnabled(), 'xr')),
+      ownItem('recenter', 'fa-crosshairs', 'Center', recenterView, { group: 'xr' }),
+      span(ownItem('hud-layout', 'fa-rotate-left', 'Reset HUD layout', resetHudLayout, { group: 'xr' }), 2),
+      ownItem('xr-exit', 'fa-right-from-bracket', 'Exit', () => session && session.end(), { group: 'xr', color: COL.red }),
     ],
   });
   return sections;
@@ -709,7 +712,7 @@ function hintState() {
 
 function toggleHints() {
   const on = toggleControlHints();
-  flash(on ? 'Tastenhilfe an: auf einen Controller schauen' : 'Tastenhilfe aus (Tab TASTEN)');
+  flash(on ? 'Button help on: look at a controller' : 'Button help off (BUTTONS tab)');
   panelDirty = true;
 }
 
@@ -739,7 +742,7 @@ function drawKeysTab(ctx) {
   const toggleR = { x: PAD, y: CONTENT_BOTTOM - KEYS_TOGGLE_H, w, h: KEYS_TOGGLE_H };
   y = rowsEnd + SEC_GAP;
   if (y + SEC_HEAD_H + SEC_HEAD_GAP + MODE_CARD_H + SEC_GAP <= toggleR.y) {
-    drawSectionHead(ctx, { title: 'MODI', fa: 'fa-shuffle', group: 'help', meta: 'B wechselt · Karte klicken' }, y);
+    drawSectionHead(ctx, { title: 'MODES', fa: 'fa-shuffle', group: 'help', meta: 'B switches · click a card' }, y);
     y += SEC_HEAD_H + SEC_HEAD_GAP;
     drawModeCard(ctx, { x: PAD, y, w: colW, h: MODE_CARD_H }, 'servo');
     drawModeCard(ctx, { x: PAD + colW + GAP, y, w: colW, h: MODE_CARD_H }, 'plan');
@@ -747,17 +750,17 @@ function drawKeysTab(ctx) {
 
   const on = isControlHintsEnabled();
   drawSectionButton(ctx, toggleR, ownItem('keys-hints', 'fa-circle-question',
-    'Tastenhilfe an den Controllern', toggleHints, { ...toggleOpts(on, 'xr'), toggle: true }));
+    'Button help on the controllers', toggleHints, { ...toggleOpts(on, 'xr'), toggle: true }));
 }
 
 const MODE_INFO = {
   servo: {
     fa: 'fa-gamepad', color: GROUP.robot.color, title: 'SERVO',
-    lines: [['GRIP', 'halten: Roboter folgt der Hand'], ['TRIGGER', 'Greifer auf/zu'], ['GRIP + STICK', '← → Linearachse']],
+    lines: [['GRIP', 'hold: robot follows the hand'], ['TRIGGER', 'Gripper open/close'], ['GRIP + STICK', '← → linear axis']],
   },
   plan: {
     fa: 'fa-ghost', color: GROUP.plan.color, title: 'PLAN',
-    lines: [['TRIGGER', 'Gizmo-Pfeil/Ring ziehen'], ['GRIP', 'Ghost frei ziehen'], ['LOSLASSEN', 'plant · ▶ im MoveIt-Popup']],
+    lines: [['TRIGGER', 'Drag gizmo arrow/ring'], ['GRIP', 'Drag the ghost freely'], ['RELEASE', 'plans · ▶ in the MoveIt popup']],
   },
 };
 
@@ -773,7 +776,7 @@ function drawModeCard(ctx, r, mode) {
   // Kopf: Icon + Name links, AKTIV rechts
   const hy = r.y + 12, hc = hy + 22;
   let xr = r.x + r.w - 14;
-  if (on) xr = pill(ctx, xr, hy, 'AKTIV', m.color);
+  if (on) xr = pill(ctx, xr, hy, 'ACTIVE', m.color);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.font = `900 28px ${FA_FONT}`;
@@ -820,7 +823,7 @@ function drawPanel() {
   ctx.textBaseline = 'middle';
   ctx.font = `700 28px ${FONT}`;
   ctx.fillStyle = warn ? COL.red : (flashing ? COL.orange : COL.cyan);
-  const view = isNozzleCamActive() ? 'KAMERA NOZZLE' : `${xrKind === 'ar' ? 'PASSTHROUGH' : 'VR'} VIEWPORT`;
+  const view = isNozzleCamActive() ? 'NOZZLE CAMERA' : `${xrKind === 'ar' ? 'PASSTHROUGH' : 'VR'} VIEWPORT`;
   const title = warn ? `⚠ ${warn}` : (flashing ? flashText : `XR · ${view}`);
   ctx.fillText(fitText(ctx, title, xr - PAD - 8), PAD + 8, PAD + 36);
 
@@ -874,7 +877,7 @@ function drawPanel() {
   ctx.font = `900 52px ${FA_FONT}`;
   ctx.fillText(glyphFor('fa-hand'), estopR.x + estopR.w / 2 - 150, ey + ESTOP_H / 2);
   ctx.font = `800 48px ${FONT}`;
-  ctx.fillText('NOT-AUS', estopR.x + estopR.w / 2 + 40, ey + ESTOP_H / 2);
+  ctx.fillText('E-STOP', estopR.x + estopR.w / 2 + 40, ey + ESTOP_H / 2);
   hitRects.push({ ...estopR, key: 'estop', onClick: () => fireEstop('Panel') });
   if (resetW) {
     const rr = { x: CW - PAD - resetW, y: ey, w: resetW, h: ESTOP_H };
@@ -949,7 +952,7 @@ function drawSections(ctx, sections, info = []) {
     ctx.textBaseline = 'middle';
     ctx.font = `500 20px ${FONT}`;
     ctx.fillStyle = COL.dim;
-    ctx.fillText(`+${skipped} Sektion(en) ohne Platz`, CW - PAD, CONTENT_BOTTOM + 4);
+    ctx.fillText(`+${skipped} section(s) without space`, CW - PAD, CONTENT_BOTTOM + 4);
   }
 }
 
@@ -1106,7 +1109,7 @@ function onXRFrame(time, frame) {
     twin.runTwinFrameUpdates();
   } catch (e) {
     reportFrameError('frame', e);
-    stopMotion('Fehler im XR-Frame');
+    stopMotion('error in XR frame');
   }
   try {
     updateHud(frame, dt);
@@ -1147,7 +1150,7 @@ function reportFrameError(where, e) {
   reportedFrameErrors.add(text);
   console.error('[xr]', where, e);
   logMsg('VR', `❌ XR ${text}`, 'err');
-  flash(`Fehler ${text}`.slice(0, 60));
+  flash(`Error ${text}`.slice(0, 60));
 }
 
 function handleInput(dt) {
@@ -1166,7 +1169,7 @@ function handleInput(dt) {
   const gesture = lp && rp && lp.grip && lp.trigger && rp.grip && rp.trigger;
   if (gesture && estopGestureArmed) {
     estopGestureArmed = false;
-    fireEstop('Geste');
+    fireEstop('gesture');
   } else if (!gesture && !(lp && (lp.grip || lp.trigger)) && !(rp && (rp.grip || rp.trigger))) {
     estopGestureArmed = true;          // erst nach komplettem Loslassen wieder scharf
   }
@@ -1198,7 +1201,7 @@ function handleInput(dt) {
 
   if (!R || !rp) {
     releaseUiPress();
-    if (servoGrip || planDrag || gizmoLaser) stopMotion('rechter Controller ohne Daten');
+    if (servoGrip || planDrag || gizmoLaser) stopMotion('right controller without data');
     if (reticle) reticle.visible = false;
     return;
   }
@@ -1314,7 +1317,7 @@ function updateUiPress(held, ray) {
 }
 
 function dropHud() {
-  if (hudDragEnd()) flash('HUD: Fläche auf freien Platz gerückt');
+  if (hudDragEnd()) flash('HUD: panel moved to a free spot');
   pulse('right', 0.5, 30);
 }
 
@@ -1326,7 +1329,7 @@ function releaseUiPress() {
 
 function resetHudLayout() {
   hudResetLayout();
-  flash('HUD-Layout zurückgesetzt');
+  flash('HUD layout reset');
 }
 
 function walk(sx, sy, dt) {
@@ -1457,13 +1460,13 @@ function handleServo(R, rp, tracked) {
 
 function handlePlan(R, rp, tracked) {
   if (!tracked) {
-    if (planDrag) { twin.cancelGizmoExternalDrag(); planDrag = null; flash('Tracking verloren - Ghost-Drag abgebrochen'); }
+    if (planDrag) { twin.cancelGizmoExternalDrag(); planDrag = null; flash('Tracking lost - ghost drag cancelled'); }
     return;
   }
   const { pos, quat } = controlPose(R.grip, Boolean(planDrag));
   if (rp.grip && !R.prev.grip && !planDrag && !gizmoLaser) {
     const start = twin.beginGizmoExternalDrag();
-    if (!start) { flash('TCP-Gizmo ist aus (Tab PLANEN)'); return; }
+    if (!start) { flash('TCP gizmo is off (PLAN tab)'); return; }
     planDrag = { gizmo: start, ctrlPos: pos.clone(), ctrlQuat: quat.clone() };
     activeTab = 'plan';
     panelDirty = true;
@@ -1510,14 +1513,14 @@ function setViewMode(kind) {
   // VR bzw. Passthrough waehlen beendet die Nozzle-Kamera (auch aus dem HUD).
   if (isNozzleCamActive()) setNozzleView(false);
   if (next === xrKind) return;
-  if (!canSwitchView()) { flash('Passthrough: Brille kann kein immersive-ar'); return; }
+  if (!canSwitchView()) { flash('Passthrough: headset does not support immersive-ar'); return; }
   // Das Rig springt - eine laufende Servo-Bewegung oder ein Ghost-Drag
   // wuerde den Sprung sonst an den Roboter weitergeben.
-  stopMotion('Ansicht gewechselt');
+  stopMotion('view changed');
   xrKind = next;
   applyViewMode();
   pulse('right', 0.5, 40);
-  flash(next === 'ar' ? 'Ansicht: Passthrough' : 'Ansicht: VR');
+  flash(next === 'ar' ? 'View: Passthrough' : 'View: VR');
   logMsg('VR', `🥽 View: ${next === 'ar' ? 'Passthrough (AR)' : 'VR'}`, 'info');
 }
 
@@ -1531,14 +1534,14 @@ function toggleNozzleView() {
 
 function setNozzleView(on) {
   if (on === isNozzleCamActive()) return;
-  if (on && !isNozzleCamAvailable()) { flash('Kamera Nozzle: Robotermodell noch nicht geladen'); return; }
+  if (on && !isNozzleCamAvailable()) { flash('Nozzle camera: robot model not loaded yet'); return; }
   // Das Rig springt - wie beim Ansichtswechsel vorher Servo/Ghost-Drag stoppen.
-  stopMotion(on ? 'Kamera Nozzle an' : 'Kamera Nozzle aus');
+  stopMotion(on ? 'nozzle camera on' : 'nozzle camera off');
   setNozzleCam(on);
   if (floorDisc) floorDisc.visible = !on && xrKind !== 'ar';
   if (!on) applyRig();
   pulse('right', 0.5, 40);
-  flash(on ? 'Kamera Nozzle: Sicht folgt dem Endeffektor' : 'Kamera Nozzle aus');
+  flash(on ? 'Nozzle camera: view follows the end effector' : 'Nozzle camera off');
   logMsg('VR', `🎥 Nozzle camera view ${on ? 'on' : 'off'}`, 'info');
   panelDirty = true;
   markHudDirty();
@@ -1560,7 +1563,7 @@ function togglePanel() {
 
 function toggleHudVisible() {
   const on = toggleHud();
-  flash(on ? 'HUD an' : 'HUD aus (Y: wieder an)');
+  flash(on ? 'HUD on' : 'HUD off (Y: on again)');
   panelDirty = true;
 }
 
@@ -1581,7 +1584,7 @@ const hudApi = {
 
 // ── Session ─────────────────────────────────────────────────────────────────
 function onSessionEnd() {
-  stopMotion('XR-Session beendet');
+  stopMotion('XR session ended');
   uiPress = null;
   publishMirrorEnd();
   setNozzleCam(false);
@@ -1598,6 +1601,7 @@ function onSessionEnd() {
   hudOnSessionEnd();
   controlHintsOnSessionEnd();
   sessionMode = '';
+  restoreTwinPointCloud();          // Desktop-Einstellung wieder anwenden
   if (h.controls) h.controls.enabled = true;
   session = null;
   twin.restoreTwinViewAfterXR();
@@ -1606,7 +1610,7 @@ function onSessionEnd() {
 
 function onVisibilityChange() {
   // Quest-Systemmenue o. ae.: Session verdeckt -> keine Bewegung
-  if (session && session.visibilityState !== 'visible') stopMotion('Session verdeckt');
+  if (session && session.visibilityState !== 'visible') stopMotion('session hidden');
 }
 
 // Fehler beim Start zusaetzlich als Popup: im Quest-Browser ist das
@@ -1658,6 +1662,9 @@ export function enterTwinXR(kind = 'vr') {
         vrBackdrop.frustumCulled = false;
         rig.add(vrBackdrop);
       }
+      // Die ZED-Punktwolke gibt es in VR nicht: aus (ohne die Desktop-
+      // Einstellung zu ueberschreiben), damit auch kein Topic mitlaeuft.
+      setTwinPointCloud(false);
       savedBackground = h.scene.background;
       savedClearAlpha = r.getClearAlpha();
       r.xr.setReferenceSpaceType('local-floor');
@@ -1668,7 +1675,7 @@ export function enterTwinXR(kind = 'vr') {
       createControlHints(rig);
       applyViewMode();
       hudOnSessionStart();
-      flash(isControlHintsEnabled() ? 'Tipp: auf einen Controller schauen = Tastenbelegung' : 'Tastenbelegung: X → Tab TASTEN', 8000);
+      flash(isControlHintsEnabled() ? 'Tip: look at a controller = button layout' : 'Button layout: X → BUTTONS tab', 8000);
       if (document.fonts) document.fonts.load(`900 46px ${FA_FONT}`).then(() => { panelDirty = true; }).catch(() => {});
       s.addEventListener('end', onSessionEnd, { once: true });
       s.addEventListener('visibilitychange', onVisibilityChange);
@@ -1689,9 +1696,10 @@ rosHooks.onEstop.push((latched) => {
   if (latched) stopMotion('E-Stop latched');
   panelDirty = true;
 });
-rosHooks.onConnectionLost.push(() => stopMotion('rosbridge getrennt'));
+rosHooks.onConnectionLost.push(() => stopMotion('rosbridge disconnected'));
 
-// VR-Buttons im Viewport-Header nur zeigen, wenn die Brille sie kann.
+// VR-Buttons im Viewport-Header nur zeigen, wenn der Browser den Modus meldet
+// (Quest, aber ggf. auch Desktop-Chrome auf localhost).
 function initXRButtons() {
   if (!navigator.xr || !window.isSecureContext) return;
   [['btn-twin-xr-vr', 'immersive-vr'], ['btn-twin-xr-ar', 'immersive-ar']].forEach(([id, mode]) => {

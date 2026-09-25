@@ -3,8 +3,8 @@ import * as twin from './twin/digital_twin.js';
 import { playObjectSelectSound, playOutOfReachSound, playMovesToSelectedObjectSound, setObjectReachContext } from './audio.js';
 import { logMsg } from './log.js';
 import { MP_ACTIVE_PHASES, setButtonsLocked } from './motion.js';
-import { uiZoom } from './util.js';
-import { createSrv, motionAllowed, ros } from './ros.js';
+import { lsGet, lsSet, uiZoom } from './util.js';
+import { createSrv, motionAllowed, ros, rosHooks } from './ros.js';
 import { showCenterNotice, validatePose } from './util.js';
 
 // ── YOLO 3D Objects ─────────────────────────────────────────────────────
@@ -355,34 +355,120 @@ export function createYoloItem(item) {
   return el;
 }
 
-yoloSub.subscribe((msg) => {
+// Virtuelle Szenenobjekte (virtual_object_detections) kommen zusaetzlich auf
+// einem eigenen Topic: auf /zed/bboxes_3d wuerde die Drosselung (Queue 1)
+// sie neben YOLO mit Kamerarate meist verwerfen. Gleiche ns/id wie dort,
+// doppelt ankommende Marker aktualisieren also nur denselben Eintrag.
+export const virtualBboxesSub = new ROSLIB.Topic({
+  ros: ros,
+  name: TOPICS.virtualBboxes3d,
+  messageType: 'visualization_msgs/MarkerArray',
+  queue_length: 1
+});
+
+function onDetectionMarkers(msg, virtual = false) {
   // 3D-Overlay im WebGL-Viewport zuerst bedienen - und bewusst VOR dem
   // yolo-container-Guard: fehlt die Liste im DOM, soll das Overlay trotzdem
   // laufen. Der Twin bekommt das komplette MarkerArray (Box, Greifpunkt,
   // Labels), die Liste unten filtert weiterhin nur die Text-Marker heraus.
   if (typeof twin.updateDigitalTwinDetections === 'function') {
-    twin.updateDigitalTwinDetections((msg && msg.markers) || []);
+    twin.updateDigitalTwinDetections((msg && msg.markers) || [], { virtual });
   }
 
-  const container = document.getElementById('yolo-container');
-  if (!container) return;
-  
-  const detected = [];
-  if (msg.markers && msg.markers.length > 0) {
-    msg.markers.forEach(m => {
-      if (m.type !== 9) return;
-      
-      const objName = m.text || 'Unknown';
-      if (objName.startsWith('X:') || objName.startsWith('Y:') || objName.startsWith('Z:')) return;
-      
-      detected.push({
-        name: objName,
-        x: (m.pose.position.x * 1000).toFixed(0),
-        y: (m.pose.position.y * 1000).toFixed(0),
-        z: (m.pose.position.z * 1000).toFixed(0)
-      });
+  updateYoloListEntries((msg && msg.markers) || [], virtual);
+  renderYoloList();
+}
+yoloSub.subscribe((msg) => onDetectionMarkers(msg, false));
+virtualBboxesSub.subscribe((msg) => onDetectionMarkers(msg, true));
+
+// DELETEALL einer Quelle (yolo_3d_bbox_for_ip_cam sendet es vor jeder
+// Erkennung) loescht per Default nur die echten Erkennungen, die virtuellen
+// Objekte bleiben in Liste und Twin. Umschaltbar ueber den Stecknadel-Button
+// im Header "Detected Objects" - aus: DELETEALL loescht wie in RViz alles.
+const KEEP_VIRTUAL_LS_KEY = 'robotControlUi.keepVirtualOnDeleteAll';
+let keepVirtualOnDeleteAll = lsGet(KEEP_VIRTUAL_LS_KEY, '1') !== '0';
+const virtualListKeys = new Set();   // "ns/id" von /ui/virtual_bboxes_3d
+twin.setKeepVirtualOnDeleteAll(keepVirtualOnDeleteAll);
+
+function applyKeepVirtualBtn() {
+  const btn = document.getElementById('btn-yolo-keep-virtual');
+  if (!btn) return;
+  btn.classList.toggle('active', keepVirtualOnDeleteAll);
+  btn.setAttribute('aria-pressed', String(keepVirtualOnDeleteAll));
+  btn.title = keepVirtualOnDeleteAll
+    ? 'DELETEALL (e.g. IP camera YOLO) keeps virtual objects - click: clear everything like RViz'
+    : 'DELETEALL clears everything, virtual objects included (like RViz) - click: keep virtual objects';
+}
+
+export function toggleKeepVirtualOnDeleteAll() {
+  keepVirtualOnDeleteAll = !keepVirtualOnDeleteAll;
+  lsSet(KEEP_VIRTUAL_LS_KEY, keepVirtualOnDeleteAll ? '1' : '0');
+  twin.setKeepVirtualOnDeleteAll(keepVirtualOnDeleteAll);
+  applyKeepVirtualBtn();
+  logMsg('UI', `DELETEALL ${keepVirtualOnDeleteAll ? 'keeps virtual objects' : 'clears all objects'}`);
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyKeepVirtualBtn);
+else applyKeepVirtualBtn();
+
+// Auf /zed/bboxes_3d publizieren mehrere Quellen (YOLO und die virtuellen
+// Szenenobjekte), jede Nachricht traegt nur ihre eigenen Objekte. Die Liste
+// merkt sich deshalb jeden Eintrag pro Marker (ns/id) und laesst ihn erst bei
+// DELETE oder nach Ablauf der Marker-Lebensdauer (2 s) fallen - sonst wuerde
+// jede Nachricht die Objekte der anderen Quelle aus der Liste werfen.
+const YOLO_LIST_TTL_MS = 2500;
+const yoloListEntries = new Map();   // "ns/id" -> { name, x, y, z, t }
+
+function updateYoloListEntries(markers, virtual = false) {
+  const now = Date.now();
+  for (const m of markers) {
+    if (!m) continue;
+    if (m.action === 3) {   // DELETEALL
+      for (const key of yoloListEntries.keys()) {
+        if (!(keepVirtualOnDeleteAll && virtualListKeys.has(key))) yoloListEntries.delete(key);
+      }
+      continue;
+    }
+    const key = `${m.ns || ''}/${m.id || 0}`;
+    if (virtual && m.action !== 2) virtualListKeys.add(key);
+    if (m.action === 2) { yoloListEntries.delete(key); continue; }  // DELETE
+    if (m.type !== 9) continue;
+
+    const objName = m.text || 'Unknown';
+    if (objName.startsWith('X:') || objName.startsWith('Y:') || objName.startsWith('Z:')) continue;
+
+    yoloListEntries.set(key, {
+      name: objName,
+      x: (m.pose.position.x * 1000).toFixed(0),
+      y: (m.pose.position.y * 1000).toFixed(0),
+      z: (m.pose.position.z * 1000).toFixed(0),
+      t: now,
     });
   }
+}
+
+// Auch ohne neue Nachricht aufraeumen - verstummt eine Quelle ganz, bliebe
+// ihr Eintrag sonst stehen.
+setInterval(() => {
+  const now = Date.now();
+  let expired = false;
+  for (const [key, e] of yoloListEntries) {
+    if (now - e.t > YOLO_LIST_TTL_MS) { yoloListEntries.delete(key); expired = true; }
+  }
+  if (expired) renderYoloList();
+}, 1000);
+
+function renderYoloList() {
+  const container = document.getElementById('yolo-container');
+  if (!container) return;
+
+  const now = Date.now();
+  const byName = new Map();
+  for (const [key, e] of yoloListEntries) {
+    if (now - e.t > YOLO_LIST_TTL_MS) { yoloListEntries.delete(key); continue; }
+    byName.set(e.name, e);
+  }
+  const detected = [...byName.values()];
 
   // Deterministic stable sort (alphabetical & numerical, e.g. sports_ball_1 before sports_ball_2)
   detected.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
@@ -436,7 +522,79 @@ yoloSub.subscribe((msg) => {
       container.insertBefore(el, container.children[index] || null);
     }
   });
+}
+
+// ── Virtuelle Szenenobjekte als Detektionen ─────────────────────────────
+// virtual_object_detections publiziert Cube, Rectangle und Cylinder aus dem
+// TF Tuner auf /zed/bboxes_3d, als haette YOLO sie erkannt ("... (virtual)").
+// Damit laufen Box, Greifkugel, Kollisionswaende, MoveIt-Kollision, Liste und
+// Kontextmenue ueber genau dieselben Wege wie bei echten Objekten.
+// Zustand latched vom Node; null = Node laeuft nicht.
+export const VIRTUAL_DETECTIONS_NODE = 'virtual_object_detections';
+export let virtualDetectionsState = null;
+
+export function applyVirtualDetectionsBtn() {
+  const btn = document.getElementById('btn-twin-virtual-objects');
+  if (!btn) return;
+  const st = virtualDetectionsState;
+  btn.classList.toggle('active', st === true);
+  if (st === null) {
+    btn.style.color = 'var(--dim)';
+    btn.style.opacity = '0.45';
+    btn.title = `Virtual objects as detections (node ${VIRTUAL_DETECTIONS_NODE} inactive)`;
+  } else if (st) {
+    btn.style.color = 'var(--cyan)';
+    btn.style.opacity = '1.0';
+    btn.title = 'Virtual objects as detections: ON - Cube, Rectangle and Cylinder with bounding box, grasp sphere and MoveIt collision. Click to disable';
+  } else {
+    btn.style.color = 'var(--mut)';
+    btn.style.opacity = '0.65';
+    btn.title = 'Virtual objects as detections: OFF - click to show Cube, Rectangle and Cylinder like detected objects';
+  }
+}
+
+new ROSLIB.Topic({
+  ros: ros,
+  name: TOPICS.virtualDetectionsEnabled,
+  messageType: 'std_msgs/Bool'
+}).subscribe((msg) => {
+  virtualDetectionsState = Boolean(msg.data);
+  applyVirtualDetectionsBtn();
 });
+
+// Der latched Zustand bleibt nach einem Node-Ende im Topic haengen.
+function checkVirtualDetectionsNode(nodesList) {
+  if (!Array.isArray(nodesList)) return;
+  if (!nodesList.some(n => n.includes(VIRTUAL_DETECTIONS_NODE)) && virtualDetectionsState !== null) {
+    virtualDetectionsState = null;
+    applyVirtualDetectionsBtn();
+  }
+}
+rosHooks.onNodeList.push(checkVirtualDetectionsNode);
+document.addEventListener('DOMContentLoaded', applyVirtualDetectionsBtn);
+
+export function toggleVirtualDetections() {
+  if (virtualDetectionsState === null) {
+    logMsg('UI', `ℹ️ Virtual objects: node ${VIRTUAL_DETECTIONS_NODE} is not running (robot_vision_cameras_bringup)`, 'warn');
+    return;
+  }
+  const enable = !virtualDetectionsState;
+  createSrv(SERVICES.setVirtualDetections, 'std_srvs/SetBool').callService(
+    new ROSLIB.ServiceRequest({ data: enable }),
+    (res) => {
+      if (!res.success) {
+        logMsg('UI', `✗ Virtual objects: ${res.message}`, 'err');
+        return;
+      }
+      virtualDetectionsState = enable;
+      applyVirtualDetectionsBtn();
+      logMsg('WebGL 3D', enable
+        ? '🟢 Virtual objects shown as detections (bounding box, grasp sphere, collision)'
+        : '⚪ Virtual objects hidden - collision objects are removed', enable ? 'info' : 'warn');
+    },
+    (err) => logMsg('UI', `✗ Virtual objects: service call failed: ${err}`, 'err')
+  );
+}
 
 // ── Greifer ─────────────────────────────────────────────────────────────
 // Die Buttons steuern den Greifer jetzt wirklich: der Befehl geht an

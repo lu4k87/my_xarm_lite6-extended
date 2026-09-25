@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VR-Spiegel · Quest 3</title>
+  <title>VR Mirror · Quest 3</title>
   <!-- Zeigt am PC, was die Quest 3 in der VR-Session sieht (js/vr_mirror.js).
        Geoeffnet ueber den Spiegel-Button im Viewport-Header der Robot Control UI. -->
   <link rel="stylesheet" href="css/fonts.css">
@@ -156,20 +156,20 @@
 
   <div class="mirror-overlay">
     <div class="mirror-bar">
-      <span class="mirror-title"><i class="fa-solid fa-vr-cardboard"></i> VR-Spiegel · Quest 3</span>
-      <span class="mirror-chip mirror-status is-wait" id="mirror-status" title="Posen von /vr_teleop/mirror_pose">
-        <span class="dot"></span><span id="mirror-status-text">Verbinde…</span>
+      <span class="mirror-title"><i class="fa-solid fa-vr-cardboard"></i> VR Mirror · Quest 3</span>
+      <span class="mirror-chip mirror-status is-wait" id="mirror-status" title="Poses from /vr_teleop/mirror_pose">
+        <span class="dot"></span><span id="mirror-status-text">Connecting…</span>
       </span>
-      <span class="mirror-chip" id="mirror-view" title="Ansicht in der Brille">VR</span>
-      <span class="mirror-chip" id="mirror-rate" title="Empfangene Posen pro Sekunde">– Hz</span>
-      <span class="mirror-chip" id="mirror-zoom" title="Mausrad: Zoom · Doppelklick oder 0: Sichtfeld der Brille">Zoom 1.00×</span>
+      <span class="mirror-chip" id="mirror-view" title="View in the headset">VR</span>
+      <span class="mirror-chip" id="mirror-rate" title="Received poses per second">– Hz</span>
+      <span class="mirror-chip" id="mirror-zoom" title="Mouse wheel: zoom · double-click or 0: headset field of view">Zoom 1.00×</span>
       <span class="mirror-spacer"></span>
-      <button type="button" class="mirror-btn" id="btn-mirror-fit" title="Ganzes Sichtfeld der Brille (dunkler Rand) oder Fenster füllen (Rand beschnitten)">Fenster füllen</button>
-      <button type="button" class="mirror-btn" id="btn-mirror-reset" title="Sichtfeld wie in der Brille (Doppelklick / Taste 0)">1:1</button>
-      <button type="button" class="mirror-btn" id="btn-mirror-fullscreen" title="Vollbild (Taste F)"><i class="fa-solid fa-expand"></i></button>
+      <button type="button" class="mirror-btn" id="btn-mirror-fit" title="Full headset field of view (dark border) or fill the window (edges cropped)">Fill window</button>
+      <button type="button" class="mirror-btn" id="btn-mirror-reset" title="Field of view as in the headset (double-click / key 0)">1:1</button>
+      <button type="button" class="mirror-btn" id="btn-mirror-fullscreen" title="Fullscreen (key F)"><i class="fa-solid fa-expand"></i></button>
     </div>
     <div class="mirror-center">
-      <div class="mirror-msg" id="mirror-msg">Verbinde mit ROS…</div>
+      <div class="mirror-msg" id="mirror-msg">Connecting to ROS…</div>
     </div>
   </div>
 

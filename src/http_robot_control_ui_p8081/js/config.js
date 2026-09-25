@@ -37,6 +37,8 @@ export const TOPICS = Object.freeze({
   scanSpeed: '/ui/scan_speed',
   setGroundCollisionLevel: '/ui/set_ground_collision_level',
   setObjectCollision: '/ui/set_object_collision',
+  virtualBboxes3d: '/ui/virtual_bboxes_3d',
+  virtualDetectionsEnabled: '/ui/virtual_detections_enabled',
   soundEnabled: '/ui/sound_enabled',
   voiceFeedback: '/ui/voice_feedback',
   voiceListenTrigger: '/ui/voice_listen_trigger',
@@ -70,6 +72,7 @@ export const SERVICES = Object.freeze({
   setMoveitCollisionGround: '/ui/set_moveit_collision_ground',
   setMoveitCollisionObjects: '/ui/set_moveit_collision_objects',
   setMovetoPreview: '/ui/set_moveto_preview',
+  setVirtualDetections: '/ui/set_virtual_detections',
   startObjectScan: '/ui/start_object_scan',
 });
 

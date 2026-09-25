@@ -71,42 +71,42 @@ export function legendRows(hand, st) {
   const pad = (st.pads && st.pads[hand]) || {};
   const stick = Math.abs(pad.sx || 0) > 0.15 || Math.abs(pad.sy || 0) > 0.15;
   if (hand === 'left') {
-    const walk = st.view === 'nozzle' ? 'aus in der Kamera Nozzle'
-      : st.view === 'ar' ? 'nur in der VR-Ansicht'
-        : st.holding ? 'gesperrt, solange die rechte Hand führt' : '';
+    const walk = st.view === 'nozzle' ? 'off in the nozzle camera'
+      : st.view === 'ar' ? 'only in the VR view'
+        : st.holding ? 'locked while the right hand guides' : '';
     return [
-      { input: 'X', group: 'xr', label: 'Handpanel ein/aus', sub: st.panel ? 'Panel ist offen' : 'Menü mit allen Tabs', pressed: pad.btnA },
-      { input: 'Y', group: 'xr', label: 'HUD ein/aus', sub: st.hud ? 'HUD ist an' : 'HUD ist aus', pressed: pad.btnB },
-      { input: 'STICK', group: 'xr', label: 'Gehen', sub: walk || 'in Blickrichtung', dim: !!walk, pressed: stick && !walk },
-      { input: 'ESTOP', group: 'safety', label: 'NOT-AUS', sub: 'beide Grips + beide Trigger zugleich', danger: true,
+      { input: 'X', group: 'xr', label: 'Hand panel on/off', sub: st.panel ? 'Panel is open' : 'Menu with all tabs', pressed: pad.btnA },
+      { input: 'Y', group: 'xr', label: 'HUD on/off', sub: st.hud ? 'HUD is on' : 'HUD is off', pressed: pad.btnB },
+      { input: 'STICK', group: 'xr', label: 'Walk', sub: walk || 'in view direction', dim: !!walk, pressed: stick && !walk },
+      { input: 'ESTOP', group: 'safety', label: 'E-STOP', sub: 'both grips + both triggers at once', danger: true,
         pressed: pad.grip && pad.trigger },
     ];
   }
   const servo = st.mode === 'servo';
   const other = servo ? 'PLAN' : 'SERVO';
   let trig;
-  if (st.aim === 'ui') trig = { group: 'xr', label: 'Klicken', sub: 'Laser zeigt auf Panel/HUD' };
-  else if (st.aim === 'object') trig = { group: 'grip', label: 'Objekt wählen', sub: st.aimName || 'rote Greifkugel' };
-  else if (st.aim === 'gizmo') trig = { group: 'plan', label: 'Gizmo ziehen', sub: 'halten + schwenken, loslassen: planen' };
-  else if (servo) trig = { group: 'grip', label: 'Greifer auf/zu', sub: st.locked ? 'gesperrt: Not-Aus aktiv' : 'Laser auf UI: klicken', dim: st.locked };
-  else trig = { group: 'xr', label: 'Klicken / Gizmo / Objekt', sub: 'Laser auf UI, Gizmo-Pfeil oder Greifkugel' };
+  if (st.aim === 'ui') trig = { group: 'xr', label: 'Click', sub: 'laser points at panel/HUD' };
+  else if (st.aim === 'object') trig = { group: 'grip', label: 'Select object', sub: st.aimName || 'red grasp sphere' };
+  else if (st.aim === 'gizmo') trig = { group: 'plan', label: 'Drag gizmo', sub: 'hold + swing, release: plan' };
+  else if (servo) trig = { group: 'grip', label: 'Gripper open/close', sub: st.locked ? 'locked: e-stop active' : 'laser on UI: click', dim: st.locked };
+  else trig = { group: 'xr', label: 'Click / gizmo / object', sub: 'laser on UI, gizmo arrow or grasp sphere' };
   const grip = servo
-    ? { group: 'robot', label: 'Roboter führen', sub: 'halten: TCP folgt der Hand' }
-    : { group: 'plan', label: 'Ghost ziehen', sub: 'loslassen: Bahn wird geplant' };
-  if (st.locked) { grip.sub = 'gesperrt: Not-Aus aktiv'; grip.dim = true; }
+    ? { group: 'robot', label: 'Guide robot', sub: 'hold: TCP follows the hand' }
+    : { group: 'plan', label: 'Drag ghost', sub: 'release: the path is planned' };
+  if (st.locked) { grip.sub = 'locked: e-stop active'; grip.dim = true; }
   // Rechter Stick: mit Grip Linearachse (SERVO), ohne Grip fliegen (nur VR).
   const fly = st.view === 'vr';
   let stk;
-  if (servo && pad.grip && !st.locked) stk = { group: 'robot', label: 'Linearachse', sub: '← → verfahren' };
-  else if (!fly && servo) stk = { group: 'robot', label: 'Linearachse', sub: st.locked ? 'gesperrt: Not-Aus aktiv' : 'nur mit gedrücktem Grip', dim: true };
-  else if (!fly) stk = { group: 'xr', label: 'Fliegen', sub: st.view === 'nozzle' ? 'aus in der Kamera Nozzle' : 'nur in der VR-Ansicht', dim: true };
-  else if (pad.grip) stk = { group: 'xr', label: 'Fliegen', sub: 'erst Grip loslassen', dim: true };
-  else stk = { group: 'xr', label: 'Fliegen', sub: servo && !st.locked ? '↔ kreisen · ↕ Höhe · Grip: Linearachse' : '↔ um den Roboter · ↕ Höhe' };
+  if (servo && pad.grip && !st.locked) stk = { group: 'robot', label: 'Linear axis', sub: '← → move' };
+  else if (!fly && servo) stk = { group: 'robot', label: 'Linear axis', sub: st.locked ? 'locked: e-stop active' : 'only with grip held', dim: true };
+  else if (!fly) stk = { group: 'xr', label: 'Fly', sub: st.view === 'nozzle' ? 'off in the nozzle camera' : 'only in the VR view', dim: true };
+  else if (pad.grip) stk = { group: 'xr', label: 'Fly', sub: 'release the grip first', dim: true };
+  else stk = { group: 'xr', label: 'Fly', sub: servo && !st.locked ? '↔ orbit · ↕ height · grip: linear axis' : '↔ around the robot · ↕ height' };
   return [
     { input: 'TRIGGER', ...trig, pressed: pad.trigger },
     { input: 'GRIP', ...grip, pressed: pad.grip },
-    { input: 'A', group: 'xr', label: 'Zentrieren', sub: st.view === 'nozzle' ? 'HUD + Kamerasicht vor den Blick' : 'HUD vor den Blick holen', pressed: pad.btnA },
-    { input: 'B', group: servo ? 'plan' : 'robot', label: `Modus → ${other}`, sub: `aktiv: ${MODE_NAME[st.mode] || st.mode}`, pressed: pad.btnB },
+    { input: 'A', group: 'xr', label: 'Center', sub: st.view === 'nozzle' ? 'HUD + camera view in front' : 'bring HUD in front', pressed: pad.btnA },
+    { input: 'B', group: servo ? 'plan' : 'robot', label: `Mode → ${other}`, sub: `active: ${MODE_NAME[st.mode] || st.mode}`, pressed: pad.btnB },
     { input: 'STICK', ...stk, pressed: stick && !stk.dim },
   ];
 }
@@ -225,7 +225,7 @@ export function drawHandHead(ctx, x, cy, w, hand, badge, badgeColor) {
   ctx.font = `800 22px ${FONT}`;
   if ('letterSpacing' in ctx) ctx.letterSpacing = '1px';
   ctx.fillStyle = COL.text;
-  ctx.fillText(fitText(ctx, hand === 'left' ? 'LINKER CONTROLLER' : 'RECHTER CONTROLLER', xr - x - 40), x + 32, cy);
+  ctx.fillText(fitText(ctx, hand === 'left' ? 'LEFT CONTROLLER' : 'RIGHT CONTROLLER', xr - x - 40), x + 32, cy);
   if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
 }
 

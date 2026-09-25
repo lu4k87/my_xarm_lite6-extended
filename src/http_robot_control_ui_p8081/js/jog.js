@@ -149,7 +149,7 @@ export function applyFloorGuard(lx, ly, lz) {
 
   const reached = clearanceMm < 0.5;
   if (reached && !floorGuardActive) {
-    logMsg('SAFETY', `⛔ Z Collision Level erreicht (${latestEEF_Z.toFixed(1)} mm ≤ ${floorGuard.levelMm} mm) - Bewegung nach unten gesperrt.`, 'warn');
+    logMsg('SAFETY', `⛔ Z Collision Level reached (${latestEEF_Z.toFixed(1)} mm ≤ ${floorGuard.levelMm} mm) - downward motion blocked.`, 'warn');
   }
   floorGuardActive = reached;
 
@@ -260,7 +260,7 @@ export function guardJointJogVelocity(vel) {
   }
   if (jointJogPrevZ !== null && vel !== 0 && latestEEF_Z < jointJogPrevZ - 0.05) {
     if (jointJogBlockedSign === 0) {
-      logMsg('SAFETY', `⛔ Z Collision Level erreicht (${latestEEF_Z.toFixed(1)} mm) - Gelenkrichtung zum Tisch gesperrt.`, 'warn');
+      logMsg('SAFETY', `⛔ Z Collision Level reached (${latestEEF_Z.toFixed(1)} mm) - joint direction towards the table blocked.`, 'warn');
     }
     jointJogBlockedSign = Math.sign(vel);
   }

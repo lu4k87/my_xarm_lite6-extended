@@ -23,7 +23,6 @@ import * as twin from './digital_twin.js';
 import { TOPICS } from '../config.js';
 import { ros } from '../ros.js';
 import { logMsg } from '../log.js';
-import { isTwinPointCloudOn } from '../pointcloud.js';
 
 const POSE_MS = 20;
 const STATE_MS = 100;
@@ -210,7 +209,7 @@ export function publishMirrorFrame(ctx) {
 
   if (now - lastStateAt >= STATE_MS) {
     lastStateAt = now;
-    const json = JSON.stringify({ kind: ctx.xrKind, cloud: isTwinPointCloudOn(), twin: twin.getTwinMirrorState() });
+    const json = JSON.stringify({ kind: ctx.xrKind, twin: twin.getTwinMirrorState() });
     if (json !== lastStateJson || now - lastStateSentAt > STATE_KEEPALIVE_MS) {
       lastStateJson = json;
       lastStateSentAt = now;

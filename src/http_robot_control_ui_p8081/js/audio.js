@@ -157,7 +157,7 @@ export function playButtonClick(btn) {
     return;
   }
   if (uiClickSound.muted || uiClickSound.volume === 0) {
-    reportClickSoundProblem(`Audio ist stummgeschaltet (muted=${uiClickSound.muted}, volume=${uiClickSound.volume})`);
+    reportClickSoundProblem(`Audio is muted (muted=${uiClickSound.muted}, volume=${uiClickSound.volume})`);
     return;
   }
 

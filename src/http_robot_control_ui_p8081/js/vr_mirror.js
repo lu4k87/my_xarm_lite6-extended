@@ -4,7 +4,7 @@
 // Robot Control UI). Die Brille schickt ihre Kopf-Pose, Controller, UI-Flaechen
 // und den Twin-Zustand (js/twin/xr_mirror_send.js); dieses Fenster rendert
 // denselben Digital Twin aus genau dieser Position mit dem Sichtfeld der
-// Brille. Erkennungen, Punktwolke und Pfad-Vorschau kommen direkt aus ROS -
+// Brille. Erkennungen und Pfad-Vorschau kommen direkt aus ROS -
 // dieselben Daten wie in der Brille.
 //
 // Die Seite ist rein passiv: sie bewegt nichts und publiziert nur einen
@@ -17,7 +17,6 @@ import * as twin from './twin/digital_twin.js';
 import { TOPICS } from './config.js';
 import { ros } from './ros.js';
 import { lsGet, lsSet } from './util.js';
-import { setTwinPointCloud } from './pointcloud.js';
 import { XR_ORDER } from './twin/xr_ui.js';
 
 const STALE_MS = 1500;           // so lange ohne Pose = Brille weg
@@ -38,7 +37,6 @@ let pose = null;                 // letzte Pose-Nachricht
 let poseAt = 0, poseFresh = false, lastSeq = -1;
 let rateCount = 0, rate = 0, rateAt = 0;
 let state = null;                // letzte Zustands-Nachricht
-let cloudOn = null;
 let zoom = clampZoom(parseFloat(lsGet(ZOOM_LS_KEY)) || 1);
 // 'fit': ganzes Sichtfeld der Brille, mittig mit dunklem Rand (Standard, 1:1).
 // 'fill': Fenster voll, das Sichtfeld wird oben/unten bzw. seitlich beschnitten.
@@ -152,10 +150,6 @@ topic(TOPICS.vrTeleopMirrorState, { queue_length: 5 }).subscribe((msg) => {
   if (!d) return;
   state = d;
   if (h && d.twin) twin.applyTwinMirrorState(d.twin);
-  if (typeof d.cloud === 'boolean' && d.cloud !== cloudOn) {
-    cloudOn = d.cloud;
-    setTwinPointCloud(cloudOn);
-  }
 });
 
 topic(TOPICS.vrTeleopMirrorUi, { queue_length: 20 }).subscribe((msg) => {
@@ -181,8 +175,9 @@ topic(TOPICS.vrTeleopMirrorUi, { queue_length: 20 }).subscribe((msg) => {
 const markerTopic = (name) => new ROSLIB.Topic({
   ros, name, messageType: 'visualization_msgs/MarkerArray', throttle_rate: 100, queue_length: 1,
 });
-[TOPICS.zedBboxes3d, TOPICS.zedYoloCollisionMarkers].forEach((name) => {
-  markerTopic(name).subscribe((msg) => twin.updateDigitalTwinDetections((msg && msg.markers) || []));
+[TOPICS.zedBboxes3d, TOPICS.virtualBboxes3d, TOPICS.zedYoloCollisionMarkers].forEach((name) => {
+  const virtual = name === TOPICS.virtualBboxes3d;
+  markerTopic(name).subscribe((msg) => twin.updateDigitalTwinDetections((msg && msg.markers) || [], { virtual }));
 });
 
 topic(TOPICS.movetoPreviewPath).subscribe((msg) => {
@@ -392,18 +387,18 @@ function updateOverlay(live, now) {
   const rosOk = !!(ros && ros.isConnected);
   let status, msg, cls;
   if (!rosOk) {
-    status = 'ROS getrennt'; cls = 'is-off';
-    msg = 'Keine Verbindung zur rosbridge (Port 9090).';
+    status = 'ROS disconnected'; cls = 'is-off';
+    msg = 'No connection to rosbridge (port 9090).';
   } else if (live) {
     status = 'Live'; cls = 'is-live'; msg = '';
   } else if (pose && pose.active === false) {
-    status = 'Session beendet'; cls = 'is-wait';
-    msg = 'Die VR-Session wurde beendet. Sobald sie in der Brille wieder startet, erscheint hier ihre Ansicht.';
+    status = 'Session ended'; cls = 'is-wait';
+    msg = 'The VR session has ended. As soon as it starts again in the headset, its view appears here.';
   } else {
-    status = 'Warte auf Brille'; cls = 'is-wait';
-    msg = 'In der Quest 3 die Robot Control UI (https://<PC>:8443) öffnen und VR starten.';
+    status = 'Waiting for headset'; cls = 'is-wait';
+    msg = 'Open the Robot Control UI (https://<PC>:8443) on the Quest 3 and start VR.';
   }
-  const kind = state && state.kind === 'ar' ? 'Passthrough (Kamerabild nicht gespiegelt)' : 'VR';
+  const kind = state && state.kind === 'ar' ? 'Passthrough (camera image not mirrored)' : 'VR';
   const key = [status, msg, kind, live ? rate : '', zoom.toFixed(2), fitMode].join('|');
   if (key !== lastOverlayKey) {
     lastOverlayKey = key;
@@ -412,7 +407,7 @@ function updateOverlay(live, now) {
     $('mirror-view').textContent = kind;
     $('mirror-rate').textContent = live ? `${rate} Hz` : '– Hz';
     $('mirror-zoom').textContent = `Zoom ${zoom.toFixed(2)}×`;
-    $('btn-mirror-fit').textContent = fitMode === 'fit' ? 'Fenster füllen' : 'Ganzes Sichtfeld';
+    $('btn-mirror-fit').textContent = fitMode === 'fit' ? 'Fill window' : 'Full field of view';
     $('mirror-msg').textContent = msg;
     $('mirror-msg').hidden = !msg;
   }

@@ -22,13 +22,13 @@ export const GLASS = { panel: [0.6, 0.7], card: [0.5, 0.62], hint: [0.66, 0.76] 
 // Button und Tasten-Badge. So findet man z. B. alles zum Greifen (Greifer,
 // Objekte, Trigger im SERVO) ueber die Farbe, egal auf welcher Flaeche.
 export const GROUP = {
-  robot:  { color: '#60a5fa', label: 'Roboter' },     // Servo, Posen, Speed, Linearachse
-  plan:   { color: '#a78bfa', label: 'Planen' },      // MoveIt, Ghost, TCP-Gizmo, PLAN-Modus
-  grip:   { color: '#fbbf24', label: 'Greifen' },     // Greifer, Objekte, Greifkugeln
-  scene:  { color: '#2dd4bf', label: 'Szene' },       // Einblendungen, Kollision, Sound
+  robot:  { color: '#60a5fa', label: 'Robot' },     // Servo, Posen, Speed, Linearachse
+  plan:   { color: '#a78bfa', label: 'Plan' },      // MoveIt, Ghost, TCP-Gizmo, PLAN-Modus
+  grip:   { color: '#fbbf24', label: 'Grasp' },     // Greifer, Objekte, Greifkugeln
+  scene:  { color: '#2dd4bf', label: 'Scene' },       // Einblendungen, Kollision, Sound
   xr:     { color: '#f472b6', label: 'VR' },          // Ansicht, Standort, HUD, Panel, Gehen
-  safety: { color: '#f43f5e', label: 'Sicherheit' },  // Not-Aus
-  help:   { color: '#94a3b8', label: 'Hilfe' },
+  safety: { color: '#f43f5e', label: 'Safety' },  // Not-Aus
+  help:   { color: '#94a3b8', label: 'Help' },
 };
 export const groupColor = (g) => (g && GROUP[g] ? GROUP[g].color : COL.cyan);
 
@@ -105,7 +105,7 @@ function withOpts(item, opts) {
   if (opts.toggle) {
     item.toggle = true;
     if (opts.on !== undefined) item.active = !!opts.on;
-    item.state = opts.state || (item.active ? 'AN' : 'AUS');
+    item.state = opts.state || (item.active ? 'ON' : 'OFF');
   }
   if (opts.warn) item.warn = true;
   if (opts.solid) item.solid = true;
@@ -115,11 +115,11 @@ function withOpts(item, opts) {
 }
 
 // Kurze deutsche Namen fuer gespiegelte Buttons (Panel und HUD gleich).
-export const GRIPPER_LABELS = { 'btn-grip-open': 'Lösen', 'btn-grip-close': 'Greifen', 'btn-grip-off': 'Greifer aus' };
-const POSE_LABELS = { 'btn-show-scene': 'Scan-Position', 'btn-scan-objects': 'OctoMap scannen' };
+export const GRIPPER_LABELS = { 'btn-grip-open': 'Open', 'btn-grip-close': 'Close', 'btn-grip-off': 'Gripper off' };
+const POSE_LABELS = { 'btn-show-scene': 'Scan position', 'btn-scan-objects': 'Scan OctoMap' };
 export function poseLabel(btn) {
   if (POSE_LABELS[btn.id]) return POSE_LABELS[btn.id];
-  return (btn.getAttribute('title') || '').toLowerCase().includes('initial') ? 'Grundstellung' : undefined;
+  return (btn.getAttribute('title') || '').toLowerCase().includes('initial') ? 'Home pose' : undefined;
 }
 
 export const q = (sel) => document.querySelector(sel);
@@ -153,7 +153,7 @@ export function moveitTargetLine() {
   const coords = q('#gizmo-hud-coords');
   const alert = !!coords && coords.classList.contains('coords-alert');
   return {
-    label: 'ZIEL',
+    label: 'TARGET',
     value: `X ${txt('#gizmo-hud-x')}  Y ${txt('#gizmo-hud-y')}  Z ${txt('#gizmo-hud-z')} mm   ${txt('#gizmo-hud-delta')}`,
     color: alert ? getComputedStyle(coords).color : undefined,
   };
@@ -182,10 +182,10 @@ export function moveitProgressLines() {
   const left = bar.dataset.left;
   const pct = parseFloat(fill.style.width) || 0;
   const lines = [];
-  if (steps.length) lines.push({ label: 'SCHRITTE', steps, accent });
+  if (steps.length) lines.push({ label: 'STEPS', steps, accent });
   lines.push({
-    label: left !== undefined ? 'VERWIRFT' : 'VERLAUF',
-    value: left !== undefined ? `in ${left} s` : (running ? 'läuft' : `${Math.round(pct)} %`),
+    label: left !== undefined ? 'DISCARDS' : 'PROGRESS',
+    value: left !== undefined ? `in ${left} s` : (running ? 'running' : `${Math.round(pct)} %`),
     // run: Position des laufenden Streifens (0..1), in 5-%-Schritten - so
     // zeichnet der HUD nur neu, wenn sich der Streifen sichtbar bewegt.
     bar: { pct, color: accent, run: running ? Math.round((performance.now() / MP_RUN_PERIOD_MS) % 1 * 20) / 20 : null },

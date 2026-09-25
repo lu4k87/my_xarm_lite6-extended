@@ -1582,14 +1582,6 @@ input[type=range]:active::-moz-range-thumb {
   min-width: 0;
 }
 
-.twin-ov-watermark {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: #ffffff;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
 /* ── Viewport Navigation Gizmo (Blender-style axis ball widget) ── */
 .twin-nav-gizmo {
   grid-area: tl;
@@ -1655,12 +1647,6 @@ input[type=range]:active::-moz-range-thumb {
   height: 30px !important;
   min-width: 30px !important;
   font-size: 13px !important;
-}
-
-/* ... while the decorative watermark steps aside completely. */
-
-.viewport-container.twin-viewport-tiny .twin-ov-watermark {
-  display: none;
 }
 
 .twin-motion-overlay {
@@ -1759,8 +1745,8 @@ input[type=range]:active::-moz-range-thumb {
 
 .twin-pose-overlay .input-group input {
   /* Platz fuer die Spinner-Pfeile rechts, damit sie den Wert nicht verdecken:
-     etwas breiter, dafuer weniger Innenabstand (Platz fuer "-1000" / "-3.14"). */
-  width: 76px;
+     breit genug fuer "-1000" bzw. "-179.9" plus Pfeile. */
+  width: 88px;
   padding: 6px 2px 6px 6px;
   font-size: 14px;
   border-radius: 0;
@@ -2205,6 +2191,35 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   color: var(--mut);
 }
 
+/* Stecknadel im Header "Detected Objects": an = DELETEALL behaelt die
+   virtuellen Objekte. Sitzt rechts vor dem Einklapp-Button, beide mit gap. */
+.yolo-keep-virtual-btn {
+  flex: 0 0 auto;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px;
+  padding: 0 !important;
+  margin-left: auto;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px !important;
+  cursor: pointer;
+}
+.glass-panel h2 .yolo-keep-virtual-btn i {
+  color: var(--mut);
+}
+.glass-panel h2 .yolo-keep-virtual-btn.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--accent);
+}
+.glass-panel h2 .yolo-keep-virtual-btn.active i {
+  color: var(--accent);
+}
+.yolo-keep-virtual-btn + .panel-collapse-btn {
+  margin-left: 0;
+}
+
 /* Collapsed: keep only the header row, drop fixed/resized heights and flex growth. */
 .glass-panel.panel-collapsed > :not(.panel-collapse-header) {
   display: none !important;
@@ -2345,7 +2360,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .tuner-num {
-  width: 54px;
+  /* "-0.125" / "-179.5" plus Spinner-Pfeile, ohne dass sie den Wert verdecken */
+  width: 76px;
   font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
   text-align: right;
@@ -2583,13 +2599,13 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .twin-toolbar .btn-icon-small {
-  width: 36px !important;
-  height: 36px !important;
+  width: 34px !important;
+  height: 34px !important;
   padding: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 16px !important;
+  font-size: 15px !important;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--mut);
@@ -2609,6 +2625,12 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   background: rgba(56, 189, 248, 0.25);
   border-color: var(--accent);
   color: #ffffff;
+}
+
+/* Ghost (Pfad-Vorschau) aus oder Node inaktiv: gestrichelt statt fast unsichtbar */
+.twin-toolbar #btn-twin-path-preview:not(.active) {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 .twin-toolbar-divider {
@@ -3422,6 +3444,75 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   font-weight: 600;
 }
 
+/* ── SYSTEM-Tab: CPU- und GPU-Last ──
+   Sitzt ueber SPEED in derselben Spalte und ist genauso breit. Pro Zeile ein
+   Raster Label | Wert | Verlauf; der Wert hat eine feste Breite, damit der
+   Graph beim Wechsel 9 % -> 100 % nicht springt. */
+#hud-tab-sysload {
+  width: 220px;
+  min-width: 200px;
+}
+
+.sysload-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 2px 0;
+}
+
+.sysload-row {
+  --sl-color: #38bdf8;
+  --sl-area: rgba(56, 189, 248, 0.16);
+  display: grid;
+  grid-template-columns: auto 4.5ch minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  min-width: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sysload-row[data-kind="gpu"] {
+  --sl-color: #10b981;
+  --sl-area: rgba(16, 185, 129, 0.16);
+}
+
+.sysload-lbl {
+  color: var(--sl-color);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
+.sysload-val {
+  color: var(--txt);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sysload-row[data-state="high"] .sysload-val {
+  color: var(--orange);
+}
+
+.sysload-row[data-state="na"] .sysload-val {
+  color: var(--mut);
+}
+
+.sysload-spark {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sysload-spark .sl-area { fill: var(--sl-area); }
+.sysload-spark .sl-line { fill: none; stroke: var(--sl-color); stroke-width: 1.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+
 /* Platzierung der Tabs im Overlay-Grid */
 .twin-ov-right-top {
   grid-column: 3;
@@ -3457,10 +3548,11 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   min-width: 0;
   /* Deckel fuer den breitesten Tab der Reihe: flex-wrap bricht um, BEVOR es
      schrumpft - ohne Deckel schob der Pose-Tab Telemetrie und Speed also in
-     eigene Zeilen und nahm der Motion-Leiste darueber die Hoehe. Die 420 px
-     sind gemessen: Telemetrie (177) + rechte Spalte (185, das Wasserzeichen
-     ist breiter als der Speed-Tab darueber) + Abstaende + Reserve. */
-  max-width: calc(100% - 420px);
+     eigene Zeilen und nahm der Motion-Leiste darueber die Hoehe. Die 500 px
+     sind gemessen: Telemetrie (~265) + Speed-Tab (220) + Abstaende. Das
+     POSE-Raster braucht ~460 px - unter 1020 px Viewport bekommt es deshalb
+     eine eigene Zeile (Container-Query weiter unten). */
+  max-width: calc(100% - 500px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3472,12 +3564,26 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   pointer-events: auto;
 }
 
+/* POSE: zwei feste Zeilen "(mm) X Y Z" / "(°) R P Yw", Go rechts ueber
+   beide Zeilen - kein Umbruch mitten in einer Achsengruppe. */
 .twin-ov-bottom-center .twin-pose-overlay {
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: auto repeat(3, auto) auto;
+  column-gap: 10px;
+  row-gap: 8px;
+  justify-content: start;
 }
-
-.twin-pose-overlay .input-row-divider {
-  margin: 0 2px;
+.twin-pose-overlay .pose-unit {
+  margin-right: 0;
+  font-size: 12px;
+  color: var(--mut);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+}
+.twin-pose-overlay .pose-go-btn {
+  grid-column: 5;
+  grid-row: 1 / span 2;
+  height: 100%;
 }
 
 /* Kleines Icon in der Viewport-Tab-Leiste: klappt alle HUD-Tabs zusammen
@@ -3843,9 +3949,9 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   gap: 10px !important;
 }
 :where(html.vp-tall) .twin-toolbar .btn-icon-small {
-  width: 36px !important;
-  height: 36px !important;
-  font-size: 16px !important;
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 15px !important;
 }
 :where(html.vp-tall) #panel-telemetry .telemetry-grid {
   margin-bottom: 10px;
@@ -3958,8 +4064,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 :where(html.vp-tall) #panel-tf-tuner .tuner-num {
   height: 23px;
   font-size: 11.5px;
-  padding: 0 5px;
-  width: 52px;
+  padding: 0 2px 0 5px;
+  width: 72px;
 }
 :where(html.vp-tall) #panel-tf-tuner .tuner-status-bar {
   margin-top: 8px;
@@ -4603,7 +4709,7 @@ header {
    bricht die Icon-Leiste in sich um - der Pfeil rutscht nie allein weg. */
 .centerpiece-header > div:last-child {
   flex-wrap: nowrap;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .centerpiece-header .twin-toolbar {
@@ -4622,11 +4728,11 @@ header {
   padding: 4px 7px !important;
 }
 
-/* Rechts aussen: "Collapse all viewport panels" oben, "Collapse 3D Viewport"
-   darunter ein Stück nach unten versetzt - sauber über-/untereinander angeordnet. */
+/* Rechts aussen: "Collapse all viewport panels" und "Collapse 3D Viewport"
+   nebeneinander in derselben Zeile wie die Icon-Leiste. */
 .centerpiece-collapse-stack {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -4647,7 +4753,6 @@ header {
 .centerpiece-collapse-stack .panel-collapse-btn {
   align-self: center;
   margin: 0;
-  margin-top: 4px; /* Collapse 3D Viewport ein Stück nach unten */
   flex-shrink: 0;
 }
 
@@ -4657,15 +4762,15 @@ header {
 }
 
 /* ── Viewport-HUD bei schmalem Viewport ──
-   Der Viewport selbst ist der Container: wird er schmal (Mitte eng durch
-   breite Aussenspalten oder kleines Fenster), bekommt das POSE-Panel eine
-   eigene, volle Zeile unter TELEMETRY | SPEED statt auf ~165 px
-   zusammengedrueckt zu werden. */
+   Der Viewport selbst ist der Container: passen TELEMETRY + POSE + SPEED
+   nicht mehr in eine Zeile (~1000 px), bekommt das POSE-Panel eine eigene,
+   volle Zeile unter TELEMETRY | SPEED. Sonst laeuft das feste Raster
+   (Felder mit Spinner-Pfeilen) rechts aus dem Viewport und Go verschwindet. */
 #digital-twin-container {
   container: twinvp / inline-size;
 }
 
-@container twinvp (max-width: 780px) {
+@container twinvp (max-width: 1020px) {
   .twin-ov-bottom-center {
     order: 3;
     flex: 1 1 100%;
@@ -4674,8 +4779,27 @@ header {
   .twin-ov-bottom-center .twin-pose-overlay {
     justify-content: center;
   }
-  /* Watermark ist Deko - bei wenig Platz weg */
-  .twin-ov-watermark {
+}
+
+/* Sehr schmaler Viewport: POSE-Raster enger, Felder bleiben breit genug
+   fuer Wert + Spinner-Pfeile. */
+@container twinvp (max-width: 560px) {
+  .twin-ov-bottom-center .twin-pose-overlay {
+    column-gap: 4px;
+    padding: 8px;
+  }
+  .twin-pose-overlay .input-group {
+    gap: 4px;
+  }
+  .twin-pose-overlay .input-group input {
+    width: 72px;
+    font-size: 12px;
+  }
+  .twin-pose-overlay .pose-go-btn {
+    padding: 0 10px;
+  }
+  /* Nur das Fadenkreuz - der Text "Go" kostet hier die letzten ~20 px. */
+  .twin-pose-overlay .pose-go-label {
     display: none;
   }
 }
@@ -5145,25 +5269,6 @@ header {
   font-size: 25px;
 }
 
-/* ── Icon-Leiste ueber dem Viewport: 1,5x, wenn die Section breit genug ist ──
-   Container ist die Section selbst (.glass-panel). Bricht die Leiste in eine
-   zweite Zeile um, kostet das Viewport-Hoehe - darum erst ab genug Breite. */
-@container (min-width: 780px) {
-  .centerpiece-header .twin-toolbar { gap: 6px; }
-  .centerpiece-header .twin-toolbar .btn-icon-small {
-    width: 45px !important;
-    height: 45px !important;
-    font-size: 20px !important;
-  }
-}
-@container (min-width: 840px) {
-  .centerpiece-header .twin-toolbar { gap: 7px; }
-  .centerpiece-header .twin-toolbar .btn-icon-small {
-    width: 54px !important;
-    height: 54px !important;
-    font-size: 24px !important;
-  }
-}
 
 /* Ghost-Modus: Auto-Move ist dort ohne Bedeutung - Gizmo und MOTION-Buttons
    planen sofort, gefahren wird erst nach Execute. */
@@ -5539,15 +5644,15 @@ header .header-status {
    MOTION, TELEMETRY, POSE und SCENE: Kopf als schmale Leiste an der Seite
    zum Viewportrand, Titel senkrecht (von unten nach oben lesbar). Der Pfeil
    zeigt aufgeklappt zur Leiste (einklappen), eingeklappt vom Rand weg.
-   SPEED behaelt seinen waagerechten Kopf. */
-.twin-hud-tab:not(#hud-tab-speed) {
+   SPEED und SYSTEM behalten ihren waagerechten Kopf. */
+.twin-hud-tab:not(#hud-tab-speed, #hud-tab-sysload) {
   flex-direction: row;
   align-items: stretch;
 }
 #hud-tab-scene {
   flex-direction: row-reverse;
 }
-.twin-hud-tab:not(#hud-tab-speed) > .hud-tab-head {
+.twin-hud-tab:not(#hud-tab-speed, #hud-tab-sysload) > .hud-tab-head {
   flex-direction: column;
   justify-content: flex-start;
   width: auto;
@@ -5555,7 +5660,7 @@ header .header-status {
   padding: 6px 3px;
   gap: 8px;
 }
-.twin-hud-tab:not(#hud-tab-speed) .hud-tab-title {
+.twin-hud-tab:not(#hud-tab-speed, #hud-tab-sysload) .hud-tab-title {
   flex: 0 0 auto;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
@@ -5568,16 +5673,16 @@ header .header-status {
   margin-bottom: auto;
 }
 /* Leiste links (MOTION, TELEMETRY, POSE): offen <-, zu -> */
-.twin-hud-tab:not(#hud-tab-speed):not(#hud-tab-scene) .hud-tab-caret { transform: rotate(90deg); }
-.twin-hud-tab.is-collapsed:not(#hud-tab-speed):not(#hud-tab-scene) .hud-tab-caret { transform: rotate(-90deg); }
+.twin-hud-tab:not(#hud-tab-speed, #hud-tab-sysload):not(#hud-tab-scene) .hud-tab-caret { transform: rotate(90deg); }
+.twin-hud-tab.is-collapsed:not(#hud-tab-speed, #hud-tab-sysload):not(#hud-tab-scene) .hud-tab-caret { transform: rotate(-90deg); }
 /* Leiste rechts (SCENE): offen ->, zu <- */
 #hud-tab-scene .hud-tab-caret { transform: rotate(-90deg); }
 #hud-tab-scene.is-collapsed .hud-tab-caret { transform: rotate(90deg); }
 /* Eingeklappt bleibt nur die Leiste - kein Abstand fuer den Inhalt */
-.twin-hud-tab.is-collapsed:not(#hud-tab-speed) {
+.twin-hud-tab.is-collapsed:not(#hud-tab-speed, #hud-tab-sysload) {
   align-self: flex-start;
 }
-.viewport-container.twin-viewport-tiny .twin-hud-tab:not(#hud-tab-speed) > .hud-tab-head {
+.viewport-container.twin-viewport-tiny .twin-hud-tab:not(#hud-tab-speed, #hud-tab-sysload) > .hud-tab-head {
   padding: 4px 2px;
 }
 

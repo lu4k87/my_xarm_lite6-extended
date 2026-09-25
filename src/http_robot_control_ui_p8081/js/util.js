@@ -79,28 +79,45 @@ export function readPoseInput(id) {
   return el ? parseFloat(el.value) : NaN;
 }
 
+// Rotation: in der UI (POSE-Felder, Telemetrie, Gelenke) Grad, in den
+// Services und im Twin rad.
+export const RAD2DEG = 180 / Math.PI;
+export const DEG2RAD = Math.PI / 180;
+// Radiant als Grad mit einer Nachkommastelle, ohne "-0.0".
+export const fmtDeg = (rad) => { const d = +(rad * RAD2DEG).toFixed(1); return (d || 0).toFixed(1); };
+
+// Alle sechs POSE-Felder als [x, y, z] in mm und [roll, pitch, yaw] in rad.
+export function readPoseInputs() {
+  return [
+    readPoseInput('inp-x'), readPoseInput('inp-y'), readPoseInput('inp-z'),
+    readPoseInput('inp-r') * DEG2RAD, readPoseInput('inp-p') * DEG2RAD, readPoseInput('inp-yw') * DEG2RAD,
+  ];
+}
+
 // Letzte Pruefung vor dem Roboter. Vorher ging der Wert aus dem Eingabefeld
 // voellig ungeprueft in den Service-Request: ein leeres Feld ergab NaN, das
 // ueber JSON als null beim Node ankam.
 // Die Grenzen sind bewusst weit - der Arbeitsraum endet laengst vorher, hier
 // geht es nur darum, offensichtlichen Unsinn nicht abzuschicken.
+// Erwartet die Rotation in rad, meldet sie aber in Grad wie in der UI.
 export function validatePose(pose) {
   const names = ['X', 'Y', 'Z', 'Roll', 'Pitch', 'Yaw'];
   for (let i = 0; i < 6; i++) {
     const v = pose[i];
     if (!Number.isFinite(v)) {
-      return `${names[i]} ist keine gueltige Zahl`;
+      return `${names[i]} is not a valid number`;
     }
     const max = (i < 3) ? LIM.POSE_MAX_MM : LIM.POSE_MAX_RAD;
     if (Math.abs(v) > max) {
-      const unit = (i < 3) ? 'mm' : 'rad';
-      return `${names[i]}=${v} liegt ausserhalb von ±${max.toFixed(2)} ${unit}`;
+      return (i < 3)
+        ? `${names[i]}=${v} mm is outside ±${max.toFixed(0)} mm`
+        : `${names[i]}=${(v * RAD2DEG).toFixed(1)}° is outside ±${(max * RAD2DEG).toFixed(0)}°`;
     }
   }
   // Unterhalb der Z Collision Level bremst MoveIt Servo den Arm danach fast
   // auf null - ein manuelles Ziel dort ist fast immer ein Tippfehler.
   if (floorGuard.enabled && pose[2] < floorGuard.levelMm) {
-    return `Z=${pose[2]} mm liegt unter der Z Collision Level (${floorGuard.levelMm} mm)`;
+    return `Z=${pose[2]} mm is below the Z Collision Level (${floorGuard.levelMm} mm)`;
   }
   return null;
 }

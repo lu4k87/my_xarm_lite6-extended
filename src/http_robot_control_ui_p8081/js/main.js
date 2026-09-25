@@ -14,6 +14,7 @@
 //   voice.js     Whisper
 //   layout.js    Drag-and-Drop, HUD-Tabs, einklappbare Panels, Twin-Schalter
 //   status.js    Port-Status, Gamepad-API
+//   sysload.js   SYSTEM-Tab im Viewport: CPU-/GPU-Last mit Mini-Verlauf
 //   tf_tuner.js  TF Control Tuner, Szenen-Nodes
 //   uievents.js  Globaler Klick-Debounce
 //   streams.js   Kamera- und RViz-Streams
@@ -38,7 +39,7 @@ import {
   requestMotion, startObjectScan, toggleMoveToPreview, toggleMoveitCollision, updateScanSpeed, updateSpeed,
 } from './motion.js';
 import { executeMoveToPoseFromGizmo } from './gizmo.js';
-import { executeGrasp, setGripper } from './grasp.js';
+import { executeGrasp, setGripper, toggleKeepVirtualOnDeleteAll, toggleVirtualDetections } from './grasp.js';
 import { startListening } from './voice.js';
 import { toggleTwinPointCloud } from './pointcloud.js';
 import { commitGroundLevel, hideGroundCollPopup, inputGroundLevel, stepGroundLevel } from './ground_popup.js';
@@ -46,6 +47,7 @@ import {
   toggleAllHudTabs, toggleHeaderCollapsed, toggleHudTab, toggleTFTunerCollapse, toggleTwinDetections, toggleTwinDistanceLine,
 } from './layout.js';
 import './status.js';
+import './sysload.js';
 import {
   onTunerElementChange, onTunerNumChange, onTunerSliderInput, resetCurrentTFElement,
   toggleSceneNode, toggleTFBroadcast,
@@ -71,7 +73,7 @@ const ACTIONS = {
   commitGroundLevel, hideGroundCollPopup, inputGroundLevel, stepGroundLevel,
   updateSpeed, updateScanSpeed, setFrame, updateLinearAxis,
   // Greifen
-  executeGrasp, setGripper,
+  executeGrasp, setGripper, toggleKeepVirtualOnDeleteAll, toggleVirtualDetections,
   // Digital Twin
   cycleTCPGizmoMode, resetDigitalTwinView, setDigitalTwinTopView, syncTCPGizmoToRobot,
   testDigitalTwinSafetyCycle, toggleDigitalTwinEdges, toggleDigitalTwinGrid, toggleTCPGizmo,

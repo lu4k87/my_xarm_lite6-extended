@@ -5,7 +5,7 @@ import { logMsg } from './log.js';
 import { setButtonsLocked } from './motion.js';
 import { createSrv, motionAllowed } from './ros.js';
 import { unreachableClearance, unreachableRadiusAt } from './robot_limits.js';
-import { LIM, floorGuard, readPoseInput, setIconLabel, validatePose } from './util.js';
+import { LIM, floorGuard, readPoseInputs, setIconLabel, validatePose } from './util.js';
 
 // ── Interactive 3D TCP Gizmo Execution ───────────────────────────────────────
 export let isExecutingGizmoMove = false;
@@ -25,12 +25,10 @@ export function executeMoveToPoseFromGizmo(opts) {
     poseData = twin.getTCPGizmoPose();
   }
 
-  const x = poseData ? poseData.x : readPoseInput('inp-x');
-  const y = poseData ? poseData.y : readPoseInput('inp-y');
-  const z = poseData ? poseData.z : readPoseInput('inp-z');
-  const r = poseData ? poseData.roll : readPoseInput('inp-r');
-  const p = poseData ? poseData.pitch : readPoseInput('inp-p');
-  const yw = poseData ? poseData.yaw : readPoseInput('inp-yw');
+  // Gizmo liefert rad, die Felder Grad - readPoseInputs() rechnet um.
+  const [x, y, z, r, p, yw] = poseData
+    ? [poseData.x, poseData.y, poseData.z, poseData.roll, poseData.pitch, poseData.yaw]
+    : readPoseInputs();
 
   // Prueft jetzt alle sechs Werte, nicht nur X/Y/Z.
   const bad = validatePose([x, y, z, r, p, yw]);

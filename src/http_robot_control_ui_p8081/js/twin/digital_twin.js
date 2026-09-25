@@ -9,7 +9,7 @@ import { TransformControls } from 'three/addons/controls/TransformControls_r128.
 import URDFLoader from 'urdf-loader';
 import { ROBOT_LIMITS, unreachableClearance, unreachableRadiusAt } from '../robot_limits.js';
 import { logMsg } from '../log.js';
-import { floorGuard, uiZoom } from '../util.js';
+import { floorGuard, uiZoom, fmtDeg } from '../util.js';
 
 // Farben wie unter r128: Hex-Werte gelten als linear, erst die Ausgabe wird
 // nach sRGB gewandelt. Mit dem seit r152 aktiven Color Management wuerden alle
@@ -1091,9 +1091,6 @@ function handleGizmoChange(updateInputs = true) {
   const posZ_mm = Math.round(gizmoTarget.position.z * 1000.0);
 
   const euler = new THREE.Euler().setFromQuaternion(gizmoTarget.quaternion, 'XYZ');
-  const roll = Number(euler.x.toFixed(2));
-  const pitch = Number(euler.y.toFixed(2));
-  const yaw = Number(euler.z.toFixed(2));
 
   if (updateInputs) {
     const inpX = document.getElementById('inp-x');
@@ -1106,9 +1103,10 @@ function handleGizmoChange(updateInputs = true) {
     if (inpX) inpX.value = posX_mm;
     if (inpY) inpY.value = posY_mm;
     if (inpZ) inpZ.value = posZ_mm;
-    if (inpR) inpR.value = roll.toFixed(2);
-    if (inpP) inpP.value = pitch.toFixed(2);
-    if (inpYw) inpYw.value = yaw.toFixed(2);
+    // POSE-Felder zeigen die Rotation in Grad
+    if (inpR) inpR.value = fmtDeg(euler.x);
+    if (inpP) inpP.value = fmtDeg(euler.y);
+    if (inpYw) inpYw.value = fmtDeg(euler.z);
   }
 
   // Distance delta to real robot TCP
@@ -3154,24 +3152,41 @@ function sweepDetections(now) {
   if (selectedGraspRec && !selectedGraspRec.obj.parent) selectedGraspRec = null;
 }
 
+// Virtuelle Objekte (virtual_object_detections) publizieren mit denselben
+// Namespaces wie YOLO auf /zed/bboxes_3d. Ihre Schluessel ("ns/id") lernt der
+// Twin von /ui/virtual_bboxes_3d (opts.virtual). Sendet eine andere Quelle
+// DELETEALL (yolo_3d_bbox_for_ip_cam vor jeder Erkennung), bleiben sie per
+// Default stehen - sonst flackern sie mit der Kamerarate. Aus: DELETEALL
+// loescht wie in RViz alles.
+const virtualDetectionKeys = new Set();
+let keepVirtualOnDeleteAll = true;
+
+export function setKeepVirtualOnDeleteAll(on) {
+  keepVirtualOnDeleteAll = !!on;
+}
+
 function clearDetections() {
-  for (const key of Object.keys(detectionObjects)) disposeDetection(detectionObjects[key]);
-  detectionObjects = {};
+  for (const key of Object.keys(detectionObjects)) {
+    if (keepVirtualOnDeleteAll && virtualDetectionKeys.has(key)) continue;
+    disposeDetection(detectionObjects[key]);
+    delete detectionObjects[key];
+  }
   legacyCoordBuffer = {};
 }
 
 // Wird von grasp.js mit dem kompletten MarkerArray gefuettert.
-export function updateDigitalTwinDetections(markers) {
+// Reihenfolge wie in RViz: DELETEALL leert, die Marker danach im selben
+// Array (IP-Kamera: DELETEALL + neue Boxen) kommen wieder dazu.
+export function updateDigitalTwinDetections(markers, opts = {}) {
   requestRender();
   if (!scene || !Array.isArray(markers)) return;
   const now = Date.now();
 
-  if (markers.some(m => m && m.action === MARKER_DELETEALL)) {
-    clearDetections();
-    return;
-  }
   for (const m of markers) {
-    if (m) upsertDetection(m, now);
+    if (!m) continue;
+    if (m.action === MARKER_DELETEALL) { clearDetections(); continue; }
+    if (opts.virtual && m.action !== MARKER_DELETE) virtualDetectionKeys.add(`${m.ns || ''}/${m.id || 0}`);
+    upsertDetection(m, now);
   }
   sweepDetections(now);
 }

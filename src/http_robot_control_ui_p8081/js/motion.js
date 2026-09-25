@@ -7,7 +7,7 @@ import {
 import { setGroundCollPopupState, showGroundCollPopup } from './ground_popup.js';
 import { logMsg } from './log.js';
 import { createSrv, estopLatched, motionAllowed, ros, rosHooks } from './ros.js';
-import { floorGuard, readPoseInput, validatePose } from './util.js';
+import { DEG2RAD, floorGuard, readPoseInput, readPoseInputs, validatePose } from './util.js';
 
 export let speedScale = 0.3;
 export let lastSpeedIndex = -1;
@@ -198,18 +198,14 @@ function applyMotionLock() {
 rosHooks.onEstop.push(applyMotionLock);
 
 export function moveToPose() {
-  const x = readPoseInput('inp-x');
-  const y = readPoseInput('inp-y');
-  const z = readPoseInput('inp-z');
-  const r = readPoseInput('inp-r');
-  const p = readPoseInput('inp-p');
-  const yw = readPoseInput('inp-yw');
+  // Rotation steht in den Feldern in Grad, der Service will rad.
+  const [x, y, z, r, p, yw] = readPoseInputs();
 
   // Erst pruefen, dann sperren - sonst blieben die Buttons bei einer
   // abgelehnten Eingabe gesperrt zurueck.
   const bad = validatePose([x, y, z, r, p, yw]);
   if (bad) {
-    logMsg('UI', `❌ MoveTo abgebrochen: ${bad}`, 'err');
+    logMsg('UI', `❌ MoveTo cancelled: ${bad}`, 'err');
     playPoseOutOfReachSound();
     return;
   }
@@ -305,9 +301,10 @@ export function showScene() {
   const x = 300.0;
   const y = 0.0;
   const z = 400.0;
-  const r = parseFloat(document.getElementById('inp-r').value) || 3.14;
-  const p = parseFloat(document.getElementById('inp-p').value) || 0.0;
-  const yw = parseFloat(document.getElementById('inp-yw').value) || 0.0;
+  // Felder in Grad, Service in rad.
+  const r = (readPoseInput('inp-r') * DEG2RAD) || 3.14;
+  const p = (readPoseInput('inp-p') * DEG2RAD) || 0.0;
+  const yw = (readPoseInput('inp-yw') * DEG2RAD) || 0.0;
 
   const req = new ROSLIB.ServiceRequest({
     pose: [x, y, z, r, p, yw],
@@ -426,9 +423,11 @@ export function applyMoveToPreviewBtn() {
   if (!btn) return;
   const st = movetoPreviewState;
   btn.classList.toggle('active', st === true);
+  // Aus/inaktiv: gestrichelter Rahmen (style.css), damit der Button sichtbar bleibt.
+  btn.classList.toggle('unavailable', st === null);
   if (st === null) {
     btn.style.color = 'var(--dim)';
-    btn.style.opacity = '0.45';
+    btn.style.opacity = '0.75';
     btn.title = `MoveTo path preview (node ${MOVETO_PREVIEW_NODE} inactive)`;
   } else if (st) {
     btn.style.color = 'var(--accent)';
@@ -436,7 +435,7 @@ export function applyMoveToPreviewBtn() {
     btn.title = 'MoveTo path preview: ON - paths are shown as a ghost and executed only after confirmation. Click to disable';
   } else {
     btn.style.color = 'var(--mut)';
-    btn.style.opacity = '0.6';
+    btn.style.opacity = '0.85';
     btn.title = 'MoveTo path preview: OFF - planned paths are executed immediately. Click to enable';
   }
 }
@@ -814,7 +813,7 @@ const MOTION_REQUESTS = {
              what: () => `Target X ${readPoseInput('inp-x')} · Y ${readPoseInput('inp-y')} · Z ${readPoseInput('inp-z')} mm`,
              // Ungueltige Eingabe: gar nicht erst bestaetigen lassen - moveToPose
              // meldet den Fehler selbst.
-             invalid: () => !!validatePose(['inp-x', 'inp-y', 'inp-z', 'inp-r', 'inp-p', 'inp-yw'].map(readPoseInput)),
+             invalid: () => !!validatePose(readPoseInputs()),
              run: () => moveToPose() },
 };
 let pendingMotion = null;

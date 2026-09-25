@@ -15,6 +15,8 @@ Ersetzt `python3 -m http.server`. Zwei Dinge sind anders:
    Quest 3, Xbox, Tobii, ROS-Umgebung). Geprueft wird hier auf dem PC: der
    Browser selbst darf aus der HTTPS-Seite (8443, Quest) keine HTTP-Ports
    abfragen und sieht keine USB-Geraete.
+4. `/api/sys_load` liefert CPU- und GPU-Last fuer den SYSTEM-Tab im Viewport
+   (/proc/stat bzw. nvidia-smi, gemessen nur solange die UI fragt).
 
 Aufruf: server.py [PORT] [VERZEICHNIS]
 """
@@ -173,6 +175,73 @@ class HeaderStatus:
 HEADER_STATUS = HeaderStatus()
 
 
+# ── CPU-/GPU-Last (SYSTEM-Tab im Viewport) ──────────────────────────────────
+LOAD_POLL_S = 1.0
+LOAD_IDLE_S = 10.0                  # ohne Abfrage kein nvidia-smi mehr
+
+
+def _cpu_times():
+    """(busy, total) aus der Sammelzeile von /proc/stat."""
+    try:
+        with open('/proc/stat') as f:
+            vals = [int(v) for v in f.readline().split()[1:]]
+    except (OSError, ValueError):
+        return None
+    idle = vals[3] + (vals[4] if len(vals) > 4 else 0)   # idle + iowait
+    total = sum(vals[:8])                                # ohne guest (steckt in user)
+    return total - idle, total
+
+
+def _gpu_sample():
+    """Auslastung der ersten NVIDIA-GPU (None ohne nvidia-smi)."""
+    try:
+        out = subprocess.run(
+            ['nvidia-smi', '--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu,name',
+             '--format=csv,noheader,nounits', '-i', '0'],
+            capture_output=True, text=True, timeout=2).stdout
+        util, mem_used, mem_total, temp, name = [v.strip() for v in out.strip().split(',', 4)]
+        return {'util': float(util), 'mem_used': float(mem_used), 'mem_total': float(mem_total),
+                'temp': float(temp), 'name': name}
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+
+
+class SysLoad:
+    """Misst im Hintergrund, solange die UI fragt; Anfragen bekommen den letzten Stand."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._state = {'cpu': None, 'gpu': None}
+        self._last_request = 0.0
+        self._thread = None
+
+    def get(self):
+        with self._lock:
+            self._last_request = time.time()
+            if self._thread is None or not self._thread.is_alive():
+                self._thread = threading.Thread(target=self._run, daemon=True)
+                self._thread.start()
+            return dict(self._state)
+
+    def _run(self):
+        prev = _cpu_times()
+        while time.time() - self._last_request < LOAD_IDLE_S:
+            time.sleep(LOAD_POLL_S)
+            cur = _cpu_times()
+            cpu = None
+            if prev and cur and cur[1] > prev[1]:
+                cpu = round(100.0 * (cur[0] - prev[0]) / (cur[1] - prev[1]), 1)
+            prev = cur
+            state = {'cpu': cpu, 'cores': os.cpu_count(), 'gpu': _gpu_sample(), 'ts': time.time()}
+            with self._lock:
+                self._state = state
+        with self._lock:
+            self._state = {'cpu': None, 'gpu': None}
+
+
+SYS_LOAD = SysLoad()
+
+
 class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
     extensions_map = {
         **http.server.SimpleHTTPRequestHandler.extensions_map,
@@ -220,8 +289,9 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def send_head(self):
         path = self.path.split('?', 1)[0]
-        if path == '/api/header_status':
-            body = json.dumps(HEADER_STATUS.get()).encode('utf-8')
+        if path in ('/api/header_status', '/api/sys_load'):
+            data = HEADER_STATUS.get() if path == '/api/header_status' else SYS_LOAD.get()
+            body = json.dumps(data).encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Content-Length', str(len(body)))

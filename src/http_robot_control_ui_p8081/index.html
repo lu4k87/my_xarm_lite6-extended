@@ -204,7 +204,11 @@
 
 
         <section id="panel-yolo" class="glass-panel">
-          <h2><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO 3D)</h2>
+          <h2><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO 3D)
+            <button type="button" class="btn btn-icon-small yolo-keep-virtual-btn active" id="btn-yolo-keep-virtual" data-action="toggleKeepVirtualOnDeleteAll" aria-pressed="true" title="DELETEALL (e.g. IP camera YOLO) keeps virtual objects - click: clear everything like RViz">
+              <i class="fa-solid fa-thumbtack"></i>
+            </button>
+          </h2>
           <div id="yolo-container" class="yolo-container">
             <div class="yolo-empty">Waiting for /zed/bboxes_3d...</div>
           </div>
@@ -229,24 +233,24 @@
             <div style="display: flex; align-items: center; gap: 8px;">
               <div class="twin-toolbar">
                 <!-- Pfad-Vorschau (Ghost) ganz links -->
-                <button class="btn btn-icon-small" id="btn-twin-path-preview" data-action="toggleMoveToPreview" title="MoveTo path preview (node robot_motion_handler_movegroup inactive)" style="color: var(--dim); opacity: 0.45;">
+                <button class="btn btn-icon-small" id="btn-twin-path-preview" data-action="toggleMoveToPreview" title="MoveTo path preview (node robot_motion_handler_movegroup inactive)" style="color: var(--dim); opacity: 0.75;">
                   <i class="fa-solid fa-ghost"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
                 <button class="btn btn-icon-small" id="btn-twin-safety-test" data-action="testDigitalTwinSafetyCycle" title="Test safety warnings (Collision & Singularity Visuals)" style="color: var(--mut);">
-                  <i class="fa-solid fa-shield-halved"></i>
+                  <i class="fa-solid fa-flask"></i>
                 </button>
                 <button class="btn btn-icon-small" data-action="resetDigitalTwinView" title="Reset camera view (Isometric)">
-                  <i class="fa-solid fa-arrows-rotate"></i>
+                  <i class="fa-solid fa-camera-rotate"></i>
                 </button>
                 <button class="btn btn-icon-small" data-action="setDigitalTwinTopView" title="Top-down view">
-                  <i class="fa-solid fa-eye"></i>
+                  <i class="fa-solid fa-down-long"></i>
                 </button>
                 <button class="btn btn-icon-small active" id="btn-twin-grid" data-action="toggleDigitalTwinGrid" title="Toggle ground grid" style="color: var(--cyan);">
                   <i class="fa-solid fa-border-all"></i>
                 </button>
                 <button class="btn btn-icon-small active" id="btn-twin-edges" data-action="toggleDigitalTwinEdges" title="Toggle CAD edge outlines" style="color: var(--cyan);">
-                  <i class="fa-solid fa-shapes"></i>
+                  <i class="fa-solid fa-draw-polygon"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
                 <button class="btn btn-icon-small active" id="btn-twin-gizmo" data-action="toggleTCPGizmo" title="Toggle 3D TCP Gizmo (Key: G)" style="color: var(--cyan);">
@@ -260,8 +264,10 @@
                 </button>
                 <div class="twin-toolbar-divider"></div>
                 <!-- VR-Gruppe (btn-xr, eigene Farbe): VR, AR, VR-Spiegel.
-                     VR/AR nur sichtbar, wenn die Seite ueber HTTPS (Port 8443)
-                     laeuft und die Brille den Modus kann (js/twin/xr.js) -->
+                     VR/AR nur sichtbar in einem sicheren Kontext (HTTPS 8443
+                     oder localhost) und wenn der Browser den Modus meldet
+                     (js/twin/xr.js). Desktop-Chrome auf localhost:8081 zeigt
+                     sie deshalb ebenfalls. -->
                 <button class="btn btn-icon-small btn-xr" id="btn-twin-xr-vr" data-action="enterTwinXR" data-args='["vr"]' title="Enter VR (Meta Quest 3): 3D viewport with HUD panels - switch to passthrough inside the headset" style="display: none;">
                   <i class="fa-solid fa-vr-cardboard"></i>
                 </button>
@@ -343,7 +349,7 @@
                     </div>
                     <div class="mp-target-right">
                       <label class="gizmo-auto-toggle" title="Robot moves automatically when the gizmo is released">
-                        <input type="checkbox" id="chk-gizmo-auto-drop" checked>
+                        <input type="checkbox" id="chk-gizmo-auto-drop">
                         <span>Auto-Move</span>
                       </label>
                     </div>
@@ -402,6 +408,9 @@
                 </button>
                 <button class="btn btn-icon-small" id="btn-twin-detections" data-action="toggleTwinDetections" title="YOLO detections in 3D view: bounding box, red grasp point and labels (/zed/bboxes_3d)">
                   <i class="fa-solid fa-vector-square"></i>
+                </button>
+                <button class="btn btn-icon-small" id="btn-twin-virtual-objects" data-action="toggleVirtualDetections" title="Virtual objects as detections (node virtual_object_detections inactive)" style="color: var(--dim); opacity: 0.45;">
+                  <i class="fa-solid fa-shapes"></i>
                 </button>
                 <button class="btn btn-icon-small" id="btn-twin-pointcloud" data-action="toggleTwinPointCloud" title="Show ZED point cloud in 3D view (/zed/pointcloud_web)" style="color: var(--dim); opacity: 0.5;">
                   <i class="fa-solid fa-braille"></i>
@@ -481,7 +490,7 @@
                 </div>
               </div>
 
-              <!-- bottom row (one line): Telemetry left · Pose Inputs center · Watermark right -->
+              <!-- bottom row (one line): Telemetry left · Pose Inputs center · Speed right -->
               <div class="twin-ov-bottom-row">
                 <!-- bottom-left: Mini Safety Telemetry HUD -->
                 <div class="twin-ov-bottom-left">
@@ -521,25 +530,47 @@
                     </button>
                     <div class="hud-tab-body">
                       <div id="twin-pose-overlay" class="twin-pose-overlay">
+                        <!-- Zwei feste Zeilen: Position in mm, Rotation in Grad; Go rechts ueber beide -->
                         <span class="pose-unit" title="X/Y/Z in millimeters">(mm)</span>
-                        <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
-                        <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
-                        <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Z</span></label><input type="number" id="inp-z" step="1" value="200"></div>
-                        <div class="input-row-divider"></div>
-                        <div class="input-group x"><label><span style="color: var(--rviz-x); font-weight: 700;">R</span></label><input type="number" id="inp-r" step="0.01" value="3.14"></div>
-                        <div class="input-group y"><label><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="0.01" value="0.00"></div>
-                        <div class="input-group z"><label><span style="color: var(--rviz-z); font-weight: 700;">Y</span></label><input type="number" id="inp-yw" step="0.01" value="0.00"></div>
-                        <div class="input-row-divider"></div>
-                        <button class="btn btn-action motion-lockable" data-action="requestMotion" data-args='["pose"]' title="Move to entered pose">
-                          <i class="fa-solid fa-crosshairs"></i> Go
+                        <div class="input-group x"><label for="inp-x"><span style="color: var(--rviz-x); font-weight: 700;">X</span></label><input type="number" id="inp-x" step="1" value="300"></div>
+                        <div class="input-group y"><label for="inp-y"><span style="color: var(--rviz-y); font-weight: 700;">Y</span></label><input type="number" id="inp-y" step="1" value="0"></div>
+                        <div class="input-group z"><label for="inp-z"><span style="color: var(--rviz-z); font-weight: 700;">Z</span></label><input type="number" id="inp-z" step="1" value="200"></div>
+                        <span class="pose-unit" title="Roll / Pitch / Yaw in degrees">(°)</span>
+                        <div class="input-group x"><label for="inp-r" title="Roll"><span style="color: var(--rviz-x); font-weight: 700;">R</span></label><input type="number" id="inp-r" step="any" value="180.0"></div>
+                        <div class="input-group y"><label for="inp-p" title="Pitch"><span style="color: var(--rviz-y); font-weight: 700;">P</span></label><input type="number" id="inp-p" step="any" value="0.0"></div>
+                        <div class="input-group z"><label for="inp-yw" title="Yaw"><span style="color: var(--rviz-z); font-weight: 700;">Yw</span></label><input type="number" id="inp-yw" step="any" value="0.0"></div>
+                        <button class="btn btn-action motion-lockable pose-go-btn" data-action="requestMotion" data-args='["pose"]' title="Move to entered pose">
+                          <i class="fa-solid fa-crosshairs"></i><span class="pose-go-label">Go</span>
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- bottom-right: Speed Slider ueber dem Watermark, rechtsbuendig -->
+                <!-- bottom-right: CPU-/GPU-Last (oben) und Speed Slider, rechtsbuendig -->
                 <div class="twin-ov-bottom-right">
+                  <div class="twin-hud-tab" id="hud-tab-sysload" data-hud="sysload">
+                    <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["sysload"]' title="Collapse / expand CPU and GPU load" aria-expanded="true">
+                      <i class="fa-solid fa-microchip hud-tab-icon"></i>
+                      <span class="hud-tab-title">SYSTEM</span>
+                      <i class="fa-solid fa-chevron-down hud-tab-caret"></i>
+                    </button>
+                    <div class="hud-tab-body">
+                      <!-- Zwei Zeilen: Wert links, Verlauf der letzten 60 s rechts (0-100 %) -->
+                      <div class="sysload-list">
+                        <div class="sysload-row" id="sysload-cpu" data-kind="cpu" title="CPU load of this PC (all cores)">
+                          <span class="sysload-lbl">CPU</span>
+                          <span class="sysload-val" id="sysload-cpu-val">–</span>
+                          <svg class="sysload-spark" id="sysload-cpu-spark" viewBox="0 0 120 22" preserveAspectRatio="none" aria-hidden="true"></svg>
+                        </div>
+                        <div class="sysload-row" id="sysload-gpu" data-kind="gpu" title="GPU load (nvidia-smi)">
+                          <span class="sysload-lbl">GPU</span>
+                          <span class="sysload-val" id="sysload-gpu-val">–</span>
+                          <svg class="sysload-spark" id="sysload-gpu-spark" viewBox="0 0 120 22" preserveAspectRatio="none" aria-hidden="true"></svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <div class="twin-hud-tab" id="hud-tab-speed" data-hud="speed">
                     <button type="button" class="hud-tab-head" data-action="toggleHudTab" data-args='["speed"]' title="Collapse / expand speed" aria-expanded="true">
                       <i class="fa-solid fa-gauge hud-tab-icon"></i>
@@ -560,7 +591,6 @@
                       </div>
                     </div>
                   </div>
-                  <div class="twin-ov-watermark">xArm Lite 6 · Live Synchronized</div>
                 </div>
               </div>
             </div>
@@ -696,23 +726,23 @@
               <span class="t-label" style="margin: 0;">[mm]</span>
             </div>
             <div class="telem-box">
-              <span class="t-label">Roll [rad]</span>
-              <span class="t-value" id="telem-r">0.00</span>
+              <span class="t-label">Roll [°]</span>
+              <span class="t-value" id="telem-r">0.0</span>
             </div>
             <div class="telem-box">
-              <span class="t-label">Pitch [rad]</span>
-              <span class="t-value" id="telem-p">0.00</span>
+              <span class="t-label">Pitch [°]</span>
+              <span class="t-value" id="telem-p">0.0</span>
             </div>
             <div class="telem-box">
-              <span class="t-label">Yaw [rad]</span>
-              <span class="t-value" id="telem-yaw">0.00</span>
+              <span class="t-label">Yaw [°]</span>
+              <span class="t-value" id="telem-yaw">0.0</span>
             </div>
           </div>
           <div class="joints-bars">
             <div class="j-col">
               <div class="j-header">
                 <span class="j-name">J1</span>
-                <span class="j-val" id="j1-val">0.00</span>
+                <span class="j-val" id="j1-val">0.0°</span>
               </div>
               <div class="j-bar" data-joint-jog="0">
                 <div class="j-fill" id="j1-fill"></div>
@@ -721,7 +751,7 @@
             <div class="j-col">
               <div class="j-header">
                 <span class="j-name">J2</span>
-                <span class="j-val" id="j2-val">0.00</span>
+                <span class="j-val" id="j2-val">0.0°</span>
               </div>
               <div class="j-bar" data-joint-jog="1">
                 <div class="j-fill" id="j2-fill"></div>
@@ -730,7 +760,7 @@
             <div class="j-col">
               <div class="j-header">
                 <span class="j-name">J3</span>
-                <span class="j-val" id="j3-val">0.00</span>
+                <span class="j-val" id="j3-val">0.0°</span>
               </div>
               <div class="j-bar" data-joint-jog="2">
                 <div class="j-fill" id="j3-fill"></div>
@@ -739,7 +769,7 @@
             <div class="j-col">
               <div class="j-header">
                 <span class="j-name">J4</span>
-                <span class="j-val" id="j4-val">0.00</span>
+                <span class="j-val" id="j4-val">0.0°</span>
               </div>
               <div class="j-bar" data-joint-jog="3">
                 <div class="j-fill" id="j4-fill"></div>
@@ -748,7 +778,7 @@
             <div class="j-col">
               <div class="j-header">
                 <span class="j-name">J5</span>
-                <span class="j-val" id="j5-val">0.00</span>
+                <span class="j-val" id="j5-val">0.0°</span>
               </div>
               <div class="j-bar" data-joint-jog="4">
                 <div class="j-fill" id="j5-fill"></div>
@@ -757,7 +787,7 @@
             <div class="j-col">
               <div class="j-header">
                 <span class="j-name">J6</span>
-                <span class="j-val" id="j6-val">0.00</span>
+                <span class="j-val" id="j6-val">0.0°</span>
               </div>
               <div class="j-bar" data-joint-jog="5">
                 <div class="j-fill" id="j6-fill"></div>
@@ -939,8 +969,9 @@
     </div>
   </div>
 
-  <!-- Verbindungsabbruch: sperrt die komplette Bedienflaeche. Der Header
-       (Not-Aus, Status) liegt darueber und bleibt erreichbar. -->
+  <!-- Verbindungsabbruch: sperrt die komplette Bedienflaeche, auch den
+       Not-Aus im Viewport (ohne rosbridge kaeme er ohnehin nicht an). Die
+       Leertaste loest ihn weiterhin aus. -->
   <div id="ros-offline-overlay" class="ros-offline-overlay is-connecting" role="alertdialog" aria-live="assertive" aria-labelledby="ros-offline-title">
     <div class="ros-offline-card">
       <i class="fa-solid fa-plug-circle-xmark ros-offline-icon"></i>
@@ -950,7 +981,7 @@
       <!-- Nur ueber HTTPS (8443, Quest): die SSL-rosbridge 9091 braucht eine
            eigene Zertifikat-Freigabe, sonst scheitert wss:// stumm. -->
       <a class="ros-offline-cert is-hidden" id="ros-offline-cert" target="_blank" rel="noopener">
-        <i class="fa-solid fa-certificate"></i> Zertifikat für Port 9091 freigeben
+        <i class="fa-solid fa-certificate"></i> Accept the certificate for port 9091
       </a>
       <button type="button" class="btn ros-offline-reload" data-action="reloadPage">
         <i class="fa-solid fa-arrows-rotate"></i> Reload page
