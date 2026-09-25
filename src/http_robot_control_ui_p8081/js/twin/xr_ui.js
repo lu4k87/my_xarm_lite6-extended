@@ -67,7 +67,9 @@ export function shortLabel(text) {
 // Anzeige-Schalter (Opazitaet 0,5 = AUS) ist KEINE Sperre - frueher galt
 // alles unter 0,5 als gesperrt, dann liessen sich ausgeschaltete Schalter
 // (Punktwolke, Sound, Pfad-Vorschau ...) in der Brille nicht mehr einschalten.
-// opts.group: Funktionsgruppe (Farbe), opts.toggle: Schalter mit AN/AUS-Pille.
+// opts.group: Funktionsgruppe (Farbe), opts.toggle: Schalter mit AN/AUS-Pille,
+// opts.solid: aktiv voll in der Gruppenfarbe (SERVO/PLAN), opts.repeat: Wert
+// laeuft bei gehaltenem Trigger weiter (+/-).
 export function domItem(el, label, opts = {}) {
   if (!el) return null;
   const cs = getComputedStyle(el);
@@ -100,12 +102,14 @@ function withOpts(item, opts) {
     item.state = opts.state || (item.active ? 'AN' : 'AUS');
   }
   if (opts.warn) item.warn = true;
+  if (opts.solid) item.solid = true;
+  if (opts.repeat) item.repeat = true;
   if (opts.group && opts.color) item.iconColor = opts.color;   // z. B. Ausfuehren gruen
   return item;
 }
 
 // Kurze deutsche Namen fuer gespiegelte Buttons (Panel und HUD gleich).
-export const GRIPPER_LABELS = { 'btn-grip-open': 'Lösen', 'btn-grip-close': 'Saugen', 'btn-grip-off': 'Greifer aus' };
+export const GRIPPER_LABELS = { 'btn-grip-open': 'Lösen', 'btn-grip-close': 'Greifen', 'btn-grip-off': 'Greifer aus' };
 const POSE_LABELS = { 'btn-show-scene': 'Scan-Position', 'btn-scan-objects': 'OctoMap scannen' };
 export function poseLabel(btn) {
   if (POSE_LABELS[btn.id]) return POSE_LABELS[btn.id];
@@ -238,40 +242,44 @@ export function pill(ctx, xRight, y, text, color) {
 // item.group: Akzentleiste links und Icon in der Farbe der Funktionsgruppe;
 // aktiv = Rahmen + leichte Toenung in dieser Farbe. Ein ausgeschalteter
 // Schalter zeigt sein Icon grau - der Zustand steht in der Pille.
+// item.solid (SERVO/PLAN): aktiv voll in der Gruppenfarbe mit dunkler Schrift,
+// inaktiv grau - so unterscheidet man die Modi auf einen Blick.
 export function drawButton(ctx, r, item, hovered) {
   const accent = item.group ? groupColor(item.group) : (item.color || COL.cyan);
   const on = item.active && !item.disabled;
+  const solid = item.solid && on, solidOff = item.solid && !on;
   roundRect(ctx, r.x, r.y, r.w, r.h, 16);
-  ctx.fillStyle = item.danger ? '#7f1d1d' : (hovered && !item.disabled ? COL.btnHover : COL.btn);
+  ctx.fillStyle = solid ? accent : item.danger ? '#7f1d1d' : (hovered && !item.disabled ? COL.btnHover : COL.btn);
   ctx.fill();
-  if (on) {
+  if (on && !solid) {
     ctx.save();
     ctx.globalAlpha = 0.16;
     ctx.fillStyle = accent;
     ctx.fill();
     ctx.restore();
   }
-  if (item.group && !item.danger) {
+  if (item.group && !item.danger && !solid) {
     // Akzentleiste, in den abgerundeten Rahmen geschnitten
     ctx.save();
     roundRect(ctx, r.x, r.y, r.w, r.h, 16);
     ctx.clip();
     ctx.fillStyle = accent;
-    ctx.globalAlpha = item.disabled ? 0.35 : (on || !item.toggle ? 1 : 0.55);
+    ctx.globalAlpha = item.disabled || solidOff ? 0.35 : (on || !item.toggle ? 1 : 0.55);
     ctx.fillRect(r.x, r.y, 7, r.h);
     ctx.restore();
   }
   roundRect(ctx, r.x, r.y, r.w, r.h, 16);
   ctx.lineWidth = on ? 4 : 2;
-  ctx.strokeStyle = on ? accent : (hovered && !item.disabled ? COL.cyan : COL.border);
+  ctx.strokeStyle = solid && hovered ? '#ffffff' : on ? accent : (hovered && !item.disabled ? COL.cyan : COL.border);
   ctx.stroke();
-  const iconColor = item.group
-    ? (item.toggle && !item.active ? COL.mut : (item.iconColor || accent))
+  const iconColor = solid ? COL.bg : item.group
+    ? ((item.toggle || solidOff) && !item.active ? COL.mut : (item.iconColor || accent))
     : (item.color || COL.text);
+  const textColor = solid ? COL.bg : (solidOff ? COL.mut : COL.text);
   ctx.globalAlpha = item.disabled ? 0.35 : 1;
   ctx.textBaseline = 'middle';
   if (r.h < 100) {
-    drawFlatContent(ctx, r, item, iconColor);
+    drawFlatContent(ctx, r, item, iconColor, textColor);
     ctx.globalAlpha = 1;
     return;
   }
@@ -281,8 +289,8 @@ export function drawButton(ctx, r, item, hovered) {
     ctx.fillStyle = iconColor;
     ctx.fillText(item.glyph, r.x + r.w / 2, r.y + r.h * 0.333);
   }
-  ctx.font = `600 22px ${FONT}`;
-  ctx.fillStyle = COL.text;
+  ctx.font = `${solid ? 800 : 600} 22px ${FONT}`;
+  ctx.fillStyle = textColor;
   const lines = wrap2(ctx, item.label, r.w - 20);
   lines.forEach((ln, i) => ctx.fillText(ln, r.x + r.w / 2,
     r.y + (lines.length === 1 ? r.h * 0.742 : r.h * 0.667 + i * 26)));
@@ -309,7 +317,7 @@ function statePill(ctx, xRight, y, item, accent, hgt) {
   return w;
 }
 
-function drawFlatContent(ctx, r, item, iconColor) {
+function drawFlatContent(ctx, r, item, iconColor, textColor = COL.text) {
   const inset = item.group ? 18 : 16;
   const pillW = item.state ? (ctx.font = `800 20px ${FONT}`, ctx.measureText(item.state).width + 25 + 12) : 0;
   const gap = item.glyph ? 14 : 0;
@@ -328,7 +336,7 @@ function drawFlatContent(ctx, r, item, iconColor) {
     ctx.fillText(item.glyph, x0, cy);
   }
   ctx.font = `600 24px ${FONT}`;
-  ctx.fillStyle = COL.text;
+  ctx.fillStyle = textColor;
   ctx.fillText(label, x0 + gw + gap, cy);
   if (item.state) {
     const accent = item.group ? groupColor(item.group) : (item.color || COL.cyan);

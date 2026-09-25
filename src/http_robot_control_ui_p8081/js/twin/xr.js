@@ -24,6 +24,8 @@
 //     am Endeffektor, die Sicht folgt dem Roboter. Gehen/Fliegen sind dann
 //     aus; Servo und Ghost-Drag rechnen im Rig vom Beginn des Griffs.
 //   * Rechter Controller: Laser (Panel bedienen, Greifkugel waehlen).
+//     Trigger auf Kopfzeile/Griff einer HUD-Flaeche halten und ziehen =
+//     Flaeche verschieben; +/- gehalten = Wert laeuft weiter.
 //     Modus SERVO: Grip = MoveIt Servo (wie controller_reader.html),
 //     Trigger = Greifer.  Modus PLAN: Grip zieht den Ghost (TCP-Gizmo),
 //     Loslassen plant; Execute/Discard im Panel (Tab MOVEIT).
@@ -60,6 +62,7 @@ import {
 import {
   createHud, hudOnSessionStart, hudOnSessionEnd, toggleHud, isHudEnabled, hudRecenter,
   markHudDirty, setHudHover, hudPick, updateHud,
+  hudDragBegin, hudDragMove, hudDragEnd, hudDragCancel, hudResetLayout,
 } from './xr_hud.js';
 import { publishMirrorEnd, publishMirrorFrame } from './xr_mirror_send.js';
 import {
@@ -84,6 +87,9 @@ const RIG_Z_MIN = -2.5, RIG_Z_MAX = 2.0;   // Flughoehe des Rigs im ROS-Frame [m
 const STICK_DEADZONE = 0.15;
 const PANEL_W_M = 0.27;              // Panelbreite in der Brille [m]
 const PANEL_REDRAW_MS = 200;         // Zustand der DOM-Buttons nachziehen
+const DRAG_START_RAD = THREE.MathUtils.degToRad(2.5);   // so weit schwenken = Ziehen statt Klick
+const REPEAT_DELAY_MS = 450;         // +/- gehalten: erste Wiederholung
+const REPEAT_MS_START = 160, REPEAT_MS_MIN = 50;        // danach immer schneller
 
 // Canvas-Layout des Panels [px]. Alles in festen Zeilen/Spalten mit Abstand -
 // nichts ueberlappt, egal wie viele Eintraege ein Tab hat (siehe AGENTS.md).
@@ -123,6 +129,7 @@ let hoverKey = null;
 let panelDirty = true, lastPanelDraw = 0;
 let hoverObject = null;
 let triggerConsumed = false;
+let uiPress = null;             // gehaltener Trigger auf Panel/HUD, siehe updateUiPress()
 let estopGestureArmed = true;
 let servoGrip = false, servoIndex = false, lastServoSent = false, lastIdleSentAt = 0;
 let planDrag = null;            // { gizmo:{position,quaternion}, ctrlPos, ctrlQuat }
@@ -467,8 +474,8 @@ function tabContent(id) {
       title: 'STEUERMODUS', fa: 'fa-gamepad', group: 'robot', cols: 2, btnH: 84,
       meta: plan ? 'Grip zieht den Ghost · B wechselt' : 'Grip führt den Roboter · B wechselt',
       items: [
-        ownItem('mode-servo', 'fa-gamepad', 'SERVO', () => setCtrlMode('servo'), toggleOpts(!plan, 'robot')),
-        ownItem('mode-plan', 'fa-ghost', 'PLAN', () => setCtrlMode('plan'), toggleOpts(plan, 'plan')),
+        ownItem('mode-servo', 'fa-gamepad', 'SERVO', () => setCtrlMode('servo'), { active: !plan, group: 'robot', solid: true }),
+        ownItem('mode-plan', 'fa-ghost', 'PLAN', () => setCtrlMode('plan'), { active: plan, group: 'plan', solid: true }),
       ],
     });
     const poses = qa('#hud-tab-motion .hud-tab-body button').map(b => domItem(b, poseLabel(b), { group: 'robot' }));
@@ -624,12 +631,13 @@ function xrSections() {
     });
   }
   sections.push({
-    title: 'HUD & SESSION', fa: 'fa-table-cells-large', group: 'xr', cols: 2, btnH: 64, dock: 'bottom',
+    title: 'HUD & SESSION', fa: 'fa-table-cells-large', group: 'xr', cols: 3, btnH: 64, dock: 'bottom',
     meta: 'X Panel · Y HUD · A zentrieren',
     items: [
       ownItem('hud', 'fa-table-cells-large', 'HUD', toggleHudVisible, toggleOpts(isHudEnabled(), 'xr')),
       ownItem('hints', 'fa-circle-question', 'Tastenhilfe', toggleHints, toggleOpts(isControlHintsEnabled(), 'xr')),
       ownItem('recenter', 'fa-crosshairs', 'Zentrieren', recenterView, { group: 'xr' }),
+      span(ownItem('hud-layout', 'fa-rotate-left', 'HUD-Layout zurücksetzen', resetHudLayout, { group: 'xr' }), 2),
       ownItem('xr-exit', 'fa-right-from-bracket', 'Beenden', () => session && session.end(), { group: 'xr', color: COL.red }),
     ],
   });
@@ -789,7 +797,7 @@ function drawPanel() {
   hitRects = [];
   ctx.clearRect(0, 0, CW, CH);
   roundRect(ctx, 0, 0, CW, CH, 36);
-  ctx.fillStyle = 'rgba(11, 17, 32, 0.94)';
+  ctx.fillStyle = 'rgba(11, 17, 32, 0.82)';
   ctx.fill();
   ctx.strokeStyle = COL.border;
   ctx.lineWidth = 3;
@@ -1047,7 +1055,7 @@ function drawStepper(ctx, r, it, group) {
     ctx.font = `900 28px ${FA_FONT}`;
     ctx.fillStyle = group ? groupColor(group) : COL.text;
     ctx.fillText(glyphFor(fa), br.x + br.w / 2, br.y + br.h / 2);
-    hitRects.push({ ...br, key: sub.key, onClick: sub.onClick });
+    hitRects.push({ ...br, key: sub.key, onClick: sub.onClick, repeat: true });
   }
   const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
   const maxW = plus.x - (minus.x + minus.w) - 16;
@@ -1171,6 +1179,7 @@ function handleInput(dt) {
     estopGestureArmed = true;          // erst nach komplettem Loslassen wieder scharf
   }
   if (!estopGestureArmed) {
+    releaseUiPress();
     if (reticle) reticle.visible = false;
     if (L) L.prev = lp || {};
     if (R) R.prev = rp || {};
@@ -1195,6 +1204,7 @@ function handleInput(dt) {
   }
 
   if (!R || !rp) {
+    releaseUiPress();
     if (servoGrip || planDrag) stopMotion('rechter Controller ohne Daten');
     if (reticle) reticle.visible = false;
     return;
@@ -1220,9 +1230,7 @@ function handleInput(dt) {
     if (ray.panelHit) {
       triggerConsumed = true;
       pulse('right', 0.5, 30);
-      clickPanelHit(ray.panelHit);
-      panelDirty = true;
-      markHudDirty();
+      pressUi(ray.panelHit, ray.ray);
     } else if (ray.object && ray.object.name) {
       triggerConsumed = true;
       pulse('right', 0.6, 40);
@@ -1230,6 +1238,7 @@ function handleInput(dt) {
       if (!panelVisible) { panelVisible = true; if (panel) panel.visible = true; }
     }
   }
+  updateUiPress(rp.trigger, ray);
 
   const tracked = R.grip.visible;
   if (ctrlMode === 'servo') {
@@ -1238,6 +1247,74 @@ function handleInput(dt) {
     handlePlan(R, rp, tracked);
   }
   R.prev = rp;
+}
+
+// ── Trigger auf Panel/HUD: Klick, Halten, Ziehen ────────────────────────────
+// Normale Buttons (auch Not-Aus) loesen sofort beim Druecken aus. +/- (repeat)
+// ebenfalls, und solange der Trigger gehalten wird und der Laser auf dem
+// Button bleibt, laeuft der Wert immer schneller weiter. Kopfzeile, Griff und
+// freie Stellen einer HUD-Flaeche (drag): Schwenkt der Laser bei gehaltenem
+// Trigger weiter als DRAG_START_RAD, wird die Flaeche verschoben - sonst
+// klickt die Kopfzeile beim Loslassen (Tab ein-/ausklappen).
+function clickUi(hit) {
+  clickPanelHit(hit);
+  panelDirty = true;
+  markHudDirty();
+}
+
+function pressUi(hit, ray) {
+  uiPress = null;
+  if (hit.drag) {
+    uiPress = { hit, start: ray.clone(), dragging: false };
+    return;
+  }
+  clickUi(hit);
+  if (hit.repeat) uiPress = { hit, n: 0, next: performance.now() + REPEAT_DELAY_MS };
+}
+
+function updateUiPress(held, ray) {
+  const p = uiPress;
+  if (!p) return;
+  if (!held || !ray) {
+    uiPress = null;
+    if (p.dragging) dropHud();
+    else if (p.hit.drag && !held && p.hit.onClick) clickUi(p.hit);
+    return;
+  }
+  if (p.hit.drag) {
+    if (!p.dragging && p.start.direction.angleTo(ray.ray.direction) > DRAG_START_RAD) {
+      p.dragging = hudDragBegin(p.hit.surface, p.start);
+      if (p.dragging) pulse('right', 0.4, 25);
+    }
+    if (p.dragging) hudDragMove(ray.ray);
+    return;
+  }
+  // Wiederholen nur, solange der Laser auf demselben Button bleibt.
+  if (!ray.panelHit || ray.panelHit.key !== p.hit.key) { uiPress = null; return; }
+  const now = performance.now();
+  if (now < p.next) return;
+  p.n++;
+  ray.panelHit.onClick();
+  pulse('right', 0.2, 8);
+  p.next = now + Math.max(REPEAT_MS_MIN, REPEAT_MS_START * Math.pow(0.85, p.n));
+  panelDirty = true;
+  markHudDirty();
+}
+
+function dropHud() {
+  if (hudDragEnd()) flash('HUD: Fläche auf freien Platz gerückt');
+  pulse('right', 0.5, 30);
+}
+
+// Not-Aus-Geste oder Controller weg: laufendes Ziehen abbrechen.
+function releaseUiPress() {
+  if (uiPress && uiPress.dragging) hudDragCancel();
+  uiPress = null;
+}
+
+function resetHudLayout() {
+  hudResetLayout();
+  flash('HUD-Layout zurückgesetzt');
 }
 
 function walk(sx, sy, dt) {
@@ -1322,7 +1399,7 @@ function updateLaser(R) {
     reticle.visible = Boolean(panelHit || object || dist < 1.5);
     reticle.position.copy(_ray.ray.origin).addScaledVector(_ray.ray.direction, dist);
   }
-  return { panelHit, object };
+  return { panelHit, object, ray: _ray.ray };
 }
 
 function handleServo(R, rp, tracked) {
@@ -1467,7 +1544,7 @@ const hudApi = {
     flash: flashText && performance.now() < flashUntil ? flashText : '',
   }),
   setViewMode,
-  toggleCtrlMode: () => setCtrlMode(ctrlMode === 'servo' ? 'plan' : 'servo'),
+  setCtrlMode,
   togglePanel,
   exit: () => { if (session) session.end(); },
   estop: (src) => fireEstop(src),
@@ -1477,6 +1554,7 @@ const hudApi = {
 // ── Session ─────────────────────────────────────────────────────────────────
 function onSessionEnd() {
   stopMotion('XR-Session beendet');
+  uiPress = null;
   publishMirrorEnd();
   setNozzleCam(false);
   const r = h.renderer;
