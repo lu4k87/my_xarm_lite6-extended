@@ -949,7 +949,7 @@ function selectNode(nodeName, skipRequest = false) {
         if (data.filtered_subs_count > 0) {
             filterHtml = `<div class="tooltip-container" style="margin-bottom: 10px; color: var(--text-secondary); font-size: 0.85rem; background: rgba(255,165,0,0.1); border-left: 3px solid orange; padding: 5px 10px; border-radius: 4px;">
                 <i class="fa-solid fa-filter" style="color: orange; margin-right: 5px;"></i> ${data.filtered_subs_count} Topic(s) gefiltert
-                <i class="fa-solid fa-circle-info tooltip-icon" style="margin-left: 5px; cursor: help; font-size: 0.75rem;"></i>
+                <i class="fa-solid fa-circle-info tooltip-icon" style="margin-left: 5px; cursor: pointer; font-size: 0.75rem;"></i>
                 <div class="tooltip-text" style="width: 250px;">
                     <b>Warum gefiltert?</b><br>
                     Diese Topics werden vom Node nur kurzzeitig oder intern dynamisch abonniert (z.B. für Live-Monitoring). Sie sind nicht Teil der festen statischen Architektur des Nodes und wurden zur besseren Übersichtlichkeit ausgeblendet.
