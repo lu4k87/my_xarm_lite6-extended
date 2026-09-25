@@ -4,25 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>xArm Lite6 Web Control</title>
-  <!-- Seitenzoom: Im Quest-Browser wirkt die Seite bei 100 % viel zu gross -
-       sie startet dort so, wie sie sonst bei 50 % Browser-Zoom aussieht
+  <!-- Seitenzoom: Im Quest-Browser wirkt die Seite bei 100 % zu klein -
+       sie startet dort so, wie sie sonst bei 150 % Browser-Zoom aussieht
        (CSS zoom auf <html>). Der Browser-Zoom wirkt zusaetzlich obendrauf.
-       Ueberschreiben (bleibt gespeichert): ?uizoom=0.5 | 1 | auto.
+       Ueberschreiben (bleibt gespeichert): ?uizoom=1.5 | 1 | auto.
        vp-tall ersetzt @media (min-height: 800px): die Media-Query saehe die
-       unverkleinerte Fensterhoehe, echter Browser-Zoom aber die doppelte.
+       ungezoomte Fensterhoehe, echter Browser-Zoom aber die skalierte.
        vh/vw schrumpfen unter zoom mit - style.css teilt sie durch --ui-zoom. -->
   <script>
     (function () {
       var KEY = 'robot_control_ui_zoom', root = document.documentElement;
       var quest = /OculusBrowser|Quest/.test(navigator.userAgent);
-      var z = quest ? 0.5 : 1;
+      var z = quest ? 1.5 : 1;
       try {
         var p = new URLSearchParams(location.search).get('uizoom');
         if (p) localStorage.setItem(KEY, p);
         var v = localStorage.getItem(KEY);
         if (v && v !== 'auto') z = parseFloat(v);
       } catch (e) { /* localStorage gesperrt: Standard */ }
-      if (!(z >= 0.25 && z <= 2)) z = quest ? 0.5 : 1;
+      if (!(z >= 0.25 && z <= 2)) z = quest ? 1.5 : 1;
       if (z !== 1) root.style.zoom = String(z);
       root.dataset.uiZoom = String(z);             // uiZoom() in util.js
       root.style.setProperty('--ui-zoom', String(z)); // 100vh/100vw in style.css
