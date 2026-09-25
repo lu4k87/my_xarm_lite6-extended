@@ -622,6 +622,8 @@ export function updateMoveitPopupObject() {
 export function hideMoveitPopup() {
   const el = document.getElementById('moveit-popup');
   if (el) el.classList.add('mp-hidden');
+  const bar = el ? el.querySelector('.mp-bar') : null;
+  if (bar) delete bar.dataset.left;
   clearPendingMotion();
   setTargetObjectName(null);
   if (mpTicker) { clearInterval(mpTicker); mpTicker = null; }
@@ -691,6 +693,13 @@ export function renderMoveitPopup() {
     fill.style.width = '100%';
   } else {
     fill.style.width = '0%';
+  }
+  // Restsekunden des Countdowns fuer die Brille (xr_ui.js) - der Balken
+  // allein sagt dort nicht, wie viel Zeit noch bleibt.
+  if (phase === 'confirm' && st.confirm_timeout > 0) {
+    bar.dataset.left = Math.max(0, st.confirm_timeout - phaseElapsed).toFixed(0);
+  } else {
+    delete bar.dataset.left;
   }
 
   // Detail line

@@ -28,8 +28,9 @@ import * as THREE from 'three';
 import * as twin from './digital_twin.js';
 import { estopLatched, ros } from '../ros.js';
 import {
-  COL, FONT, FA_FONT, domItem, ownItem, glyphFor, shortLabel, q, qa, txt, stepSpeed,
-  roundRect, fitText, drawButton, pill,
+  COL, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, shortLabel, q, qa, txt, stepSpeed,
+  roundRect, fitText, drawButton, pill, drawInfoLine,
+  moveitActionsVisible, moveitTargetLine, moveitProgressLines,
 } from './xr_ui.js';
 
 const DEG = THREE.MathUtils.degToRad;
@@ -41,17 +42,17 @@ const PITCH_DEADZONE = DEG(32);
 const PITCH_MIN = DEG(-60), PITCH_MAX = DEG(40);
 const POS_DEADZONE = 0.25;            // m
 const FOLLOW_RATE = 5;                // 1/s, exponentielles Nachziehen
-const RENDER_ORDER = 800;             // vor Handgelenk-Panel (900), Controllern und Laser (950)
+const RENDER_ORDER = XR_ORDER.hud;    // unter Handgelenk-Panel, Controllern und Laser
 
 // Slots: Mitte in Grad (az + rechts, el + oben), Groesse in Metern. anchor:
 // an welcher Kante der Inhalt klebt, wenn er kuerzer als die Flaeche ist -
 // die untere Reihe waechst wie am Desktop nach oben.
 // Winkel-Ausdehnung (halbe Breite/Hoehe bei 1,2 m): Toolbar ±25,0°/±1,8°,
-// MoveIt ±13,1°/±5,2°, Seiten ±7,1°/±8,1..9,5°, Not-Aus ±9,5°/±1,8°,
+// MoveIt ±13,1°/±5,9°, Seiten ±7,1°/±8,1..9,5°, Not-Aus ±9,5°/±1,8°,
 // untere Reihe ±8,1°/±4,3°. Dazwischen bleiben ueberall mind. 3° frei.
 const SLOTS = [
   { id: 'toolbar',   az: 0,   el: 27,  w: 1.12, h: 0.075, anchor: 'top', pad: 14 },
-  { id: 'moveit',    az: 0,   el: 16.5, w: 0.56, h: 0.22,  anchor: 'top' },
+  { id: 'moveit',    az: 0,   el: 16,  w: 0.56, h: 0.25,  anchor: 'top' },
   { id: 'motion',    az: -34, el: 8,   w: 0.30, h: 0.40,  anchor: 'top' },
   { id: 'scene',     az: 34,  el: 12,  w: 0.30, h: 0.34,  anchor: 'top' },
   { id: 'estop',     az: 0,   el: -18, w: 0.40, h: 0.075, anchor: 'top', pad: 14 },
@@ -319,12 +320,11 @@ const MODELS = {
     const info = [];
     const obj = txt('#mp-object-name');
     if (obj) info.push({ label: 'OBJEKT', value: obj });
-    info.push({ label: 'ZIEL', value: `X ${txt('#gizmo-hud-x')}  Y ${txt('#gizmo-hud-y')}  Z ${txt('#gizmo-hud-z')} mm   ${txt('#gizmo-hud-delta')}` });
+    info.push(moveitTargetLine());
+    info.push(...moveitProgressLines());
     const detail = txt('#mp-detail');
     if (detail) info.push({ label: 'INFO', value: detail });
-    // Wie am Desktop (style.css .mp-actions): nur in der Phase "confirm" und
-    // nicht, solange Auto-Move ohne Rueckfrage laeuft.
-    const actions = mp.classList.contains('mp-phase-confirm') && !(mp.dataset.automove === '1' && mp.dataset.awaiting !== '1');
+    const actions = moveitActionsVisible();
     return {
       title: 'MOVEIT', fa: 'fa-route',
       badge: `${txt('#mp-phase')} · ${txt('#mp-timer')}`, badgeColor: COL.cyan,
@@ -535,33 +535,7 @@ function drawCard(s, m, hov) {
   if (m.info.length || rows) y += (m.title || m.banner ? G : 0);
 
   for (const line of m.info) {
-    const cy = y + INFO_H / 2;
-    const vx = x + LABEL_COL_W;
-    ctx.textAlign = 'left';
-    ctx.font = `700 20px ${FONT}`;
-    ctx.fillStyle = COL.dim;
-    ctx.fillText(line.label, x + 8, cy);
-    if (line.bar) {
-      const valueW = 100;
-      const bw = s.cw - P - 8 - valueW - G - vx;
-      roundRect(ctx, vx, cy - 8, bw, 16, 8);
-      ctx.fillStyle = '#1e293b';
-      ctx.fill();
-      const fw = bw * Math.max(0, Math.min(100, line.bar.pct)) / 100;
-      if (fw > 1) {
-        roundRect(ctx, vx, cy - 8, Math.max(16, fw), 16, 8);
-        ctx.fillStyle = line.bar.color || COL.green;
-        ctx.fill();
-      }
-      ctx.textAlign = 'right';
-      ctx.font = `600 24px ${FONT}`;
-      ctx.fillStyle = COL.text;
-      ctx.fillText(fitText(ctx, line.value || '–', valueW), s.cw - P - 8, cy);
-    } else {
-      ctx.font = `500 24px ${FONT}`;
-      ctx.fillStyle = line.color || COL.text;
-      ctx.fillText(fitText(ctx, line.value || '–', s.cw - P - 8 - vx), vx, cy);
-    }
+    drawInfoLine(ctx, line, x, y, w, INFO_H, LABEL_COL_W);
     y += INFO_H;
   }
   if (m.info.length && rows) y += G;

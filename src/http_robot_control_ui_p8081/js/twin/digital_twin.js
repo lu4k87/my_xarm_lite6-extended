@@ -61,6 +61,7 @@ let externalRender = false;         // VR-Spiegel rendert selbst (setTwinExterna
 let tunerElementsSnapshot = null;   // letzte Szenenobjekt-Posen (fuer den VR-Spiegel)
 
 // ── Interactive 3D TCP Gizmo State ──
+const GIZMO_RENDER_ORDER = 1500;    // ueber Markierungen (bis 999), unter XR-HUD/Panel
 let transformControls = null;
 let gizmoTarget = null;
 let ghostTCPGroup = null;
@@ -976,6 +977,12 @@ function initTCPGizmo() {
     transformControls.attach(gizmoTarget);
     // TransformControls_r128 ist selbst das Object3D (getHelper() = this).
     scene.add(transformControls.getHelper());
+    // TransformControls zeichnet mit renderOrder = Infinity. In der Brille
+    // laege das Gizmo damit auch ueber HUD und Handgelenk-Panel (XR_ORDER in
+    // xr_ui.js). Endlich, aber weiter ueber allen Markierungen der Szene.
+    transformControls.getHelper().traverse((o) => {
+      if (o.renderOrder === Infinity) o.renderOrder = GIZMO_RENDER_ORDER;
+    });
 
     // Dashed connecting line
     const lineGeo = new THREE.BufferGeometry().setFromPoints([

@@ -48,8 +48,9 @@ import { emergencyStop, resetEmergencyStop } from '../safety.js';
 import { approachObjectFromAbove, disabledCollisionObjects, setObjectCollision } from '../grasp.js';
 import { playObjectSelectSound } from '../audio.js';
 import {
-  COL, FONT, FA_FONT, domItem, ownItem, glyphFor, shortLabel, q, qa, txt, stepSpeed,
-  roundRect, fitText, drawButton, pill,
+  COL, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, shortLabel, q, qa, txt, stepSpeed,
+  roundRect, fitText, drawButton, pill, drawInfoLine,
+  moveitActionsVisible, moveitTargetLine, moveitProgressLines,
 } from './xr_ui.js';
 import {
   createHud, hudOnSessionStart, hudOnSessionEnd, toggleHud, isHudEnabled, hudRecenter,
@@ -85,7 +86,7 @@ const CW = 1024, CH = 1152, PAD = 24, GAP = 16;
 const HEADER_H = 72, TAB_H = 96, ESTOP_H = 140;
 const CONTENT_Y = PAD + HEADER_H + GAP + TAB_H + GAP;
 const CONTENT_BOTTOM = CH - PAD - ESTOP_H - GAP;
-const GRID_COLS = 4, BTN_H = 132, INFO_LINE_H = 40;
+const GRID_COLS = 4, BTN_H = 132, INFO_LINE_H = 40, INFO_LABEL_W = 180;
 // Sektionen (VR-Tab): Beschriftung mit Trennlinie, darunter ein Raster.
 const SEC_HEAD_H = 34, SEC_HEAD_GAP = 10, SEC_GAP = 18, SEC_BTN_H = 84, NOTE_LINE_H = 30;
 // Tab TASTEN: Spaltenkopf je Hand, Modus-Karten, Schalter unten.
@@ -211,7 +212,7 @@ function makeControllerMesh(color) {
   // davor bleiben: transparent (Opazitaet 1) und nach dem HUD gezeichnet.
   g.traverse((o) => {
     if (o.material) o.material.transparent = true;
-    o.renderOrder = 950;
+    o.renderOrder = XR_ORDER.controller;
   });
   return g;
 }
@@ -251,13 +252,13 @@ function attachLaser(ctrl) {
     const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]);
     laser = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.8 }));
     laser.scale.z = 1.5;
-    laser.renderOrder = 950;           // ueber dem HUD (800)
+    laser.renderOrder = XR_ORDER.controller;   // ueber HUD und Panel
   }
   if (!reticle) {
     reticle = new THREE.Mesh(
       new THREE.SphereGeometry(0.006, 12, 12),
       new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false }));
-    reticle.renderOrder = 1000;
+    reticle.renderOrder = XR_ORDER.reticle;
     reticle.visible = false;
     h.scene.add(reticle);
   }
@@ -375,7 +376,7 @@ function attachPanel(grip) {
     // Ueber dem linken Controller, zum Gesicht geneigt.
     panel.position.set(0.0, 0.16, -0.05);
     panel.rotation.x = -0.75;
-    panel.renderOrder = 900;
+    panel.renderOrder = XR_ORDER.panel;
   }
   grip.add(panel);
   panel.visible = panelVisible;
@@ -418,12 +419,15 @@ function tabContent(id) {
     info.push({ label: 'PHASE', value: hidden ? '– (Popup zu)' : txt('#mp-phase') });
     const obj = txt('#mp-object-name');
     if (obj) info.push({ label: 'OBJEKT', value: obj });
-    info.push({ label: 'ZIEL', value: `X ${txt('#gizmo-hud-x')}  Y ${txt('#gizmo-hud-y')}  Z ${txt('#gizmo-hud-z')} mm   ${txt('#gizmo-hud-delta')}` });
+    info.push(moveitTargetLine());
+    if (!hidden) info.push(...moveitProgressLines());
     const detail = txt('#mp-detail');
     if (detail && !hidden) info.push({ label: 'INFO', value: detail });
     items = [
-      domItem(q('#moveit-popup .mp-btn-exec'), 'Execute'),
-      domItem(q('#moveit-popup .mp-btn-discard'), 'Discard'),
+      actions && domItem(q('#moveit-popup .mp-btn-exec'), 'Execute'),
+      actions && domItem(q('#moveit-popup .mp-btn-discard'), 'Discard'),
+    // Execute/Discard nur, wenn sie auch am Desktop sichtbar sind.
+    const actions = moveitActionsVisible();
       domItem(q('#mp-btn-path-preview'), 'Ghost-Vorschau'),
       domItem(q('#chk-gizmo-auto-drop'), 'Auto-Move'),
       domItem(q('#btn-twin-gizmo-mode'), twin.getTCPGizmoMode() === 'rotate' ? 'Gizmo: Rotation' : 'Gizmo: Translation'),
@@ -770,13 +774,7 @@ function drawFlatContent(ctx, info, items) {
   let y = CONTENT_Y;
   ctx.textBaseline = 'middle';
   for (const line of info) {
-    ctx.textAlign = 'left';
-    ctx.font = `700 20px ${FONT}`;
-    ctx.fillStyle = COL.dim;
-    ctx.fillText(line.label, PAD + 8, y + INFO_LINE_H / 2);
-    ctx.font = `500 24px ${FONT}`;
-    ctx.fillStyle = COL.text;
-    ctx.fillText(fitText(ctx, line.value || '–', CW - 2 * PAD - 180), PAD + 180, y + INFO_LINE_H / 2);
+    drawInfoLine(ctx, line, PAD, y, CW - 2 * PAD, INFO_LINE_H, INFO_LABEL_W);
     y += INFO_LINE_H;
   }
   if (info.length) y += GAP;

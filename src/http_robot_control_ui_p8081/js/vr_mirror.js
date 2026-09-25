@@ -18,6 +18,7 @@ import { TOPICS } from './config.js';
 import { ros } from './ros.js';
 import { lsGet, lsSet } from './util.js';
 import { setTwinPointCloud } from './pointcloud.js';
+import { XR_ORDER } from './twin/xr_ui.js';
 
 const STALE_MS = 1500;           // so lange ohne Pose = Brille weg
 const SMOOTH_TAU = 0.03;         // s, glaettet Netz-Jitter der Posen
@@ -71,7 +72,7 @@ function makeControllerMesh(color) {
   g.add(ring);
   g.traverse((o) => {
     if (o.material) o.material.transparent = true;
-    o.renderOrder = 950;
+    o.renderOrder = XR_ORDER.controller;
   });
   return g;
 }
@@ -90,12 +91,12 @@ function buildObjects() {
   laser = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]),
     new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.8 }));
-  laser.renderOrder = 950;
+  laser.renderOrder = XR_ORDER.controller;
   ray.add(laser);
   reticle = new THREE.Mesh(
     new THREE.SphereGeometry(0.006, 12, 12),
     new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false }));
-  reticle.renderOrder = 1000;
+  reticle.renderOrder = XR_ORDER.reticle;
   reticle.visible = false;
   root.add(reticle);
   // Die Brille schickt die Welt-Pose des Bodens (inkl. Drehung in die Ebene).

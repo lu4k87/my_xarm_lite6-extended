@@ -24,7 +24,7 @@
 // Laserpunkt hinter einer Karte, blendet sie aus - sie verdeckt nie das Ziel.
 
 import * as THREE from 'three';
-import { COL, FONT, FA_FONT, glyphFor, roundRect, fitText, pill } from './xr_ui.js';
+import { COL, FONT, FA_FONT, XR_ORDER, glyphFor, roundRect, fitText, pill } from './xr_ui.js';
 import { lsGet, lsSet } from '../util.js';
 
 const LS_KEY = 'robot_control_xr_hints_v1';
@@ -36,7 +36,7 @@ const P = 20, G = 8, HEAD_H = 52;
 export const ROW_H = 64, ROW_GAP = 8;
 const BADGE_W = 100;
 const INNER_M = 0.07;                 // Abstand Controller-Mitte -> Kartenrand
-const RENDER_ORDER = 960;             // ueber HUD (800), Panel (900), Controllern (950)
+const RENDER_ORDER = XR_ORDER.hints;  // ueber HUD, Panel und Controllern
 // Blick auf den Controller: einblenden unter SHOW_DEG, ausblenden ueber HIDE_DEG
 const SHOW_DEG = 20, HIDE_DEG = 28;
 const MAX_DIST = 1.0;                 // m, weiter weg keine Karte

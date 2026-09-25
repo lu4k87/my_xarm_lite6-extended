@@ -14,6 +14,12 @@ export const COL = {
 export const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 export const FA_FONT = '"Font Awesome 6 Free"';
 
+// Zeichenreihenfolge in der Brille (auch im VR-Spiegel). Die Szene zeichnet
+// Markierungen ohne Tiefentest - Bahnlinie der Pfad-Vorschau, TCP-Achsen,
+// Labels (bis 999) und das TCP-Gizmo (1500, digital_twin.js). Alles hier
+// liegt darueber, sonst schienen sie durch HUD und Panel hindurch.
+export const XR_ORDER = { hud: 2000, panel: 2100, controller: 2150, hints: 2160, reticle: 2200 };
+
 const glyphCache = new Map();
 export function glyphFor(faName) {
   if (glyphCache.has(faName)) return glyphCache.get(faName);
@@ -73,6 +79,64 @@ export function stepSpeed(delta) {
   if (String(v) === s.value) return;
   s.value = String(v);
   s.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+// ── MoveIt-Popup (#moveit-popup) fuer HUD und Handgelenk-Panel ─────────────
+
+// Execute/Discard wie am Desktop (style.css .mp-actions): nur bei offenem
+// Popup in der Phase "confirm" und nicht, solange Auto-Move ohne Rueckfrage
+// laeuft. Sonst wuerde Execute das Gizmo-Ziel ohne Rueckfrage anfahren
+// (confirmMoveToPreview in motion.js).
+export function moveitActionsVisible() {
+  const mp = q('#moveit-popup');
+  return !!mp && !mp.classList.contains('mp-hidden') && mp.classList.contains('mp-phase-confirm')
+    && !(mp.dataset.automove === '1' && mp.dataset.awaiting !== '1');
+}
+
+// Gizmo-Ziel mit Abstand; in der Warnfarbe des Desktops, wenn das Ziel in
+// der Tischebene oder im unerreichbaren Bereich liegt.
+export function moveitTargetLine() {
+  const coords = q('#gizmo-hud-coords');
+  const alert = !!coords && coords.classList.contains('coords-alert');
+  return {
+    label: 'ZIEL',
+    value: `X ${txt('#gizmo-hud-x')}  Y ${txt('#gizmo-hud-y')}  Z ${txt('#gizmo-hud-z')} mm   ${txt('#gizmo-hud-delta')}`,
+    color: alert ? getComputedStyle(coords).color : undefined,
+  };
+}
+
+const MP_STEP_STATES = ['done', 'active', 'waiting', 'failed'];
+const MP_RUN_PERIOD_MS = 1100;          // wie @keyframes mp-indeterminate
+
+// Schritte IK / PLAN / EXECUTE und Balken, so wie renderMoveitPopup
+// (motion.js) sie gerade gesetzt hat. Beim Bestaetigen zeigt der Balken den
+// Countdown bis zum automatischen Verwerfen, sonst den Fortschritt.
+export function moveitProgressLines() {
+  const fill = q('#mp-bar-fill');
+  const bar = fill ? fill.parentElement : null;
+  if (!bar) return [];
+  const accent = getComputedStyle(fill).backgroundColor || COL.cyan;
+  const steps = qa('#moveit-popup .mp-step').map((el) => {
+    const part = (sel) => { const n = el.querySelector(sel); return n ? n.textContent.trim() : ''; };
+    return {
+      label: part('.mp-step-label'),
+      time: part('.mp-step-time'),
+      state: MP_STEP_STATES.find(s => el.classList.contains(`mp-step-${s}`)) || '',
+    };
+  });
+  const running = bar.classList.contains('mp-bar-indeterminate');
+  const left = bar.dataset.left;
+  const pct = parseFloat(fill.style.width) || 0;
+  const lines = [];
+  if (steps.length) lines.push({ label: 'SCHRITTE', steps, accent });
+  lines.push({
+    label: left !== undefined ? 'VERWIRFT' : 'VERLAUF',
+    value: left !== undefined ? `in ${left} s` : (running ? 'läuft' : `${Math.round(pct)} %`),
+    // run: Position des laufenden Streifens (0..1), in 5-%-Schritten - so
+    // zeichnet der HUD nur neu, wenn sich der Streifen sichtbar bewegt.
+    bar: { pct, color: accent, run: running ? Math.round((performance.now() / MP_RUN_PERIOD_MS) % 1 * 20) / 20 : null },
+  });
+  return lines;
 }
 
 export function roundRect(ctx, x, y, w, hgt, r) {
@@ -173,4 +237,99 @@ function drawFlatContent(ctx, r, item) {
   ctx.font = `600 24px ${FONT}`;
   ctx.fillStyle = COL.text;
   ctx.fillText(label, x0 + gw + gap, cy);
+}
+
+// ── Infozeilen (HUD-Karten und Handgelenk-Panel) ───────────────────────────
+// Label links in einer Spalte der Breite labelW, rechts davon Text, ein
+// Balken (line.bar) oder die MoveIt-Schritte (line.steps). Alles bleibt
+// innerhalb von x..x+w und der Zeilenhoehe h.
+const BAR_VALUE_W = 100, BAR_GAP = 12, STEP_GAP = 12;
+
+export function drawInfoLine(ctx, line, x, y, w, h, labelW) {
+  const cy = y + h / 2;
+  const vx = x + labelW, right = x + w - 8;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.font = `700 20px ${FONT}`;
+  ctx.fillStyle = COL.dim;
+  ctx.fillText(fitText(ctx, line.label, labelW - 16), x + 8, cy);
+  if (line.steps) {
+    drawSteps(ctx, line.steps, vx, y + 4, right - vx, h - 8, line.accent || COL.cyan);
+  } else if (line.bar) {
+    drawBar(ctx, line, vx, cy, right);
+  } else {
+    ctx.font = `500 24px ${FONT}`;
+    ctx.fillStyle = line.color || COL.text;
+    ctx.fillText(fitText(ctx, line.value || '–', right - vx), vx, cy);
+  }
+}
+
+function drawBar(ctx, line, vx, cy, right) {
+  const b = line.bar;
+  const bw = right - BAR_VALUE_W - BAR_GAP - vx;
+  roundRect(ctx, vx, cy - 8, bw, 16, 8);
+  ctx.fillStyle = '#1e293b';
+  ctx.fill();
+  let x0 = vx;
+  let fw = bw * Math.max(0, Math.min(100, b.pct)) / 100;
+  if (b.run !== null && b.run !== undefined) {
+    // Dauer unbekannt (IK, Planung): laufender Streifen wie .mp-bar-indeterminate
+    const seg = bw * 0.35;
+    const s0 = vx - seg + b.run * (bw + seg);
+    x0 = Math.max(vx, s0);
+    fw = Math.min(vx + bw, s0 + seg) - x0;
+  }
+  if (fw > 1) {
+    const fwDraw = Math.min(Math.max(16, fw), vx + bw - x0);
+    roundRect(ctx, x0, cy - 8, fwDraw, 16, Math.min(8, fwDraw / 2));
+    ctx.fillStyle = b.color || COL.green;
+    ctx.fill();
+  }
+  ctx.textAlign = 'right';
+  ctx.font = `600 24px ${FONT}`;
+  ctx.fillStyle = COL.text;
+  ctx.fillText(fitText(ctx, line.value || '–', BAR_VALUE_W), right, cy);
+}
+
+// Drei Chips nebeneinander wie .mp-step am Desktop: Punkt (erledigt gruen,
+// aktiv/wartend Akzent, gescheitert rot), Name, Zeit rechtsbuendig.
+function drawSteps(ctx, steps, x, y, w, h, accent) {
+  const cw = (w - (steps.length - 1) * STEP_GAP) / steps.length;
+  const cy = y + h / 2;
+  steps.forEach((st, i) => {
+    const cx = x + i * (cw + STEP_GAP);
+    const hot = st.state === 'active' || st.state === 'waiting';
+    roundRect(ctx, cx, y, cw, h, 10);
+    if (hot) {
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = accent;
+    } else {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+    }
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.setLineDash(st.state === 'waiting' ? [8, 6] : []);
+    ctx.strokeStyle = st.state === 'failed' ? 'rgba(239, 68, 68, 0.6)' : (hot ? accent : 'rgba(255, 255, 255, 0.14)');
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(cx + 20, cy, 7, 0, Math.PI * 2);
+    ctx.fillStyle = st.state === 'done' ? COL.green : st.state === 'failed' ? COL.red : (hot ? accent : 'rgba(255, 255, 255, 0.18)');
+    ctx.fill();
+
+    const lx = cx + 36, rx = cx + cw - 12;
+    ctx.textAlign = 'left';
+    ctx.font = `700 20px ${FONT}`;
+    ctx.fillStyle = st.state === 'failed' ? '#fecaca' : (hot ? COL.text : '#cbd5e1');
+    const label = fitText(ctx, st.label, Math.max(0, rx - lx));
+    ctx.fillText(label, lx, cy);
+    const room = rx - (lx + ctx.measureText(label).width + 10);
+    ctx.textAlign = 'right';
+    ctx.font = `500 20px ${FONT}`;
+    ctx.fillStyle = COL.mut;
+    const time = room > 0 ? fitText(ctx, st.time, room) : '';
+    if (time && time !== '…') ctx.fillText(time, rx, cy);
+  });
 }
