@@ -66,6 +66,8 @@ Decoding parameters read from `whisper_server/config/whisper.yaml`: `model_name`
 
 **CPU profile:** `ros2 launch whisper_bringup bringup.launch.py use_gpu:=false` additionally loads `whisper_server/config/whisper_cpu.yaml` (`base`, 12 threads, `audio_ctx: 320`), because `small` is far too slow on the CPU.
 
+**Launch arguments (`whisper_bringup/launch/bringup.launch.py`):** `use_gpu` (default `true`), `active` (default `true`, start with the whisper node active), `device_index` (PyAudio device, `-1` = default), `model_name` and `language` (empty = value from `whisper.yaml` or the CPU profile; applied after the CPU profile), e.g. `ros2 launch whisper_bringup bringup.launch.py model_name:=base language:=de`.
+
 ## Available Actions
 
 Action server under topic `inference` of type [Inference.action](whisper_idl/action/Inference.action).
