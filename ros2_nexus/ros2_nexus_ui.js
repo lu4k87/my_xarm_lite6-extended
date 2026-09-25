@@ -2214,6 +2214,7 @@
 
     // Popup-Theme (Dark / Light) - localStorage-Schluessel
     const POPUP_THEME_KEY = 'ros2_nexus_popup_theme';
+    const POPUP_HEADER_COLLAPSED_KEY = 'ros2_nexus_popup_header_collapsed';
 
     // ─── FAKE / REAL Umschalter ─────────────────────────────────────────────────
     // Beide Modi sind eigene Sequenzen (eigene Nodes, Launch-Struktur und
@@ -3721,11 +3722,18 @@
                          <button type="button" class="seq-filter-opt" data-filter="on" role="radio" aria-checked="false">Active <b id="seq-filter-n-on">0</b></button>
                          <button type="button" class="seq-filter-opt" data-filter="off" role="radio" aria-checked="false">Inactive <b id="seq-filter-n-off">0</b></button>
                       </div>
-                      <span class="seq-toolbar-hint"><i class="fa-solid fa-grip-vertical"></i>Drag &amp; drop cards to reorder</span>
+                      <div class="seq-toolbar-end">
+                         <span class="seq-toolbar-hint"><i class="fa-solid fa-grip-vertical"></i>Drag &amp; drop cards to reorder</span>
+                         <button type="button" class="seq-kill-btn" id="seq-kill-btn" title="Stop all ROS 2 processes, terminals and the ROS 2 daemon, then reload Nexus"><i class="fa-solid fa-skull"></i><span>Kill Daemon</span></button>
+                      </div>
                    </div>`;
 
+       // Header ein-/ausgeklappt (Netzwerk-Leiste), bleibt im Browser gespeichert
+       let headerCollapsed = false;
+       try { headerCollapsed = localStorage.getItem(POPUP_HEADER_COLLAPSED_KEY) === '1'; } catch (e) {}
+
        const modalHtml = `
-          <div id="launch-modal" data-theme="${popupTheme}">
+          <div id="launch-modal" data-theme="${popupTheme}"${headerCollapsed ? ' class="is-header-collapsed"' : ''}>
              <div id="launch-modal-window">
                 <div id="launch-modal-header">
                    <div class="modal-header-top">
@@ -3797,7 +3805,12 @@
                          </div>
                       </div>
                    </div>
-                   ${toolbarHtml}
+                   <div class="modal-header-bottom">
+                      ${toolbarHtml}
+                      <button type="button" class="modal-header-collapse-btn" id="modal-header-collapse-btn" aria-expanded="${!headerCollapsed}" title="${headerCollapsed ? 'Expand header' : 'Collapse header'}">
+                         <i class="fa-solid fa-chevron-up"></i>
+                      </button>
+                   </div>
                 </div>
                 
                 <div id="launch-modal-body"></div>
@@ -4009,10 +4022,24 @@
            });
        }
 
+       // Header ein-/ausklappen
+       const headerCollapseBtn = document.getElementById('modal-header-collapse-btn');
+       if (headerCollapseBtn && modalRoot) {
+           headerCollapseBtn.onclick = (e) => {
+               e.stopPropagation();
+               const collapsed = modalRoot.classList.toggle('is-header-collapsed');
+               headerCollapseBtn.setAttribute('aria-expanded', !collapsed);
+               headerCollapseBtn.title = collapsed ? 'Expand header' : 'Collapse header';
+               try { localStorage.setItem(POPUP_HEADER_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch (err) {}
+           };
+       }
+
        // Suche + Filter: blendet <li> nur aus (hidden), Reihenfolge und
        // Drag & Drop bleiben unberuehrt. Beim Abhaken einer Karte wird nicht
        // sofort neu gefiltert, damit sie nicht unter dem Mauszeiger verschwindet.
        const seqSearchInput = document.getElementById('seq-search-input');
+       const seqKillBtn = document.getElementById('seq-kill-btn');
+       if (seqKillBtn) seqKillBtn.addEventListener('click', () => { if (window.killAllROS2) window.killAllROS2(); });
        const seqFilter = document.getElementById('seq-filter');
        let seqFilterMode = 'all';
        const applySeqFilter = () => {

@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WS_DIR="$(dirname "$SCRIPT_DIR")"
 PORT=5000
 URL="http://127.0.0.1:${PORT}"
+PROFILE_DIR="$HOME/.ros2_nexus_profile"
 
 # ANSI Colors
 C_CYAN="\033[1;36m"
@@ -108,11 +109,17 @@ fi
 
 echo ""
 # ── Browser öffnen ────────────────────────────────────────────
-echo -e "${T_ICON}${I_WEB}${T_TEXT}${C_BOLD}Öffne Browser:${C_RESET} $URL"
-if command -v google-chrome &> /dev/null; then
-    google-chrome --user-data-dir="$HOME/.ros2_nexus_profile" --class="ros2-nexus" --app="$URL" --start-maximized 2>/dev/null &
+echo -e "${T_ICON}${I_WEB}${T_TEXT}${C_BOLD}Öffne Nexus Webapp:${C_RESET} $URL"
+POPUP_WINDOW="$SCRIPT_DIR/ros2_nexus_popup_window.py"
+USE_POPUP_WINDOW=false
+# Rahmenloses Fenster (nur das Popup) über WebKitGTK, sonst Chrome im App-Modus
+if python3 -c "import gi; gi.require_version('WebKit2','4.0'); from gi.repository import WebKit2" 2>/dev/null; then
+    USE_POPUP_WINDOW=true
+    python3 "$POPUP_WINDOW" "$URL/" 2>/dev/null &
+elif command -v google-chrome &> /dev/null; then
+    google-chrome --user-data-dir="$PROFILE_DIR" --class="ros2-nexus" --app="$URL" --start-maximized 2>/dev/null &
 elif command -v chromium-browser &> /dev/null; then
-    chromium-browser --user-data-dir="$HOME/.ros2_nexus_profile" --class="ros2-nexus" --app="$URL" --start-maximized 2>/dev/null &
+    chromium-browser --user-data-dir="$PROFILE_DIR" --class="ros2-nexus" --app="$URL" --start-maximized 2>/dev/null &
 else
     xdg-open "$URL" 2>/dev/null &
 fi
@@ -123,7 +130,7 @@ echo -e "${T_ICON}${I_OK}${T_TEXT}${C_GREEN}${C_BOLD}ROS 2 Nexus Web läuft!${C_
 echo -e "${T_TEXT}${C_BOLD}PID:${T_VAL}${BACKEND_PID:-bereits laufend}${C_RESET}"
 echo ""
 echo -e "${T_TEXT}Dieses Terminal offen lassen."
-echo -e "${T_TEXT}Zum Beenden: Strg+C  oder  'Kill all ROS2 Processes' im Browser"
+echo -e "${T_TEXT}Zum Beenden: Nexus-Fenster schließen, Strg+C  oder  'Kill all ROS2 Processes' im Browser"
 echo -e "${C_GREEN}========================================================${C_RESET}"
 echo ""
 
@@ -134,11 +141,49 @@ cleanup() {
     [ -n "$BACKEND_PID" ] && kill "$BACKEND_PID" 2>/dev/null
     echo -e "${T_ICON}${I_OK}${T_TEXT}${C_GREEN}Beendet.${C_RESET}"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM HUP
 
-if [ -n "$BACKEND_PID" ]; then
-    wait "$BACKEND_PID"
-else
-    echo "(Nexus Web Backend lief bereits. Strg+C zum Schließen dieses Fensters)"
-    wait
+# Nur der Browser-Hauptprozess (ohne --type=renderer/gpu/...) zählt als "Fenster offen".
+# Über das Profil statt über die PID, damit auch ein an eine laufende Instanz
+# übergebener Start (zweiter Klick aufs Icon) erkannt wird.
+nexus_browser_alive() {
+    if $USE_POPUP_WINDOW; then
+        pgrep -f -- "$POPUP_WINDOW" > /dev/null
+        return
+    fi
+    local procs
+    procs=$(pgrep -af -- "--user-data-dir=$PROFILE_DIR") || return 1
+    grep -v -- "--type=" <<<"$procs" | grep -qE '^[0-9]+ [^ ]*chrom'
+}
+backend_alive() {
+    [ -z "$BACKEND_PID" ] || kill -0 "$BACKEND_PID" 2>/dev/null
+}
+
+# Startfehler sichtbar lassen, statt das Terminal sofort zu schließen
+if [ -n "$BACKEND_PID" ] && [ "$READY" -ne 1 ]; then
+    read -rp "Enter zum Schließen..."
+    exit 1
 fi
+
+if $USE_POPUP_WINDOW || command -v google-chrome &> /dev/null || command -v chromium-browser &> /dev/null; then
+    # Warten bis das Fenster da ist, dann solange laufen wie Browser UND Backend leben:
+    # Fenster zu → Backend + Terminal beenden (wie umgekehrt beim Schließen des Terminals).
+    for _ in {1..20}; do nexus_browser_alive && break; sleep 0.5; done
+    while nexus_browser_alive && backend_alive; do sleep 1; done
+elif [ -n "$BACKEND_PID" ]; then
+    echo "(Kein Chrome gefunden – Strg+C beendet das Backend)"
+    wait "$BACKEND_PID"
+fi
+
+if [ -n "$BACKEND_PID" ] && ! backend_alive; then
+    wait "$BACKEND_PID"; RC=$?
+    BACKEND_PID=""
+    # Absturz (kein Signal-Exit wie bei 'Kill all') → Traceback lesbar lassen
+    if [ "$RC" -ne 0 ] && [ "$RC" -lt 128 ]; then
+        echo -e "${T_ICON}${I_FAIL}${T_TEXT}${C_RED}Nexus Web Backend abgestürzt (Exit $RC)${C_RESET}"
+        read -rp "Enter zum Schließen..."
+    fi
+fi
+exit 0

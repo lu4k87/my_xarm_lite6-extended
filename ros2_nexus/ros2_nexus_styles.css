@@ -468,7 +468,7 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
-      background: rgba(13, 18, 30, 0.7);
+      background: linear-gradient(180deg, rgba(30, 42, 66, 0.98) 0%, rgba(24, 34, 55, 0.98) 100%);
       flex-shrink: 0;
     }
 
@@ -478,6 +478,53 @@
       flex-wrap: wrap;
       gap: 10px 16px;
       min-width: 0;
+    }
+
+    /* Letzte Header-Zeile: Toolbar links, Ein-/Ausklapp-Button unten rechts */
+    .modal-header-bottom {
+      display: flex;
+      align-items: center;
+      gap: 10px 14px;
+      min-width: 0;
+    }
+
+    .modal-header-bottom > .seq-toolbar {
+      flex: 1 1 auto;
+    }
+
+    .modal-header-collapse-btn {
+      flex-shrink: 0;
+      margin-left: auto;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      background: rgba(56, 189, 248, 0.08);
+      color: #7dd3fc;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+
+    .modal-header-collapse-btn:hover {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.55);
+      color: #e0f2fe;
+    }
+
+    .modal-header-collapse-btn i {
+      transition: transform .25s ease;
+    }
+
+    #launch-modal.is-header-collapsed .modal-header-collapse-btn i {
+      transform: rotate(180deg);
+    }
+
+    #launch-modal.is-header-collapsed .dds-bar {
+      display: none;
     }
 
     #launch-modal-header::after {
@@ -614,22 +661,18 @@
       margin-left: auto;
     }
 
-    /* Netzwerk-Leiste: eine zusammenhaengende Leiste mit gleich aufgebauten
-       Zellen (Label oben, Wert unten), normal in einer Zeile. Die Trennlinien
-       sind der 1px-gap auf dem Rahmen-farbigen Hintergrund; erst bei schmalem
-       Popup bricht sie um, die Zellen wachsen dann, damit jede Zeile voll
-       bleibt. Erklaerungen stehen im Tooltip (title).
-       Zwei Gruppen (Rechner: User/LAN/Traffic | ROS: Scope/RMW/Domain/DDS),
-       getrennt durch eine breitere, hellere Linie (3px-gap der Leiste). */
+    /* Netzwerk-Leiste: jede Zelle ist eine eigene Kachel (Label oben, Wert
+       unten) mit Rahmen und leicht abgerundeten Ecken, getrennt per gap statt
+       Trennlinien. Normal in einer Zeile; erst bei schmalem Popup bricht sie
+       um, die Kacheln wachsen dann, damit jede Zeile voll bleibt.
+       Erklaerungen stehen im Tooltip (title).
+       Zwei Gruppen (Rechner: User/LAN/Traffic | ROS: DDS/Scope/RMW/Domain),
+       zwischen den Gruppen etwas mehr Abstand als innerhalb. */
     .dds-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 3px;
+      gap: 12px;
       min-width: 0;
-      background: #2b3445;
-      border: 1px solid #161b25;
-      border-radius: 12px;
-      overflow: hidden;
     }
 
     .dds-group {
@@ -638,8 +681,7 @@
       max-width: 100%;
       display: flex;
       flex-wrap: wrap;
-      gap: 1px;
-      background: #161b25;
+      gap: 8px;
     }
 
     .dds-cell {
@@ -652,7 +694,10 @@
       gap: 6px;
       padding: 9px 14px;
       background: #070a12;
+      border: 1px solid #1e2533;
+      border-radius: 8px;
       cursor: default;
+      transition: background 0.15s, border-color 0.15s;
     }
 
     /* Zellen-Titel: linksbuendig mit smoother horizontaler Trennlinie */
@@ -730,7 +775,7 @@
     .dds-cell[data-state="ok"] .dds-val { color: #6ee7b7; }
     .dds-cell[data-state="ok"] .dds-key i { color: #10b981; }
     .dds-cell[data-state="info"] .dds-key i { color: #38bdf8; }
-    .dds-cell[data-state="warn"] { background: #1a1408; }
+    .dds-cell[data-state="warn"] { background: #1a1408; border-color: rgba(245, 158, 11, 0.35); }
     .dds-cell[data-state="warn"] .dds-val { color: #fcd34d; }
     .dds-cell[data-state="warn"] .dds-key i { color: #f59e0b; }
 
@@ -742,6 +787,7 @@
 
     .dds-cell-toggle:hover {
       background: #0c111c;
+      border-color: #2b3445;
     }
 
     /* Schiebeschalter statt Checkbox, damit die Zelle als Toggle erkennbar ist */
@@ -918,6 +964,7 @@
     #launch-modal-body {
       flex: 1;
       padding: 18px 24px;
+      background: linear-gradient(180deg, rgba(17, 25, 41, 0.98) 0%, rgba(13, 20, 34, 0.98) 100%);
       overflow-y: auto;
       overflow-x: hidden;
       font-family: var(--font-sans);
@@ -1930,7 +1977,7 @@
       grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       align-items: center;
       gap: 10px 16px;
-      background: rgba(11, 16, 28, 0.75);
+      background: rgba(7, 11, 20, 0.98);
       flex-shrink: 0;
     }
 
@@ -2096,7 +2143,7 @@
       font-size: 12px !important;
       font-weight: 800 !important;
       padding: 8px 26px !important;
-      border-radius: 50px !important;
+      border-radius: 8px !important;
       border: none !important;
       cursor: pointer !important;
       box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35), 0 0 12px rgba(0, 240, 255, 0.25) !important;
@@ -3946,8 +3993,42 @@
   background: rgba(56, 189, 248, 0.12);
 }
 
-.seq-toolbar-hint {
+.seq-toolbar-end {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.seq-kill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+}
+
+.seq-kill-btn i { font-size: 11px; }
+.seq-kill-btn:hover { background: rgba(239, 68, 68, 0.22); border-color: rgba(239, 68, 68, 0.6); color: #fee2e2; }
+.seq-kill-btn:focus-visible { outline: 2px solid rgba(239, 68, 68, 0.7); outline-offset: 2px; }
+
+#launch-modal[data-theme="light"] .seq-kill-btn { color: #b91c1c; background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.35); }
+#launch-modal[data-theme="light"] .modal-header-collapse-btn { color: var(--pl-accent); background: rgba(2, 132, 199, 0.08); border-color: rgba(2, 132, 199, 0.3); }
+#launch-modal[data-theme="light"] .modal-header-collapse-btn:hover { background: rgba(2, 132, 199, 0.16); border-color: rgba(2, 132, 199, 0.5); color: #075985; }
+#launch-modal[data-theme="light"] .seq-kill-btn:hover { background: rgba(220, 38, 38, 0.15); color: #991b1b; }
+
+.seq-toolbar-hint {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -4051,9 +4132,16 @@
   box-shadow: 0 30px 80px -24px rgba(20, 30, 50, 0.45), 0 0 0 1px rgba(20, 30, 50, 0.04);
 }
 
-#launch-modal[data-theme="light"] #launch-modal-header,
+#launch-modal[data-theme="light"] #launch-modal-header {
+  background: #e2e8f0;
+}
+
+#launch-modal[data-theme="light"] #launch-modal-body {
+  background: #f1f5f9;
+}
+
 #launch-modal[data-theme="light"] #launch-modal-footer {
-  background: var(--pl-surface);
+  background: #e8edf3;
 }
 
 #launch-modal[data-theme="light"] #launch-modal-header::after,
@@ -4132,15 +4220,8 @@
 }
 
 /* Netzwerk-Leiste */
-#launch-modal[data-theme="light"] .dds-bar {
-  background: var(--pl-faint);
-  border-color: var(--pl-line);
-}
-
-#launch-modal[data-theme="light"] .dds-group { background: var(--pl-line); }
-
-#launch-modal[data-theme="light"] .dds-cell { background: var(--pl-window); }
-#launch-modal[data-theme="light"] .dds-cell-toggle:hover { background: var(--pl-raised); }
+#launch-modal[data-theme="light"] .dds-cell { background: var(--pl-window); border-color: var(--pl-line); }
+#launch-modal[data-theme="light"] .dds-cell-toggle:hover { background: var(--pl-raised); border-color: var(--pl-line-strong); }
 #launch-modal[data-theme="light"] .dds-key { color: var(--pl-text); }
 #launch-modal[data-theme="light"] .dds-key::after {
   background: linear-gradient(90deg, rgba(15, 23, 42, 0.18) 0%, rgba(15, 23, 42, 0.08) 60%, transparent 100%);
@@ -4156,7 +4237,7 @@
 #launch-modal[data-theme="light"] .dds-cell[data-state="ok"] .dds-key i,
 #launch-modal[data-theme="light"] .dds-cell-toggle:has(input:checked) .dds-key i { color: #059669; }
 #launch-modal[data-theme="light"] .dds-cell[data-state="info"] .dds-key i { color: var(--pl-accent); }
-#launch-modal[data-theme="light"] .dds-cell[data-state="warn"] { background: #fef6e4; }
+#launch-modal[data-theme="light"] .dds-cell[data-state="warn"] { background: #fef6e4; border-color: rgba(217, 119, 6, 0.35); }
 #launch-modal[data-theme="light"] .dds-cell[data-state="warn"] .dds-val { color: #a16207; }
 #launch-modal[data-theme="light"] .dds-spark-area { fill: rgba(2, 132, 199, 0.12); }
 #launch-modal[data-theme="light"] .dds-spark-line { stroke: var(--pl-accent); }

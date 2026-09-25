@@ -288,6 +288,11 @@ def _open_terminal(script: str, title: str):
 def index():
     return send_from_directory(BASE_DIR, "ros2_nexus_web.html")
 
+@app.route("/old_index.html")
+def old_index():
+    # Alte Startseite (Header, Tabs, Karten-Raster)
+    return send_from_directory(BASE_DIR, "old_index.html")
+
 @app.route("/ros2_nexus_styles.css")
 def styles():
     return send_from_directory(BASE_DIR, "ros2_nexus_styles.css")
@@ -923,7 +928,8 @@ def api_kill_all_ros2():
     try:
         # Robustly kill all ROS2-related commands and terminal wrappers using dedicated script
         script_path = os.path.join(BASE_DIR, "kill_ros2.sh")
-        os.system(f"bash {script_path}")
+        subprocess.run(["bash", script_path], timeout=20)
+        active_processes.clear()
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
