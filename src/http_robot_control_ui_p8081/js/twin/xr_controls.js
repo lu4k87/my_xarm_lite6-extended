@@ -87,8 +87,9 @@ export function legendRows(hand, st) {
   let trig;
   if (st.aim === 'ui') trig = { group: 'xr', label: 'Klicken', sub: 'Laser zeigt auf Panel/HUD' };
   else if (st.aim === 'object') trig = { group: 'grip', label: 'Objekt wählen', sub: st.aimName || 'rote Greifkugel' };
+  else if (st.aim === 'gizmo') trig = { group: 'plan', label: 'Gizmo ziehen', sub: 'halten + schwenken, loslassen: planen' };
   else if (servo) trig = { group: 'grip', label: 'Greifer auf/zu', sub: st.locked ? 'gesperrt: Not-Aus aktiv' : 'Laser auf UI: klicken', dim: st.locked };
-  else trig = { group: 'xr', label: 'Klicken / Objekt wählen', sub: 'Laser auf UI oder Greifkugel' };
+  else trig = { group: 'xr', label: 'Klicken / Gizmo / Objekt', sub: 'Laser auf UI, Gizmo-Pfeil oder Greifkugel' };
   const grip = servo
     ? { group: 'robot', label: 'Roboter führen', sub: 'halten: TCP folgt der Hand' }
     : { group: 'plan', label: 'Ghost ziehen', sub: 'loslassen: Bahn wird geplant' };

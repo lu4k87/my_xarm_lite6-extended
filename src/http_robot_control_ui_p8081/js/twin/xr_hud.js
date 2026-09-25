@@ -40,8 +40,8 @@ import {
   COL, groupColor, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, q, qa, txt, stepSpeed,
   GRIPPER_LABELS, poseLabel,
   roundRect, fitText, drawButton, pill, drawInfoLine, rgba, vGrad, glass, GLASS, estopFill,
-  moveitActionsVisible, moveitTargetLine, moveitProgressLines,
 } from './xr_ui.js';
+import { drawMoveitPopup, moveitPopupModel } from './xr_moveit.js';
 
 const DEG = THREE.MathUtils.degToRad;
 const HUD_DIST = 1.2;                 // m, Radius der Schale um den Kopf
@@ -527,33 +527,14 @@ const MODELS = {
     };
   },
 
+  // Das MoveIt-Popup sieht aus wie am Desktop (xr_moveit.js).
   moveit(st) {
-    const mp = q('#moveit-popup');
-    const open = !!mp && !mp.classList.contains('mp-hidden');
     const warnEl = q('#twin-warning-banner');
     const warn = warnEl && !warnEl.classList.contains('banner-hidden') ? txt('#twin-warning-text') : '';
     const banner = warn ? { text: `⚠ ${warn}`, color: COL.red } : (st.flash ? { text: st.flash, color: COL.orange } : null);
-    if (!open && !banner) return null;
-    if (!open) return { banner, info: [], items: [] };
-    const info = [];
-    const obj = txt('#mp-object-name');
-    if (obj) info.push({ label: 'OBJEKT', value: obj });
-    info.push(moveitTargetLine());
-    info.push(...moveitProgressLines());
-    const detail = txt('#mp-detail');
-    if (detail) info.push({ label: 'INFO', value: detail });
-    const actions = moveitActionsVisible();
-    return {
-      title: 'MOVEIT', fa: 'fa-route', group: 'plan',
-      badge: `${txt('#mp-phase')} · ${txt('#mp-timer')}`, badgeColor: groupColor('plan'),
-      close: domItem(q('#moveit-popup .mp-close'), 'Schliessen'),
-      banner, info,
-      items: actions ? [
-        domItem(q('#moveit-popup .mp-btn-exec'), 'Ausführen', { group: 'plan', color: COL.green }),
-        domItem(q('#moveit-popup .mp-btn-discard'), 'Verwerfen', { group: 'plan', color: COL.red }),
-      ].filter(Boolean) : [],
-      cols: 2, btnH: FLAT_BTN_H,
-    };
+    const popup = moveitPopupModel(banner);
+    if (popup) return popup;
+    return banner ? { banner, info: [], items: [] } : null;
   },
 
   motion() {
@@ -630,6 +611,7 @@ function drawSurface(s, m, hov) {
   if (m.toolbar) drawToolbar(s, m, hov);
   else if (m.estop) drawEstop(s, m, hov);
   else if (m.modeBadge) drawModeBadge(s, m);
+  else if (m.moveitPopup) drawMoveitPopup(s, m, hov, (r, key, onClick, extra) => addHit(s, r, key, onClick, extra));
   else drawCard(s, m, hov);
   // Beim Verschieben: Rahmen cyan, rot solange die Flaeche eine andere beruehrt.
   if (s.dragState && s.drawn) {

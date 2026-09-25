@@ -72,6 +72,7 @@ let distanceLineEnabled = true;
 let isGizmoActive = true;
 let gizmoMode = 'translate'; // 'translate' | 'rotate'
 let isDraggingGizmo = false;
+let suppressGizmoDragEnd = false;   // Laser-Drag abgebrochen: Loslassen plant nicht
 
 // Grenzwerte kommen aus robot_limits.js, damit UI und Twin nicht
 // auseinanderlaufen. Der Fallback greift nur, falls die Datei fehlt.
@@ -1021,12 +1022,16 @@ function initTCPGizmo() {
     // Dragging events
     transformControls.addEventListener('dragging-changed', function (event) {
       isDraggingGizmo = Boolean(event.value);
-      if (controls) controls.enabled = !isDraggingGizmo;
+      // In der Brille bleiben die OrbitControls aus (xr.js) - auch nach einem
+      // Laser-Drag am Gizmo.
+      if (controls && !renderer.xr.isPresenting) controls.enabled = !isDraggingGizmo;
 
       if (isDraggingGizmo) {
         hasUserTargetOffset = true;
         const mp = document.getElementById('moveit-popup');
         if (mp) mp.classList.remove('mp-hidden');
+      } else if (suppressGizmoDragEnd) {
+        suppressGizmoDragEnd = false;
       } else {
         handleGizmoDragEnd();
       }
@@ -3420,6 +3425,50 @@ export function endGizmoExternalDrag() {
   if (!isDraggingGizmo) return;
   isDraggingGizmo = false;
   handleGizmoDragEnd();
+  requestRender();
+}
+
+// ── Gizmo mit dem Controller-Laser (xr.js) ─────────────────────────────────
+// Der rechte Laser bedient die Pfeile, Ebenen und Ringe genau wie die Maus am
+// Desktop: zeigen = Achse leuchtet, Trigger halten = entlang der Achse ziehen,
+// loslassen = dasselbe "dragging-changed" wie mit der Maus (Popup, Planung,
+// Auto-Move, Ghost). pointer.ray ersetzt dabei die Bildschirmkoordinaten
+// (TransformControls_r128.js).
+const _gizmoWorld = new THREE.Vector3();
+
+// Zeigt der Strahl auf einen Griff? Gibt { axis, distance } oder null.
+// ray = null nimmt die Hervorhebung zurueck.
+export function gizmoLaserHover(ray) {
+  if (!transformControls || !gizmoTarget) return null;
+  if (transformControls.dragging) return null;
+  if (!ray || !isGizmoActive) {
+    if (transformControls.axis !== null) transformControls.axis = null;
+    return null;
+  }
+  transformControls.getHelper().updateMatrixWorld(true);
+  transformControls.pointerHover({ x: 0, y: 0, button: -1, ray });
+  if (transformControls.axis === null) return null;
+  gizmoTarget.getWorldPosition(_gizmoWorld);
+  return { axis: transformControls.axis, distance: ray.origin.distanceTo(_gizmoWorld) };
+}
+
+export function gizmoLaserDown(ray) {
+  if (!gizmoLaserHover(ray)) return false;
+  transformControls.pointerDown({ x: 0, y: 0, button: 0, ray });
+  return !!transformControls.dragging;
+}
+
+export function gizmoLaserMove(ray) {
+  if (!transformControls || !transformControls.dragging || !ray) return;
+  transformControls.pointerMove({ x: 0, y: 0, button: -1, ray });
+}
+
+// cancel: ohne Planung loslassen (Session-Ende, Tracking weg, Not-Aus-Geste)
+export function gizmoLaserUp(cancel = false) {
+  if (!transformControls || !transformControls.dragging) return;
+  suppressGizmoDragEnd = !!cancel;
+  transformControls.pointerUp({ button: 0 });
+  suppressGizmoDragEnd = false;
   requestRender();
 }
 

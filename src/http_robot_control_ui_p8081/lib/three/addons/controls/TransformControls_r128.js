@@ -5,10 +5,30 @@
 // Ebenen-Griffe, Ringe). Der Code nutzt nur APIs, die es in r186 noch gibt.
 // Unterschied zum Original: getHelper() - die r186-Schnittstelle, die der
 // Twin verwendet. Hier ist das Objekt selbst der Helper (Object3D).
+// Zweiter Unterschied: pointerHover/Down/Move nehmen statt Bildschirm-
+// koordinaten auch einen fertigen Strahl (pointer.ray, VR-Controller).
 import * as THREE from 'three';
 
 
 	const _raycaster = new THREE.Raycaster();
+
+	// pointer.ray: fertiger Strahl (Controller-Laser in der Brille, xr.js)
+	// statt Bildschirmkoordinaten - so greift der Laser das Gizmo wie die Maus.
+	function setPointerRay( pointer, camera ) {
+
+		if ( pointer.ray ) {
+
+			_raycaster.ray.copy( pointer.ray );
+			_raycaster.near = 0;
+			_raycaster.far = Infinity;
+
+		} else {
+
+			_raycaster.setFromCamera( pointer, camera );
+
+		}
+
+	}
 
 	const _tempVector = new THREE.Vector3();
 
@@ -199,7 +219,7 @@ import * as THREE from 'three';
 
 			if ( this.object === undefined || this.dragging === true ) return;
 
-			_raycaster.setFromCamera( pointer, this.camera );
+			setPointerRay( pointer, this.camera );
 
 			const intersect = intersectObjectWithRay( this._gizmo.picker[ this.mode ], _raycaster );
 
@@ -221,7 +241,7 @@ import * as THREE from 'three';
 
 			if ( this.axis !== null ) {
 
-				_raycaster.setFromCamera( pointer, this.camera );
+				setPointerRay( pointer, this.camera );
 
 				const planeIntersect = intersectObjectWithRay( this._plane, _raycaster, true );
 
@@ -289,7 +309,7 @@ import * as THREE from 'three';
 
 			if ( object === undefined || axis === null || this.dragging === false || pointer.button !== - 1 ) return;
 
-			_raycaster.setFromCamera( pointer, this.camera );
+			setPointerRay( pointer, this.camera );
 
 			const planeIntersect = intersectObjectWithRay( this._plane, _raycaster, true );
 			if ( ! planeIntersect ) return;

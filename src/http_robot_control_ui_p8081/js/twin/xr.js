@@ -27,8 +27,11 @@
 //     Trigger auf Kopfzeile/Griff einer HUD-Flaeche halten und ziehen =
 //     Flaeche verschieben; +/- gehalten = Wert laeuft weiter.
 //     Modus SERVO: Grip = MoveIt Servo (wie controller_reader.html),
-//     Trigger = Greifer.  Modus PLAN: Grip zieht den Ghost (TCP-Gizmo),
-//     Loslassen plant; Execute/Discard im Panel (Tab MOVEIT).
+//     Trigger = Greifer.  Modus PLAN: Laser auf Pfeil/Ebene/Ring des
+//     TCP-Gizmos + Trigger halten zieht es wie die Maus am Desktop; Grip
+//     zieht den Ghost frei mit der Hand. Loslassen plant wie am Desktop;
+//     Execute/Discard im MoveIt-Popup des HUD (sieht aus wie am Desktop,
+//     xr_moveit.js) oder im Panel.
 //   * Tasten: X (links) Handgelenk-Panel ein/aus, Y (links) HUD ein/aus,
 //     A (rechts) HUD vor den Blick holen (Nozzle-Kamera: auch den Blick
 //     zentrieren), B (rechts) SERVO <-> PLAN,
@@ -135,6 +138,8 @@ let uiPress = null;             // gehaltener Trigger auf Panel/HUD, siehe updat
 let estopGestureArmed = true;
 let servoGrip = false, servoIndex = false, lastServoSent = false, lastIdleSentAt = 0;
 let planDrag = null;            // { gizmo:{position,quaternion}, ctrlPos, ctrlQuat }
+let gizmoLaser = null;          // Trigger zieht einen Gizmo-Griff: { dist } (Laserlaenge)
+let gizmoHoverAxis = null;
 let lastFrameT = 0;
 let vrTopic = null;
 let flashText = '', flashUntil = 0;
@@ -352,6 +357,14 @@ function stopMotion(reason) {
     twin.cancelGizmoExternalDrag();
     planDrag = null;
   }
+  cancelGizmoLaser();
+}
+
+// Laser-Drag am Gizmo ohne Planung beenden (Modus, Not-Aus, Tracking weg).
+function cancelGizmoLaser() {
+  if (!gizmoLaser) return;
+  gizmoLaser = null;
+  twin.gizmoLaserUp(true);
 }
 
 function fireEstop(source) {
@@ -376,7 +389,7 @@ function setCtrlMode(mode) {
       );
     } catch (_) {}
   }
-  flash(mode === 'plan' ? 'Modus PLAN: Grip zieht den Ghost' : 'Modus SERVO: Grip steuert den Roboter');
+  flash(mode === 'plan' ? 'Modus PLAN: Laser + Trigger auf das Gizmo, Grip zieht den Ghost' : 'Modus SERVO: Grip steuert den Roboter');
   announceCtrlMode(mode);         // Ansage hier und in jeder Desktop-UI
   pulse('right', 0.6, 60);
   panelDirty = true;
@@ -686,9 +699,9 @@ function hintState() {
     view: isNozzleCamActive() ? 'nozzle' : xrKind,
     hud: isHudEnabled(),
     panel: panelVisible,
-    aim: hoverKey ? 'ui' : (hoverObject ? 'object' : ''),
+    aim: hoverKey ? 'ui' : (gizmoLaser || gizmoHoverAxis ? 'gizmo' : (hoverObject ? 'object' : '')),
     aimName: hoverObject && hoverObject.name ? hoverObject.name.replace(/_/g, ' ') : '',
-    holding: servoGrip || Boolean(planDrag),
+    holding: servoGrip || Boolean(planDrag) || Boolean(gizmoLaser),
     locked: Boolean(estopLatched),
     pads,
   };
@@ -744,7 +757,7 @@ const MODE_INFO = {
   },
   plan: {
     fa: 'fa-ghost', color: GROUP.plan.color, title: 'PLAN',
-    lines: [['GRIP', 'Ghost (TCP-Ziel) ziehen'], ['LOSLASSEN', 'Bahn wird geplant'], ['AUSFÜHREN', 'Tab PLANEN oder HUD']],
+    lines: [['TRIGGER', 'Gizmo-Pfeil/Ring ziehen'], ['GRIP', 'Ghost frei ziehen'], ['LOSLASSEN', 'plant · ▶ im MoveIt-Popup']],
   },
 };
 
@@ -1159,6 +1172,7 @@ function handleInput(dt) {
   }
   if (!estopGestureArmed) {
     releaseUiPress();
+    cancelGizmoLaser();
     if (reticle) reticle.visible = false;
     if (L) L.prev = lp || {};
     if (R) R.prev = rp || {};
@@ -1177,14 +1191,14 @@ function handleInput(dt) {
       toggleHudVisible();
       pulse('left', 0.3, 20);
     }
-    if (xrKind === 'vr' && !isNozzleCamActive() && !servoGrip && !planDrag
+    if (xrKind === 'vr' && !isNozzleCamActive() && !servoGrip && !planDrag && !gizmoLaser
         && (Math.abs(lp.sx) > STICK_DEADZONE || Math.abs(lp.sy) > STICK_DEADZONE)) walk(lp.sx, lp.sy, dt);
     L.prev = lp;
   }
 
   if (!R || !rp) {
     releaseUiPress();
-    if (servoGrip || planDrag) stopMotion('rechter Controller ohne Daten');
+    if (servoGrip || planDrag || gizmoLaser) stopMotion('rechter Controller ohne Daten');
     if (reticle) reticle.visible = false;
     return;
   }
@@ -1195,13 +1209,13 @@ function handleInput(dt) {
 
   // Rechter Stick ohne Grip = fliegen (nur VR). Mit Grip fuehrt die Hand den
   // Roboter bzw. den Ghost - ein bewegtes Rig wuerde ihn dann mitziehen.
-  if (xrKind === 'vr' && !isNozzleCamActive() && !rp.grip && !planDrag) {
+  if (xrKind === 'vr' && !isNozzleCamActive() && !rp.grip && !planDrag && !gizmoLaser) {
     const sx = Math.abs(rp.sx) > STICK_DEADZONE ? rp.sx : 0;
     const sy = Math.abs(rp.sy) > STICK_DEADZONE ? rp.sy : 0;
     if (sx || sy) orbit(sx, sy, dt);
   }
 
-  // Laser: Panel hat Vorrang, sonst Greifkugeln
+  // Laser: Panel hat Vorrang, dann das TCP-Gizmo (PLAN), dann Greifkugeln
   const ray = updateLaser(R);
   const trigEdge = rp.trigger && !R.prev.trigger;
   if (!rp.trigger) triggerConsumed = false;
@@ -1210,6 +1224,13 @@ function handleInput(dt) {
       triggerConsumed = true;
       pulse('right', 0.5, 30);
       pressUi(ray.panelHit, ray.ray);
+    } else if (ray.gizmo && twin.gizmoLaserDown(ray.ray)) {
+      // Wie die Maus: Achse/Ebene/Ring greifen, beim Loslassen plant der
+      // Twin genau wie am Desktop (dragging-changed -> handleGizmoDragEnd).
+      triggerConsumed = true;
+      gizmoLaser = { dist: ray.gizmo.distance };
+      pulse('right', 0.5, 30);
+      panelDirty = true;
     } else if (ray.object && ray.object.name) {
       triggerConsumed = true;
       pulse('right', 0.6, 40);
@@ -1218,6 +1239,18 @@ function handleInput(dt) {
     }
   }
   updateUiPress(rp.trigger, ray);
+  if (gizmoLaser) {
+    if (rp.trigger && ray && R.grip.visible) {
+      twin.gizmoLaserMove(ray.ray);
+    } else {
+      // Loslassen plant; Laser/Tracking weg bricht ohne Planung ab.
+      const cancel = !ray || !R.grip.visible;
+      gizmoLaser = null;
+      twin.gizmoLaserUp(cancel);
+      pulse('right', 0.5, 40);
+      panelDirty = true;
+    }
+  }
 
   const tracked = R.grip.visible;
   if (ctrlMode === 'servo') {
@@ -1361,7 +1394,23 @@ function updateLaser(R) {
     setHudHover(pk);
     if (pk) pulse('right', 0.15, 10);
   }
-  if (!onUi) {
+  // TCP-Gizmo (nur PLAN - im SERVO gehoert der Trigger dem Greifer und der
+  // Laser streift den TCP staendig). Waehrend des Ziehens bleibt die Achse.
+  let gizmo = null;
+  if (gizmoLaser) {
+    dist = gizmoLaser.dist;
+  } else if (!onUi && ctrlMode === 'plan' && !planDrag) {
+    gizmo = twin.gizmoLaserHover(_ray.ray);
+    if (gizmo) dist = gizmo.distance;
+  } else {
+    twin.gizmoLaserHover(null);
+  }
+  const ga = gizmoLaser ? gizmoHoverAxis : (gizmo ? gizmo.axis : null);
+  if (ga !== gizmoHoverAxis) {
+    gizmoHoverAxis = ga;
+    if (ga) pulse('right', 0.2, 12);
+  }
+  if (!onUi && !gizmo && !gizmoLaser) {
     object = twin.pickDetectedObjectByRay(_ray.ray);
     if (object) dist = object.distance;
   }
@@ -1373,12 +1422,12 @@ function updateLaser(R) {
   hoverObject = object;
 
   laser.scale.z = dist;
-  laser.material.color.set(panelHit || object ? 0xf59e0b : 0x38bdf8);
+  laser.material.color.set(panelHit || object || gizmo || gizmoLaser ? 0xf59e0b : 0x38bdf8);
   if (reticle) {
-    reticle.visible = Boolean(panelHit || object || dist < 1.5);
+    reticle.visible = Boolean(panelHit || object || gizmo || gizmoLaser || dist < 1.5);
     reticle.position.copy(_ray.ray.origin).addScaledVector(_ray.ray.direction, dist);
   }
-  return { panelHit, object, ray: _ray.ray };
+  return { panelHit, object, gizmo, ray: _ray.ray };
 }
 
 function handleServo(R, rp, tracked) {
@@ -1412,7 +1461,7 @@ function handlePlan(R, rp, tracked) {
     return;
   }
   const { pos, quat } = controlPose(R.grip, Boolean(planDrag));
-  if (rp.grip && !R.prev.grip && !planDrag) {
+  if (rp.grip && !R.prev.grip && !planDrag && !gizmoLaser) {
     const start = twin.beginGizmoExternalDrag();
     if (!start) { flash('TCP-Gizmo ist aus (Tab PLANEN)'); return; }
     planDrag = { gizmo: start, ctrlPos: pos.clone(), ctrlQuat: quat.clone() };
