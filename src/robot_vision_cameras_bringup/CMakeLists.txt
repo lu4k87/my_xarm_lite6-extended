@@ -37,6 +37,7 @@ install(PROGRAMS
   scripts/yolo_grasp_executor.py 
   scripts/yolo_planned_grasp_executor.py 
   scripts/grasp_action_bridge.py 
+  scripts/virtual_object_detections.py 
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -49,7 +49,13 @@ class YoloMoveitCollision(Node):
         self.ignored_objects = {}
         self.object_last_seen = {}
         self.published_vis_ids = set()
-        self.last_publish_time = self.get_clock().now()
+        # Auf /zed/bboxes_3d publizieren mehrere Quellen (YOLO und
+        # virtual_object_detections), jede Nachricht enthaelt nur die eigenen
+        # Objekte. Aufraeumen und Nachsenden laufen deshalb pro Objekt nach
+        # Zeit und nicht danach, was in der letzten Nachricht fehlte.
+        self.vis_last_seen = {}        # Marker-ID -> Zeit der letzten Wand
+        self.object_last_publish = {}  # Objektname -> letztes CollisionObject
+        self.create_timer(0.5, lambda: self.expire_stale(self.get_clock().now().nanoseconds / 1e9))
         
         # TF Buffer and Listener
         self.tf_buffer = Buffer()
@@ -195,6 +201,45 @@ class YoloMoveitCollision(Node):
             self.published_vis_ids.clear()
         self.get_logger().info('Alle YOLO Collision-Objekte aus MoveIt entfernt.')
 
+    def remove_object(self, obj_name):
+        co = CollisionObject()
+        co.id = obj_name
+        co.operation = CollisionObject.REMOVE
+        self.pub_collision_object.publish(co)
+        self.known_objects.discard(obj_name)
+        self.object_last_seen.pop(obj_name, None)
+        self.object_last_publish.pop(obj_name, None)
+
+    def delete_vis_markers(self, ids):
+        if not ids:
+            return
+        del_array = MarkerArray()
+        for old_id in ids:
+            dm = Marker()
+            dm.header.frame_id = 'world'
+            dm.header.stamp = self.get_clock().now().to_msg()
+            dm.ns = 'yolo_collision_vis'
+            dm.id = old_id
+            dm.action = Marker.DELETE
+            del_array.markers.append(dm)
+            self.published_vis_ids.discard(old_id)
+            self.vis_last_seen.pop(old_id, None)
+        self.pub_collision_toggle.publish(del_array)
+        self.pub_collision_markers.publish(del_array)
+
+    def expire_stale(self, current_time):
+        """Objekte nach 2 s ohne Meldung aus MoveIt nehmen, Waende nach 1 s.
+
+        Laeuft auch per Timer: verstummt eine Quelle ganz (Node beendet,
+        virtuelle Objekte ausgeschaltet), kaeme sonst nie wieder ein Callback,
+        der ihre Objekte entfernt.
+        """
+        for obj_name in list(self.known_objects):
+            if current_time - self.object_last_seen.get(obj_name, 0) > 2.0:
+                self.remove_object(obj_name)
+        self.delete_vis_markers([i for i in self.published_vis_ids
+                                 if current_time - self.vis_last_seen.get(i, 0) > 1.0])
+
     def wall_height(self, scale_z):
         # Mindestens 1 cm Wand, auch bei flachen Objekten.
         return max(0.01, min(scale_z, scale_z - self.top_clearance))
@@ -261,34 +306,7 @@ class YoloMoveitCollision(Node):
                 objects_dict[obj_id]['points'] = marker.points
 
         if not objects_dict:
-            # Check for expired objects
-            objects_to_remove = set()
-            for obj_name in list(self.known_objects):
-                last_seen = self.object_last_seen.get(obj_name, 0)
-                if (current_time - last_seen) > 2.0:
-                    objects_to_remove.add(obj_name)
-
-            for obj_name in objects_to_remove:
-                co = CollisionObject()
-                co.id = obj_name
-                co.operation = CollisionObject.REMOVE
-                self.pub_collision_object.publish(co)
-                self.known_objects.discard(obj_name)
-                self.object_last_seen.pop(obj_name, None)
-
-            if len(self.published_vis_ids) > 0 and len(self.known_objects) == 0:
-                del_array = MarkerArray()
-                for old_id in self.published_vis_ids:
-                    dm = Marker()
-                    dm.header.frame_id = 'world'
-                    dm.header.stamp = self.get_clock().now().to_msg()
-                    dm.ns = 'yolo_collision_vis'
-                    dm.id = old_id
-                    dm.action = Marker.DELETE
-                    del_array.markers.append(dm)
-                self.pub_collision_toggle.publish(del_array)
-                self.pub_collision_markers.publish(del_array)
-                self.published_vis_ids.clear()
+            self.expire_stale(current_time)
             return
 
         vis_markers = MarkerArray()
@@ -296,8 +314,6 @@ class YoloMoveitCollision(Node):
         current_vis_ids = set()
 
         now = self.get_clock().now()
-        time_since_last_publish = (now - self.last_publish_time).nanoseconds / 1e9
-        should_publish_collision = (time_since_last_publish >= 0.4)
 
         for obj_id, data in objects_dict.items():
             if not data['points']:
@@ -389,8 +405,10 @@ class YoloMoveitCollision(Node):
                 co.primitive_poses.append(p)
 
             if self.collision_enabled and (
-                    (obj_name not in self.known_objects) or should_publish_collision):
+                    obj_name not in self.known_objects or
+                    current_time - self.object_last_publish.get(obj_name, 0) >= 0.4):
                 self.pub_collision_object.publish(co)
+                self.object_last_publish[obj_name] = current_time
 
             # --- 2. Waende fuer RViz und die Robot Control UI ---
             # Nur bei aktiver Kollision: rot transparent, exakt die Geometrie,
@@ -421,40 +439,18 @@ class YoloMoveitCollision(Node):
             vis_markers.markers.append(vm)
             current_vis_ids.add(obj_id)
 
-        if should_publish_collision:
-            self.last_publish_time = now
-
-        # Remove objects that are no longer detected with 2.0s persistence
-        objects_to_remove = set()
-        for obj_name in list(self.known_objects):
-            if obj_name not in current_objects:
-                last_seen = self.object_last_seen.get(obj_name, 0)
-                if current_time - last_seen > 2.0:
-                    objects_to_remove.add(obj_name)
-
-        for obj_name in objects_to_remove:
-            co = CollisionObject()
-            co.id = obj_name
-            co.operation = CollisionObject.REMOVE
-            self.pub_collision_object.publish(co)
-            self.known_objects.discard(obj_name)
-            self.object_last_seen.pop(obj_name, None)
-
         if self.collision_enabled:
             self.known_objects.update(current_objects)
-        
-        # Clean up disappeared visual markers
-        removed_vis_ids = self.published_vis_ids - current_vis_ids
-        for old_id in removed_vis_ids:
-            dm = Marker()
-            dm.header.frame_id = 'world'
-            dm.header.stamp = now.to_msg()
-            dm.ns = 'yolo_collision_vis'
-            dm.id = old_id
-            dm.action = Marker.DELETE
-            vis_markers.markers.append(dm)
-            
-        self.published_vis_ids = current_vis_ids
+
+        # Waende von Objekten DIESER Nachricht, die keine mehr bekommen
+        # (Kollision fuer das Objekt aus, ignoriert): sofort loeschen. Objekte
+        # anderer Quellen fehlen hier nur und laufen in expire_stale() ab.
+        msg_ids = set(objects_dict.keys())
+        for vid in current_vis_ids:
+            self.vis_last_seen[vid] = current_time
+        self.published_vis_ids |= current_vis_ids
+        self.delete_vis_markers((self.published_vis_ids & msg_ids) - current_vis_ids)
+        self.expire_stale(current_time)
 
         if vis_markers.markers:
             self.pub_collision_toggle.publish(vis_markers)

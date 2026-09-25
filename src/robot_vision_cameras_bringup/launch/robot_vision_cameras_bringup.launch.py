@@ -18,6 +18,9 @@ Gemeinsame Pipeline (in beiden Modi aktiv):
    - YOLO MoveIt Collision Node (yolo_moveit_collision.py)
    - YOLO Planned Grasp Executor Node (yolo_planned_grasp_executor.py)
    - Grasp Action Bridge Node (grasp_action_bridge.py)
+   - Virtuelle Objekt-Erkennung (virtual_object_detections.py): Cube, Rectangle
+     und Cylinder aus dem TF Tuner als "erkannte" Objekte. Startet AUS, der
+     Schalter sitzt im SCENE-Tab der Robot Control UI.
 
 Verwendung:
    ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m
@@ -243,6 +246,13 @@ def generate_launch_description():
         ]
     )
 
+    virtual_object_detections_node = Node(
+        package='robot_vision_cameras_bringup',
+        executable='virtual_object_detections.py',
+        name='virtual_object_detections',
+        output='screen'
+    )
+
     grasp_action_bridge_node = Node(
         package='robot_vision_cameras_bringup',
         executable='grasp_action_bridge.py',
@@ -286,6 +296,7 @@ def generate_launch_description():
         yolo_moveit_collision_node,
         yolo_planned_grasp_executor_node,
         grasp_action_bridge_node,
+        virtual_object_detections_node,
         rviz_object_distance_visualizer_node,
         rviz_servo_status_node,
     ])
