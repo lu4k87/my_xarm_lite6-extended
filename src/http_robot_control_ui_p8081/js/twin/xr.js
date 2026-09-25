@@ -38,6 +38,9 @@
 //     VR-Tab.
 //   * Not-Aus: roter Button im Panel, beide Grips + beide Trigger zugleich.
 //     Session-Ende, verdeckte Session oder Tracking-Verlust stoppen Servo.
+//   * Sounds wie am Desktop: audio.js laeuft auf derselben Seite (Ansagen,
+//     Fehler, Bewegungsgeraeusch, Objekt-Klick, Sound-Schalter in der HUD-
+//     Toolbar). Button-Klicks im Panel/HUD: siehe clickPanelHit().
 
 import * as THREE from 'three';
 import * as twin from './digital_twin.js';
@@ -46,7 +49,7 @@ import { logMsg } from '../log.js';
 import { lsGet, lsSet } from '../util.js';
 import { emergencyStop, resetEmergencyStop } from '../safety.js';
 import { approachObjectFromAbove, disabledCollisionObjects, setObjectCollision } from '../grasp.js';
-import { playObjectSelectSound } from '../audio.js';
+import { playButtonClick, playObjectSelectSound } from '../audio.js';
 import {
   COL, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, shortLabel, q, qa, txt, stepSpeed,
   roundRect, fitText, drawButton, pill, drawInfoLine,
@@ -423,11 +426,11 @@ function tabContent(id) {
     if (!hidden) info.push(...moveitProgressLines());
     const detail = txt('#mp-detail');
     if (detail && !hidden) info.push({ label: 'INFO', value: detail });
+    // Execute/Discard nur, wenn sie auch am Desktop sichtbar sind.
+    const actions = moveitActionsVisible();
     items = [
       actions && domItem(q('#moveit-popup .mp-btn-exec'), 'Execute'),
       actions && domItem(q('#moveit-popup .mp-btn-discard'), 'Discard'),
-    // Execute/Discard nur, wenn sie auch am Desktop sichtbar sind.
-    const actions = moveitActionsVisible();
       domItem(q('#mp-btn-path-preview'), 'Ghost-Vorschau'),
       domItem(q('#chk-gizmo-auto-drop'), 'Auto-Move'),
       domItem(q('#btn-twin-gizmo-mode'), twin.getTCPGizmoMode() === 'rotate' ? 'Gizmo: Rotation' : 'Gizmo: Translation'),
@@ -546,6 +549,23 @@ function xrSections() {
     ],
   });
   return sections;
+}
+
+// Klick auf einen Panel- oder HUD-Eintrag. Eintraege, die einen echten
+// DOM-Button klicken, bekommen den Klick-Sound wie am Desktop von
+// uievents.js (inkl. Debounce - ein gesperrter Button bleibt stumm). Rein
+// virtuelle Eintraege (Tabs, SERVO/PLAN, VR/Passthrough, VR-Tab, Speed ...)
+// loesen kein DOM-Klick-Event aus und spielen den Sound deshalb hier.
+function clickPanelHit(hit) {
+  let viaDom = false;
+  const onDomClick = () => { viaDom = true; };
+  document.addEventListener('click', onDomClick, true);
+  try {
+    hit.onClick();
+  } finally {
+    document.removeEventListener('click', onDomClick, true);
+  }
+  if (!viaDom) playButtonClick();
 }
 
 function selectObject(name) {
@@ -1114,7 +1134,7 @@ function handleInput(dt) {
     if (ray.panelHit) {
       triggerConsumed = true;
       pulse('right', 0.5, 30);
-      ray.panelHit.onClick();
+      clickPanelHit(ray.panelHit);
       panelDirty = true;
       markHudDirty();
     } else if (ray.object && ray.object.name) {
