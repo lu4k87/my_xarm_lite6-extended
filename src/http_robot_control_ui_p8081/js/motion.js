@@ -730,7 +730,8 @@ export function renderMoveitPopup() {
       const left = Math.max(0, (st.confirm_timeout || 0) - phaseElapsed);
       detail = `Path ready${st.ghost === false ? ' - click ▶ to move' : ' (ghost in viewport)'}` +
                ` · ${st.waypoints || '?'} waypoints · est. ${mpFmt(st.exec_expected)}` +
-               ` · auto-discard in ${left.toFixed(0)} s`;
+               // "· auto-discard" bleibt in Zeile 1 (NBSP), die Sekunden kommen darunter.
+               ` ·\u00A0auto-discard\nin ${left.toFixed(0)} s`;
       break;
     }
     case 'discarded':

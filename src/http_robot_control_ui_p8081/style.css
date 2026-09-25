@@ -3082,6 +3082,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   line-height: 1.45;
   color: #cbd5e1;
   overflow-wrap: anywhere;
+  white-space: pre-line;
   text-align: center;
 }
 
