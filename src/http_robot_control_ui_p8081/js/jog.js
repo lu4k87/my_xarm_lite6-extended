@@ -5,7 +5,7 @@ import { logMsg } from './log.js';
 import { speedScale } from './motion.js';
 import { motionAllowed, ros, rosHooks } from './ros.js';
 import { latestEEF_Q, latestEEF_Z, updateMoveItBadge } from './safety.js';
-import { LIM, floorGuard } from './util.js';
+import { LIM, floorGuard, uiZoom } from './util.js';
 import { startListening } from './voice.js';
 
 export let currentFrame = 'link_base';
@@ -472,8 +472,10 @@ export function moveJoy(e) {
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
   const clientY = e.touches ? e.touches[0].clientY : e.clientY;
   
-  let dx = clientX - joyCenterX;
-  let dy = clientY - joyCenterY;
+  // Seitenpixel wie maxRadius und translate() - der Knopf folgt dem Zeiger
+  // auch mit Seitenzoom.
+  let dx = (clientX - joyCenterX) / uiZoom();
+  let dy = (clientY - joyCenterY) / uiZoom();
   const dist = Math.sqrt(dx*dx + dy*dy);
   
   if (dist > maxRadius) {

@@ -2,6 +2,7 @@ import { TOPICS } from './config.js';
 import { logMsg } from './log.js';
 import { moveToPose, setInitialPose, startObjectScan, updateSpeed } from './motion.js';
 import { ros } from './ros.js';
+import { uiZoom } from './util.js';
 
 // Zustand des Whisper-Listeners (vorher als window.* abgelegt)
 export let whisperTriggerPub = null;
@@ -280,9 +281,11 @@ export function positionSpeechPopup() {
   const popup = document.getElementById('speech-cmd-popup');
   if (!btn || !popup) return;
 
+  // Gerechnet in sichtbaren Pixeln, gesetzt in Seitenpixeln (Seitenzoom).
+  const z = uiZoom();
   const rect = btn.getBoundingClientRect();
-  const popupWidth = Math.min(390, window.innerWidth - 24);
-  popup.style.width = `${popupWidth}px`;
+  const popupWidth = Math.min(390 * z, window.innerWidth - 24);
+  popup.style.width = `${popupWidth / z}px`;
 
   // Horizontal positionieren
   let left = rect.left;
@@ -293,7 +296,7 @@ export function positionSpeechPopup() {
 
   // Vertikal positionieren: standardmäßig unter dem Button
   let top = rect.bottom + 8;
-  const popupHeight = popup.offsetHeight || 380;
+  const popupHeight = (popup.offsetHeight || 380) * z;
   if (top + popupHeight > window.innerHeight - 14) {
     const topAbove = rect.top - popupHeight - 8;
     if (topAbove >= 14) {
@@ -303,8 +306,8 @@ export function positionSpeechPopup() {
     }
   }
 
-  popup.style.left = `${Math.round(left)}px`;
-  popup.style.top = `${Math.round(top)}px`;
+  popup.style.left = `${Math.round(left / z)}px`;
+  popup.style.top = `${Math.round(top / z)}px`;
 }
 
 export function renderVoiceCommands(lang = 'de') {

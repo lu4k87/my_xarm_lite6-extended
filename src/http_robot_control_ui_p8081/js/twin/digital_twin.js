@@ -9,7 +9,7 @@ import { TransformControls } from 'three/addons/controls/TransformControls_r128.
 import URDFLoader from 'urdf-loader';
 import { ROBOT_LIMITS, unreachableClearance, unreachableRadiusAt } from '../robot_limits.js';
 import { logMsg } from '../log.js';
-import { floorGuard } from '../util.js';
+import { floorGuard, uiZoom } from '../util.js';
 
 // Farben wie unter r128: Hex-Werte gelten als linear, erst die Ausgabe wird
 // nach sRGB gewandelt. Mit dem seit r152 aktiven Color Management wuerden alle
@@ -2636,16 +2636,16 @@ function ensureHoverCursor() {
 // Style-Zuweisungen, und nur solange der Cursor sichtbar ist.
 function moveHoverCursor(ev) {
   if (!hoverCursorEl || !hoverCursorEl.classList.contains('is-active')) return;
-  hoverCursorEl.style.left = ev.clientX + 'px';
-  hoverCursorEl.style.top = ev.clientY + 'px';
+  hoverCursorEl.style.left = ev.clientX / uiZoom() + 'px';
+  hoverCursorEl.style.top = ev.clientY / uiZoom() + 'px';
 }
 
 function showHoverCursor(on, ev) {
   const el = ensureHoverCursor();
   el.classList.toggle('is-active', !!on);
   if (on && ev) {
-    el.style.left = ev.clientX + 'px';
-    el.style.top = ev.clientY + 'px';
+    el.style.left = ev.clientX / uiZoom() + 'px';
+    el.style.top = ev.clientY / uiZoom() + 'px';
   }
 }
 

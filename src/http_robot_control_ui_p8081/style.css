@@ -51,7 +51,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  height: 100vh;
+  height: calc(100vh / var(--ui-zoom, 1));
   display: flex;
   flex-direction: column;
 }
@@ -3765,199 +3765,209 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .input-group.z input { border-bottom: 2px solid var(--rviz-z); }
 
 /* Ergonomic 1080p Layout Fit (Eliminates vertical scrolling) */
-@media (min-height: 800px) {
-  body {
-    height: 100vh;
-    overflow-y: hidden;
-  }
-  .app-container {
-    height: 100vh;
-    padding: 10px 16px;
-    box-sizing: border-box;
-  }
-  header {
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-  }
-  .grid-layout {
-    height: calc(100vh - 85px);
-    flex: 1;
-    min-height: 0;
-  }
-  .col-left, .col-middle, .col-right {
-    height: 100%;
-    min-height: 0;
-    overflow-y: auto;
-  }
-  .col-left .glass-panel {
-    flex: 1;
-    min-height: 0;
-    height: auto !important;
-  }
-  .glass-panel {
-    padding: 14px 16px !important;
-  }
-  .glass-panel h2,
-  .glass-panel > h2,
-  .tf-tuner-header h2 {
-    margin-bottom: 10px !important;
-  }
-  #panel-moveto, #panel-yolo, #panel-jogging, #panel-telemetry, #panel-whisper, #panel-tf-tuner {
-    flex: 0 0 auto;
-  }
-  #panel-jogging .jogging-container {
-    gap: 10px;
-    margin-top: 6px;
-  }
-  #panel-jogging .jog-divider-joy {
-    margin-top: 0;
-  }
-  .col-left, .col-middle, .col-right {
-    gap: 10px !important;
-  }
-  .twin-toolbar .btn-icon-small {
-    width: 36px !important;
-    height: 36px !important;
-    font-size: 16px !important;
-  }
-  #panel-telemetry .telemetry-grid {
-    margin-bottom: 10px;
-    gap: 8px;
-  }
-  #panel-telemetry .telem-box {
-    padding: 6px 10px;
-  }
-  #panel-telemetry .telem-box span[style*="font-size: 22px"] {
-    font-size: 17px !important;
-  }
-  #panel-telemetry .telem-box .t-value {
-    font-size: 16px !important;
-  }
-  #panel-telemetry .joints-bars {
-    gap: 8px 16px;
-    margin-top: 12px;
-    padding: 8px 12px;
-  }
-  #panel-telemetry .j-col {
-    gap: 4px;
-  }
-  #panel-telemetry .j-header {
-    font-size: 13px;
-  }
-  #panel-telemetry .j-bar {
-    height: 6px;
-  }
-  #panel-telemetry .linear-axis-box {
-    margin-top: 12px;
-    padding: 8px 12px;
-  }
-  #panel-telemetry .linear-axis-header {
-    margin-bottom: 6px;
-  }
-  #panel-yolo .yolo-container {
-    min-height: 28px;
-    margin-bottom: 10px;
-  }
-  #panel-yolo .yolo-empty {
-    padding: 4px 0;
-    font-size: 11.5px;
-  }
-  #panel-yolo h2:nth-of-type(2) {
-    margin-top: 12px !important;
-    margin-bottom: 8px !important;
-  }
-  #panel-yolo input[type="text"] {
-    height: 32px;
-    font-size: 12px;
-    padding: 0 10px;
-  }
-  #panel-yolo button.btn-orange {
-    height: 32px !important;
-    font-size: 12px !important;
-    padding: 0 14px !important;
-  }
-  #panel-whisper > div {
-    margin-top: 10px !important;
-    gap: 14px !important;
-  }
-  #panel-whisper #btn-start-listening {
-    width: 42px !important;
-    height: 42px !important;
-  }
-  #panel-whisper #btn-start-listening i {
-    font-size: 17px !important;
-  }
-  #panel-whisper #btn-listen-text {
-    font-size: 13.5px !important;
-    font-weight: 600 !important;
-    color: var(--txt) !important;
-  }
-  #panel-3d-centerpiece {
-    flex: 1;
-    min-height: 100px;
-    display: flex;
-    flex-direction: column;
-  }
-  #panel-tf-tuner .tf-tuner-header {
-    margin-bottom: 8px;
-  }
-  #panel-tf-tuner .tuner-selector-row {
-    margin-bottom: 10px;
-  }
-  #panel-tf-tuner .tuner-select {
-    height: 28px;
-    font-size: 12px;
-    padding: 3px 8px;
-  }
-  #panel-tf-tuner .tuner-grid {
-    gap: 10px;
-  }
-  #panel-tf-tuner .tuner-col {
-    padding: 8px 10px;
-    gap: 5px;
-  }
-  #panel-tf-tuner .tuner-col-title {
-    font-size: 13px;
-    margin-bottom: 4px;
-  }
-  #panel-tf-tuner .tuner-input-row {
-    margin-bottom: 4px;
-    gap: 7px;
-  }
-  #panel-tf-tuner .tuner-axis-lbl {
-    font-size: 11.5px;
-    width: 18px;
-  }
-  #panel-tf-tuner .tuner-num {
-    height: 23px;
-    font-size: 11.5px;
-    padding: 0 5px;
-    width: 52px;
-  }
-  #panel-tf-tuner .tuner-status-bar {
-    margin-top: 8px;
-    padding-top: 5px;
-    font-size: 10px;
-  }
-  #panel-console {
-    flex: 1 1 auto;
-    min-height: 120px;
-    height: auto;
-    max-height: none;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-  }
-  #panel-console #log-window {
-    flex: 1 1 auto;
-    height: 100% !important;
-    max-height: none !important;
-    min-height: 80px !important;
-    padding: 8px 10px;
-    font-size: 14.5px;
-    line-height: 1.45;
-    box-sizing: border-box;
-  }
+/* Statt @media (min-height: 800px): html.vp-tall setzt index.html aus Fensterhoehe
+   und Seitenzoom (Quest-Browser). :where() haelt die Spezifitaet wie bei der
+   Media-Query. */
+:where(html.vp-tall) body {
+  height: calc(100vh / var(--ui-zoom, 1));
+  overflow-y: hidden;
+}
+:where(html.vp-tall) .app-container {
+  height: calc(100vh / var(--ui-zoom, 1));
+  padding: 10px 16px;
+  box-sizing: border-box;
+}
+:where(html.vp-tall) header {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+}
+:where(html.vp-tall) .grid-layout {
+  height: calc(100vh / var(--ui-zoom, 1) - 85px);
+  flex: 1;
+  min-height: 0;
+}
+:where(html.vp-tall) .col-left,
+:where(html.vp-tall) .col-middle,
+:where(html.vp-tall) .col-right {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+}
+:where(html.vp-tall) .col-left .glass-panel {
+  flex: 1;
+  min-height: 0;
+  height: auto !important;
+}
+:where(html.vp-tall) .glass-panel {
+  padding: 14px 16px !important;
+}
+:where(html.vp-tall) .glass-panel h2,
+:where(html.vp-tall) .glass-panel > h2,
+:where(html.vp-tall) .tf-tuner-header h2 {
+  margin-bottom: 10px !important;
+}
+:where(html.vp-tall) #panel-moveto,
+:where(html.vp-tall) #panel-yolo,
+:where(html.vp-tall) #panel-jogging,
+:where(html.vp-tall) #panel-telemetry,
+:where(html.vp-tall) #panel-whisper,
+:where(html.vp-tall) #panel-tf-tuner {
+  flex: 0 0 auto;
+}
+:where(html.vp-tall) #panel-jogging .jogging-container {
+  gap: 10px;
+  margin-top: 6px;
+}
+:where(html.vp-tall) #panel-jogging .jog-divider-joy {
+  margin-top: 0;
+}
+:where(html.vp-tall) .col-left,
+:where(html.vp-tall) .col-middle,
+:where(html.vp-tall) .col-right {
+  gap: 10px !important;
+}
+:where(html.vp-tall) .twin-toolbar .btn-icon-small {
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 16px !important;
+}
+:where(html.vp-tall) #panel-telemetry .telemetry-grid {
+  margin-bottom: 10px;
+  gap: 8px;
+}
+:where(html.vp-tall) #panel-telemetry .telem-box {
+  padding: 6px 10px;
+}
+:where(html.vp-tall) #panel-telemetry .telem-box span[style*="font-size: 22px"] {
+  font-size: 17px !important;
+}
+:where(html.vp-tall) #panel-telemetry .telem-box .t-value {
+  font-size: 16px !important;
+}
+:where(html.vp-tall) #panel-telemetry .joints-bars {
+  gap: 8px 16px;
+  margin-top: 12px;
+  padding: 8px 12px;
+}
+:where(html.vp-tall) #panel-telemetry .j-col {
+  gap: 4px;
+}
+:where(html.vp-tall) #panel-telemetry .j-header {
+  font-size: 13px;
+}
+:where(html.vp-tall) #panel-telemetry .j-bar {
+  height: 6px;
+}
+:where(html.vp-tall) #panel-telemetry .linear-axis-box {
+  margin-top: 12px;
+  padding: 8px 12px;
+}
+:where(html.vp-tall) #panel-telemetry .linear-axis-header {
+  margin-bottom: 6px;
+}
+:where(html.vp-tall) #panel-yolo .yolo-container {
+  min-height: 28px;
+  margin-bottom: 10px;
+}
+:where(html.vp-tall) #panel-yolo .yolo-empty {
+  padding: 4px 0;
+  font-size: 11.5px;
+}
+:where(html.vp-tall) #panel-yolo h2:nth-of-type(2) {
+  margin-top: 12px !important;
+  margin-bottom: 8px !important;
+}
+:where(html.vp-tall) #panel-yolo input[type="text"] {
+  height: 32px;
+  font-size: 12px;
+  padding: 0 10px;
+}
+:where(html.vp-tall) #panel-yolo button.btn-orange {
+  height: 32px !important;
+  font-size: 12px !important;
+  padding: 0 14px !important;
+}
+:where(html.vp-tall) #panel-whisper > div {
+  margin-top: 10px !important;
+  gap: 14px !important;
+}
+:where(html.vp-tall) #panel-whisper #btn-start-listening {
+  width: 42px !important;
+  height: 42px !important;
+}
+:where(html.vp-tall) #panel-whisper #btn-start-listening i {
+  font-size: 17px !important;
+}
+:where(html.vp-tall) #panel-whisper #btn-listen-text {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: var(--txt) !important;
+}
+:where(html.vp-tall) #panel-3d-centerpiece {
+  flex: 1;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+}
+:where(html.vp-tall) #panel-tf-tuner .tf-tuner-header {
+  margin-bottom: 8px;
+}
+:where(html.vp-tall) #panel-tf-tuner .tuner-selector-row {
+  margin-bottom: 10px;
+}
+:where(html.vp-tall) #panel-tf-tuner .tuner-select {
+  height: 28px;
+  font-size: 12px;
+  padding: 3px 8px;
+}
+:where(html.vp-tall) #panel-tf-tuner .tuner-grid {
+  gap: 10px;
+}
+:where(html.vp-tall) #panel-tf-tuner .tuner-col {
+  padding: 8px 10px;
+  gap: 5px;
+}
+:where(html.vp-tall) #panel-tf-tuner .tuner-col-title {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+:where(html.vp-tall) #panel-tf-tuner .tuner-input-row {
+  margin-bottom: 4px;
+  gap: 7px;
+}
+:where(html.vp-tall) #panel-tf-tuner .tuner-axis-lbl {
+  font-size: 11.5px;
+  width: 18px;
+}
+:where(html.vp-tall) #panel-tf-tuner .tuner-num {
+  height: 23px;
+  font-size: 11.5px;
+  padding: 0 5px;
+  width: 52px;
+}
+:where(html.vp-tall) #panel-tf-tuner .tuner-status-bar {
+  margin-top: 8px;
+  padding-top: 5px;
+  font-size: 10px;
+}
+:where(html.vp-tall) #panel-console {
+  flex: 1 1 auto;
+  min-height: 120px;
+  height: auto;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+:where(html.vp-tall) #panel-console #log-window {
+  flex: 1 1 auto;
+  height: 100% !important;
+  max-height: none !important;
+  min-height: 80px !important;
+  padding: 8px 10px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  box-sizing: border-box;
 }
 
 
@@ -4043,12 +4053,10 @@ header {
 }
 
 /* Kleine Fenster scrollen - der Header samt Not-Aus bleibt oben stehen. */
-@media (max-height: 799px) {
-  header {
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-  }
+:where(html:not(.vp-tall)) header {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
 }
 
 /* ── Offline-Overlay (rosbridge getrennt) ────────────────────────────────── */
@@ -4209,7 +4217,7 @@ header {
   flex-direction: column;
   gap: 2px;
   min-width: 260px;
-  max-width: calc(100vw - 16px);
+  max-width: calc(100vw / var(--ui-zoom, 1) - 16px);
   padding: 6px;
   background: rgba(10, 14, 23, 0.96);
   border: 1px solid rgba(56, 189, 248, 0.35);
@@ -4686,10 +4694,8 @@ header {
    Dort scrollt die Seite ohnehin (Header mit Not-Aus bleibt oben stehen).
    Der Viewport bekommt deshalb eine Mindesthoehe, statt die fuenf HUD-Panels
    uebereinander zu quetschen. */
-@media (max-height: 799px) {
-  #digital-twin-container {
-    min-height: 560px !important;
-  }
+:where(html:not(.vp-tall)) #digital-twin-container {
+  min-height: 560px !important;
 }
 
 /* ── MoveIt-Popup oben mittig ──
@@ -4801,7 +4807,7 @@ header {
   position: fixed;
   z-index: 2000;
   width: 390px;
-  max-width: calc(100vw - 24px);
+  max-width: calc(100vw / var(--ui-zoom, 1) - 24px);
   background: rgba(13, 17, 23, 0.98);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -5172,7 +5178,7 @@ header {
   top: 50%;
   left: 50%;
   z-index: 3001;
-  width: min(380px, calc(100vw - 32px));
+  width: min(380px, calc(100vw / var(--ui-zoom, 1) - 32px));
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

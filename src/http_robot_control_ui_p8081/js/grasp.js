@@ -3,6 +3,7 @@ import * as twin from './twin/digital_twin.js';
 import { playObjectSelectSound, playOutOfReachSound, playMovesToSelectedObjectSound, setObjectReachContext } from './audio.js';
 import { logMsg } from './log.js';
 import { setButtonsLocked } from './motion.js';
+import { uiZoom } from './util.js';
 import { createSrv, motionAllowed, ros } from './ros.js';
 import { showCenterNotice, validatePose } from './util.js';
 
@@ -281,8 +282,8 @@ export function openDetectedObjectMenu(info, clientX, clientY) {
   const m = 8;
   const x = Math.min(Math.max(m, clientX), window.innerWidth - r.width - m);
   const y = Math.min(Math.max(m, clientY), window.innerHeight - r.height - m);
-  objMenuEl.style.left = `${x}px`;
-  objMenuEl.style.top = `${y}px`;
+  objMenuEl.style.left = `${x / uiZoom()}px`;
+  objMenuEl.style.top = `${y / uiZoom()}px`;
 }
 
 // Der Name stammt aus dem YOLO-Marker, ist also Fremddaten. Frueher ging er

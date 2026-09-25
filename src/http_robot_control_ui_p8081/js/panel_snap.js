@@ -21,6 +21,7 @@
 
 import { resizeDigitalTwin } from './twin/digital_twin.js';
 import { logMsg } from './log.js';
+import { uiZoom } from './util.js';
 
 const SNAP_THRESHOLD_PX = 38;
 
@@ -89,7 +90,7 @@ export function setupPanel(panel) {
     panel.style.marginRight = '0';
 
     const onPointerMove = (ev) => {
-      const deltaX = ev.clientX - startX;
+      const deltaX = (ev.clientX - startX) / uiZoom();   // Seitenpixel wie offsetWidth
       // Nach links ziehen vergrößert die Section
       const targetWidth = startWidth - deltaX;
       const maxColWidth = col ? col.clientWidth : window.innerWidth;
@@ -98,7 +99,7 @@ export function setupPanel(panel) {
 
       // Distanz zur linken Kante (zum Viewport / Spaltenrand)
       const currentPanelRect = panel.getBoundingClientRect();
-      const distanceToLeft = currentPanelRect.left - startColRect.left;
+      const distanceToLeft = (currentPanelRect.left - startColRect.left) / uiZoom();
       const isNearLeft = (distanceToLeft <= SNAP_THRESHOLD_PX) || (clampedWidth >= maxColWidth - SNAP_THRESHOLD_PX);
 
       if (isNearLeft) {
@@ -122,7 +123,7 @@ export function setupPanel(panel) {
 
       const colWidth = col ? col.clientWidth : window.innerWidth;
       const currentPanelRect = panel.getBoundingClientRect();
-      const distanceToLeft = currentPanelRect.left - startColRect.left;
+      const distanceToLeft = (currentPanelRect.left - startColRect.left) / uiZoom();
       const currentWidth = panel.offsetWidth;
       const shouldSnap = (distanceToLeft <= SNAP_THRESHOLD_PX) || (currentWidth >= colWidth - SNAP_THRESHOLD_PX);
 
@@ -151,7 +152,8 @@ export function setupPanel(panel) {
 
     const rect = panel.getBoundingClientRect();
     // Native resize zone unten rechts (~24x24 px)
-    const inGripZone = (e.clientX >= rect.right - 26 && e.clientY >= rect.bottom - 26);
+    const grip = 26 * uiZoom();
+    const inGripZone = (e.clientX >= rect.right - grip && e.clientY >= rect.bottom - grip);
     if (inGripZone) {
       activeResizePanel = panel;
       activeResizeType = 'right';
@@ -177,7 +179,7 @@ window.addEventListener('pointermove', (e) => {
       const panelW = activeResizePanel.offsetWidth;
       const colRect = col.getBoundingClientRect();
       const panelRect = activeResizePanel.getBoundingClientRect();
-      const distToRight = colRect.right - panelRect.right;
+      const distToRight = (colRect.right - panelRect.right) / uiZoom();
 
       if (distToRight <= SNAP_THRESHOLD_PX || panelW >= colW - SNAP_THRESHOLD_PX) {
         activeResizePanel.classList.add('is-snapping');
@@ -200,7 +202,7 @@ window.addEventListener('pointerup', (e) => {
       const panelW = panel.offsetWidth;
       const colRect = col.getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
-      const distToRight = colRect.right - panelRect.right;
+      const distToRight = (colRect.right - panelRect.right) / uiZoom();
       const shouldSnap = (distToRight <= SNAP_THRESHOLD_PX) || (panelW >= colW - SNAP_THRESHOLD_PX);
 
       if (shouldSnap) {

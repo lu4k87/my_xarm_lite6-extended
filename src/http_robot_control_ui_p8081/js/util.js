@@ -36,6 +36,13 @@ export function lsSet(key, value) {
   }
 }
 
+// Seitenzoom (CSS zoom auf <html>, gesetzt in index.html, im Quest-Browser
+// 0,5). getBoundingClientRect() und clientX/Y liefern sichtbare Pixel,
+// style.left/width usw. gelten in Seitenpixeln - also durch uiZoom() teilen.
+export function uiZoom() {
+  return parseFloat(document.documentElement.dataset.uiZoom) || 1;
+}
+
 // Periodische Abfrage, die bei verstecktem Tab pausiert. Beim Zurueckkehren
 // laeuft sie sofort einmal, statt bis zum naechsten Takt zu warten.
 // NICHT fuer Dinge verwenden, die der Roboter braucht (TF-Broadcast,

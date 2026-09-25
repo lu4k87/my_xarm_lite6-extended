@@ -10,7 +10,7 @@
 // Der Zustand steht in localStorage und wird schon beim Laden des Moduls
 // angewendet, damit das Layout nicht sichtbar springt.
 
-import { lsGet, lsSet } from './util.js';
+import { lsGet, lsSet, uiZoom } from './util.js';
 import { resizeDigitalTwin } from './twin/digital_twin.js';
 
 const LS_KEY = 'robot_control_columns_v1';
@@ -37,11 +37,12 @@ function save() {
   lsSet(LS_KEY, JSON.stringify(state));
 }
 
+// Breiten in Seitenpixeln (wie --col-*-w), Rects sind sichtbare Pixel.
 function clampWidth(side, px) {
-  const total = grid.getBoundingClientRect().width;
+  const total = grid.getBoundingClientRect().width / uiZoom();
   const other = side === 'left' ? 'right' : 'left';
   const otherEl = document.getElementById(`col-${other}`);
-  const otherW = state[other].collapsed || !otherEl ? 0 : otherEl.getBoundingClientRect().width;
+  const otherW = state[other].collapsed || !otherEl ? 0 : otherEl.getBoundingClientRect().width / uiZoom();
   const max = Math.min(total * MAX_COL_FRACTION, total - otherW - 24 - MIN_MIDDLE_PX);
   return Math.round(Math.max(MIN_COL_PX, Math.min(px, Math.max(MIN_COL_PX, max))));
 }
@@ -79,7 +80,7 @@ function freezeWidths() {
   for (const side of ['left', 'right']) {
     const el = document.getElementById(`col-${side}`);
     if (state[side].w === null && !state[side].collapsed && el && el.offsetParent) {
-      state[side].w = Math.round(el.getBoundingClientRect().width);
+      state[side].w = Math.round(el.getBoundingClientRect().width / uiZoom());
     }
   }
 }
@@ -125,7 +126,7 @@ function initSplitter(side) {
 
     const onMove = (ev) => {
       const r = grid.getBoundingClientRect();
-      const px = side === 'left' ? ev.clientX - r.left - 6 : r.right - ev.clientX - 6;
+      const px = (side === 'left' ? ev.clientX - r.left : r.right - ev.clientX) / uiZoom() - 6;
       state[side].w = clampWidth(side, px);
       if (!raf) {
         raf = requestAnimationFrame(() => {
