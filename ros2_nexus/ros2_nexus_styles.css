@@ -448,11 +448,12 @@
       background: linear-gradient(165deg, rgba(16, 23, 38, 0.98) 0%, rgba(9, 14, 25, 0.99) 100%);
       border: 1px solid rgba(56, 189, 248, 0.25);
       border-radius: 20px;
-      zoom: 1.25;
-      width: min(calc(95vw / 1.25), 1700px);
-      max-width: calc(97vw / 1.25);
-      height: min(calc(93vh / 1.25), 1040px);
-      max-height: calc(96vh / 1.25);
+      /* Frueher zoom 1.25; jetzt 1.0 = Inhalt auf 80 %. Breite ebenfalls
+         auf 80 % (vorher 95vw / max. 2125 px). */
+      width: min(76vw, 1700px);
+      max-width: 97vw;
+      height: min(93vh, 1300px);
+      max-height: 96vh;
       display: flex;
       flex-direction: column;
       box-shadow: 0 30px 80px -10px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.12);
@@ -1380,14 +1381,48 @@
       cursor: pointer;
     }
 
+    /* Eigene Checkbox statt nativer (WebKitGTK zeichnet den Haken sonst
+       riesig und flach): leicht vertieft wenn aus, erhaben mit Verlauf und
+       kleinem SVG-Haken wenn an. Farbe ueber --cb-color. */
     .modal-cb-wrap input[type="checkbox"].main-action-cb {
+      --cb-color: #10b981;
+      appearance: none;
+      -webkit-appearance: none;
+      flex-shrink: 0;
+      box-sizing: border-box;
       width: 18px;
       height: 18px;
       margin: 0;
-      accent-color: #10b981;
+      border-radius: 5px;
+      border: 1.5px solid color-mix(in srgb, var(--cb-color) 55%, rgba(148, 163, 184, 0.35));
+      background-color: rgba(8, 12, 22, 0.75);
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 10px 10px;
+      box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.05);
       cursor: pointer;
-      filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4));
-      transition: transform 0.15s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    }
+
+    .modal-cb-wrap input[type="checkbox"].main-action-cb:checked {
+      border-color: color-mix(in srgb, var(--cb-color) 70%, #000);
+      background-color: var(--cb-color);
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.4 6.3l2.4 2.4 4.8-5.2' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 55%, rgba(0, 0, 0, 0.22));
+      background-size: 10px 10px, 100% 100%;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.25),
+        0 2px 4px rgba(0, 0, 0, 0.45),
+        0 0 8px -1px color-mix(in srgb, var(--cb-color) 55%, transparent);
+    }
+
+    .modal-cb-wrap input[type="checkbox"].main-action-cb:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--cb-color) 60%, transparent);
+      outline-offset: 2px;
     }
 
     .modal-cb-wrap input[type="checkbox"].main-action-cb:hover {
@@ -3280,8 +3315,7 @@
     }
 
     .seq-card .modal-cb-wrap input[type="checkbox"].main-action-cb {
-      accent-color: var(--sec-color);
-      filter: drop-shadow(0 0 5px color-mix(in srgb, var(--sec-color) 45%, transparent));
+      --cb-color: var(--sec-color, #10b981);
     }
 
     .seq-card-eyebrow {
@@ -4094,6 +4128,40 @@
   background: rgba(18, 24, 38, 0.8);
 }
 
+/* Farbiger Rand etwas kraeftiger, dezenter Glow in der Kartenfarbe und
+   leichter 3D-Eindruck: Lichtkante oben, Schatten unten innen, Drop-Shadow */
+.modal-action-card.seq-card {
+  border-width: 2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.30),
+    0 6px 20px -4px rgba(0, 0, 0, 0.45);
+}
+
+.modal-action-card.seq-card.card-active {
+  border-color: color-mix(in srgb, var(--sec-color) 45%, rgba(255, 255, 255, 0.07));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.30),
+    0 6px 20px -4px rgba(0, 0, 0, 0.45),
+    0 0 14px -2px color-mix(in srgb, var(--sec-color) 28%, transparent);
+}
+
+.modal-action-card.seq-card:hover,
+.modal-card-row:hover .modal-action-card.seq-card {
+  border-color: color-mix(in srgb, var(--sec-color) 65%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.30),
+    0 8px 26px -4px rgba(0, 0, 0, 0.50),
+    0 0 18px -2px color-mix(in srgb, var(--sec-color) 38%, transparent);
+}
+
+.modal-action-card.seq-card.card-inactive,
+.modal-card-row:hover .modal-action-card.seq-card.card-inactive {
+  box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.35);
+}
+
 /* ── LIGHT THEME ──────────────────────────────────────────────────────── */
 #launch-modal[data-theme="light"] {
   color-scheme: light;
@@ -4290,6 +4358,43 @@
   background: var(--pl-surface);
   border-color: color-mix(in srgb, var(--sec-color, #0284c7) 60%, var(--pl-line));
   box-shadow: 0 4px 16px -6px rgba(20, 30, 50, 0.18);
+}
+
+#launch-modal[data-theme="light"] .modal-cb-wrap input[type="checkbox"].main-action-cb:not(:checked) {
+  background-color: var(--pl-surface);
+  border-color: color-mix(in srgb, var(--cb-color) 45%, var(--pl-line-strong));
+  box-shadow: inset 0 1px 2px rgba(20, 30, 50, 0.15);
+}
+
+#launch-modal[data-theme="light"] .modal-action-card.seq-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 4px rgba(20, 30, 50, 0.05),
+    0 3px 10px -4px rgba(20, 30, 50, 0.18);
+}
+
+#launch-modal[data-theme="light"] .modal-action-card.seq-card.card-active {
+  border-color: color-mix(in srgb, var(--sec-color) 55%, var(--pl-line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 4px rgba(20, 30, 50, 0.05),
+    0 3px 10px -4px rgba(20, 30, 50, 0.18),
+    0 0 12px -3px color-mix(in srgb, var(--sec-color) 35%, transparent);
+}
+
+#launch-modal[data-theme="light"] .modal-action-card.seq-card:hover,
+#launch-modal[data-theme="light"] .modal-card-row:hover .modal-action-card.seq-card {
+  border-color: color-mix(in srgb, var(--sec-color, #0284c7) 70%, var(--pl-line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 4px rgba(20, 30, 50, 0.05),
+    0 6px 18px -6px rgba(20, 30, 50, 0.24),
+    0 0 14px -3px color-mix(in srgb, var(--sec-color, #0284c7) 42%, transparent);
+}
+
+#launch-modal[data-theme="light"] .modal-action-card.seq-card.card-inactive,
+#launch-modal[data-theme="light"] .modal-card-row:hover .modal-action-card.seq-card.card-inactive {
+  box-shadow: 0 1px 2px rgba(20, 30, 50, 0.05);
 }
 
 #launch-modal[data-theme="light"] .modal-action-card.card-inactive {
@@ -4666,9 +4771,25 @@
   width: 104px;
 }
 
+/* Natives Select-Rendering abschalten: sonst zeichnet das System-Theme
+   (hell) den Hintergrund und der helle Text wird unlesbar */
 select.param-value-input {
-  padding-right: 2px;
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: dark;
+  padding-right: 18px;
+  background-color: #0f172a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%2394a3b8'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 8px 5px;
+  text-overflow: ellipsis;
   cursor: pointer;
+}
+
+select.param-value-input option {
+  background: #0f172a;
+  color: #e2e8f0;
 }
 
 .param-value-input:focus {
@@ -4735,6 +4856,11 @@ select.param-value-input {
   font-size: 10.5px;
 }
 
+.user-dev-params select.param-value-input {
+  padding-right: 16px;
+  background-position: right 5px center;
+}
+
 .user-dev-params .param-value-input.param-value-ip {
   width: 90px;
 }
@@ -4768,6 +4894,21 @@ select.param-value-input {
   color: var(--pl-text);
   background: var(--pl-surface);
   border-color: var(--pl-line);
+}
+#launch-modal[data-theme="light"] select.param-value-input {
+  color-scheme: light;
+  background-color: var(--pl-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23475569'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 8px 5px;
+}
+#launch-modal[data-theme="light"] .user-dev-params select.param-value-input {
+  background-position: right 5px center;
+}
+#launch-modal[data-theme="light"] select.param-value-input option {
+  background: var(--pl-surface);
+  color: var(--pl-text);
 }
 #launch-modal[data-theme="light"] .param-value.is-modified .param-value-input { color: #c2410c; }
 #launch-modal[data-theme="light"] .param-src-badge.src-launch { color: #047857; border-color: rgba(4, 120, 87, 0.35); }

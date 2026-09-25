@@ -43,8 +43,9 @@ from gi.repository import Gdk, GLib, Gtk, WebKit2  # noqa: E402
 
 URL = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:5000/"
 DATA_DIR = os.path.expanduser("~/.ros2_nexus_webkit")
-# Anteil der Bildschirmflaeche; knapp unter Vollbild, sonst maximiert GNOME
-SIZE_W, SIZE_H = 0.88, 0.9
+# Anteil der Bildschirmflaeche; knapp unter Vollbild, sonst maximiert GNOME.
+# Breite = 80 % der frueheren 0.88 (passend zum Popup-Inhalt auf 80 %).
+SIZE_W, SIZE_H = 0.7, 0.9
 
 
 def frameless_url(url):
