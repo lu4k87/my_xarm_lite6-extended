@@ -2360,9 +2360,11 @@ function updateWallProximity() {
 // den Pfad ueber /ui/moveto_preview_path. Hier faehrt ein halbtransparenter
 // Klon des Roboters den Pfad in Echtzeit in einer Schleife ab, dazu zeigt
 // eine Linie die Bahn des TCP. Ausgefuehrt wird erst nach Bestaetigung.
+// Nach Execute (data.executing) steht der Geist fest am Ziel, bis der Arm
+// dort angekommen ist - erst dann schickt der Node { clear: true }.
 const PREVIEW_HOLD_S = 0.8;   // Pause am Ziel, bevor die Schleife neu startet
 let previewGhost = null;
-let previewPath = null;       // { names, points, times, duration }
+let previewPath = null;       // { names, points, times, duration, executing }
 let previewLine = null;
 let previewEndMarker = null;
 let previewT0 = 0;
@@ -2464,7 +2466,8 @@ function buildPreviewLine() {
 function updatePathPreview() {
   if (!previewPath) return false;
   applyPathPreview();
-  return !!previewPath;
+  // Der stehende Geist waehrend der Fahrt braucht kein Dauer-Rendering.
+  return !!previewPath && !previewPath.executing;
 }
 
 function applyPathPreview() {
@@ -2477,7 +2480,11 @@ function applyPathPreview() {
   }
   previewGhost.visible = true;
 
-  const { points, times, duration } = previewPath;
+  const { points, times, duration, executing } = previewPath;
+  if (executing) {
+    setGhostJoints(points[points.length - 1]);
+    return;
+  }
   const cycle = duration + PREVIEW_HOLD_S;
   const t = Math.min(duration, ((performance.now() - previewT0) / 1000) % cycle);
 
@@ -2506,6 +2513,7 @@ export function showDigitalTwinPathPreview(data) {
     points: data.points.map(p => p.map(Number)),
     times,
     duration: Math.max(0, times[times.length - 1] || 0),
+    executing: data.executing === true,
   };
   previewLineBuilt = false;
 }

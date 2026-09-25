@@ -105,6 +105,9 @@ class RobotMotionHandlerMovegroup(Node):
         self._preview_event = threading.Event()
         self._preview_decision = None
         self._preview_waiting = False
+        # Bestaetigter Pfad wird gerade gefahren: der Geist bleibt bis
+        # _moveit_finish am Ziel stehen.
+        self._preview_executing = False
         preview_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.preview_enabled_pub = self.create_publisher(Bool, '/ui/moveto_preview_enabled', preview_qos)
         # Latched, damit ein Reload der UI einen wartenden Pfad wieder anzeigt.
@@ -1808,11 +1811,12 @@ class RobotMotionHandlerMovegroup(Node):
             self._move_goal_handle = None
             self._resume_servo()
 
-    def _publish_preview_path(self, joint_traj):
+    def _publish_preview_path(self, joint_traj, executing=False):
         with self._moveit_lock:
             seq = self._moveit_run['seq'] if self._moveit_run else 0
         msg = {
             'seq': seq,
+            'executing': executing,
             'joint_names': list(joint_traj.joint_names),
             'points': [[round(float(v), 5) for v in p.positions] for p in joint_traj.points],
             'times': [round(p.time_from_start.sec + p.time_from_start.nanosec * 1e-9, 3)
@@ -1833,6 +1837,7 @@ class RobotMotionHandlerMovegroup(Node):
         self._preview_decision = None
         self._preview_event.clear()
         self._preview_waiting = True
+        confirmed = False
         try:
             self._publish_preview_path(jt)
             self._moveit_phase('confirm', waypoints=len(jt.points),
@@ -1849,10 +1854,21 @@ class RobotMotionHandlerMovegroup(Node):
                 raise Exception("Movement interrupted by EMERGENCY STOP!")
             if not self._preview_decision:
                 raise PreviewDiscarded("path discarded by user")
+            confirmed = True
         finally:
             self._preview_waiting = False
-            self.preview_path_pub.publish(String(data=json.dumps({'clear': True})))
+            if confirmed:
+                # Geist bleibt am Ziel stehen, bis der Arm dort ist
+                # (geloescht in _moveit_finish).
+                self._preview_executing = True
+                self._publish_preview_path(jt, executing=True)
+            else:
+                self._clear_preview_path()
         self._moveit_mark('t_confirm')
+
+    def _clear_preview_path(self):
+        self._preview_executing = False
+        self.preview_path_pub.publish(String(data=json.dumps({'clear': True})))
 
     def _execute_trajectory(self, robot_traj, log_msg="MoveIt [3/3] Path confirmed - executing."):
         """Den bestaetigten Pfad unveraendert ueber move_group ausfuehren."""
@@ -1931,6 +1947,8 @@ class RobotMotionHandlerMovegroup(Node):
 
     def _moveit_finish(self, outcome, message=''):
         """Publish the final state and return a copy of the run (None if none was active)."""
+        if self._preview_executing:
+            self._clear_preview_path()
         with self._moveit_lock:
             run = self._moveit_run
             if run is None:
