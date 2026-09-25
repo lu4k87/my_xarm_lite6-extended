@@ -302,7 +302,14 @@
         const gazeMode = getGazeMode(action);
         if (gazeMode) finalCmd = gazeMode.cmd;
         if (action.args && action.args.length > 0) {
-            const activeArgs = action.args.filter(a => a.checked && a.kind !== 'gaze-mode').map(a => a.text);
+            const activeArgs = action.args.filter(a => a.checked && a.kind !== 'gaze-mode' && a.kind !== 'value').map(a => a.text);
+            // Wert-Felder: nur Abweichungen vom Standard; Node-Parameter ("ros2 run")
+            // gehen gesammelt hinter --ros-args
+            const nodeParams = [];
+            action.args.filter(a => a.kind === 'value').forEach(a => {
+                const txt = valueArgCmdText(action, a);
+                if (txt) (a.def.source === 'node' ? nodeParams : activeArgs).push(txt);
+            });
             // rviz ist standardmaessig an - ein fehlendes Argument wuerde
             // RViz also trotzdem starten. Deshalb explizit abschalten.
             if (action.args.some(a => a.text === 'rviz:=true' && !a.checked)) {
@@ -312,6 +319,10 @@
             if (action.args.some(a => a.text === WHISPER_GPU_ARG && !a.checked)) {
                 activeArgs.push('use_gpu:=false');
             }
+            // --ros-args muss als letztes kommen
+            if (nodeParams.length > 0) {
+                activeArgs.push('--ros-args ' + nodeParams.map(p => '-p ' + p).join(' '));
+            }
             if (activeArgs.length > 0) {
                 finalCmd += ' ' + activeArgs.join(' ');
             }
@@ -320,6 +331,32 @@
             finalCmd += action.postCmd;
         }
         return finalCmd;
+    }
+
+    // Befehl + Terminal-Titel fuer den Start einer Aktion (EXECUTE im
+    // Sequenz-Popup und Klick auf eine Karte der Multimodal-Uebersicht)
+    function resolveLaunch(action, isLinearAxisNodeActive) {
+        let finalCmd = buildFinalCmd(action);
+        const gazeMode = getGazeMode(action);
+
+        // Terminal-Titel je nach Linear-Axis-Zustand
+        let finalTitle = (gazeMode && gazeMode.title) || action.title || 'Launch';
+        const hasLinearAxisArgChecked = action.args && action.args.some(a => a.text.includes('linear_axis') && a.checked);
+        const cmdHasLinearAxis = finalCmd.includes('linear_axis');
+        const isLinearAxisEnabled = isLinearAxisNodeActive && (cmdHasLinearAxis || hasLinearAxisArgChecked);
+
+        if (!isLinearAxisEnabled) {
+            finalTitle = finalTitle.replace(/\s*\+\s*Linear\s*Axis/gi, '')
+                                   .replace(/\s*\(\s*\+\s*Linear\s*Axis\s*\)/gi, '')
+                                   .replace(/\s*-\s*Linear\s*Axis/gi, '')
+                                   .trim();
+            if (!isLinearAxisNodeActive && finalCmd.includes('attach_to:=linear_axis_link')) {
+                finalCmd = finalCmd.replace(/\s*attach_to:=linear_axis_link/g, '').trim();
+            }
+        } else if ((finalTitle.toLowerCase().includes('servo') || finalTitle.toLowerCase().includes('movegroup')) && !finalTitle.toLowerCase().includes('linear axis')) {
+            finalTitle += ' + Linear Axis';
+        }
+        return { cmd: finalCmd, title: finalTitle };
     }
 
     // Verkettete Befehle (&, &&, ;) in Einzelbefehle zerlegen - eine Zeile je Befehl
@@ -753,6 +790,10 @@
     // Option aktiv (die Logik dafuer steckt in den onchange-Handlern der Chips).
     function getArgGroup(argObj) {
         const t = String((argObj && argObj.text) || '');
+        if (argObj && argObj.kind === 'value') {
+            const g = VALUE_GROUPS[argObj.def.group] || { label: 'Werte', icon: 'fa-solid fa-sliders' };
+            return { key: 'val_' + argObj.def.group, label: g.label, icon: g.icon };
+        }
         if (argObj && argObj.kind === 'gpu-toggle') return { key: 'device', label: 'Inferenz', icon: 'fa-solid fa-microchip' };
         if (argObj && argObj.kind === 'gaze-mode') return { key: 'gaze', label: 'Gaze-Modus', icon: 'fa-solid fa-eye', exclusive: 'genau 1' };
         if (t.startsWith('robot_ip:='))  return { key: 'ip', label: 'Roboter-Verbindung', icon: 'fa-solid fa-ethernet' };
@@ -762,6 +803,1220 @@
         if (t.startsWith('report_type:=')) return { key: 'report', label: 'Report-Level', icon: 'fa-solid fa-file-lines', exclusive: 'genau 1' };
         if (/(^|\s)-[rp](\s|$)/.test(t) || t.startsWith('--')) return { key: 'rosargs', label: 'ROS-Args', icon: 'fa-solid fa-gears' };
         return { key: 'options', label: 'Optionen', icon: 'fa-solid fa-toggle-on' };
+    }
+
+    // ─── WERT-PARAMETER (Eingabefeld statt Chip) ────────────────────────────────
+    // Launch-Argumente, Config-Werte (YAML) und Node-Parameter, die sich vor dem
+    // Start einstellen lassen. Hier steht nur die Darstellung (Label, Typ,
+    // Bereich). Standardwert und Herkunft kommen aus /api/launch_details, damit
+    // Launch-Datei bzw. YAML die Quelle der Werte bleiben. Angehaengt wird ein
+    // Wert nur, wenn er vom Standard abweicht; value === null heisst "Standard".
+    window.NEXUS_LAUNCH_DETAILS = null;
+
+    function loadLaunchDetails() {
+        return fetch('/api/launch_details')
+            .then(r => r.json())
+            .then(d => { if (d && d.ok) window.NEXUS_LAUNCH_DETAILS = d.launch || {}; })
+            .catch(() => { /* ohne Backend gelten die Defaults unten */ });
+    }
+    loadLaunchDetails();
+
+    const ZED_ONLY = { arg: 'camera', equals: 'zed_m' };
+    const GAZE_REAL_ONLY = { arg: 'gaze_mode', equals: 'real_world' };
+    const WHISPER_VALUE_PARAMS = [
+        { name: 'model_name', label: 'Modell', type: 'choice', choices: ['tiny', 'base', 'small', 'medium'], group: 'whisper',
+          hint: 'Größer = genauer, aber langsamer. Fehlende Modelle werden beim Start geladen.' },
+        { name: 'language', label: 'Sprache', type: 'choice', choices: ['auto', 'de', 'en'], group: 'whisper' },
+        { name: 'device_index', label: 'Geräte-Index', type: 'int', min: -1, max: 64, step: 1, group: 'mic',
+          hint: '-1 = Standard-Mikrofon des Systems' }
+    ];
+    const VALUE_PARAMS = {
+        'xarm_moveit_servo/lite6_moveit_servo_realmove.launch.py': [
+            { name: 'robot_ip', label: 'Roboter-IP', type: 'ip', group: 'ip' }
+        ],
+        'robot_vision_cameras_bringup/robot_vision_cameras_bringup.launch.py': [
+            { name: 'camera_model', label: 'Modell', type: 'choice', choices: ['zedm', 'zed2', 'zed2i', 'zedx', 'zedxm'], group: 'zed', when: ZED_ONLY },
+            { name: 'confidence_threshold', label: 'Konfidenz', type: 'float', min: 0.05, max: 0.95, step: 0.05, group: 'detect', when: ZED_ONLY,
+              hint: 'Erkennungen unter dieser Sicherheit werden verworfen' },
+            { name: 'ema_alpha', label: 'EMA-Glättung', type: 'float', min: 0.05, max: 1, step: 0.05, group: 'detect', when: ZED_ONLY,
+              hint: 'Kleiner = ruhigere, aber trägere 3D-Boxen' },
+            { name: 'safe_z_hover_height', label: 'Hover-Höhe', unit: 'm', type: 'float', min: 0.02, max: 0.4, step: 0.01, group: 'grasp' },
+            { name: 'grasp_z_offset', label: 'Offset Z', unit: 'm', type: 'float', min: -0.05, max: 0.1, step: 0.005, group: 'grasp',
+              hint: 'Zusätzliche Höhe über der Objekt-Oberkante beim Greifen' },
+            { name: 'velocity_scaling', label: 'Tempo', type: 'float', min: 0.01, max: 1, step: 0.05, group: 'grasp',
+              hint: 'MoveIt-Geschwindigkeitsfaktor der Greifbewegung (1 = Maximum)' },
+            { name: 'acceleration_scaling', label: 'Beschl.', type: 'float', min: 0.01, max: 1, step: 0.05, group: 'grasp',
+              hint: 'MoveIt-Beschleunigungsfaktor der Greifbewegung (1 = Maximum)' },
+            { name: 'tf_x', label: 'X', unit: 'm', type: 'float', min: -2, max: 2, step: 0.005, group: 'tf', when: ZED_ONLY },
+            { name: 'tf_y', label: 'Y', unit: 'm', type: 'float', min: -2, max: 2, step: 0.005, group: 'tf', when: ZED_ONLY },
+            { name: 'tf_z', label: 'Z', unit: 'm', type: 'float', min: -2, max: 2, step: 0.005, group: 'tf', when: ZED_ONLY },
+            { name: 'tf_roll', label: 'Roll', unit: 'rad', type: 'float', min: -3.1416, max: 3.1416, step: 0.01, group: 'tf', when: ZED_ONLY },
+            { name: 'tf_pitch', label: 'Pitch', unit: 'rad', type: 'float', min: -3.1416, max: 3.1416, step: 0.01, group: 'tf', when: ZED_ONLY },
+            { name: 'tf_yaw', label: 'Yaw', unit: 'rad', type: 'float', min: -3.1416, max: 3.1416, step: 0.01, group: 'tf', when: ZED_ONLY }
+        ],
+        'voice_command_listener/voice_listener.launch.py': WHISPER_VALUE_PARAMS,
+        'whisper_bringup/bringup.launch.py': WHISPER_VALUE_PARAMS,
+        'http_robot_control_ui_p8081/http_robot_control_ui.launch.py': [
+            { name: 'start_video_server', label: 'Video-Server + Window Capture', type: 'bool', group: 'video',
+              hint: 'Aus = kein Kamera-/RViz-Stream auf Port 8082 (spart CPU)' }
+        ],
+        // "ros2 run": Node-Parameter, angehaengt als --ros-args -p name:=wert
+        [GAZE_REAL_CMD]: [
+            { name: 'dwell_threshold', label: 'Verweilzeit', unit: 's', type: 'float', min: 0.3, max: 5, step: 0.1, def: '2.0',
+              source: 'node', group: 'gazeparam', when: GAZE_REAL_ONLY, hint: 'So lange muss der Blick auf einem Objekt ruhen, bis gegriffen wird' },
+            { name: 'tobii_ip', label: 'Tobii-IP', type: 'ip', def: '192.168.100.2', source: 'node', group: 'gazeparam', when: GAZE_REAL_ONLY }
+        ]
+    };
+
+    const VALUE_GROUPS = {
+        ip:        { label: 'Roboter-Verbindung', icon: 'fa-solid fa-ethernet' },
+        zed:       { label: 'ZED-Kamera',         icon: 'fa-solid fa-camera' },
+        detect:    { label: 'Erkennung (YOLO)',   icon: 'fa-solid fa-crosshairs' },
+        grasp:     { label: 'Greif-Bewegung',     icon: 'fa-solid fa-hand-holding' },
+        tf:        { label: 'Kamera-Pose (TF)',   icon: 'fa-solid fa-up-down-left-right' },
+        whisper:   { label: 'Whisper',            icon: 'fa-solid fa-language' },
+        mic:       { label: 'Mikrofon',           icon: 'fa-solid fa-microphone' },
+        video:     { label: 'Video-Streaming',    icon: 'fa-solid fa-video' },
+        gazeparam: { label: 'Gaze-Routine',       icon: 'fa-solid fa-stopwatch' }
+    };
+
+    const PARAM_SRC_BADGES = {
+        config: { text: 'CONFIG', icon: 'fa-solid fa-file-code' },
+        launch: { text: 'ARG',    icon: 'fa-solid fa-rocket' },
+        node:   { text: 'PARAM',  icon: 'fa-solid fa-circle-nodes' }
+    };
+
+    function valueParamDefs(action) {
+        const base = String((action && (action.baseCmd || action.cmd)) || '').trim();
+        return VALUE_PARAMS[launchKeyOf(base)] || VALUE_PARAMS[base] || [];
+    }
+
+    function launchDetailsOf(action) {
+        const map = window.NEXUS_LAUNCH_DETAILS;
+        const key = launchKeyOf((action && (action.baseCmd || action.cmd)) || '');
+        return (map && key && map[key]) || null;
+    }
+
+    function formatParamValue(def, v) {
+        if (v === null || v === undefined) return '';
+        if (typeof v === 'boolean') return v ? 'true' : 'false';
+        let s = String(v).trim();
+        if (def.type === 'bool') s = s.toLowerCase();
+        // ROS liest "2" als int - ein double-Parameter braucht "2.0"
+        if (def.type === 'float' && /^-?\d+$/.test(s)) s += '.0';
+        return s;
+    }
+
+    // Eingabe pruefen, null = ungueltig. Der Wert landet in einer Shell,
+    // deshalb nur Zahlen, IPs und feste Auswahlwerte.
+    function parseParamInput(def, raw) {
+        const s = String(raw == null ? '' : raw).trim();
+        if (def.type === 'choice') return def.choices.includes(s) ? s : null;
+        if (def.type === 'bool') return (s === 'true' || s === 'false') ? s : null;
+        if (def.type === 'ip') {
+            return /^\d{1,3}(\.\d{1,3}){3}$/.test(s) && s.split('.').every(n => Number(n) <= 255) ? s : null;
+        }
+        if (def.type === 'int' || def.type === 'float') {
+            const re = def.type === 'int' ? /^-?\d+$/ : /^-?(\d+\.?\d*|\.\d+)$/;
+            if (!re.test(s)) return null;
+            const n = Number(s);
+            if ((def.min !== undefined && n < def.min) || (def.max !== undefined && n > def.max)) return null;
+            return formatParamValue(def, s);
+        }
+        return /^[A-Za-z0-9._\/-]+$/.test(s) ? s : null;
+    }
+
+    // Aktueller Wert eines Arguments dieser Aktion (Wert-Feld, GPU-Schalter,
+    // aktiver Chip, sonst Launch-Default) - fuer "when"-Bedingungen.
+    function actionArgValue(action, name) {
+        const args = (action && action.args) || [];
+        const valArg = args.find(a => a.kind === 'value' && a.name === name);
+        if (valArg) return effectiveParamValue(action, valArg);
+        const gpu = args.find(a => a.kind === 'gpu-toggle' && a.text.startsWith(name + ':='));
+        if (gpu) return gpu.checked ? 'true' : 'false';
+        const chip = args.find(a => a.checked && a.kind !== 'value' && a.text.startsWith(name + ':='));
+        if (chip) return chip.text.slice(name.length + 2);
+        const d = launchDetailsOf(action);
+        const info = d && d.args && d.args[name];
+        return info && info.default !== undefined ? String(info.default) : '';
+    }
+
+    // Standardwert + Herkunft: YAML-Wert (CONFIG), sonst Default des Launch-
+    // Arguments (ARG), sonst der hinterlegte Node-Default (PARAM). Von mehreren
+    // passenden YAMLs gewinnt die zuletzt geladene (z.B. Whisper CPU-Profil).
+    function paramDefaultInfo(action, def) {
+        const d = launchDetailsOf(action);
+        const configs = (d && d.configs) || [];
+        const findHit = (respectWhen) => {
+            let hit = null;
+            configs.forEach(cfg => {
+                if (respectWhen && cfg.when &&
+                    actionArgValue(action, cfg.when.arg).toLowerCase() !== String(cfg.when.equals).toLowerCase()) return;
+                (cfg.values || []).forEach(v => { if (v.arg === def.name) hit = { cfg, v }; });
+            });
+            return hit;
+        };
+        const hit = findHit(true) || findHit(false);
+        if (hit) {
+            return { value: formatParamValue(def, hit.v.value), source: 'config',
+                     file: hit.cfg.file, pkg: hit.cfg.pkg, key: hit.v.key, desc: '' };
+        }
+        const info = d && d.args && d.args[def.name];
+        if (info && info.default) {
+            return { value: formatParamValue(def, info.default), source: def.source || 'launch', desc: info.description || '' };
+        }
+        return { value: formatParamValue(def, def.def), source: def.source || 'launch', desc: '' };
+    }
+
+    function effectiveParamValue(action, argObj) {
+        return argObj.value !== null ? argObj.value : paramDefaultInfo(action, argObj.def).value;
+    }
+
+    function paramWhenOk(action, def) {
+        return !def.when || actionArgValue(action, def.when.arg) === def.when.equals;
+    }
+
+    // "name:=wert" fuer den Start oder null (Standard / Bedingung nicht erfuellt)
+    function valueArgCmdText(action, argObj) {
+        if (argObj.value === null || !paramWhenOk(action, argObj.def)) return null;
+        if (argObj.value === paramDefaultInfo(action, argObj.def).value) return null;
+        return `${argObj.name}:=${argObj.value}`;
+    }
+
+    // Speicherformat: Chips als "text": bool, Wert-Felder als "val:name": wert|null
+    function storeArgState(target, argObj) {
+        if (argObj.kind === 'value') target['val:' + argObj.name] = argObj.value;
+        else target[argObj.text] = !!argObj.checked;
+    }
+
+    // Eine Zeile: Herkunfts-Badge · Label · Eingabe · Einheit · Zuruecksetzen
+    function buildValueParamRow(action, argObj, onChange) {
+        const def = argObj.def;
+        const row = document.createElement('div');
+        row.className = 'param-value';
+        row.dataset.argText = argObj.text;
+        row.onclick = (e) => e.stopPropagation();
+
+        const badge = document.createElement('span');
+        badge.className = 'param-src-badge';
+
+        const label = document.createElement('span');
+        label.className = 'param-value-label';
+        label.textContent = def.label;
+
+        let input;
+        if (def.type === 'choice' || def.type === 'bool') {
+            input = document.createElement('select');
+            (def.type === 'bool' ? ['true', 'false'] : def.choices).forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = def.type === 'bool' ? (c === 'true' ? 'an' : 'aus') : c;
+                input.appendChild(opt);
+            });
+        } else {
+            input = document.createElement('input');
+            input.type = (def.type === 'int' || def.type === 'float') ? 'number' : 'text';
+            if (def.min !== undefined) input.min = def.min;
+            if (def.max !== undefined) input.max = def.max;
+            if (def.step !== undefined) input.step = def.step;
+            input.spellcheck = false;
+            input.autocomplete = 'off';
+        }
+        input.className = 'param-value-input param-value-' + def.type;
+        input.setAttribute('aria-label', def.label);
+
+        const reset = document.createElement('button');
+        reset.type = 'button';
+        reset.className = 'param-value-reset';
+        reset.innerHTML = '<i class="fa-solid fa-rotate-left"></i>';
+
+        // Einheit immer als (ggf. leere) Spalte, damit die Felder buendig stehen
+        const unit = document.createElement('span');
+        unit.className = 'param-value-unit';
+        unit.textContent = def.unit || '';
+        row.append(badge, label, input, unit, reset);
+
+        const update = () => {
+            const info = paramDefaultInfo(action, def);
+            const whenOk = paramWhenOk(action, def);
+            const shown = argObj.value !== null ? argObj.value : info.value;
+            if (input.tagName === 'SELECT' && shown && !Array.from(input.options).some(o => o.value === shown)) {
+                const opt = document.createElement('option');
+                opt.value = shown;
+                opt.textContent = shown;
+                input.appendChild(opt);
+            }
+            if (document.activeElement !== input && !row.classList.contains('is-invalid')) input.value = shown;
+
+            const modified = argObj.value !== null && argObj.value !== info.value;
+            argObj.checked = modified && whenOk;
+            row.classList.toggle('is-modified', modified);
+            row.classList.toggle('is-off', !whenOk);
+            input.disabled = !whenOk;
+            reset.disabled = !modified;
+
+            const src = PARAM_SRC_BADGES[info.source] || PARAM_SRC_BADGES.launch;
+            badge.className = 'param-src-badge src-' + info.source;
+            badge.innerHTML = `<i class="${src.icon}"></i>${src.text}`;
+            row.dataset.src = info.source;
+
+            const origin = info.source === 'config' ? `Config: ${info.file} (${info.pkg}) → ${info.key}`
+                : info.source === 'node' ? 'Node-Parameter (--ros-args -p)' : 'Launch-Argument';
+            reset.title = `Zurücksetzen auf ${info.value || '(leer)'}`;
+            row.title = [
+                `${def.name}:=${shown}`,
+                origin,
+                `Standard: ${info.value || '(leer)'}`,
+                info.desc,
+                def.hint,
+                whenOk ? '' : `Nur wirksam bei ${def.when.arg}:=${def.when.equals}`,
+                (modified && whenOk) ? 'Geändert – wird beim Start angehängt' : 'Standardwert – wird nicht angehängt'
+            ].filter(Boolean).join('\n');
+        };
+
+        input.addEventListener('input', () => {
+            row.classList.toggle('is-invalid', parseParamInput(def, input.value) === null);
+        });
+        input.addEventListener('keydown', (e) => {
+            e.stopPropagation();
+            if (e.key === 'Enter') input.blur();
+        });
+        // "change" blubbert weiter und aktualisiert die Befehlsanzeige
+        input.addEventListener('change', () => {
+            const v = parseParamInput(def, input.value);
+            row.classList.toggle('is-invalid', v === null);
+            if (v === null) return;
+            argObj.value = (v === paramDefaultInfo(action, def).value) ? null : v;
+            update();
+            onChange();
+        });
+        reset.onclick = (e) => {
+            e.stopPropagation();
+            argObj.value = null;
+            row.classList.remove('is-invalid');
+            update();
+            onChange();
+            row.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        row._update = update;
+        update();
+        return row;
+    }
+
+    // Wert-Zeilen eines Containers neu bewerten (Bedingungen, Defaults), z.B.
+    // nach Kamera- oder CPU/GPU-Wechsel.
+    // Der Handler des ausloesenden Chips laeuft vor dem Bubbling, der neue
+    // Zustand steht hier also schon fest.
+    function watchValueParamRows(container) {
+        container.addEventListener('change', () => {
+            container.querySelectorAll('.param-value').forEach(r => { if (r._update) r._update(); });
+        });
+    }
+
+    // ─── CONFIG-DATEIEN EINER AKTION ────────────────────────────────────────────
+    // Zeigt die YAML-Configs, die eine Launch-Datei laedt (/api/launch_details):
+    // wichtige Werte mit Einheit, ob die Datei beim aktuellen Parametersatz
+    // ueberhaupt geladen wird, welche Werte ein Launch-Argument bzw. eine
+    // spaeter geladene Config ueberschreibt, und ob eine Aenderung an der YAML
+    // sofort wirkt (install/ verlinkt auf src/) oder erst nach colcon build.
+    // Die Daten werden beim Oeffnen des Popups frisch geholt, damit eine
+    // gerade bearbeitete YAML ohne Neuladen der Seite sichtbar ist.
+    let launchDetailsFetchedAt = 0;
+    let launchDetailsPending = null;
+    function refreshLaunchDetails(maxAgeMs) {
+        if (Date.now() - launchDetailsFetchedAt < maxAgeMs && window.NEXUS_LAUNCH_DETAILS) return Promise.resolve();
+        if (!launchDetailsPending) {
+            launchDetailsPending = loadLaunchDetails().then(() => {
+                launchDetailsFetchedAt = Date.now();
+                launchDetailsPending = null;
+            });
+        }
+        return launchDetailsPending;
+    }
+
+    const CFG_STATUS = {
+        linked:  { text: 'Live',          cls: 'ok',   title: 'install/ verlinkt auf src/ - Änderungen an der YAML wirken beim nächsten Start' },
+        copy:    { text: 'Kopie',         cls: 'info', title: 'install/ enthält eine Kopie (identisch mit src/) - nach Änderungen ist colcon build nötig' },
+        stale:   { text: 'Build nötig',   cls: 'warn', title: 'install/ enthält eine ältere Kopie - der Start nutzt NICHT den Stand aus src/. colcon build ausführen' },
+        missing: { text: 'Nicht gebaut',  cls: 'warn', title: 'Datei fehlt in install/ - Paket mit colcon build bauen' }
+    };
+
+    function formatCfgValue(v) {
+        if (v === null || v === undefined) return '—';
+        if (typeof v === 'boolean') return v ? 'true' : 'false';
+        if (typeof v === 'object') return JSON.stringify(v);
+        return String(v) === '' ? '""' : String(v);
+    }
+
+    // Gleicher Wert trotz anderer Schreibweise? ("0.35" vs 0.35, "True" vs true)
+    function sameCfgValue(a, b) {
+        const sa = String(a).trim().toLowerCase(), sb = String(b).trim().toLowerCase();
+        if (sa === sb) return true;
+        return sa !== '' && sb !== '' && !isNaN(Number(sa)) && Number(sa) === Number(sb);
+    }
+
+    function buildConfigPane(action) {
+        const pane = document.createElement('div');
+        pane.className = 'seq-pane seq-pane-config';
+        pane.hidden = true;
+        const head = document.createElement('div');
+        head.className = 'seq-pane-head';
+        const files = document.createElement('div');
+        files.className = 'cfg-files';
+        pane.append(head, files);
+
+        const render = () => {
+            const d = launchDetailsOf(action);
+            const configs = (d && d.configs) || [];
+            pane.hidden = configs.length === 0;
+            if (!configs.length) return;
+
+            const active = configs.map(cfg => !cfg.when ||
+                actionArgValue(action, cfg.when.arg).toLowerCase() === String(cfg.when.equals).toLowerCase());
+            head.innerHTML = `<i class="fa-solid fa-file-code"></i><b>Config-Dateien</b>`
+                + `<span class="cfg-head-count">${active.filter(Boolean).length}/${configs.length} geladen</span>`;
+
+            // Spaeter geladene aktive Configs ueberschreiben gleiche Schluessel
+            const lastActiveIdx = {};
+            configs.forEach((cfg, i) => {
+                if (active[i]) (cfg.all || []).forEach(e => { lastActiveIdx[e.key] = i; });
+            });
+
+            files.innerHTML = '';
+            configs.forEach((cfg, i) => {
+                const box = document.createElement('div');
+                box.className = 'cfg-file' + (active[i] ? '' : ' is-inactive');
+
+                const top = document.createElement('div');
+                top.className = 'cfg-file-head';
+                const title = document.createElement('span');
+                title.className = 'cfg-file-title';
+                title.textContent = cfg.title || cfg.file;
+                const name = document.createElement('code');
+                name.className = 'cfg-file-name';
+                name.textContent = cfg.file.split('/').pop();
+                name.title = `${cfg.pkg}/${cfg.file}`;
+                top.append(title, name);
+
+                const badges = document.createElement('div');
+                badges.className = 'cfg-file-badges';
+                const st = CFG_STATUS[cfg.status];
+                if (st) {
+                    const b = document.createElement('span');
+                    b.className = 'cfg-badge cfg-badge-' + st.cls;
+                    b.textContent = st.text;
+                    b.title = st.title;
+                    badges.appendChild(b);
+                }
+                if (cfg.when) {
+                    const b = document.createElement('span');
+                    b.className = 'cfg-badge ' + (active[i] ? 'cfg-badge-ok' : 'cfg-badge-off');
+                    b.textContent = active[i] ? 'geladen' : 'nicht geladen';
+                    b.title = `Wird nur bei ${cfg.when.arg}:=${cfg.when.equals} geladen`;
+                    badges.appendChild(b);
+                }
+                if (cfg.path) {
+                    const copyBtn = document.createElement('button');
+                    copyBtn.type = 'button';
+                    copyBtn.className = 'cfg-copy-btn';
+                    copyBtn.title = `Pfad kopieren: ${cfg.path}`;
+                    copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+                    copyBtn.onclick = (e) => { e.stopPropagation(); copyCmd(cfg.path, copyBtn); };
+                    badges.appendChild(copyBtn);
+                }
+                top.appendChild(badges);
+                box.appendChild(top);
+
+                if (cfg.error) {
+                    const err = document.createElement('div');
+                    err.className = 'cfg-error';
+                    err.textContent = cfg.error;
+                    box.appendChild(err);
+                    files.appendChild(box);
+                    return;
+                }
+
+                const rows = document.createElement('div');
+                rows.className = 'cfg-rows';
+                (cfg.values || []).forEach(v => {
+                    const row = document.createElement('div');
+                    row.className = 'cfg-row';
+                    const key = document.createElement('span');
+                    key.className = 'cfg-key';
+                    key.textContent = v.label;
+                    const val = document.createElement('span');
+                    val.className = 'cfg-val';
+                    let text = formatCfgValue(v.value);
+                    if (v.hz && Number(v.value) > 0) text += ` s · ${(1 / Number(v.value)).toFixed(1)} Hz`;
+                    else if (v.unit === 'rad' && typeof v.value === 'number') text += ` rad · ${Math.round(v.value * 1800 / Math.PI) / 10}°`;
+                    else if (v.unit) text += ` ${v.unit}`;
+                    const orig = document.createElement('span');
+                    orig.className = 'cfg-val-orig';
+                    orig.textContent = text;
+                    val.appendChild(orig);
+
+                    const tips = [`${cfg.file} → ${v.key}`];
+                    // Launch-Argument ueberschreibt den YAML-Wert?
+                    if (v.arg && active[i]) {
+                        const eff = actionArgValue(action, v.arg);
+                        if (eff !== '' && !sameCfgValue(eff, v.value)) {
+                            row.classList.add('is-overridden');
+                            const ov = document.createElement('span');
+                            ov.className = 'cfg-override';
+                            ov.textContent = `${eff}${v.unit && !v.hz ? ' ' + v.unit : ''}`;
+                            ov.title = `Überschrieben durch ${v.arg}:=${eff}`;
+                            val.appendChild(ov);
+                            tips.push(`Überschrieben durch ${v.arg}:=${eff}`);
+                        } else {
+                            tips.push(`Einstellbar über ${v.arg}:=`);
+                        }
+                    }
+                    // ... oder eine spaeter geladene Config (z.B. Whisper CPU-Profil)?
+                    if (active[i] && lastActiveIdx[v.key] !== undefined && lastActiveIdx[v.key] > i && !row.classList.contains('is-overridden')) {
+                        row.classList.add('is-overridden');
+                        const later = configs[lastActiveIdx[v.key]];
+                        tips.push(`Überschrieben durch ${later.file.split('/').pop()}`);
+                        const ov = document.createElement('span');
+                        ov.className = 'cfg-override';
+                        const laterVal = (later.all || []).find(e => e.key === v.key);
+                        ov.textContent = laterVal ? formatCfgValue(laterVal.value) : '?';
+                        ov.title = `Überschrieben durch ${later.file.split('/').pop()}`;
+                        val.appendChild(ov);
+                    }
+                    row.title = tips.join('\n');
+                    row.append(key, val);
+                    rows.appendChild(row);
+                });
+                box.appendChild(rows);
+
+                // Alle Schluessel der Datei zum Nachschlagen
+                if ((cfg.all || []).length > (cfg.values || []).length) {
+                    const det = document.createElement('details');
+                    det.className = 'cfg-all';
+                    det.onclick = (e) => e.stopPropagation();
+                    const sum = document.createElement('summary');
+                    sum.textContent = `Alle Werte (${cfg.all.length})`;
+                    det.appendChild(sum);
+                    const list = document.createElement('div');
+                    list.className = 'cfg-all-list';
+                    cfg.all.forEach(e => {
+                        const r = document.createElement('div');
+                        r.className = 'cfg-all-row';
+                        const k = document.createElement('span');
+                        k.className = 'cfg-all-key';
+                        k.textContent = e.key.replace(/^.*?\.ros__parameters\./, '');
+                        k.title = e.key;
+                        const vv = document.createElement('span');
+                        vv.className = 'cfg-all-val';
+                        vv.textContent = formatCfgValue(e.value);
+                        if (e.note) { vv.title = e.note; r.classList.add('has-note'); }
+                        r.append(k, vv);
+                        list.appendChild(r);
+                    });
+                    det.appendChild(list);
+                    box.appendChild(det);
+                }
+                files.appendChild(box);
+            });
+        };
+
+        render();
+        // Frisch vom Server: YAML kann sich seit dem Laden der Seite geaendert
+        // haben. Danach auch die Wert-Zeilen der Karte neu bewerten (Defaults).
+        refreshLaunchDetails(3000).then(() => {
+            render();
+            const card = pane.closest('.seq-card');
+            if (card) card.querySelectorAll('.param-value').forEach(r => { if (r._update) r._update(); });
+        });
+        pane._render = render;
+        return pane;
+    }
+
+    // ─── PARAMETER EINER AKTION ─────────────────────────────────────────────────
+    // Baut action.args (Chips) aus dem Befehl und dem gespeicherten Zustand des
+    // Popups auf. Genutzt vom Sequenz-Popup und von den DEV-SETUP-Sections der
+    // Multimodal-Uebersicht, damit beide dieselben Parameter/Defaults zeigen.
+    function parseActionArgs(action, effPopupId, actionsData) {
+       if (!action.cmd.startsWith('ros2 launch') && !action.cmd.startsWith('ros2 run') && !action.cmd.startsWith('ros2 topic pub')) {
+           action.baseCmd = action.cmd;
+           action.postCmd = '';
+           return;
+       }
+
+       const tokens = action.cmd.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+       
+       let fileIndex = -1;
+       for (let i = 0; i < tokens.length; i++) {
+          if (tokens[i].endsWith('.py') || tokens[i].endsWith('.cpp') || tokens[i].endsWith('.xml')) {
+              fileIndex = i; break;
+          }
+       }
+       if (fileIndex === -1 && tokens[0] === 'ros2' && tokens[1] === 'run') fileIndex = 3;
+       if (fileIndex === -1 && tokens[0] === 'ros2' && tokens[1] === 'topic' && tokens[2] === 'pub') {
+            // For 'ros2 topic pub', scan past optional flags to find topic-name and msg-type
+            // Structure: ros2 topic pub [flags] <topic> <msg_type> [<msg_yaml>]
+            // We want: baseCmd = everything up to and including msg_type
+            // So only the message payload (and nothing else) becomes a checkbox
+            let idx = 3;
+            // skip optional flags like --rate <n>, --once, --keep-alive <s>, etc.
+            while (idx < tokens.length && tokens[idx].startsWith('-')) {
+                idx++; // skip the flag name
+                if (idx < tokens.length && !tokens[idx].startsWith('-') && !tokens[idx].startsWith('/')) {
+                    idx++; // skip the flag value
+                }
+            }
+            // idx now points to <topic>, skip topic and msg_type
+            idx += 2; // past <topic> and <msg_type>
+            fileIndex = idx - 1; // fileIndex is last mandatory token (msg_type)
+        }
+       
+       if (fileIndex !== -1 && fileIndex < tokens.length - 1) {
+           let baseTokens = tokens.slice(0, fileIndex + 1);
+           let argTokens = [];
+           let postArgsTokens = [];
+           let parsingArgs = true;
+           
+           for (let i = fileIndex + 1; i < tokens.length; i++) {
+               const t = tokens[i];
+               if (t === '&' || t === '&&' || t === ';' || t === '|' || t === '||') {
+                   parsingArgs = false;
+               }
+               if (parsingArgs) {
+                   argTokens.push(t);
+               } else {
+                   postArgsTokens.push(t);
+               }
+           }
+           
+           action.baseCmd = baseTokens.join(' ');
+           action.postCmd = postArgsTokens.length > 0 ? ' ' + postArgsTokens.join(' ') : '';
+           
+           let mergedArgs = [];
+           for (let i = 0; i < argTokens.length; i++) {
+               let t = argTokens[i];
+               if (t.startsWith('-')) {
+                   let group = t;
+                   while (i + 1 < argTokens.length) {
+                       let nextToken = argTokens[i+1];
+                       if (nextToken.startsWith('-')) {
+                           group += ' ' + nextToken;
+                           i++;
+                       } else {
+                           group += ' ' + nextToken;
+                           i++;
+                           break;
+                       }
+                   }
+                   mergedArgs.push(group);
+               } else {
+                   mergedArgs.push(t);
+               }
+           }
+
+            mergedArgs.forEach(arg => {
+                const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, arg);
+                action.args.push({ text: arg, checked: isChecked });
+            });
+
+            // Update action.title if linear_axis arg or tuner node is not checked initially
+            const hasLinearAxisArg = action.args.some(a => a.text.includes('linear_axis'));
+            if ((hasLinearAxisArg || (action.title && action.title.toLowerCase().includes('linear axis'))) && action.title) {
+                const isLinearAxisChecked = action.args.some(a => a.text.includes('linear_axis') && a.checked);
+                const tunerNode = actionsData.find(a => a.cmd && a.cmd.includes('fake_linear_axis'));
+                const isTunerActive = tunerNode ? tunerNode.active : true;
+                if (!isLinearAxisChecked || !isTunerActive) {
+                    action.title = action.title.replace(/\s*\+\s*Linear\s*Axis/gi, '')
+                                               .replace(/\s*\(\s*\+\s*Linear\s*Axis\s*\)/gi, '')
+                                               .replace(/\s*-\s*Linear\s*Axis/gi, '')
+                                               .trim();
+                }
+            }
+        } else {
+           action.baseCmd = action.cmd;
+           action.postCmd = '';
+       }
+
+        // Whisper (Sprachsteuerung): CPU/GPU als Umschalter statt Chips.
+        // silero_vad_use_cuda wirkt nicht (kein VAD in whisper_bringup) und
+        // wird nicht mehr angeboten. Ein abgewaehltes use_gpu:=true wuerde
+        // nur weggelassen und damit den Launch-Standard (GPU) behalten -
+        // deshalb haengt der Start immer use_gpu:=true oder :=false an.
+        if (isWhisperLaunch(action.baseCmd)) {
+            const gpuDefault = !action.args.some(a => /^use_gpu:=false$/i.test(a.text));
+            action.args = action.args.filter(a => !/^(silero_vad_use_cuda|use_gpu):=/i.test(a.text));
+            // Nur der exakte Befehl zaehlt: GPU- und CPU-Karte teilen sich den
+            // Grundbefehl, die Wahl der einen soll die andere nicht umstellen.
+            const useGpu = getSavedArgState(effPopupId, action.cmd, null, WHISPER_GPU_ARG, gpuDefault);
+            action.args.unshift({ text: WHISPER_GPU_ARG, checked: !!useGpu, kind: 'gpu-toggle' });
+        }
+
+        // Eyetracker: genau ein Gaze-Modus (Standard: Real World)
+        if (isGazeModeCard(action.baseCmd)) {
+            action.args = action.args.filter(a => !a.text.startsWith('gaze_mode:='));
+            Object.keys(GAZE_MODES).forEach(modeArg => {
+                const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, modeArg, modeArg === 'gaze_mode:=real_world');
+                action.args.push({ text: modeArg, checked: !!isChecked, kind: 'gaze-mode' });
+            });
+            const gazeArgs = action.args.filter(a => a.kind === 'gaze-mode');
+            const checkedGaze = gazeArgs.filter(a => a.checked);
+            if (checkedGaze.length !== 1) {
+                const preferred = checkedGaze[0] || gazeArgs[0];
+                gazeArgs.forEach(a => { a.checked = (a === preferred); });
+            }
+        }
+
+           // Ensure static_objects:=true is available for lite6_moveit_servo
+        if (action.baseCmd && (action.baseCmd.includes('lite6_moveit_servo_realmove.launch.py') || action.baseCmd.includes('lite6_moveit_servo_fake.launch.py'))) {
+            const staticArgText = 'static_objects:=true';
+            if (!action.args.some(a => a.text === staticArgText || a.text === 'static_onjects:=true')) {
+                const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, staticArgText);
+                action.args.push({ text: staticArgText, checked: isChecked });
+            }
+            // RViz mitstarten ja/nein - echtes Launch-Argument "rviz" der
+            // Servo-Launches (Standard: an). Ohne Haken wird rviz:=false
+            // angehaengt, siehe buildCmdWithArgs.
+            const rvizArgText = 'rviz:=true';
+            if (!action.args.some(a => a.text.startsWith('rviz:='))) {
+                const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, rvizArgText);
+                action.args.push({ text: rvizArgText, checked: isChecked });
+            }
+        }
+
+        // Ensure camera selection and ZED M YOLO models args are available for robot_vision_cameras_bringup
+        if (action.baseCmd && action.baseCmd.includes('robot_vision_cameras_bringup.launch.py')) {
+            action.args = action.args.filter(a => !a.text.startsWith('use_zed_hardware'));
+            const visionDefaults = [
+                'camera:=zed_m',
+                'camera:=ip_cam',
+                'yolo_model:=yolov8l.pt',
+                'yolo_model:=yolov8s.pt',
+                'yolo_model:=my_yolo_model.pt'
+            ];
+            visionDefaults.forEach(defArg => {
+                if (!action.args.some(a => a.text === defArg)) {
+                    let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
+                    if (defArg === 'camera:=zed_m' && isChecked === false) {
+                        const ipSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'camera:=ip_cam');
+                        if (!ipSaved) isChecked = true;
+                    }
+                    action.args.push({ text: defArg, checked: isChecked });
+                }
+            });
+        }
+
+        // Ensure gripper selection args (add_vacuum_gripper and add_gripper) are available for Lite6 MoveIt Servo / MoveGroup
+        const isMoveItGripperCmd = (action.baseCmd && (
+            action.baseCmd.includes('lite6_moveit_servo') || 
+            action.baseCmd.includes('standalone_move_group')
+        )) || (action.cmd && (
+            action.cmd.includes('lite6_moveit_servo') || 
+            action.cmd.includes('standalone_move_group')
+        ));
+
+        if (isMoveItGripperCmd) {
+            const gripperDefaults = [
+                'add_vacuum_gripper:=true',
+                'add_gripper:=true'
+            ];
+            gripperDefaults.forEach(defArg => {
+                if (!action.args.some(a => a.text === defArg)) {
+                    let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
+                    if (defArg === 'add_vacuum_gripper:=true' && isChecked === false) {
+                        const gripSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'add_gripper:=true');
+                        if (!gripSaved) isChecked = true;
+                    }
+                    action.args.push({ text: defArg, checked: isChecked });
+                }
+            });
+        }
+
+        // Ensure report_type selection args (dev, normal, rich) are available for Real Move commands
+        const isRealMoveReportCmd = (action.baseCmd && (
+            action.baseCmd.includes('lite6_moveit_servo_realmove') || 
+            (action.baseCmd.includes('standalone_move_group') && (action.baseCmd.includes('robot_ip') || (action.cmd && action.cmd.includes('robot_ip')))) ||
+            action.baseCmd.includes('report_type')
+        )) || (action.cmd && (
+            action.cmd.includes('lite6_moveit_servo_realmove') || 
+            (action.cmd.includes('standalone_move_group') && action.cmd.includes('robot_ip')) ||
+            action.cmd.includes('report_type')
+        ));
+
+        if (isRealMoveReportCmd) {
+            // Ensure robot_ip:=192.168.1.175 is available and checked by default for realmove
+            const defaultIp = 'robot_ip:=192.168.1.175';
+            if (!action.args.some(a => a.text.startsWith('robot_ip:='))) {
+                let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defaultIp);
+                if (isChecked === undefined || isChecked === false) isChecked = true;
+                action.args.push({ text: defaultIp, checked: isChecked });
+            } else {
+                const ipArg = action.args.find(a => a.text.startsWith('robot_ip:='));
+                if (ipArg && !ipArg.checked) {
+                    ipArg.checked = true;
+                }
+            }
+
+            const reportDefaults = [
+                'report_type:=dev',
+                'report_type:=normal',
+                'report_type:=rich'
+            ];
+            reportDefaults.forEach(defArg => {
+                if (!action.args.some(a => a.text === defArg)) {
+                    let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
+                    if (defArg === 'report_type:=dev' && isChecked === false) {
+                        const normalSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'report_type:=normal');
+                        const richSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'report_type:=rich');
+                        if (!normalSaved && !richSaved) isChecked = true;
+                    }
+                    action.args.push({ text: defArg, checked: isChecked });
+                }
+            });
+        }
+
+        // Wert-Parameter als Eingabefeld; ein fester Chip gleichen Namens aus
+        // dem Befehl (z.B. robot_ip:=192.168.1.175) wird dabei ersetzt.
+        valueParamDefs(action).forEach(def => {
+            const prefix = def.name + ':=';
+            const chip = action.args.find(a => a.kind !== 'value' && a.text.startsWith(prefix));
+            action.args = action.args.filter(a => a.kind === 'value' || !a.text.startsWith(prefix));
+            if (action.args.some(a => a.kind === 'value' && a.name === def.name)) return;
+
+            const saved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'val:' + def.name, null);
+            let value = (saved === null || saved === undefined || saved === '') ? null : parseParamInput(def, saved);
+            if (value === null && chip) value = parseParamInput(def, chip.text.slice(prefix.length));
+            const argObj = { kind: 'value', name: def.name, def, text: prefix, value, checked: false };
+            // Gleich dem Standard -> "Standard", damit spaetere YAML-Aenderungen greifen
+            if (argObj.value !== null && argObj.value === paramDefaultInfo(action, def).value) argObj.value = null;
+            argObj.checked = !!valueArgCmdText(action, argObj);
+            action.args.push(argObj);
+        });
+    }
+
+    // Exklusive Gruppen (Kamera, YOLO, Greifer, Report) bereinigen und die
+    // Chips sortieren: IP, Kamera, YOLO, Greifer, Report, Rest.
+    function normalizeActionArgs(action) {
+        if (!action || !action.args || action.args.length === 0) return;
+        // Ensure exactly one camera:= arg is checked initially
+        const checkedCams = action.args.filter(a => a.text.startsWith('camera:=') && a.checked);
+        if (checkedCams.length > 1) {
+            const preferred = checkedCams.find(a => a.text === 'camera:=zed_m') || checkedCams[0];
+            checkedCams.forEach(a => { if (a !== preferred) a.checked = false; });
+        } else if (checkedCams.length === 0 && action.args.some(a => a.text.startsWith('camera:='))) {
+            const defaultCam = action.args.find(a => a.text === 'camera:=zed_m') || action.args.find(a => a.text.startsWith('camera:='));
+            if (defaultCam) defaultCam.checked = true;
+        }
+
+        // Ensure at most one yolo_model:= arg is checked initially
+        const checkedYoloModels = action.args.filter(a => a.text.startsWith('yolo_model:=') && a.checked);
+        if (checkedYoloModels.length > 1) {
+            const preferred = checkedYoloModels.find(a => a.text === 'yolo_model:=yolov8l.pt') || checkedYoloModels[0];
+            checkedYoloModels.forEach(a => { if (a !== preferred) a.checked = false; });
+        }
+
+        // Ensure exactly one gripper arg is checked initially
+        const gripperArgs = action.args.filter(a => a.text === 'add_vacuum_gripper:=true' || a.text === 'add_gripper:=true');
+        if (gripperArgs.length > 0) {
+            const checkedGrippers = gripperArgs.filter(a => a.checked);
+            if (checkedGrippers.length > 1) {
+                const preferred = checkedGrippers.find(a => a.text === 'add_vacuum_gripper:=true') || checkedGrippers[0];
+                checkedGrippers.forEach(a => { if (a !== preferred) a.checked = false; });
+            } else if (checkedGrippers.length === 0) {
+                const defaultGripper = gripperArgs.find(a => a.text === 'add_vacuum_gripper:=true') || gripperArgs[0];
+                if (defaultGripper) defaultGripper.checked = true;
+            }
+        }
+
+        // Ensure exactly one report_type:= arg is checked initially
+        const reportTypeArgs = action.args.filter(a => a.text.startsWith('report_type:='));
+        if (reportTypeArgs.length > 0) {
+            const checkedReports = reportTypeArgs.filter(a => a.checked);
+            if (checkedReports.length > 1) {
+                const preferred = checkedReports.find(a => a.text === 'report_type:=dev') || checkedReports[0];
+                checkedReports.forEach(a => { if (a !== preferred) a.checked = false; });
+            } else if (checkedReports.length === 0) {
+                const defaultReport = reportTypeArgs.find(a => a.text === 'report_type:=dev') || reportTypeArgs[0];
+                if (defaultReport) defaultReport.checked = true;
+            }
+        }
+
+        // Put robot_ip args first, camera args next, yolo_model args next, gripper args grouped together, report_type args grouped together
+        action.args.sort((a, b) => {
+            const isIpA = a.text.startsWith('robot_ip:=');
+            const isIpB = b.text.startsWith('robot_ip:=');
+            if (isIpA && !isIpB) return -1;
+            if (!isIpA && isIpB) return 1;
+
+            const isCamA = a.text.startsWith('camera:=');
+            const isCamB = b.text.startsWith('camera:=');
+            const isYoloA = a.text.startsWith('yolo_model:=');
+            const isYoloB = b.text.startsWith('yolo_model:=');
+            if (isCamA && !isCamB) return -1;
+            if (!isCamA && isCamB) return 1;
+            if (isYoloA && !isYoloB) return -1;
+            if (!isYoloA && isYoloB) return 1;
+
+            const isGripA = (a.text === 'add_vacuum_gripper:=true' || a.text === 'add_gripper:=true');
+            const isGripB = (b.text === 'add_vacuum_gripper:=true' || b.text === 'add_gripper:=true');
+            if (isGripA && isGripB) {
+                if (a.text === 'add_vacuum_gripper:=true') return -1;
+                if (b.text === 'add_vacuum_gripper:=true') return 1;
+            }
+            if (isGripA && !isGripB) return -1;
+            if (!isGripA && isGripB) return 1;
+
+            const isRepA = a.text.startsWith('report_type:=');
+            const isRepB = b.text.startsWith('report_type:=');
+            if (isRepA && isRepB) {
+                const repOrder = ['report_type:=dev', 'report_type:=normal', 'report_type:=rich'];
+                const idxA = repOrder.indexOf(a.text);
+                const idxB = repOrder.indexOf(b.text);
+                return (idxA !== -1 && idxB !== -1) ? idxA - idxB : 0;
+            }
+            if (isRepA && !isRepB) return -1;
+            if (!isRepA && isRepB) return 1;
+
+            return 0;
+        });
+    }
+
+    // ─── MULTIMODAL-UEBERSICHT: DEV SETUP FAKE / REAL ───────────────────────────
+    // Je eine Section mit den Aktionen aus getDevSetupActions(). Checkbox,
+    // Parameter und localhost-Schalter teilen sich den gespeicherten Zustand
+    // mit dem DEV-Setup-Popup (popupId dev_fake / dev_real). Klick auf eine
+    // Karte startet genau diese Aktion so, wie EXECUTE sie starten wuerde.
+    const DEV_SETUP_SECTIONS = {
+        dev_fake: { mode: 'fake', title: 'DEV SETUP · FAKE', badge: 'Simulation', icon: 'fa-solid fa-flask', color: '#f0b429' },
+        dev_real: { mode: 'real', title: 'DEV SETUP · REAL', badge: 'Hardware', icon: 'fa-solid fa-bolt', color: '#00e5ff' }
+    };
+
+    function loadDevSetupActions(popupId) {
+        const d = DEV_SETUP_SECTIONS[popupId];
+        if (!d || typeof getDevSetupActions !== 'function') return [];
+        const actions = getDevSetupActions(d.mode);
+
+        let activeSet = null;
+        try {
+            const localActive = JSON.parse(localStorage.getItem('ros2_nexus_popups_active') || '{}');
+            if (Array.isArray(localActive[popupId])) activeSet = new Set(localActive[popupId]);
+        } catch (e) {}
+        if (!activeSet && window.TABS && window.TABS['__popups_active'] && Array.isArray(window.TABS['__popups_active'][popupId])) {
+            activeSet = new Set(window.TABS['__popups_active'][popupId]);
+        }
+
+        actions.forEach(a => {
+            a.baseCmd = a.cmd;
+            a.args = [];
+            a.active = activeSet ? (activeSet.has(a.cmd) || (a.title && activeSet.has(a.title))) : true;
+        });
+        actions.forEach(a => {
+            parseActionArgs(a, popupId, actions);
+            normalizeActionArgs(a);
+            if (a.active && activeSet && !activeSet.has(a.cmd) && a.baseCmd) a.active = activeSet.has(a.baseCmd) || activeSet.has(a.title);
+        });
+        return actions;
+    }
+
+    function isDevSetupLocalhostOnly(popupId) {
+        const env = window.TABS && window.TABS['__popups_env'] && window.TABS['__popups_env'][popupId];
+        return !!(env && env.localhost_only);
+    }
+
+    // Gleiches Speicherformat wie saveActiveState() im Sequenz-Popup
+    function saveDevSetupState(popupId, actions) {
+        const activeCmds = [];
+        const argsState = {};
+        actions.forEach(a => {
+            if (a.active) {
+                if (a.cmd && !activeCmds.includes(a.cmd)) activeCmds.push(a.cmd);
+                if (a.baseCmd && a.baseCmd !== a.cmd && !activeCmds.includes(a.baseCmd)) activeCmds.push(a.baseCmd);
+            }
+            if (a.args && a.args.length > 0) {
+                [a.cmd, a.baseCmd].filter(Boolean).forEach(k => {
+                    argsState[k] = argsState[k] || {};
+                    a.args.forEach(arg => storeArgState(argsState[k], arg));
+                });
+            }
+        });
+
+        if (!window.TABS) window.TABS = {};
+        ['__popups_active', '__popups_args', '__cmd_args'].forEach(k => { if (!window.TABS[k]) window.TABS[k] = {}; });
+        window.TABS['__popups_active'][popupId] = activeCmds;
+        window.TABS['__popups_args'][popupId] = Object.assign(window.TABS['__popups_args'][popupId] || {}, argsState);
+        Object.keys(argsState).forEach(k => {
+            window.TABS['__cmd_args'][k] = Object.assign(window.TABS['__cmd_args'][k] || {}, argsState[k]);
+        });
+
+        try {
+            localStorage.setItem('ros2_nexus_popups_active', JSON.stringify(window.TABS['__popups_active']));
+            localStorage.setItem('ros2_nexus_popups_args', JSON.stringify(window.TABS['__popups_args']));
+            localStorage.setItem('ros2_nexus_cmd_args', JSON.stringify(window.TABS['__cmd_args']));
+        } catch (e) {}
+
+        fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(window.TABS)
+        }).catch(err => console.error('Failed to save config to /api/config:', err));
+    }
+
+    async function runDevSetupAction(popupId, action) {
+        const { cmd, title } = resolveLaunch(action, true);
+        try {
+            await fetch('/api/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: cmd, title, mode: 'ros', localhost_only: isDevSetupLocalhostOnly(popupId) })
+            });
+            return true;
+        } catch (e) {
+            console.error('Failed to start:', cmd);
+            return false;
+        }
+    }
+
+    // Chip umschalten; exklusive Gruppen verhalten sich wie im Sequenz-Popup:
+    // "genau 1" mit zwei Optionen schaltet beim Abwaehlen auf die andere,
+    // mit mehr Optionen bleibt die gewaehlte aktiv; "max. 1" waehlt die
+    // anderen ab.
+    function toggleDevSetupArg(action, argObj, checked) {
+        const g = getArgGroup(argObj);
+        const peers = action.args.filter(a => a !== argObj && getArgGroup(a).key === g.key);
+        if (g.exclusive === 'genau 1') {
+            let target = argObj;
+            if (!checked) target = peers.length === 1 ? peers[0] : argObj;
+            [argObj].concat(peers).forEach(a => { a.checked = (a === target); });
+        } else {
+            argObj.checked = checked;
+            if (checked && g.exclusive === 'max. 1') peers.forEach(a => { a.checked = false; });
+        }
+        // Linear Axis / Static Objects gelten fuer alle Aktionen der Sequenz
+        return argObj.text.includes('linear_axis') || argObj.text === 'static_objects:=true' || argObj.text === 'static_onjects:=true';
+    }
+
+    function buildDevSetupArgs(action, actions, onChange) {
+        const wrap = document.createElement('div');
+        wrap.className = 'user-dev-params';
+        if (!action.args || action.args.length === 0) return wrap;
+
+        const launchKey = launchKeyOf(action.baseCmd || action.cmd);
+        const hosts = {};
+        const hostFor = (argObj) => {
+            const g = getArgGroup(argObj);
+            if (hosts[g.key]) return hosts[g.key];
+            const groupEl = document.createElement('div');
+            groupEl.className = 'param-group';
+            groupEl.dataset.group = g.key;
+            groupEl.innerHTML = `<div class="param-group-head"><i class="${g.icon}"></i><span>${g.label}</span>`
+                + (g.exclusive ? `<span class="param-group-hint" title="Diese Optionen schliessen sich gegenseitig aus">${g.exclusive}</span>` : '')
+                + `</div>`;
+            const chips = document.createElement('div');
+            chips.className = 'param-group-chips';
+            groupEl.appendChild(chips);
+            wrap.appendChild(groupEl);
+            hosts[g.key] = chips;
+            return chips;
+        };
+
+        const syncChips = () => {
+            wrap.querySelectorAll('label.param-chip').forEach(lbl => {
+                const a = action.args.find(x => x.text === lbl.dataset.argText);
+                const cb = lbl.querySelector('input');
+                if (!a || !cb) return;
+                cb.checked = !!a.checked;
+                lbl.classList.toggle('chip-inactive', !a.checked);
+            });
+        };
+
+        action.args.forEach(argObj => {
+            if (argObj.kind === 'gpu-toggle') {
+                hostFor(argObj).appendChild(buildWhisperDeviceToggle(argObj, () => {
+                    onChange(false);
+                    wrap.dispatchEvent(new Event('change', { bubbles: true }));
+                }));
+                return;
+            }
+            if (argObj.kind === 'value') {
+                hostFor(argObj).appendChild(buildValueParamRow(action, argObj, () => onChange(false)));
+                return;
+            }
+            const lbl = document.createElement('label');
+            const kind = classifyArg(argObj.text, launchKey);
+            lbl.className = 'param-chip' + (argObj.checked ? '' : ' chip-inactive') + (kind.cls ? ' ' + kind.cls : '');
+            lbl.title = kind.title || argObj.text;
+            lbl.dataset.argText = argObj.text;
+            lbl.onclick = (e) => e.stopPropagation();
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = !!argObj.checked;
+            cb.onchange = (e) => {
+                const shared = toggleDevSetupArg(action, argObj, e.target.checked);
+                if (shared) {
+                    actions.forEach(other => (other.args || []).forEach(a => {
+                        if (a.text === argObj.text) a.checked = argObj.checked;
+                    }));
+                }
+                syncChips();
+                onChange(shared);
+            };
+
+            const txt = document.createElement('span');
+            txt.className = 'user-dev-chip-txt';
+            const eq = argObj.text.indexOf(':=');
+            if (eq !== -1) {
+                txt.innerHTML = `<span class="arg-key">${argObj.text.slice(0, eq)}:=</span><span class="arg-val">${argObj.text.slice(eq + 2)}</span>`;
+            } else {
+                txt.textContent = argObj.text;
+            }
+            lbl.appendChild(cb);
+            lbl.appendChild(txt);
+            hostFor(argObj).appendChild(lbl);
+        });
+        watchValueParamRows(wrap);
+        wrap.syncChips = syncChips;
+        return wrap;
+    }
+
+    function mountDevSetupSections(root) {
+        root.querySelectorAll('.user-dev-section').forEach(sec => {
+            const popupId = sec.dataset.devPopup;
+            const grid = sec.querySelector('.user-dev-grid');
+            const runAllBtn = sec.querySelector('.user-dev-run-all');
+            const runN = sec.querySelector('.user-dev-run-n');
+            const actions = loadDevSetupActions(popupId);
+            const paramViews = [];
+
+            const updateCount = () => {
+                const n = actions.filter(a => a.active).length;
+                if (runN) runN.textContent = n;
+                if (runAllBtn) runAllBtn.disabled = n === 0;
+            };
+
+            if (actions.length === 0) {
+                grid.innerHTML = `<div class="param-empty">Keine Aktionen gefunden</div>`;
+                if (runAllBtn) runAllBtn.disabled = true;
+                return;
+            }
+
+            actions.forEach(action => {
+                const cat = getSeqCategory(action);
+                const titleParts = splitSeqTitle(action.title || action.cmd);
+                const iconMetas = getActionIconMeta(action, action.cmd);
+
+                const card = document.createElement('div');
+                card.className = 'user-icon-card user-dev-card' + (action.active ? '' : ' is-off');
+                card.style.setProperty('--sec-color', cat.color);
+                card.tabIndex = 0;
+                card.setAttribute('role', 'button');
+                card.title = 'Klick: ' + (action.title || action.cmd) + ' starten';
+
+                const top = document.createElement('div');
+                top.className = 'user-dev-card-top';
+                const activeLbl = document.createElement('label');
+                activeLbl.className = 'user-dev-active';
+                activeLbl.title = 'In der Sequenz aktiv (wird von „Aktive starten“ und EXECUTE im DEV-Setup-Popup mitgestartet)';
+                activeLbl.onclick = (e) => e.stopPropagation();
+                const activeCb = document.createElement('input');
+                activeCb.type = 'checkbox';
+                activeCb.className = 'main-action-cb';
+                activeCb.checked = !!action.active;
+                activeCb.onchange = (e) => {
+                    action.active = e.target.checked;
+                    card.classList.toggle('is-off', !action.active);
+                    updateCount();
+                    saveDevSetupState(popupId, actions);
+                };
+                const activeTxt = document.createElement('span');
+                activeTxt.textContent = 'Aktiv';
+                activeLbl.appendChild(activeCb);
+                activeLbl.appendChild(activeTxt);
+                const catTag = document.createElement('span');
+                catTag.className = 'user-dev-cat';
+                catTag.innerHTML = `<i class="${cat.icon}"></i>`;
+                catTag.title = cat.label;
+                top.appendChild(activeLbl);
+                top.appendChild(catTag);
+                card.appendChild(top);
+
+                // Alle Icons der Action Card aus dem DEV-Setup-Popup
+                const icons = document.createElement('div');
+                icons.className = 'user-dev-icons' + (iconMetas.length > 1 ? ' is-multi' : '');
+                (iconMetas.length ? iconMetas : [null]).forEach(meta => {
+                    const badge = document.createElement('div');
+                    badge.className = 'user-icon-badge';
+                    if (meta) {
+                        badge.title = meta.label || '';
+                        const img = document.createElement('img');
+                        img.className = 'user-icon-img';
+                        img.src = meta.path;
+                        img.alt = meta.label || '';
+                        badge.appendChild(img);
+                    } else {
+                        badge.innerHTML = `<i class="${cat.icon} user-dev-fa"></i>`;
+                    }
+                    icons.appendChild(badge);
+                });
+                card.appendChild(icons);
+
+                const title = document.createElement('div');
+                title.className = 'user-icon-title';
+                title.textContent = titleParts.main;
+                card.appendChild(title);
+                const desc = document.createElement('div');
+                desc.className = 'user-icon-desc';
+                desc.textContent = titleParts.sub ? titleParts.sub.replace(/^[|·]\s*/, '') : cat.label;
+                card.appendChild(desc);
+
+                const divider = document.createElement('div');
+                divider.className = 'user-icon-divider';
+                card.appendChild(divider);
+
+                const params = buildDevSetupArgs(action, actions, (shared) => {
+                    if (shared) paramViews.forEach(v => v.syncChips && v.syncChips());
+                    saveDevSetupState(popupId, actions);
+                });
+                paramViews.push(params);
+                card.appendChild(params);
+
+                const hint = document.createElement('div');
+                hint.className = 'user-dev-launch';
+                hint.innerHTML = `<i class="fa-solid fa-play"></i><span>Klick startet</span>`;
+                card.appendChild(hint);
+
+                const launch = async () => {
+                    if (card.classList.contains('is-launching')) return;
+                    card.classList.add('is-launching');
+                    showToast('🚀 ' + titleParts.main + ' gestartet...');
+                    await runDevSetupAction(popupId, action);
+                    setTimeout(() => card.classList.remove('is-launching'), 1200);
+                };
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('label, input, .param-device-switch, button')) return;
+                    launch();
+                });
+                card.addEventListener('keydown', (e) => {
+                    if (e.target !== card) return;
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); launch(); }
+                });
+                grid.appendChild(card);
+            });
+
+            updateCount();
+            if (runAllBtn) {
+                runAllBtn.addEventListener('click', async () => {
+                    const toRun = actions.filter(a => a.active);
+                    if (toRun.length === 0) return;
+                    runAllBtn.disabled = true;
+                    showToast('🚀 ' + DEV_SETUP_SECTIONS[popupId].title + ' gestartet...');
+                    for (const a of toRun) {
+                        await runDevSetupAction(popupId, a);
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
+                    updateCount();
+                });
+            }
+        });
     }
 
     function buildUserAppOverviewHtml() {
@@ -821,7 +2076,27 @@
             [sections[2], sections[3]]
         ];
 
+        // Oben: DEV SETUP FAKE | REAL - Inhalt fuellt mountDevSetupSections()
         let html = `<div class="user-overview-container">`;
+        html += `<div class="user-overview-row">`;
+        Object.keys(DEV_SETUP_SECTIONS).forEach(popupId => {
+            const d = DEV_SETUP_SECTIONS[popupId];
+            html += `
+                <div class="user-overview-section user-dev-section" data-dev-popup="${popupId}" style="--sec-color: ${d.color};">
+                    <div class="user-overview-section-header">
+                        <div class="user-sec-title-wrap">
+                            <i class="${d.icon}" style="color: ${d.color}; font-size: 14px;"></i>
+                            <span class="user-sec-title">${d.title}</span>
+                            <span class="user-sec-badge" style="color: ${d.color}; border-color: ${d.color}40; background: ${d.color}15;">${d.badge}</span>
+                        </div>
+                        <button type="button" class="user-dev-run-all" title="Alle aktiven Aktionen dieser Sequenz nacheinander starten (wie EXECUTE im DEV-Setup-Popup)">
+                            <i class="fa-solid fa-play"></i><span>Aktive starten</span><b class="user-dev-run-n">0</b>
+                        </button>
+                    </div>
+                    <div class="user-overview-icons-grid user-dev-grid"></div>
+                </div>`;
+        });
+        html += `</div>`;
         rows.forEach(rowSections => {
             html += `<div class="user-overview-row">`;
             rowSections.forEach(sec => {
@@ -1110,14 +2385,10 @@
                if (a.args && a.args.length > 0) {
                    const cmdKey = a.cmd || a.baseCmd;
                    if (!currentArgsState[cmdKey]) currentArgsState[cmdKey] = {};
-                   a.args.forEach(argObj => {
-                       currentArgsState[cmdKey][argObj.text] = !!argObj.checked;
-                   });
+                   a.args.forEach(argObj => storeArgState(currentArgsState[cmdKey], argObj));
                    if (a.baseCmd && a.baseCmd !== a.cmd) {
                        if (!currentArgsState[a.baseCmd]) currentArgsState[a.baseCmd] = {};
-                       a.args.forEach(argObj => {
-                           currentArgsState[a.baseCmd][argObj.text] = !!argObj.checked;
-                       });
+                       a.args.forEach(argObj => storeArgState(currentArgsState[a.baseCmd], argObj));
                    }
                }
            });
@@ -1637,242 +2908,9 @@
             }
         }
         
+        // Parameter-Liste wie im Sequenz-Popup (auch fuer die Multimodal-Uebersicht)
         function parseArgs(action) {
-           if (!action.cmd.startsWith('ros2 launch') && !action.cmd.startsWith('ros2 run') && !action.cmd.startsWith('ros2 topic pub')) {
-               action.baseCmd = action.cmd;
-               action.postCmd = '';
-               return;
-           }
-
-           const tokens = action.cmd.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
-           
-           let fileIndex = -1;
-           for (let i = 0; i < tokens.length; i++) {
-              if (tokens[i].endsWith('.py') || tokens[i].endsWith('.cpp') || tokens[i].endsWith('.xml')) {
-                  fileIndex = i; break;
-              }
-           }
-           if (fileIndex === -1 && tokens[0] === 'ros2' && tokens[1] === 'run') fileIndex = 3;
-           if (fileIndex === -1 && tokens[0] === 'ros2' && tokens[1] === 'topic' && tokens[2] === 'pub') {
-                // For 'ros2 topic pub', scan past optional flags to find topic-name and msg-type
-                // Structure: ros2 topic pub [flags] <topic> <msg_type> [<msg_yaml>]
-                // We want: baseCmd = everything up to and including msg_type
-                // So only the message payload (and nothing else) becomes a checkbox
-                let idx = 3;
-                // skip optional flags like --rate <n>, --once, --keep-alive <s>, etc.
-                while (idx < tokens.length && tokens[idx].startsWith('-')) {
-                    idx++; // skip the flag name
-                    if (idx < tokens.length && !tokens[idx].startsWith('-') && !tokens[idx].startsWith('/')) {
-                        idx++; // skip the flag value
-                    }
-                }
-                // idx now points to <topic>, skip topic and msg_type
-                idx += 2; // past <topic> and <msg_type>
-                fileIndex = idx - 1; // fileIndex is last mandatory token (msg_type)
-            }
-           
-           if (fileIndex !== -1 && fileIndex < tokens.length - 1) {
-               let baseTokens = tokens.slice(0, fileIndex + 1);
-               let argTokens = [];
-               let postArgsTokens = [];
-               let parsingArgs = true;
-               
-               for (let i = fileIndex + 1; i < tokens.length; i++) {
-                   const t = tokens[i];
-                   if (t === '&' || t === '&&' || t === ';' || t === '|' || t === '||') {
-                       parsingArgs = false;
-                   }
-                   if (parsingArgs) {
-                       argTokens.push(t);
-                   } else {
-                       postArgsTokens.push(t);
-                   }
-               }
-               
-               action.baseCmd = baseTokens.join(' ');
-               action.postCmd = postArgsTokens.length > 0 ? ' ' + postArgsTokens.join(' ') : '';
-               
-               let mergedArgs = [];
-               for (let i = 0; i < argTokens.length; i++) {
-                   let t = argTokens[i];
-                   if (t.startsWith('-')) {
-                       let group = t;
-                       while (i + 1 < argTokens.length) {
-                           let nextToken = argTokens[i+1];
-                           if (nextToken.startsWith('-')) {
-                               group += ' ' + nextToken;
-                               i++;
-                           } else {
-                               group += ' ' + nextToken;
-                               i++;
-                               break;
-                           }
-                       }
-                       mergedArgs.push(group);
-                   } else {
-                       mergedArgs.push(t);
-                   }
-               }
-
-                mergedArgs.forEach(arg => {
-                    const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, arg);
-                    action.args.push({ text: arg, checked: isChecked });
-                });
-
-                // Update action.title if linear_axis arg or tuner node is not checked initially
-                const hasLinearAxisArg = action.args.some(a => a.text.includes('linear_axis'));
-                if ((hasLinearAxisArg || (action.title && action.title.toLowerCase().includes('linear axis'))) && action.title) {
-                    const isLinearAxisChecked = action.args.some(a => a.text.includes('linear_axis') && a.checked);
-                    const tunerNode = actionsData.find(a => a.cmd && a.cmd.includes('fake_linear_axis'));
-                    const isTunerActive = tunerNode ? tunerNode.active : true;
-                    if (!isLinearAxisChecked || !isTunerActive) {
-                        action.title = action.title.replace(/\s*\+\s*Linear\s*Axis/gi, '')
-                                                   .replace(/\s*\(\s*\+\s*Linear\s*Axis\s*\)/gi, '')
-                                                   .replace(/\s*-\s*Linear\s*Axis/gi, '')
-                                                   .trim();
-                    }
-                }
-            } else {
-               action.baseCmd = action.cmd;
-               action.postCmd = '';
-           }
-
-            // Whisper (Sprachsteuerung): CPU/GPU als Umschalter statt Chips.
-            // silero_vad_use_cuda wirkt nicht (kein VAD in whisper_bringup) und
-            // wird nicht mehr angeboten. Ein abgewaehltes use_gpu:=true wuerde
-            // nur weggelassen und damit den Launch-Standard (GPU) behalten -
-            // deshalb haengt der Start immer use_gpu:=true oder :=false an.
-            if (isWhisperLaunch(action.baseCmd)) {
-                const gpuDefault = !action.args.some(a => /^use_gpu:=false$/i.test(a.text));
-                action.args = action.args.filter(a => !/^(silero_vad_use_cuda|use_gpu):=/i.test(a.text));
-                // Nur der exakte Befehl zaehlt: GPU- und CPU-Karte teilen sich den
-                // Grundbefehl, die Wahl der einen soll die andere nicht umstellen.
-                const useGpu = getSavedArgState(effPopupId, action.cmd, null, WHISPER_GPU_ARG, gpuDefault);
-                action.args.unshift({ text: WHISPER_GPU_ARG, checked: !!useGpu, kind: 'gpu-toggle' });
-            }
-
-            // Eyetracker: genau ein Gaze-Modus (Standard: Real World)
-            if (isGazeModeCard(action.baseCmd)) {
-                action.args = action.args.filter(a => !a.text.startsWith('gaze_mode:='));
-                Object.keys(GAZE_MODES).forEach(modeArg => {
-                    const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, modeArg, modeArg === 'gaze_mode:=real_world');
-                    action.args.push({ text: modeArg, checked: !!isChecked, kind: 'gaze-mode' });
-                });
-                const gazeArgs = action.args.filter(a => a.kind === 'gaze-mode');
-                const checkedGaze = gazeArgs.filter(a => a.checked);
-                if (checkedGaze.length !== 1) {
-                    const preferred = checkedGaze[0] || gazeArgs[0];
-                    gazeArgs.forEach(a => { a.checked = (a === preferred); });
-                }
-            }
-
-               // Ensure static_objects:=true is available for lite6_moveit_servo
-            if (action.baseCmd && (action.baseCmd.includes('lite6_moveit_servo_realmove.launch.py') || action.baseCmd.includes('lite6_moveit_servo_fake.launch.py'))) {
-                const staticArgText = 'static_objects:=true';
-                if (!action.args.some(a => a.text === staticArgText || a.text === 'static_onjects:=true')) {
-                    const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, staticArgText);
-                    action.args.push({ text: staticArgText, checked: isChecked });
-                }
-                // RViz mitstarten ja/nein - echtes Launch-Argument "rviz" der
-                // Servo-Launches (Standard: an). Ohne Haken wird rviz:=false
-                // angehaengt, siehe buildCmdWithArgs.
-                const rvizArgText = 'rviz:=true';
-                if (!action.args.some(a => a.text.startsWith('rviz:='))) {
-                    const isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, rvizArgText);
-                    action.args.push({ text: rvizArgText, checked: isChecked });
-                }
-            }
-
-            // Ensure camera selection and ZED M YOLO models args are available for robot_vision_cameras_bringup
-            if (action.baseCmd && action.baseCmd.includes('robot_vision_cameras_bringup.launch.py')) {
-                action.args = action.args.filter(a => !a.text.startsWith('use_zed_hardware'));
-                const visionDefaults = [
-                    'camera:=zed_m',
-                    'camera:=ip_cam',
-                    'yolo_model:=yolov8l.pt',
-                    'yolo_model:=yolov8s.pt',
-                    'yolo_model:=my_yolo_model.pt'
-                ];
-                visionDefaults.forEach(defArg => {
-                    if (!action.args.some(a => a.text === defArg)) {
-                        let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
-                        if (defArg === 'camera:=zed_m' && isChecked === false) {
-                            const ipSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'camera:=ip_cam');
-                            if (!ipSaved) isChecked = true;
-                        }
-                        action.args.push({ text: defArg, checked: isChecked });
-                    }
-                });
-            }
-
-            // Ensure gripper selection args (add_vacuum_gripper and add_gripper) are available for Lite6 MoveIt Servo / MoveGroup
-            const isMoveItGripperCmd = (action.baseCmd && (
-                action.baseCmd.includes('lite6_moveit_servo') || 
-                action.baseCmd.includes('standalone_move_group')
-            )) || (action.cmd && (
-                action.cmd.includes('lite6_moveit_servo') || 
-                action.cmd.includes('standalone_move_group')
-            ));
-
-            if (isMoveItGripperCmd) {
-                const gripperDefaults = [
-                    'add_vacuum_gripper:=true',
-                    'add_gripper:=true'
-                ];
-                gripperDefaults.forEach(defArg => {
-                    if (!action.args.some(a => a.text === defArg)) {
-                        let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
-                        if (defArg === 'add_vacuum_gripper:=true' && isChecked === false) {
-                            const gripSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'add_gripper:=true');
-                            if (!gripSaved) isChecked = true;
-                        }
-                        action.args.push({ text: defArg, checked: isChecked });
-                    }
-                });
-            }
-
-            // Ensure report_type selection args (dev, normal, rich) are available for Real Move commands
-            const isRealMoveReportCmd = (action.baseCmd && (
-                action.baseCmd.includes('lite6_moveit_servo_realmove') || 
-                (action.baseCmd.includes('standalone_move_group') && (action.baseCmd.includes('robot_ip') || (action.cmd && action.cmd.includes('robot_ip')))) ||
-                action.baseCmd.includes('report_type')
-            )) || (action.cmd && (
-                action.cmd.includes('lite6_moveit_servo_realmove') || 
-                (action.cmd.includes('standalone_move_group') && action.cmd.includes('robot_ip')) ||
-                action.cmd.includes('report_type')
-            ));
-
-            if (isRealMoveReportCmd) {
-                // Ensure robot_ip:=192.168.1.175 is available and checked by default for realmove
-                const defaultIp = 'robot_ip:=192.168.1.175';
-                if (!action.args.some(a => a.text.startsWith('robot_ip:='))) {
-                    let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defaultIp);
-                    if (isChecked === undefined || isChecked === false) isChecked = true;
-                    action.args.push({ text: defaultIp, checked: isChecked });
-                } else {
-                    const ipArg = action.args.find(a => a.text.startsWith('robot_ip:='));
-                    if (ipArg && !ipArg.checked) {
-                        ipArg.checked = true;
-                    }
-                }
-
-                const reportDefaults = [
-                    'report_type:=dev',
-                    'report_type:=normal',
-                    'report_type:=rich'
-                ];
-                reportDefaults.forEach(defArg => {
-                    if (!action.args.some(a => a.text === defArg)) {
-                        let isChecked = getSavedArgState(effPopupId, action.cmd, action.baseCmd, defArg);
-                        if (defArg === 'report_type:=dev' && isChecked === false) {
-                            const normalSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'report_type:=normal');
-                            const richSaved = getSavedArgState(effPopupId, action.cmd, action.baseCmd, 'report_type:=rich');
-                            if (!normalSaved && !richSaved) isChecked = true;
-                        }
-                        action.args.push({ text: defArg, checked: isChecked });
-                    }
-                });
-            }
+            parseActionArgs(action, effPopupId, actionsData);
         }
         
             function createArgsDiv(action) {
@@ -1881,87 +2919,7 @@
 
              
              if (action && action.args.length > 0) {
-                 // Ensure exactly one camera:= arg is checked initially
-                 const checkedCams = action.args.filter(a => a.text.startsWith('camera:=') && a.checked);
-                 if (checkedCams.length > 1) {
-                     const preferred = checkedCams.find(a => a.text === 'camera:=zed_m') || checkedCams[0];
-                     checkedCams.forEach(a => { if (a !== preferred) a.checked = false; });
-                 } else if (checkedCams.length === 0 && action.args.some(a => a.text.startsWith('camera:='))) {
-                     const defaultCam = action.args.find(a => a.text === 'camera:=zed_m') || action.args.find(a => a.text.startsWith('camera:='));
-                     if (defaultCam) defaultCam.checked = true;
-                 }
-
-                 // Ensure at most one yolo_model:= arg is checked initially
-                 const checkedYoloModels = action.args.filter(a => a.text.startsWith('yolo_model:=') && a.checked);
-                 if (checkedYoloModels.length > 1) {
-                     const preferred = checkedYoloModels.find(a => a.text === 'yolo_model:=yolov8l.pt') || checkedYoloModels[0];
-                     checkedYoloModels.forEach(a => { if (a !== preferred) a.checked = false; });
-                 }
-
-                 // Ensure exactly one gripper arg is checked initially
-                 const gripperArgs = action.args.filter(a => a.text === 'add_vacuum_gripper:=true' || a.text === 'add_gripper:=true');
-                 if (gripperArgs.length > 0) {
-                     const checkedGrippers = gripperArgs.filter(a => a.checked);
-                     if (checkedGrippers.length > 1) {
-                         const preferred = checkedGrippers.find(a => a.text === 'add_vacuum_gripper:=true') || checkedGrippers[0];
-                         checkedGrippers.forEach(a => { if (a !== preferred) a.checked = false; });
-                     } else if (checkedGrippers.length === 0) {
-                         const defaultGripper = gripperArgs.find(a => a.text === 'add_vacuum_gripper:=true') || gripperArgs[0];
-                         if (defaultGripper) defaultGripper.checked = true;
-                     }
-                 }
-
-                 // Ensure exactly one report_type:= arg is checked initially
-                 const reportTypeArgs = action.args.filter(a => a.text.startsWith('report_type:='));
-                 if (reportTypeArgs.length > 0) {
-                     const checkedReports = reportTypeArgs.filter(a => a.checked);
-                     if (checkedReports.length > 1) {
-                         const preferred = checkedReports.find(a => a.text === 'report_type:=dev') || checkedReports[0];
-                         checkedReports.forEach(a => { if (a !== preferred) a.checked = false; });
-                     } else if (checkedReports.length === 0) {
-                         const defaultReport = reportTypeArgs.find(a => a.text === 'report_type:=dev') || reportTypeArgs[0];
-                         if (defaultReport) defaultReport.checked = true;
-                     }
-                 }
-
-                 // Put robot_ip args first, camera args next, yolo_model args next, gripper args grouped together, report_type args grouped together
-                 action.args.sort((a, b) => {
-                     const isIpA = a.text.startsWith('robot_ip:=');
-                     const isIpB = b.text.startsWith('robot_ip:=');
-                     if (isIpA && !isIpB) return -1;
-                     if (!isIpA && isIpB) return 1;
-
-                     const isCamA = a.text.startsWith('camera:=');
-                     const isCamB = b.text.startsWith('camera:=');
-                     const isYoloA = a.text.startsWith('yolo_model:=');
-                     const isYoloB = b.text.startsWith('yolo_model:=');
-                     if (isCamA && !isCamB) return -1;
-                     if (!isCamA && isCamB) return 1;
-                     if (isYoloA && !isYoloB) return -1;
-                     if (!isYoloA && isYoloB) return 1;
-
-                     const isGripA = (a.text === 'add_vacuum_gripper:=true' || a.text === 'add_gripper:=true');
-                     const isGripB = (b.text === 'add_vacuum_gripper:=true' || b.text === 'add_gripper:=true');
-                     if (isGripA && isGripB) {
-                         if (a.text === 'add_vacuum_gripper:=true') return -1;
-                         if (b.text === 'add_vacuum_gripper:=true') return 1;
-                     }
-                     if (isGripA && !isGripB) return -1;
-                     if (!isGripA && isGripB) return 1;
-
-                     const isRepA = a.text.startsWith('report_type:=');
-                     const isRepB = b.text.startsWith('report_type:=');
-                     if (isRepA && isRepB) {
-                         const repOrder = ['report_type:=dev', 'report_type:=normal', 'report_type:=rich'];
-                         const idxA = repOrder.indexOf(a.text);
-                         const idxB = repOrder.indexOf(b.text);
-                         return (idxA !== -1 && idxB !== -1) ? idxA - idxB : 0;
-                     }
-                     if (isRepA && !isRepB) return -1;
-                     if (!isRepA && isRepB) return 1;
-
-                     return 0;
-                 });
+                 normalizeActionArgs(action);
 
                  const argLaunchKey = launchKeyOf(action.baseCmd || action.cmd);
 
@@ -1989,7 +2947,15 @@
 
                  action.args.forEach(argObj => {
                      if (argObj.kind === 'gpu-toggle') {
-                         groupHostFor(argObj).appendChild(buildWhisperDeviceToggle(argObj, saveActiveState));
+                         groupHostFor(argObj).appendChild(buildWhisperDeviceToggle(argObj, () => {
+                             saveActiveState();
+                             // Befehlsanzeige und abhaengige Defaults (CPU-Profil) aktualisieren
+                             argsDiv.dispatchEvent(new Event('change', { bubbles: true }));
+                         }));
+                         return;
+                     }
+                     if (argObj.kind === 'value') {
+                         groupHostFor(argObj).appendChild(buildValueParamRow(action, argObj, saveActiveState));
                          return;
                      }
                      const argLbl = document.createElement('label');
@@ -2103,6 +3069,7 @@
                 noArgsEl.textContent = 'Keine Parameter';
                 argsDiv.appendChild(noArgsEl);
             }
+            watchValueParamRows(argsDiv);
             return argsDiv;
         }
 
@@ -2319,15 +3286,21 @@
                const body = document.createElement('div');
                body.className = 'seq-card-body' + (hasTree ? ' has-tree' : '') + (hasArgs ? ' has-params' : '');
 
-
+               // Mit Baum: linke Spalte = Launch-Struktur + Befehl darunter,
+               // die Parameter stehen daneben. Ohne Baum folgt der Befehl
+               // ueber die volle Breite auf die Parameter.
+               let treeCol = null;
                if (hasTree) {
+                   treeCol = document.createElement('div');
+                   treeCol.className = 'seq-col-tree';
                    const pane = document.createElement('div');
                    pane.className = 'seq-pane seq-pane-tree modal-card-left-col';
                    pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-sitemap"></i><b>Launch-Struktur</b></div>`;
                    o.ulNode.removeAttribute('style');
                    o.ulNode.querySelectorAll('ul').forEach(subUl => subUl.classList.add('sub-launch-tree'));
                    pane.appendChild(o.ulNode);
-                   body.appendChild(pane);
+                   treeCol.appendChild(pane);
+                   body.appendChild(treeCol);
                }
                if (hasArgs) {
                    const pane = document.createElement('div');
@@ -2360,7 +3333,16 @@
                    seqCmdRefreshers.add(renderCmds);
                    pane.appendChild(headEl);
                    pane.appendChild(cmdList);
-                   body.appendChild(pane);
+                   (treeCol || body).appendChild(pane);
+               }
+               // YAML-Configs der Launch-Datei - volle Breite unter allem,
+               // bleibt verborgen, wenn die Launch-Datei keine hat
+               if (action) {
+                   const cfgPane = buildConfigPane(action);
+                   const refreshCfg = () => cfgPane._render();
+                   refreshCfg.el = cfgPane;
+                   seqCmdRefreshers.add(refreshCfg);
+                   body.appendChild(cfgPane);
                }
                cardDiv.appendChild(body);
 
@@ -2454,9 +3436,10 @@
            mo.observe(listEl, { childList: true });
        }
 
-       const isOverviewOnly = (!actionsData || actionsData.length === 0 || popupId === 'sec_nodes_0' || effPopupId === 'sec_nodes_0' || (titleHTML && titleHTML.includes('Start - Multimodal Teleoperation')));
+       const isOverviewOnly = (!actionsData || actionsData.length === 0 || popupId === 'sec_nodes_0' || effPopupId === 'sec_nodes_0' || (titleHTML && /Start - Multimodal Teleoperation|Start Multimodal Setup/.test(titleHTML)));
        if (isOverviewOnly) {
           contentClone.innerHTML = buildUserAppOverviewHtml();
+          mountDevSetupSections(contentClone);
        } else {
        const topUls = Array.from(contentClone.children).filter(n => n.tagName === 'UL');
        if (topUls.length > 0) {
@@ -2697,27 +3680,33 @@
                       <label class="dds-cell dds-cell-toggle" id="modal-localhost-lbl" title="Traffic stays on this PC. ROS_LOCALHOST_ONLY=1: DDS traffic stays on this machine and does not flood the LAN. Other machines can no longer see the ROS 2 topics (Quest 3 WebXR is not affected).">
                          <span class="dds-key"><i class="fa-solid fa-shield-halved"></i>DDS</span>
                          <span class="dds-val"><input type="checkbox" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}><span>Localhost only</span></span>
+                         <span class="dds-desc">Traffic stays on PC</span>
                       </label>
                       <div class="dds-cell" title="Node group (ID). ROS_DOMAIN_ID: only nodes with the same ID can see each other">
                          <span class="dds-key"><i class="fa-solid fa-hashtag"></i>Domain</span>
                          <span class="dds-val" id="dds-chip-domain">–</span>
+                         <span class="dds-desc">Node group ID</span>
                       </div>
                       <div class="dds-cell" title="DDS middleware. RMW_IMPLEMENTATION: DDS middleware in use">
                          <span class="dds-key"><i class="fa-solid fa-diagram-project"></i>RMW</span>
                          <span class="dds-val" id="dds-chip-rmw">–</span>
+                         <span class="dds-desc">DDS middleware</span>
                       </div>
                       <div class="dds-cell" id="dds-chip-scope-wrap" title="DDS traffic destination: where the DDS traffic of the launched nodes goes">
                          <span class="dds-key"><i class="fa-solid fa-tower-broadcast"></i>Scope</span>
                          <span class="dds-val" id="dds-chip-scope">–</span>
+                         <span class="dds-desc">Traffic destination</span>
                       </div>
                       <div class="dds-cell" title="Network interface of the default route and IP of this machine. Linux interface name: en… = Ethernet (cable), wl… = Wi-Fi. Example enp0s31f6: en = Ethernet, p0 = PCI bus 0, s31 = slot 31, f6 = function 6 → the LAN port built into the mainboard.">
                          <span class="dds-key"><i class="fa-solid fa-ethernet"></i><span id="dds-net-key">LAN</span></span>
                          <span class="dds-val" id="dds-chip-net">–</span>
+                         <span class="dds-desc">Interface &amp; IP</span>
                       </div>
                       <div class="dds-cell dds-cell-traffic" id="dds-chip-traffic-wrap" title="Total LAN traffic of this PC over the LAN interface – all programs combined (ROS 2/DDS, browser, updates …), not just ROS. ↑ TX = this PC sends to the LAN (transmit), ↓ RX = this PC receives from the LAN (receive). Sustained high TX with little RX indicates DDS flooding the LAN.">
                          <div class="dds-cell-text">
                             <span class="dds-key"><i class="fa-solid fa-arrow-right-arrow-left"></i>Traffic</span>
                             <span class="dds-val" id="dds-chip-traffic">–</span>
+                            <span class="dds-desc">Whole PC · ↑ TX ↓ RX</span>
                          </div>
                          <svg class="dds-spark" id="dds-traffic-spark" viewBox="0 0 64 24" preserveAspectRatio="none" aria-hidden="true"></svg>
                       </div>
@@ -3111,31 +4100,8 @@
           
           for (const action of actionsData) {
               if (!action.active) continue;
-              
-              // Reconstruct command based on checked args
-              let finalCmd = buildFinalCmd(action);
-              const gazeMode = getGazeMode(action);
+              const { cmd: finalCmd, title: finalTitle } = resolveLaunch(action, isLinearAxisNodeActive);
 
-              // Dynamically compute terminal window title based on linear axis active state
-              let finalTitle = (gazeMode && gazeMode.title) || action.title || 'Launch';
-              const hasLinearAxisArgChecked = action.args && action.args.some(a => a.text.includes('linear_axis') && a.checked);
-              const cmdHasLinearAxis = finalCmd.includes('linear_axis');
-              const isLinearAxisEnabled = isLinearAxisNodeActive && (cmdHasLinearAxis || hasLinearAxisArgChecked);
-
-              if (!isLinearAxisEnabled) {
-                  finalTitle = finalTitle.replace(/\s*\+\s*Linear\s*Axis/gi, '')
-                                         .replace(/\s*\(\s*\+\s*Linear\s*Axis\s*\)/gi, '')
-                                         .replace(/\s*-\s*Linear\s*Axis/gi, '')
-                                         .trim();
-                  if (!isLinearAxisNodeActive && finalCmd.includes('attach_to:=linear_axis_link')) {
-                      finalCmd = finalCmd.replace(/\s*attach_to:=linear_axis_link/g, '').trim();
-                  }
-              } else {
-                  if ((finalTitle.toLowerCase().includes('servo') || finalTitle.toLowerCase().includes('movegroup')) && !finalTitle.toLowerCase().includes('linear axis')) {
-                      finalTitle += ' + Linear Axis';
-                  }
-              }
-              
               try {
                 await fetch('/api/run', {
                   method: 'POST',

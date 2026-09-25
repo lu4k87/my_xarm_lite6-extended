@@ -121,6 +121,11 @@
         TABS = await res.json();
         window.TABS = TABS;
 
+        // Umbenannt: "Start - Multimodal Teleoperation" -> "Start Multimodal Setup"
+        (TABS.nodes || []).forEach(sec => {
+          if (sec && sec.title === 'Start - Multimodal Teleoperation') sec.title = 'Start Multimodal Setup';
+        });
+
         if (!window.TABS['__popups_active']) window.TABS['__popups_active'] = {};
         if (!window.TABS['__popups_args']) window.TABS['__popups_args'] = {};
         if (!window.TABS['__cmd_args']) window.TABS['__cmd_args'] = {};

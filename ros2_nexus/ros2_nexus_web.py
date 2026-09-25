@@ -509,6 +509,280 @@ def api_launch_args():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+# ── Launch-Details fuer die Popups: Standardwerte der Launch-Argumente und
+#    die YAML-Configs, die eine Launch-Datei laedt ─────────────────────────────
+# Die Argumente werden per ast gelesen (DeclareLaunchArgument und
+# LaunchConfiguration(..., default=...)), transitiv ueber eingebundene
+# Launch-Dateien - der erste Fund gewinnt, also zaehlt die aeussere Datei.
+#
+# Welche YAML zu welcher Launch-Datei gehoert und welche Werte daraus fuer
+# den Nutzer wichtig sind, steht in _LAUNCH_CONFIGS. "arg" markiert Werte, die
+# ein Launch-Argument beim Start ueberschreibt; "when" nennt die Bedingung,
+# unter der die Datei ueberhaupt geladen wird.
+_SERVO_CONFIG = {
+    "pkg": "xarm_moveit_servo", "file": "config/xarm_moveit_servo_config.yaml",
+    "title": "MoveIt Servo",
+    "keys": [
+        {"key": "scale.linear", "label": "Max. Lineargeschw.", "unit": "m/s"},
+        {"key": "scale.rotational", "label": "Max. Drehgeschw.", "unit": "rad/s"},
+        {"key": "scale.joint", "label": "Joint-Skalierung"},
+        {"key": "publish_period", "label": "Publish-Periode", "unit": "s", "hz": True},
+        {"key": "incoming_command_timeout", "label": "Befehls-Timeout", "unit": "s"},
+        {"key": "low_pass_filter_coeff", "label": "Tiefpass-Koeffizient"},
+        {"key": "check_collisions", "label": "Kollisionsprüfung"},
+        {"key": "collision_check_rate", "label": "Kollisions-Rate", "unit": "Hz"},
+        {"key": "scene_collision_proximity_threshold", "label": "Mindestabstand Szene", "unit": "m"},
+        {"key": "self_collision_proximity_threshold", "label": "Mindestabstand Eigenkollision", "unit": "m"},
+        {"key": "lower_singularity_threshold", "label": "Singularität: bremsen"},
+        {"key": "hard_stop_singularity_threshold", "label": "Singularität: Stopp"},
+    ],
+    "overridden": {
+        "move_group_name": "setzt der Launch auf die Lite-6-Gruppe",
+        "command_out_topic": "setzt der Launch auf den Lite-6-Trajectory-Controller",
+    },
+}
+
+_WHISPER_CONFIGS = [
+    {
+        "pkg": "whisper_server", "file": "config/whisper.yaml", "title": "Whisper",
+        "keys": [
+            {"key": "whisper.inference.ros__parameters.model_name", "label": "Modell", "arg": "model_name"},
+            {"key": "whisper.inference.ros__parameters.wparams.language", "label": "Sprache", "arg": "language"},
+            {"key": "whisper.inference.ros__parameters.wparams.n_threads", "label": "Threads"},
+            {"key": "whisper.inference.ros__parameters.wparams.beam_size", "label": "Beam Size"},
+            {"key": "whisper.inference.ros__parameters.callback_ms", "label": "Inferenz-Takt", "unit": "ms"},
+            {"key": "whisper.inference.ros__parameters.buffer_capacity", "label": "Audio-Puffer", "unit": "s"},
+            {"key": "whisper.inference.ros__parameters.listen_window_ms", "label": "Hörfenster", "unit": "ms"},
+            {"key": "whisper.inference.ros__parameters.cparams.use_gpu", "label": "GPU", "arg": "use_gpu"},
+        ],
+    },
+    {
+        "pkg": "whisper_server", "file": "config/whisper_cpu.yaml", "title": "Whisper CPU-Profil",
+        "when": {"arg": "use_gpu", "equals": "false"},
+        "keys": [
+            {"key": "whisper.inference.ros__parameters.model_name", "label": "Modell", "arg": "model_name"},
+            {"key": "whisper.inference.ros__parameters.wparams.n_threads", "label": "Threads"},
+            {"key": "whisper.inference.ros__parameters.wparams.audio_ctx", "label": "Audio-Kontext"},
+        ],
+    },
+]
+
+_LAUNCH_CONFIGS = {
+    "xarm_moveit_servo/lite6_moveit_servo_realmove.launch.py": [_SERVO_CONFIG],
+    "xarm_moveit_servo/lite6_moveit_servo_fake.launch.py": [_SERVO_CONFIG],
+    "robot_vision_cameras_bringup/robot_vision_cameras_bringup.launch.py": [
+        {
+            "pkg": "robot_vision_cameras_bringup", "file": "config/perception_params.yaml",
+            "title": "YOLO-Erkennung (ZED)", "when": {"arg": "camera", "equals": "zed_m"},
+            "keys": [
+                {"key": "yolo_3d_bbox_for_zed_m.ros__parameters.model_path", "label": "Modell", "arg": "yolo_model"},
+                {"key": "yolo_3d_bbox_for_zed_m.ros__parameters.confidence_threshold", "label": "Konfidenz-Schwelle", "arg": "confidence_threshold"},
+                {"key": "yolo_3d_bbox_for_zed_m.ros__parameters.ema_alpha", "label": "Glättung (EMA)", "arg": "ema_alpha"},
+            ],
+        },
+        {
+            "pkg": "robot_vision_cameras_bringup", "file": "config/grasping_params.yaml",
+            "title": "Greifen",
+            "keys": [
+                {"key": "yolo_planned_grasp_executor.ros__parameters.safe_z_hover_height", "label": "Hover-Höhe", "unit": "m", "arg": "safe_z_hover_height"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.grasp_z_offset", "label": "Greif-Offset Z", "unit": "m", "arg": "grasp_z_offset"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.velocity_scaling", "label": "Geschw.-Skalierung", "arg": "velocity_scaling"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.acceleration_scaling", "label": "Beschl.-Skalierung", "arg": "acceleration_scaling"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.target_roll", "label": "Ziel-Roll", "unit": "rad"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.target_pitch", "label": "Ziel-Pitch", "unit": "rad"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.target_yaw", "label": "Ziel-Yaw", "unit": "rad"},
+                {"key": "yolo_planned_grasp_executor.ros__parameters.ik_tolerance_position", "label": "IK-Toleranz Position", "unit": "m"},
+            ],
+        },
+        {
+            "pkg": "robot_vision_cameras_bringup", "file": "config/zed_override.yaml",
+            "title": "ZED-Kamera", "when": {"arg": "camera", "equals": "zed_m"},
+            "keys": [
+                {"key": "/**.ros__parameters.general.grab_resolution", "label": "Auflösung"},
+                {"key": "/**.ros__parameters.depth.depth_mode", "label": "Tiefenmodus"},
+                {"key": "/**.ros__parameters.depth.depth_confidence", "label": "Tiefen-Konfidenz"},
+                {"key": "/**.ros__parameters.depth.min_depth", "label": "Min. Tiefe", "unit": "m"},
+                {"key": "/**.ros__parameters.depth.max_depth", "label": "Max. Tiefe", "unit": "m"},
+            ],
+        },
+    ],
+    "voice_command_listener/voice_listener.launch.py": _WHISPER_CONFIGS,
+    "whisper_bringup/bringup.launch.py": _WHISPER_CONFIGS,
+}
+
+def _package_dirs(src):
+    """{ paketname: verzeichnis } fuer alle Pakete unter src/."""
+    out = {}
+    for root, dirs, files in os.walk(src):
+        dirs[:] = [d for d in dirs if d not in ("__pycache__", ".git", "build", "install")]
+        if "package.xml" in files:
+            out.setdefault(os.path.basename(root), root)
+    return out
+
+
+def _literal(node):
+    import ast
+    try:
+        return ast.literal_eval(node)
+    except Exception:
+        return None
+
+
+def _parse_launch_file_args(path):
+    """{ name: {default, description, choices} } einer Launch-Datei (ast)."""
+    import ast
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            tree = ast.parse(f.read())
+    except (OSError, SyntaxError, ValueError):
+        return {}
+    out = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        fn = node.func.id if isinstance(node.func, ast.Name) else getattr(node.func, "attr", "")
+        if fn not in ("DeclareLaunchArgument", "LaunchConfiguration") or not node.args:
+            continue
+        name = _literal(node.args[0])
+        if not isinstance(name, str):
+            continue
+        kw = {k.arg: k.value for k in node.keywords if k.arg}
+        entry = out.setdefault(name, {})
+        if fn == "DeclareLaunchArgument":
+            default = _literal(kw["default_value"]) if "default_value" in kw else None
+            if default is not None:
+                entry["default"] = str(default)
+            desc = _literal(kw["description"]) if "description" in kw else None
+            if isinstance(desc, str):
+                entry["description"] = desc
+            choices = _literal(kw["choices"]) if "choices" in kw else None
+            if isinstance(choices, (list, tuple)):
+                entry["choices"] = [str(c) for c in choices]
+        elif "default" in kw and "default" not in entry:
+            default = _literal(kw["default"])
+            if default is not None:
+                entry["default"] = str(default).lower() if isinstance(default, bool) else str(default)
+    return out
+
+
+def _flatten_yaml(node, prefix=""):
+    """Verschachteltes YAML -> [(schluessel.pfad, wert)] (Listen als Ganzes)."""
+    if isinstance(node, dict):
+        out = []
+        for k, v in node.items():
+            out += _flatten_yaml(v, f"{prefix}.{k}" if prefix else str(k))
+        return out
+    return [(prefix, node)]
+
+
+def _config_status(src_path, pkg, rel):
+    """Liegt die Datei in install/ als Symlink auf src (sofort wirksam) oder
+    als Kopie (wirkt erst nach colcon build)?"""
+    inst = os.path.join(WS_PATH, "install", pkg, "share", pkg, rel)
+    if not os.path.lexists(inst):
+        return "missing"
+    if os.path.islink(inst):
+        return "linked" if os.path.realpath(inst) == os.path.realpath(src_path) else "copy"
+    try:
+        with open(inst, "rb") as a, open(src_path, "rb") as b:
+            return "copy" if a.read() == b.read() else "stale"
+    except OSError:
+        return "copy"
+
+
+def _read_config(spec, pkg_dirs):
+    import yaml
+    pkg_dir = pkg_dirs.get(spec["pkg"])
+    path = os.path.join(pkg_dir, spec["file"]) if pkg_dir else None
+    res = {
+        "pkg": spec["pkg"], "file": spec["file"], "title": spec.get("title", ""),
+        "when": spec.get("when"), "path": path, "values": [], "all": [],
+    }
+    if not path or not os.path.isfile(path):
+        res["error"] = "Datei nicht gefunden"
+        return res
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    except (OSError, yaml.YAMLError) as e:
+        res["error"] = f"YAML nicht lesbar: {e}"
+        return res
+    flat = dict(_flatten_yaml(data))
+    for k in spec.get("keys", []):
+        if k["key"] in flat:
+            res["values"].append(dict(k, value=flat[k["key"]]))
+    overridden = spec.get("overridden", {})
+    res["all"] = [
+        {"key": k, "value": v, **({"note": overridden[k]} if k in overridden else {})}
+        for k, v in flat.items()
+    ]
+    res["status"] = _config_status(path, spec["pkg"], spec["file"])
+    res["mtime"] = os.path.getmtime(path)
+    return res
+
+
+def _launch_details(ws_path):
+    src = os.path.join(ws_path, "src")
+    pkg_dirs = _package_dirs(src)
+    # Launch-Dateien nach Dateiname (fuer eingebundene Launches ohne Paketangabe)
+    by_name, by_key = {}, {}
+    for pkg, d in pkg_dirs.items():
+        for root, dirs, files in os.walk(d):
+            dirs[:] = [x for x in dirs if x not in ("__pycache__", ".git", "build", "install")]
+            for fn in files:
+                if fn.endswith(".launch.py"):
+                    full = os.path.join(root, fn)
+                    by_name.setdefault(fn, []).append(full)
+                    by_key.setdefault(f"{pkg}/{fn}", full)
+
+    parsed = {}
+
+    def args_of(path):
+        if path not in parsed:
+            parsed[path] = _parse_launch_file_args(path)
+        return parsed[path]
+
+    def collect(path, seen):
+        if path in seen:
+            return {}
+        seen.add(path)
+        out = dict(args_of(path))
+        try:
+            with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                includes = set(_INCL_RE.findall(f.read()))
+        except OSError:
+            includes = set()
+        for inc in includes:
+            for inc_path in by_name.get(inc, []):
+                for name, info in collect(inc_path, seen).items():
+                    merged = out.setdefault(name, {})
+                    for field, val in info.items():
+                        merged.setdefault(field, val)
+        return out
+
+    launch = {}
+    for key in set(_LAUNCH_CONFIGS) | set(by_key):
+        path = by_key.get(key)
+        if not path:
+            continue
+        entry = {"args": collect(path, set())}
+        if key in _LAUNCH_CONFIGS:
+            entry["configs"] = [_read_config(spec, pkg_dirs) for spec in _LAUNCH_CONFIGS[key]]
+        launch[key] = entry
+    return launch
+
+
+@app.route("/api/launch_details", methods=["GET"])
+def api_launch_details():
+    """Launch-Argumente (Standard, Beschreibung, Auswahl) und YAML-Configs
+    der Popup-Launches. Frisch gelesen, damit Aenderungen an einer YAML
+    beim naechsten Oeffnen des Popups sichtbar sind."""
+    try:
+        return jsonify({"ok": True, "launch": _launch_details(WS_PATH)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 def _reap_finished_processes():
     # Beendete Hintergrundprozesse einsammeln - sonst bleiben sie als Zombies
     # stehen und active_processes waechst mit jedem Start weiter.
