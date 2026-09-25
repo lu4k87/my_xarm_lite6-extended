@@ -22,9 +22,9 @@ def generate_launch_description():
     )
 
     rviz_streamer_node = Node(
-        package='rviz_window_streamer',
-        executable='rviz_window_streamer_node',
-        name='rviz_window_streamer_node',
+        package='window_x11_streamer',
+        executable='window_capture_node',
+        name='window_capture_node',
         output='screen'
     )
 

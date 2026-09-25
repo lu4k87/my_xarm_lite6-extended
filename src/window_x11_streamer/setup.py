@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'rviz_window_streamer'
+package_name = 'window_x11_streamer'
 
 setup(
     name=package_name,
@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='mk',
     maintainer_email='lu4k87@live.de',
-    description='TODO: Package description',
+    description='Captures an X11 window (default: RViz2) and publishes it as sensor_msgs/Image',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'rviz_window_streamer_node = rviz_window_streamer.rviz_window_streamer_node:main'
+            'window_capture_node = window_x11_streamer.window_capture_node:main'
         ],
     },
 )

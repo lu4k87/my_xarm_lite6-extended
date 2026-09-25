@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>rviz_window_streamer</name>
+  <name>window_x11_streamer</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Captures an X11 window (default: RViz2) and publishes it as sensor_msgs/Image</description>
   <maintainer email="lu4k87@live.de">mk</maintainer>
   <license>TODO: License declaration</license>
 

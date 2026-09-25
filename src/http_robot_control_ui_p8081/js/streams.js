@@ -161,7 +161,7 @@ setupPolledCam('cam-stream-2', 'cam-stream-2-err', 'cam-stream-2-meta', '192.168
   const rvizHost = window.location.hostname || 'localhost';
   // Ebenfalls ungekodiert - siehe Begruendung bei streamUrl() weiter unten.
   const rvizUrl = () =>
-    `http://${rvizHost}:8082/stream?topic=/rviz_video/image_raw` +
+    `http://${rvizHost}:8082/stream?topic=/window_capture/image_raw` +
     `&type=mjpeg&qos_profile=sensor_data&width=800&height=450&_t=${Date.now()}`;
 
   let watch = null;

@@ -59,16 +59,16 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. Web Video Server (Port 8082) + RViz Streamer fuer die Kamera- und
+    # 5. Web Video Server (Port 8082) + Window Capture fuer die Kamera- und
     #    RViz-Streams. Ohne ihn zeigen alle Stream-Panels in der UI
     #    "Stream Disconnected". Eingebunden wird das komplette
     #    web_video_server.launch.py, damit diese Card in der Nexus Webapp die
-    #    fruehere separate Card "Web Video Server & RViz Streamer" ersetzt.
+    #    fruehere separate Card "Web Video Server & Window Capture" ersetzt.
     #    Der fuser-Cleanup gibt Port 8082 vorher frei, falls noch eine alte
     #    Instanz laeuft. Mit start_video_server:=false abschaltbar.
     start_video_server_arg = DeclareLaunchArgument(
         'start_video_server', default_value='true',
-        description='Web Video Server (Port 8082) und RViz Streamer mitstarten.')
+        description='Web Video Server (Port 8082) und Window Capture mitstarten.')
 
     video_server_port_arg = DeclareLaunchArgument(
         'video_server_port', default_value='8082',

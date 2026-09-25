@@ -3,7 +3,7 @@
 <package format="3">
   <name>web_video_server</name>
   <version>1.0.0</version>
-  <description>Launch package for Web Video Server &amp; RViz Streamer</description>
+  <description>Launch package for Web Video Server &amp; Window Capture</description>
   <maintainer email="mk@todo.todo">mk</maintainer>
   <license>BSD</license>
 
@@ -11,7 +11,7 @@
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
-  <exec_depend>rviz_window_streamer</exec_depend>
+  <exec_depend>window_x11_streamer</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
