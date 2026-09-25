@@ -3773,6 +3773,11 @@
                          </div>
                       </div>
                       <div class="dds-group">
+                         <label class="dds-cell dds-cell-toggle" id="modal-localhost-lbl" title="ROS_LOCALHOST_ONLY=1: DDS traffic stays on this PC and does not flood the LAN.">
+                            <span class="dds-key"><i class="fa-solid fa-shield-halved"></i>DDS</span>
+                            <span class="dds-val"><span>Localhost only</span><input type="checkbox" class="dds-switch" role="switch" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}></span>
+                            <span class="dds-desc">Traffic stays on PC</span>
+                         </label>
                          <div class="dds-cell" id="dds-chip-scope-wrap" title="Where the DDS traffic of launched nodes goes.">
                             <span class="dds-key"><i class="fa-solid fa-tower-broadcast"></i>Scope</span>
                             <span class="dds-val" id="dds-chip-scope">–</span>
@@ -3788,11 +3793,6 @@
                             <span class="dds-val" id="dds-chip-domain">–</span>
                             <span class="dds-desc">Node group ID</span>
                          </div>
-                         <label class="dds-cell dds-cell-toggle" id="modal-localhost-lbl" title="ROS_LOCALHOST_ONLY=1: DDS traffic stays on this PC and does not flood the LAN.">
-                            <span class="dds-key"><i class="fa-solid fa-shield-halved"></i>DDS</span>
-                            <span class="dds-val"><input type="checkbox" id="modal-localhost-cb" ${localhostOnly ? 'checked' : ''}><span>Localhost only</span></span>
-                            <span class="dds-desc">Traffic stays on PC</span>
-                         </label>
                       </div>
                    </div>
                    ${toolbarHtml}

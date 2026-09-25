@@ -655,24 +655,41 @@
       cursor: default;
     }
 
+    /* Zellen-Titel: linksbuendig mit smoother horizontaler Trennlinie */
     .dds-key {
+      position: relative;
       display: flex;
       align-items: center;
+      justify-content: flex-start;
       gap: 6px;
       min-width: 0;
+      width: 100%;
       font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 600;
+      font-size: 11.5px;
+      font-weight: 700;
       line-height: 1;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #566074;
+      color: #ffffff;
       white-space: nowrap;
+      padding-bottom: 6px;
+      margin-bottom: 2px;
+    }
+
+    .dds-key::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.12) 60%, rgba(255, 255, 255, 0.02) 100%);
+      pointer-events: none;
     }
 
     .dds-key i {
       flex-shrink: 0;
-      font-size: 10px;
+      font-size: 11px;
       color: #566074;
     }
 
@@ -727,17 +744,57 @@
       background: #0c111c;
     }
 
-    .dds-cell-toggle input[type="checkbox"] {
+    /* Schiebeschalter statt Checkbox, damit die Zelle als Toggle erkennbar ist */
+    .dds-cell-toggle .dds-switch {
+      appearance: none;
+      -webkit-appearance: none;
+      position: relative;
       flex-shrink: 0;
-      width: 14px;
-      height: 14px;
+      width: 30px;
+      height: 16px;
       margin: 0;
-      accent-color: #10b981;
+      border-radius: 999px;
+      background: #334155;
+      border: 1px solid #475569;
       cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .dds-cell-toggle .dds-switch::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .dds-cell-toggle .dds-switch:checked {
+      background: #059669;
+      border-color: #10b981;
+    }
+
+    .dds-cell-toggle .dds-switch:checked::before {
+      transform: translateX(14px);
+      background: #ffffff;
+    }
+
+    .dds-cell-toggle:hover .dds-switch {
+      border-color: #64748b;
+    }
+
+    .dds-cell-toggle:hover .dds-switch:checked {
+      border-color: #34d399;
     }
 
     .dds-cell-toggle .dds-val {
       color: #94a3b8;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .dds-cell-toggle:has(input:checked) .dds-val {
@@ -4075,8 +4132,14 @@
 
 #launch-modal[data-theme="light"] .dds-cell { background: var(--pl-window); }
 #launch-modal[data-theme="light"] .dds-cell-toggle:hover { background: var(--pl-raised); }
-#launch-modal[data-theme="light"] .dds-key,
+#launch-modal[data-theme="light"] .dds-key { color: var(--pl-text); }
+#launch-modal[data-theme="light"] .dds-key::after {
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.18) 0%, rgba(15, 23, 42, 0.08) 60%, transparent 100%);
+}
 #launch-modal[data-theme="light"] .dds-key i { color: var(--pl-faint); }
+#launch-modal[data-theme="light"] .dds-cell-toggle .dds-switch { background: #cbd5e1; border-color: #94a3b8; }
+#launch-modal[data-theme="light"] .dds-cell-toggle .dds-switch::before { background: #ffffff; }
+#launch-modal[data-theme="light"] .dds-cell-toggle .dds-switch:checked { background: #059669; border-color: #047857; }
 #launch-modal[data-theme="light"] .dds-val { color: var(--pl-text); }
 #launch-modal[data-theme="light"] .dds-cell-toggle .dds-val { color: var(--pl-muted); }
 #launch-modal[data-theme="light"] .dds-cell[data-state="ok"] .dds-val,
