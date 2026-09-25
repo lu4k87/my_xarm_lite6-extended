@@ -41,6 +41,8 @@ export const TOPICS = Object.freeze({
   voiceFeedback: '/ui/voice_feedback',
   voiceListenTrigger: '/ui/voice_listen_trigger',
   voiceStatus: '/ui/voice_status',
+  // SERVO/PLAN der Brille (JSON {mode, from}) - Ansage auch am Desktop
+  vrCtrlMode: '/ui/vr_ctrl_mode',
   visualizationMarkerArray: '/visualization_marker_array',
   // VR-Spiegel: Quest -> PC-Fenster (vr_mirror.html), PC -> Quest (Nachsenden)
   vrTeleopMirrorPose: '/vr_teleop/mirror_pose',

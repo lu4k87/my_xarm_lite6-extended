@@ -40,6 +40,8 @@
 //     VR-Tab.
 //   * Not-Aus: roter Button im Panel, beide Grips + beide Trigger zugleich.
 //     Session-Ende, verdeckte Session oder Tracking-Verlust stoppen Servo.
+//   * SERVO <-> PLAN wird angesagt, in der Brille und in jeder offenen
+//     Desktop-UI (announceCtrlMode, Topic /ui/vr_ctrl_mode).
 //   * Sounds wie am Desktop: audio.js laeuft auf derselben Seite (Ansagen,
 //     Fehler, Bewegungsgeraeusch, Objekt-Klick, Sound-Schalter in der HUD-
 //     Toolbar). Button-Klicks im Panel/HUD: siehe clickPanelHit().
@@ -52,7 +54,7 @@ import { logMsg } from '../log.js';
 import { lsGet, lsSet } from '../util.js';
 import { emergencyStop, resetEmergencyStop } from '../safety.js';
 import { approachObjectFromAbove, disabledCollisionObjects, setObjectCollision } from '../grasp.js';
-import { playButtonClick, playObjectSelectSound } from '../audio.js';
+import { announceCtrlMode, playButtonClick, playObjectSelectSound } from '../audio.js';
 import {
   COL, GROUP, groupColor, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, q, qa, txt, stepSpeed,
   GRIPPER_LABELS, poseLabel,
@@ -375,6 +377,7 @@ function setCtrlMode(mode) {
     } catch (_) {}
   }
   flash(mode === 'plan' ? 'Modus PLAN: Grip zieht den Ghost' : 'Modus SERVO: Grip steuert den Roboter');
+  announceCtrlMode(mode);         // Ansage hier und in jeder Desktop-UI
   pulse('right', 0.6, 60);
   panelDirty = true;
 }

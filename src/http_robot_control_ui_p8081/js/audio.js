@@ -15,6 +15,8 @@ export let initialPoseSound = null;
 export let absolutePoseSound = null;
 export let objectSelectSound = null;
 export let robotMovesSound = null;
+export let robotModeServoSound = null;
+export let robotModePlanSound = null;
 try {
   uiClickSound = new Audio('sounds/ui_mouse_click.mp3');
   scanPosSound = new Audio('sounds/_voice_robot_moves_to_scan_pos.mp3');
@@ -29,6 +31,8 @@ try {
   objectSelectSound = new Audio('sounds/object_select_click_sound.mp3');
   robotMovesSound = new Audio('sounds/robot_moves_sound.mp3');
   robotMovesSound.loop = true;
+  robotModeServoSound = new Audio('sounds/_voice_robotmode_servo.mp3');
+  robotModePlanSound = new Audio('sounds/_voice_robotmode_planning_path.mp3');
 } catch (e) {}
 
 // ── Web Audio UI Click Sound Effect & Sound Toggle ───────────────────────
@@ -51,7 +55,8 @@ visibleInterval(publishSoundState, 2000);
 export function syncAudioElements() {
   const all = [uiClickSound, scanPosSound, collisionEnabledSound, collisionDisabledSound,
     errorSound, outOfReachSound, poseOutOfReachSound, movesToSelectedObjectSound,
-    initialPoseSound, absolutePoseSound, objectSelectSound, robotMovesSound];
+    initialPoseSound, absolutePoseSound, objectSelectSound, robotMovesSound,
+    robotModeServoSound, robotModePlanSound];
   for (const audio of all) {
     if (!audio) continue;
     audio.muted = !soundEnabled;
@@ -307,6 +312,31 @@ export function reportClickSoundProblem(msg) {
   if (typeof logMsg === 'function') logMsg('AUDIO', `🔇 Click sound not played: ${msg}`, 'warn');
   else console.warn('[AUDIO]', msg);
 }
+
+// ── Ansage beim Wechsel SERVO <-> PLAN (VR) ────────────────────────────────
+// Die Brille sagt den neuen Modus selbst an und meldet ihn auf
+// /ui/vr_ctrl_mode - jede andere offene Robot Control UI (Desktop) sagt ihn
+// dann ebenfalls an. Die eigene Meldung erkennt eine Seite an ihrer Kennung.
+const pageId = Math.random().toString(36).slice(2, 10);
+const ctrlModeTopic = new ROSLIB.Topic({ ros, name: TOPICS.vrCtrlMode, messageType: 'std_msgs/String' });
+
+function playCtrlModeVoice(mode) {
+  playVoice(mode === 'plan' ? robotModePlanSound : robotModeServoSound, `mode ${mode}`);
+}
+
+export function announceCtrlMode(mode) {
+  playCtrlModeVoice(mode);
+  if (ros && ros.isConnected) {
+    ctrlModeTopic.publish(new ROSLIB.Message({ data: JSON.stringify({ mode, from: pageId }) }));
+  }
+}
+
+ctrlModeTopic.subscribe((msg) => {
+  let m = null;
+  try { m = JSON.parse(msg.data); } catch (e) { return; }
+  if (!m || m.from === pageId || (m.mode !== 'servo' && m.mode !== 'plan')) return;
+  playCtrlModeVoice(m.mode);
+});
 
 // Nach jedem (Re-)Connect den Sound-Zustand sofort an die Nodes melden.
 rosHooks.onConnect.push(publishSoundState);
