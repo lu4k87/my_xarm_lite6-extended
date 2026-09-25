@@ -27,7 +27,7 @@
 // Laserpunkt hinter einer Karte, blendet sie aus - sie verdeckt nie das Ziel.
 
 import * as THREE from 'three';
-import { COL, GROUP, groupColor, FONT, FA_FONT, XR_ORDER, glyphFor, roundRect, fitText, pill } from './xr_ui.js';
+import { COL, GROUP, groupColor, FONT, FA_FONT, XR_ORDER, glyphFor, roundRect, fitText, pill, rgba, glass, GLASS } from './xr_ui.js';
 import { lsGet, lsSet } from '../util.js';
 
 const LS_KEY = 'robot_control_xr_hints_v1';
@@ -179,14 +179,13 @@ function drawBadge(ctx, x, cy, input, color, pressed, danger) {
 export function drawLegendRow(ctx, r, row, color) {
   const tint = row.danger ? COL.red : (row.group ? groupColor(row.group) : color);
   roundRect(ctx, r.x, r.y, r.w, r.h, 12);
-  ctx.fillStyle = row.pressed ? tint + '33' : COL.panel;
+  ctx.fillStyle = row.pressed ? rgba(tint, 0.22) : COL.panel;
   ctx.fill();
   ctx.save();
-  roundRect(ctx, r.x, r.y, r.w, r.h, 12);
-  ctx.clip();
   ctx.globalAlpha = row.dim ? 0.35 : 1;
+  roundRect(ctx, r.x + 4, r.y + 10, 4, r.h - 20, 2);
   ctx.fillStyle = tint;
-  ctx.fillRect(r.x, r.y, 6, r.h);
+  ctx.fill();
   ctx.restore();
   roundRect(ctx, r.x, r.y, r.w, r.h, 12);
   ctx.lineWidth = 2;
@@ -240,12 +239,7 @@ function drawCard(c, st) {
   const ctx = c.ctx;
   const rows = legendRows(c.hand, st);
   ctx.clearRect(0, 0, c.cw, c.ch);
-  roundRect(ctx, 1, 1, c.cw - 2, c.ch - 2, 24);
-  ctx.fillStyle = 'rgba(11, 17, 32, 0.92)';
-  ctx.fill();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = HAND_COL[c.hand];
-  ctx.stroke();
+  glass(ctx, 1.5, 1.5, c.cw - 3, c.ch - 3, 24, { a: GLASS.hint, tint: HAND_COL[c.hand], tintA: [0.1, 0.02], border: rgba(HAND_COL[c.hand], 0.8), lw: 3 });
   const [badge, badgeColor] = c.hand === 'right'
     ? [MODE_NAME[st.mode] || '', groupColor(st.mode === 'plan' ? 'plan' : 'robot')]
     : viewBadge(st);

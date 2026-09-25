@@ -5,23 +5,29 @@
 // echte DOM-Buttons der Seite (domItem) - Zustand, Farbe und Klick kommen
 // von dort, nichts wird doppelt implementiert.
 
+// Glas-Look: Flaechen, Buttons und Rahmen sind halbtransparent, die Szene
+// scheint durch. Text und Icons bleiben deckend (Kontrast in der Brille).
 export const COL = {
-  bg: '#0b1120', panel: '#111827', btn: '#1a2335', btnHover: '#27344d',
-  border: '#2c3a52', text: '#e2e8f0', mut: '#94a3b8', dim: '#64748b',
-  cyan: '#38bdf8', green: '#10b981', orange: '#f59e0b', red: '#ef4444',
+  bg: '#0b1120', panel: 'rgba(15, 23, 42, 0.55)', btn: 'rgba(30, 41, 59, 0.6)', btnHover: 'rgba(51, 65, 85, 0.8)',
+  border: 'rgba(148, 163, 184, 0.24)', hover: 'rgba(255, 255, 255, 0.6)',
+  text: '#f1f5f9', mut: '#a3b1c6', dim: '#8391a7',
+  cyan: '#38bdf8', green: '#34d399', orange: '#fbbf24', red: '#f43f5e',
 };
+
+// Deckkraft der grossen Flaechen (oben -> unten verlaufend)
+export const GLASS = { panel: [0.6, 0.7], card: [0.5, 0.62], hint: [0.66, 0.76] };
 
 // Funktionsgruppen: zusammengehoerige Funktionen tragen in Handgelenk-Panel,
 // HUD und Tastenhilfe dieselbe Farbe - Tab, Sektionskopf, Akzentleiste am
 // Button und Tasten-Badge. So findet man z. B. alles zum Greifen (Greifer,
 // Objekte, Trigger im SERVO) ueber die Farbe, egal auf welcher Flaeche.
 export const GROUP = {
-  robot:  { color: '#38bdf8', label: 'Roboter' },     // Servo, Posen, Speed, Linearachse
+  robot:  { color: '#60a5fa', label: 'Roboter' },     // Servo, Posen, Speed, Linearachse
   plan:   { color: '#a78bfa', label: 'Planen' },      // MoveIt, Ghost, TCP-Gizmo, PLAN-Modus
-  grip:   { color: '#f59e0b', label: 'Greifen' },     // Greifer, Objekte, Greifkugeln
+  grip:   { color: '#fbbf24', label: 'Greifen' },     // Greifer, Objekte, Greifkugeln
   scene:  { color: '#2dd4bf', label: 'Szene' },       // Einblendungen, Kollision, Sound
   xr:     { color: '#f472b6', label: 'VR' },          // Ansicht, Standort, HUD, Panel, Gehen
-  safety: { color: '#ef4444', label: 'Sicherheit' },  // Not-Aus
+  safety: { color: '#f43f5e', label: 'Sicherheit' },  // Not-Aus
   help:   { color: '#94a3b8', label: 'Hilfe' },
 };
 export const groupColor = (g) => (g && GROUP[g] ? GROUP[g].color : COL.cyan);
@@ -187,6 +193,52 @@ export function moveitProgressLines() {
   return lines;
 }
 
+// Farbe (#rrggbb oder rgb(...) aus getComputedStyle) mit Deckkraft a.
+export function rgba(color, a) {
+  const c = String(color || '');
+  let v;
+  if (c[0] === '#' && c.length === 7) {
+    const n = parseInt(c.slice(1), 16);
+    v = [n >> 16 & 255, n >> 8 & 255, n & 255];
+  } else {
+    v = (c.match(/[\d.]+/g) || [148, 163, 184]).slice(0, 3);
+  }
+  return `rgba(${v[0]}, ${v[1]}, ${v[2]}, ${a})`;
+}
+
+export function vGrad(ctx, y, hgt, top, bottom) {
+  const g = ctx.createLinearGradient(0, y, 0, y + hgt);
+  g.addColorStop(0, top);
+  g.addColorStop(1, bottom);
+  return g;
+}
+
+// Glasflaeche: dunkler Verlauf (Deckkraft a[0] oben, a[1] unten), optional in
+// einer Gruppenfarbe getoent, Rand in border bzw. als helle Lichtkante oben.
+export function glass(ctx, x, y, w, hgt, r, { a = GLASS.card, tint = null, tintA = [0.14, 0.04], border = null, lw = 2 } = {}) {
+  roundRect(ctx, x, y, w, hgt, r);
+  ctx.fillStyle = vGrad(ctx, y, hgt, `rgba(15, 23, 42, ${a[0]})`, `rgba(8, 12, 24, ${a[1]})`);
+  ctx.fill();
+  if (tint) {
+    ctx.fillStyle = vGrad(ctx, y, hgt, rgba(tint, tintA[0]), rgba(tint, tintA[1]));
+    ctx.fill();
+  }
+  ctx.lineWidth = lw;
+  ctx.strokeStyle = border || vGrad(ctx, y, hgt, 'rgba(255, 255, 255, 0.22)', 'rgba(148, 163, 184, 0.1)');
+  ctx.stroke();
+}
+
+// Not-Aus-Flaeche: bleibt deckend (Sicherheit vor Optik), roter Verlauf mit
+// heller Kante - auf allen Flaechen gleich.
+export function estopFill(ctx, r, radius, hovered) {
+  roundRect(ctx, r.x, r.y, r.w, r.h, radius);
+  ctx.fillStyle = hovered ? vGrad(ctx, r.y, r.h, '#f87171', '#dc2626') : vGrad(ctx, r.y, r.h, '#ef4444', '#b91c1c');
+  ctx.fill();
+  ctx.strokeStyle = hovered ? '#ffffff' : '#fecaca';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+}
+
 export function roundRect(ctx, x, y, w, hgt, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -223,9 +275,9 @@ export function pill(ctx, xRight, y, text, color) {
   const w = ctx.measureText(text).width + 28;
   const x = xRight - w;
   roundRect(ctx, x, y, w, 44, 22);
-  ctx.fillStyle = color + '33';
+  ctx.fillStyle = rgba(color, 0.2);
   ctx.fill();
-  ctx.strokeStyle = color;
+  ctx.strokeStyle = rgba(color, 0.75);
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.fillStyle = color;
@@ -248,29 +300,36 @@ export function drawButton(ctx, r, item, hovered) {
   const accent = item.group ? groupColor(item.group) : (item.color || COL.cyan);
   const on = item.active && !item.disabled;
   const solid = item.solid && on, solidOff = item.solid && !on;
+  const hov = hovered && !item.disabled;
   roundRect(ctx, r.x, r.y, r.w, r.h, 16);
-  ctx.fillStyle = solid ? accent : item.danger ? '#7f1d1d' : (hovered && !item.disabled ? COL.btnHover : COL.btn);
+  if (solid) {
+    ctx.fillStyle = vGrad(ctx, r.y, r.h, rgba(accent, 1), rgba(accent, 0.8));
+  } else if (item.danger) {
+    ctx.fillStyle = vGrad(ctx, r.y, r.h, 'rgba(220, 38, 38, 0.85)', 'rgba(127, 29, 29, 0.85)');
+  } else {
+    ctx.fillStyle = hov ? COL.btnHover : vGrad(ctx, r.y, r.h, 'rgba(51, 65, 85, 0.55)', 'rgba(30, 41, 59, 0.5)');
+  }
   ctx.fill();
-  if (on && !solid) {
+  if ((on || hov) && !solid && !item.danger) {
+    // aktiv: Verlauf in der Gruppenfarbe, Hover: nur ein Hauch davon
+    ctx.fillStyle = vGrad(ctx, r.y, r.h, rgba(accent, on ? 0.3 : 0.12), rgba(accent, on ? 0.1 : 0.04));
+    ctx.fill();
+  }
+  if (item.group && !item.danger && !solid) {
+    // Akzentleiste als abgerundeter Streifen links, mit Abstand zum Rahmen
     ctx.save();
-    ctx.globalAlpha = 0.16;
+    ctx.globalAlpha = item.disabled || solidOff ? 0.35 : (on || !item.toggle ? 1 : 0.55);
+    roundRect(ctx, r.x + 6, r.y + 12, 5, r.h - 24, 2.5);
     ctx.fillStyle = accent;
     ctx.fill();
     ctx.restore();
   }
-  if (item.group && !item.danger && !solid) {
-    // Akzentleiste, in den abgerundeten Rahmen geschnitten
-    ctx.save();
-    roundRect(ctx, r.x, r.y, r.w, r.h, 16);
-    ctx.clip();
-    ctx.fillStyle = accent;
-    ctx.globalAlpha = item.disabled || solidOff ? 0.35 : (on || !item.toggle ? 1 : 0.55);
-    ctx.fillRect(r.x, r.y, 7, r.h);
-    ctx.restore();
-  }
   roundRect(ctx, r.x, r.y, r.w, r.h, 16);
-  ctx.lineWidth = on ? 4 : 2;
-  ctx.strokeStyle = solid && hovered ? '#ffffff' : on ? accent : (hovered && !item.disabled ? COL.cyan : COL.border);
+  ctx.lineWidth = on ? 3 : 2;
+  ctx.strokeStyle = solid ? (hovered ? '#ffffff' : 'rgba(255, 255, 255, 0.35)')
+    : on ? accent
+    : hov ? (item.group ? rgba(accent, 0.85) : COL.hover)
+    : vGrad(ctx, r.y, r.h, 'rgba(255, 255, 255, 0.16)', 'rgba(148, 163, 184, 0.12)');
   ctx.stroke();
   const iconColor = solid ? COL.bg : item.group
     ? ((item.toggle || solidOff) && !item.active ? COL.mut : (item.iconColor || accent))
@@ -305,10 +364,10 @@ function statePill(ctx, xRight, y, item, accent, hgt) {
   const x = xRight - w;
   const c = item.warn ? COL.red : (item.active ? accent : COL.dim);
   roundRect(ctx, x, y, w, hgt, hgt / 2);
-  ctx.fillStyle = item.active ? c : 'rgba(255, 255, 255, 0.04)';
+  ctx.fillStyle = item.active ? c : 'rgba(255, 255, 255, 0.05)';
   ctx.fill();
   ctx.lineWidth = 2;
-  ctx.strokeStyle = c;
+  ctx.strokeStyle = item.active ? c : rgba(c, 0.6);
   ctx.stroke();
   ctx.fillStyle = item.active ? '#0b1120' : c;
   ctx.textAlign = 'center';
@@ -373,7 +432,7 @@ function drawBar(ctx, line, vx, cy, right) {
   const b = line.bar;
   const bw = right - BAR_VALUE_W - BAR_GAP - vx;
   roundRect(ctx, vx, cy - 8, bw, 16, 8);
-  ctx.fillStyle = '#1e293b';
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.18)';
   ctx.fill();
   let x0 = vx;
   let fw = bw * Math.max(0, Math.min(100, b.pct)) / 100;

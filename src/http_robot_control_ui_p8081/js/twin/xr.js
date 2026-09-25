@@ -58,7 +58,7 @@ import { announceCtrlMode, playButtonClick, playObjectSelectSound } from '../aud
 import {
   COL, GROUP, groupColor, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, q, qa, txt, stepSpeed,
   GRIPPER_LABELS, poseLabel,
-  roundRect, fitText, drawButton, pill, drawInfoLine,
+  roundRect, fitText, drawButton, pill, drawInfoLine, rgba, glass, GLASS, estopFill,
   moveitActionsVisible, moveitTargetLine, moveitProgressLines,
 } from './xr_ui.js';
 import {
@@ -396,8 +396,8 @@ function attachPanel(grip) {
     panelTex.anisotropy = 4;
     const geo = new THREE.PlaneGeometry(PANEL_W_M, PANEL_W_M * CH / CW);
     panel = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: panelTex, transparent: true, toneMapped: false }));
-    // Ueber dem linken Controller, zum Gesicht geneigt.
-    panel.position.set(0.0, 0.16, -0.05);
+    // Ueber dem linken Controller, etwas vorgesetzt, zum Gesicht geneigt.
+    panel.position.set(0.0, 0.20, -0.11);
     panel.rotation.x = -0.75;
     panel.renderOrder = XR_ORDER.panel;
   }
@@ -752,19 +752,11 @@ function drawModeCard(ctx, r, mode) {
   const m = MODE_INFO[mode];
   const on = ctrlMode === mode;
   const key = `mode-card:${mode}`;
-  roundRect(ctx, r.x, r.y, r.w, r.h, 16);
-  ctx.fillStyle = hoverKey === key ? COL.btnHover : COL.btn;
-  ctx.fill();
-  if (on) {
-    ctx.save();
-    ctx.globalAlpha = 0.14;
-    ctx.fillStyle = m.color;
-    ctx.fill();
-    ctx.restore();
-  }
-  ctx.lineWidth = on ? 4 : 2;
-  ctx.strokeStyle = on ? m.color : (hoverKey === key ? COL.cyan : COL.border);
-  ctx.stroke();
+  const hov = hoverKey === key;
+  glass(ctx, r.x, r.y, r.w, r.h, 16, {
+    a: [0.35, 0.45], tint: on || hov ? m.color : null, tintA: on ? [0.3, 0.1] : [0.12, 0.04],
+    border: on ? m.color : (hov ? rgba(m.color, 0.85) : null), lw: on ? 3 : 2,
+  });
   // Kopf: Icon + Name links, AKTIV rechts
   const hy = r.y + 12, hc = hy + 22;
   let xr = r.x + r.w - 14;
@@ -799,12 +791,9 @@ function drawPanel() {
   if (!ctx) return;
   hitRects = [];
   ctx.clearRect(0, 0, CW, CH);
-  roundRect(ctx, 0, 0, CW, CH, 36);
-  ctx.fillStyle = 'rgba(11, 17, 32, 0.82)';
-  ctx.fill();
-  ctx.strokeStyle = COL.border;
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  // Glas; Rahmen und ein Hauch Toenung in der Farbe des aktiven Tabs.
+  const tabColor = groupColor((TABS.find(t => t.id === activeTab) || TABS[0]).group);
+  glass(ctx, 1.5, 1.5, CW - 3, CH - 3, 36, { a: GLASS.panel, tint: tabColor, tintA: [0.1, 0.02], border: rgba(tabColor, 0.55), lw: 3 });
 
   // Kopfzeile: Titel links, Status-Pillen rechts (von rechts nach links gesetzt).
   const warnBanner = q('#twin-warning-banner');
@@ -832,31 +821,20 @@ function drawPanel() {
     const key = `tab:${t.id}`;
     const on = activeTab === t.id;
     const gc = groupColor(t.group);
-    roundRect(ctx, r.x, r.y, r.w, r.h, 14);
-    ctx.fillStyle = hoverKey === key && !on ? COL.btnHover : COL.panel;
+    const hov = hoverKey === key && !on;
+    glass(ctx, r.x, r.y, r.w, r.h, 16, {
+      a: [0.3, 0.4], tint: gc, tintA: on ? [0.38, 0.14] : (hov ? [0.16, 0.05] : [0.06, 0.02]),
+      border: on ? gc : (hov ? rgba(gc, 0.8) : null), lw: on ? 3 : 2,
+    });
+    // Farbstreifen oben (aktiv breit und voll, sonst schmal und blasser)
+    const sw = on ? r.w - 32 : r.w * 0.4;
+    roundRect(ctx, r.x + (r.w - sw) / 2, r.y + 6, sw, 5, 2.5);
+    ctx.fillStyle = on ? gc : rgba(gc, 0.55);
     ctx.fill();
-    if (on) {
-      ctx.save();
-      ctx.globalAlpha = 0.22;
-      ctx.fillStyle = gc;
-      ctx.fill();
-      ctx.restore();
-    }
-    ctx.save();
-    roundRect(ctx, r.x, r.y, r.w, r.h, 14);
-    ctx.clip();
-    ctx.fillStyle = gc;
-    ctx.globalAlpha = on ? 1 : 0.6;
-    ctx.fillRect(r.x, r.y, r.w, on ? 8 : 5);
-    ctx.restore();
-    roundRect(ctx, r.x, r.y, r.w, r.h, 14);
-    ctx.strokeStyle = on ? gc : COL.border;
-    ctx.lineWidth = on ? 3 : 2;
-    ctx.stroke();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `900 34px ${FA_FONT}`;
-    ctx.fillStyle = on ? gc : gc + 'b3';
+    ctx.fillStyle = on ? gc : rgba(gc, 0.75);
     ctx.fillText(glyphFor(t.fa), r.x + r.w / 2, r.y + 38);
     ctx.font = `700 20px ${FONT}`;
     ctx.fillStyle = on ? COL.text : COL.mut;
@@ -877,12 +855,7 @@ function drawPanel() {
   const ey = CH - PAD - ESTOP_H;
   const resetW = estopLatched ? (CW - 2 * PAD - GAP) / 3 : 0;
   const estopR = { x: PAD, y: ey, w: CW - 2 * PAD - (resetW ? resetW + GAP : 0), h: ESTOP_H };
-  roundRect(ctx, estopR.x, estopR.y, estopR.w, estopR.h, 22);
-  ctx.fillStyle = hoverKey === 'estop' ? '#dc2626' : '#b91c1c';
-  ctx.fill();
-  ctx.strokeStyle = '#fecaca';
-  ctx.lineWidth = 4;
-  ctx.stroke();
+  estopFill(ctx, estopR, 22, hoverKey === 'estop');
   ctx.textAlign = 'center';
   ctx.fillStyle = '#fff';
   ctx.font = `900 52px ${FA_FONT}`;
@@ -1021,7 +994,10 @@ function drawSectionHead(ctx, s, y) {
     }
   }
   if (xr - x > 16) {
-    ctx.strokeStyle = s.group ? gc + '55' : COL.border;
+    const lg = ctx.createLinearGradient(x, 0, xr, 0);
+    lg.addColorStop(0, s.group ? rgba(gc, 0.55) : COL.border);
+    lg.addColorStop(1, s.group ? rgba(gc, 0.05) : 'rgba(148, 163, 184, 0.04)');
+    ctx.strokeStyle = lg;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(x, cy);
@@ -1036,12 +1012,8 @@ function drawSectionButton(ctx, r, it) {
 }
 
 function drawStepper(ctx, r, it, group) {
-  roundRect(ctx, r.x, r.y, r.w, r.h, 16);
-  ctx.fillStyle = COL.panel;
-  ctx.fill();
-  ctx.strokeStyle = group ? groupColor(group) + '66' : COL.border;
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  const sc = group ? groupColor(group) : null;
+  glass(ctx, r.x, r.y, r.w, r.h, 16, { a: [0.3, 0.4], tint: sc, tintA: [0.1, 0.03], border: sc ? rgba(sc, 0.4) : null });
   const inset = 6, bw = Math.min(96, Math.round(r.w * 0.24));
   const minus = { x: r.x + inset, y: r.y + inset, w: bw, h: r.h - 2 * inset };
   const plus = { x: r.x + r.w - inset - bw, y: minus.y, w: bw, h: minus.h };
@@ -1050,7 +1022,11 @@ function drawStepper(ctx, r, it, group) {
     roundRect(ctx, br.x, br.y, br.w, br.h, 12);
     ctx.fillStyle = hov ? COL.btnHover : COL.btn;
     ctx.fill();
-    ctx.strokeStyle = hov ? COL.cyan : COL.border;
+    if (hov && sc) {
+      ctx.fillStyle = rgba(sc, 0.16);
+      ctx.fill();
+    }
+    ctx.strokeStyle = hov ? (sc ? rgba(sc, 0.85) : COL.hover) : COL.border;
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.textAlign = 'center';

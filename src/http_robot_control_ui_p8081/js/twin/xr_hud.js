@@ -38,7 +38,7 @@ import { lsGet, lsSet } from '../util.js';
 import {
   COL, groupColor, FONT, FA_FONT, XR_ORDER, domItem, ownItem, glyphFor, q, qa, txt, stepSpeed,
   GRIPPER_LABELS, poseLabel,
-  roundRect, fitText, drawButton, pill, drawInfoLine,
+  roundRect, fitText, drawButton, pill, drawInfoLine, rgba, vGrad, glass, GLASS, estopFill,
   moveitActionsVisible, moveitTargetLine, moveitProgressLines,
 } from './xr_ui.js';
 
@@ -85,7 +85,6 @@ const HEAD_H = 60, INFO_H = 42, BANNER_H = 48, BTN_H = 124, FLAT_BTN_H = 84;
 const LABEL_COL_W = 150;
 const TB_DIV_W = 20;
 const HANDLE_W = 48;                  // Griff zum Verschieben (Toolbar, Not-Aus)
-const CARD_ALPHA = 0.72;              // Hintergrund der Karten, leicht transparent
 
 // Farben: jede Karte und jeder Toolbar-Button traegt die Farbe seiner
 // Funktionsgruppe (GROUP in xr_ui.js) - dieselbe wie im Handgelenk-Panel.
@@ -624,7 +623,7 @@ function drawHandle(s, r, hov) {
   roundRect(ctx, r.x, r.y, r.w, r.h, 14);
   ctx.fillStyle = hov === key ? COL.btnHover : COL.btn;
   ctx.fill();
-  ctx.strokeStyle = hov === key ? COL.cyan : COL.border;
+  ctx.strokeStyle = hov === key ? COL.hover : COL.border;
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.textAlign = 'center';
@@ -635,13 +634,10 @@ function drawHandle(s, r, hov) {
   addHit(s, r, 'handle', null, { drag: true });
 }
 
+// Glaskarte (GLASS.card), in der Gruppenfarbe getoent und umrandet.
 function cardBackground(ctx, x, y, w, hgt, group) {
-  roundRect(ctx, x, y, w, hgt, 28);
-  ctx.fillStyle = `rgba(11, 17, 32, ${CARD_ALPHA})`;
-  ctx.fill();
-  ctx.strokeStyle = group ? groupColor(group) + '99' : COL.border;
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  const gc = group ? groupColor(group) : null;
+  glass(ctx, x + 1.5, y + 1.5, w - 3, hgt - 3, 28, { a: GLASS.card, tint: gc, tintA: [0.12, 0.02], border: gc ? rgba(gc, 0.6) : null, lw: 3 });
 }
 
 function drawToolbar(s, m, hov) {
@@ -686,12 +682,7 @@ function drawEstop(s, m, hov) {
   const r = { x: x0, y: p, w: s.cw - p - x0 - (resetW ? resetW + G : 0), h: hgt };
   drawHandle(s, { x: p, y: p, w: HANDLE_W, h: hgt }, hov);
   const key = `hud:${s.id}:estop`;
-  roundRect(ctx, r.x, r.y, r.w, r.h, 20);
-  ctx.fillStyle = hov === key ? '#dc2626' : '#b91c1c';
-  ctx.fill();
-  ctx.strokeStyle = '#fecaca';
-  ctx.lineWidth = 4;
-  ctx.stroke();
+  estopFill(ctx, r, 20, hov === key);
   // Icon und Text als Gruppe mittig
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
@@ -725,7 +716,7 @@ function drawModeBadge(s, m) {
   const r = { x: p, y: p, w: s.cw - 2 * p, h: s.ch - 2 * p };
   const cy = r.y + r.h / 2;
   roundRect(ctx, r.x, r.y, r.w, r.h, r.h / 2);
-  ctx.fillStyle = color;
+  ctx.fillStyle = vGrad(ctx, r.y, r.h, rgba(color, 1), rgba(color, 0.8));
   ctx.fill();
   ctx.strokeStyle = '#ffffff';
   ctx.globalAlpha = 0.6;
@@ -796,9 +787,9 @@ function drawCard(s, m, hov) {
 
   if (m.banner) {
     roundRect(ctx, x, y, w, BANNER_H, 12);
-    ctx.fillStyle = m.banner.color + '33';
+    ctx.fillStyle = rgba(m.banner.color, 0.2);
     ctx.fill();
-    ctx.strokeStyle = m.banner.color;
+    ctx.strokeStyle = rgba(m.banner.color, 0.8);
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.textAlign = 'center';
@@ -833,9 +824,17 @@ function drawHeader(s, m, y, hov) {
   const ctx = s.ctx;
   const x = P, w = s.cw - 2 * P, cy = y + HEAD_H / 2;
   const headKey = `hud:${s.id}:head`;
+  roundRect(ctx, x, y, w, HEAD_H, 14);
   if (hov === headKey) {
-    roundRect(ctx, x, y, w, HEAD_H, 14);
     ctx.fillStyle = COL.btnHover;
+    ctx.fill();
+  }
+  if (m.group) {
+    // Kopfband: Gruppenfarbe laeuft nach rechts aus
+    const hg = ctx.createLinearGradient(x, 0, x + w, 0);
+    hg.addColorStop(0, rgba(groupColor(m.group), 0.26));
+    hg.addColorStop(1, rgba(groupColor(m.group), 0));
+    ctx.fillStyle = hg;
     ctx.fill();
   }
   // Griff (⋮⋮): die Kopfzeile verschiebt die Karte
