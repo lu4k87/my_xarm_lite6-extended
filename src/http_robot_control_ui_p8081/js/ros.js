@@ -149,6 +149,46 @@ export function checkRosNodes() {
 
 visibleInterval(checkRosNodes, 2500);
 
+// ── ROS-Serverzeit ────────────────────────────────────────────────────────
+// Date.now() ist die Uhr des jeweiligen Geraets. Die Quest 3 ging 1,5 s vor:
+// tf2 nimmt bei lookup_transform(..., Time()) den juengsten Stempel, ihre
+// TF-Nachrichten haben damit die des Desktops dauerhaft verdraengt. Stempel
+// deshalb mit dem gemessenen Versatz zur ROS-Zeit (rosapi/get_time) setzen.
+let rosClockOffsetMs = 0;
+let getTimeClient = null;
+
+export function rosNowMs() {
+  return Date.now() + rosClockOffsetMs;
+}
+
+export function rosStampNow() {
+  const ms = rosNowMs();
+  const sec = Math.floor(ms / 1000);
+  return { sec, nanosec: Math.min(999999999, Math.round((ms - sec * 1000) * 1e6)) };
+}
+
+function syncRosClock() {
+  if (!ros || !ros.isConnected) return;
+  if (!getTimeClient) {
+    getTimeClient = new ROSLIB.Service({
+      ros: ros,
+      name: SERVICES.rosapiGetTime,
+      serviceType: 'rosapi/GetTime'
+    });
+  }
+  const t0 = Date.now();
+  getTimeClient.callService(new ROSLIB.ServiceRequest({}), (res) => {
+    const t1 = Date.now();
+    // Bei langer Antwortzeit ist die Mitte des Intervalls zu ungenau.
+    if (!res || !res.time || t1 - t0 > 500) return;
+    const serverMs = res.time.sec * 1000 + res.time.nanosec / 1e6;
+    rosClockOffsetMs = serverMs - (t0 + t1) / 2;
+  }, () => {});
+}
+
+rosHooks.onConnect.push(syncRosClock);
+visibleInterval(syncRosClock, 30000);
+
 // Live ROS Environment Metadata (Topic: /dashboard/workspace_metadata)
 try {
   const metaTopic = new ROSLIB.Topic({

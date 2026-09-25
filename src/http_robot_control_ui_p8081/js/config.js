@@ -40,6 +40,7 @@ export const TOPICS = Object.freeze({
   virtualBboxes3d: '/ui/virtual_bboxes_3d',
   virtualDetectionsEnabled: '/ui/virtual_detections_enabled',
   soundEnabled: '/ui/sound_enabled',
+  tfTunerState: '/ui/tf_tuner_state',
   voiceFeedback: '/ui/voice_feedback',
   voiceListenTrigger: '/ui/voice_listen_trigger',
   voiceStatus: '/ui/voice_status',
@@ -59,6 +60,7 @@ export const TOPICS = Object.freeze({
 
 export const SERVICES = Object.freeze({
   rosapiGetParam: '/rosapi/get_param',
+  rosapiGetTime: '/rosapi/get_time',
   rosapiNodes: '/rosapi/nodes',
   rosapiTopicsForType: '/rosapi/topics_for_type',
   confirmMovetoPreview: '/ui/confirm_moveto_preview',

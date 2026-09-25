@@ -1,7 +1,7 @@
 import { TOPICS } from './config.js';
 import * as twin from './twin/digital_twin.js';
 import { logMsg } from './log.js';
-import { ros, rosHooks } from './ros.js';
+import { ros, rosHooks, rosNowMs, rosStampNow } from './ros.js';
 
 // ── TF Control Tuner (Built-in Web Transform Broadcaster & Tuner) ────────────
 export const TF_TUNER_ELEMENTS = {
@@ -65,6 +65,62 @@ export const tfTunerPub = new ROSLIB.Topic({
   ros: ros,
   name: TOPICS.tf,
   messageType: 'tf2_msgs/TFMessage'
+});
+
+// ── Gemeinsamer Tuner-Zustand aller UI-Clients ──────────────────────────
+// Jeder offene Client (Desktop, Quest 3, weiterer Tab) sendet die Tuner-Frames
+// mit 10 Hz auf /tf - jeder mit seinen eigenen Werten aus dem localStorage.
+// Zwei Clients kaempften so um denselben Frame, und Greifkugel, Waende und
+// MoveIt-Kollision (virtual_object_detections) blieben an der alten Stelle
+// stehen. Jede Aenderung geht deshalb latched auf /ui/tf_tuner_state, alle
+// Clients uebernehmen sie und senden danach identische Werte.
+const TUNER_CLIENT_ID = Math.random().toString(36).slice(2, 10);
+const TUNER_STATE_SEND_MS = 50;
+let tunerStateSendTimer = null;
+// Kam der gemeinsame Zustand schon an, darf der localStorage-Stand beim
+// Wiederherstellen (persist.js) ihn nicht mehr ueberschreiben.
+let sharedTunerStateSeen = false;
+// Beide rosbridges (9090 Desktop, 9091 Quest) halten je einen latched Stand -
+// ein neu verbundener Client bekommt beide in beliebiger Reihenfolge. Es
+// zaehlt nur der juengste (Zeit in ROS-Millisekunden).
+let tunerStateTime = 0;
+
+export const tfTunerStatePub = new ROSLIB.Topic({
+  ros: ros,
+  name: TOPICS.tfTunerState,
+  messageType: 'std_msgs/String',
+  latch: true
+});
+
+function sendTunerState() {
+  tunerStateSendTimer = null;
+  if (!ros || !ros.isConnected) return;
+  tunerStateTime = rosNowMs();
+  tfTunerStatePub.publish(new ROSLIB.Message({
+    data: JSON.stringify({ client: TUNER_CLIENT_ID, t: tunerStateTime, values: getTunerState().values })
+  }));
+}
+
+// Nur nach einer Bedienung aufrufen, nie beim Wiederherstellen oder Uebernehmen.
+function shareTunerState() {
+  if (tunerStateSendTimer === null) tunerStateSendTimer = setTimeout(sendTunerState, TUNER_STATE_SEND_MS);
+}
+
+new ROSLIB.Topic({
+  ros: ros,
+  name: TOPICS.tfTunerState,
+  messageType: 'std_msgs/String'
+}).subscribe((msg) => {
+  let st;
+  try { st = JSON.parse(msg.data); } catch (e) { return; }
+  if (!st || st.client === TUNER_CLIENT_ID || !st.values) return;
+  if (!(Number(st.t) > tunerStateTime)) return;
+  tunerStateTime = Number(st.t);
+  sharedTunerStateSeen = true;
+  applyTunerValues(st.values);
+  updateTunerUI();
+  if (twin.updateTunerSceneObjects) twin.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
+  broadcastAllTFTunerTransforms();
 });
 
 export const safetyZoneParamsPub = new ROSLIB.Topic({
@@ -244,17 +300,14 @@ export function eulerDegToQuat(rollDeg, pitchDeg, yawDeg) {
 export function broadcastAllTFTunerTransforms() {
   if (!isTFBroadcastActive || !ros || !ros.isConnected) return;
 
-  const now = Date.now();
-  const sec = Math.floor(now / 1000);
-  const nanosec = (now % 1000) * 1000000;
-
+  const stamp = rosStampNow();
   const transforms = [];
 
   for (const [name, data] of Object.entries(TF_TUNER_ELEMENTS)) {
     const q = eulerDegToQuat(data.roll, data.pitch, data.yaw);
     transforms.push({
       header: {
-        stamp: { sec: sec, nanosec: nanosec },
+        stamp: stamp,
         frame_id: 'world'
       },
       child_frame_id: data.frame_id,
@@ -400,6 +453,7 @@ export function onTunerSliderInput(axis, val) {
   if (slider) updateRangeProgress(slider);
 
   broadcastAllTFTunerTransforms();
+  shareTunerState();
 }
 
 export function onTunerNumChange(axis, val) {
@@ -416,6 +470,7 @@ export function onTunerNumChange(axis, val) {
   }
 
   broadcastAllTFTunerTransforms();
+  shareTunerState();
 }
 
 export function resetCurrentTFElement() {
@@ -425,6 +480,7 @@ export function resetCurrentTFElement() {
   Object.assign(data, data.default);
   updateTunerUI();
   broadcastAllTFTunerTransforms();
+  shareTunerState();
   logMsg('TF-Tuner', `Reset ${currentTFTunerElement} to factory defaults`, 'action');
 }
 
@@ -478,17 +534,19 @@ export function getTunerState() {
   return { element: currentTFTunerElement, values, scene: { ...sceneGroupUserVisible } };
 }
 
-export function applyTunerState(st) {
-  if (!st) return;
-  if (st.values) {
-    for (const [name, vals] of Object.entries(st.values)) {
-      const el = TF_TUNER_ELEMENTS[name];
-      if (!el || !vals) continue;
-      for (const f of TUNER_FIELDS) {
-        if (typeof el[f] === 'number' && Number.isFinite(vals[f])) el[f] = vals[f];
-      }
+function applyTunerValues(values) {
+  for (const [name, vals] of Object.entries(values)) {
+    const el = TF_TUNER_ELEMENTS[name];
+    if (!el || !vals) continue;
+    for (const f of TUNER_FIELDS) {
+      if (typeof el[f] === 'number' && Number.isFinite(vals[f])) el[f] = vals[f];
     }
   }
+}
+
+export function applyTunerState(st) {
+  if (!st) return;
+  if (st.values && !sharedTunerStateSeen) applyTunerValues(st.values);
   if (st.element && TF_TUNER_ELEMENTS[st.element]) {
     currentTFTunerElement = st.element;
     const sel = document.getElementById('tuner-element-select');
