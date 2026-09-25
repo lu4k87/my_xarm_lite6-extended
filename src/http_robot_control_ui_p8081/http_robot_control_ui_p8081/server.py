@@ -53,7 +53,9 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         path = self.path.split('?', 1)[0]
         if path.endswith('/') or path.endswith(NO_CACHE_EXT):
-            self.send_header('Cache-Control', 'no-cache')
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
         super().end_headers()
 
     def _asset_version(self, rel):

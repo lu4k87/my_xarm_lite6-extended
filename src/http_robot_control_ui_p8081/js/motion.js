@@ -468,11 +468,7 @@ function applyPreviewPopupMode() {
 }
 
 export function toggleMoveToPreview() {
-  if (movetoPreviewState === null) {
-    logMsg('MoveIt', `ℹ️ Path preview: node ${MOVETO_PREVIEW_NODE} is not running`, 'warn');
-    return;
-  }
-  const enable = !movetoPreviewState;
+  const enable = movetoPreviewState === null ? true : !movetoPreviewState;
   createSrv(SERVICES.setMovetoPreview, 'std_srvs/SetBool').callService(
     new ROSLIB.ServiceRequest({ data: enable }),
     (res) => {
@@ -486,7 +482,13 @@ export function toggleMoveToPreview() {
         ? '👻 Path preview ON - MoveTo waits for confirmation before moving'
         : 'Path preview OFF - MoveTo executes planned paths immediately', 'info');
     },
-    (err) => logMsg('MoveIt', `✗ Path preview: service call failed: ${err}`, 'err')
+    (err) => {
+      if (movetoPreviewState === null) {
+        logMsg('MoveIt', `ℹ️ Path preview: node ${MOVETO_PREVIEW_NODE} is not running (${err})`, 'warn');
+      } else {
+        logMsg('MoveIt', `✗ Path preview: service call failed: ${err}`, 'err');
+      }
+    }
   );
 }
 
@@ -560,7 +562,12 @@ new ROSLIB.Topic({
 export function checkMoveToPreviewNode(nodesList) {
   if (!Array.isArray(nodesList)) return;
   const running = nodesList.some(n => n.includes(MOVETO_PREVIEW_NODE));
-  if (!running && movetoPreviewState !== null) {
+  if (running) {
+    if (movetoPreviewState === null) {
+      movetoPreviewState = false;
+      applyMoveToPreviewBtn();
+    }
+  } else if (movetoPreviewState !== null) {
     movetoPreviewState = null;
     applyMoveToPreviewBtn();
   }

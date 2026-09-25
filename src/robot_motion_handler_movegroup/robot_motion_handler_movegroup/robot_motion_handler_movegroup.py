@@ -118,6 +118,7 @@ class RobotMotionHandlerMovegroup(Node):
                             callback_group=self.cb_group)
         self.preview_enabled_pub.publish(Bool(data=self.preview_enabled))
         self.preview_path_pub.publish(String(data=json.dumps({'clear': True})))
+        self.create_timer(1.0, self._preview_enabled_heartbeat, callback_group=self.cb_group)
 
         # Live MoveTo progress for the MoveIt popup in the Robot Control UI
         # (JSON in std_msgs/String). move_group itself only reports PLANNING and
@@ -349,6 +350,12 @@ class RobotMotionHandlerMovegroup(Node):
                 self.is_executing = False
 
         threading.Thread(target=_task, daemon=True).start()
+
+    def _preview_enabled_heartbeat(self):
+        try:
+            self.preview_enabled_pub.publish(Bool(data=self.preview_enabled))
+        except Exception:
+            pass
 
     def set_moveto_preview_cb(self, request, response):
         self.preview_enabled = bool(request.data)

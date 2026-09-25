@@ -188,6 +188,9 @@ import * as THREE from 'three';
 			this.camera.updateMatrixWorld();
 			this.camera.matrixWorld.decompose( this.cameraPosition, this.cameraQuaternion, this._cameraScale );
 			this.eye.copy( this.cameraPosition ).sub( this.worldPosition ).normalize();
+			if ( isNaN( this.eye.x ) || isNaN( this.eye.y ) || isNaN( this.eye.z ) ) {
+				this.eye.set( 0, 0, 1 );
+			}
 			super.updateMatrixWorld( this );
 
 		}
@@ -992,11 +995,17 @@ import * as THREE from 'three';
 
 				if ( this.camera.isOrthographicCamera ) {
 
-					factor = ( this.camera.top - this.camera.bottom ) / this.camera.zoom;
+					factor = ( this.camera.top - this.camera.bottom ) / ( this.camera.zoom || 1 );
 
 				} else {
 
-					factor = this.worldPosition.distanceTo( this.cameraPosition ) * Math.min( 1.9 * Math.tan( Math.PI * this.camera.fov / 360 ) / this.camera.zoom, 7 );
+					const fov = ( typeof this.camera.fov === 'number' && !isNaN( this.camera.fov ) && this.camera.fov > 0 ) ? this.camera.fov : 50;
+					const zoom = ( typeof this.camera.zoom === 'number' && !isNaN( this.camera.zoom ) && this.camera.zoom > 0 ) ? this.camera.zoom : 1;
+					const dist = this.worldPosition.distanceTo( this.cameraPosition );
+					factor = dist * Math.min( 1.9 * Math.tan( Math.PI * fov / 360 ) / zoom, 7 );
+					if ( isNaN( factor ) || !isFinite( factor ) || factor <= 0.001 ) {
+						factor = 0.5;
+					}
 
 				}
 

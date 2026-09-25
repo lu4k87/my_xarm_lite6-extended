@@ -83,7 +83,8 @@ export function executeMoveToPoseFromGizmo() {
 
     if (res.ret === 0) {
       logMsg('GIZMO', 'Gizmo move accepted - MoveIt is planning the path.', 'info');
-      if (typeof twin.syncTCPGizmoToRobot === 'function') {
+      const isPreview = typeof twin.twinHooks.isPathPreviewOn === 'function' && twin.twinHooks.isPathPreviewOn();
+      if (!isPreview && typeof twin.syncTCPGizmoToRobot === 'function') {
         twin.syncTCPGizmoToRobot();
       }
     } else {

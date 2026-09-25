@@ -515,6 +515,119 @@ body.col-resizing * {
   position: relative;
   max-width: 100%;
   box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* ── Functional Area Backgrounds & Visual Hierarchy ─────────────────────────
+   Jeder Funktionsbereich der Robot Control UI hat eine eigene, dezente
+   Farbtönung und Rand-Nuance, um Panels und Action Cards visuell klar
+   voneinander abzugrenzen (Zero Overlap Policy & Responsive Flow). */
+
+/* 1. Vision & Kameras (Left Column / Perception): Deep Indigo / Violet */
+#panel-camera,
+#panel-camera-2,
+#panel-zed-camera,
+#panel-yolo {
+  background: linear-gradient(180deg, rgba(20, 24, 48, 0.72) 0%, rgba(13, 17, 36, 0.65) 100%);
+  border-color: rgba(129, 140, 248, 0.22);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(129, 140, 248, 0.1);
+}
+#panel-camera:hover,
+#panel-camera-2:hover,
+#panel-zed-camera:hover,
+#panel-yolo:hover {
+  border-color: rgba(129, 140, 248, 0.35);
+}
+
+/* 2. 3D Digital Twin Centerpiece (Middle Column / Simulation): Cyber Deep Space */
+#panel-3d-centerpiece {
+  background: linear-gradient(180deg, rgba(10, 16, 30, 0.82) 0%, rgba(6, 11, 22, 0.78) 100%);
+  border-color: rgba(56, 189, 248, 0.28);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(56, 189, 248, 0.12);
+}
+#panel-3d-centerpiece:hover {
+  border-color: rgba(56, 189, 248, 0.42);
+}
+
+/* 3. Cartesian Jogging & Steuerung (Right Column / Motion): Tech Cyan Slate */
+#panel-jogging {
+  background: linear-gradient(180deg, rgba(14, 26, 44, 0.75) 0%, rgba(9, 18, 32, 0.7) 100%);
+  border-color: rgba(56, 189, 248, 0.26);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(56, 189, 248, 0.1);
+}
+#panel-jogging:hover {
+  border-color: rgba(56, 189, 248, 0.38);
+}
+
+/* Jogging Sub-Groups visuell abgrenzen */
+#panel-jogging .z-controls {
+  background: rgba(15, 28, 48, 0.55);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 6px;
+  padding: 6px;
+}
+#panel-jogging .joystick-assembly {
+  background: radial-gradient(circle, rgba(10, 20, 36, 0.9) 0%, rgba(6, 12, 22, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+}
+#panel-jogging .rot-and-frame-group {
+  background: rgba(18, 22, 42, 0.5);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+#panel-jogging .gripper-area {
+  background: rgba(28, 22, 14, 0.5);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+/* 4. Telemetrie & Diagnose: Neutral Slate */
+#panel-telemetry {
+  background: linear-gradient(180deg, rgba(16, 22, 34, 0.72) 0%, rgba(11, 16, 26, 0.68) 100%);
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(148, 163, 184, 0.08);
+}
+#panel-telemetry:hover {
+  border-color: rgba(148, 163, 184, 0.35);
+}
+#panel-telemetry .telem-box {
+  background: rgba(24, 34, 52, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 6px;
+}
+
+/* 5. Voice Control / Whisper AI: Emerald / Teal */
+#panel-whisper {
+  background: linear-gradient(180deg, rgba(12, 32, 30, 0.7) 0%, rgba(8, 22, 22, 0.65) 100%);
+  border-color: rgba(20, 184, 166, 0.26);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(20, 184, 166, 0.1);
+}
+#panel-whisper:hover {
+  border-color: rgba(20, 184, 166, 0.4);
+}
+
+/* 6. TF Tuner (Kalibrierung): Warm Bronze / Amber */
+#panel-tf-tuner {
+  background: linear-gradient(180deg, rgba(28, 22, 14, 0.72) 0%, rgba(18, 14, 9, 0.68) 100%);
+  border-color: rgba(245, 158, 11, 0.24);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(245, 158, 11, 0.09);
+}
+#panel-tf-tuner:hover {
+  border-color: rgba(245, 158, 11, 0.38);
+}
+
+/* 7. Terminal Konsole & ROS Log: Monospace Obsidian Black */
+#panel-console {
+  background: linear-gradient(180deg, rgba(7, 9, 15, 0.9) 0%, rgba(4, 5, 9, 0.92) 100%);
+  border-color: rgba(56, 189, 248, 0.2);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.04);
+}
+#panel-console:hover {
+  border-color: rgba(56, 189, 248, 0.32);
 }
 
 /* ── Panel Snapping & Left-Side Resize Grip ── */

@@ -1,5 +1,6 @@
+import { TOPICS } from './config.js';
 import { logMsg } from './log.js';
-import { ROS_HOST, ros } from './ros.js';
+import { ROS_HOST, ros, rosHooks } from './ros.js';
 import { shortRmwName, visibleInterval } from './util.js';
 
 // ── Gamepad API Status ──────────────────────────────────────────────────
@@ -36,6 +37,14 @@ new ROSLIB.Topic({
   name: '/vr_teleop/controller_data',
   messageType: 'std_msgs/String',
   throttle_rate: 500,
+  queue_length: 1
+}).subscribe(() => { questLastSeen = Date.now(); });
+
+new ROSLIB.Topic({
+  ros: ros,
+  name: TOPICS.vrTeleopMirrorPose,
+  messageType: 'std_msgs/String',
+  throttle_rate: 1000,
   queue_length: 1
 }).subscribe(() => { questLastSeen = Date.now(); });
 
@@ -138,36 +147,35 @@ export function initPortMonitoring() {
       });
   }
 
+  let vrTeleopNodeRunning = false;
+  rosHooks.onNodeList.push((nodes) => {
+    if (Array.isArray(nodes)) {
+      vrTeleopNodeRunning = nodes.some(n => n.includes('vr_quest3_teleop_node') || n.includes('vr_quest3'));
+      if (window.location.protocol !== 'https:') {
+        const dot = document.getElementById('dot-port-9091');
+        if (dot) dot.className = vrTeleopNodeRunning ? 'dot glow-green' : 'dot glow-red';
+      }
+    }
+  });
+
   function checkPort9091() {
     const dot = document.getElementById('dot-port-9091');
     if (!dot) return;
+
+    if (window.location.protocol !== 'https:') {
+      // Auf Desktop HTTP den Status aus der ROS 2 Node-Liste spiegeln
+      dot.className = vrTeleopNodeRunning ? 'dot glow-green' : 'dot glow-red';
+      return;
+    }
+
+    // In HTTPS (Meta Quest 3 / WebXR) direkter WSS-Check ohne unverschlüsseltes Fallback
     let resolved = false;
-    // Port 9091 runs with SSL (wss://) in vr_quest3_teleop.launch.py
-    const proto = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
     try {
       const testWs = new WebSocket('wss://' + host + ':9091');
       const timer = setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          // Fallback check: probe plain ws:// if wss didn't open
-          try {
-            const fallbackWs = new WebSocket('ws://' + host + ':9091');
-            const fbTimer = setTimeout(() => {
-              dot.className = 'dot glow-red';
-              try { fallbackWs.close(); } catch(e) {}
-            }, 1000);
-            fallbackWs.onopen = () => {
-              clearTimeout(fbTimer);
-              dot.className = 'dot glow-green';
-              try { fallbackWs.close(); } catch(e) {}
-            };
-            fallbackWs.onerror = () => {
-              clearTimeout(fbTimer);
-              dot.className = 'dot glow-red';
-            };
-          } catch(e) {
-            dot.className = 'dot glow-red';
-          }
+          dot.className = 'dot glow-red';
           try { testWs.close(); } catch(e) {}
         }
       }, 1500);
@@ -185,25 +193,8 @@ export function initPortMonitoring() {
         if (!resolved) {
           resolved = true;
           clearTimeout(timer);
-          // Try plain ws:// fallback
-          try {
-            const fallbackWs = new WebSocket('ws://' + host + ':9091');
-            const fbTimer = setTimeout(() => {
-              dot.className = 'dot glow-red';
-              try { fallbackWs.close(); } catch(e) {}
-            }, 1000);
-            fallbackWs.onopen = () => {
-              clearTimeout(fbTimer);
-              dot.className = 'dot glow-green';
-              try { fallbackWs.close(); } catch(e) {}
-            };
-            fallbackWs.onerror = () => {
-              clearTimeout(fbTimer);
-              dot.className = 'dot glow-red';
-            };
-          } catch(e) {
-            dot.className = 'dot glow-red';
-          }
+          dot.className = 'dot glow-red';
+          try { testWs.close(); } catch(e) {}
         }
       };
     } catch (e) {

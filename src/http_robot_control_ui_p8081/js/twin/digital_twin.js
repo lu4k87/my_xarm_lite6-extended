@@ -950,28 +950,45 @@ function initTCPGizmo() {
     ghostTCPGroup = new THREE.Group();
 
     // Ghost Axes
-    const ghostAxes = new THREE.AxesHelper(0.065);
+    const ghostAxes = new THREE.AxesHelper(0.08);
     ghostAxes.material.depthTest = false;
+    ghostAxes.material.depthWrite = false;
     ghostAxes.material.transparent = true;
-    ghostAxes.material.opacity = 0.85;
+    ghostAxes.material.opacity = 0.9;
     ghostAxes.renderOrder = 999;
     ghostTCPGroup.add(ghostAxes);
 
     // Ghost suction cup / end flange disc (glowing cyan)
-    const ghostDiscGeo = new THREE.CylinderGeometry(0.016, 0.016, 0.005, 24);
+    const ghostDiscGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.006, 32);
     ghostDiscGeo.rotateX(Math.PI / 2);
     const ghostDiscMat = new THREE.MeshStandardMaterial({
       color: 0x38bdf8,
       emissive: 0x0284c7,
-      emissiveIntensity: 0.6,
+      emissiveIntensity: 0.8,
       transparent: true,
-      opacity: 0.55,
-      metalness: 0.3,
-      roughness: 0.25
+      opacity: 0.75,
+      depthTest: false,
+      depthWrite: false,
+      metalness: 0.2,
+      roughness: 0.2
     });
     const ghostDiscMesh = new THREE.Mesh(ghostDiscGeo, ghostDiscMat);
     ghostDiscMesh.renderOrder = 999;
     ghostTCPGroup.add(ghostDiscMesh);
+
+    // Ghost TCP Outer Target Ring (clearly visible around vacuum gripper or tool)
+    const ghostRingGeo = new THREE.RingGeometry(0.026, 0.036, 32);
+    const ghostRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85,
+      depthTest: false,
+      depthWrite: false
+    });
+    const ghostRingMesh = new THREE.Mesh(ghostRingGeo, ghostRingMat);
+    ghostRingMesh.renderOrder = 1000;
+    ghostTCPGroup.add(ghostRingMesh);
 
     gizmoTarget.add(ghostTCPGroup);
     transformControls.attach(gizmoTarget);
@@ -3293,6 +3310,11 @@ export function getTwinLinkWorldMatrix(names) {
 // Dieselben Aktualisierungen wie im normalen Loop. In XR wird jedes Frame
 // gerendert (Kopfbewegung), deshalb ohne requestRender-Logik.
 export function runTwinFrameUpdates() {
+  if (transformControls && isGizmoActive) {
+    try {
+      transformControls.getHelper().updateMatrixWorld(true);
+    } catch (_) {}
+  }
   updateSafetyVisuals();
   updateGraspSelection();
   updatePathPreview();
