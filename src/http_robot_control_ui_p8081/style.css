@@ -2618,6 +2618,19 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   margin: 0 4px;
 }
 
+/* VR-Gruppe (VR, AR, VR-Spiegel): violett hinterlegt, damit sie sich von den
+   Viewport-Werkzeugen abhebt. */
+.twin-toolbar .btn-icon-small.btn-xr {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #c4b5fd;
+}
+.twin-toolbar .btn-icon-small.btn-xr:hover {
+  background: rgba(139, 92, 246, 0.35);
+  border-color: var(--purple);
+  color: #ffffff;
+}
+
 /* Gripper Active Glow Highlight */
 .gripper-active {
   box-shadow: 0 0 12px var(--accent) !important;

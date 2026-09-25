@@ -228,6 +228,11 @@
             
             <div style="display: flex; align-items: center; gap: 8px;">
               <div class="twin-toolbar">
+                <!-- Pfad-Vorschau (Ghost) ganz links -->
+                <button class="btn btn-icon-small" id="btn-twin-path-preview" data-action="toggleMoveToPreview" title="MoveTo path preview (node robot_motion_handler_movegroup inactive)" style="color: var(--dim); opacity: 0.45;">
+                  <i class="fa-solid fa-ghost"></i>
+                </button>
+                <div class="twin-toolbar-divider"></div>
                 <button class="btn btn-icon-small" id="btn-twin-safety-test" data-action="testDigitalTwinSafetyCycle" title="Test safety warnings (Collision & Singularity Visuals)" style="color: var(--mut);">
                   <i class="fa-solid fa-shield-halved"></i>
                 </button>
@@ -254,22 +259,20 @@
                   <i class="fa-solid fa-crosshairs"></i>
                 </button>
                 <div class="twin-toolbar-divider"></div>
-                <button class="btn btn-icon-small" id="btn-twin-path-preview" data-action="toggleMoveToPreview" title="MoveTo path preview (node robot_motion_handler_movegroup inactive)" style="color: var(--dim); opacity: 0.45;">
-                  <i class="fa-solid fa-ghost"></i>
-                </button>
-                <div class="twin-toolbar-divider"></div>
-                <!-- WebXR (Meta Quest 3): nur sichtbar, wenn die Seite ueber HTTPS
-                     (Port 8443) laeuft und die Brille den Modus kann (js/twin/xr.js) -->
-                <button class="btn btn-icon-small" id="btn-twin-xr-vr" data-action="enterTwinXR" data-args='["vr"]' title="Enter VR (Meta Quest 3): 3D viewport with HUD panels - switch to passthrough inside the headset" style="display: none; color: var(--cyan);">
+                <!-- VR-Gruppe (btn-xr, eigene Farbe): VR, AR, VR-Spiegel.
+                     VR/AR nur sichtbar, wenn die Seite ueber HTTPS (Port 8443)
+                     laeuft und die Brille den Modus kann (js/twin/xr.js) -->
+                <button class="btn btn-icon-small btn-xr" id="btn-twin-xr-vr" data-action="enterTwinXR" data-args='["vr"]' title="Enter VR (Meta Quest 3): 3D viewport with HUD panels - switch to passthrough inside the headset" style="display: none;">
                   <i class="fa-solid fa-vr-cardboard"></i>
                 </button>
-                <button class="btn btn-icon-small" id="btn-twin-xr-ar" data-action="enterTwinXR" data-args='["ar"]' title="Enter Passthrough AR (Meta Quest 3) - prepared, calibration against the real robot pending" style="display: none; color: var(--mut);">
+                <button class="btn btn-icon-small btn-xr" id="btn-twin-xr-ar" data-action="enterTwinXR" data-args='["ar"]' title="Enter Passthrough AR (Meta Quest 3) - prepared, calibration against the real robot pending" style="display: none;">
                   <i class="fa-solid fa-glasses"></i>
                 </button>
                 <!-- VR-Spiegel: neues Fenster mit der aktuellen Ansicht der Quest 3 (vr_mirror.html) -->
-                <button class="btn btn-icon-small" id="btn-twin-vr-mirror" data-action="openVRMirror" title="VR mirror: open a new window showing exactly what the Quest 3 headset sees" style="color: var(--cyan);">
+                <button class="btn btn-icon-small btn-xr" id="btn-twin-vr-mirror" data-action="openVRMirror" title="VR mirror: open a new window showing exactly what the Quest 3 headset sees">
                   <i class="fa-solid fa-display"></i>
                 </button>
+                <div class="twin-toolbar-divider"></div>
                 <button class="btn btn-icon-small" id="btn-sound-toggle" data-action="toggleSound" title="Toggle sound effects" style="color: var(--cyan);">
                   <i class="fa-solid fa-volume-high" id="sound-toggle-icon"></i>
                 </button>
