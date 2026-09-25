@@ -17,6 +17,9 @@ Ersetzt `python3 -m http.server`. Zwei Dinge sind anders:
    abfragen und sieht keine USB-Geraete.
 4. `/api/sys_load` liefert CPU- und GPU-Last fuer den SYSTEM-Tab im Viewport
    (/proc/stat bzw. nvidia-smi, gemessen nur solange die UI fragt).
+5. `/api/tf_tuner` (GET/POST) haelt die per "Save" fest gespeicherten
+   TF-Tuner-Werte. Liegen auf dem PC statt im localStorage, damit Desktop
+   und Quest 3 (8443 nutzt diesen Handler mit) beim Start denselben Stand laden.
 
 Aufruf: server.py [PORT] [VERZEICHNIS]
 """
@@ -242,6 +245,53 @@ class SysLoad:
 SYS_LOAD = SysLoad()
 
 
+# ── Fest gespeicherte TF-Tuner-Werte ─────────────────────────────────────────
+TF_TUNER_FILE = os.path.expanduser('~/.config/robot_control_ui/tf_tuner.json')
+TF_TUNER_FIELDS = ('x', 'y', 'z', 'roll', 'pitch', 'yaw', 'radius')
+TF_TUNER_MAX_BODY = 64 * 1024
+TF_TUNER_LOCK = threading.Lock()
+
+
+def load_tf_tuner():
+    try:
+        with open(TF_TUNER_FILE, encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    # Aelteres Format: {"rev", "client", "elements": {...}}
+    values = clean_tf_tuner_values(data.get('values', data.get('elements')))
+    return {'values': values, 'saved_at': data.get('saved_at', data.get('rev'))} if values else {}
+
+
+def clean_tf_tuner_values(values):
+    """Nur Elementname -> {Feld: endliche Zahl}; alles andere faellt weg."""
+    if not isinstance(values, dict):
+        return None
+    out = {}
+    for name, vals in values.items():
+        if not isinstance(name, str) or len(name) > 64 or not isinstance(vals, dict):
+            continue
+        clean = {f: float(vals[f]) for f in TF_TUNER_FIELDS
+                 if isinstance(vals.get(f), (int, float)) and not isinstance(vals.get(f), bool)
+                 and abs(float(vals[f])) < 1e6}
+        if clean:
+            out[name] = clean
+    return out or None
+
+
+def save_tf_tuner(values):
+    data = {'values': values, 'saved_at': time.time()}
+    os.makedirs(os.path.dirname(TF_TUNER_FILE), exist_ok=True)
+    tmp = TF_TUNER_FILE + '.tmp'
+    with TF_TUNER_LOCK:
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp, TF_TUNER_FILE)
+    return data
+
+
 class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
     extensions_map = {
         **http.server.SimpleHTTPRequestHandler.extensions_map,
@@ -287,17 +337,47 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
             return f'{m.group(1)}{m.group(2)}?v={ver}{m.group(3)}'
         return ASSET_RE.sub(repl, text)
 
+    def _send_json(self, data, status=200):
+        body = json.dumps(data).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        import io
+        return io.BytesIO(body)
+
+    def do_POST(self):
+        if self.path.split('?', 1)[0] != '/api/tf_tuner':
+            self.send_error(404)
+            return
+        try:
+            length = int(self.headers.get('Content-Length') or 0)
+        except ValueError:
+            length = 0
+        if length <= 0 or length > TF_TUNER_MAX_BODY:
+            self.send_error(413 if length > TF_TUNER_MAX_BODY else 400)
+            return
+        try:
+            values = clean_tf_tuner_values(json.loads(self.rfile.read(length)).get('values'))
+        except (ValueError, AttributeError):
+            values = None
+        if values is None:
+            self.send_error(400, 'invalid tf tuner values')
+            return
+        try:
+            data = save_tf_tuner(values)
+        except OSError as e:
+            self.send_error(500, f'save failed: {e}')
+            return
+        f = self._send_json(data)
+        self.wfile.write(f.read())
+
     def send_head(self):
         path = self.path.split('?', 1)[0]
         if path in ('/api/header_status', '/api/sys_load'):
-            data = HEADER_STATUS.get() if path == '/api/header_status' else SYS_LOAD.get()
-            body = json.dumps(data).encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Content-Length', str(len(body)))
-            self.end_headers()
-            import io
-            return io.BytesIO(body)
+            return self._send_json(HEADER_STATUS.get() if path == '/api/header_status' else SYS_LOAD.get())
+        if path == '/api/tf_tuner':
+            return self._send_json(load_tf_tuner())
         page = VERSIONED_PAGES.get(path)
         if page:
             full = os.path.join(self.directory, page)

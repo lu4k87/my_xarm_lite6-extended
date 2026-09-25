@@ -396,8 +396,8 @@ export function toggleMoveitCollision(key) {
       }
       moveitCollState[key] = enable;
       applyMoveitCollBtn(key);
-      // Boden: Popup im Viewport mit der Z Collision Level zum Nachstellen
-      if (key === 'ground') showGroundCollPopup(enable);
+      // Boden: nur beim Einschalten Popup mit der Z Collision Level
+      if (key === 'ground' && enable) showGroundCollPopup();
       // Erst nach bestaetigtem Umschalten ansagen - sonst hiesse es
       // "enabled", obwohl der Node den Befehl abgelehnt hat.
       playVoice(enable ? collisionEnabledSound : collisionDisabledSound,
@@ -730,8 +730,8 @@ export function renderMoveitPopup() {
       const left = Math.max(0, (st.confirm_timeout || 0) - phaseElapsed);
       detail = `Path ready${st.ghost === false ? ' - click ▶ to move' : ' (ghost in viewport)'}` +
                ` · ${st.waypoints || '?'} waypoints · est. ${mpFmt(st.exec_expected)}` +
-               // "· auto-discard" bleibt in Zeile 1 (NBSP), die Sekunden kommen darunter.
-               ` ·\u00A0auto-discard\nin ${left.toFixed(0)} s`;
+               // Countdown komplett in eigener Zeile (NBSP hält ihn zusammen).
+               `\nauto-discard\u00A0in\u00A0${left.toFixed(0)}\u00A0s`;
       break;
     }
     case 'discarded':

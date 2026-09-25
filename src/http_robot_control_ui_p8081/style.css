@@ -1624,29 +1624,21 @@ input[type=range]:active::-moz-range-thumb {
 
 /* Niedriger Viewport: wieder die kompakten Groessen, damit SCENE- und
    MOTION-Spalte nicht in die Panels darueber/darunter wachsen. */
-.viewport-container.twin-viewport-short .twin-scene-node-overlay .btn-icon-small {
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  font-size: 16px !important;
+.viewport-container.twin-viewport-short .twin-scene-node-overlay {
+  --scene-row-h: 26px;
+  --scene-icon-size: 13px;
 }
 
-.viewport-container.twin-viewport-short .twin-motion-overlay .btn-action,
-.viewport-container.twin-viewport-short .twin-motion-overlay .btn-danger {
-  width: 38px !important;
-  height: 38px !important;
-  min-width: 38px !important;
+.viewport-container.twin-viewport-short .twin-motion-overlay {
+  --motion-row-h: 28px;
+  --motion-icon-size: 14px;
 }
 
 /* Very short viewports also need compact motion buttons so the overlay
    rows still fit without pushing into each other. */
-.viewport-container.twin-viewport-tiny .twin-motion-overlay .btn-action,
-.viewport-container.twin-viewport-tiny .twin-motion-overlay .btn-danger {
-  width: 30px !important;
-  height: 30px !important;
-  min-width: 30px !important;
-  font-size: 13px !important;
+.viewport-container.twin-viewport-tiny .twin-motion-overlay {
+  --motion-row-h: 24px;
+  --motion-icon-size: 12px;
 }
 
 .twin-motion-overlay {
@@ -1657,9 +1649,13 @@ input[type=range]:active::-moz-range-thumb {
      instead of spilling over the HUDs above and below; below that the row is
      clipped rather than allowed to overlap its neighbours. */
   flex-wrap: wrap;
+  align-content: flex-start;
   max-height: 100%;
   overflow: hidden;
-  gap: 5px;
+  /* Zeilenhoehe/Icongroesse; short/tiny/large setzen nur diese Variablen. */
+  --motion-row-h: 32px;
+  --motion-icon-size: 15px;
+  gap: 6px;
   background: rgba(10, 14, 23, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
@@ -1670,21 +1666,27 @@ input[type=range]:active::-moz-range-thumb {
 
 .twin-motion-overlay .btn-action,
 .twin-motion-overlay .btn-danger {
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  padding: 0 !important;
-  font-size: 17px !important;
+  /* Zeile: Label links, Icon-Feld rechts - gespiegelt zu SCENE, weil die
+     Leiste am linken Viewportrand sitzt. */
+  width: 100% !important;
+  height: var(--motion-row-h) !important;
+  min-width: 0 !important;
+  padding: 0 0 0 10px !important;
+  font-size: var(--motion-icon-size) !important;
   display: flex !important;
+  flex-direction: row-reverse;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
+  gap: 6px;
   border-radius: 6px !important;
 }
 
 .twin-motion-overlay .btn-action i,
 .twin-motion-overlay .btn-danger i {
+  flex: 0 0 var(--motion-row-h);
   margin: 0;
-  font-size: 17px;
+  text-align: center;
+  font-size: var(--motion-icon-size);
 }
 
 
@@ -2246,9 +2248,15 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 
 .tf-tuner-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
   margin-bottom: 8px;
+}
+/* Bricht die Buttongruppe in schmalen Spalten um, bleibt sie rechtsbuendig. */
+.tf-tuner-header > div:last-child {
+  margin-left: auto;
 }
 
 .btn-toggle-broadcast {
@@ -2275,6 +2283,45 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--mut);
 }
+
+/* Badge "Save": Tuner-Werte fest speichern (server.py, /api/tf_tuner).
+   dirty = ungespeicherte Aenderungen, saved = alles gespeichert. */
+.btn-tuner-save {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 62px;   /* "Save" und "Saved" gleich breit - nichts springt */
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--mut);
+  transition: all 0.2s ease;
+}
+.btn-tuner-save.dirty {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: var(--orange);
+}
+.btn-tuner-save.dirty:hover { background: rgba(245, 158, 11, 0.25); }
+.btn-tuner-save.saved {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: var(--green);
+}
+.btn-tuner-save.error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: var(--red);
+}
+.btn-tuner-save:disabled { opacity: 0.6; cursor: wait; }
 
 .tuner-selector-row {
   display: flex;
@@ -3374,13 +3421,6 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   -webkit-backdrop-filter: none;
 }
 
-/* Die beiden senkrechten Icon-Leisten sind schmaler als ihre Kopfzeile -
-   die Icons werden darum mittig unter dem Kopf ausgerichtet. */
-.twin-ov-right-top .twin-scene-node-overlay,
-.twin-ov-left-mid .twin-motion-overlay {
-  align-items: center;
-}
-
 /* Das TCP-HUD trug bisher selbst den cyanfarbenen Rahmen samt Glow. Der
    ist auf den Tab umgezogen, damit das Panel weiter hervorsticht. */
 #hud-tab-gizmo {
@@ -3677,12 +3717,20 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   }
 }
 
-/* ── Floating Scene Node Toggle Overlay (top-right inside viewport) ── */
+/* ── Floating Scene Node Toggle Overlay (top-right inside viewport) ──
+   Drei Untergruppen (Scene Models / Vision / MoveIt Collision) mit eigenem
+   Rahmen, darin je Schalter eine Zeile: Icon-Feld links, Kurzlabel rechts.
+   .hud-group / .hud-group-title / .hud-btn-label nutzt MOTION genauso.
+   Zeilenhoehe und Icongroesse kommen aus den Variablen, die short/large
+   unten nur umsetzen. */
 .twin-scene-node-overlay {
   /* grid-area sitzt jetzt am umschliessenden Tab (.twin-ov-right-top) */
+  --scene-row-h: 30px;
+  --scene-icon-size: 15px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: stretch;
+  gap: 6px;
   background: rgba(10, 14, 23, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
@@ -3691,19 +3739,70 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   -webkit-backdrop-filter: blur(8px);
 }
 
+.hud-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 5px;
+  background: rgba(10, 14, 23, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+}
+
+.hud-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 3px 3px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--mut);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hud-group-title i {
+  font-size: 9.5px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
 .twin-scene-node-overlay .btn-icon-small {
-  width: 38px !important;
-  height: 38px !important;
-  min-width: 38px !important;
-  min-height: 38px !important;
-  padding: 0 !important;
-  font-size: 17px !important;
+  width: 100% !important;
+  height: var(--scene-row-h) !important;
+  min-width: 0 !important;
+  min-height: var(--scene-row-h) !important;
+  padding: 0 10px 0 0 !important;
+  font-size: var(--scene-icon-size) !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
+  gap: 6px;
   line-height: 1 !important;
   cursor: pointer !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Quadratisches Icon-Feld: alle Icons stehen in einer Flucht, die Labels
+   beginnen buendig. */
+.twin-scene-node-overlay .btn-icon-small > i {
+  flex: 0 0 var(--scene-row-h);
+  text-align: center;
+}
+
+.hud-btn-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
 .twin-scene-node-overlay .btn-icon-small:hover {
@@ -3717,14 +3816,6 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   border-color: var(--accent) !important;
   color: var(--cyan) !important;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.25) !important;
-}
-
-/* Trennt die Anzeige-Toggles von den MoveIt-Kollisions-Toggles */
-.twin-scene-divider {
-  width: 22px;
-  height: 1px;
-  margin: 2px 0;
-  background: rgba(255, 255, 255, 0.15);
 }
 
 /* MoveIt-Kollision: Sicherheitsschalter in Ampelfarben statt Blau.
@@ -5243,31 +5334,17 @@ header {
    gelten die bisherigen Groessen bzw. short/tiny, damit SCENE und MOTION
    nicht abgeschnitten werden oder in die Nachbar-Panels wachsen. */
 .viewport-container.twin-viewport-large .twin-scene-node-overlay {
-  gap: 6px;
+  --scene-row-h: 36px;
+  --scene-icon-size: 18px;
+  gap: 8px;
 }
-.viewport-container.twin-viewport-large .twin-scene-node-overlay .btn-icon-small {
-  width: 57px !important;
-  height: 57px !important;
-  min-width: 57px !important;
-  min-height: 57px !important;
-  font-size: 25px !important;
-}
-.viewport-container.twin-viewport-large .twin-scene-divider {
-  width: 33px;
+.viewport-container.twin-viewport-large .hud-btn-label {
+  font-size: 12.5px;
 }
 .viewport-container.twin-viewport-large .twin-motion-overlay {
-  gap: 7px;
-}
-.viewport-container.twin-viewport-large .twin-motion-overlay .btn-action,
-.viewport-container.twin-viewport-large .twin-motion-overlay .btn-danger {
-  width: 60px !important;
-  height: 60px !important;
-  min-width: 60px !important;
-  font-size: 25px !important;
-}
-.viewport-container.twin-viewport-large .twin-motion-overlay .btn-action i,
-.viewport-container.twin-viewport-large .twin-motion-overlay .btn-danger i {
-  font-size: 25px;
+  --motion-row-h: 38px;
+  --motion-icon-size: 18px;
+  gap: 8px;
 }
 
 
@@ -5513,6 +5590,7 @@ header .header-status {
 
 .gc-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -5574,6 +5652,29 @@ header .header-status {
 .gc-unit {
   font-size: 14px;
   color: var(--mut);
+}
+.gc-ok {
+  flex-shrink: 0;
+  height: 34px;
+  min-width: 52px;
+  margin-left: 6px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--gc-accent) 60%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--gc-accent) 18%, transparent);
+  color: var(--gc-accent);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.gc-ok:hover {
+  background: color-mix(in srgb, var(--gc-accent) 30%, transparent);
+}
+.gc-ok:active {
+  transform: scale(0.95);
 }
 
 @keyframes estop-fade-in {
@@ -5679,6 +5780,28 @@ header .header-status {
 /* Leiste rechts (SCENE): offen ->, zu <- */
 #hud-tab-scene .hud-tab-caret { transform: rotate(-90deg); }
 #hud-tab-scene.is-collapsed .hud-tab-caret { transform: rotate(90deg); }
+/* SCENE und MOTION aufgeklappt: Kopf waagerecht oben ueber den Gruppen;
+   eingeklappt bleibt die senkrechte Leiste am Viewportrand. */
+#hud-tab-scene:not(.is-collapsed),
+#hud-tab-motion:not(.is-collapsed) {
+  flex-direction: column;
+}
+#hud-tab-scene:not(.is-collapsed) > .hud-tab-head,
+#hud-tab-motion:not(.is-collapsed) > .hud-tab-head {
+  flex-direction: row;
+  width: 100%;
+  padding: 3px 6px;
+  gap: 7px;
+}
+#hud-tab-scene:not(.is-collapsed) .hud-tab-title,
+#hud-tab-motion:not(.is-collapsed) .hud-tab-title {
+  flex: 1 1 auto;
+  writing-mode: horizontal-tb;
+  transform: none;
+  text-align: left;
+  margin-top: 0;
+  margin-bottom: 0;
+}
 /* Eingeklappt bleibt nur die Leiste - kein Abstand fuer den Inhalt */
 .twin-hud-tab.is-collapsed:not(#hud-tab-speed, #hud-tab-sysload) {
   align-self: flex-start;

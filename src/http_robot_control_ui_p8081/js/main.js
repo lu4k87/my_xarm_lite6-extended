@@ -42,7 +42,7 @@ import { executeMoveToPoseFromGizmo } from './gizmo.js';
 import { executeGrasp, setGripper, toggleKeepVirtualOnDeleteAll, toggleVirtualDetections } from './grasp.js';
 import { startListening } from './voice.js';
 import { toggleTwinPointCloud } from './pointcloud.js';
-import { commitGroundLevel, hideGroundCollPopup, inputGroundLevel, stepGroundLevel } from './ground_popup.js';
+import { confirmGroundLevel, hideGroundCollPopup, inputGroundLevel, stepGroundLevel } from './ground_popup.js';
 import {
   toggleAllHudTabs, toggleHeaderCollapsed, toggleHudTab, toggleTFTunerCollapse, toggleTwinDetections, toggleTwinDistanceLine,
 } from './layout.js';
@@ -50,7 +50,7 @@ import './status.js';
 import './sysload.js';
 import {
   onTunerElementChange, onTunerNumChange, onTunerSliderInput, resetCurrentTFElement,
-  toggleSceneNode, toggleTFBroadcast,
+  saveTunerValues, toggleSceneNode, toggleTFBroadcast,
 } from './tf_tuner.js';
 import './uievents.js';
 import './streams.js';
@@ -70,7 +70,7 @@ const ACTIONS = {
   // Bewegung
   moveToPose, requestMotion, setInitialPose, showScene, startObjectScan, executeMoveToPoseFromGizmo,
   confirmMoveToPreview, hideMoveitPopup, toggleMoveToPreview, toggleMoveitCollision,
-  commitGroundLevel, hideGroundCollPopup, inputGroundLevel, stepGroundLevel,
+  confirmGroundLevel, hideGroundCollPopup, inputGroundLevel, stepGroundLevel,
   updateSpeed, updateScanSpeed, setFrame, updateLinearAxis,
   // Greifen
   executeGrasp, setGripper, toggleKeepVirtualOnDeleteAll, toggleVirtualDetections,
@@ -82,7 +82,7 @@ const ACTIONS = {
   toggleAllHudTabs, toggleHeaderCollapsed, toggleHudTab, toggleTFTunerCollapse,
   // TF Tuner
   onTunerElementChange, onTunerNumChange, onTunerSliderInput, resetCurrentTFElement,
-  toggleSceneNode, toggleTFBroadcast,
+  saveTunerValues, toggleSceneNode, toggleTFBroadcast,
   // Sonstiges
   startListening, toggleSound,
   reloadPage: () => location.reload(),

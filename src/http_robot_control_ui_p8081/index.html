@@ -394,37 +394,56 @@
                 </button>
                 <div class="hud-tab-body">
                 <div id="twin-scene-node-overlay" class="twin-scene-node-overlay">
-                <button class="btn btn-icon-small active" id="btn-twin-scene-objects" data-action="toggleSceneNode" data-args='["objects"]' title="Interactive 3D scene objects (rviz_marker_3d_scene_objects)" style="color: var(--cyan);">
-                  <i class="fa-solid fa-cubes"></i>
-                </button>
-                <button class="btn btn-icon-small active" id="btn-twin-scene-plane" data-action="toggleSceneNode" data-args='["plane"]' title="White reference plane (rviz_marker_3d_scene_plane)" style="color: var(--cyan);">
-                  <i class="fa-solid fa-square"></i>
-                </button>
-                <button class="btn btn-icon-small active" id="btn-twin-scene-safety" data-action="toggleSceneNode" data-args='["safety"]' title="Safety &amp; Collision Zone, Singularity &amp; Workspace Limit (r=420 mm) (rviz_marker_3d_scene_safety_zone)" style="color: var(--cyan);">
-                  <i class="fa-solid fa-shield-halved"></i>
-                </button>
-                <button class="btn btn-icon-small active" id="btn-twin-scene-zedm" data-action="toggleSceneNode" data-args='["zedm"]' title="ZED-M camera stand (rviz_marker_3d_scene_zedm_stand)" style="color: var(--cyan);">
-                  <i class="fa-solid fa-video"></i>
-                </button>
-                <button class="btn btn-icon-small" id="btn-twin-detections" data-action="toggleTwinDetections" title="YOLO detections in 3D view: bounding box, red grasp point and labels (/zed/bboxes_3d)">
-                  <i class="fa-solid fa-vector-square"></i>
-                </button>
-                <button class="btn btn-icon-small" id="btn-twin-virtual-objects" data-action="toggleVirtualDetections" title="Virtual objects as detections (node virtual_object_detections inactive)" style="color: var(--dim); opacity: 0.45;">
-                  <i class="fa-solid fa-shapes"></i>
-                </button>
-                <button class="btn btn-icon-small" id="btn-twin-pointcloud" data-action="toggleTwinPointCloud" title="Show ZED point cloud in 3D view (/zed/pointcloud_web)" style="color: var(--dim); opacity: 0.5;">
-                  <i class="fa-solid fa-braille"></i>
-                </button>
-                <button class="btn btn-icon-small" id="btn-twin-distance-line" data-action="toggleTwinDistanceLine" title="Distance line (dashed line from TCP to the nearest detected object)">
-                  <i class="fa-solid fa-ruler-horizontal"></i>
-                </button>
-                <div class="twin-scene-divider"></div>
-                <button class="btn btn-icon-small" id="btn-moveit-coll-objects" data-action="toggleMoveitCollision" data-args='["objects"]' title="MoveIt collision of detected objects (node inactive)" style="color: var(--dim); opacity: 0.45;">
-                  <i class="fa-solid fa-box-open"></i>
-                </button>
-                <button class="btn btn-icon-small" id="btn-moveit-coll-ground" data-action="toggleMoveitCollision" data-args='["ground"]' title="MoveIt ground collision (node inactive)" style="color: var(--dim); opacity: 0.45;">
-                  <i class="fa-solid fa-arrows-down-to-line"></i>
-                </button>
+                  <!-- Untergruppen mit eigenem Rahmen; jede Zeile Icon + Kurzlabel -->
+                  <div class="hud-group">
+                    <div class="hud-group-title"><i class="fa-solid fa-cube"></i><span>Scene Models</span></div>
+                    <button class="btn btn-icon-small active" id="btn-twin-scene-objects" data-action="toggleSceneNode" data-args='["objects"]' title="Interactive 3D scene objects (rviz_marker_3d_scene_objects)" style="color: var(--cyan);">
+                      <i class="fa-solid fa-cubes"></i>
+                      <span class="hud-btn-label">Objects</span>
+                    </button>
+                    <button class="btn btn-icon-small active" id="btn-twin-scene-plane" data-action="toggleSceneNode" data-args='["plane"]' title="White reference plane (rviz_marker_3d_scene_plane)" style="color: var(--cyan);">
+                      <i class="fa-solid fa-square"></i>
+                      <span class="hud-btn-label">Plane</span>
+                    </button>
+                    <button class="btn btn-icon-small active" id="btn-twin-scene-safety" data-action="toggleSceneNode" data-args='["safety"]' title="Safety &amp; Collision Zone, Singularity &amp; Workspace Limit (r=420 mm) (rviz_marker_3d_scene_safety_zone)" style="color: var(--cyan);">
+                      <i class="fa-solid fa-shield-halved"></i>
+                      <span class="hud-btn-label">Safety Zone</span>
+                    </button>
+                    <button class="btn btn-icon-small active" id="btn-twin-scene-zedm" data-action="toggleSceneNode" data-args='["zedm"]' title="ZED-M camera stand (rviz_marker_3d_scene_zedm_stand)" style="color: var(--cyan);">
+                      <i class="fa-solid fa-video"></i>
+                      <span class="hud-btn-label">ZED Stand</span>
+                    </button>
+                  </div>
+                  <div class="hud-group">
+                    <div class="hud-group-title"><i class="fa-solid fa-eye"></i><span>Vision</span></div>
+                    <button class="btn btn-icon-small" id="btn-twin-detections" data-action="toggleTwinDetections" title="YOLO detections in 3D view: bounding box, red grasp point and labels (/zed/bboxes_3d)">
+                      <i class="fa-solid fa-vector-square"></i>
+                      <span class="hud-btn-label">Detections</span>
+                    </button>
+                    <button class="btn btn-icon-small" id="btn-twin-virtual-objects" data-action="toggleVirtualDetections" title="Virtual objects as detections (node virtual_object_detections inactive)" style="color: var(--dim); opacity: 0.45;">
+                      <i class="fa-solid fa-shapes"></i>
+                      <span class="hud-btn-label">Virtual Obj.</span>
+                    </button>
+                    <button class="btn btn-icon-small" id="btn-twin-pointcloud" data-action="toggleTwinPointCloud" title="Show ZED point cloud in 3D view (/zed/pointcloud_web)" style="color: var(--dim); opacity: 0.5;">
+                      <i class="fa-solid fa-braille"></i>
+                      <span class="hud-btn-label">Point Cloud</span>
+                    </button>
+                    <button class="btn btn-icon-small" id="btn-twin-distance-line" data-action="toggleTwinDistanceLine" title="Distance line (dashed line from TCP to the nearest detected object)">
+                      <i class="fa-solid fa-ruler-horizontal"></i>
+                      <span class="hud-btn-label">Distance Line</span>
+                    </button>
+                  </div>
+                  <div class="hud-group">
+                    <div class="hud-group-title"><i class="fa-solid fa-shield"></i><span>MoveIt Collision</span></div>
+                    <button class="btn btn-icon-small" id="btn-moveit-coll-objects" data-action="toggleMoveitCollision" data-args='["objects"]' title="MoveIt collision of detected objects (node inactive)" style="color: var(--dim); opacity: 0.45;">
+                      <i class="fa-solid fa-box-open"></i>
+                      <span class="hud-btn-label">Objects</span>
+                    </button>
+                    <button class="btn btn-icon-small" id="btn-moveit-coll-ground" data-action="toggleMoveitCollision" data-args='["ground"]' title="MoveIt ground collision (node inactive)" style="color: var(--dim); opacity: 0.45;">
+                      <i class="fa-solid fa-arrows-down-to-line"></i>
+                      <span class="hud-btn-label">Ground</span>
+                    </button>
+                  </div>
               </div>
               </div>
               </div>
@@ -438,15 +457,25 @@
                 </button>
                 <div class="hud-tab-body">
                 <div id="twin-motion-overlay" class="twin-motion-overlay">
-                <button class="btn btn-action motion-lockable" data-action="requestMotion" data-args='["initial"]' title="Move to Initial Pose">
-                  <i class="fa-solid fa-house"></i>
-                </button>
-                <button id="btn-show-scene" class="btn btn-action motion-lockable" data-action="requestMotion" data-args='["scene"]' title="Move to Scan Position">
-                  <i class="fa-solid fa-eye"></i>
-                </button>
-                <button id="btn-scan-objects" class="btn btn-action motion-lockable" data-action="requestMotion" data-args='["scan"]' title="Create OctoMap of Objects">
-                  <i class="fa-solid fa-cube"></i>
-                </button>
+                  <!-- Untergruppen mit eigenem Rahmen; jede Zeile Kurzlabel + Icon -->
+                  <div class="hud-group">
+                    <div class="hud-group-title"><i class="fa-solid fa-location-dot"></i><span>Poses</span></div>
+                    <button class="btn btn-action motion-lockable" data-action="requestMotion" data-args='["initial"]' title="Move to Initial Pose">
+                      <i class="fa-solid fa-house"></i>
+                      <span class="hud-btn-label">Home</span>
+                    </button>
+                    <button id="btn-show-scene" class="btn btn-action motion-lockable" data-action="requestMotion" data-args='["scene"]' title="Move to Scan Position">
+                      <i class="fa-solid fa-eye"></i>
+                      <span class="hud-btn-label">Scan Pose</span>
+                    </button>
+                  </div>
+                  <div class="hud-group">
+                    <div class="hud-group-title"><i class="fa-solid fa-cubes-stacked"></i><span>Mapping</span></div>
+                    <button id="btn-scan-objects" class="btn btn-action motion-lockable" data-action="requestMotion" data-args='["scan"]' title="Create OctoMap of Objects">
+                      <i class="fa-solid fa-cube"></i>
+                      <span class="hud-btn-label">OctoMap</span>
+                    </button>
+                  </div>
               </div>
               </div>
               </div>
@@ -466,8 +495,8 @@
                 </button>
               </div>
 
-              <!-- Ground Collision: erscheint nach dem Umschalten des Boden-Icons
-                   (SCENE); Z Collision Level live einstellbar. -->
+              <!-- Ground Collision: erscheint nur beim Einschalten des Boden-Icons
+                   (SCENE); Z Collision Level einstellen, OK uebernimmt. -->
               <div class="twin-ov-ground" id="ground-coll-popup" data-state="unknown" hidden>
                 <div class="gc-head">
                   <i class="fa-solid fa-arrows-down-to-line gc-icon"></i>
@@ -482,11 +511,12 @@
                   <button type="button" class="gc-step" data-action="stepGroundLevel" data-args="[-1]" title="Lower by 1 mm" aria-label="Lower by 1 mm">
                     <i class="fa-solid fa-minus"></i>
                   </button>
-                  <input type="number" class="gc-input" id="gc-level" min="0" max="200" step="1" value="10" inputmode="numeric" data-input="inputGroundLevel" data-change="commitGroundLevel" aria-label="Z Collision Level in mm">
+                  <input type="number" class="gc-input" id="gc-level" min="0" max="200" step="1" value="10" inputmode="numeric" data-input="inputGroundLevel" aria-label="Z Collision Level in mm">
                   <button type="button" class="gc-step" data-action="stepGroundLevel" data-args="[1]" title="Raise by 1 mm" aria-label="Raise by 1 mm">
                     <i class="fa-solid fa-plus"></i>
                   </button>
                   <span class="gc-unit">mm</span>
+                  <button type="button" class="gc-ok" data-action="confirmGroundLevel" title="Apply Z Collision Level (Enter)">OK</button>
                 </div>
               </div>
 
@@ -841,6 +871,9 @@
               </button>
             </div>
             <div style="display: flex; align-items: center; gap: 6px;">
+              <button id="btn-tuner-save" class="btn-tuner-save dirty" data-action="saveTunerValues" title="Store all TF tuner values permanently">
+                <i class="fa-solid fa-floppy-disk"></i> <span id="tuner-save-label">Save</span>
+              </button>
               <button class="btn btn-icon-small" data-action="resetCurrentTFElement" title="Reset current element to defaults" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
                 <i class="fa-solid fa-rotate-left"></i>
               </button>

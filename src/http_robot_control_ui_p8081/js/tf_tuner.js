@@ -92,17 +92,21 @@ export const tfTunerStatePub = new ROSLIB.Topic({
   latch: true
 });
 
-function sendTunerState() {
+// saved: die Werte wurden eben per "Save" festgeschrieben - die anderen
+// Clients uebernehmen sie dann auch als gespeicherten Stand fuer ihr Badge.
+function sendTunerState(saved = false) {
+  if (tunerStateSendTimer !== null) clearTimeout(tunerStateSendTimer);
   tunerStateSendTimer = null;
   if (!ros || !ros.isConnected) return;
   tunerStateTime = rosNowMs();
-  tfTunerStatePub.publish(new ROSLIB.Message({
-    data: JSON.stringify({ client: TUNER_CLIENT_ID, t: tunerStateTime, values: getTunerState().values })
-  }));
+  const msg = { client: TUNER_CLIENT_ID, t: tunerStateTime, values: getTunerState().values };
+  if (saved) msg.saved = true;
+  tfTunerStatePub.publish(new ROSLIB.Message({ data: JSON.stringify(msg) }));
 }
 
 // Nur nach einer Bedienung aufrufen, nie beim Wiederherstellen oder Uebernehmen.
 function shareTunerState() {
+  updateTunerSaveBadge();
   if (tunerStateSendTimer === null) tunerStateSendTimer = setTimeout(sendTunerState, TUNER_STATE_SEND_MS);
 }
 
@@ -118,10 +122,121 @@ new ROSLIB.Topic({
   tunerStateTime = Number(st.t);
   sharedTunerStateSeen = true;
   applyTunerValues(st.values);
+  if (st.saved) savedTunerValues = st.values;
   updateTunerUI();
+  updateTunerSaveBadge();
   if (twin.updateTunerSceneObjects) twin.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
   broadcastAllTFTunerTransforms();
 });
+
+// ── Objekt-Frames fuer die virtuellen Objekte ───────────────────────────
+// virtual_object_detections liest die Pose von Cube, Rectangle und Cylinder
+// aus TF. Ohne Szenen-Node (static_objects:=false) und ohne "Live TF" kam
+// dort nichts an, Greifkugel, Waende und MoveIt-Kollision blieben stehen.
+// Solange die virtuellen Objekte aktiv sind, gehen deshalb diese drei Frames
+// immer raus - nur sie, zed_camera_link bleibt beim statischen Kamera-TF.
+const VIRTUAL_OBJECT_ELEMENTS = ['Blue Cube', 'Red Rectangle', 'Green Cylinder'];
+const VIRTUAL_DETECTIONS_NODE = 'virtual_object_detections';
+let virtualDetectionsEnabled = false;
+let virtualDetectionsNodeRunning = false;
+
+new ROSLIB.Topic({
+  ros: ros,
+  name: TOPICS.virtualDetectionsEnabled,
+  messageType: 'std_msgs/Bool'
+}).subscribe((msg) => {
+  virtualDetectionsEnabled = Boolean(msg.data);
+  virtualDetectionsNodeRunning = true;
+  broadcastAllTFTunerTransforms();
+});
+
+function virtualObjectsNeedTf() {
+  return virtualDetectionsEnabled && virtualDetectionsNodeRunning;
+}
+
+// ── Werte fest speichern (Badge "Save") ─────────────────────────────────
+// Die Werte liegen auf dem PC (server.py, /api/tf_tuner), nicht im
+// localStorage des einzelnen Browsers. Beim Laden der Seite gewinnt dieser
+// Stand ueber den localStorage - nur ein schon laufender gemeinsamer Stand
+// (/ui/tf_tuner_state) ist noch aktueller.
+const TUNER_API = 'api/tf_tuner';
+let savedTunerValues = null;       // null = noch nie gespeichert / nicht geladen
+let serverTunerValuesApplied = false;
+let tunerSaveBusy = false;
+
+function tunerValuesEqual(a, b) {
+  if (!a || !b) return false;
+  for (const [name, el] of Object.entries(TF_TUNER_ELEMENTS)) {
+    if (!a[name] || !b[name]) return false;
+    for (const f of TUNER_FIELDS) {
+      if (typeof el[f] !== 'number') continue;
+      if (Math.abs(Number(a[name][f]) - Number(b[name][f])) > 1e-6) return false;
+    }
+  }
+  return true;
+}
+
+export function updateTunerSaveBadge(state) {
+  const btn = document.getElementById('btn-tuner-save');
+  const label = document.getElementById('tuner-save-label');
+  if (!btn || !label) return;
+  const clean = tunerValuesEqual(getTunerState().values, savedTunerValues);
+  const mode = state || (tunerSaveBusy ? 'busy' : (clean ? 'saved' : 'dirty'));
+  btn.classList.toggle('saved', mode === 'saved');
+  btn.classList.toggle('dirty', mode === 'dirty');
+  btn.classList.toggle('error', mode === 'error');
+  btn.disabled = mode === 'busy';
+  label.textContent = mode === 'saved' ? 'Saved' : mode === 'busy' ? 'Saving' : mode === 'error' ? 'Retry' : 'Save';
+  btn.title = mode === 'saved'
+    ? 'All TF tuner values are saved - loaded on every start (desktop and Quest 3)'
+    : mode === 'error'
+      ? 'Saving failed - click to try again'
+      : 'Unsaved changes - click to store all TF tuner values permanently';
+}
+
+export async function saveTunerValues() {
+  if (tunerSaveBusy) return;
+  tunerSaveBusy = true;
+  updateTunerSaveBadge();
+  const values = getTunerState().values;
+  try {
+    const res = await fetch(TUNER_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    savedTunerValues = values;
+    tunerSaveBusy = false;
+    updateTunerSaveBadge();
+    sendTunerState(true);
+    logMsg('TF-Tuner', '💾 TF tuner values saved permanently', 'success');
+  } catch (e) {
+    tunerSaveBusy = false;
+    updateTunerSaveBadge('error');
+    logMsg('TF-Tuner', `✗ Saving TF tuner values failed: ${e.message || e}`, 'err');
+  }
+}
+
+async function loadSavedTunerValues() {
+  try {
+    const res = await fetch(TUNER_API, { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data || !data.values) { updateTunerSaveBadge(); return; }
+    savedTunerValues = data.values;
+    if (!sharedTunerStateSeen) {
+      serverTunerValuesApplied = true;
+      applyTunerValues(data.values);
+      updateTunerUI();
+      if (twin.updateTunerSceneObjects) twin.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
+      broadcastAllTFTunerTransforms();
+    }
+  } catch (e) {
+    // Ohne Server-API (z. B. python3 -m http.server) bleibt der localStorage-Stand.
+  }
+  updateTunerSaveBadge();
+}
 
 export const safetyZoneParamsPub = new ROSLIB.Topic({
   ros: ros,
@@ -171,6 +286,10 @@ zedVisualMarkersSub.subscribe((msg) => {
 export function checkSceneObjectsNodeState(nodesList) {
   const sceneNodes = ['rviz_marker_3d_scene_objects', 'fixed_marker_publisher', 'tf_control_tuner', 'rviz_marker_3d_scene_zedm_stand', 'rviz_marker_3d_scene_plane', 'rviz_marker_3d_scene_safety_zone'];
   const hasSceneNode = Array.isArray(nodesList) && nodesList.some(n => sceneNodes.some(sn => n.includes(sn)));
+  // Der latched Zustand bleibt nach einem Node-Ende im Topic haengen.
+  if (Array.isArray(nodesList)) {
+    virtualDetectionsNodeRunning = nodesList.some(n => n.includes(VIRTUAL_DETECTIONS_NODE));
+  }
   const recentMarkers = (Date.now() - lastSceneMarkerTime < 4500);
 
   if (hasSceneNode || recentMarkers) {
@@ -245,8 +364,12 @@ export function applySceneObjectsActiveState(isActive, reason) {
   const wasRunning = isSceneObjectsNodeRunning;
   isSceneObjectsNodeRunning = isActive;
 
+  // Nur bei einem echten Wechsel umschalten - die Node-Abfrage (2,5 s) und
+  // der Marker-Stream melden den Zustand laufend und haben sonst ein von Hand
+  // gesetztes "Live TF" sofort wieder ueberschrieben.
+  if (isActive !== wasRunning) isTFBroadcastActive = isActive;
+
   if (isActive) {
-    isTFBroadcastActive = true;
     // Apply per-group visibility
     for (const key of Object.keys(sceneGroupUserVisible)) {
       if (twin.setSceneGroupVisibility) {
@@ -262,7 +385,6 @@ export function applySceneObjectsActiveState(isActive, reason) {
       logMsg('TF-Tuner', `🟢 3D scene objects node active (${reason || 'node active'})`, 'info');
     }
   } else {
-    isTFBroadcastActive = false;
     // Keep 3D twin objects visible in WebGL if user enabled them
     for (const key of Object.keys(sceneGroupUserVisible)) {
       if (twin.setSceneGroupVisibility) {
@@ -298,12 +420,14 @@ export function eulerDegToQuat(rollDeg, pitchDeg, yawDeg) {
 }
 
 export function broadcastAllTFTunerTransforms() {
-  if (!isTFBroadcastActive || !ros || !ros.isConnected) return;
+  const objectsOnly = !isTFBroadcastActive && virtualObjectsNeedTf();
+  if ((!isTFBroadcastActive && !objectsOnly) || !ros || !ros.isConnected) return;
 
   const stamp = rosStampNow();
   const transforms = [];
 
   for (const [name, data] of Object.entries(TF_TUNER_ELEMENTS)) {
+    if (objectsOnly && !VIRTUAL_OBJECT_ELEMENTS.includes(name)) continue;
     const q = eulerDegToQuat(data.roll, data.pitch, data.yaw);
     transforms.push({
       header: {
@@ -546,7 +670,7 @@ function applyTunerValues(values) {
 
 export function applyTunerState(st) {
   if (!st) return;
-  if (st.values && !sharedTunerStateSeen) applyTunerValues(st.values);
+  if (st.values && !sharedTunerStateSeen && !serverTunerValuesApplied) applyTunerValues(st.values);
   if (st.element && TF_TUNER_ELEMENTS[st.element]) {
     currentTFTunerElement = st.element;
     const sel = document.getElementById('tuner-element-select');
@@ -582,4 +706,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (twin.updateTunerSceneObjects) twin.updateTunerSceneObjects(TF_TUNER_ELEMENTS);
     updateAllSceneNodeBtns(isSceneObjectsNodeRunning);
   }, 400);
+  loadSavedTunerValues();
 });

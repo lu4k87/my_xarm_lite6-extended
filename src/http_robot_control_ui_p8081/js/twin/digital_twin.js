@@ -65,8 +65,12 @@ const GIZMO_RENDER_ORDER = 1500;    // ueber Markierungen (bis 999), unter XR-HU
 let transformControls = null;
 let gizmoTarget = null;
 let ghostTCPGroup = null;
-let dashedLine = null;
-// Nutzerschalter fuer die gestrichelte Distanzlinie TCP -> Gizmo-Ziel.
+let dashedLine = null;   // Gruppe: Leuchtstrahl + Endpunkt-Glows (createDistanceLine)
+let distanceBeam = null;
+let distanceTcpGlow = null;
+let distanceTargetGlow = null;
+let distanceTargetRing = null;
+// Nutzerschalter fuer die Distanzlinie TCP -> naechste Greifkugel/Gizmo-Ziel.
 // Gatet jede Stelle, die sie sichtbar schalten wuerde.
 let distanceLineEnabled = true;
 let isGizmoActive = true;
@@ -217,11 +221,11 @@ function initDigitalTwin() {
   // Hemisphere Light: Natural vertical shading gradient (cool bright sky to deep slate ground)
   // Lichtstaerken: seit r155 physikalische Einheiten. Faktor PI entspricht
   // der Helligkeit der bisherigen (legacy) Werte.
-  const hemiLight = new THREE.HemisphereLight(0xf8fafc, 0x090d16, 0.45 * Math.PI);
+  const hemiLight = new THREE.HemisphereLight(0xf8fafc, 0x090d16, 0.35 * Math.PI);
   scene.add(hemiLight);
 
   // Key Directional Light: Generates crisp highlights and soft dynamic drop shadows
-  const keyLight = new THREE.DirectionalLight(0xffffff, 0.95 * Math.PI);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.75 * Math.PI);
   keyLight.position.set(1.2, -1.0, 2.2);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.width = 1024;
@@ -302,6 +306,7 @@ function initDigitalTwin() {
     if (updateGraspSelection()) animating = true;
     if (updatePathPreview()) animating = true;
     if (updateWallProximity()) animating = true;
+    if (updateDistanceLineFx()) animating = true;
     if (!animating && !renderRequested) return;
     renderRequested = false;
     updateConnectingLine();
@@ -1002,21 +1007,8 @@ function initTCPGizmo() {
       if (o.renderOrder === Infinity) o.renderOrder = GIZMO_RENDER_ORDER;
     });
 
-    // Dashed connecting line
-    const lineGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, 0)
-    ]);
-    const lineMat = new THREE.LineDashedMaterial({
-      color: 0x38bdf8,
-      dashSize: 0.012,
-      gapSize: 0.008,
-      transparent: true,
-      opacity: 0.8
-    });
-    dashedLine = new THREE.Line(lineGeo, lineMat);
-    dashedLine.computeLineDistances();
-    dashedLine.visible = false;
+    // Distanzlinie: leuchtender, animierter Strahl (createDistanceLine)
+    dashedLine = createDistanceLine();
     scene.add(dashedLine);
 
     // Dragging events
@@ -1247,6 +1239,172 @@ function pickDistanceLineTarget(tcpPos) {
   return target ? { position: target, dist: best } : null;
 }
 
+// ── Distanzlinie: Leuchtstrahl mit Animation ────────────────────────────
+// Ein offener Zylinder (Einheitslaenge/-radius, per Skalierung gestreckt)
+// mit additivem Shader: heller Kern + weicher Glow ueber den Fresnel-Winkel,
+// darauf Lichtpulse, die vom TCP zum Ziel laufen. An beiden Enden sitzt ein
+// Glow-Punkt, am Ziel zusaetzlich ein sich ausbreitender Ring. Nah am Ziel
+// wechselt die Farbe von Cyan zu Gruen und die Pulse werden schneller.
+// WebGL-Linien sind immer 1 px breit, darum ein Mesh statt THREE.Line.
+const DIST_BEAM_RADIUS = 0.0015;     // Glow-Radius [m], Kern ~1/4 davon
+const DIST_PULSE_PERIOD = 0.05;      // Abstand der Lichtpulse [m]
+const DIST_NEAR = 0.03;              // ab hier voll "gruen" [m]
+const DIST_FAR = 0.15;               // ab hier voll "cyan" [m]
+const DIST_COLOR_FAR = new THREE.Color(0x38bdf8);
+const DIST_COLOR_NEAR = new THREE.Color(0x34d399);
+const DIST_RENDER_ORDER = 950;       // ueber Markierungen, unter dem Gizmo
+const _distDir = new THREE.Vector3();
+const _distUp = new THREE.Vector3(0, 1, 0);
+const _distColor = new THREE.Color();
+
+function makeGlowTexture(ring) {
+  const size = 128;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  const r = size / 2;
+  const grad = g.createRadialGradient(r, r, 0, r, r, r);
+  if (ring) {
+    grad.addColorStop(0.0, 'rgba(255,255,255,0)');
+    grad.addColorStop(0.62, 'rgba(255,255,255,0)');
+    grad.addColorStop(0.8, 'rgba(255,255,255,1)');
+    grad.addColorStop(1.0, 'rgba(255,255,255,0)');
+  } else {
+    grad.addColorStop(0.0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.18, 'rgba(255,255,255,0.85)');
+    grad.addColorStop(0.45, 'rgba(255,255,255,0.25)');
+    grad.addColorStop(1.0, 'rgba(255,255,255,0)');
+  }
+  g.fillStyle = grad;
+  g.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function makeGlowSprite(tex) {
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: tex,
+    color: DIST_COLOR_FAR.clone(),
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: false,   // Ziel liegt in der Greifkugel - sonst verdeckt
+  }));
+  sprite.renderOrder = DIST_RENDER_ORDER + 1;
+  return sprite;
+}
+
+function createDistanceLine() {
+  const group = new THREE.Group();
+  group.name = 'distance_line';
+
+  const beamMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uLength: { value: 0.1 },
+      uSpeed: { value: 0.08 },
+      uColor: { value: DIST_COLOR_FAR.clone() },
+    },
+    vertexShader: `
+      varying vec3 vNormalV;
+      varying vec3 vViewDir;
+      varying float vAlong;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vNormalV = normalize(normalMatrix * normal);
+        vViewDir = normalize(-mv.xyz);
+        vAlong = position.y + 0.5;   // 0 = TCP, 1 = Ziel
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uLength;
+      uniform float uSpeed;
+      uniform vec3 uColor;
+      varying vec3 vNormalV;
+      varying vec3 vViewDir;
+      varying float vAlong;
+      void main() {
+        // 1 auf der Achse, 0 am Rand des Zylinders (Blickrichtung)
+        float f = abs(dot(normalize(vNormalV), normalize(vViewDir)));
+        float core = pow(f, 10.0);
+        float halo = pow(f, 3.0);
+        // Lichtpulse laufen vom TCP zum Ziel, Abstand fest in Metern
+        float s = vAlong * uLength;
+        float ph = fract((s - uTime * uSpeed) / ${DIST_PULSE_PERIOD.toFixed(3)});
+        float pulse = smoothstep(0.0, 0.55, ph) * (1.0 - smoothstep(0.55, 0.75, ph));
+        float breathe = 0.8 + 0.2 * sin(uTime * 3.0);
+        // Enden weich ausblenden, damit der Strahl nicht abgehackt wirkt
+        float ends = smoothstep(0.0, 0.04, vAlong) * (1.0 - smoothstep(0.96, 1.0, vAlong));
+        float a = (halo * 0.18 * breathe + core * (0.55 + 0.9 * pulse) + halo * pulse * 0.22) * ends;
+        vec3 col = mix(uColor, vec3(1.0), core * (0.35 + 0.4 * pulse));
+        gl_FragColor = vec4(col, a);   // additiv: Farbe * a
+        #include <colorspace_fragment>
+      }`,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  distanceBeam = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 20, 1, true), beamMat);
+  distanceBeam.renderOrder = DIST_RENDER_ORDER;
+  distanceBeam.frustumCulled = false;   // Einheitsgeometrie, per Skalierung gestreckt
+  group.add(distanceBeam);
+
+  const dotTex = makeGlowTexture(false);
+  distanceTcpGlow = makeGlowSprite(dotTex);
+  distanceTargetGlow = makeGlowSprite(dotTex);
+  distanceTargetRing = makeGlowSprite(makeGlowTexture(true));
+  group.add(distanceTcpGlow, distanceTargetGlow, distanceTargetRing);
+
+  group.visible = false;
+  return group;
+}
+
+// Laeuft jedes Frame (Loop + XR). Meldet, ob animiert wird - solange die
+// Linie sichtbar ist, zeichnet der Loop durchgehend.
+function updateDistanceLineFx() {
+  if (!dashedLine || !dashedLine.visible || !distanceBeam) return false;
+  const t = performance.now() / 1000;
+  distanceBeam.material.uniforms.uTime.value = t;
+  // Ring am Ziel: waechst und verblasst, alle 1,2 s neu
+  const k = (t % 1.2) / 1.2;
+  const rs = 0.012 + 0.04 * k;
+  distanceTargetRing.scale.set(rs, rs, 1);
+  distanceTargetRing.material.opacity = 0.9 * (1 - k) * (1 - k);
+  // Ziel-Glow atmet
+  const gs = 0.022 * (0.85 + 0.15 * Math.sin(t * 5.0));
+  distanceTargetGlow.scale.set(gs, gs, 1);
+  return true;
+}
+
+function placeDistanceLine(from, to, dist) {
+  _distDir.subVectors(to, from);
+  const len = _distDir.length();
+  if (len < 1e-6) return;
+  _distDir.divideScalar(len);
+  distanceBeam.position.addVectors(from, to).multiplyScalar(0.5);
+  distanceBeam.quaternion.setFromUnitVectors(_distUp, _distDir);
+  distanceBeam.scale.set(DIST_BEAM_RADIUS, len, DIST_BEAM_RADIUS);
+
+  // Farbe und Tempo nach Abstand: fern = Cyan/ruhig, nah = Gruen/schnell
+  const near = 1 - THREE.MathUtils.clamp((dist - DIST_NEAR) / (DIST_FAR - DIST_NEAR), 0, 1);
+  _distColor.copy(DIST_COLOR_FAR).lerp(DIST_COLOR_NEAR, near);
+  const u = distanceBeam.material.uniforms;
+  u.uLength.value = len;
+  u.uSpeed.value = 0.08 + 0.14 * near;
+  u.uColor.value.copy(_distColor);
+  distanceTcpGlow.material.color.copy(_distColor);
+  distanceTargetGlow.material.color.copy(_distColor);
+  distanceTargetRing.material.color.copy(_distColor);
+
+  distanceTcpGlow.position.copy(from);
+  distanceTcpGlow.scale.set(0.016, 0.016, 1);
+  distanceTargetGlow.position.copy(to);
+  distanceTargetRing.position.copy(to);
+}
+
 function updateConnectingLine() {
   if (!dashedLine || !distanceLineEnabled) {
     if (dashedLine) dashedLine.visible = false;
@@ -1266,15 +1424,7 @@ function updateConnectingLine() {
   }
 
   dashedLine.visible = true;
-  const positions = dashedLine.geometry.attributes.position.array;
-  positions[0] = realTCP.position.x;
-  positions[1] = realTCP.position.y;
-  positions[2] = realTCP.position.z;
-  positions[3] = target.position.x;
-  positions[4] = target.position.y;
-  positions[5] = target.position.z;
-  dashedLine.geometry.attributes.position.needsUpdate = true;
-  dashedLine.computeLineDistances();
+  placeDistanceLine(realTCP.position, target.position, target.dist);
 }
 
 function updateGizmoVisibility() {
@@ -1634,7 +1784,7 @@ function initTunerSceneObjects() {
 
   // 1. Blue Cube (30mm x 30mm x 30mm)
   const blueGeo = new THREE.BoxGeometry(0.03, 0.03, 0.03);
-  const blueMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.2, roughness: 0.3 });
+  const blueMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.05, roughness: 0.55 });
   const blueMesh = new THREE.Mesh(blueGeo, blueMat);
   blueMesh.castShadow = true;
   blueMesh.receiveShadow = true;
@@ -1645,7 +1795,7 @@ function initTunerSceneObjects() {
 
   // 2. Red Rectangle (60mm x 30mm x 30mm)
   const redGeo = new THREE.BoxGeometry(0.06, 0.03, 0.03);
-  const redMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.2, roughness: 0.3 });
+  const redMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.05, roughness: 0.55 });
   const redMesh = new THREE.Mesh(redGeo, redMat);
   redMesh.castShadow = true;
   redMesh.receiveShadow = true;
@@ -1657,7 +1807,7 @@ function initTunerSceneObjects() {
   // 3. Green Cylinder (diameter: 30mm, height: 30mm)
   const greenGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.03, 24);
   greenGeo.rotateX(Math.PI / 2); // ROS Z is UP
-  const greenMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, metalness: 0.2, roughness: 0.3 });
+  const greenMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, metalness: 0.05, roughness: 0.55 });
   const greenMesh = new THREE.Mesh(greenGeo, greenMat);
   greenMesh.castShadow = true;
   greenMesh.receiveShadow = true;
@@ -3255,7 +3405,7 @@ export function clearDigitalTwinPointCloud() {
   requestRender();
 }
 
-// Distanzlinie (gestrichelt, TCP -> naechste Greifkugel) ein-/ausschalten.
+// Distanzlinie (Leuchtstrahl, TCP -> naechste Greifkugel) ein-/ausschalten.
 // Beim Einschalten wird nicht blind sichtbar geschaltet: updateConnectingLine
 // entscheidet anhand von Gizmo-Zustand und Abstand, ob es etwas zu zeigen gibt.
 export function setDigitalTwinDistanceLine(visible) {
@@ -3344,6 +3494,7 @@ export function runTwinFrameUpdates() {
   updatePathPreview();
   updateWallProximity();
   updateConnectingLine();
+  updateDistanceLineFx();
 }
 
 // Nach dem Ende der Session: Kamera wieder fuer OrbitControls herrichten.

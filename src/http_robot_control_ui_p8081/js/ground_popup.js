@@ -2,20 +2,21 @@ import { TOPICS } from './config.js';
 import * as twin from './twin/digital_twin.js';
 import { logMsg } from './log.js';
 import { ros } from './ros.js';
-import { LIM, floorGuard } from './util.js';
+import { LIM, floorGuard, lsGet, lsSet } from './util.js';
 
 // ── Ground-Collision-Popup im Viewport ───────────────────────────────────
-// Erscheint nach dem Umschalten des Boden-Kollisions-Icons (SCENE-Panel)
+// Erscheint nur beim EINschalten des Boden-Kollisions-Icons (SCENE-Panel)
 // unten mittig im Viewport - eigene Rasterzeile "gc" ueber dem Not-Aus, also
-// ohne Ueberlappung mit POSE & Co. Zeigt Status und die Z Collision Level
-// (TCP-Hoehe) und laesst sie live verstellen. Der Wert gilt sofort fuer die
-// UI-Bodensperre (floorGuard.levelMm) und geht an moveit_floor_collision,
-// das die MoveIt-Box nachzieht und den gueltigen Wert latched zurueckmeldet.
-const AUTO_HIDE_MS = 10000;   // ohne Bedienung wieder ausblenden
-const SEND_DEBOUNCE_MS = 350; // Tippen im Feld: erst senden, wenn Ruhe ist
+// ohne Ueberlappung mit POSE & Co. Das Feld ist mit dem zuletzt bestaetigten
+// Z Collision Level (TCP-Hoehe) vorbelegt; +/- und Tippen aendern nur das
+// Feld. Erst OK (oder Enter) uebernimmt den Wert: UI-Bodensperre
+// (floorGuard.levelMm) sofort, dazu an moveit_floor_collision, das die
+// MoveIt-Box nachzieht und den gueltigen Wert latched zurueckmeldet.
+const AUTO_HIDE_MS = 10000;   // unveraendert und ohne Bedienung wieder ausblenden
+const LS_KEY = 'groundCollisionLevelMm';   // zuletzt bestaetigter Wert
 
 let hideTimer = null;
-let sendTimer = null;
+let dirty = false;   // Feld weicht vom uebernommenen Wert ab
 
 const levelSetPub = new ROSLIB.Topic({
   ros: ros,
@@ -24,6 +25,7 @@ const levelSetPub = new ROSLIB.Topic({
 });
 
 // Latched vom Node: Stand nach einem Reload und nach dem Klemmen auf min/max.
+// Das offene Feld bleibt unangetastet, dort steht die Eingabe des Nutzers.
 new ROSLIB.Topic({
   ros: ros,
   name: TOPICS.groundCollisionLevel,
@@ -32,23 +34,34 @@ new ROSLIB.Topic({
   const mm = Number(msg.data);
   if (!Number.isFinite(mm)) return;
   floorGuard.levelMm = mm;
-  renderLevel(false);
 });
 
 function popupEl() {
   return document.getElementById('ground-coll-popup');
 }
 
+function inputEl() {
+  return document.getElementById('gc-level');
+}
+
 function clampLevel(mm) {
   return Math.min(LIM.FLOOR_LEVEL_MAX_MM, Math.max(LIM.FLOOR_LEVEL_MIN_MM, mm));
 }
 
-// force=false: waehrend der Eingabe den Feldinhalt nicht ueberschreiben
-function renderLevel(force = true) {
-  const input = document.getElementById('gc-level');
-  if (!input) return;
-  if (!force && document.activeElement === input) return;
-  input.value = String(Math.round(floorGuard.levelMm));
+// Vorbelegung: zuletzt per OK bestaetigter Wert, sonst der aktuelle Stand
+function lastLevel() {
+  const saved = parseFloat(lsGet(LS_KEY));
+  return Number.isFinite(saved) ? clampLevel(saved) : floorGuard.levelMm;
+}
+
+function fieldLevel() {
+  const mm = parseFloat(inputEl()?.value);
+  return Number.isFinite(mm) ? mm : lastLevel();
+}
+
+function renderField(mm) {
+  const input = inputEl();
+  if (input) input.value = String(Math.round(mm));
 }
 
 export function setGroundCollPopupState(state) {
@@ -57,14 +70,16 @@ export function setGroundCollPopupState(state) {
   if (!badge || !popup) return;
   badge.textContent = state === null ? 'NODE OFF' : state ? 'ON' : 'OFF';
   popup.dataset.state = state === null ? 'unknown' : state ? 'on' : 'off';
+  // Popup gehoert nur zur eingeschalteten Bodenkollision
+  if (state !== true) hideGroundCollPopup();
 }
 
 function armAutoHide() {
   if (hideTimer) clearTimeout(hideTimer);
   hideTimer = setTimeout(() => {
     const popup = popupEl();
-    // Nicht mitten in der Bedienung schliessen
-    if (popup && (popup.matches(':hover') || popup.contains(document.activeElement))) {
+    // Nicht mitten in der Bedienung oder mit offener Aenderung schliessen
+    if (popup && (dirty || popup.matches(':hover') || popup.contains(document.activeElement))) {
       armAutoHide();
       return;
     }
@@ -72,11 +87,12 @@ function armAutoHide() {
   }, AUTO_HIDE_MS);
 }
 
-export function showGroundCollPopup(state) {
+export function showGroundCollPopup() {
   const popup = popupEl();
   if (!popup) return;
-  setGroundCollPopupState(state);
-  renderLevel(true);
+  setGroundCollPopupState(true);
+  renderField(lastLevel());
+  dirty = false;
   popup.classList.remove('is-hiding');
   if (popup.hidden) {
     popup.hidden = false;
@@ -88,6 +104,7 @@ export function showGroundCollPopup(state) {
 export function hideGroundCollPopup() {
   const popup = popupEl();
   if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  dirty = false;
   if (!popup || popup.hidden) return;
   popup.classList.add('is-hiding');
   setTimeout(() => {
@@ -98,33 +115,31 @@ export function hideGroundCollPopup() {
   }, 150);   // = Dauer von gc-fade-out
 }
 
-function applyLevel(mm, immediate) {
-  const v = clampLevel(Math.round(mm));
-  floorGuard.levelMm = v;   // UI-Sperre sofort, auch ohne laufenden Node
-  renderLevel(immediate);
-  armAutoHide();
-  if (sendTimer) clearTimeout(sendTimer);
-  const send = () => {
-    sendTimer = null;
-    levelSetPub.publish(new ROSLIB.Message({ data: v }));
-    logMsg('SAFETY', `Z Collision Level set to ${v} mm`, 'info');
-  };
-  if (immediate) send();
-  else sendTimer = setTimeout(send, SEND_DEBOUNCE_MS);
-}
-
 export function stepGroundLevel(deltaMm) {
-  applyLevel(floorGuard.levelMm + Number(deltaMm), true);
+  renderField(clampLevel(Math.round(fieldLevel()) + Number(deltaMm)));
+  dirty = true;
+  armAutoHide();
 }
 
-// data-input: jede Eingabe, gesendet wird nach kurzer Ruhe
-export function inputGroundLevel(value) {
-  const mm = parseFloat(value);
-  if (!Number.isFinite(mm)) return;
-  applyLevel(mm, false);
+// data-input: nur merken, uebernommen wird erst mit OK
+export function inputGroundLevel() {
+  dirty = true;
+  armAutoHide();
 }
 
-// Enter/Fokusverlust: Feld auf den geklemmten Wert zuruecksetzen
-export function commitGroundLevel() {
-  renderLevel(true);
+// OK / Enter: Wert uebernehmen, senden, merken und schliessen
+export function confirmGroundLevel() {
+  const v = clampLevel(Math.round(fieldLevel()));
+  renderField(v);
+  floorGuard.levelMm = v;   // UI-Sperre sofort, auch ohne laufenden Node
+  lsSet(LS_KEY, String(v));
+  levelSetPub.publish(new ROSLIB.Message({ data: v }));
+  logMsg('SAFETY', `Z Collision Level set to ${v} mm`, 'info');
+  hideGroundCollPopup();
 }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.target !== inputEl()) return;
+  e.preventDefault();
+  confirmGroundLevel();
+});

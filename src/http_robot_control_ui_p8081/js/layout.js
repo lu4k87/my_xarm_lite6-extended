@@ -41,8 +41,8 @@ export function applyTwinDistanceLineBtn(visible) {
   btn.style.color = visible ? 'var(--cyan)' : 'var(--dim)';
   btn.style.opacity = visible ? '1' : '0.5';
   btn.title = visible
-    ? 'Hide distance line (dashed line from TCP to the nearest detected object)'
-    : 'Show distance line (dashed line from TCP to the nearest detected object)';
+    ? 'Hide distance line (glowing line from TCP to the nearest detected object)'
+    : 'Show distance line (glowing line from TCP to the nearest detected object)';
 }
 
 export function toggleTwinDistanceLine() {

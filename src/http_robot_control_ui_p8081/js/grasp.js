@@ -547,8 +547,8 @@ export function applyVirtualDetectionsBtn() {
     btn.style.opacity = '1.0';
     btn.title = 'Virtual objects as detections: ON - Cube, Rectangle and Cylinder with bounding box, grasp sphere and MoveIt collision. Click to disable';
   } else {
-    btn.style.color = 'var(--mut)';
-    btn.style.opacity = '0.65';
+    btn.style.color = 'var(--txt)';
+    btn.style.opacity = '1.0';
     btn.title = 'Virtual objects as detections: OFF - click to show Cube, Rectangle and Cylinder like detected objects';
   }
 }
