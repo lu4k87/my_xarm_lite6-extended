@@ -213,6 +213,62 @@
 
 
 
+    // ── Segment-Control fuer "genau 1 aus N" ─────────────────────────────
+    // Einheitliche Auswahl fuer CPU/GPU und kurze Auswahllisten. Verhaelt
+    // sich nach aussen wie ein <select>: .value, .disabled und ein
+    // blubberndes "change"-Event, damit Befehlsanzeige und Refresher mitziehen.
+    const PARAM_SEGMENT_MAX = 5;
+
+    function buildParamSegment(options) {
+        const seg = document.createElement('div');
+        seg.className = 'param-segment';
+        seg.setAttribute('role', 'radiogroup');
+        let current = null;
+        let disabled = false;
+
+        const paint = () => {
+            seg.querySelectorAll('.param-seg-opt').forEach(b => {
+                const on = b.dataset.value === current;
+                b.classList.toggle('is-active', on);
+                b.setAttribute('aria-checked', String(on));
+                b.disabled = disabled;
+            });
+        };
+
+        const addOption = (opt) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'param-seg-opt';
+            b.setAttribute('role', 'radio');
+            b.dataset.value = opt.value;
+            b.innerHTML = opt.html || escHtml(opt.value);
+            if (opt.title) b.title = opt.title;
+            b.onclick = (e) => {
+                e.stopPropagation();
+                if (disabled || current === opt.value) return;
+                current = opt.value;
+                paint();
+                seg.dispatchEvent(new Event('change', { bubbles: true }));
+            };
+            seg.appendChild(b);
+        };
+        options.forEach(addOption);
+
+        Object.defineProperty(seg, 'value', {
+            get: () => current,
+            set: (v) => { current = v == null ? null : String(v); paint(); }
+        });
+        Object.defineProperty(seg, 'disabled', {
+            get: () => disabled,
+            set: (v) => { disabled = !!v; seg.classList.toggle('is-disabled', disabled); paint(); }
+        });
+        // Wert aus YAML/Launch, der nicht in der Liste steht, trotzdem anzeigen
+        seg._ensureOption = (v) => {
+            if (v && !seg.querySelector(`.param-seg-opt[data-value="${CSS.escape(v)}"]`)) addOption({ value: v });
+        };
+        return seg;
+    }
+
     // ── Whisper CPU/GPU-Umschalter (Voice Command Listener) ─────────────────
     const WHISPER_GPU_ARG = 'use_gpu:=true';
 
@@ -221,59 +277,28 @@
     }
 
     function buildWhisperDeviceToggle(argObj, onChange) {
-        const wrap = document.createElement('div');
-        wrap.className = 'param-device-switch';
-        wrap.title = 'Whisper inference on CPU or GPU (CUDA): use_gpu:=false / true';
-        wrap.onclick = (e) => e.stopPropagation();
+        const row = document.createElement('div');
+        row.className = 'param-value param-device-row';
+        row.title = 'Whisper inference on CPU or GPU (CUDA): use_gpu:=false / true';
+        row.onclick = (e) => e.stopPropagation();
 
         const label = document.createElement('span');
-        label.className = 'param-device-label';
+        label.className = 'param-value-label';
         label.textContent = 'Whisper';
-        wrap.appendChild(label);
 
-        const track = document.createElement('div');
-        track.className = 'param-device-track';
-        track.setAttribute('role', 'switch');
-        track.tabIndex = 0;
+        const seg = buildParamSegment([
+            { value: 'cpu', html: '<i class="fa-solid fa-microchip"></i>CPU', title: 'use_gpu:=false' },
+            { value: 'gpu', html: '<i class="fa-solid fa-bolt"></i>GPU', title: 'use_gpu:=true' }
+        ]);
+        seg.setAttribute('aria-label', 'Whisper device');
+        seg.value = argObj.checked ? 'gpu' : 'cpu';
+        seg.addEventListener('change', () => {
+            argObj.checked = seg.value === 'gpu';
+            if (typeof onChange === 'function') onChange();
+        });
 
-        const cpuSpan = document.createElement('span');
-        cpuSpan.className = 'param-device-opt-label param-device-opt-cpu';
-        cpuSpan.innerHTML = '<i class="fa-solid fa-microchip"></i> CPU';
-
-        const knob = document.createElement('span');
-        knob.className = 'param-device-knob';
-
-        const gpuSpan = document.createElement('span');
-        gpuSpan.className = 'param-device-opt-label param-device-opt-gpu';
-        gpuSpan.innerHTML = '<i class="fa-solid fa-bolt"></i> GPU';
-
-        function setChecked(isGpu, fire) {
-            argObj.checked = !!isGpu;
-            track.classList.toggle('is-gpu', !!isGpu);
-            track.setAttribute('aria-checked', String(!!isGpu));
-            if (fire && typeof onChange === 'function') onChange();
-        }
-
-        cpuSpan.onclick = (e) => { e.stopPropagation(); setChecked(false, true); };
-        gpuSpan.onclick = (e) => { e.stopPropagation(); setChecked(true, true); };
-        track.onclick = (e) => { e.stopPropagation(); setChecked(!argObj.checked, true); };
-        track.onkeydown = (e) => {
-            if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                e.preventDefault();
-                e.stopPropagation();
-                if (e.key === 'ArrowLeft') setChecked(false, true);
-                else if (e.key === 'ArrowRight') setChecked(true, true);
-                else setChecked(!argObj.checked, true);
-            }
-        };
-
-        track.appendChild(cpuSpan);
-        track.appendChild(knob);
-        track.appendChild(gpuSpan);
-        wrap.appendChild(track);
-
-        setChecked(!!argObj.checked, false);
-        return wrap;
+        row.append(label, seg);
+        return row;
     }
 
     // ── Eyetracker Gaze Control: Real World <-> UI Gaze ─────────────────────
@@ -805,6 +830,22 @@
         return { key: 'options', label: 'Options', icon: 'fa-solid fa-toggle-on' };
     }
 
+    // "genau 1 aus N"-Gruppen erscheinen als Segment-Control. Die Chips bleiben
+    // Checkbox-Labels (die Sync-Funktionen arbeiten auf ihnen), nur ein Klick
+    // auf das bereits aktive Segment wird ignoriert.
+    function markSegmentGroup(chipsEl, group) {
+        if (group.exclusive !== 'exactly 1') return;
+        chipsEl.classList.add('is-segment');
+        chipsEl.setAttribute('role', 'radiogroup');
+        chipsEl.setAttribute('aria-label', group.label);
+        chipsEl.addEventListener('click', (e) => {
+            const lbl = e.target.closest('label.param-chip');
+            if (!lbl || e.target.tagName === 'INPUT') return;
+            const cb = lbl.querySelector('input[type="checkbox"]');
+            if (cb && cb.checked) e.preventDefault();
+        }, true);   // Capture: die Chips stoppen das Bubbling selbst
+    }
+
     // ─── WERT-PARAMETER (Eingabefeld statt Chip) ────────────────────────────────
     // Launch-Argumente, Config-Werte (YAML) und Node-Parameter, die sich vor dem
     // Start einstellen lassen. Hier steht nur die Darstellung (Label, Typ,
@@ -820,7 +861,7 @@
                 if (!d || !d.ok) return;
                 window.NEXUS_LAUNCH_DETAILS = d.launch || {};
                 // Schon gebaute Wert-Zeilen zeigen jetzt die echten Standardwerte
-                document.querySelectorAll('.param-value').forEach(r => { if (r._update) r._update(); });
+                document.querySelectorAll('[data-value-param]').forEach(r => { if (r._update) r._update(); });
             })
             .catch(() => { /* ohne Backend gelten die Defaults unten */ });
     }
@@ -1060,12 +1101,92 @@
     // Beim Scrollen wuerde der Tooltip an der alten Stelle stehen bleiben
     window.addEventListener('scroll', hideParamTip, true);
 
+    // Herkunfts-Badge einer Wert-Zeile bzw. eines Bool-Chips setzen
+    function paintParamSrcBadge(badge, info) {
+        const src = PARAM_SRC_BADGES[info.source] || PARAM_SRC_BADGES.launch;
+        badge.className = 'param-src-badge src-' + info.source;
+        badge.innerHTML = `<i class="${src.icon}"></i>${src.text}`;
+        // Launch-Argumente sind der Normalfall - nur CONFIG/PARAM markieren
+        badge.style.display = info.source === 'launch' ? 'none' : '';
+        return src;
+    }
+
+    // Inhalt des Hover-Tooltips (showParamTip) fuer Wert-Zeilen und Bool-Chips
+    function valueParamTip(def, info, src, shown, whenOk, modified) {
+        return {
+            name: def.name,
+            info: def.info || info.desc || '',
+            source: src.text,
+            origin: info.source === 'config' ? `${info.pkg}/${info.file} → ${info.key}`
+                : info.source === 'node' ? 'Node parameter (--ros-args -p)' : 'Launch argument',
+            value: shown,
+            def: info.value || '(empty)',
+            unit: def.unit || '',
+            state: !whenOk ? `Only used with ${def.when.arg}:=${def.when.equals}`
+                : modified ? 'Changed – appended to the start command' : 'Default – not appended',
+            stateCls: !whenOk ? 'off' : modified ? 'mod' : ''
+        };
+    }
+
+    // An/Aus-Wert als Checkbox-Chip wie die Flag-Chips. Angehaengt wird er wie
+    // jeder Wert-Parameter nur, wenn er vom Standard abweicht.
+    function buildBoolParamChip(action, argObj, onChange) {
+        const def = argObj.def;
+        const chip = document.createElement('label');
+        chip.className = 'param-chip param-bool-chip';
+        chip.dataset.argText = argObj.text;
+        chip.dataset.valueParam = '1';
+        chip.onclick = (e) => e.stopPropagation();
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.onclick = (e) => e.stopPropagation();
+        const badge = document.createElement('span');
+        const txt = document.createElement('span');
+        txt.className = 'param-bool-label';
+        txt.textContent = def.label;
+        chip.append(cb, badge, txt);
+
+        const update = () => {
+            const info = paramDefaultInfo(action, def);
+            const whenOk = paramWhenOk(action, def);
+            const shown = argObj.value !== null ? argObj.value : info.value;
+            const on = shown === 'true';
+            const modified = argObj.value !== null && argObj.value !== info.value;
+            argObj.checked = modified && whenOk;
+            cb.checked = on;
+            cb.disabled = !whenOk;
+            chip.classList.toggle('chip-inactive', !on);
+            chip.classList.toggle('is-modified', modified);
+            chip.classList.toggle('is-off', !whenOk);
+            const src = paintParamSrcBadge(badge, info);
+            chip._tip = valueParamTip(def, info, src, shown, whenOk, modified);
+            if (paramTipRow === chip) showParamTip(chip);
+        };
+
+        chip.addEventListener('mouseenter', () => showParamTip(chip));
+        chip.addEventListener('mouseleave', hideParamTip);
+        // "change" blubbert weiter und aktualisiert die Befehlsanzeige
+        cb.addEventListener('change', () => {
+            const v = cb.checked ? 'true' : 'false';
+            argObj.value = (v === paramDefaultInfo(action, def).value) ? null : v;
+            update();
+            onChange();
+        });
+
+        chip._update = update;
+        update();
+        return chip;
+    }
+
     // Eine Zeile: Herkunfts-Badge · Label · Eingabe · Einheit · Zuruecksetzen
     function buildValueParamRow(action, argObj, onChange) {
         const def = argObj.def;
+        if (def.type === 'bool') return buildBoolParamChip(action, argObj, onChange);
         const row = document.createElement('div');
         row.className = 'param-value';
         row.dataset.argText = argObj.text;
+        row.dataset.valueParam = '1';
         row.onclick = (e) => e.stopPropagation();
 
         const badge = document.createElement('span');
@@ -1075,13 +1196,16 @@
         label.className = 'param-value-label';
         label.textContent = def.label;
 
+        // Kurze Auswahllisten als Segment, lange als Dropdown
         let input;
-        if (def.type === 'choice' || def.type === 'bool') {
+        if (def.type === 'choice' && def.choices.length <= PARAM_SEGMENT_MAX) {
+            input = buildParamSegment(def.choices.map(c => ({ value: c })));
+        } else if (def.type === 'choice') {
             input = document.createElement('select');
-            (def.type === 'bool' ? ['true', 'false'] : def.choices).forEach(c => {
+            def.choices.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c;
-                opt.textContent = def.type === 'bool' ? (c === 'true' ? 'an' : 'aus') : c;
+                opt.textContent = c;
                 input.appendChild(opt);
             });
         } else {
@@ -1093,7 +1217,7 @@
             input.spellcheck = false;
             input.autocomplete = 'off';
         }
-        input.className = 'param-value-input param-value-' + def.type;
+        if (!input._ensureOption) input.className = 'param-value-input param-value-' + def.type;
         input.setAttribute('aria-label', def.label);
 
         const reset = document.createElement('button');
@@ -1111,7 +1235,8 @@
             const info = paramDefaultInfo(action, def);
             const whenOk = paramWhenOk(action, def);
             const shown = argObj.value !== null ? argObj.value : info.value;
-            if (input.tagName === 'SELECT' && shown && !Array.from(input.options).some(o => o.value === shown)) {
+            if (input._ensureOption) input._ensureOption(shown);
+            else if (input.tagName === 'SELECT' && shown && !Array.from(input.options).some(o => o.value === shown)) {
                 const opt = document.createElement('option');
                 opt.value = shown;
                 opt.textContent = shown;
@@ -1126,27 +1251,11 @@
             input.disabled = !whenOk;
             reset.disabled = !modified;
 
-            const src = PARAM_SRC_BADGES[info.source] || PARAM_SRC_BADGES.launch;
-            badge.className = 'param-src-badge src-' + info.source;
-            badge.innerHTML = `<i class="${src.icon}"></i>${src.text}`;
-            // Launch-Argumente sind der Normalfall - nur CONFIG/PARAM markieren
-            badge.style.display = info.source === 'launch' ? 'none' : '';
+            const src = paintParamSrcBadge(badge, info);
             row.dataset.src = info.source;
 
             reset.title = `Reset to ${info.value || '(empty)'}`;
-            row._tip = {
-                name: def.name,
-                info: def.info || info.desc || '',
-                source: src.text,
-                origin: info.source === 'config' ? `${info.pkg}/${info.file} → ${info.key}`
-                    : info.source === 'node' ? 'Node parameter (--ros-args -p)' : 'Launch argument',
-                value: shown,
-                def: info.value || '(empty)',
-                unit: def.unit || '',
-                state: !whenOk ? `Only used with ${def.when.arg}:=${def.when.equals}`
-                    : modified ? 'Changed – appended to the start command' : 'Default – not appended',
-                stateCls: !whenOk ? 'off' : modified ? 'mod' : ''
-            };
+            row._tip = valueParamTip(def, info, src, shown, whenOk, modified);
             if (paramTipRow === row) showParamTip(row);
         };
 
@@ -1189,7 +1298,7 @@
     // Zustand steht hier also schon fest.
     function watchValueParamRows(container) {
         container.addEventListener('change', () => {
-            container.querySelectorAll('.param-value').forEach(r => { if (r._update) r._update(); });
+            container.querySelectorAll('[data-value-param]').forEach(r => { if (r._update) r._update(); });
         });
     }
 
@@ -1235,15 +1344,37 @@
         return sa !== '' && sb !== '' && !isNaN(Number(sa)) && Number(sa) === Number(sb);
     }
 
-    function buildConfigPane(action) {
+    // Abgehobene Sektion einer Action Card (Parameter, Launch-Struktur,
+    // Befehl, Configs): Kopfleiste mit Titel, optionalem Zaehler und dem
+    // Einklapp-Chevron rechts; der Inhalt klappt per grid-template-rows weich
+    // ein/aus. Die Klick-Logik haengt die Karte an (Zustand je Karte gespeichert).
+    function createSeqBox(kind, icon, title) {
         const pane = document.createElement('div');
-        pane.className = 'seq-pane seq-pane-config';
-        pane.hidden = true;
+        pane.className = `seq-pane seq-pane-box seq-pane-${kind}`;
         const head = document.createElement('div');
-        head.className = 'seq-pane-head';
+        head.className = 'seq-pane-head seq-box-head';
+        head.innerHTML = `<i class="fa-solid ${icon}"></i><b class="seq-box-title"></b>`
+            + `<span class="seq-pane-count" hidden></span>`
+            + `<span class="seq-box-toggle"><i class="fa-solid fa-chevron-up"></i></span>`;
+        const titleEl = head.querySelector('.seq-box-title');
+        titleEl.innerHTML = title;
+        const wrap = document.createElement('div');
+        wrap.className = 'seq-box-wrap';
+        const inner = document.createElement('div');
+        inner.className = 'seq-box-inner';
+        wrap.appendChild(inner);
+        pane.append(head, wrap);
+        return { pane, head, wrap, inner, titleEl, countEl: head.querySelector('.seq-pane-count') };
+    }
+
+    function buildConfigPane(action) {
+        const box = createSeqBox('config', 'fa-file-code', 'Config Files');
+        const pane = box.pane;
+        pane._box = box;
+        pane.hidden = true;
         const files = document.createElement('div');
         files.className = 'cfg-files';
-        pane.append(head, files);
+        box.inner.appendChild(files);
 
         const render = () => {
             const d = launchDetailsOf(action);
@@ -1253,8 +1384,8 @@
 
             const active = configs.map(cfg => !cfg.when ||
                 actionArgValue(action, cfg.when.arg).toLowerCase() === String(cfg.when.equals).toLowerCase());
-            head.innerHTML = `<i class="fa-solid fa-file-code"></i><b>Config Files</b>`
-                + `<span class="cfg-head-count">${active.filter(Boolean).length}/${configs.length} loaded</span>`;
+            box.countEl.hidden = false;
+            box.countEl.textContent = `${active.filter(Boolean).length}/${configs.length} loaded`;
 
             // Spaeter geladene aktive Configs ueberschreiben gleiche Schluessel
             const lastActiveIdx = {};
@@ -1406,7 +1537,7 @@
         refreshLaunchDetails(3000).then(() => {
             render();
             const card = pane.closest('.seq-card');
-            if (card) card.querySelectorAll('.param-value').forEach(r => { if (r._update) r._update(); });
+            if (card) card.querySelectorAll('[data-value-param]').forEach(r => { if (r._update) r._update(); });
         });
         pane._render = render;
         return pane;
@@ -1891,6 +2022,7 @@
                 + `</div>`;
             const chips = document.createElement('div');
             chips.className = 'param-group-chips';
+            markSegmentGroup(chips, g);
             groupEl.appendChild(chips);
             wrap.appendChild(groupEl);
             hosts[g.key] = chips;
@@ -2071,7 +2203,7 @@
                     setTimeout(() => card.classList.remove('is-launching'), 1200);
                 };
                 card.addEventListener('click', (e) => {
-                    if (e.target.closest('label, input, .param-device-switch, button')) return;
+                    if (e.target.closest('label, input, .param-segment, button')) return;
                     launch();
                 });
                 card.addEventListener('keydown', (e) => {
@@ -3015,6 +3147,7 @@
                          (g.exclusive ? `<span class="param-group-hint" title="Mutually exclusive options">${g.exclusive}</span>` : '');
                      const chips = document.createElement('div');
                      chips.className = 'param-group-chips';
+                     markSegmentGroup(chips, g);
                      groupEl.appendChild(head);
                      groupEl.appendChild(chips);
                      argsDiv.appendChild(groupEl);
@@ -3364,30 +3497,90 @@
                const body = document.createElement('div');
                body.className = 'seq-card-body' + (hasTree ? ' has-tree' : '') + (hasArgs ? ' has-params' : '');
 
-               // Mit Baum: linke Spalte = Launch-Struktur + Befehl darunter,
-               // die Parameter stehen daneben. Ohne Baum folgt der Befehl
-               // ueber die volle Breite auf die Parameter.
+               // Jede Sektion ist ein abgehobenes Unterfenster; ein Klick auf
+               // die Kopfleiste klappt sie ein/aus (je Karte + Sektion gespeichert)
+               const boxKeyBase = (action && (action.cmd || action.baseCmd)) || cmdStr || li.dataset.cmd || '';
+               const wireSeqBox = (box, part, label) => {
+                   const { pane, head, wrap } = box;
+                   head.setAttribute('role', 'button');
+                   head.tabIndex = 0;
+                   const key = `${boxKeyBase}::${part}`;
+                   const apply = (collapsed) => {
+                       pane.classList.toggle('is-collapsed', collapsed);
+                       head.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+                       head.title = collapsed ? `${label} ausklappen` : `${label} einklappen`;
+                   };
+                   apply(isCardCollapsed(key));
+                   // Waehrend der Animation clippt der Inhalt, offen bleibt er
+                   // sichtbar (Tree-Connector-Linien, Fokus-Ringe)
+                   wrap.addEventListener('transitionend', (e) => {
+                       if (e.target === wrap) pane.classList.remove('is-animating');
+                   });
+                   const toggle = (e) => {
+                       e.stopPropagation();
+                       e.preventDefault();
+                       const collapsed = !pane.classList.contains('is-collapsed');
+                       pane.classList.add('is-animating');
+                       apply(collapsed);
+                       saveCardCollapsed(key, collapsed);
+                   };
+                   head.addEventListener('click', toggle);
+                   head.addEventListener('keydown', (e) => {
+                       if (e.key === 'Enter' || e.key === ' ') toggle(e);
+                   });
+               };
+
+               // Reihenfolge: Parameter, Launch-Struktur, Configs - der
+               // Befehl steht immer ganz unten.
+               if (hasArgs) {
+                   const box = createSeqBox('params', 'fa-sliders', 'Parameter &amp; Args');
+                   box.inner.appendChild(createArgsDiv(action));
+                   wireSeqBox(box, 'params', 'Parameter & Args');
+                   body.appendChild(box.pane);
+                   // Zaehler "x / y active" ueber die Checkbox-Args; laeuft
+                   // mit den Befehl-Refreshern, damit auch gekoppelte
+                   // Aenderungen (Gripper-/Kamera-Sync) ankommen
+                   if (action) {
+                       const refreshCount = () => {
+                           const toggles = action.args.filter(a => a.kind !== 'value' && a.kind !== 'gpu-toggle');
+                           box.countEl.hidden = toggles.length === 0;
+                           box.countEl.textContent = `${toggles.filter(a => a.checked).length} / ${toggles.length} active`;
+                       };
+                       refreshCount();
+                       refreshCount.el = box.pane;
+                       seqCmdRefreshers.add(refreshCount);
+                   }
+               }
                let treeCol = null;
                if (hasTree) {
                    treeCol = document.createElement('div');
                    treeCol.className = 'seq-col-tree';
-                   const pane = document.createElement('div');
-                   pane.className = 'seq-pane seq-pane-tree modal-card-left-col';
-                   pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-sitemap"></i><b>Launch Structure</b></div>`;
+                   const box = createSeqBox('tree', 'fa-sitemap', 'Launch Structure');
+                   const treeParts = [];
+                   if (tree.launches) treeParts.push(`${tree.launches} ${tree.launches === 1 ? 'launch' : 'launches'}`);
+                   if (tree.nodes) treeParts.push(`${tree.nodes} ${tree.nodes === 1 ? 'node' : 'nodes'}`);
+                   if (tree.cmds) treeParts.push(`${tree.cmds} ${tree.cmds === 1 ? 'cmd' : 'cmds'}`);
+                   box.countEl.hidden = treeParts.length === 0;
+                   box.countEl.textContent = treeParts.join(' · ');
+                   box.inner.classList.add('seq-tree-inner', 'modal-card-left-col');
                    o.ulNode.removeAttribute('style');
                    o.ulNode.querySelectorAll('ul').forEach(subUl => subUl.classList.add('sub-launch-tree'));
-                   pane.appendChild(o.ulNode);
-                   treeCol.appendChild(pane);
+                   box.inner.appendChild(o.ulNode);
+                   wireSeqBox(box, 'tree', 'Launch Structure');
+                   treeCol.appendChild(box.pane);
                    body.appendChild(treeCol);
                }
-               if (hasArgs) {
-                   const pane = document.createElement('div');
-                   pane.className = 'seq-pane seq-pane-params';
-                   pane.innerHTML = `<div class="seq-pane-head"><i class="fa-solid fa-sliders"></i><b>Parameter &amp; Args</b></div>`;
-                   pane.appendChild(createArgsDiv(action));
-                   body.appendChild(pane);
+               // YAML-Configs der Launch-Datei - volle Breite unter allem,
+               // bleibt verborgen, wenn die Launch-Datei keine hat
+               if (action) {
+                   const cfgPane = buildConfigPane(action);
+                   const refreshCfg = () => cfgPane._render();
+                   refreshCfg.el = cfgPane;
+                   seqCmdRefreshers.add(refreshCfg);
+                   wireSeqBox(cfgPane._box, 'config', 'Config Files');
+                   body.appendChild(cfgPane);
                }
-               // Befehl(e) jeder Karte - verkettete Befehle zeilenweise
+               // Befehl(e) jeder Karte - immer ganz unten, verkettete Befehle zeilenweise
                {
                    const pane = document.createElement('div');
                    pane.className = 'seq-pane seq-pane-cmd';
@@ -3411,16 +3604,7 @@
                    seqCmdRefreshers.add(renderCmds);
                    pane.appendChild(headEl);
                    pane.appendChild(cmdList);
-                   (treeCol || body).appendChild(pane);
-               }
-               // YAML-Configs der Launch-Datei - volle Breite unter allem,
-               // bleibt verborgen, wenn die Launch-Datei keine hat
-               if (action) {
-                   const cfgPane = buildConfigPane(action);
-                   const refreshCfg = () => cfgPane._render();
-                   refreshCfg.el = cfgPane;
-                   seqCmdRefreshers.add(refreshCfg);
-                   body.appendChild(cfgPane);
+                   body.appendChild(pane);
                }
                cardDiv.appendChild(body);
 
@@ -3450,7 +3634,7 @@
            };
 
            li.onclick = (e) => {
-               if (e.target === mainCb || e.target.closest('label') || e.target.closest('a') || e.target.closest('.modal-cmd-btn') || e.target.closest('button') || e.target.closest('.param-device-switch')) return;
+               if (e.target === mainCb || e.target.closest('label') || e.target.closest('a') || e.target.closest('.modal-cmd-btn') || e.target.closest('button') || e.target.closest('.param-segment')) return;
                mainCb.checked = !mainCb.checked;
                mainCb.dispatchEvent(new Event('change'));
            };
@@ -3807,9 +3991,14 @@
                    </div>
                    <div class="modal-header-bottom">
                       ${toolbarHtml}
-                      <button type="button" class="modal-header-collapse-btn" id="modal-header-collapse-btn" aria-expanded="${!headerCollapsed}" title="${headerCollapsed ? 'Expand header' : 'Collapse header'}">
-                         <i class="fa-solid fa-chevron-up"></i>
-                      </button>
+                      <div class="modal-header-actions">
+                         <button type="button" class="modal-header-refresh-btn" id="modal-header-refresh-btn" title="Refresh popup" aria-label="Refresh popup">
+                            <i class="fa-solid fa-rotate-right"></i>
+                         </button>
+                         <button type="button" class="modal-header-collapse-btn" id="modal-header-collapse-btn" aria-expanded="${!headerCollapsed}" title="${headerCollapsed ? 'Expand header' : 'Collapse header'}">
+                            <i class="fa-solid fa-chevron-up"></i>
+                         </button>
+                      </div>
                    </div>
                 </div>
                 
@@ -4020,6 +4209,23 @@
                    try { localStorage.setItem(POPUP_THEME_KEY, t); } catch (err) {}
                };
            });
+       }
+
+       // Popup neu aufbauen: Stand speichern, schliessen und mit denselben
+       // Daten wieder oeffnen; die Scroll-Position bleibt erhalten
+       const headerRefreshBtn = document.getElementById('modal-header-refresh-btn');
+       if (headerRefreshBtn) {
+           headerRefreshBtn.onclick = (e) => {
+               e.stopPropagation();
+               const bodyEl = document.getElementById('launch-modal-body');
+               const scrollTop = bodyEl ? bodyEl.scrollTop : 0;
+               closeModal();
+               openLaunchModal(wrapper, actionsData, toastMsg, popupId);
+               requestAnimationFrame(() => {
+                   const newBody = document.getElementById('launch-modal-body');
+                   if (newBody) newBody.scrollTop = scrollTop;
+               });
+           };
        }
 
        // Header ein-/ausklappen

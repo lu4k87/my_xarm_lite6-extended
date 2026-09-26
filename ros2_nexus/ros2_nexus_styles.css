@@ -493,9 +493,59 @@
       flex: 1 1 auto;
     }
 
-    .modal-header-collapse-btn {
+    /* Refresh + Ein-/Ausklappen: runde Buttons rechts neben Kill Daemon,
+       gleicher Abstand wie zwischen Toolbar und Button-Gruppe */
+    .modal-header-actions {
       flex-shrink: 0;
       margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .modal-header-refresh-btn {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: rgba(148, 163, 184, 0.08);
+      color: #cbd5e1;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+
+    .modal-header-refresh-btn:hover {
+      background: rgba(148, 163, 184, 0.18);
+      border-color: rgba(148, 163, 184, 0.55);
+      color: #f8fafc;
+    }
+
+    .modal-header-refresh-btn i {
+      transition: transform .35s ease;
+    }
+
+    .modal-header-refresh-btn:hover i {
+      transform: rotate(180deg);
+    }
+
+    .modal-header-refresh-btn:focus-visible,
+    .modal-header-collapse-btn:focus-visible {
+      outline: 2px solid rgba(56, 189, 248, 0.7);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .modal-header-refresh-btn i { transition: none; }
+      .modal-header-refresh-btn:hover i { transform: none; }
+    }
+
+    .modal-header-collapse-btn {
+      flex-shrink: 0;
       width: 28px;
       height: 28px;
       display: inline-flex;
@@ -1572,80 +1622,6 @@
       background: rgba(16, 185, 129, 0.08);
       border: 1px solid rgba(16, 185, 129, 0.28);
       color: #34d399;
-    }
-
-    /* Whisper CPU/GPU-Umschalter (Voice Command Listener) */
-    .param-device-switch {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      max-width: 100%;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      user-select: none;
-    }
-
-    .param-device-label {
-      color: #94a3b8;
-      font-weight: 600;
-    }
-
-    .param-device-track {
-      position: relative;
-      display: flex;
-      align-items: center;
-      width: 118px;
-      height: 26px;
-      border-radius: 999px;
-      background: rgba(148, 163, 184, 0.08);
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      cursor: pointer;
-      overflow: hidden;
-    }
-
-    .param-device-track:focus-visible {
-      outline: 2px solid #38bdf8;
-      outline-offset: 2px;
-    }
-
-    .param-device-knob {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: calc(50% - 3px);
-      height: calc(100% - 4px);
-      border-radius: 999px;
-      background: rgba(16, 185, 129, 0.18);
-      border: 1px solid rgba(16, 185, 129, 0.55);
-      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s, border-color 0.25s;
-    }
-
-    .param-device-track.is-gpu .param-device-knob {
-      transform: translateX(100%);
-      background: rgba(56, 189, 248, 0.18);
-      border-color: rgba(56, 189, 248, 0.55);
-    }
-
-    .param-device-opt-label {
-      position: relative;
-      z-index: 1;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      font-weight: 600;
-      color: #64748b;
-      transition: color 0.2s;
-    }
-
-    .param-device-track:not(.is-gpu) .param-device-opt-cpu {
-      color: #34d399;
-    }
-
-    .param-device-track.is-gpu .param-device-opt-gpu {
-      color: #38bdf8;
     }
 
     .param-chip:hover {
@@ -3409,17 +3385,18 @@
       }
     }
 
-    /* Titelblock mittig im Bereich rechts der Icon-Kacheln (in allen
-       Sections): Titel, Badge/Datei-Zeile und Port-Chips zentriert, auch
-       vertikal zur Hoehe der Kacheln. */
+    /* Titelblock rechts der Icon-Kacheln (in allen Sections): Titel,
+       Badge/Datei-Zeile und Port-Chips linksbuendig mit Abstand zu den
+       Kacheln, vertikal mittig zur Hoehe der Kacheln. */
     .seq-card-titles {
       min-width: 0;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
       align-self: center;
       gap: 8px;
-      text-align: center;
+      padding-left: 10px;
+      text-align: left;
     }
 
     /* Lange Titel duerfen auf zwei Zeilen umbrechen statt abgeschnitten zu werden */
@@ -3462,7 +3439,7 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 4px 8px;
       min-width: 0;
       max-width: 100%;
@@ -3516,7 +3493,7 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 6px;
       min-width: 0;
       max-width: 100%;
@@ -3681,17 +3658,14 @@
       color: #7aa7f7;
     }
 
-    /* ── Body: Launch-Struktur | Parameter ── */
+    /* ── Body: Parameter, darunter Launch-Struktur und Befehl ── */
     .seq-card-body {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
       margin: 0 18px;
       padding: 14px 0 16px;
       border-top: 1px solid rgba(255, 255, 255, 0.07);
-    }
-
-    .seq-card-body.has-tree.has-params {
-      grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
     }
 
     .seq-pane {
@@ -3701,34 +3675,141 @@
       gap: 10px;
     }
 
-    /* Parameter-Bereich als leicht abgehobenes Panel */
-    .seq-pane-params {
+    /* Jede Sektion (Parameter, Launch-Struktur, Befehl, Configs) als
+       abgehobenes Unterfenster: in der Sektionsfarbe getoent, Ueberschrift
+       als eigene Kopfleiste mit Zaehler und Chevron rechts; der Inhalt
+       klappt per grid-template-rows weich ein/aus */
+    .seq-pane-box {
       box-sizing: border-box;
-      padding: 12px 14px 14px;
+      gap: 0;
       border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.12);
-      background: rgba(148, 163, 184, 0.045);
+      border: 1px solid color-mix(in srgb, var(--sec-color, #38bdf8) 28%, transparent);
+      background: color-mix(in srgb, var(--sec-color, #38bdf8) 3%, rgba(8, 13, 24, 0.5));
+      box-shadow: 0 6px 22px color-mix(in srgb, var(--sec-color, #38bdf8) 6%, transparent);
     }
 
-    .seq-card-body.has-tree.has-params .seq-pane-params {
-      margin-left: 18px;
+    .seq-pane-box > .seq-box-head {
+      flex-wrap: wrap;
+      row-gap: 4px;
+      min-width: 0;
+      padding: 8px 10px 8px 14px;
+      border-radius: 9px 9px 0 0;
+      background: color-mix(in srgb, var(--sec-color, #38bdf8) 8%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--sec-color, #38bdf8) 18%, transparent);
+      color: color-mix(in srgb, var(--sec-color, #38bdf8) 35%, #e2e8f0);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease, border-radius 0.2s ease;
     }
 
-    /* Halbe Popup-Breite reicht nicht fuer Baum und Parameter nebeneinander */
-    @container (max-width: 960px) {
-      .seq-card-body.has-tree.has-params {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .seq-card-body.has-tree.has-params .seq-pane-params {
-        margin: 14px 0 0;
-      }
+    .seq-pane-box > .seq-box-head:hover {
+      background: color-mix(in srgb, var(--sec-color, #38bdf8) 14%, transparent);
     }
 
-    /* Linke Spalte bei Karten mit Baum: Launch-Struktur, darunter der Befehl */
+    .seq-pane-box > .seq-box-head:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--sec-color, #38bdf8) 60%, transparent);
+      outline-offset: 2px;
+    }
+
+    .seq-pane-box.is-collapsed > .seq-box-head {
+      border-bottom-color: transparent;
+      border-radius: 9px;
+    }
+
+    /* Zaehler + Chevron rechts ausgerichtet, sauberer Abstand per gap */
+    .seq-box-head .seq-pane-count:not([hidden]) + .seq-box-toggle {
+      margin-left: 0;
+    }
+
+    .seq-box-toggle {
+      margin-left: auto;
+      flex: 0 0 auto;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      border: 1px solid color-mix(in srgb, var(--sec-color, #38bdf8) 30%, transparent);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .seq-pane-box > .seq-box-head:hover .seq-box-toggle {
+      border-color: color-mix(in srgb, var(--sec-color, #38bdf8) 60%, transparent);
+      background: color-mix(in srgb, var(--sec-color, #38bdf8) 15%, transparent);
+    }
+
+    #launch-modal-body .seq-box-toggle i {
+      font-size: 9.5px;
+      transition: transform 0.2s ease;
+    }
+
+    .seq-pane-box.is-collapsed .seq-box-toggle i {
+      transform: rotate(180deg);
+    }
+
+    .seq-box-wrap {
+      display: grid;
+      grid-template-rows: 1fr;
+      min-width: 0;
+      transition: grid-template-rows 0.22s ease;
+    }
+
+    .seq-pane-box.is-collapsed > .seq-box-wrap {
+      grid-template-rows: 0fr;
+    }
+
+    /* Offen bleibt der Inhalt ungeclippt; nur eingeklappt bzw. waehrend
+       der Animation wird er abgeschnitten, damit nichts ueberlappt */
+    .seq-box-inner {
+      min-height: 0;
+      min-width: 0;
+      padding: 12px 14px 14px;
+      transition: padding 0.22s ease, opacity 0.18s ease;
+    }
+
+    .seq-pane-box.is-collapsed .seq-box-inner,
+    .seq-pane-box.is-animating .seq-box-inner {
+      overflow: hidden;
+    }
+
+    .seq-pane-box.is-collapsed .seq-box-inner {
+      padding-top: 0;
+      padding-bottom: 0;
+      opacity: 0;
+    }
+
+    /* Tree: Padding im Inneren, damit die Connector-Linien (top: -6px)
+       nie vom overflow abgeschnitten werden */
+    .seq-pane-tree:not(.is-collapsed) .seq-tree-inner {
+      padding: 10px 14px 12px;
+    }
+
+    .seq-pane-count {
+      margin-left: auto;
+      padding: 1px 8px;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--sec-color, #38bdf8) 40%, transparent);
+      color: color-mix(in srgb, var(--sec-color, #38bdf8) 70%, #e2e8f0);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: none;
+      white-space: nowrap;
+    }
+
+    .seq-pane-count[hidden] {
+      display: none;
+    }
+
+    /* Spalte bei Karten mit Baum: Launch-Struktur, darunter der Befehl */
     .seq-col-tree {
       min-width: 0;
       display: flex;
       flex-direction: column;
+      gap: 14px;
     }
 
     /* Befehl-Block ohne Baum: volle Breite unter den Parametern */
@@ -3736,9 +3817,11 @@
       grid-column: 1 / -1;
     }
 
+    /* Befehl bleibt ohne eigene Box: schlichte Ueberschrift, per Linie
+       von Parametern/Launch-Struktur abgesetzt */
     .seq-card-body.has-tree .seq-pane-cmd,
-    .seq-card-body.has-params .seq-pane-cmd {
-      margin-top: 14px;
+    .seq-card-body.has-params .seq-pane-cmd,
+    .seq-card-body .seq-pane-config:not([hidden]) ~ .seq-pane-cmd {
       padding-top: 14px;
       border-top: 1px solid rgba(255, 255, 255, 0.07);
     }
@@ -3764,15 +3847,6 @@
       overflow-wrap: anywhere;
     }
 
-    @media (max-width: 1100px) {
-      .seq-card-body.has-tree.has-params {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .seq-card-body.has-tree.has-params .seq-pane-params {
-        margin: 14px 0 0;
-      }
-    }
-
     .seq-pane-head {
       display: flex;
       align-items: center;
@@ -3794,17 +3868,17 @@
     }
 
     /* Baum im Pane: Wurzellinie beginnt knapp unter der Pane-Ueberschrift */
-    #launch-modal-body .seq-pane-tree > ul {
+    #launch-modal-body .seq-tree-inner > ul {
       margin: 2px 0 0 2px !important;
       width: calc(100% - 2px) !important;
     }
 
-    #launch-modal-body .seq-pane-tree > ul > li:first-child::before {
+    #launch-modal-body .seq-tree-inner > ul > li:first-child::before {
       top: -6px !important;
     }
 
-    #launch-modal-body .seq-pane-tree > ul > li:only-child::before,
-    #launch-modal-body .seq-pane-tree > ul > li:first-child:last-child::before {
+    #launch-modal-body .seq-tree-inner > ul > li:only-child::before,
+    #launch-modal-body .seq-tree-inner > ul > li:first-child:last-child::before {
       top: -6px !important;
       height: 18px !important;
     }
@@ -3818,18 +3892,14 @@
       min-width: 0;
     }
 
+    /* Parameter haben immer die volle Kartenbreite - Gruppen nebeneinander */
     .seq-pane-params .modal-args-list {
-      gap: 12px;
-    }
-
-    /* Ohne Baum hat die Karte die volle Breite - Gruppen nebeneinander */
-    .seq-card-body:not(.has-tree) .modal-args-list {
       flex-direction: row;
       flex-wrap: wrap;
       gap: 12px 28px;
     }
 
-    .seq-card-body:not(.has-tree) .modal-args-list .param-group {
+    .seq-pane-params .modal-args-list .param-group {
       align-self: flex-start;
     }
 
@@ -3866,7 +3936,7 @@
       white-space: nowrap;
     }
 
-    .seq-card-body:not(.has-tree) .param-group-hint {
+    .seq-pane-params .param-group-hint {
       margin-left: 6px;
     }
 
@@ -4060,6 +4130,8 @@
 #launch-modal[data-theme="light"] .seq-kill-btn { color: #b91c1c; background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.35); }
 #launch-modal[data-theme="light"] .modal-header-collapse-btn { color: var(--pl-accent); background: rgba(2, 132, 199, 0.08); border-color: rgba(2, 132, 199, 0.3); }
 #launch-modal[data-theme="light"] .modal-header-collapse-btn:hover { background: rgba(2, 132, 199, 0.16); border-color: rgba(2, 132, 199, 0.5); color: #075985; }
+#launch-modal[data-theme="light"] .modal-header-refresh-btn { color: var(--pl-muted); background: var(--pl-raised); border-color: var(--pl-line-strong); }
+#launch-modal[data-theme="light"] .modal-header-refresh-btn:hover { color: var(--pl-text); background: #e2e7ee; border-color: #b8c0cc; }
 #launch-modal[data-theme="light"] .seq-kill-btn:hover { background: rgba(220, 38, 38, 0.15); color: #991b1b; }
 
 .seq-toolbar-hint {
@@ -4488,8 +4560,30 @@
 /* Body der Karte: Baum, Parameter, Befehl */
 #launch-modal[data-theme="light"] .seq-card-body,
 #launch-modal[data-theme="light"] .seq-card-body.has-tree .seq-pane-cmd,
-#launch-modal[data-theme="light"] .seq-card-body.has-params .seq-pane-cmd { border-top-color: var(--pl-line); }
-#launch-modal[data-theme="light"] .seq-pane-params { border-color: var(--pl-line); background: #f6f8fb; }
+#launch-modal[data-theme="light"] .seq-card-body.has-params .seq-pane-cmd,
+#launch-modal[data-theme="light"] .seq-card-body .seq-pane-config:not([hidden]) ~ .seq-pane-cmd { border-top-color: var(--pl-line); }
+#launch-modal[data-theme="light"] .seq-pane-box {
+  border-color: color-mix(in srgb, var(--sec-color, #0284c7) 32%, var(--pl-line));
+  background: color-mix(in srgb, var(--sec-color, #0284c7) 3%, #f8fafc);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--sec-color, #0284c7) 7%, transparent);
+}
+#launch-modal[data-theme="light"] .seq-pane-box > .seq-box-head {
+  background: color-mix(in srgb, var(--sec-color, #0284c7) 8%, #ffffff);
+  border-bottom-color: color-mix(in srgb, var(--sec-color, #0284c7) 22%, var(--pl-line));
+  color: color-mix(in srgb, var(--sec-color, #0284c7) 55%, #0b1220);
+}
+#launch-modal[data-theme="light"] .seq-pane-box > .seq-box-head:hover {
+  background: color-mix(in srgb, var(--sec-color, #0284c7) 14%, #ffffff);
+}
+#launch-modal[data-theme="light"] .seq-pane-box.is-collapsed > .seq-box-head { border-bottom-color: transparent; }
+#launch-modal[data-theme="light"] .seq-box-toggle {
+  background: #ffffff;
+  border-color: color-mix(in srgb, var(--sec-color, #0284c7) 35%, var(--pl-line));
+}
+#launch-modal[data-theme="light"] .seq-pane-count {
+  border-color: color-mix(in srgb, var(--sec-color, #0284c7) 40%, var(--pl-line));
+  color: color-mix(in srgb, var(--sec-color, #0284c7) 65%, #0b1220);
+}
 #launch-modal[data-theme="light"] .seq-pane-head { color: var(--pl-faint); }
 
 #launch-modal[data-theme="light"] .seq-cmd-line {
@@ -4581,11 +4675,6 @@
   background: var(--pl-faint);
 }
 
-#launch-modal[data-theme="light"] .param-device-label { color: var(--pl-muted); }
-#launch-modal[data-theme="light"] .param-device-track { background: var(--pl-raised); border-color: var(--pl-line-strong); }
-#launch-modal[data-theme="light"] .param-device-opt-label { color: var(--pl-faint); }
-#launch-modal[data-theme="light"] .param-device-track:not(.is-gpu) .param-device-opt-cpu { color: #047857; }
-#launch-modal[data-theme="light"] .param-device-track.is-gpu .param-device-opt-gpu { color: #0369a1; }
 
 /* Footer */
 #launch-modal[data-theme="light"] .modal-footer-status { color: var(--pl-muted); }
@@ -4835,7 +4924,156 @@ select.param-value-input option {
   background: rgba(251, 146, 60, 0.15);
 }
 
+/* ── Segment-Control: "genau 1 aus N" ───────────────────────────────────────
+   Einheitlich fuer CPU/GPU, kurze Auswahllisten (Wert-Zeilen) und exklusive
+   Chip-Gruppen (Gripper, Kamera, Report, Gaze). Aktives Segment gruen wie ein
+   aktiver Chip; in einer geaenderten Wert-Zeile orange wie das Eingabefeld.
+   Zu schmal: die Segmente brechen um statt zu ueberlaufen. */
+.param-segment,
+.param-group-chips.is-segment {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  padding: 2px;
+  border-radius: 7px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.param-segment {
+  flex: 0 1 auto;
+}
+
+.param-group-chips.is-segment {
+  align-self: flex-start;
+}
+
+.param-seg-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #64748b;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.param-seg-opt i {
+  font-size: 10px;
+}
+
+.param-seg-opt:not(.is-active):not(:disabled):hover {
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.param-seg-opt.is-active {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.45);
+  cursor: default;
+}
+
+.param-value.is-modified .param-seg-opt.is-active {
+  color: #fdba74;
+  background: rgba(251, 146, 60, 0.14);
+  border-color: rgba(251, 146, 60, 0.5);
+}
+
+.param-seg-opt:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.7);
+  outline-offset: 1px;
+}
+
+.param-seg-opt:disabled {
+  cursor: not-allowed;
+}
+
+/* Exklusive Chip-Gruppe: Chips werden zu Segmenten, die Checkbox bleibt fuer
+   Tastatur und Sync-Logik im DOM, ist aber unsichtbar */
+.param-group-chips.is-segment .param-chip {
+  position: relative;
+  padding: 3px 10px;
+  border-radius: 5px;
+}
+
+.param-group-chips.is-segment .param-chip:hover {
+  transform: none;
+}
+
+.param-group-chips.is-segment .param-chip:not(.chip-inactive) {
+  cursor: default;
+}
+
+.param-group-chips.is-segment .param-chip.chip-inactive {
+  opacity: 0.55;
+  background: transparent;
+  border-color: transparent;
+}
+
+.param-group-chips.is-segment .param-chip.chip-inactive:hover {
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.param-group-chips.is-segment .param-chip input[type="checkbox"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.param-group-chips.is-segment .param-chip:has(input:focus-visible) {
+  outline: 2px solid rgba(56, 189, 248, 0.7);
+  outline-offset: 1px;
+}
+
+/* An/Aus-Wert als Checkbox-Chip: orange, wenn vom Standard abweichend */
+.param-chip.param-bool-chip.is-modified {
+  border-color: rgba(251, 146, 60, 0.55);
+}
+
+.param-chip.param-bool-chip.is-off {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.param-bool-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #e2e8f0;
+}
+
+.param-bool-chip.chip-inactive .param-bool-label {
+  color: inherit;
+}
+
 /* Uebersichtskarten im START-Popup sind schmaler: kompakte Zeile */
+.user-dev-params .param-seg-opt {
+  height: 18px;
+  padding: 0 7px;
+  font-size: 10.5px;
+}
+
+.user-dev-params .param-group-chips.is-segment .param-chip {
+  padding: 2px 8px;
+}
+
 .user-dev-params .param-value {
   gap: 4px;
   padding: 2px 3px 2px 5px;
@@ -4915,6 +5153,19 @@ select.param-value-input option {
 #launch-modal[data-theme="light"] .param-src-badge.src-node { color: #0369a1; border-color: rgba(2, 132, 199, 0.35); }
 #launch-modal[data-theme="light"] .param-src-badge.src-config { color: #c2410c; border-color: rgba(234, 88, 12, 0.40); }
 #launch-modal[data-theme="light"] .param-value-reset { color: #c2410c; }
+#launch-modal[data-theme="light"] .param-segment,
+#launch-modal[data-theme="light"] .param-group-chips.is-segment {
+  background: var(--pl-surface);
+  border-color: var(--pl-line-strong);
+}
+#launch-modal[data-theme="light"] .param-seg-opt { color: var(--pl-faint); }
+#launch-modal[data-theme="light"] .param-seg-opt:not(.is-active):not(:disabled):hover { color: var(--pl-text); background: var(--pl-raised); }
+#launch-modal[data-theme="light"] .param-seg-opt.is-active { color: #047857; background: rgba(16, 185, 129, 0.12); border-color: rgba(4, 120, 87, 0.4); }
+#launch-modal[data-theme="light"] .param-value.is-modified .param-seg-opt.is-active { color: #c2410c; background: rgba(234, 88, 12, 0.08); border-color: rgba(234, 88, 12, 0.45); }
+#launch-modal[data-theme="light"] .param-group-chips.is-segment .param-chip.chip-inactive { background: transparent; border-color: transparent; }
+#launch-modal[data-theme="light"] .param-group-chips.is-segment .param-chip.chip-inactive:hover { background: var(--pl-raised); }
+#launch-modal[data-theme="light"] .param-chip.param-bool-chip.is-modified { border-color: rgba(234, 88, 12, 0.45); }
+#launch-modal[data-theme="light"] .param-bool-label { color: var(--pl-text); }
 
 /* ── Config-Dateien (YAML) einer Action Card ─────────────────────────────────
    Volle Breite unter Baum/Parametern/Befehl. Die Dateien liegen in einem
@@ -4922,25 +5173,17 @@ select.param-value-input option {
    Drag in eine Spalte) untereinander - nie ueberlappend. */
 .seq-card-body .seq-pane-config {
   grid-column: 1 / -1;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .seq-pane-config[hidden] {
   display: none;
 }
 
-.cfg-head-count {
-  margin-left: auto;
-  letter-spacing: 0.3px;
-  text-transform: none;
-  color: #64748b;
-}
-
 .cfg-files {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  /* auto-fit: eine einzelne Datei nutzt die volle Breite; erst ab
+     2 x 420px stehen zwei Dateien nebeneinander */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
   gap: 10px;
   min-width: 0;
 }
@@ -5035,9 +5278,11 @@ select.param-value-input option {
 }
 
 .cfg-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  display: grid;
+  /* Zwei Spalten, sobald jede mind. 220px bekommt - schmal (z.B. nach Drag
+     in eine Spalte) automatisch einspaltig, nie mehr als zwei */
+  grid-template-columns: repeat(auto-fill, minmax(max(220px, calc((100% - 28px) / 2)), 1fr));
+  column-gap: 28px;
   min-width: 0;
 }
 
@@ -5047,6 +5292,8 @@ select.param-value-input option {
   flex-wrap: wrap;
   gap: 2px 10px;
   min-width: 0;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   font-size: 11px;
 }
 
@@ -5108,9 +5355,9 @@ select.param-value-input option {
 }
 
 .cfg-all-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(220px, calc((100% - 28px) / 2)), 1fr));
+  gap: 2px 28px;
   margin-top: 6px;
   max-height: 220px;
   overflow-y: auto;
@@ -5150,8 +5397,6 @@ select.param-value-input option {
   cursor: help;
 }
 
-#launch-modal[data-theme="light"] .seq-card-body .seq-pane-config { border-top-color: var(--pl-line); }
-#launch-modal[data-theme="light"] .cfg-head-count { color: var(--pl-faint); }
 #launch-modal[data-theme="light"] .cfg-file { background: rgba(234, 88, 12, 0.03); border-color: rgba(234, 88, 12, 0.25); }
 #launch-modal[data-theme="light"] .cfg-file.is-inactive { background: var(--pl-window); border-color: var(--pl-line); }
 #launch-modal[data-theme="light"] .cfg-file-title { color: var(--pl-text); }
@@ -5170,6 +5415,7 @@ select.param-value-input option {
 #launch-modal[data-theme="light"] .cfg-override { color: #c2410c; }
 #launch-modal[data-theme="light"] .cfg-all summary { color: var(--pl-faint); }
 #launch-modal[data-theme="light"] .cfg-all-list { background: var(--pl-raised); }
+#launch-modal[data-theme="light"] .cfg-row { border-bottom-color: var(--pl-line); }
 
 /* ── Hover-Tooltip der Wert-Parameter (fixed am body, kein Abschneiden) ───── */
 .param-floating-tooltip {
