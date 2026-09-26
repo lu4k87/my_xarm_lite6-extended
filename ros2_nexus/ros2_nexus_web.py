@@ -69,6 +69,12 @@ def add_cors_headers(response):
     if request.method in ("GET", "HEAD"):
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Methods"] = "GET"
+        # Fremdbibliotheken aendern sich nie -> eine Woche aus dem Cache statt
+        # bei jedem Start ~750 KB neu anzufragen. Eigene JS/CSS-Dateien bleiben
+        # bei der Revalidierung (ETag/304), sonst haelt ein vergessener ?v=-Bump
+        # alten Code fest.
+        if request.path.startswith("/vendor/") and response.status_code == 200:
+            response.headers["Cache-Control"] = "public, max-age=604800"
     return response
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -342,6 +348,13 @@ def serve_imgs(filename):
     return send_from_directory(imgs_dir, filename)
 
 
+# Lokale Kopien von Font Awesome, SortableJS und den Google Fonts: die Webapp
+# braucht so kein Internet und startet auf jedem PC gleich schnell.
+@app.route("/vendor/<path:filename>")
+def serve_vendor(filename):
+    return send_from_directory(os.path.join(BASE_DIR, "vendor"), filename)
+
+
 @app.route("/icons/<path:filename>")
 def serve_icons(filename):
     icons_dir = os.path.join(WS_PATH, "_imgs", "icons")
@@ -486,7 +499,49 @@ def api_config():
 # aufzurufen: das waere ein Subprozess pro Datei und braucht ein gesourctes
 # Environment. Gesucht wird nach DeclareLaunchArgument / LaunchConfiguration,
 # inklusive der transitiv eingebundenen Launch-Dateien.
-_LAUNCH_ARGS_CACHE = {"mtime": None, "data": None}
+
+# Ergebnisse pro Datei (ast/Regex/YAML) bleiben gueltig, solange sich mtime
+# und Groesse der Datei nicht aendern. Das Verzeichnis-Listing laeuft dagegen
+# bei jedem Aufruf frisch (wenige ms), damit neue oder geaenderte Dateien
+# sofort sichtbar sind. Das Parsen aller Launch-Dateien kostete sonst bei
+# jedem Popup-Oeffnen ~100 ms, auf langsameren Rechnern deutlich mehr.
+_FILE_CACHE = {}
+_FILE_CACHE_LOCK = threading.Lock()
+
+
+def _cached_by_file(kind, path, compute):
+    """compute(path), gecacht bis sich die Datei aendert. Das Ergebnis wird
+    geteilt - Aufrufer duerfen es nicht veraendern."""
+    try:
+        st = os.stat(path)
+        sig = (st.st_mtime_ns, st.st_size)
+    except OSError:
+        return compute(path)
+    key = (kind, path)
+    with _FILE_CACHE_LOCK:
+        hit = _FILE_CACHE.get(key)
+    if hit is not None and hit[0] == sig:
+        return hit[1]
+    value = compute(path)
+    with _FILE_CACHE_LOCK:
+        _FILE_CACHE[key] = (sig, value)
+    return value
+
+
+def _read_text(path):
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            return f.read()
+    except OSError:
+        return ""
+
+
+def _launch_refs(path):
+    """(deklarierte Argumente, eingebundene Launch-Dateien) einer Datei."""
+    def scan(p):
+        txt = _read_text(p)
+        return frozenset(_DECL_RE.findall(txt)), frozenset(_INCL_RE.findall(txt))
+    return _cached_by_file("refs", path, scan)
 
 _DECL_RE = re.compile(
     r"(?:DeclareLaunchArgument|LaunchConfiguration|LaunchConfigurationEquals)"
@@ -516,26 +571,15 @@ def _scan_launch_args(ws_path: str):
             if os.path.exists(os.path.join(d, "package.xml")):
                 by_pkg[f"{os.path.basename(d)}/{fn}"] = full
 
-    text_cache = {}
-
-    def read(path):
-        if path not in text_cache:
-            try:
-                with open(path, "r", encoding="utf-8", errors="ignore") as f:
-                    text_cache[path] = f.read()
-            except OSError:
-                text_cache[path] = ""
-        return text_cache[path]
-
     def args_of(fn, seen):
         if fn in seen or fn not in by_name:
             return set()
         seen.add(fn)
         out = set()
         for path in by_name[fn]:
-            txt = read(path)
-            out |= set(_DECL_RE.findall(txt))
-            for inc in set(_INCL_RE.findall(txt)):
+            decls, includes = _launch_refs(path)
+            out |= decls
+            for inc in includes:
                 if inc != fn:
                     out |= args_of(inc, seen)
         return out
@@ -551,12 +595,10 @@ def api_launch_args():
     unbekannt -> laeuft ins Leere, Datei nicht gelistet -> Paket/Datei fehlt.
     """
     try:
-        src = os.path.join(WS_PATH, "src")
-        mtime = os.path.getmtime(src) if os.path.exists(src) else 0
-        if _LAUNCH_ARGS_CACHE["mtime"] != mtime or _LAUNCH_ARGS_CACHE["data"] is None:
-            _LAUNCH_ARGS_CACHE["data"] = _scan_launch_args(WS_PATH)
-            _LAUNCH_ARGS_CACHE["mtime"] = mtime
-        return jsonify({"ok": True, "launch_files": _LAUNCH_ARGS_CACHE["data"]})
+        # Frueher gecacht ueber die mtime von src/ - die aendert sich aber nicht,
+        # wenn eine Datei in einem Unterordner bearbeitet wird. Jetzt wird pro
+        # Datei gecacht (_launch_refs), das Listing ist immer aktuell.
+        return jsonify({"ok": True, "launch_files": _scan_launch_args(WS_PATH)})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
@@ -681,7 +723,12 @@ def _literal(node):
 
 
 def _parse_launch_file_args(path):
-    """{ name: {default, description, choices} } einer Launch-Datei (ast)."""
+    """{ name: {default, description, choices} } einer Launch-Datei (ast).
+    Gecacht bis sich die Datei aendert - Ergebnis nicht veraendern."""
+    return _cached_by_file("args", path, _parse_launch_file_args_uncached)
+
+
+def _parse_launch_file_args_uncached(path):
     import ast
     try:
         with open(path, "r", encoding="utf-8", errors="ignore") as f:
@@ -753,9 +800,11 @@ def _read_config(spec, pkg_dirs):
     if not path or not os.path.isfile(path):
         res["error"] = "File not found"
         return res
+    def load(p):
+        with open(p, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
+        data = _cached_by_file("yaml", path, load)
     except (OSError, yaml.YAMLError) as e:
         res["error"] = f"YAML not readable: {e}"
         return res
@@ -787,23 +836,14 @@ def _launch_details(ws_path):
                     by_name.setdefault(fn, []).append(full)
                     by_key.setdefault(f"{pkg}/{fn}", full)
 
-    parsed = {}
-
-    def args_of(path):
-        if path not in parsed:
-            parsed[path] = _parse_launch_file_args(path)
-        return parsed[path]
-
     def collect(path, seen):
         if path in seen:
             return {}
         seen.add(path)
-        out = dict(args_of(path))
-        try:
-            with open(path, "r", encoding="utf-8", errors="ignore") as f:
-                includes = set(_INCL_RE.findall(f.read()))
-        except OSError:
-            includes = set()
+        # Kopie je Argument: unten wird per setdefault hineingemischt, und
+        # _parse_launch_file_args liefert geteilte (gecachte) Dicts.
+        out = {name: dict(info) for name, info in _parse_launch_file_args(path).items()}
+        _decls, includes = _launch_refs(path)
         for inc in includes:
             for inc_path in by_name.get(inc, []):
                 for name, info in collect(inc_path, seen).items():

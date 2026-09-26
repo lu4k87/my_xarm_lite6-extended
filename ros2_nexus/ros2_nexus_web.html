@@ -8,13 +8,10 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>ROS 2 Nexus — Web Edition</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap"
-    rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="ros2_nexus_styles.css?v=139">
+  <!-- Lokal (vendor/) statt CDN: laeuft ohne Internet und ohne Nachladen bei jedem Start -->
+  <link rel="stylesheet" href="vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="ros2_nexus_styles.css?v=140">
   <style>
     /* Startseite = nur das Start-Popup. Die Seite bleibt im DOM (Karten,
        Status), weil das Popup seine Inhalte daraus aufbaut. */
@@ -29,10 +26,7 @@
        Hintergrund, das Popup fuellt das ganze Fenster. */
     html.frameless, html.frameless body { background: transparent !important; }
     html.frameless body::before, html.frameless body::after { display: none !important; }
-    html.frameless #launch-modal {
-      background: transparent !important;
-      backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-    }
+    html.frameless #launch-modal { background: transparent !important; }
     html.frameless #launch-modal-window {
       width: 100% !important; max-width: none !important;
       height: 100% !important; max-height: none !important;
@@ -128,9 +122,9 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-  <script src="ros2_nexus_ui.js?v=137"></script>
-  <script src="ros2_nexus_script.js?v=137"></script>
+  <script src="vendor/sortablejs/Sortable.min.js"></script>
+  <script src="ros2_nexus_ui.js?v=138"></script>
+  <script src="ros2_nexus_script.js?v=138"></script>
 </body>
 
 </html>

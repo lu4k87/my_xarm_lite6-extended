@@ -159,6 +159,9 @@
             div.innerHTML = `<span style="color: var(--dim);">[${timeStr}]</span> <span style="color: ${color};"><i class="fa-solid ${icon}"></i> PID ${log.pid}</span> <span style="color: var(--txt);">${log.command}</span>`;
             content.appendChild(div);
           });
+          // Wie im Backend (global_logs) nur die letzten 200 Eintraege behalten,
+          // sonst waechst der DOM bei langer Laufzeit unbegrenzt.
+          while (content.childElementCount > 200) content.firstElementChild.remove();
           content.scrollTop = content.scrollHeight;
         }
       } catch (e) {
@@ -4087,8 +4090,8 @@
            if (localhostOnly) { text = 'localhost only'; cls = 'ok'; }
            else if (uri) { text = 'LAN · ' + uri.split('/').pop(); cls = 'info'; }
            else { text = 'LAN · Multicast'; cls = 'warn'; }
-           el.textContent = text;
-           wrap.dataset.state = cls;
+           if (el.textContent !== text) el.textContent = text;
+           if (wrap.dataset.state !== cls) wrap.dataset.state = cls;
        };
 
        // Linux-Interfacenamen lesbar machen, z. B. enp0s31f6 = Ethernet, PCI-Bus 0 / Slot 31 / Funktion 6
@@ -4105,17 +4108,23 @@
        };
 
        const refreshDdsStatus = async () => {
+           // Minimiert / im Hintergrund nichts abfragen; die Traffic-Rate
+           // rechnet mit dem echten Zeitabstand und bleibt danach korrekt.
+           if (document.hidden) return;
            try {
                const res = await fetch('/api/status');
                const st = await res.json();
                ddsStatus = st;
-               const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+               // Nur bei Aenderung schreiben: jede textContent-Zuweisung ersetzt
+               // den Textknoten und loest ein neues Layout aus, auch bei gleichem Text.
+               const set = (id, v) => { const e = document.getElementById(id); if (e && e.textContent !== v) e.textContent = v; };
                set('dds-chip-domain', st.ros_domain_id || '–');
                set('dds-chip-rmw', (st.rmw_implementation || '–').replace(/^rmw_/, '').replace(/_cpp$/, ''));
                set('dds-net-key', st.net_iface ? describeIface(st.net_iface) : 'LAN');
                set('dds-chip-net', st.net_iface ? (st.net_ip || '–') : 'no network');
                const netWrap = document.getElementById('dds-chip-net-wrap');
-               if (netWrap && st.net_iface) netWrap.title = `Default route: ${st.net_iface}. en… = Ethernet, wl… = Wi-Fi.`;
+               const netTitle = `Default route: ${st.net_iface}. en… = Ethernet, wl… = Wi-Fi.`;
+               if (netWrap && st.net_iface && netWrap.title !== netTitle) netWrap.title = netTitle;
                set('dds-chip-user', st.user || '–');
                set('dds-chip-host', st.hostname ? '@ ' + st.hostname : 'Host');
                renderDdsScope();
@@ -4459,10 +4468,49 @@
     window.checkStatus = checkStatus;
 
     // ─── CLICK SOUND ──────────────────────────────────────────────────────────────
+    // Einmal laden und dekodieren, danach nur noch abspielen. Vorher lud und
+    // dekodierte jeder Klick die MP3 neu (new Audio pro Klick).
+    // Der AudioContext entsteht erst beim ersten Klick (Browser erlauben ihn
+    // nur nach einer Nutzeraktion); bis er dekodiert hat, spielt ein
+    // wiederverwendetes <audio>-Element.
+    const clickSound = (() => {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        const bytes = Ctx ? fetch('ui_mouse_click.mp3').then(r => r.arrayBuffer()).catch(() => null) : null;
+        let ctx = null, gain = null, buffer = null, fallback = null;
+
+        const initContext = () => {
+            try {
+                ctx = new Ctx();
+                gain = ctx.createGain();
+                gain.gain.value = 0.5;
+                gain.connect(ctx.destination);
+                bytes.then(data => data && new Promise((ok, fail) => ctx.decodeAudioData(data, ok, fail)))
+                    .then(b => { if (b) buffer = b; })
+                    .catch(() => {});
+            } catch (e) { ctx = null; }
+        };
+
+        return function play() {
+            if (Ctx && !ctx) initContext();
+            if (ctx && buffer) {
+                if (ctx.state === 'suspended') ctx.resume();
+                const src = ctx.createBufferSource();
+                src.buffer = buffer;
+                src.connect(gain);
+                src.start();
+                return;
+            }
+            if (!fallback) {
+                fallback = new Audio('ui_mouse_click.mp3');
+                fallback.volume = 0.5;
+            }
+            fallback.currentTime = 0;
+            fallback.play().catch(() => {});
+        };
+    })();
+
     function playClickSound() {
-        const sound = new Audio('ui_mouse_click.mp3');
-        sound.volume = 0.5;
-        sound.play().catch(err => console.warn('Audio play failed:', err));
+        clickSound();
     }
 
     document.addEventListener('click', function(e) {
