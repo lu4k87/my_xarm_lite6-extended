@@ -262,6 +262,9 @@ The `ros2_control` framework integrates the real `xarm_api` hardware interface, 
 #### 3.1.1 📊 Simulation (FAKE) vs. Real Hardware (REAL) Matrix
 The table below illustrates which project modules can be evaluated in pure software simulation on a standard PC versus which features require physical hardware devices:
 
+<details>
+<summary><b>🔽 Show table</b> · 12 subsystems · FAKE vs. REAL · required hardware</summary>
+
 | Feature / Subsystem | Pure Simulation (FAKE) | Real Hardware (REAL) | Required Hardware / Peripheral |
 |---|:---:|:---:|---|
 | **Robot Control UI (Port 8081)** | ✅ Functional (RViz Mirror) | ✅ Functional (Hardware Motion) | Host PC & Web Browser |
@@ -276,6 +279,8 @@ The table below illustrates which project modules can be evaluated in pure softw
 | **Autonomous 3D Grasp Routine** | ❌ *(Needs 3D Camera)* | ✅ Functional | xArm Lite 6 & ZED Mini |
 | **Tobii Eye-Tracking Interaction** | ❌ *(Needs Glasses)* | ✅ Functional | Tobii Pro Glasses 3 (Wi-Fi / LAN) |
 | **Meta Quest 3 WebXR Teleoperation** | ❌ *(Needs VR Headset)* | ✅ Functional | Meta Quest 3 (Wi-Fi, Port 8443) |
+
+</details>
 
 ---
 <br>
@@ -2274,6 +2279,9 @@ if predicted_z < Z_LIMIT:
  axes[RT] = 1.0 # set downward command to 0.0
 ```
 
+<details>
+<summary><b>🔽 Show table</b> · 8 parameters · Z limit · caution zone · lookahead</summary>
+
 | Parameter | Value | Description |
 |---|---|---|
 | `Z_LIMIT` | `91.0 mm` | *Absolute Z-limit — downward motion is blocked at this height* |
@@ -2284,6 +2292,8 @@ if predicted_z < Z_LIMIT:
 | `ACCELERATION_FACTOR` (α) | `0.9` | *Velocity damping factor applied to prediction* |
 | `DOWN_TRIGGER_AXIS` | `5` (RT) | *Joy axis index for the downward trigger* |
 | `EEF_TIMEOUT` | `1.0 s` | *Without a new `/ui/eef_position` the position counts as unknown afterwards — downward motion blocked* |
+
+</details>
 
 
 ---
@@ -2309,6 +2319,9 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 
 
 #### 5.3.1 Full Controller Button Mapping
+
+<details>
+<summary><b>🔽 Show table</b> · 16 inputs · sticks · triggers · bumpers · D-Pad · buttons · speed levels</summary>
 
 | Input | Function | ROS Action | Technical Detail |
 |-------|----------|-----------|-----------------|
@@ -2338,6 +2351,8 @@ This node receives the already-sanitized `/joy_check` signal and translates it i
 | 3 | `0.3` | 60 % | *Normal — default start level* |
 | 4 | `0.4` | 80 % | *Fast — long-range traversal* |
 | 5 | `0.5` | 100 % | *Maximum* |
+
+</details>
 
 
 #### 5.3.2 Signal Flow & Exponential Smoothing
@@ -2387,6 +2402,9 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 
 #### 5.3.4 Topics & Services Reference
 
+<details>
+<summary><b>🔽 Show table</b> · 20 entries · Subscribers · Publishers · Service Clients · Action Client</summary>
+
 | Type | Name | Message Type | Description |
 |------|------|-------------|-------------|
 | **Subscriber** | `/joy_check` | `sensor_msgs/Joy` | *Sanitized joy signal from `teleop_pre_collision_checker.py`* |
@@ -2410,6 +2428,8 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 | **Service Client** | `/ui/execute_initial_pose` | `std_srvs/srv/Trigger` | *Triggers home position sequence via motion handler* |
 | **Action Client** | `/whisper/inference` | `whisper_idl/action/Inference` | *Starts/cancels Whisper voice recording* |
 
+</details>
+
 
 
 
@@ -2427,6 +2447,9 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 
 ### System Requirements
 
+<details>
+<summary><b>🔽 Show table</b> · 11 components · OS · ROS 2 · MoveIt 2 · Python · ZED SDK · CUDA</summary>
+
 | Component | Version / Details |
 |-----------|-----------------|
 | **OS** | *Ubuntu 22.04.5 LTS (Jammy)* |
@@ -2440,6 +2463,8 @@ Status feedback is published to `/ui/joy_button_presses` after every state trans
 | **Pygame** | *v2.6.1* |
 | **Build System** | *`colcon`* |
 | **Compiler** | *GCC 11+ (C++17)* |
+
+</details>
 
 <br>
 
@@ -2536,6 +2561,10 @@ pip install "ultralytics>=8.0.0" # YOLO 3D Object detection
 ### 6.1 🛠️ Hardware Bill of Materials (BOM) & Physical Wiring
 
 #### Bill of Materials (BOM)
+
+<details>
+<summary><b>🔽 Show table</b> · 9 components · robot · gripper · sensors · input devices · PC · network</summary>
+
 | Component | Model / Specification | Interface / Protocol | Primary Role |
 |---|---|---|---|
 | **Robot Manipulator** | UFactory xArm Lite 6 | Ethernet (Modbus TCP) | 6-DOF lightweight collaborative robotic arm |
@@ -2547,6 +2576,8 @@ pip install "ultralytics>=8.0.0" # YOLO 3D Object detection
 | **VR Headset** | Meta Quest 3 | HTTPS / WebXR (Wi-Fi) | Immersive 6-DoF stereoscopic remote teleoperation |
 | **Host Workstation** | Intel i9-12900K, RTX A5000 | Ubuntu 22.04 / CUDA | Real-time MoveIt Servo, YOLO inferencing, & ROS 2 Core |
 | **Network Switch** | Unmanaged Gigabit Switch | RJ45 Ethernet | Low-latency local network backplane for controller & PC |
+
+</details>
 
 #### Physical Wiring & Network Topology
 > [!NOTE]
@@ -2722,6 +2753,9 @@ The start popup (7.2) covers the RUN DEV SETUP sequences. For single nodes and l
 
 To run the complete system with both web interfaces (Nexus and Dashboard), multiple services operate on separate ports:
 
+<details>
+<summary><b>🔽 Show table</b> · 10 ports · 5000 · 8080 · 8081 · 8082 · 8443 · 8554 · 9090 · 9091 · xArm · DDS</summary>
+
 | Port | Protocol | Service / Component | Description |
 | :--- | :--- | :--- | :--- |
 | **`5000`** | HTTP (Flask) | **Nexus Webapp** (backend) | *Central process manager & web console.* |
@@ -2734,6 +2768,8 @@ To run the complete system with both web interfaces (Nexus and Dashboard), multi
 | **`9091`** | WSS (Secure WS)| **ROSBridge Secure** | *Encrypted WebSocket connection for WebXR.* |
 | **`502 / 7000`** | TCP/IP | **xArm Lite 6 Controller** | *Modbus TCP & hardware control interface.* |
 | **`23900+`** | UDP | **CycloneDDS Discovery** | *Discovery & data exchange in the local subnet. Derived from the domain: `7400 + 250 x ROS_DOMAIN_ID`, so `ROS_DOMAIN_ID=66` yields 23900 (discovery) and 23910+ (unicast).* |
+
+</details>
 
 **Why strict port separation?** Ports 8080 and 9090 serve fundamentally different purposes and protocols. Port 8080 (HTTP) acts as a standard web server to deliver the static UI files (HTML/CSS) to the browser. Port 9090 (WebSocket via `rosbridge`) is a highly specialized data broker that exclusively streams live ROS telemetry and lacks the capability to serve web pages. Port 5000 (Flask) provides Nexus Web Backend business logic independent of ROS.
 
@@ -2867,6 +2903,9 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 
 ### 7.9 🔧 Troubleshooting & Frequently Asked Questions (FAQ)
 
+<details>
+<summary><b>🔽 Show table</b> · 7 symptoms · likely root cause · diagnostic & solution</summary>
+
 | Symptom / Error | Likely Root Cause | Recommended Diagnostic & Solution |
 |---|---|---|
 | **Robot does not respond (`Connection refused` / timeout)** | Subnet mismatch or physical controller box powered off. | Verify the xArm controller is switched on. Ensure your workstation network interface is configured with a static IPv4 address in the same subnet (e.g., `192.168.1.50`, netmask `255.255.255.0`). Verify connectivity using `ping 192.168.1.175`. |
@@ -2876,6 +2915,8 @@ sudo sysctl -p /etc/sysctl.d/60-cyclonedds.conf
 | **Robot motion stops abruptly / Servo refuses jogging** | Hard table barrier or Singularity collision guard engaged. | Check `/ui/collision_msg` for active boundary alerts. Inspect `/servo_server/status` codes (`0` = no warning, `1` = approaching singularity, `2` = halt: singularity, `3` = approaching collision, `4` = halt: collision, `5` = halt: joint bound). Drive the arm upwards using the LT trigger to clear the caution zone. |
 | **Stereolabs ZED Mini camera fails to initialize** | Camera connected to USB 2.0 port or insufficient USB bandwidth. | Plug the ZED Mini strictly into a blue **USB 3.0 / 3.1** port directly on the PC motherboard (avoid unpowered USB extension hubs). Check detection via `lsusb` and `ZED_Diagnostic`. |
 | **Voice command listener fails with missing IDL** | Custom ROS 2 IDL package not sourced in environment. | Execute `source install/setup.bash` in the terminal to expose the `whisper_idl/action/Inference` interface definition. |
+
+</details>
 
 [⬆️ Back to Top](#table-of-contents)
 
