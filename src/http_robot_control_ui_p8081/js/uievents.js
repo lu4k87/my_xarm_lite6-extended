@@ -26,6 +26,9 @@ document.addEventListener('click', function(e) {
 
   // Allow continuous jogging buttons to be pressed rapidly or held without getting visually disabled by the debounce
   if (btn.classList.contains('btn-z') || btn.classList.contains('btn-rot')) return;
+  // Reine Anzeige-Schalter (Frame-Chips, Settings-Pillen) sollen sich schnell
+  // hintereinander umschalten lassen.
+  if (btn.classList.contains('btn-no-debounce')) return;
   
   // Mark as clicked and visually disable
   btn.dataset.clicked = "true";

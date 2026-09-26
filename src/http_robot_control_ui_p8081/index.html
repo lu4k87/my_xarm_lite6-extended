@@ -861,28 +861,35 @@
           </div>
         </section>
 
-        <!-- TF Control Tuner (Built-in Web Transform Calibrator) -->
+        <!-- Settings: Gruppe "TF Tuner" (Built-in Web Transform Calibrator) und
+             Gruppe "TCP Gizmo" (Darstellung im Viewport), jede mit eigenem Save.
+             Die ids heissen weiter panel-tf-tuner / tf-tuner-*, damit
+             gespeicherte Layouts und der Einklapp-Zustand erhalten bleiben. -->
         <section id="panel-tf-tuner" class="glass-panel tf-tuner-section">
           <div class="tf-tuner-header">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <h2 style="margin: 0;"><i class="fa-solid fa-sliders"></i> TF Control Tuner</h2>
+            <h2 style="margin: 0;"><i class="fa-solid fa-gear"></i> Settings</h2>
+            <button class="btn btn-icon-small settings-icon-btn" id="btn-tf-collapse" data-action="toggleTFTunerCollapse" title="Collapse / expand Settings">
+              <i class="fa-solid fa-chevron-up" id="tf-collapse-icon"></i>
+            </button>
+          </div>
+          <div id="tf-tuner-body" class="tf-tuner-body">
+
+          <!-- Gruppe 1: TF Tuner -->
+          <div class="settings-group settings-group-tf">
+          <div class="settings-group-header">
+            <div class="settings-group-title"><i class="fa-solid fa-sliders"></i> TF Tuner</div>
+            <div class="settings-group-actions">
               <button id="btn-tuner-broadcast" class="btn-toggle-broadcast" data-action="toggleTFBroadcast" title="Toggle Live TF broadcasting via rosbridge (10 Hz)">
                 <i class="fa-solid fa-satellite-dish"></i> <span id="tuner-broadcast-label">Live TF</span>
               </button>
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
               <button id="btn-tuner-save" class="btn-tuner-save dirty" data-action="saveTunerValues" title="Store all TF tuner values permanently">
                 <i class="fa-solid fa-floppy-disk"></i> <span id="tuner-save-label">Save</span>
               </button>
-              <button class="btn btn-icon-small" data-action="resetCurrentTFElement" title="Reset current element to defaults" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
+              <button class="btn btn-icon-small settings-icon-btn" data-action="resetCurrentTFElement" title="Reset current element to defaults">
                 <i class="fa-solid fa-rotate-left"></i>
-              </button>
-              <button class="btn btn-icon-small" id="btn-tf-collapse" data-action="toggleTFTunerCollapse" title="Collapse / expand TF Control Tuner" style="width: 26px; height: 26px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;">
-                <i class="fa-solid fa-chevron-up" id="tf-collapse-icon"></i>
               </button>
             </div>
           </div>
-          <div id="tf-tuner-body" class="tf-tuner-body">
 
           <div class="tuner-selector-row">
             <label for="tuner-element-select" style="font-size: 11px; font-weight: 600; color: var(--mut); text-transform: uppercase; letter-spacing: 0.5px;">Element:</label>
@@ -964,6 +971,135 @@
             <span id="tuner-frame-info">Frame: zed_camera_link → world</span>
             <span id="tuner-rate-info">10 Hz Active</span>
           </div>
+          </div>
+
+          <!-- Gruppe 2: Darstellung des TCP-Gizmos im Viewport (js/settings.js) -->
+          <div class="settings-group settings-group-gizmo">
+            <div class="settings-group-header">
+              <div class="settings-group-title"><i class="fa-solid fa-up-down-left-right"></i> TCP Gizmo</div>
+              <div class="settings-group-actions">
+                <button id="btn-gizmo-save" class="btn-tuner-save saved" data-action="saveSettingsGroup" data-args='["gizmo"]' title="Store permanently">
+                  <i class="fa-solid fa-floppy-disk"></i> <span id="gizmo-save-label">Saved</span>
+                </button>
+                <button class="btn btn-icon-small settings-icon-btn" data-action="resetSettingsGroup" data-args='["gizmo"]' title="Reset appearance to defaults">
+                  <i class="fa-solid fa-rotate-left"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="settings-rows">
+              <div class="settings-row" title="Length of the gizmo arrows (translate) and radius of the rings (rotate). 100 % = default">
+                <label class="settings-row-lbl" for="set-gizmo-length-slider"><i class="fa-solid fa-ruler-horizontal"></i> Line length</label>
+                <div class="settings-row-ctrl">
+                  <input type="range" id="set-gizmo-length-slider" class="tuner-slider" min="50" max="250" step="5" value="100" data-input="onSettingInput" data-args='["gizmo","length"]'>
+                  <input type="number" id="set-gizmo-length-num" class="tuner-num settings-num" min="50" max="250" step="5" value="100" data-change="onSettingNum" data-args='["gizmo","length"]'>
+                  <span class="settings-unit">%</span>
+                </div>
+              </div>
+              <div class="settings-row" title="Line thickness of arrows and rings. 1.0 = thin line (default), about 1 px per step">
+                <label class="settings-row-lbl" for="set-gizmo-thickness-slider"><i class="fa-solid fa-grip-lines"></i> Line thickness</label>
+                <div class="settings-row-ctrl">
+                  <input type="range" id="set-gizmo-thickness-slider" class="tuner-slider" min="1" max="10" step="0.5" value="1.0" data-input="onSettingInput" data-args='["gizmo","thickness"]'>
+                  <input type="number" id="set-gizmo-thickness-num" class="tuner-num settings-num" min="1" max="10" step="0.5" value="1.0" data-change="onSettingNum" data-args='["gizmo","thickness"]'>
+                  <span class="settings-unit">px</span>
+                </div>
+              </div>
+              <div class="settings-row" title="Opacity of the gizmo and the ghost TCP marker. 100 % = default">
+                <label class="settings-row-lbl" for="set-gizmo-opacity-slider"><i class="fa-solid fa-circle-half-stroke"></i> Opacity</label>
+                <div class="settings-row-ctrl">
+                  <input type="range" id="set-gizmo-opacity-slider" class="tuner-slider" min="10" max="100" step="5" value="100" data-input="onSettingInput" data-args='["gizmo","opacity"]'>
+                  <input type="number" id="set-gizmo-opacity-num" class="tuner-num settings-num" min="10" max="100" step="5" value="100" data-change="onSettingNum" data-args='["gizmo","opacity"]'>
+                  <span class="settings-unit">%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="tuner-status-bar">
+              <span>Translate: arrow length · Rotate: ring radius</span>
+              <span>Live preview in viewport</span>
+            </div>
+          </div>
+
+          <!-- Gruppe 3: Frame-Achsen (RGB-Achsenkreuz an URDF-Links und TF-Frames) -->
+          <div class="settings-group settings-group-axes">
+            <div class="settings-group-header">
+              <div class="settings-group-title"><i class="fa-solid fa-diagram-project"></i> Frame Axes</div>
+              <div class="settings-group-actions">
+                <button id="set-axes-enabled" class="settings-pill btn-no-debounce active" data-action="toggleSetting" data-args='["axes","enabled"]' title="Show / hide all selected frame axes (selection is kept)" aria-pressed="true">
+                  <i class="fa-solid fa-eye"></i> Visible
+                </button>
+                <button id="btn-axes-save" class="btn-tuner-save saved" data-action="saveSettingsGroup" data-args='["axes"]' title="Store permanently">
+                  <i class="fa-solid fa-floppy-disk"></i> <span id="axes-save-label">Saved</span>
+                </button>
+                <button class="btn btn-icon-small settings-icon-btn" data-action="resetSettingsGroup" data-args='["axes"]' title="Reset appearance to defaults">
+                  <i class="fa-solid fa-rotate-left"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="axes-frames">
+              <div class="axes-frames-head">
+                <span class="axes-frames-title">Frames</span>
+                <div class="axes-frames-quick">
+                  <button type="button" class="axes-quick-btn btn-no-debounce" data-action="setAxesFrames" data-args='["robot"]' title="Select all robot frames">Robot</button>
+                  <button type="button" class="axes-quick-btn btn-no-debounce" data-action="setAxesFrames" data-args='["all"]' title="Select all frames">All</button>
+                  <button type="button" class="axes-quick-btn btn-no-debounce" data-action="setAxesFrames" data-args='["none"]' title="Clear selection">None</button>
+                </div>
+              </div>
+              <div class="axes-frames-cat">
+                <span class="axes-frames-cat-lbl"><i class="fa-solid fa-robot"></i> Robot</span>
+                <div class="frame-chip-list" id="axes-frames-robot"></div>
+              </div>
+              <div class="axes-frames-cat">
+                <span class="axes-frames-cat-lbl"><i class="fa-solid fa-cube"></i> Scene</span>
+                <div class="frame-chip-list" id="axes-frames-scene"></div>
+              </div>
+            </div>
+
+            <div class="settings-rows">
+              <div class="settings-row" title="Length of each axis in the scene">
+                <label class="settings-row-lbl" for="set-axes-length-slider"><i class="fa-solid fa-ruler-horizontal"></i> Axis length</label>
+                <div class="settings-row-ctrl">
+                  <input type="range" id="set-axes-length-slider" class="tuner-slider" min="1" max="30" step="0.5" value="8.0" data-input="onSettingInput" data-args='["axes","length"]'>
+                  <input type="number" id="set-axes-length-num" class="tuner-num settings-num" min="1" max="30" step="0.5" value="8.0" data-change="onSettingNum" data-args='["axes","length"]'>
+                  <span class="settings-unit">cm</span>
+                </div>
+              </div>
+              <div class="settings-row" title="Axis diameter. 0 = thin 1 px line">
+                <label class="settings-row-lbl" for="set-axes-thickness-slider"><i class="fa-solid fa-grip-lines"></i> Thickness</label>
+                <div class="settings-row-ctrl">
+                  <input type="range" id="set-axes-thickness-slider" class="tuner-slider" min="0" max="10" step="0.5" value="0.0" data-input="onSettingInput" data-args='["axes","thickness"]'>
+                  <input type="number" id="set-axes-thickness-num" class="tuner-num settings-num" min="0" max="10" step="0.5" value="0.0" data-change="onSettingNum" data-args='["axes","thickness"]'>
+                  <span class="settings-unit">mm</span>
+                </div>
+              </div>
+              <div class="settings-row" title="Opacity of axes and labels">
+                <label class="settings-row-lbl" for="set-axes-opacity-slider"><i class="fa-solid fa-circle-half-stroke"></i> Opacity</label>
+                <div class="settings-row-ctrl">
+                  <input type="range" id="set-axes-opacity-slider" class="tuner-slider" min="10" max="100" step="5" value="100" data-input="onSettingInput" data-args='["axes","opacity"]'>
+                  <input type="number" id="set-axes-opacity-num" class="tuner-num settings-num" min="10" max="100" step="5" value="100" data-change="onSettingNum" data-args='["axes","opacity"]'>
+                  <span class="settings-unit">%</span>
+                </div>
+              </div>
+              <div class="settings-row">
+                <span class="settings-row-lbl"><i class="fa-solid fa-toggle-on"></i> Options</span>
+                <div class="settings-row-ctrl settings-pills">
+                  <button id="set-axes-labels" class="settings-pill btn-no-debounce active" data-action="toggleSetting" data-args='["axes","labels"]' title="Show the frame name next to each axis cross" aria-pressed="true">
+                    <i class="fa-solid fa-tag"></i> Labels
+                  </button>
+                  <button id="set-axes-on_top" class="settings-pill btn-no-debounce active" data-action="toggleSetting" data-args='["axes","on_top"]' title="Draw axes on top of the robot model (visible inside the links)" aria-pressed="true">
+                    <i class="fa-solid fa-layer-group"></i> On top
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="tuner-status-bar">
+              <span id="axes-count-info">Select frames to show their axes</span>
+              <span><b class="axis-x">X</b> <b class="axis-y">Y</b> <b class="axis-z">Z</b></span>
+            </div>
+          </div>
+
           </div>
         </section>
 

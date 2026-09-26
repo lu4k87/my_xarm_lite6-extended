@@ -304,7 +304,7 @@ export function switch3DTab(tab) {
 
 
 // Initialize Tuner UI on ready
-// ── TF Tuner Collapse Toggle ──
+// ── Settings Section Collapse Toggle (ids noch vom TF Tuner) ──
 export function toggleTFTunerCollapse() {
   const body = document.getElementById('tf-tuner-body');
   const icon = document.getElementById('tf-collapse-icon');
@@ -324,7 +324,7 @@ export function restoreTFTunerCollapse() {
   }
 }
 
-// ── Collapsible sections (same pattern as the TF Control Tuner) ─────────
+// ── Collapsible sections (same pattern as the Settings section) ─────────
 // Every other section gets a small chevron button at the top right of its
 // header. Collapsed, only the header row stays visible; the state is kept per
 // section in localStorage. The button sits inside the drag handle, but
@@ -358,7 +358,7 @@ export function togglePanelCollapse(sectionId) {
 
 export function initPanelCollapse() {
   document.querySelectorAll('section.glass-panel').forEach((section) => {
-    // The TF Control Tuner already has its own collapse button.
+    // The Settings section (panel-tf-tuner) already has its own collapse button.
     if (!section.id || section.id === 'panel-tf-tuner') return;
     let header, host;
     if (section.id === 'panel-3d-centerpiece') {

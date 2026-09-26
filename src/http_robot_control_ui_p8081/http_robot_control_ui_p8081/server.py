@@ -23,6 +23,8 @@ Ersetzt `python3 -m http.server`. Zwei Dinge sind anders:
 5. `/api/tf_tuner` (GET/POST) haelt die per "Save" fest gespeicherten
    TF-Tuner-Werte. Liegen auf dem PC statt im localStorage, damit Desktop
    und Quest 3 (8443 nutzt diesen Handler mit) beim Start denselben Stand laden.
+6. `/api/settings` (GET/POST) haelt die per "Save" gespeicherten Einstellungen
+   der Settings-Section (z. B. Aussehen des TCP-Gizmos), aus demselben Grund.
 
 Aufruf: server.py [PORT] [VERZEICHNIS]
 """
@@ -252,7 +254,7 @@ SYS_LOAD = SysLoad()
 # ── Fest gespeicherte TF-Tuner-Werte ─────────────────────────────────────────
 TF_TUNER_FILE = os.path.expanduser('~/.config/robot_control_ui/tf_tuner.json')
 TF_TUNER_FIELDS = ('x', 'y', 'z', 'roll', 'pitch', 'yaw', 'radius')
-TF_TUNER_MAX_BODY = 64 * 1024
+TF_TUNER_MAX_BODY = 64 * 1024        # gilt fuer alle POST-Endpunkte
 TF_TUNER_LOCK = threading.Lock()
 
 
@@ -294,6 +296,88 @@ def save_tf_tuner(values):
             json.dump(data, f, indent=2)
         os.replace(tmp, TF_TUNER_FILE)
     return data
+
+
+# ── Fest gespeicherte UI-Einstellungen (Settings-Section) ─────────────────────
+# Nur bekannte Gruppen/Felder - alles andere faellt weg. Feldtypen:
+#   (min, max)  Zahl, auf den Bereich begrenzt
+#   bool        True/False
+#   FRAMES      Liste von Frame-Namen (TF/URDF), hoechstens 64
+# Neue Einstellungen hier und in js/settings.js eintragen.
+SETTINGS_FILE = os.path.expanduser('~/.config/robot_control_ui/settings.json')
+FRAMES = 'frames'
+FRAME_NAME_RE = re.compile(r'^[A-Za-z0-9_./-]{1,64}$')
+SETTINGS_SCHEMA = {
+    'gizmo': {'length': (0.5, 2.5), 'thickness': (1.0, 10.0), 'opacity': (0.1, 1.0)},
+    'axes': {'enabled': bool, 'labels': bool, 'on_top': bool,
+             'length': (0.01, 0.3), 'thickness': (0.0, 10.0), 'opacity': (0.1, 1.0),
+             'frames': FRAMES},
+}
+SETTINGS_LOCK = threading.Lock()
+
+
+def _clean_field(kind, v):
+    """Bereinigter Wert oder None, wenn er nicht zum Feldtyp passt."""
+    if kind is bool:
+        return v if isinstance(v, bool) else None
+    if kind == FRAMES:
+        if not isinstance(v, list):
+            return None
+        names = [n for n in v if isinstance(n, str) and FRAME_NAME_RE.match(n)]
+        return list(dict.fromkeys(names))[:64]
+    lo, hi = kind
+    if isinstance(v, (int, float)) and not isinstance(v, bool) and abs(float(v)) < 1e6:
+        return min(hi, max(lo, float(v)))
+    return None
+
+
+def clean_settings(data):
+    if not isinstance(data, dict):
+        return None
+    out = {}
+    for group, fields in SETTINGS_SCHEMA.items():
+        vals = data.get(group)
+        if not isinstance(vals, dict):
+            continue
+        clean = {}
+        for f, kind in fields.items():
+            v = _clean_field(kind, vals.get(f))
+            if v is not None:
+                clean[f] = v
+        if clean:
+            out[group] = clean
+    return out or None
+
+
+def load_settings():
+    try:
+        with open(SETTINGS_FILE, encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    settings = clean_settings(data.get('settings') if isinstance(data, dict) else None)
+    return {'settings': settings, 'saved_at': data.get('saved_at')} if settings else {}
+
+
+def save_settings(settings):
+    # Gruppen, die der Client nicht mitschickt, bleiben wie gespeichert.
+    merged = dict(load_settings().get('settings') or {})
+    merged.update(settings)
+    data = {'settings': merged, 'saved_at': time.time()}
+    os.makedirs(os.path.dirname(SETTINGS_FILE), exist_ok=True)
+    tmp = SETTINGS_FILE + '.tmp'
+    with SETTINGS_LOCK:
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp, SETTINGS_FILE)
+    return data
+
+
+# POST-Endpunkte: Pfad -> (JSON-Schluessel, Bereinigen, Speichern)
+POST_APIS = {
+    '/api/tf_tuner': ('values', clean_tf_tuner_values, save_tf_tuner),
+    '/api/settings': ('settings', clean_settings, save_settings),
+}
 
 
 class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -368,9 +452,11 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
         return io.BytesIO(body)
 
     def do_POST(self):
-        if self.path.split('?', 1)[0] != '/api/tf_tuner':
+        api = POST_APIS.get(self.path.split('?', 1)[0])
+        if not api:
             self.send_error(404)
             return
+        key, clean, save = api
         try:
             length = int(self.headers.get('Content-Length') or 0)
         except ValueError:
@@ -379,14 +465,14 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(413 if length > TF_TUNER_MAX_BODY else 400)
             return
         try:
-            values = clean_tf_tuner_values(json.loads(self.rfile.read(length)).get('values'))
+            values = clean(json.loads(self.rfile.read(length)).get(key))
         except (ValueError, AttributeError):
             values = None
         if values is None:
-            self.send_error(400, 'invalid tf tuner values')
+            self.send_error(400, f'invalid {key}')
             return
         try:
-            data = save_tf_tuner(values)
+            data = save(values)
         except OSError as e:
             self.send_error(500, f'save failed: {e}')
             return
@@ -399,6 +485,8 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
             return self._send_json(HEADER_STATUS.get() if path == '/api/header_status' else SYS_LOAD.get())
         if path == '/api/tf_tuner':
             return self._send_json(load_tf_tuner())
+        if path == '/api/settings':
+            return self._send_json(load_settings())
         page = VERSIONED_PAGES.get(path)
         if page:
             full = os.path.join(self.directory, page)

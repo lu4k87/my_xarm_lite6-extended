@@ -77,6 +77,15 @@ let isGizmoActive = true;
 let gizmoMode = 'translate'; // 'translate' | 'rotate'
 let isDraggingGizmo = false;
 let suppressGizmoDragEnd = false;   // Laser-Drag abgebrochen: Loslassen plant nicht
+// Aussehen (Settings-Section): length = Achslaenge/Ringradius als Faktor
+// (1 = Original), thickness = Stufe 1..10 (1 = 1-px-Linie wie bisher),
+// opacity = Deckkraft 0.1..1 (Gizmo samt Ghost-Markierung).
+let gizmoAppearance = { length: 1, thickness: 1, opacity: 1 };
+let gizmoAppearanceFrame = 0;
+let gizmoBuiltKey = '1|1';          // Geometrie nur neu bauen, wenn sie sich aendert
+// Stufe -> Linienradius in Gizmo-Einheiten. Das Gizmo ist immer etwa 13,6 %
+// der Viewport-Hoehe lang; bei ~800 px entspricht eine Stufe etwa 1 px Breite.
+const GIZMO_THICKNESS_UNIT = 0.0046;
 
 // Grenzwerte kommen aus robot_limits.js, damit UI und Twin nicht
 // auseinanderlaufen. Der Fallback greift nur, falls die Datei fehlt.
@@ -835,6 +844,9 @@ function loadURDFModel() {
 
       // Add robot to scene
       scene.add(robotModel);
+      // Frame-Achsen (Settings) haengen an den Links - jetzt gibt es sie.
+      rebuildFrameAxes();
+      announceTwinFrames();
 
       // Apply any cached joints or linear axis
       applyJointValues();
@@ -1052,6 +1064,7 @@ function initTCPGizmo() {
       }
     });
 
+    applyGizmoAppearance();
     updateGizmoVisibility();
     console.log('[DigitalTwin] 3D TCP TransformControls initialized.');
   } catch (e) {
@@ -1718,7 +1731,43 @@ export function resizeDigitalTwin() {
   handleResize();
 }
 
+function applyGizmoAppearance() {
+  gizmoAppearanceFrame = 0;
+  if (!transformControls || typeof transformControls.setAppearance !== 'function') return;
+  const { length, thickness, opacity } = gizmoAppearance;
+  const key = `${length}|${thickness}`;
+  if (key !== gizmoBuiltKey) {
+    gizmoBuiltKey = key;
+    transformControls.setAppearance(length, thickness > 1 ? thickness * GIZMO_THICKNESS_UNIT : 0);
+    // Neu gebaute Griffe tragen wieder renderOrder = Infinity (siehe initTCPGizmo).
+    transformControls.getHelper().traverse((o) => {
+      if (o.renderOrder === Infinity) o.renderOrder = GIZMO_RENDER_ORDER;
+    });
+  }
+  transformControls.setOpacity(opacity);
+  // Ghost-Markierung (Achsen, Scheibe, Ring) mit derselben Deckkraft.
+  if (ghostTCPGroup) {
+    ghostTCPGroup.traverse((o) => {
+      const m = o.material;
+      if (!m) return;
+      if (m.userData.baseOpacity === undefined) m.userData.baseOpacity = m.opacity;
+      m.opacity = m.userData.baseOpacity * opacity;
+    });
+  }
+  requestRender();
+}
+
 // ── Public TCP Gizmo APIs ──
+// Vor dem Init nur gemerkt, initTCPGizmo wendet es dann an. Schnelles
+// Schieben am Slider baut hoechstens etwa einmal pro Frame neu (setTimeout
+// statt requestAnimationFrame: das steht waehrend einer XR-Session still).
+export function setTCPGizmoAppearance({ length, thickness, opacity } = {}) {
+  if (Number.isFinite(length) && length > 0) gizmoAppearance.length = length;
+  if (Number.isFinite(thickness) && thickness >= 1) gizmoAppearance.thickness = thickness;
+  if (Number.isFinite(opacity)) gizmoAppearance.opacity = Math.min(1, Math.max(0.05, opacity));
+  if (!gizmoAppearanceFrame) gizmoAppearanceFrame = setTimeout(applyGizmoAppearance, 16);
+}
+
 export function toggleTCPGizmo(forceState) {
   requestRender();
   if (typeof forceState === 'boolean') isGizmoActive = forceState;
@@ -2017,6 +2066,7 @@ export function updateTunerSceneObjects(elements) {
   requestRender();
   if (!elements || !scene) return;
   tunerElementsSnapshot = snapshotTunerElements(elements);
+  updateSceneFrameAnchors(elements);
 
   if (Object.keys(tunerSceneObjects).length === 0) {
     initTunerSceneObjects();
@@ -2055,6 +2105,198 @@ export function updateTunerSceneObjects(elements) {
       outer.scale.set(scale, scale, 1);
     }
   }
+}
+
+// ── Frame-Achsen (Settings > Frame Axes) ────────────────────────────────────
+// Zeigt fuer ausgewaehlte Frames ein RGB-Achsenkreuz (X rot, Y gruen, Z blau)
+// wie in RViz. Robot-Frames sind die URDF-Links (der Link-Frame ist zugleich
+// der Frame des Gelenks davor), Scene-Frames sind world und die Frames des
+// TF Tuners. Die Achsen haengen als Kind am Link bzw. an einem Anker und
+// laufen dadurch ohne eigenes Update mit. Alle Frames teilen sich ein
+// Aussehen: length [m], thickness [mm Durchmesser, 0 = 1-px-Linie],
+// opacity 0.1..1, labels (Frame-Name), on_top (durch das Modell sichtbar).
+const FRAME_AXES_ORDER = 960;        // ueber Markierungen, unter Distanzlinie/Gizmo
+const FRAME_AXIS_COLORS = [0xff3b3b, 0x22e05a, 0x3b82ff];
+let frameAxesCfg = {
+  enabled: true, labels: true, on_top: true,
+  length: 0.08, thickness: 0, opacity: 1, frames: [],
+};
+let frameAxesTimer = 0;
+const frameAxesObjs = [];            // aktuell angehaengte Achsen-Gruppen
+const frameAxesShared = [];          // geteilte Geometrien/Materialien (dispose)
+const sceneFrameAnchors = {};        // frame_id -> Object3D in Weltkoordinaten
+const _frameEuler = new THREE.Euler(0, 0, 0, 'ZYX');   // ROS-RPY
+
+// TF-Tuner-Frames exakt an der TF-Pose (ohne den Bodenversatz der Modelle).
+function updateSceneFrameAnchors(elements) {
+  let added = false;
+  for (const data of Object.values(elements)) {
+    const id = data && data.frame_id;
+    if (!id) continue;
+    let anchor = sceneFrameAnchors[id];
+    if (!anchor) {
+      anchor = new THREE.Object3D();
+      anchor.name = `frame_anchor_${id}`;
+      scene.add(anchor);
+      sceneFrameAnchors[id] = anchor;
+      added = true;
+    }
+    anchor.position.set(Number(data.x) || 0, Number(data.y) || 0, Number(data.z) || 0);
+    _frameEuler.set(THREE.MathUtils.degToRad(Number(data.roll) || 0),
+                    THREE.MathUtils.degToRad(Number(data.pitch) || 0),
+                    THREE.MathUtils.degToRad(Number(data.yaw) || 0), 'ZYX');
+    anchor.quaternion.setFromEuler(_frameEuler);
+  }
+  if (added) {
+    rebuildFrameAxes();
+    announceTwinFrames();
+  }
+}
+
+// Liste fuer die Settings-Section: { robot: [{name, joint}], scene: [{name}] }.
+// joint = Kurzname des beweglichen Gelenks vor dem Link (J1..J6), sonst ''.
+export function getTwinFrames() {
+  const robot = [];
+  if (robotModel) {
+    robotModel.traverse((o) => {
+      if (!o.isURDFLink || o.name === robotModel.name) return;
+      const j = o.parent && o.parent.isURDFJoint ? o.parent : null;
+      const movable = j && j.jointType && j.jointType !== 'fixed';
+      robot.push({ name: o.name, joint: movable ? j.name.replace(/^joint/, 'J') : '' });
+    });
+  }
+  const scene_ = [{ name: 'world', joint: '' }, ...Object.keys(sceneFrameAnchors).map((name) => ({ name, joint: '' }))];
+  return { robot, scene: scene_ };
+}
+
+function announceTwinFrames() {
+  document.dispatchEvent(new CustomEvent('twin-frames-changed'));
+}
+
+function frameHost(name) {
+  if (name === 'world') return scene;
+  if (sceneFrameAnchors[name]) return sceneFrameAnchors[name];
+  if (!robotModel) return null;
+  const link = robotModel.links ? robotModel.links[name] : null;
+  return link || robotModel.getObjectByName(name) || null;
+}
+
+function makeFrameLabel(text, height, mat) {
+  const c = document.createElement('canvas');
+  const g = c.getContext('2d');
+  const font = '600 44px "JetBrains Mono", monospace';
+  g.font = font;
+  c.width = Math.ceil(g.measureText(text).width) + 24;
+  c.height = 64;
+  g.font = font;                      // nach dem Groessenwechsel neu setzen
+  g.textBaseline = 'middle';
+  g.lineJoin = 'round';
+  g.lineWidth = 6;
+  g.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+  g.strokeText(text, 12, 33);
+  g.fillStyle = '#f1f5f9';
+  g.fillText(text, 12, 33);
+  const tex = new THREE.CanvasTexture(c);
+  tex.minFilter = THREE.LinearFilter;
+  if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+  const m = mat.clone();
+  m.map = tex;
+  const sprite = new THREE.Sprite(m);
+  sprite.center.set(-0.08, 1.1);      // rechts unterhalb des Ursprungs, frei von den Achsen
+  sprite.scale.set(height * c.width / c.height, height, 1);
+  sprite.renderOrder = FRAME_AXES_ORDER + 1;
+  sprite.userData.frameLabelTex = tex;
+  return sprite;
+}
+
+function clearFrameAxes() {
+  for (const grp of frameAxesObjs) {
+    if (grp.parent) grp.parent.remove(grp);
+    grp.traverse((o) => {
+      if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); }
+    });
+  }
+  frameAxesObjs.length = 0;
+  for (const r of frameAxesShared) r.dispose();
+  frameAxesShared.length = 0;
+}
+
+function rebuildFrameAxes() {
+  frameAxesTimer = 0;
+  clearFrameAxes();
+  requestRender();
+  const cfg = frameAxesCfg;
+  if (!scene || !cfg.enabled || !cfg.frames.length) return;
+
+  const L = cfg.length;
+  const common = { transparent: true, opacity: cfg.opacity, depthTest: !cfg.on_top, depthWrite: false, toneMapped: false };
+  let parts;                          // [{geometry, material}] fuer X, Y, Z
+  if (cfg.thickness > 0) {
+    const r = cfg.thickness / 2000;   // mm Durchmesser -> m Radius
+    parts = [0, 1, 2].map((i) => {
+      const geo = new THREE.CylinderGeometry(r, r, L, 12, 1, false);
+      geo.translate(0, L / 2, 0);     // von 0 bis L entlang +Y
+      if (i === 0) geo.rotateZ(-Math.PI / 2);
+      if (i === 2) geo.rotateX(Math.PI / 2);
+      const mat = new THREE.MeshBasicMaterial({ ...common, color: FRAME_AXIS_COLORS[i] });
+      frameAxesShared.push(geo, mat);
+      return { geo, mat, mesh: true };
+    });
+  } else {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, L, 0, 0, 0, 0, 0, 0, L, 0, 0, 0, 0, 0, 0, L], 3));
+    const col = new THREE.Color();
+    const colors = [];
+    for (const hex of FRAME_AXIS_COLORS) { col.setHex(hex); colors.push(col.r, col.g, col.b, col.r, col.g, col.b); }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    const mat = new THREE.LineBasicMaterial({ ...common, vertexColors: true });
+    frameAxesShared.push(geo, mat);
+    parts = [{ geo, mat, mesh: false }];
+  }
+  const labelMat = new THREE.SpriteMaterial({ transparent: true, opacity: cfg.opacity, depthTest: !cfg.on_top, depthWrite: false });
+  frameAxesShared.push(labelMat);
+  const labelH = Math.min(0.03, Math.max(0.012, L * 0.22));
+  // Frames mit (fast) gleichem Ursprung (world/link_base, link_eef/Greifer/
+  // link_tcp): Labels untereinander statt uebereinander.
+  const labelSlots = new Map();
+  const _p = new THREE.Vector3();
+
+  for (const name of cfg.frames) {
+    const host = frameHost(name);
+    if (!host) continue;               // Link/Anker (noch) nicht da
+    host.updateWorldMatrix(true, false);
+    _p.setFromMatrixPosition(host.matrixWorld);
+    const slotKey = `${Math.round(_p.x * 200)}|${Math.round(_p.y * 200)}|${Math.round(_p.z * 200)}`;
+    const slot = labelSlots.get(slotKey) || 0;
+    labelSlots.set(slotKey, slot + 1);
+    const grp = new THREE.Group();
+    grp.name = `frame_axes_${name}`;
+    for (const p of parts) {
+      const o = p.mesh ? new THREE.Mesh(p.geo, p.mat) : new THREE.LineSegments(p.geo, p.mat);
+      o.renderOrder = FRAME_AXES_ORDER;
+      o.raycast = () => {};            // nie Klickziel (Greifkugeln, Hover)
+      grp.add(o);
+    }
+    if (cfg.labels) {
+      const label = makeFrameLabel(name, labelH, labelMat);
+      label.center.y += slot * 1.15;
+      grp.add(label);
+    }
+    host.add(grp);
+    frameAxesObjs.push(grp);
+  }
+}
+
+// Vor dem Laden des Modells nur gemerkt; Aenderungen am Slider werden
+// gebuendelt (wie beim Gizmo, setTimeout statt rAF wegen XR).
+export function setFrameAxesConfig(cfg = {}) {
+  const c = frameAxesCfg;
+  for (const k of ['enabled', 'labels', 'on_top']) if (typeof cfg[k] === 'boolean') c[k] = cfg[k];
+  if (Number.isFinite(cfg.length) && cfg.length > 0) c.length = cfg.length;
+  if (Number.isFinite(cfg.thickness) && cfg.thickness >= 0) c.thickness = cfg.thickness;
+  if (Number.isFinite(cfg.opacity)) c.opacity = Math.min(1, Math.max(0.05, cfg.opacity));
+  if (Array.isArray(cfg.frames)) c.frames = cfg.frames.filter((f) => typeof f === 'string');
+  if (!frameAxesTimer) frameAxesTimer = setTimeout(rebuildFrameAxes, 16);
 }
 
 export function toggleDigitalTwinSection() {

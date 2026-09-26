@@ -613,7 +613,7 @@ body.col-resizing * {
   border-color: rgba(20, 184, 166, 0.4);
 }
 
-/* 6. TF Tuner (Kalibrierung): Warm Bronze / Amber */
+/* 6. Settings (TF Tuner + TCP Gizmo): Warm Bronze / Amber */
 #panel-tf-tuner {
   background: linear-gradient(180deg, rgba(28, 22, 14, 0.72) 0%, rgba(18, 14, 9, 0.68) 100%);
   border-color: rgba(245, 158, 11, 0.24);
@@ -2161,7 +2161,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   color: #64748b;
 }
 
-/* ── TF Control Tuner Section ── */
+/* ── Settings Section (Gruppen: TF Tuner, TCP Gizmo) ── */
 .tf-tuner-section {
   display: flex;
   flex-direction: column;
@@ -2170,8 +2170,11 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .tf-tuner-body {
   overflow: hidden;
   transition: max-height 0.3s ease, opacity 0.25s ease;
-  max-height: 800px;
+  max-height: 1400px;
   opacity: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 /* ── Collapsible sections (chevron button at the top right of each header) ── */
@@ -2254,8 +2257,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   gap: 6px;
   margin-bottom: 8px;
 }
-/* Bricht die Buttongruppe in schmalen Spalten um, bleibt sie rechtsbuendig. */
-.tf-tuner-header > div:last-child {
+/* Einklapp-Button bleibt immer rechtsbuendig. */
+.tf-tuner-header > .settings-icon-btn {
   margin-left: auto;
 }
 
@@ -2442,6 +2445,327 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   margin-top: 6px;
   padding-top: 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Settings: jede Gruppe ist eine eigene Box mit Titelzeile (Titel links,
+   Save/Reset rechts). Die Zeile bricht in schmalen Spalten um, die Buttons
+   bleiben dabei rechtsbuendig - nichts ueberlappt. */
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.14);
+  border-radius: 6px;
+}
+
+.settings-group-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 8px;
+  margin-bottom: 8px;
+}
+
+.settings-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--txt);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.settings-group-title i {
+  color: var(--orange);
+  font-size: 11px;
+}
+
+.settings-group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.settings-icon-btn {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.settings-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+
+/* Label | Slider + Zahl + Einheit. Schmale Section: Label ueber die Regler. */
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(112px, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.settings-row-lbl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.settings-row-lbl i {
+  width: 12px;
+  text-align: center;
+  color: var(--cyan);
+}
+
+.settings-row-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-row-ctrl .tuner-slider {
+  min-width: 60px;
+}
+
+.settings-num {
+  flex: 0 0 auto;
+  width: 64px;
+}
+
+.settings-unit {
+  flex: 0 0 18px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--mut);
+}
+
+/* Schalter-Pillen (Visible, Labels, On top): an = Cyan, aus = grau. */
+.settings-pills {
+  flex-wrap: wrap;
+}
+
+.settings-pill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--mut);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.settings-pill:hover { background: rgba(255, 255, 255, 0.1); }
+.settings-pill.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: var(--cyan);
+}
+.settings-pill.active:hover { background: rgba(56, 189, 248, 0.25); }
+#set-axes-enabled:not(.active) i::before { content: "\f070"; }   /* fa-eye-slash */
+
+/* Frame-Auswahl: Kategorie-Label links, Chips umbrechend rechts. */
+.axes-frames {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+
+.axes-frames-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+.axes-frames-title,
+.axes-frames-cat-lbl {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.axes-frames-quick {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.axes-quick-btn {
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--mut);
+}
+.axes-quick-btn:hover {
+  color: var(--txt);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.axes-frames-cat {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: start;
+  gap: 6px 8px;
+}
+
+.axes-frames-cat-lbl {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+}
+
+.axes-frames-cat-lbl i {
+  width: 12px;
+  text-align: center;
+  color: var(--cyan);
+}
+
+.frame-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.frame-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  height: 22px;
+  padding: 0 8px 0 7px;
+  border-radius: 11px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--mut);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.frame-chip:hover {
+  color: var(--txt);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.frame-chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Punkt = Mini-Achsenkreuz in RGB, aus = grauer Ring. */
+.frame-chip-dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.frame-chip-joint {
+  flex: 0 0 auto;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 14px;
+  color: var(--orange);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.frame-chip.active {
+  color: var(--txt);
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+.frame-chip.active .frame-chip-dot {
+  border: none;
+  background: conic-gradient(#ff3b3b 0 120deg, #22e05a 0 240deg, #3b82ff 0);
+}
+/* Ausgewaehlt, aber "Visible" aus */
+.frame-chip.active.muted {
+  opacity: 0.55;
+}
+
+.frame-chip-empty {
+  font-size: 10.5px;
+  font-style: italic;
+  color: var(--mut);
+  line-height: 22px;
+}
+
+.tuner-status-bar .axis-x { color: #ff3b3b; }
+.tuner-status-bar .axis-y { color: #22e05a; }
+.tuner-status-bar .axis-z { color: #3b82ff; }
+
+@container (max-width: 360px) {
+  .settings-rows {
+    gap: 10px;
+  }
+  .settings-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .axes-frames-cat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #panel-tf-tuner .tuner-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #panel-tf-tuner .tuner-status-bar {
+    flex-wrap: wrap;
+    gap: 2px 8px;
+  }
 }
 
 /* Source Badges */

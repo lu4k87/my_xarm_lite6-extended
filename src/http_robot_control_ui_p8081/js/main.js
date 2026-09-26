@@ -15,7 +15,8 @@
 //   layout.js    Drag-and-Drop, HUD-Tabs, einklappbare Panels, Twin-Schalter
 //   status.js    Port-Status, Gamepad-API
 //   sysload.js   SYSTEM-Tab im Viewport: CPU-/GPU-Last mit Mini-Verlauf
-//   tf_tuner.js  TF Control Tuner, Szenen-Nodes
+//   tf_tuner.js  TF Tuner (Gruppe der Settings-Section), Szenen-Nodes
+//   settings.js  Settings-Section: TCP-Gizmo-Darstellung, Frame-Achsen
 //   uievents.js  Globaler Klick-Debounce
 //   streams.js   Kamera- und RViz-Streams
 //   persist.js   Letzten UI-Zustand speichern / wiederherstellen
@@ -52,6 +53,9 @@ import {
   onTunerElementChange, onTunerNumChange, onTunerSliderInput, resetCurrentTFElement,
   saveTunerValues, toggleSceneNode, toggleTFBroadcast,
 } from './tf_tuner.js';
+import {
+  onSettingInput, onSettingNum, resetSettingsGroup, saveSettingsGroup, setAxesFrames, toggleAxesFrame, toggleSetting,
+} from './settings.js';
 import './uievents.js';
 import './streams.js';
 import './persist.js';
@@ -83,6 +87,8 @@ const ACTIONS = {
   // TF Tuner
   onTunerElementChange, onTunerNumChange, onTunerSliderInput, resetCurrentTFElement,
   saveTunerValues, toggleSceneNode, toggleTFBroadcast,
+  // Settings (TCP-Gizmo-Darstellung, Frame-Achsen)
+  onSettingInput, onSettingNum, resetSettingsGroup, saveSettingsGroup, setAxesFrames, toggleAxesFrame, toggleSetting,
   // Sonstiges
   startListening, toggleSound,
   reloadPage: () => location.reload(),

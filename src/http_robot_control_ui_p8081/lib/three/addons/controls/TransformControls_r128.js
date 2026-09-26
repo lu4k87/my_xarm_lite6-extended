@@ -620,6 +620,22 @@ import * as THREE from 'three';
 
 		}
 
+		// Aussehen des Gizmos (siehe TransformControlsGizmo.setAppearance).
+		setAppearance( length, thickness ) {
+
+			this._gizmo.setAppearance( length, thickness );
+			this.dispatchEvent( _changeEvent );
+
+		}
+
+		// Deckkraft des ganzen Gizmos (0..1), wirkt auf jede Hervorhebung mit.
+		setOpacity( opacity ) {
+
+			this._gizmo.opacityScale = opacity;
+			this.dispatchEvent( _changeEvent );
+
+		}
+
 		setSpace( space ) {
 
 			this.space = space;
@@ -811,7 +827,6 @@ import * as THREE from 'three';
 			const matLineYellowTransparent = matLineYellow.clone();
 			matLineYellowTransparent.opacity = 0.25; // reusable geometry
 
-			const arrowGeometry = new THREE.CylinderGeometry( 0, 0.05, 0.2, 12, 1, false );
 			const scaleHandleGeometry = new THREE.BoxGeometry( 0.125, 0.125, 0.125 );
 			const lineGeometry = new THREE.BufferGeometry();
 			lineGeometry.setAttribute( 'position', new THREE.Float32BufferAttribute( [ 0, 0, 0, 1, 0, 0 ], 3 ) );
@@ -842,24 +857,51 @@ import * as THREE from 'three';
 			} // Gizmo definitions - custom hierarchy definitions for setupGizmo() function
 
 
-			const gizmoTranslate = {
-				X: [[ new THREE.Mesh( arrowGeometry, matRed ), [ 1, 0, 0 ], [ 0, 0, - Math.PI / 2 ], null, 'fwd' ], [ new THREE.Mesh( arrowGeometry, matRed ), [ 1, 0, 0 ], [ 0, 0, Math.PI / 2 ], null, 'bwd' ], [ new THREE.Line( lineGeometry, matLineRed ) ]],
-				Y: [[ new THREE.Mesh( arrowGeometry, matGreen ), [ 0, 1, 0 ], null, null, 'fwd' ], [ new THREE.Mesh( arrowGeometry, matGreen ), [ 0, 1, 0 ], [ Math.PI, 0, 0 ], null, 'bwd' ], [ new THREE.Line( lineGeometry, matLineGreen ), null, [ 0, 0, Math.PI / 2 ]]],
-				Z: [[ new THREE.Mesh( arrowGeometry, matBlue ), [ 0, 0, 1 ], [ Math.PI / 2, 0, 0 ], null, 'fwd' ], [ new THREE.Mesh( arrowGeometry, matBlue ), [ 0, 0, 1 ], [ - Math.PI / 2, 0, 0 ], null, 'bwd' ], [ new THREE.Line( lineGeometry, matLineBlue ), null, [ 0, - Math.PI / 2, 0 ]]],
-				XYZ: [[ new THREE.Mesh( new THREE.OctahedronGeometry( 0.1, 0 ), matWhiteTransparent.clone() ), [ 0, 0, 0 ], [ 0, 0, 0 ]]],
-				XY: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.295, 0.295 ), matYellowTransparent.clone() ), [ 0.15, 0.15, 0 ]], [ new THREE.Line( lineGeometry, matLineYellow ), [ 0.18, 0.3, 0 ], null, [ 0.125, 1, 1 ]], [ new THREE.Line( lineGeometry, matLineYellow ), [ 0.3, 0.18, 0 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]]],
-				YZ: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.295, 0.295 ), matCyanTransparent.clone() ), [ 0, 0.15, 0.15 ], [ 0, Math.PI / 2, 0 ]], [ new THREE.Line( lineGeometry, matLineCyan ), [ 0, 0.18, 0.3 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]], [ new THREE.Line( lineGeometry, matLineCyan ), [ 0, 0.3, 0.18 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]],
-				XZ: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.295, 0.295 ), matMagentaTransparent.clone() ), [ 0.15, 0, 0.15 ], [ - Math.PI / 2, 0, 0 ]], [ new THREE.Line( lineGeometry, matLineMagenta ), [ 0.18, 0, 0.3 ], null, [ 0.125, 1, 1 ]], [ new THREE.Line( lineGeometry, matLineMagenta ), [ 0.3, 0, 0.18 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]]
-			};
-			const pickerTranslate = {
-				X: [[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, 1, 4, 1, false ), matInvisible ), [ 0.6, 0, 0 ], [ 0, 0, - Math.PI / 2 ]]],
-				Y: [[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, 1, 4, 1, false ), matInvisible ), [ 0, 0.6, 0 ]]],
-				Z: [[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, 1, 4, 1, false ), matInvisible ), [ 0, 0, 0.6 ], [ Math.PI / 2, 0, 0 ]]],
-				XYZ: [[ new THREE.Mesh( new THREE.OctahedronGeometry( 0.2, 0 ), matInvisible ) ]],
-				XY: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.4, 0.4 ), matInvisible ), [ 0.2, 0.2, 0 ]]],
-				YZ: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.4, 0.4 ), matInvisible ), [ 0, 0.2, 0.2 ], [ 0, Math.PI / 2, 0 ]]],
-				XZ: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.4, 0.4 ), matInvisible ), [ 0.2, 0, 0.2 ], [ - Math.PI / 2, 0, 0 ]]]
-			};
+			// Aussehen einstellbar (Settings-Section, setAppearance): L = Laenge der
+			// Achslinien bzw. Ringradius (1 = Original), T = Radius der Linien als
+			// Roehre (0 = Original, 1-px-Linie). Pfeil- und Ringgriffe wachsen mit,
+			// sobald die Linie sonst dicker waere als sie.
+			function buildMaps( L, T ) {
+
+				const arrowGeometry = new THREE.CylinderGeometry( 0, Math.max( 0.05, T * 2.2 ), 0.2, 12, 1, false );
+				const knob = Math.max( 0.04, T * 1.6 );
+				const pick = 0.1 + L / 2;
+				const gizmoTranslate = {
+					X: [[ new THREE.Mesh( arrowGeometry, matRed ), [ L, 0, 0 ], [ 0, 0, - Math.PI / 2 ], null, 'fwd' ], [ new THREE.Mesh( arrowGeometry, matRed ), [ L, 0, 0 ], [ 0, 0, Math.PI / 2 ], null, 'bwd' ], [ new THREE.Line( lineGeometry, matLineRed ), null, null, [ L, 1, 1 ]]],
+					Y: [[ new THREE.Mesh( arrowGeometry, matGreen ), [ 0, L, 0 ], null, null, 'fwd' ], [ new THREE.Mesh( arrowGeometry, matGreen ), [ 0, L, 0 ], [ Math.PI, 0, 0 ], null, 'bwd' ], [ new THREE.Line( lineGeometry, matLineGreen ), null, [ 0, 0, Math.PI / 2 ], [ L, 1, 1 ]]],
+					Z: [[ new THREE.Mesh( arrowGeometry, matBlue ), [ 0, 0, L ], [ Math.PI / 2, 0, 0 ], null, 'fwd' ], [ new THREE.Mesh( arrowGeometry, matBlue ), [ 0, 0, L ], [ - Math.PI / 2, 0, 0 ], null, 'bwd' ], [ new THREE.Line( lineGeometry, matLineBlue ), null, [ 0, - Math.PI / 2, 0 ], [ L, 1, 1 ]]],
+					XYZ: [[ new THREE.Mesh( new THREE.OctahedronGeometry( 0.1, 0 ), matWhiteTransparent.clone() ), [ 0, 0, 0 ], [ 0, 0, 0 ]]],
+					XY: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.295, 0.295 ), matYellowTransparent.clone() ), [ 0.15, 0.15, 0 ]], [ new THREE.Line( lineGeometry, matLineYellow ), [ 0.18, 0.3, 0 ], null, [ 0.125, 1, 1 ]], [ new THREE.Line( lineGeometry, matLineYellow ), [ 0.3, 0.18, 0 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]]],
+					YZ: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.295, 0.295 ), matCyanTransparent.clone() ), [ 0, 0.15, 0.15 ], [ 0, Math.PI / 2, 0 ]], [ new THREE.Line( lineGeometry, matLineCyan ), [ 0, 0.18, 0.3 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]], [ new THREE.Line( lineGeometry, matLineCyan ), [ 0, 0.3, 0.18 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]],
+					XZ: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.295, 0.295 ), matMagentaTransparent.clone() ), [ 0.15, 0, 0.15 ], [ - Math.PI / 2, 0, 0 ]], [ new THREE.Line( lineGeometry, matLineMagenta ), [ 0.18, 0, 0.3 ], null, [ 0.125, 1, 1 ]], [ new THREE.Line( lineGeometry, matLineMagenta ), [ 0.3, 0, 0.18 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]]
+				};
+				const pickerTranslate = {
+					X: [[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, L, 4, 1, false ), matInvisible ), [ pick, 0, 0 ], [ 0, 0, - Math.PI / 2 ]]],
+					Y: [[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, L, 4, 1, false ), matInvisible ), [ 0, pick, 0 ]]],
+					Z: [[ new THREE.Mesh( new THREE.CylinderGeometry( 0.2, 0, L, 4, 1, false ), matInvisible ), [ 0, 0, pick ], [ Math.PI / 2, 0, 0 ]]],
+					XYZ: [[ new THREE.Mesh( new THREE.OctahedronGeometry( 0.2, 0 ), matInvisible ) ]],
+					XY: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.4, 0.4 ), matInvisible ), [ 0.2, 0.2, 0 ]]],
+					YZ: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.4, 0.4 ), matInvisible ), [ 0, 0.2, 0.2 ], [ 0, Math.PI / 2, 0 ]]],
+					XZ: [[ new THREE.Mesh( new THREE.PlaneGeometry( 0.4, 0.4 ), matInvisible ), [ 0.2, 0, 0.2 ], [ - Math.PI / 2, 0, 0 ]]]
+				};
+				const gizmoRotate = {
+					X: [[ new THREE.Line( CircleGeometry( L, 0.5 ), matLineRed ) ], [ new THREE.Mesh( new THREE.OctahedronGeometry( knob, 0 ), matRed ), [ 0, 0, 0.99 * L ], null, [ 1, 3, 1 ]]],
+					Y: [[ new THREE.Line( CircleGeometry( L, 0.5 ), matLineGreen ), null, [ 0, 0, - Math.PI / 2 ]], [ new THREE.Mesh( new THREE.OctahedronGeometry( knob, 0 ), matGreen ), [ 0, 0, 0.99 * L ], null, [ 3, 1, 1 ]]],
+					Z: [[ new THREE.Line( CircleGeometry( L, 0.5 ), matLineBlue ), null, [ 0, Math.PI / 2, 0 ]], [ new THREE.Mesh( new THREE.OctahedronGeometry( knob, 0 ), matBlue ), [ 0.99 * L, 0, 0 ], null, [ 1, 3, 1 ]]],
+					E: [[ new THREE.Line( CircleGeometry( 1.25 * L, 1 ), matLineYellowTransparent ), null, [ 0, Math.PI / 2, 0 ]], [ new THREE.Mesh( new THREE.CylinderGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 1.17 * L, 0, 0 ], [ 0, 0, - Math.PI / 2 ], [ 1, 1, 0.001 ]], [ new THREE.Mesh( new THREE.CylinderGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ - 1.17 * L, 0, 0 ], [ 0, 0, Math.PI / 2 ], [ 1, 1, 0.001 ]], [ new THREE.Mesh( new THREE.CylinderGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 0, - 1.17 * L, 0 ], [ Math.PI, 0, 0 ], [ 1, 1, 0.001 ]], [ new THREE.Mesh( new THREE.CylinderGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 0, 1.17 * L, 0 ], [ 0, 0, 0 ], [ 1, 1, 0.001 ]]],
+					XYZE: [[ new THREE.Line( CircleGeometry( L, 1 ), matLineGray ), null, [ 0, Math.PI / 2, 0 ]]]
+				};
+				const pickerRotate = {
+					X: [[ new THREE.Mesh( new THREE.TorusGeometry( L, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ 0, - Math.PI / 2, - Math.PI / 2 ]]],
+					Y: [[ new THREE.Mesh( new THREE.TorusGeometry( L, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ Math.PI / 2, 0, 0 ]]],
+					Z: [[ new THREE.Mesh( new THREE.TorusGeometry( L, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ 0, 0, - Math.PI / 2 ]]],
+					E: [[ new THREE.Mesh( new THREE.TorusGeometry( 1.25 * L, 0.1, 2, 24 ), matInvisible ) ]],
+					XYZE: [[ new THREE.Mesh( new THREE.SphereGeometry( 0.7 * L, 10, 8 ), matInvisible ) ]]
+				};
+				return { gizmoTranslate, pickerTranslate, gizmoRotate, pickerRotate };
+
+			}
+
 			const helperTranslate = {
 				START: [[ new THREE.Mesh( new THREE.OctahedronGeometry( 0.01, 2 ), matHelper ), null, null, null, 'helper' ]],
 				END: [[ new THREE.Mesh( new THREE.OctahedronGeometry( 0.01, 2 ), matHelper ), null, null, null, 'helper' ]],
@@ -868,22 +910,8 @@ import * as THREE from 'three';
 				Y: [[ new THREE.Line( lineGeometry, matHelper.clone() ), [ 0, - 1e3, 0 ], [ 0, 0, Math.PI / 2 ], [ 1e6, 1, 1 ], 'helper' ]],
 				Z: [[ new THREE.Line( lineGeometry, matHelper.clone() ), [ 0, 0, - 1e3 ], [ 0, - Math.PI / 2, 0 ], [ 1e6, 1, 1 ], 'helper' ]]
 			};
-			const gizmoRotate = {
-				X: [[ new THREE.Line( CircleGeometry( 1, 0.5 ), matLineRed ) ], [ new THREE.Mesh( new THREE.OctahedronGeometry( 0.04, 0 ), matRed ), [ 0, 0, 0.99 ], null, [ 1, 3, 1 ]]],
-				Y: [[ new THREE.Line( CircleGeometry( 1, 0.5 ), matLineGreen ), null, [ 0, 0, - Math.PI / 2 ]], [ new THREE.Mesh( new THREE.OctahedronGeometry( 0.04, 0 ), matGreen ), [ 0, 0, 0.99 ], null, [ 3, 1, 1 ]]],
-				Z: [[ new THREE.Line( CircleGeometry( 1, 0.5 ), matLineBlue ), null, [ 0, Math.PI / 2, 0 ]], [ new THREE.Mesh( new THREE.OctahedronGeometry( 0.04, 0 ), matBlue ), [ 0.99, 0, 0 ], null, [ 1, 3, 1 ]]],
-				E: [[ new THREE.Line( CircleGeometry( 1.25, 1 ), matLineYellowTransparent ), null, [ 0, Math.PI / 2, 0 ]], [ new THREE.Mesh( new THREE.CylinderGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 1.17, 0, 0 ], [ 0, 0, - Math.PI / 2 ], [ 1, 1, 0.001 ]], [ new THREE.Mesh( new THREE.CylinderGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ - 1.17, 0, 0 ], [ 0, 0, Math.PI / 2 ], [ 1, 1, 0.001 ]], [ new THREE.Mesh( new THREE.CylinderGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 0, - 1.17, 0 ], [ Math.PI, 0, 0 ], [ 1, 1, 0.001 ]], [ new THREE.Mesh( new THREE.CylinderGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 0, 1.17, 0 ], [ 0, 0, 0 ], [ 1, 1, 0.001 ]]],
-				XYZE: [[ new THREE.Line( CircleGeometry( 1, 1 ), matLineGray ), null, [ 0, Math.PI / 2, 0 ]]]
-			};
 			const helperRotate = {
 				AXIS: [[ new THREE.Line( lineGeometry, matHelper.clone() ), [ - 1e3, 0, 0 ], null, [ 1e6, 1, 1 ], 'helper' ]]
-			};
-			const pickerRotate = {
-				X: [[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ 0, - Math.PI / 2, - Math.PI / 2 ]]],
-				Y: [[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ Math.PI / 2, 0, 0 ]]],
-				Z: [[ new THREE.Mesh( new THREE.TorusGeometry( 1, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ 0, 0, - Math.PI / 2 ]]],
-				E: [[ new THREE.Mesh( new THREE.TorusGeometry( 1.25, 0.1, 2, 24 ), matInvisible ) ]],
-				XYZE: [[ new THREE.Mesh( new THREE.SphereGeometry( 0.7, 10, 8 ), matInvisible ) ]]
 			};
 			const gizmoScale = {
 				X: [[ new THREE.Mesh( scaleHandleGeometry, matRed ), [ 0.8, 0, 0 ], [ 0, 0, - Math.PI / 2 ]], [ new THREE.Line( lineGeometry, matLineRed ), null, null, [ 0.8, 1, 1 ]]],
@@ -913,7 +941,22 @@ import * as THREE from 'three';
 				Z: [[ new THREE.Line( lineGeometry, matHelper.clone() ), [ 0, 0, - 1e3 ], [ 0, - Math.PI / 2, 0 ], [ 1e6, 1, 1 ], 'helper' ]]
 			}; // Creates an THREE.Object3D with gizmos described in custom hierarchy definition.
 
-			function setupGizmo( gizmoMap ) {
+			// Macht aus einer eingebackenen Linie (2 Punkte oder Kreisbogen) eine
+			// Roehre mit Radius r. WebGL zeichnet Linien immer 1 px breit, deshalb
+			// geht "Liniendicke" nur ueber Geometrie. Das Material bleibt das der
+			// Linie (LineBasicMaterial nutzt denselben Shader wie MeshBasicMaterial),
+			// damit die Achs-Hervorhebung unveraendert greift.
+			function lineToTube( geometry, r ) {
+
+				const pos = geometry.getAttribute( 'position' );
+				const points = [];
+				for ( let i = 0; i < pos.count; i ++ ) points.push( new THREE.Vector3().fromBufferAttribute( pos, i ) );
+				const curve = points.length === 2 ? new THREE.LineCurve3( points[ 0 ], points[ 1 ] ) : new THREE.CatmullRomCurve3( points );
+				return new THREE.TubeGeometry( curve, points.length === 2 ? 1 : points.length * 2, r, 8, false );
+
+			}
+
+			function setupGizmo( gizmoMap, thickness = 0 ) {
 
 				const gizmo = new THREE.Object3D();
 
@@ -951,12 +994,26 @@ import * as THREE from 'three';
 						object.updateMatrix();
 						const tempGeometry = object.geometry.clone();
 						tempGeometry.applyMatrix4( object.matrix );
-						object.geometry = tempGeometry;
-						object.renderOrder = Infinity;
-						object.position.set( 0, 0, 0 );
-						object.rotation.set( 0, 0, 0 );
-						object.scale.set( 1, 1, 1 );
-						gizmo.add( object );
+						let handle = object;
+
+						if ( thickness > 0 && object.isLine && tag !== 'helper' ) {
+
+							handle = new THREE.Mesh( lineToTube( tempGeometry, thickness ), object.material );
+							handle.name = name;
+							handle.tag = tag;
+							tempGeometry.dispose();
+
+						} else {
+
+							object.geometry = tempGeometry;
+							object.position.set( 0, 0, 0 );
+							object.rotation.set( 0, 0, 0 );
+							object.scale.set( 1, 1, 1 );
+
+						}
+
+						handle.renderOrder = Infinity;
+						gizmo.add( handle );
 
 					}
 
@@ -967,14 +1024,18 @@ import * as THREE from 'three';
 			} // Gizmo creation
 
 
+			const initialMaps = buildMaps( 1, 0 );
+			this.opacityScale = 1;
+			this._buildMaps = buildMaps;
+			this._setupGizmo = setupGizmo;
 			this.gizmo = {};
 			this.picker = {};
 			this.helper = {};
-			this.add( this.gizmo[ 'translate' ] = setupGizmo( gizmoTranslate ) );
-			this.add( this.gizmo[ 'rotate' ] = setupGizmo( gizmoRotate ) );
+			this.add( this.gizmo[ 'translate' ] = setupGizmo( initialMaps.gizmoTranslate ) );
+			this.add( this.gizmo[ 'rotate' ] = setupGizmo( initialMaps.gizmoRotate ) );
 			this.add( this.gizmo[ 'scale' ] = setupGizmo( gizmoScale ) );
-			this.add( this.picker[ 'translate' ] = setupGizmo( pickerTranslate ) );
-			this.add( this.picker[ 'rotate' ] = setupGizmo( pickerRotate ) );
+			this.add( this.picker[ 'translate' ] = setupGizmo( initialMaps.pickerTranslate ) );
+			this.add( this.picker[ 'rotate' ] = setupGizmo( initialMaps.pickerRotate ) );
 			this.add( this.picker[ 'scale' ] = setupGizmo( pickerScale ) );
 			this.add( this.helper[ 'translate' ] = setupGizmo( helperTranslate ) );
 			this.add( this.helper[ 'rotate' ] = setupGizmo( helperRotate ) );
@@ -983,6 +1044,36 @@ import * as THREE from 'three';
 			this.picker[ 'translate' ].visible = false;
 			this.picker[ 'rotate' ].visible = false;
 			this.picker[ 'scale' ].visible = false;
+
+		}
+
+		// Baut Translate- und Rotate-Gizmo samt Pickern neu (length = Achslaenge /
+		// Ringradius, thickness = Linienradius, beide in Gizmo-Einheiten).
+		// Materialien sind geteilt und bleiben, nur die Geometrien werden frei.
+		setAppearance( length, thickness ) {
+
+			const maps = this._buildMaps( length, thickness );
+			const swap = ( store, mode, map, hidden ) => {
+
+				const old = store[ mode ];
+				const next = this._setupGizmo( map, thickness );
+				next.visible = ! hidden && old.visible;
+				this.remove( old );
+				old.traverse( ( o ) => {
+
+					if ( o.geometry ) o.geometry.dispose();
+
+				} );
+				this.add( next );
+				store[ mode ] = next;
+				return next;
+
+			};
+
+			swap( this.gizmo, 'translate', maps.gizmoTranslate, false );
+			swap( this.gizmo, 'rotate', maps.gizmoRotate, false );
+			swap( this.picker, 'translate', maps.pickerTranslate, true );
+			swap( this.picker, 'rotate', maps.pickerRotate, true );
 
 		} // updateMatrixWorld will update transformations and appearance of individual handles
 
@@ -1377,6 +1468,10 @@ import * as THREE from 'three';
 					}
 
 				}
+
+				// Geteilte Materialien: oben jedes Mal von _opacity neu gesetzt,
+				// deshalb wird hier nicht mehrfach multipliziert.
+				handle.material.opacity *= this.opacityScale;
 
 			}
 
