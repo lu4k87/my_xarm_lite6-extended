@@ -511,22 +511,8 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 ### 3.3 Funktion: Autonomes Greifen & 3D Objekterkennung (YOLO / ZED)
 *Dieses Subsystem ist dafür verantwortlich, Objekte im 3D-Raum zu lokalisieren, virtuelle Hindernisse zu generieren und den Roboter gezielt an das Objekt heranzuführen.*
 
-```mermaid
-flowchart TD
-    subgraph Cameras ["Kamera-Quelle (camera:=zed_m | ip_cam)"]
-        ZED["ZED-Kamera (RGB-D)"] --> PC["pointcloud_optimizer.py<br/>(Punktwolken-Transformation)"]
-        PC --> YOLO_ZED["yolo_3d_bbox_for_zed_m.py<br/>(YOLOv8 3D Cluster)"]
-        IP["IP-Cam (JPEG-Stream)"] --> YOLO_IP["yolo_3d_bbox_for_ip_cam.py<br/>(ArUco-Homographie & YOLOv8)"]
-    end
-    YOLO_ZED --> BBOX["/zed/bboxes_3d"]
-    YOLO_IP --> BBOX
-    VIRT["virtual_object_detections.py<br/>(Virtuelle Szenenobjekte, standardmäßig aus)"] --> BBOX
-    BBOX --> COLL["yolo_moveit_collision.py<br/>(Kollisionsobjekte)"]
-    BBOX --> GRASP["yolo_planned_grasp_executor.py<br/>(3-Phasen Greifpfad)"]
-    COLL --> OCTO["octomap_server<br/>(3D Voxelkarte)"]
-    OCTO --> MOVEIT["MoveIt 2<br/>(Bewegungsplanung)"]
-    GRASP --> MOVEIT
-```
+> [!NOTE]
+> 🚧 **Platzhalter:** Hier folgt in Kürze das überarbeitete Diagramm der 3D-Objekterkennungs- und Greif-Pipeline (Kamera-Quellen, YOLO-Bounding-Boxes, Kollisionsobjekte, OctoMap und MoveIt 2).
 
 ---
 
@@ -909,30 +895,8 @@ flowchart TD
 >
 >
 
-```mermaid
-stateDiagram-v2
-    [*] --> Phase1_Retract: Start Grasp Action
-    
-    Phase1_Retract --> Phase2_Hover: Z-Axis Safe Height
-    note right of Phase1_Retract
-      Move strictly upwards
-      to clear the table
-    end note
-    
-    Phase2_Hover --> Phase3_Approach: Aligned (IK Tolerance)
-    note right of Phase2_Hover
-      Horizontal translation
-      Top-down orientation
-    end note
-    
-    Phase3_Approach --> Grasping: Reached Object
-    note right of Phase3_Approach
-      Collision object ignored
-      Move down into bbox
-    end note
-    
-    Grasping --> [*]: Complete
-```
+> [!NOTE]
+> 🚧 **Platzhalter:** Hier folgt in Kürze das überarbeitete Zustandsdiagramm des 3-Phasen-Greifablaufs (Retract, Hover, Approach).
 
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 >
@@ -1190,24 +1154,12 @@ stateDiagram-v2
 *Diese experimentellen Module erlauben die "Hands-Free"-Steuerung des Systems.*
 
 #### Whisper AI Sprachsteuerungs-Pipeline
-```mermaid
-flowchart TD
-    MIC["Mikrofon"] --> AL["audio_listener.py"]
-    AL --> AS["C++ Action Server<br/>(ros2_whisper)"]
-    AS --> INF["/whisper/inference<br/>(Action)"]
-    INF --> VCL["voice_command_listener.py<br/>(Regex Intents)"]
-    VCL --> UI["/ui/voice_feedback<br/>& Service Trigger"]
-```
+> [!NOTE]
+> 🚧 **Platzhalter:** Hier folgt in Kürze das überarbeitete Diagramm der Whisper-Sprachsteuerungs-Pipeline (Mikrofon, Audio-Listener, Action Server, Intent-Erkennung, UI-Feedback).
 
 #### Tobii Eye-Tracking Pipeline
-```mermaid
-flowchart TD
-    TOBII["Tobii Pro Glasses 3<br/>(RTSP Stream)"] --> ARUCO["ArUco Corner Detection<br/>(Homographie)"]
-    ARUCO --> DWELL["Dwell-Time Fixation<br/>(2,0 Sek. Timer)"]
-    DWELL --> TARGET["Zielverriegelung"]
-    TARGET --> SCENE["Show-Scene Trajektorie"]
-    SCENE --> GRASP["Greifbefehl"]
-```
+> [!NOTE]
+> 🚧 **Platzhalter:** Hier folgt in Kürze das überarbeitete Diagramm der Tobii-Eye-Tracking-Pipeline (RTSP-Stream, ArUco-Homographie, Dwell-Time-Fixation, Zielauswahl).
 
 ---
 
@@ -2316,24 +2268,8 @@ Dieser Abschnitt liefert eine vollständige technische Referenz für die zweistu
 
 Das Gamepad-Signal durchläuft zwei Stufen, bevor es den MoveIt Servo Server erreicht. Dieses Zwei-Node-Design trennt **Sicherheitsdurchsetzung** (Python) von **Bewegungsübersetzung** (C++):
 
-```mermaid
-flowchart LR
-    JOY["🎮 /joy\n(Rohes Gamepad-Signal\nvom joy_node)"]
-    CHECKER["🛡️ teleop_pre_collision_checker\nteleop_pre_collision_checker.py\n(Python)"]
-    JOY_CHECK["✅ /joy_check\n(Bereinigtes Signal)"]
-    CPP["⚙️ xarm_joystick_input\n.cpp (C++)"]
-    SERVO["🦾 /servo_server/\ndelta_twist_cmds"]
-    UI["🖥️ /ui/collision_msg\n/ui/eef_position"]
-
-    JOY --> CHECKER
-    CHECKER --> JOY_CHECK
-    JOY_CHECK --> CPP
-    CPP --> SERVO
-    CPP --> |"/ui/eef_position"| CHECKER
-    CPP --> |"/ui/eef_position"| UI
-    CPP --> |"/ui/joy_button_presses\n/ui/robot_control/current_speed"| UI
-    CHECKER --> |"/ui/collision_msg"| UI
-```
+> [!NOTE]
+> 🚧 **Platzhalter:** Hier folgt in Kürze das überarbeitete Diagramm der Gamepad-Teleoperations-Pipeline (Joy-Eingabe, Pre-Collision-Checker, Servo-Übersetzung, MoveIt Servo).
 
 ---
 <br>
@@ -2620,37 +2556,8 @@ pip install "ultralytics>=8.0.0" # YOLO 3D Objekterkennung
 | **Netzwerk-Switch** | Unmanaged Gigabit Switch | RJ45 Ethernet | Latenzarme lokale Netzwerk-Backplane für Controller & PC |
 
 #### Physischer Verkabelungsplan & Netzwerktopologie
-```mermaid
-graph TD
-    subgraph Workstation["Workstation Host-PC (Ubuntu 22.04 LTS)"]
-        CORE["ROS 2 Core (Humble) & MoveIt 2"]
-        NEXUS["Nexus Webapp Backend (:5000)"]
-        WS["ROSBridge WebSocket Server (:9090)"]
-        YOLO["YOLO 3D Bounding Box Node"]
-    end
-
-    subgraph Network["Lokales Steuerungs-Subnetz (192.168.1.0/24)"]
-        SWITCH["Gigabit Ethernet Switch"]
-        ROBOT["xArm Lite 6 Controller-Box<br/>Statische IP: 192.168.1.175"]
-    end
-
-    subgraph Peripherals["Physische Eingabe- & Sensorik-Peripherie"]
-        ZED["Stereolabs ZED Mini Kamera"]
-        XBOX["Xbox One Wireless Controller"]
-        TOBII["Tobii Glasses 3 Hub<br/>RTSP :8554<br/>WLAN 192.168.75.51 / LAN 192.168.100.2"]
-        QUEST["Meta Quest 3 (WebXR Browser)"]
-    end
-
-    SWITCH <-->|Ethernet Cat6 (Statisch: 192.168.1.50)| Workstation
-    SWITCH <-->|Ethernet Cat6| ROBOT
-    ROBOT ---|Werkzeugkabel| LASER["TCP Laser-Pointer"]
-    ROBOT ---|Pneumatikleitung| VACUUM["Vakuumgreifer"]
-
-    ZED -->|USB 3.0 High-Speed Kabel| Workstation
-    XBOX -->|USB / Bluetooth latenzarm| Workstation
-    TOBII -.->|WLAN oder Ethernet / RTSP Stream :8554| Workstation
-    QUEST -.->|WLAN / HTTPS WSS :8443 / :9091| Workstation
-```
+> [!NOTE]
+> 🚧 **Platzhalter:** Hier folgt in Kürze das überarbeitete Diagramm des physischen Verkabelungsplans und der Netzwerktopologie (Workstation, Controller, Sensorik, Eingabegeräte, Switch).
 
 <br>
 
@@ -2813,31 +2720,8 @@ Das Start-Popup (7.2) deckt die RUN-DEV-SETUP-Sequenzen ab. Für einzelne Nodes 
 
 ### 7.4 Netzwerk- & Port-Architektur
 
-```mermaid
-graph TD
-    classDef pc fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
-    classDef dds fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    classDef ros fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
-
-    subgraph Roboter-Hardware
-        L6[🦾 xArm Lite 6]
-    end
-
-    subgraph "Robot PC (ROS 2 Nexus)"
-        N_ROS[ROS 2 Nodes]:::ros
-        N_DDS[CycloneDDS<br>UDP 23900+ / Domain 66]:::dds
-        N_ROS <--> N_DDS
-    end
-
-    subgraph "Operator PC (Dashboard/UI)"
-        O_ROS[ROS 2 UI Nodes]:::ros
-        O_DDS[CycloneDDS<br>UDP 23900+ / Domain 66]:::dds
-        O_ROS <--> O_DDS
-    end
-
-    L6 <-->|TCP/IP| N_ROS
-    N_DDS <-->|Multicast / Unicast<br>Wi-Fi / LAN| O_DDS
-```
+> [!NOTE]
+> 🚧 **Platzhalter:** Hier folgt in Kürze das überarbeitete Diagramm der Netzwerk- und Port-Architektur (Rechner, CycloneDDS, Webserver und Ports).
 
 
 Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nutzen, laufen im Hintergrund mehrere Server auf separaten Ports:
@@ -2859,13 +2743,8 @@ Um das komplette System mit beiden Web-Oberflächen (Nexus und Dashboard) zu nut
 
 #### 7.4.1 Nexus Web Backend Architektur
 
-```mermaid
-flowchart TD
-    WEB["Webbrowser Frontend<br/>(Port 5000)"] --> FLASK["Flask Server"]
-    FLASK --> PROC["Prozessmanager<br/>(kill_ros2.sh, Subprozesse)"]
-    PROC --> ROS2["Native ROS 2 Knoten"]
-    ROS2 --> ROSB["Rosbridge WebSocket Broker<br/>(Port 9090)"]
-```
+> [!NOTE]
+> 🚧 **Platzhalter:** Hier folgt in Kürze das überarbeitete Diagramm der Nexus-Web-Backend-Architektur (Browser-Frontend, Flask-Server, Prozessmanager).
 
 Die Nexus Webapp (Port 5000) fungiert als zentraler Befehls-Orchestrator. Sie basiert auf einem Flask (Python) Backend und arbeitet völlig unabhängig vom ROS 2 Netzwerk. Ihre Hauptfunktion besteht darin, Klicks aus der Web-Oberfläche zu interpretieren und native Betriebssystem-Unterprozesse (wie `gnome-terminal -- ros2 launch ...`) zu starten. Da es direkt mit dem Host-Betriebssystem interagiert, um Terminal-Instanzen und Prozess-IDs zu verwalten, muss es nativ auf dem Host-Rechner laufen.
 
