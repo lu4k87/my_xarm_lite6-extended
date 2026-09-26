@@ -3,11 +3,14 @@
 
 Ersetzt `python3 -m http.server`. Zwei Dinge sind anders:
 
-1. HTML, JS, CSS und JSON gehen mit `Cache-Control: no-cache` raus. Der Browser
-   behaelt die Dateien, fragt aber bei jedem Laden per If-Modified-Since nach -
-   unveraendert kommt ein 304 ohne Inhalt, geaendert sofort die neue Fassung.
-   Das gilt auch fuer Dateien, die per ES-Modul-`import` nachgeladen werden und
-   deshalb keinen ?v=-Parameter bekommen koennen.
+1. JS, CSS, JSON und URDF gehen mit `Cache-Control: no-cache` und einem ETag
+   (Aenderungszeit in ns + Groesse) raus. Der Browser behaelt die Dateien,
+   fragt aber bei jedem Laden per If-None-Match nach - unveraendert kommt ein
+   304 ohne Inhalt, geaendert sofort die neue Fassung. Das gilt auch fuer
+   Dateien, die per ES-Modul-`import` nachgeladen werden und deshalb keinen
+   ?v=-Parameter bekommen koennen. (Bis hierhin stand dort zusaetzlich
+   `no-store` - damit lud jeder Reload alles neu, u.a. 2 MB three.js.)
+   HTML bleibt bei `no-store`.
 2. In index.html (und vr_mirror.html) bekommt jedes lokale <script src> und <link href> auf eine
    .js/.css-Datei ein `?v=<Aenderungszeit>`. Das manuelle Hochzaehlen von
    ?v=28 usw. entfaellt.
@@ -36,7 +39,8 @@ import sys
 import threading
 import time
 
-NO_CACHE_EXT = ('.html', '.js', '.mjs', '.css', '.json', '.urdf')
+NO_STORE_EXT = ('.html',)
+REVALIDATE_EXT = ('.js', '.mjs', '.css', '.json', '.urdf')
 ASSET_RE = re.compile(r'''(\s(?:src|href)=")([^"#?:]+\.(?:js|mjs|css))(?:\?v=[^"]*)?(")''')
 # Seiten, deren <script src>/<link href> automatisch ?v=<mtime> bekommen.
 VERSIONED_PAGES = {'/': 'index.html', '/index.html': 'index.html', '/vr_mirror.html': 'vr_mirror.html'}
@@ -316,11 +320,28 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):
         path = self.path.split('?', 1)[0]
-        if path.endswith('/') or path.endswith(NO_CACHE_EXT):
+        if path.endswith('/') or path.endswith(NO_STORE_EXT):
             self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
             self.send_header('Pragma', 'no-cache')
             self.send_header('Expires', '0')
+        elif path.endswith(REVALIDATE_EXT):
+            self.send_header('Cache-Control', 'no-cache')
+            etag = getattr(self, '_etag', None)
+            if etag:
+                self.send_header('ETag', etag)
         super().end_headers()
+
+    @staticmethod
+    def _file_etag(fs_path):
+        # Nanosekunden statt der sekundengenauen Last-Modified-Zeit: zwei
+        # Speicherungen in derselben Sekunde ergaeben sonst ein falsches 304.
+        try:
+            st = os.stat(fs_path)
+        except OSError:
+            return None
+        if not os.path.isfile(fs_path):
+            return None
+        return f'"{st.st_mtime_ns:x}-{st.st_size:x}"'
 
     def _asset_version(self, rel):
         full = os.path.join(self.directory, rel.lstrip('/'))
@@ -394,6 +415,16 @@ class UIRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             import io
             return io.BytesIO(body)
+        self._etag = None
+        if path.endswith(REVALIDATE_EXT):
+            self._etag = self._file_etag(self.translate_path(self.path))
+            inm = self.headers.get('If-None-Match')
+            if self._etag and inm:
+                tags = [t.strip() for t in inm.split(',')]
+                if self._etag in tags or 'W/' + self._etag in tags:
+                    self.send_response(304)
+                    self.end_headers()
+                    return None
         return super().send_head()
 
     def log_message(self, fmt, *args):

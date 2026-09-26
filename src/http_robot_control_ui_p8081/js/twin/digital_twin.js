@@ -9,7 +9,7 @@ import { TransformControls } from 'three/addons/controls/TransformControls_r128.
 import URDFLoader from 'urdf-loader';
 import { ROBOT_LIMITS, unreachableClearance, unreachableRadiusAt } from '../robot_limits.js';
 import { logMsg } from '../log.js';
-import { floorGuard, uiZoom, fmtDeg } from '../util.js';
+import { floorGuard, uiZoom, fmtDeg, setTextIfChanged } from '../util.js';
 
 // Farben wie unter r128: Hex-Werte gelten als linear, erst die Ausgabe wird
 // nach sRGB gewandelt. Mit dem seit r152 aktiven Color Management wuerden alle
@@ -861,29 +861,45 @@ function loadURDFModel() {
   );
 }
 
-function applyJointValues() {
-  requestRender();
+// onlyIfChanged: /joint_states kommt auch bei stehendem Arm mit ~30 Hz. Dann
+// wird nur gezeichnet, wenn sich am Modell oder am mitgefuehrten Gizmo
+// wirklich etwas bewegt hat - sonst liefe der Render-Loop dauerhaft mit
+// voller Szene und Schatten.
+const _gizmoPrevPos = new THREE.Vector3();
+const _gizmoPrevQuat = new THREE.Quaternion();
+function applyJointValues(onlyIfChanged = false) {
+  if (!onlyIfChanged) requestRender();
   if (!robotModel) return;
+  let changed = false;
   const jointNames = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6'];
   for (let i = 0; i < 6; i++) {
     if (robotModel.joints && robotModel.joints[jointNames[i]]) {
-      robotModel.setJointValue(jointNames[i], currentJoints[i]);
+      if (robotModel.setJointValue(jointNames[i], currentJoints[i])) changed = true;
     }
   }
   // Update linear axis translation along Y axis
   if (robotModel.position) {
+    if (robotModel.position.y !== linearShiftY) changed = true;
     robotModel.position.y = linearShiftY;
   }
   if (tunerSceneObjects['Workspace Circle']) {
+    if (tunerSceneObjects['Workspace Circle'].position.y !== linearShiftY) changed = true;
     tunerSceneObjects['Workspace Circle'].position.y = linearShiftY;
   }
 
   // Keep TCP Gizmo in sync if user is not actively dragging it
   if (isGizmoActive && !isDraggingGizmo && !hasUserTargetOffset) {
+    if (gizmoTarget) {
+      _gizmoPrevPos.copy(gizmoTarget.position);
+      _gizmoPrevQuat.copy(gizmoTarget.quaternion);
+    }
     syncGizmoToRealTCP(false);
+    if (gizmoTarget && (!gizmoTarget.position.equals(_gizmoPrevPos) ||
+                        !gizmoTarget.quaternion.equals(_gizmoPrevQuat))) changed = true;
   } else {
     updateConnectingLine();
   }
+  if (changed) requestRender();
 }
 
 // ── Safety & Warning Visual Loop (Collision: Red Glow, Singularity: Amber Glow)
@@ -1142,15 +1158,15 @@ function handleGizmoChange(updateInputs = true) {
   }
   if (hudDelta) {
     if (isInsideDeadzone) {
-      hudDelta.innerText = `⚠️ R: ${Math.round(r_xy)} < ${Math.round(unreachableRadiusAt(posZ_mm))} mm`;
+      setTextIfChanged(hudDelta, `⚠️ R: ${Math.round(r_xy)} < ${Math.round(unreachableRadiusAt(posZ_mm))} mm`);
       hudDelta.style.color = '#ef4444';
       hudDelta.style.background = 'rgba(239, 68, 68, 0.25)';
     } else if (isBelowFloor) {
-      hudDelta.innerText = `⚠️ Z: ${posZ_mm} ≤ ${floorGuard.levelMm} mm`;
+      setTextIfChanged(hudDelta, `⚠️ Z: ${posZ_mm} ≤ ${floorGuard.levelMm} mm`);
       hudDelta.style.color = '#ef4444';
       hudDelta.style.background = 'rgba(239, 68, 68, 0.25)';
     } else {
-      hudDelta.innerText = `Δ ${deltaDist_mm} mm`;
+      setTextIfChanged(hudDelta, `Δ ${deltaDist_mm} mm`);
       if (deltaDist_mm > 4) {
         hudDelta.style.color = '#38bdf8';
         hudDelta.style.background = 'rgba(56, 189, 248, 0.2)';
@@ -1450,9 +1466,18 @@ function updateGizmoVisibility() {
 }
 
 // ── Public Global API ───────────────────────────────────────────────────────
+// Kommt mit /joint_states und der EEF-Pose (je ~30 Hz) - neu gezeichnet wird
+// nur, wenn sich der Zustand geaendert hat. Solange eine Warnung pulsiert,
+// zeichnet der Loop ohnehin (updateSafetyVisuals).
+function safetyStateKey() {
+  const s = safetyState;
+  return `${s.collision}|${s.singularity}|${s.message}|${s.collidingLinks.join(',')}|` +
+         `${s.singularityJoints.join(',')}|${s.manipPct}|${s.floorClearanceZ}`;
+}
+
 export function updateDigitalTwinSafety(state) {
-  requestRender();
-  if (!state) return;
+  if (!state) { requestRender(); return; }
+  const prevKey = safetyStateKey();
   safetyState.collision = Boolean(state.collision);
   safetyState.singularity = Boolean(state.singularity);
   safetyState.message = state.message || '';
@@ -1460,6 +1485,7 @@ export function updateDigitalTwinSafety(state) {
   safetyState.singularityJoints = Array.isArray(state.singularityJoints) ? state.singularityJoints : [];
   if (typeof state.manipPct === 'number') safetyState.manipPct = state.manipPct;
   if (state.floorClearanceZ !== undefined) safetyState.floorClearanceZ = state.floorClearanceZ;
+  if (safetyStateKey() !== prevKey) requestRender();
 
   // 1. Update Warning Banner DOM in Viewport
   const banner = document.getElementById('twin-warning-banner');
@@ -1471,7 +1497,7 @@ export function updateDigitalTwinSafety(state) {
     if (safetyState.collision) {
       banner.className = 'twin-hud-banner banner-collision';
       bannerIcon.className = 'fa-solid fa-triangle-exclamation';
-      bannerText.innerText = safetyState.message || 'COLLISION DETECTED';
+      setTextIfChanged(bannerText, safetyState.message || 'COLLISION DETECTED');
       if (twinContainer) {
         twinContainer.classList.add('vignette-collision');
         twinContainer.classList.remove('vignette-singularity');
@@ -1479,7 +1505,7 @@ export function updateDigitalTwinSafety(state) {
     } else if (safetyState.singularity) {
       banner.className = 'twin-hud-banner banner-singularity';
       bannerIcon.className = 'fa-solid fa-bolt';
-      bannerText.innerText = safetyState.message || 'SINGULARITY WARNING';
+      setTextIfChanged(bannerText, safetyState.message || 'SINGULARITY WARNING');
       if (twinContainer) {
         twinContainer.classList.add('vignette-singularity');
         twinContainer.classList.remove('vignette-collision');
@@ -1498,7 +1524,7 @@ export function updateDigitalTwinSafety(state) {
   if (manipBar && manipVal) {
     const pct = Math.max(0, Math.min(100, Math.round(safetyState.manipPct)));
     manipBar.style.width = pct + '%';
-    manipVal.innerText = pct + '%';
+    setTextIfChanged(manipVal, pct + '%');
     if (pct > 50) {
       manipBar.style.backgroundColor = '#10b981';
       manipVal.style.color = '#38bdf8';
@@ -1515,7 +1541,7 @@ export function updateDigitalTwinSafety(state) {
   if (floorVal) {
     if (safetyState.floorClearanceZ !== null && !isNaN(safetyState.floorClearanceZ)) {
       const fz = safetyState.floorClearanceZ;
-      floorVal.innerText = Number(fz).toFixed(0) + ' mm';
+      setTextIfChanged(floorVal, Number(fz).toFixed(0) + ' mm');
       if (Number(fz) <= floorGuard.levelMm) {
         floorVal.style.color = '#ef4444';
       } else if (Number(fz) < (floorGuard.levelMm + LIM.FLOOR_WARN_MARGIN_MM)) {
@@ -1524,7 +1550,7 @@ export function updateDigitalTwinSafety(state) {
         floorVal.style.color = '#38bdf8';
       }
     } else {
-      floorVal.innerText = '-- mm';
+      setTextIfChanged(floorVal, '-- mm');
       floorVal.style.color = 'var(--mut)';
     }
   }
@@ -1591,7 +1617,6 @@ export function getDigitalTwinJoints() {
 }
 
 export function updateDigitalTwinJoints(jointVals, axisY) {
-  requestRender();
   if (Array.isArray(jointVals)) {
     for (let i = 0; i < Math.min(jointVals.length, 6); i++) {
       currentJoints[i] = Number(jointVals[i]) || 0;
@@ -1600,7 +1625,7 @@ export function updateDigitalTwinJoints(jointVals, axisY) {
   if (typeof axisY === 'number') {
     linearShiftY = axisY;
   }
-  applyJointValues();
+  applyJointValues(true);
 }
 
 export function resetDigitalTwinView() {

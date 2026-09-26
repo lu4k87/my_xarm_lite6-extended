@@ -5,7 +5,7 @@ import { currentFrame, stopAllJogging } from './jog.js';
 import { logMsg } from './log.js';
 import { createSrv, noteEstopPressed, ros, setEstopLatched } from './ros.js';
 import { unreachableClearance, unreachableRadiusAt } from './robot_limits.js';
-import { LIM, floorGuard, fmtDeg } from './util.js';
+import { LIM, floorGuard, fmtDeg, setTextIfChanged } from './util.js';
 
 export let currentServoStatus = 0;
 export let isRobotMoving = false;
@@ -46,7 +46,7 @@ jointStateSub.subscribe((msg) => {
       currentJointVals.push(val);
       const valEl = document.getElementById(`j${i+1}-val`);
       const fillEl = document.getElementById(`j${i+1}-fill`);
-      if(valEl) valEl.innerText = `${fmtDeg(val)}°`;
+      setTextIfChanged(valEl, `${fmtDeg(val)}°`);
       if(fillEl) {
         // J1/J4/J6 koennen +-360 Grad (limited:=false), die uebrigen +-180.
         const range = (i === 0 || i === 3 || i === 5) ? 2 * Math.PI : Math.PI;
@@ -106,9 +106,9 @@ eefSub.subscribe((msg) => {
     const tx = document.getElementById('telem-x');
     const ty = document.getElementById('telem-y');
     const tz = document.getElementById('telem-z');
-    if(tx) tx.innerText = msg.data[0].toFixed(1);
-    if(ty) ty.innerText = msg.data[1].toFixed(1);
-    if(tz) tz.innerText = msg.data[2].toFixed(1);
+    setTextIfChanged(tx, msg.data[0].toFixed(1));
+    setTextIfChanged(ty, msg.data[1].toFixed(1));
+    setTextIfChanged(tz, msg.data[2].toFixed(1));
     latestEEF_X = msg.data[0];
     latestEEF_Y = msg.data[1];
     latestEEF_Z = msg.data[2];
@@ -132,9 +132,9 @@ eefSub.subscribe((msg) => {
     const tp = document.getElementById('telem-p');
     const tyaw = document.getElementById('telem-yaw');
     // Anzeige in Grad wie die POSE-Felder
-    if(tr) tr.innerText = fmtDeg(roll);
-    if(tp) tp.innerText = fmtDeg(pitch);
-    if(tyaw) tyaw.innerText = fmtDeg(yaw);
+    setTextIfChanged(tr, fmtDeg(roll));
+    setTextIfChanged(tp, fmtDeg(pitch));
+    setTextIfChanged(tyaw, fmtDeg(yaw));
   }
 });
 

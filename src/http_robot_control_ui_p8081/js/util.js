@@ -63,6 +63,17 @@ export function visibleInterval(fn, ms) {
   return { start, stop };
 }
 
+// innerText nur setzen, wenn sich der Text geaendert hat. Fuer Anzeigen, die
+// mit /joint_states bzw. der EEF-Pose (~30 Hz) auch bei stehendem Arm neu
+// beschrieben werden: ein gleicher Text ersetzt sonst trotzdem den Textknoten
+// und loest Layout aus. Nur fuer Elemente, in die sonst niemand schreibt.
+const lastInnerText = new WeakMap();
+export function setTextIfChanged(el, text) {
+  if (!el || lastInnerText.get(el) === text) return;
+  el.innerText = text;
+  lastInnerText.set(el, text);
+}
+
 // Icon + Text in ein Element setzen, ohne innerHTML.
 export function setIconLabel(el, iconClass, text) {
   if (!el) return;
