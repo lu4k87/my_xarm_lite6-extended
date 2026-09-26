@@ -1,6 +1,6 @@
 import * as twin from './twin/digital_twin.js';
 import { logMsg } from './log.js';
-import { updateRangeProgress } from './tf_tuner.js';
+import { setTunerSaveHooks, updateRangeProgress, updateTunerSaveBadge } from './tf_tuner.js';
 
 // ── Settings-Section: TCP-Gizmo und Frame-Achsen ─────────────────────────────
 // Die Section "Settings" hat drei Gruppen: TF Tuner (tf_tuner.js, eigener
@@ -9,6 +9,11 @@ import { updateRangeProgress } from './tf_tuner.js';
 // Reset-Button. Gespeichert wird wie beim TF Tuner auf dem PC (server.py,
 // /api/settings), damit Desktop und Quest 3 beim Start denselben Stand laden.
 // Ungespeicherte Aenderungen gelten nur bis zum Neuladen.
+//
+// Die drei Gruppen lassen sich am Titel per Drag & Drop umsortieren. Die
+// Reihenfolge (settings.layout.order) gehoert zu jedem Save: solange sie
+// ungespeichert ist, zeigen alle drei Badges "Save", und egal welches man
+// klickt - die Reihenfolge wird mitgespeichert.
 //
 // Element-ids: set-<gruppe>-<feld>-slider / -num (Zahlen),
 // set-<gruppe>-<feld> (Schalter), btn-<gruppe>-save / <gruppe>-save-label.
@@ -45,6 +50,10 @@ const GROUPS = {
     apply: (v) => twin.setFrameAxesConfig(v),
   },
 };
+
+// Reihenfolge der Gruppen wie im HTML (data-group), = SETTINGS_GROUP_IDS in server.py.
+const DEFAULT_ORDER = ['tf', 'gizmo', 'axes'];
+let savedOrder = null; // null = nie gespeichert (Standard gilt als gespeichert)
 
 const state = {};      // gruppe -> aktuelle Werte
 const saved = {};      // gruppe -> gespeicherte Werte (null = nie gespeichert)
@@ -191,6 +200,73 @@ function updateFrameChips() {
   }
 }
 
+// ── Reihenfolge der Gruppen (Drag & Drop) ───────────────────────────────
+function groupBody() {
+  return document.getElementById('tf-tuner-body');
+}
+
+function normalizeOrder(order) {
+  const ids = (Array.isArray(order) ? order : []).filter((g, i, a) => DEFAULT_ORDER.includes(g) && a.indexOf(g) === i);
+  return [...ids, ...DEFAULT_ORDER.filter((g) => !ids.includes(g))];
+}
+
+function currentOrder() {
+  const body = groupBody();
+  if (!body) return [...DEFAULT_ORDER];
+  return normalizeOrder([...body.querySelectorAll(':scope > .settings-group[data-group]')].map((el) => el.dataset.group));
+}
+
+function applyOrder(order) {
+  const body = groupBody();
+  if (!body) return;
+  for (const g of normalizeOrder(order)) {
+    const el = body.querySelector(`:scope > .settings-group[data-group="${g}"]`);
+    if (el) body.appendChild(el);
+  }
+}
+
+function orderDirty() {
+  return currentOrder().join('|') !== (savedOrder || DEFAULT_ORDER).join('|');
+}
+
+function updateAllSaveBadges() {
+  for (const g of Object.keys(GROUPS)) updateSaveBadge(g);
+  updateTunerSaveBadge();
+}
+
+// Nur die Reihenfolge speichern (vom Save des TF Tuners aus).
+async function saveOrder() {
+  const order = currentOrder();
+  const res = await fetch(SETTINGS_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ settings: { layout: { order } } })
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  savedOrder = order;
+  updateAllSaveBadges();
+}
+
+function initGroupSortable() {
+  const body = groupBody();
+  if (!body || typeof Sortable === 'undefined') return;
+  // Eigene Gruppe ohne pull/put: Gruppen bleiben in der Section, Sections
+  // aus den Spalten koennen nicht hinein. Griff ist der Gruppentitel - der
+  // liegt nicht im h2, die Spalten-Sortables reagieren darauf also nicht.
+  new Sortable(body, {
+    group: { name: 'settings-groups', pull: false, put: false },
+    draggable: '.settings-group',
+    handle: '.settings-group-title',
+    animation: 200,
+    ghostClass: 'sortable-ghost',
+    onEnd: (evt) => {
+      if (evt.oldIndex === evt.newIndex) return;
+      updateAllSaveBadges();
+      if (orderDirty()) logMsg('Settings', 'Group order changed - click Save to keep it', 'action');
+    }
+  });
+}
+
 // ── Save-Badge (gleiches Verhalten wie beim TF Tuner) ──────────────────
 function sameValues(g, a, b) {
   if (!a || !b) return false;
@@ -210,7 +286,7 @@ function updateSaveBadge(g, forced) {
   const label = document.getElementById(`${g}-save-label`);
   if (!btn || !label) return;
   // Nie gespeichert und unveraendert = Standard, kein Grund zum Speichern.
-  const clean = sameValues(g, state[g], saved[g] || defaultsOf(g));
+  const clean = sameValues(g, state[g], saved[g] || defaultsOf(g)) && !orderDirty();
   const mode = forced || (busy[g] ? 'busy' : (clean ? 'saved' : 'dirty'));
   btn.classList.toggle('saved', mode === 'saved');
   btn.classList.toggle('dirty', mode === 'dirty');
@@ -222,7 +298,7 @@ function updateSaveBadge(g, forced) {
     ? `${what[0].toUpperCase()}${what.slice(1)} saved - loaded on every start (desktop and Quest 3)`
     : mode === 'error'
       ? 'Saving failed - click to try again'
-      : `Unsaved changes - click to store the ${what} permanently`;
+      : `Unsaved changes - click to store the ${what} and the group order permanently`;
 }
 
 export async function saveSettingsGroup(g) {
@@ -230,16 +306,18 @@ export async function saveSettingsGroup(g) {
   busy[g] = true;
   updateSaveBadge(g);
   const values = JSON.parse(JSON.stringify(state[g]));
+  const order = currentOrder();
   try {
     const res = await fetch(SETTINGS_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ settings: { [g]: values } })
+      body: JSON.stringify({ settings: { [g]: values, layout: { order } } })
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     saved[g] = values;
+    savedOrder = order;
     busy[g] = false;
-    updateSaveBadge(g);
+    updateAllSaveBadges();
     logMsg('Settings', `💾 ${GROUPS[g].label[0].toUpperCase()}${GROUPS[g].label.slice(1)} saved permanently`, 'success');
   } catch (e) {
     busy[g] = false;
@@ -255,6 +333,10 @@ async function loadSavedSettings() {
     if (res.ok) {
       const data = await res.json();
       const all = (data && data.settings) || {};
+      if (all.layout && Array.isArray(all.layout.order)) {
+        savedOrder = normalizeOrder(all.layout.order);
+        applyOrder(savedOrder);
+      }
       for (const [g, cfg] of Object.entries(GROUPS)) {
         const s = all[g];
         if (!s) continue;
@@ -272,12 +354,16 @@ async function loadSavedSettings() {
     // Ohne Server-API (z. B. python3 -m http.server) bleiben die Standardwerte.
   }
   for (const g of Object.keys(GROUPS)) applyGroup(g);
+  updateTunerSaveBadge();
 }
 
 // Robot-Modell geladen / TF-Tuner-Frames angelegt: Chips neu aufbauen.
 document.addEventListener('twin-frames-changed', renderFrameChips);
 
+setTunerSaveHooks({ extraDirty: orderDirty, onSave: saveOrder });
+
 document.addEventListener('DOMContentLoaded', () => {
+  initGroupSortable();
   renderFrameChips();
   for (const g of Object.keys(GROUPS)) updateGroupUI(g);
   loadSavedSettings();

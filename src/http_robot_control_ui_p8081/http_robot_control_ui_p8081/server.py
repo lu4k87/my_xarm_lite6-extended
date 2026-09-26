@@ -303,15 +303,19 @@ def save_tf_tuner(values):
 #   (min, max)  Zahl, auf den Bereich begrenzt
 #   bool        True/False
 #   FRAMES      Liste von Frame-Namen (TF/URDF), hoechstens 64
+#   ORDER       Reihenfolge der Gruppen in der Section (ids aus SETTINGS_GROUP_IDS)
 # Neue Einstellungen hier und in js/settings.js eintragen.
 SETTINGS_FILE = os.path.expanduser('~/.config/robot_control_ui/settings.json')
 FRAMES = 'frames'
+ORDER = 'order'
+SETTINGS_GROUP_IDS = ('tf', 'gizmo', 'axes')
 FRAME_NAME_RE = re.compile(r'^[A-Za-z0-9_./-]{1,64}$')
 SETTINGS_SCHEMA = {
     'gizmo': {'length': (0.5, 2.5), 'thickness': (1.0, 10.0), 'opacity': (0.1, 1.0)},
     'axes': {'enabled': bool, 'labels': bool, 'on_top': bool,
              'length': (0.01, 0.3), 'thickness': (0.0, 10.0), 'opacity': (0.1, 1.0),
              'frames': FRAMES},
+    'layout': {'order': ORDER},
 }
 SETTINGS_LOCK = threading.Lock()
 
@@ -325,6 +329,11 @@ def _clean_field(kind, v):
             return None
         names = [n for n in v if isinstance(n, str) and FRAME_NAME_RE.match(n)]
         return list(dict.fromkeys(names))[:64]
+    if kind == ORDER:
+        if not isinstance(v, list):
+            return None
+        ids = [g for g in v if isinstance(g, str) and g in SETTINGS_GROUP_IDS]
+        return list(dict.fromkeys(ids)) or None
     lo, hi = kind
     if isinstance(v, (int, float)) and not isinstance(v, bool) and abs(float(v)) < 1e6:
         return min(hi, max(lo, float(v)))

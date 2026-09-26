@@ -13,6 +13,7 @@
   --red: #ef4444;
   --purple: #8b5cf6;
   --orange: #f59e0b;
+  --settings: #a78bfa;   /* Lila fuer alles in der Settings-Section (nicht Pink) */
   --rviz-x: #ef4444;
   --rviz-y: #10b981;
   --rviz-z: #38bdf8;
@@ -613,14 +614,14 @@ body.col-resizing * {
   border-color: rgba(20, 184, 166, 0.4);
 }
 
-/* 6. Settings (TF Tuner + TCP Gizmo): Warm Bronze / Amber */
+/* 6. Settings (TF Tuner, TCP Gizmo, Frame Axes): Deep Violet */
 #panel-tf-tuner {
-  background: linear-gradient(180deg, rgba(28, 22, 14, 0.72) 0%, rgba(18, 14, 9, 0.68) 100%);
-  border-color: rgba(245, 158, 11, 0.24);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(245, 158, 11, 0.09);
+  background: linear-gradient(180deg, rgba(22, 16, 36, 0.72) 0%, rgba(14, 10, 24, 0.68) 100%);
+  border-color: rgba(139, 92, 246, 0.26);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(139, 92, 246, 0.1);
 }
 #panel-tf-tuner:hover {
-  border-color: rgba(245, 158, 11, 0.38);
+  border-color: rgba(139, 92, 246, 0.42);
 }
 
 /* 7. Terminal Konsole & ROS Log: Monospace Obsidian Black */
@@ -2161,7 +2162,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   color: #64748b;
 }
 
-/* ── Settings Section (Gruppen: TF Tuner, TCP Gizmo) ── */
+/* ── Settings Section (Gruppen: TF Tuner, TCP Gizmo, Frame Axes) ── */
 .tf-tuner-section {
   display: flex;
   flex-direction: column;
@@ -2309,11 +2310,11 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   transition: all 0.2s ease;
 }
 .btn-tuner-save.dirty {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.45);
-  color: var(--orange);
+  background: rgba(139, 92, 246, 0.18);
+  border-color: rgba(139, 92, 246, 0.55);
+  color: var(--settings);
 }
-.btn-tuner-save.dirty:hover { background: rgba(245, 158, 11, 0.25); }
+.btn-tuner-save.dirty:hover { background: rgba(139, 92, 246, 0.3); }
 .btn-tuner-save.saved {
   background: rgba(16, 185, 129, 0.12);
   border-color: rgba(16, 185, 129, 0.35);
@@ -2430,8 +2431,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 .tuner-radius-row {
   margin-top: 6px;
   padding: 4px 8px;
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.22);
   border-radius: 4px;
 }
 
@@ -2456,7 +2457,7 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   min-width: 0;
   padding: 8px 10px;
   background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(139, 92, 246, 0.18);
   border-radius: 6px;
 }
 
@@ -2483,8 +2484,34 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
 }
 
 .settings-group-title i {
-  color: var(--orange);
+  color: var(--settings);
   font-size: 11px;
+}
+
+/* Titel = Griff zum Umsortieren der Gruppen (SortableJS, js/settings.js). */
+.settings-group-title {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.settings-group-title:active {
+  cursor: grabbing;
+}
+.settings-group-title i.settings-group-grip {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: var(--mut);
+  opacity: 0.55;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.settings-group-title:hover i.settings-group-grip {
+  opacity: 1;
+  color: var(--settings);
+}
+.settings-group.sortable-ghost {
+  border: 1px dashed var(--settings) !important;
+  background: rgba(139, 92, 246, 0.08) !important;
 }
 
 .settings-group-actions {
@@ -2720,8 +2747,8 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   font-size: 9.5px;
   font-weight: 700;
   line-height: 14px;
-  color: var(--orange);
-  background: rgba(245, 158, 11, 0.12);
+  color: var(--settings);
+  background: rgba(139, 92, 246, 0.16);
 }
 
 .frame-chip.active {

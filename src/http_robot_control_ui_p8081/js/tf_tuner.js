@@ -164,6 +164,15 @@ let savedTunerValues = null;       // null = noch nie gespeichert / nicht gelade
 let serverTunerValuesApplied = false;
 let tunerSaveBusy = false;
 
+// Die Reihenfolge der Settings-Gruppen gehoert zu jedem Save der Section.
+// settings.js haengt sich hier ein (kein Import in die Gegenrichtung):
+// extraDirty = Reihenfolge ungespeichert, onSave = Reihenfolge speichern.
+let tunerSaveHooks = { extraDirty: () => false, onSave: async () => {} };
+export function setTunerSaveHooks(hooks) {
+  tunerSaveHooks = { ...tunerSaveHooks, ...hooks };
+  updateTunerSaveBadge();
+}
+
 function tunerValuesEqual(a, b) {
   if (!a || !b) return false;
   for (const [name, el] of Object.entries(TF_TUNER_ELEMENTS)) {
@@ -180,7 +189,7 @@ export function updateTunerSaveBadge(state) {
   const btn = document.getElementById('btn-tuner-save');
   const label = document.getElementById('tuner-save-label');
   if (!btn || !label) return;
-  const clean = tunerValuesEqual(getTunerState().values, savedTunerValues);
+  const clean = tunerValuesEqual(getTunerState().values, savedTunerValues) && !tunerSaveHooks.extraDirty();
   const mode = state || (tunerSaveBusy ? 'busy' : (clean ? 'saved' : 'dirty'));
   btn.classList.toggle('saved', mode === 'saved');
   btn.classList.toggle('dirty', mode === 'dirty');
@@ -207,6 +216,7 @@ export async function saveTunerValues() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     savedTunerValues = values;
+    if (tunerSaveHooks.extraDirty()) await tunerSaveHooks.onSave();
     tunerSaveBusy = false;
     updateTunerSaveBadge();
     sendTunerState(true);

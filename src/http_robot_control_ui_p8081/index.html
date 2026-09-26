@@ -861,8 +861,10 @@
           </div>
         </section>
 
-        <!-- Settings: Gruppe "TF Tuner" (Built-in Web Transform Calibrator) und
-             Gruppe "TCP Gizmo" (Darstellung im Viewport), jede mit eigenem Save.
+        <!-- Settings: Gruppen "TF Tuner" (Built-in Web Transform Calibrator),
+             "TCP Gizmo" und "Frame Axes", jede mit eigenem Save. Die Gruppen
+             lassen sich am Titel umsortieren (js/settings.js), die Reihenfolge
+             wird mit jedem Save gespeichert.
              Die ids heissen weiter panel-tf-tuner / tf-tuner-*, damit
              gespeicherte Layouts und der Einklapp-Zustand erhalten bleiben. -->
         <section id="panel-tf-tuner" class="glass-panel tf-tuner-section">
@@ -875,9 +877,9 @@
           <div id="tf-tuner-body" class="tf-tuner-body">
 
           <!-- Gruppe 1: TF Tuner -->
-          <div class="settings-group settings-group-tf">
+          <div class="settings-group settings-group-tf" data-group="tf">
           <div class="settings-group-header">
-            <div class="settings-group-title"><i class="fa-solid fa-sliders"></i> TF Tuner</div>
+            <div class="settings-group-title" title="Drag to reorder"><i class="fa-solid fa-grip-vertical settings-group-grip"></i><i class="fa-solid fa-sliders"></i> TF Tuner</div>
             <div class="settings-group-actions">
               <button id="btn-tuner-broadcast" class="btn-toggle-broadcast" data-action="toggleTFBroadcast" title="Toggle Live TF broadcasting via rosbridge (10 Hz)">
                 <i class="fa-solid fa-satellite-dish"></i> <span id="tuner-broadcast-label">Live TF</span>
@@ -961,7 +963,7 @@
           <!-- Safety Zone Radius Row (only visible if Safety Zone selected) -->
           <div id="tuner-radius-container" class="tuner-radius-row" style="display: none;">
             <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-              <span class="tuner-axis-lbl" style="color: var(--orange); font-size: 11px; width: 48px;">Radius:</span>
+              <span class="tuner-axis-lbl" style="color: var(--settings); font-size: 11px; width: 48px;">Radius:</span>
               <input type="range" id="tuner-slider-radius" class="tuner-slider" min="0" max="1.0" step="0.005" data-input="onTunerSliderInput" data-args='["radius"]'>
               <input type="number" id="tuner-num-radius" class="tuner-num" step="0.005" data-change="onTunerNumChange" data-args='["radius"]'>
             </div>
@@ -974,9 +976,9 @@
           </div>
 
           <!-- Gruppe 2: Darstellung des TCP-Gizmos im Viewport (js/settings.js) -->
-          <div class="settings-group settings-group-gizmo">
+          <div class="settings-group settings-group-gizmo" data-group="gizmo">
             <div class="settings-group-header">
-              <div class="settings-group-title"><i class="fa-solid fa-up-down-left-right"></i> TCP Gizmo</div>
+              <div class="settings-group-title" title="Drag to reorder"><i class="fa-solid fa-grip-vertical settings-group-grip"></i><i class="fa-solid fa-up-down-left-right"></i> TCP Gizmo</div>
               <div class="settings-group-actions">
                 <button id="btn-gizmo-save" class="btn-tuner-save saved" data-action="saveSettingsGroup" data-args='["gizmo"]' title="Store permanently">
                   <i class="fa-solid fa-floppy-disk"></i> <span id="gizmo-save-label">Saved</span>
@@ -1021,9 +1023,9 @@
           </div>
 
           <!-- Gruppe 3: Frame-Achsen (RGB-Achsenkreuz an URDF-Links und TF-Frames) -->
-          <div class="settings-group settings-group-axes">
+          <div class="settings-group settings-group-axes" data-group="axes">
             <div class="settings-group-header">
-              <div class="settings-group-title"><i class="fa-solid fa-diagram-project"></i> Frame Axes</div>
+              <div class="settings-group-title" title="Drag to reorder"><i class="fa-solid fa-grip-vertical settings-group-grip"></i><i class="fa-solid fa-diagram-project"></i> Frame Axes</div>
               <div class="settings-group-actions">
                 <button id="set-axes-enabled" class="settings-pill btn-no-debounce active" data-action="toggleSetting" data-args='["axes","enabled"]' title="Show / hide all selected frame axes (selection is kept)" aria-pressed="true">
                   <i class="fa-solid fa-eye"></i> Visible
