@@ -14,31 +14,31 @@ export const TF_TUNER_ELEMENTS = {
   },
   'Blue Cube': {
     frame_id: 'target_blue_cube',
-    x: 0.300, y: 0.085, z: 0.0,
+    x: 0.300, y: 0.085, z: 0.002,
     roll: 0.0, pitch: 0.0, yaw: 0.0,
     minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
-    default: { x: 0.300, y: 0.085, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0 }
+    default: { x: 0.300, y: 0.085, z: 0.002, roll: 0.0, pitch: 0.0, yaw: 0.0 }
   },
   'Red Rectangle': {
     frame_id: 'target_red_rectangle',
-    x: 0.305, y: -0.080, z: 0.0,
+    x: 0.305, y: -0.080, z: 0.002,
     roll: 0.0, pitch: 0.0, yaw: 45.0,
     minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
-    default: { x: 0.305, y: -0.080, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 45.0 }
+    default: { x: 0.305, y: -0.080, z: 0.002, roll: 0.0, pitch: 0.0, yaw: 45.0 }
   },
   'Green Cylinder': {
     frame_id: 'target_green_cylinder',
-    x: 0.350, y: 0.025, z: 0.0,
+    x: 0.350, y: 0.025, z: 0.002,
     roll: 0.0, pitch: 0.0, yaw: 0.0,
     minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
-    default: { x: 0.350, y: 0.025, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0 }
+    default: { x: 0.350, y: 0.025, z: 0.002, roll: 0.0, pitch: 0.0, yaw: 0.0 }
   },
   'White Plane': {
     frame_id: 'target_white_plane',
-    x: 0.305, y: 0.0, z: -0.003,
+    x: 0.305, y: 0.0, z: 0.0,
     roll: 0.0, pitch: 0.0, yaw: 0.0,
     minX: -0.5, maxX: 1.0, minY: -0.5, maxY: 0.5, minZ: -0.5, maxZ: 1.0,
-    default: { x: 0.305, y: 0.0, z: -0.003, roll: 0.0, pitch: 0.0, yaw: 0.0 }
+    default: { x: 0.305, y: 0.0, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0 }
   },
   'Safety Zone': {
     frame_id: 'target_safety_zone',

@@ -1800,6 +1800,8 @@ let areTunerSceneObjectsVisible = false;
 // braucht es denselben Versatz - sonst steckt das halbe Objekt im Boden.
 // Der Versatz wird in Weltrichtung Z addiert, genau wie in RViz, damit
 // Drehungen weiterhin um den Objektmittelpunkt laufen.
+const PLANE_THICKNESS_M = 0.002;
+
 function groundOffsetOf(obj) {
   return (obj && obj.userData && obj.userData.groundOffset) || 0;
 }
@@ -1841,11 +1843,13 @@ function initTunerSceneObjects() {
   scene.add(greenMesh);
   tunerSceneObjects['Green Cylinder'] = greenMesh;
 
-  // 4. White Plane (210mm x 300mm x 2mm)
-  const planeGeo = new THREE.BoxGeometry(0.21, 0.30, 0.002);
+  // 4. White Plane (210mm x 300mm x 2mm) - liegt mit z = 0 auf dem Boden,
+  //    die Objekte stehen mit z = PLANE_THICKNESS_M auf ihrer Oberseite.
+  const planeGeo = new THREE.BoxGeometry(0.21, 0.30, PLANE_THICKNESS_M);
   const planeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.85, roughness: 0.6 });
   const planeMesh = new THREE.Mesh(planeGeo, planeMat);
   planeMesh.receiveShadow = true;
+  planeMesh.userData.groundOffset = PLANE_THICKNESS_M / 2;
   planeMesh.visible = areTunerSceneObjectsVisible;
   scene.add(planeMesh);
   tunerSceneObjects['White Plane'] = planeMesh;
