@@ -138,12 +138,16 @@
     let pollFailures = 0;
     let pollInterval;
 
+    // Der Log-Poll dient zugleich als Online-Check (ersetzt den separaten /api/ping-Timer).
+    // Im Hintergrund-Tab wird pausiert; beim Zurückwechseln sofort nachgeholt.
     async function pollLogs() {
+      if (document.hidden) return;
       try {
         const res = await fetch(`/api/logs?since=${lastLogId}`);
         if (!res.ok) throw new Error("Server offline");
         const data = await res.json();
         pollFailures = 0; // Reset
+        setOnlineStatus(true);
         if (data.logs && data.logs.length > 0) {
           const content = document.getElementById('console-content');
           data.logs.forEach(log => {
@@ -159,6 +163,7 @@
         }
       } catch (e) {
         pollFailures++;
+        setOnlineStatus(false);
         if (pollFailures >= 3) {
           clearInterval(pollInterval);
           // Versuche den Tab automatisch zu schließen (funktioniert meist nur bei --app Modus)
@@ -177,7 +182,10 @@
       }
     }
 
-    pollInterval = setInterval(pollLogs, 1000);
+    pollInterval = setInterval(pollLogs, 2000);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && pollFailures < 3) pollLogs();
+    });
 
 
     function copyCmd(text, btn) {
@@ -198,15 +206,18 @@
 
 
     // ─── STATUS ───────────────────────────────────────────────────────────────────
+    function setOnlineStatus(ok) {
+      document.getElementById('status-dot').classList.toggle('ok', ok);
+      const host = window.location.host || 'local';
+      document.getElementById('status-text').textContent = ok ? `Online • ${host}` : 'Offline';
+    }
+
     async function checkStatus() {
       try {
         const data = await (await fetch('/api/ping')).json();
-        document.getElementById('status-dot').classList.toggle('ok', data.ok);
-        const host = window.location.host || 'local';
-        document.getElementById('status-text').textContent = data.ok ? `Online • ${host}` : 'Offline';
+        setOnlineStatus(!!data.ok);
       } catch (err) {
-        document.getElementById('status-dot').classList.remove('ok');
-        document.getElementById('status-text').textContent = 'Offline';
+        setOnlineStatus(false);
       }
     }
 

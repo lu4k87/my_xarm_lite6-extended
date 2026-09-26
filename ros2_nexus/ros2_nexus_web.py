@@ -17,6 +17,20 @@ import signal
 import getpass
 import socket
 import re
+import logging
+
+
+# Die Webapp pollt /api/logs, /api/status und /api/ping laufend –
+# erfolgreiche Abfragen davon nicht ins Terminal schreiben. Fehler (4xx/5xx)
+# und alle anderen Requests bleiben sichtbar.
+class _QuietPollFilter(logging.Filter):
+    _POLL = re.compile(r'"GET /api/(?:logs|status|ping)\b[^"]*" 200 ')
+
+    def filter(self, record):
+        return not self._POLL.search(record.getMessage())
+
+
+logging.getLogger("werkzeug").addFilter(_QuietPollFilter())
 
 app     = Flask(__name__)
 

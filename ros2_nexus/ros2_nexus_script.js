@@ -977,5 +977,4 @@
 
     // ─── INIT ─────────────────────────────────────────────────────────────────────
     loadConfig();
-    window.checkStatus();
-    setInterval(() => window.checkStatus(), 5000);
+    window.checkStatus(); // einmalig; laufend hält der Log-Poll den Online-Status aktuell
