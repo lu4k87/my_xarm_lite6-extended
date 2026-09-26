@@ -1,5 +1,6 @@
 import * as twin from './twin/digital_twin.js';
 import { logMsg } from './log.js';
+import { lsGet, lsSet } from './util.js';
 import { setTunerSaveHooks, updateRangeProgress, updateTunerSaveBadge } from './tf_tuner.js';
 
 // ── Settings-Section: TCP-Gizmo und Frame-Achsen ─────────────────────────────
@@ -267,6 +268,37 @@ function initGroupSortable() {
   });
 }
 
+// ── Einklappen einzelner Gruppen ────────────────────────────────────────
+// Chevron ganz rechts in jeder Gruppen-Titelzeile. Eingeklappt bleibt nur die
+// Titelzeile (mit Save/Reset) sichtbar. Reiner Anzeige-Zustand pro Browser
+// (localStorage), gehoert nicht zu den gespeicherten Settings.
+const GROUP_COLLAPSE_LS_PREFIX = 'settings_group_collapsed_';
+
+function setGroupCollapsed(g, collapsed, save = true) {
+  const el = groupBody()?.querySelector(`:scope > .settings-group[data-group="${g}"]`);
+  if (!el) return;
+  el.classList.toggle('group-collapsed', collapsed);
+  const btn = /** @type {HTMLElement|null} */ (el.querySelector('.settings-group-collapse-btn'));
+  if (btn) {
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = collapsed ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up';
+    btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    btn.title = `${collapsed ? 'Expand' : 'Collapse'} ${btn.dataset.groupTitle || g}`;
+  }
+  if (save) lsSet(GROUP_COLLAPSE_LS_PREFIX + g, collapsed ? '1' : '0');
+}
+
+export function toggleSettingsGroupCollapse(g) {
+  const el = groupBody()?.querySelector(`:scope > .settings-group[data-group="${g}"]`);
+  if (el) setGroupCollapsed(g, !el.classList.contains('group-collapsed'));
+}
+
+function restoreGroupCollapse() {
+  for (const g of DEFAULT_ORDER) {
+    if (lsGet(GROUP_COLLAPSE_LS_PREFIX + g) === '1') setGroupCollapsed(g, true, false);
+  }
+}
+
 // ── Save-Badge (gleiches Verhalten wie beim TF Tuner) ──────────────────
 function sameValues(g, a, b) {
   if (!a || !b) return false;
@@ -364,6 +396,7 @@ setTunerSaveHooks({ extraDirty: orderDirty, onSave: saveOrder });
 
 document.addEventListener('DOMContentLoaded', () => {
   initGroupSortable();
+  restoreGroupCollapse();
   renderFrameChips();
   for (const g of Object.keys(GROUPS)) updateGroupUI(g);
   loadSavedSettings();

@@ -55,6 +55,7 @@ import {
 } from './tf_tuner.js';
 import {
   onSettingInput, onSettingNum, resetSettingsGroup, saveSettingsGroup, setAxesFrames, toggleAxesFrame, toggleSetting,
+  toggleSettingsGroupCollapse,
 } from './settings.js';
 import './uievents.js';
 import './streams.js';
@@ -89,6 +90,7 @@ const ACTIONS = {
   saveTunerValues, toggleSceneNode, toggleTFBroadcast,
   // Settings (TCP-Gizmo-Darstellung, Frame-Achsen)
   onSettingInput, onSettingNum, resetSettingsGroup, saveSettingsGroup, setAxesFrames, toggleAxesFrame, toggleSetting,
+  toggleSettingsGroupCollapse,
   // Sonstiges
   startListening, toggleSound,
   reloadPage: () => location.reload(),

@@ -2534,6 +2534,17 @@ input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); 
   font-size: 11px;
 }
 
+/* Eingeklappte Gruppe: nur die Titelzeile bleibt (js/settings.js). */
+.settings-group.group-collapsed > :not(.settings-group-header) {
+  display: none !important;
+}
+.settings-group.group-collapsed > .settings-group-header {
+  margin-bottom: 0;
+}
+.settings-group-collapse-btn i {
+  color: var(--mut);
+}
+
 .settings-rows {
   display: flex;
   flex-direction: column;
