@@ -3319,6 +3319,29 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
+    /* Vertikale Trennlinie zwischen Icon-Kacheln und Titelblock: eigene
+       Grid-Spalte, per gap links/rechts gleich weit entfernt, oben und
+       unten ausgefadet. */
+    .seq-card-main:has(.seq-card-icons) {
+      grid-template-columns: auto 1px minmax(0, 1fr);
+      column-gap: 18px;
+    }
+    .seq-card-main:has(.seq-card-icons)::before {
+      content: '';
+      grid-column: 2;
+      grid-row: 1;
+      align-self: stretch;
+      width: 1px;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        var(--seq-divider, rgba(255, 255, 255, 0.16)) 25%,
+        var(--seq-divider, rgba(255, 255, 255, 0.16)) 75%,
+        transparent 100%);
+      pointer-events: none;
+    }
+    .seq-card-main:has(.seq-card-icons) > .seq-card-icons { grid-column: 1; grid-row: 1; }
+    .seq-card-main:has(.seq-card-icons) > .seq-card-titles { grid-column: 3; grid-row: 1; padding-left: 0; }
+
     /* Kompakte Kacheln: 1 Spalte bei einem Icon, sonst 2 Spalten (2x2 bei 4) */
     .seq-card-icons {
       --seq-icon: 78px;
@@ -3356,8 +3379,15 @@
 
     /* Schmale Karte: Kacheln als Reihe ueber dem Titel */
     @container (max-width: 440px) {
-      .seq-card-main {
+      .seq-card-main,
+      .seq-card-main:has(.seq-card-icons) {
         grid-template-columns: minmax(0, 1fr);
+      }
+      .seq-card-main:has(.seq-card-icons)::before { display: none; }
+      .seq-card-main:has(.seq-card-icons) > .seq-card-icons,
+      .seq-card-main:has(.seq-card-icons) > .seq-card-titles {
+        grid-column: 1;
+        grid-row: auto;
       }
       .seq-card-icons,
       .seq-card-icons.is-multi {
@@ -4480,6 +4510,8 @@
   background: #ffffff !important;
   border-color: color-mix(in srgb, var(--sec-color, var(--pl-accent)) 60%, var(--pl-line-strong)) !important;
 }
+
+#launch-modal[data-theme="light"] .seq-card-main { --seq-divider: var(--pl-line-strong); }
 
 #launch-modal[data-theme="light"] .modal-card-side-img,
 #launch-modal[data-theme="light"] .user-icon-img { filter: invert(1); }
