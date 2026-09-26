@@ -137,14 +137,14 @@ source install/setup.bash
 ```bash
 ./ros2_nexus/ros2_nexus_web_start.sh
 ```
-*Dies startet den lokalen Prozess-Manager-Daemon und öffnet die Nexus Webapp automatisch im Standardbrowser unter `http://localhost:5000`.*
+*Dies startet den lokalen Prozess-Manager-Daemon (`http://localhost:5000`) und öffnet die Nexus Webapp als rahmenloses Fenster, das nur das Start-Popup zeigt (Fallback: Chrome-App-Fenster oder Standardbrowser, siehe 7.2).*
 
 #### 3. Simulation starten & Web-UIs erkunden
-1. Klicke in der **Nexus Webapp** auf den grünen Button **`RUN DEV SETUP (FAKE)`**.
-   * Öffnet das DEV-SETUP-Popup; **EXECUTE** startet das simulierte xArm Lite 6 `ros2_control` Hardware-Interface, MoveIt 2 Servo + MoveGroup, RViz2, die virtuelle Linearachse und die Robot Control UI inkl. WebSocket ROS Bridge (`ws://localhost:9090`) und Videoserver (8082). Vision, Sprachsteuerung, Eyetracking und VR sind weitere Karten im selben Popup und lassen sich abwählen.
+1. Die **Nexus Webapp** öffnet sich direkt mit dem **RUN DEV SETUP**-Popup; wähle im FAKE | REAL-Umschalter des Popup-Headers **FAKE**.
+   * **EXECUTE** startet das simulierte xArm Lite 6 `ros2_control` Hardware-Interface, MoveIt 2 Servo + MoveGroup, RViz2, die virtuelle Linearachse und die Robot Control UI inkl. WebSocket ROS Bridge (`ws://localhost:9090`) und Videoserver (8082). Vision, Sprachsteuerung, Eyetracking und VR sind weitere Karten im selben Popup und lassen sich abwählen.
 2. Öffne die **Robot Control UI** (`http://localhost:8081`):
    * Teste kartesische XYZ-Jog-Steuerung, bewege die Joint-Slider oder fahre die Home-Initialpose an. *(Die Greifer-Buttons steuern den Greifer direkt — siehe 3.6.)*
-3. Öffne das **Dashboard Monitoring UI** (`http://localhost:8080/dashboard_index.html`). Es ist **nicht** Teil des DEV SETUP: vorher **Dashboard Monitoring (Port 8080)** und **Workspace Analyzer** in der Nexus-Sektion `Workspace Analyzer Backend` starten.
+3. Öffne das **Dashboard Monitoring UI** (`http://localhost:8080/dashboard_index.html`). Es ist **nicht** Teil des DEV SETUP: vorher **Dashboard Monitoring (Port 8080)** und **Workspace Analyzer** in der Nexus-Sektion `Workspace Analyzer Backend` starten (vollständige Seite `http://localhost:5000/old_index.html`, siehe 7.3).
    * Überwache Echtzeit-Topic-Frequenzen (Hz), visualisiere Node-Topologiegraphen und inspiziere Live-Parameter.
 
 [⬆️ Zurück zum Inhaltsverzeichnis](#inhaltsverzeichnis)
@@ -235,7 +235,7 @@ Das Kernziel des Projekts ist die Realisierung einer modularen, plattformbasiert
 
 <br>
 
-### Human-Centered Automation
+### 🧑‍💻 Human-Centered Automation
 Die Systemarchitektur stellt den menschlichen Operator ins Zentrum des Interaktionsdesigns. Das System wird so konzipiert, dass Nutzer den aktuellen Automatisierungszustand durchgängig kognitiv erfassen und nachfolgende Systemaktionen antizipieren können. Diese Transparenz bricht algorithmische Black-Box-Strukturen auf, was für den praktischen Einsatz wesentliche Vorteile bringt:
 
 - **Kognitive Transparenz:** Durchgängige Nachvollziehbarkeit der Systemzustände, insbesondere bei der parallelen Verarbeitung von Blickbewegungen und sensorischen Rückmeldungen.
@@ -274,7 +274,7 @@ Zur Gewährleistung wissenschaftlicher Validität ist das Projekt als Open-Sourc
 
 <br>
 
-### Kosteneffiziente Hardware
+### 💶 Kosteneffiziente Hardware
 Die Systemkonfiguration basiert primär auf ökonomisch erschwinglichen, kommerziell verfügbaren Komponenten (COTS), ohne die erforderliche Präzision und funktionale Zuverlässigkeit zu kompromittieren. Dieser Ansatz verfolgt klare strategische Ziele:
 
 - **Demokratisierung des Zugangs:** Reduktion investiver und finanzieller Barrieren beim Einstieg in moderne, multimodal gesteuerte Robotiktechnologien.
@@ -283,7 +283,7 @@ Die Systemkonfiguration basiert primär auf ökonomisch erschwinglichen, kommerz
 
 <br>
 
-### Modular & Industrie-Standard
+### 🧩 Modular & Industrie-Standard
 Die softwareseitige Infrastruktur ist modular gekapselt und vollständig in das Middleware-Framework ROS 2 Humble integriert. Die native Nutzung standardisierter Kommunikationsprimitive sichert die Interoperabilität mit industriellen Ökosystemen. Das konsequente Baukastenprinzip bietet entscheidende architektonische Vorteile:
 
 - **Native ROS 2-Kommunikation:** Volle Kompatibilität mit etablierten Ökosystemen (wie MoveIt 2) und modernen Sensor-SDKs über Nodes, Topics, Services und Actions.
@@ -404,7 +404,7 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
 >> | **`/servo_server/delta_twist_cmds`** | `geometry_msgs/TwistStamped` | *Sendet berechnete kartesische Geschwindigkeiten an den Servo Server.* |
->> | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | *Publiziert mit 10 Hz die Live-Pose (X, Y, Z) für das Web-UI.* |
+>> | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | *Publiziert mit 10 Hz die Live-Pose für das Web-UI: `[x, y, z]` in mm plus Orientierungs-Quaternion `[qx, qy, qz, qw]` (`link_base` ➔ `link_tcp`).* |
 >> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Publiziert den aktuellen Geschwindigkeitsfaktor für das UI.* |
 >> | **`/ui/joy_button_presses`** | `std_msgs/String` | *Publiziert Controller-Tastendrücke für das UI.* |
 >> | **`/ui/gripper_state`** | `std_msgs/String` (latched) | *Greiferzustand (`open` / `closed` / `off`) - hält Gamepad-Toggle und UI-Buttons synchron.* |
@@ -415,24 +415,30 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 >
 > ![TF2](https://img.shields.io/badge/TF2-yellow?style=flat-square)
 >
->> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
->> | *-* | *-* | *Hört auf die aktuelle TCP-Position (`link_base` -> `link_tcp`).* |
+>> | Frame / Transformation | Beschreibung |
+>> |---|---|
+>> | **`link_base` ➔ `link_tcp`** | *Hört auf die aktuelle TCP-Position für die Live-Telemetrie.* |
 >
 >
 > ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/servo_server/start_servo`** | Client | *Startet die MoveIt Servo-Engine.* |
->> | **`/servo_server/stop_servo`** | Client | *Stoppt die MoveIt Servo-Engine sicher.* |
->> | **`/ufactory/set_vacuum_gripper`** | Client (`xarm_msgs/srv/VacuumGripperCtrl`) | *Vakuum an/aus (A-Taste, B-Taste = aus) bei `add_vacuum_gripper:=true`.* |
->> | **`/ufactory/open_lite6_gripper`** | Client (`xarm_msgs/srv/Call`) | *Öffnet den Lite 6 Greifer (A-Taste, bei `add_gripper:=true`).* |
->> | **`/ufactory/close_lite6_gripper`** | Client (`xarm_msgs/srv/Call`) | *Schließt den Lite 6 Greifer (A-Taste, bei `add_gripper:=true`).* |
->> | **`/ufactory/stop_lite6_gripper`** | Client (`xarm_msgs/srv/Call`) | *Stoppt den Lite 6 Greifer sofort und löst die Haltekraft (B-Taste, bei `add_gripper:=true`).* |
->> | **`/ufactory/get_position`** | Client (`xarm_msgs/srv/GetFloat32List`) | *Fragt die aktuelle kartesische Controller-Position beim xArm-Treiber ab.* |
->> | **`/ui/execute_initial_pose`** | Client (`std_srvs/srv/Trigger`) | *Fährt den Roboter in die definierte Home-/Initialpose (Y-Taste).* |
+>> | **`/servo_server/start_servo`** | `std_srvs/srv/Trigger` (Client) | *Startet die MoveIt Servo-Engine beim Bringup.* |
+>> | **`/servo_server/stop_servo`** | `std_srvs/srv/Trigger` (Client) | *Stoppt die MoveIt Servo-Engine sicher.* |
+>> | **`/ufactory/set_vacuum_gripper`** | `xarm_msgs/srv/VacuumGripperCtrl` (Client) | *Vakuum an/aus (A-Taste, B-Taste = aus) bei `add_vacuum_gripper:=true`.* |
+>> | **`/ufactory/open_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Öffnet den Lite 6 Greifer (A-Taste, bei `add_gripper:=true`).* |
+>> | **`/ufactory/close_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Schließt den Lite 6 Greifer (A-Taste, bei `add_gripper:=true`).* |
+>> | **`/ufactory/stop_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Stoppt den Lite 6 Greifer sofort und löst die Haltekraft (B-Taste, bei `add_gripper:=true`).* |
+>> | **`/ufactory/get_position`** | `xarm_msgs/srv/GetFloat32List` (Client) | *Fragt die aktuelle kartesische Controller-Position beim xArm-Treiber ab.* |
+>> | **`/ui/execute_initial_pose`** | `std_srvs/srv/Trigger` (Client) | *Fährt den Roboter in die definierte Home-/Initialpose (Y-Taste).* |
 >
+>
+> ![Action Client](https://img.shields.io/badge/Action_Client-00BCD4?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/whisper/inference`** | `whisper_idl/action/Inference` | *Startet bzw. bricht die Whisper-AI-Spracherkennung per Tastendruck ab (X-Taste).* |
 >
 
 ---
@@ -453,7 +459,7 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/joy`** | `sensor_msgs/Joy` | *Liest den rohen, unbearbeiteten Gamepad-Input.* |
+>> | **`/joy`** | `sensor_msgs/Joy` | *Roher Gamepad-Input von `joy_node`.* |
 >> | **`/servo_server/status`** | `std_msgs/Int8` | *Überwacht Status-Codes des Servo-Servers.* |
 >> | **`/ui/eef_position`** | `std_msgs/Float32MultiArray` | *Bezieht die aktuelle Z-Höhe für den prädiktiven Kollisions-Check.* |
 >> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Liest den aktuellen Geschwindigkeitsfaktor zur dynamischen Dämpfungsberechnung.* |
@@ -464,7 +470,7 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/joy_check`** | `sensor_msgs/Joy` | *Leitet den auf Kollisionen geprüften Controller-Befehl weiter.* |
+>> | **`/joy_check`** | `sensor_msgs/Joy` | *Leitet das auf Kollisionen geprüfte Gamepad-Signal an `xarm_joystick_input` weiter.* |
 >> | **`/ui/collision_msg`** | `std_msgs/String` | *Meldet harte Stopps an das UI-Log.* |
 >
 > *Das haptische Rumble-Feedback des Xbox-Controllers wird nicht über ROS verschickt, sondern direkt über `pygame` am Joystick-Gerät ausgelöst (`joystick.rumble(...)`).*
@@ -512,7 +518,6 @@ Die folgende Übersicht zeigt auf einen Blick, welche Projektmodule in reiner So
 >> |---|---|---|
 >> | **`/xarm/set_tgpio_digital`** | `xarm_msgs/srv/SetDigitalIO` (Client) | *Schaltet Tool Digital Output 0 (TGPIO) am Greifer EIN (1) bzw. AUS (0).* |
 >
-<br>
 
 ---
 
@@ -566,6 +571,7 @@ flowchart TD
     end
     YOLO_ZED --> BBOX["/zed/bboxes_3d"]
     YOLO_IP --> BBOX
+    VIRT["virtual_object_detections.py<br/>(Virtuelle Szenenobjekte, standardmäßig aus)"] --> BBOX
     BBOX --> COLL["yolo_moveit_collision.py<br/>(Kollisionsobjekte)"]
     BBOX --> GRASP["yolo_planned_grasp_executor.py<br/>(3-Phasen Greifpfad)"]
     COLL --> OCTO["octomap_server<br/>(3D Voxelkarte)"]
@@ -590,7 +596,7 @@ flowchart TD
 > ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=ip_cam
 > ```
 >
-> **Zweck & Aufgabe:** Der zentrale Orchestrator für die gesamte 3D-Vision-, Objekterkennungs- und autonome Greif-Pipeline. Abhängig vom Parameter `camera` startet das Launch-Skript entweder dynamisch den ZED Mini Hardware-Treiber (`zed_wrapper`) zusammen mit `pointcloud_optimizer.py` und `yolo_3d_bbox_for_zed_m.py` oder die netzwerkbasierte `yolo_3d_bbox_for_ip_cam.py` zusammen mit `ip_cam_aruco_6pose_tf_coord.py` (ArUco 6-Pose TF-Koordinaten). Parallel dazu werden stets der MoveIt-Kollisionsgenerator (`yolo_moveit_collision.py`), der Trajektorien-Grasp-Server (`yolo_planned_grasp_executor.py`), die UI-Bridge (`grasp_action_bridge.py`), der RViz-Distanz-Visualisierer (`rviz_object_distance_visualizer.py`) sowie das MoveIt Servo-Warnungs-Status-Overlay (`rviz_servo_status.py`) hochgefahren.
+> **Zweck & Aufgabe:** Der zentrale Orchestrator für die gesamte 3D-Vision-, Objekterkennungs- und autonome Greif-Pipeline. Abhängig vom Parameter `camera` startet das Launch-Skript entweder dynamisch den ZED Mini Hardware-Treiber (`zed_wrapper`) zusammen mit `pointcloud_optimizer.py` und `yolo_3d_bbox_for_zed_m.py` oder die netzwerkbasierte `yolo_3d_bbox_for_ip_cam.py` zusammen mit `ip_cam_aruco_6pose_tf_coord.py` (ArUco 6-Pose TF-Koordinaten). Parallel dazu werden stets der MoveIt-Kollisionsgenerator (`yolo_moveit_collision.py`), der Trajektorien-Grasp-Server (`yolo_planned_grasp_executor.py`), die UI-Bridge (`grasp_action_bridge.py`), die virtuelle Objekterkennung (`virtual_object_detections.py`, startet ausgeschaltet), der RViz-Distanz-Visualisierer (`rviz_object_distance_visualizer.py`) sowie das MoveIt Servo-Warnungs-Status-Overlay (`rviz_servo_status.py`) hochgefahren.
 >
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
@@ -785,6 +791,52 @@ flowchart TD
 
 <br>
 
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `virtual_object_detections.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/virtual_object_detections.py`](./src/robot_vision_cameras_bringup/scripts/virtual_object_detections.py)</i></sub>
+> [!NOTE]
+> 💻 **Run Command:**
+> ```bash
+> ros2 run robot_vision_cameras_bringup virtual_object_detections.py
+> ```
+> *(Wird von `robot_vision_cameras_bringup.launch.py` gestartet, standardmäßig ausgeschaltet. Der Schalter ist der Button **Virtual Obj.** im SCENE-Panel der Robot Control UI.)*
+>
+> **Zweck & Aufgabe:** Publiziert die drei Szenenobjekte **Blue Cube**, **Red Rectangle** und **Green Cylinder** so auf `/zed/bboxes_3d`, als hätte YOLO sie erkannt - Bounding Box, rote Greifkugel und Labels im exakt gleichen Marker-Format (Marker-IDs ab 901, Namen mit dem Zusatz ` (virtual)`). Alles, was an `/zed/bboxes_3d` hängt, behandelt sie wie echte Detektionen: `yolo_moveit_collision` (MoveIt-Kollisionsobjekt + rote Wände), die Robot Control UI (Viewport, Liste *Detected Objects*, Kontextmenü, VR) und `robot_motion_handler_movegroup` („Approach from above“, Objekt-Scan). So lässt sich der Greif- und Kollisionsablauf ohne Kamera testen, z. B. im FAKE-Modus. Die Posen kommen aus den TF-Tuner-Frames `target_blue_cube`, `target_red_rectangle` und `target_green_cylinder` (die TF-z ist die Unterkante des Objekts); solange die virtuellen Objekte an sind, publiziert der TF-Tuner der Robot Control UI diese Frames auch bei ausgeschaltetem „Live TF“. Fehlt ein Frame, bleibt die Standard- bzw. zuletzt gesehene Pose stehen. Gedrehte Objekte bekommen wie eine echte YOLO-Box die achsparallele Hülle. Standardmäßig aus, damit virtuelle Kollisionsobjekte nie unbemerkt in MoveIt landen.
+>
+>
+> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Die virtuellen Detektionen im YOLO-Marker-Format (Namespaces `yolo_bboxes`, `yolo_object_grasp_center_point`, `yolo_labels_class`, `yolo_labels_coords`).* |
+>> | **`/ui/virtual_bboxes_3d`** | `visualization_msgs/MarkerArray` | *Dieselben Marker exklusiv für die Robot Control UI (Desktop, VR, VR-Spiegel), da das gedrosselte Abo von `/zed/bboxes_3d` (Queue 1) sie neben YOLO mit Kamerarate meist verdrängen würde.* |
+>> | **`/ui/virtual_detections_enabled`** | `std_msgs/Bool` (latched) | *Aktueller Schalterzustand für den Button Virtual Obj.* |
+>
+>
+> ![TF2](https://img.shields.io/badge/TF2-yellow?style=flat-square)
+>
+>> | Frame / Transformation | Beschreibung |
+>> |---|---|
+>> | **`world` ➔ `target_blue_cube` / `target_red_rectangle` / `target_green_cylinder`** | *Pose der drei Szenenobjekte (TF-Tuner-Frames).* |
+>
+>
+> ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/ui/set_virtual_detections`** | `std_srvs/srv/SetBool` (Server) | *Schaltet die virtuellen Detektionen an/aus. Ausschalten löscht die Marker; `yolo_moveit_collision` entfernt die Kollisionsobjekte nach 2 s.* |
+>
+>
+> ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
+>
+>> | Parameter | Standardwert | Beschreibung |
+>> |---|---|---|
+>> | `enabled` | `false` | *Schalterzustand beim Start.* |
+>> | `rate_hz` | `5.0` | *Publizierrate der Detektionen [Hz].* |
+>
+
+---
+
+<br>
+
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_moveit_collision.py`](./src/robot_vision_cameras_bringup/scripts/yolo_moveit_collision.py)</i></sub>
 > [!NOTE]
 > 💻 **Run Command:**
@@ -792,7 +844,7 @@ flowchart TD
 > ros2 run robot_vision_cameras_bringup yolo_moveit_collision.py
 > ```
 >
-> **Zweck & Aufgabe:** Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten um. Statt eines massiven Blocks wird eine **nach oben offene Becher-Form** (5 hauchdünne Wände à 1 mm) in den Planungsraum eingefügt. Dies erlaubt dem Greifer ein ungehindertes Eintauchen von oben (für Top-Down-Grasps), blockiert aber seitliche Kollisionen sicher. Die Seitenwände enden `top_clearance` (Parameter, Standard 0,01 m) unter der Objektoberkante und schützen damit fast die ganze Objekthöhe. Das ist weniger als der Servo-Haltabstand von 2 cm: Beim Herunterjoggen direkt über einem Objekt kann Servo etwas früher stoppen; „Approach from above“ plant über MoveIt und ist nicht betroffen.
+> **Zweck & Aufgabe:** Wandelt die erkannten 3D-Boxen nahtlos in dynamische MoveIt `CollisionObject`-Nachrichten um. Statt eines massiven Blocks wird eine **nach oben offene Becher-Form** (5 hauchdünne Wände à 1 mm) in den Planungsraum eingefügt. Dies erlaubt dem Greifer ein ungehindertes Eintauchen von oben (für Top-Down-Grasps), blockiert aber seitliche Kollisionen sicher. Die Seitenwände enden `top_clearance` (Parameter, Standard 0,01 m) unter der Objektoberkante und schützen damit fast die ganze Objekthöhe. Das ist weniger als der Servo-Haltabstand von 2 cm: Beim Herunterjoggen direkt über einem Objekt kann Servo etwas früher stoppen; „Approach from above“ plant über MoveIt und ist nicht betroffen. Da mehrere Quellen auf `/zed/bboxes_3d` publizieren (YOLO und `virtual_object_detections`) und jede Nachricht nur die eigenen Objekte enthält, wird pro Objekt nach Zeit aufgeräumt statt danach, was in der letzten Nachricht fehlt: Ein Objekt verlässt MoveIt nach 2 s ohne Meldung, seine Wände nach 1 s. Ein 0,5-s-Timer erledigt das auch dann, wenn eine Quelle ganz verstummt (Node beendet, virtuelle Objekte ausgeschaltet).
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -950,10 +1002,10 @@ stateDiagram-v2
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/compute_ik`** | Client | *Prüft via MoveIt, ob die Zielpose mathematisch erreichbar ist.* |
->> | **`/ui/execute_move_to_pose`** | Client | *Nutzt MoveIt Servo als Fallback-Bewegung.* |
->> | **`/servo_server/stop_servo`** | Client | *Stoppt den Servo Server temporär während der Trajektorienfahrt.* |
->> | **`/servo_server/start_servo`** | Client | *Startet den Servo Server nach Abschluss der Fahrt wieder.* |
+>> | **`/compute_ik`** | `moveit_msgs/srv/GetPositionIK` (Client) | *Prüft via MoveIt, ob die Zielpose mathematisch erreichbar ist.* |
+>> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Nutzt MoveIt Servo als Fallback-Bewegung.* |
+>> | **`/servo_server/stop_servo`** | `std_srvs/srv/Trigger` (Client) | *Stoppt den Servo Server temporär während der Trajektorienfahrt.* |
+>> | **`/servo_server/start_servo`** | `std_srvs/srv/Trigger` (Client) | *Startet den Servo Server nach Abschluss der Fahrt wieder.* |
 >
 >
 
@@ -1065,12 +1117,12 @@ stateDiagram-v2
 >
 >> | Element | Frame-ID | X [m] | Y [m] | Z [m] | Roll | Pitch | Yaw |
 >> |---|---|---|---|---|---|---|---|
->> | **Zed M Camera** | `zed_camera_link` | `0.473` | `0.000` | `0.368` | `0,0°` | `57,5°` | `180,0°` |
->> | **Blue Cube** | `target_blue_cube` | `0.300` | `0.085` | `0.000` | `0,0°` | `0,0°` | `0,0°` |
->> | **Red Rectangle** | `target_red_rectangle` | `0.305` | `-0.080` | `0.000` | `0,0°` | `0,0°` | `45,0°` |
->> | **Green Cylinder** | `target_green_cylinder` | `0.350` | `0.025` | `0.000` | `0,0°` | `0,0°` | `0,0°` |
->> | **White Plane** | `target_white_plane` | `0.305` | `0.000` | `-0,003` | `0,0°` | `0,0°` | `0,0°` |
->> | **Safety Zone** | `target_safety_zone` | `0.000` | `0.000` | `0.000` | `0,0°` | `0,0°` | `0,0°` |
+>> | **Zed M Camera** | `zed_camera_link` | `0.473` | `0.000` | `0.368` | `0.0°` | `57.5°` | `180.0°` |
+>> | **Blue Cube** | `target_blue_cube` | `0.300` | `0.085` | `0.000` | `0.0°` | `0.0°` | `0.0°` |
+>> | **Red Rectangle** | `target_red_rectangle` | `0.305` | `-0.080` | `0.000` | `0.0°` | `0.0°` | `45.0°` |
+>> | **Green Cylinder** | `target_green_cylinder` | `0.350` | `0.025` | `0.000` | `0.0°` | `0.0°` | `0.0°` |
+>> | **White Plane** | `target_white_plane` | `0.305` | `0.000` | `-0.003` | `0.0°` | `0.0°` | `0.0°` |
+>> | **Safety Zone** | `target_safety_zone` | `0.000` | `0.000` | `0.000` | `0.0°` | `0.0°` | `0.0°` |
 >
 > *Standardradius der Safety Zone: 200 mm (geht zusammen mit X/Y über `/ui/safety_zone_params`).*
 >
@@ -1334,6 +1386,13 @@ flowchart TD
 >> |---|---|---|
 >> | **`/ui/sound_enabled`** | `std_msgs/Bool` | *Schaltet die akustische Rückmeldung gemeinsam mit dem Sound-Toggle der Web-UI stumm.* |
 >
+>
+> ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
+>
+>> | Topic / Interface | Msg Type | Beschreibung |
+>> |---|---|---|
+>> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Fährt Scan-Posen an und schwebt über den erkannten Zielen.* |
+>
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
 >
 >> | Parameter | Standardwert | Beschreibung |
@@ -1342,30 +1401,6 @@ flowchart TD
 >> | `dwell_threshold` | `2.0` | *Fixationsdauer [s] auf einem Objekt bis zur Auswahl.* |
 >
 > *Die Blickpunktdaten kommen nicht über ein ROS-Topic, sondern direkt aus dem RTSP-Stream der Tobii Glasses 3 (`rtsp://<tobii-ip>:8554/live/all`, JSON-Feld `gaze2d`). Die Objekterkennung läuft node-intern über YOLOv8 auf demselben Stream.*
->
->
-> ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
->
->> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
->> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Sendet den Namen des anvisierten Zielobjekts an den Grasp-Executor.* |
->> | **`/ui/grasp_status`** | `std_msgs/String` | *Publiziert Fixations- und Greifstatus an das Dashboard.* |
->
->
-> ![Action Client](https://img.shields.io/badge/Action_Client-00BCD4?style=flat-square)
->
->> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
->> | **`/ui/grasp_object`** | `robot_vision_cameras_bringup/action/GraspObject` | *Action-Schnittstelle zur Einleitung der autonomen Greifsequenz.* |
->
->
-> ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
->
->> | Topic / Interface | Msg Type | Beschreibung |
->> |---|---|---|
->> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Fährt Ziel- und Scan-Posen kartesisch an.* |
->> | **`/ufactory/open_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Öffnet den Lite 6 Greifer.* |
->> | **`/ufactory/close_lite6_gripper`** | `xarm_msgs/srv/Call` (Client) | *Schließt den Lite 6 Greifer zur Aufnahme.* |
 >
 
 ---
@@ -1509,7 +1544,6 @@ flowchart TD
 >> | **`/ui/grasp_status`** | `std_msgs/String` | *Empfängt Live-Statusmeldungen der Autonomie-Pipeline für das Konsolen-Log.* |
 >> | **`/joint_states`** | `sensor_msgs/JointState` | *Liest die aktuellen Gelenkwinkel zur Darstellung in den UI-Slidern.* |
 >> | **`/ui/robot_control/current_speed`** | `std_msgs/Float32` | *Zeigt die aktive Speed-Index-Stufe an.* |
->> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Liest die Safety-Zone zur visuellen Darstellung aus.* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1526,10 +1560,10 @@ flowchart TD
 >
 >> | Topic / Interface | Msg Type | Beschreibung |
 >> |---|---|---|
->> | **`/ui/execute_initial_pose`** | Client | *Löst die Rückkehr in die Home-Position aus.* |
->> | **`/ui/execute_scan_trajectory`** | Client | *Startet die 3D-Scan-Trajektorie.* |
->> | **`/ui/execute_move_to_pose`** | Client | *Befiehlt das Anfahren einer kartesischen Absolutpose.* |
->> | **`/ui/execute_move_joint`** | Client | *Bewegt Gelenke auf Zielwinkel.* |
+>> | **`/ui/execute_initial_pose`** | `std_srvs/srv/Trigger` (Client) | *Löst die Rückkehr in die Home-Position aus.* |
+>> | **`/ui/execute_scan_trajectory`** | `std_srvs/srv/Trigger` (Client) | *Startet die 3D-Scan-Trajektorie.* |
+>> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Befiehlt das Anfahren einer kartesischen Absolutpose.* |
+>> | **`/ui/execute_move_joint`** | `xarm_msgs/srv/MoveJoint` (Client) | *Bewegt Gelenke auf Zielwinkel.* |
 >
 >
 
@@ -1897,15 +1931,15 @@ flowchart TD
 > 💻 **Run Command:**
 > ```bash
 > # Komplett: rosbridge 9090 + Webserver 8081 + Chrome-App-Fenster + web_video_server 8082 (inkl. window_x11_streamer):
-> # Launch-Argumente: start_video_server (Standard true), video_server_port (Standard 8082)
 > ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py
 >
 > # Nur der Webserver:
 > python3 src/http_robot_control_ui_p8081/http_robot_control_ui_p8081/server.py 8081 src/http_robot_control_ui_p8081
 > ```
+> *Launch-Argumente: `start_video_server` (Standard `true`), `video_server_port` (Standard `8082`).*
 >
 > **Zweck & Aufgabe:** Eine sich nativ anfühlende, eigenständige Chrome Web App in moderner Glassmorphism-Designsprache. Fungiert als multimodales Dashboard und spiegelt das RViz Control Panel für die Remote-Bedienung. Läuft auf **Port 8081**.
-> **Native Desktop Integration:** Sowohl die *ROS 2 Nexus Webapp* als auch die *Robot Control UI* starten nun in dedizierten, isolierten Chrome `--app` Profilen. Sie öffnen sich automatisch maximiert als eigenständige Anwendungen, völlig losgelöst von Standard-Browserfenstern, und verfügen über eigene, unverwechselbare Taskleisten-Icons für ein perfektes, natives Desktop-Erlebnis.
+> **Native Desktop Integration:** Die *Robot Control UI* startet in einem dedizierten, isolierten Chrome-`--app`-Profil: maximiert als eigenständige Anwendung, losgelöst von normalen Browserfenstern und mit eigenem Taskleisten-Icon. Die *ROS 2 Nexus Webapp* öffnet sich als rahmenloses WebKitGTK-Fenster, das nur das Start-Popup zeigt (siehe 7.2); Chrome `--app` ist dort nur noch der Fallback.
 > - ✨ **Core Features:** 
 >   - **Standardisierte Statusleiste & Schnell-Reload:** Vereinheitlichte Navbar mit Live-Refresh-Button (`fa-arrows-rotate`) ganz links, gefolgt von standardisierten Port-Badges im Format `Name: PORT` (`ROS 2 Bridge: 9090`, `Robot Control UI: 8081`, `Nexus Webapp: 5000`, `Dashboard: 8080`, `Video Streams: 8082`, `VR Teleop: 9091`), Geräte-Badges, Live-ROS-Umgebungsparametern (`ROS_DOMAIN_ID: 66`, `RMW: rmw_cyclonedds_cpp`, `Localhost Only: On/Off`) und Echtzeit-Hardware-Modus-Badges. Alle Badges kommen von `/api/header_status` des UI-Webservers (`server.py`, auf 8081 und 8443 gleich - Same-Origin, klappt also auch im Quest-Browser): Ports werden auf dem PC geprüft; **Quest 3** ist online per USB (sysfs), WLAN (Ping auf die einmal per `adb` gelesene IP, gemerkt in `~/.cache/robot_control_ui/quest_ip`, `QUEST_IP` überschreibt) oder laufender WebXR-Session und zeigt z. B. `VR · USB+WLAN`; **Xbox** per USB/Bluetooth, `/joy` oder Gamepad-API; **Tobii** über den RTSP-Port 8554 (`TOBII_IP`, Standard `192.168.75.51`); Domain/RMW/Localhost aus der Umgebung des Servers.
 >   - **Globale Geschwindigkeit (SPEED-Tab):** Ein einziger Slider unten rechts im Viewport (5 Stufen, Anzeige z. B. `3/5 (60%)` im Tab-Kopf) regelt alles: MoveIt Servo/Jogging und Gamepad über `/ui/robot_control/set_speed_index` (Faktoren 0,1–0,5) und zugleich MoveTo, Initialpose und Scans über `/ui/scan_speed` (Stufe 1–2 = Slow, 3 = Normal, 4–5 = Fast).
@@ -1918,9 +1952,14 @@ flowchart TD
 >   - **Verstellbare & einklappbare Außenspalten:** Zwischen linker/rechter Spalte und der Mitte sitzt je eine schmale Trennleiste (`js/columns.js`). Ziehen ändert die Breite der Außenspalte (min. 300 px, max. 42 % der Breite, die Mitte behält mindestens 480 px), Doppelklick stellt das Standardlayout her, der Pfeil-Button auf der Leiste klappt die Spalte ganz ein und wieder aus. Die mittlere Spalte mit dem 3D-Viewport bekommt jeweils den frei werdenden Platz; Breiten und Einklapp-Zustand werden im Browser gespeichert.
 >   - **Responsives Layout der Sections:** Die Sections richten sich per Container Queries nach ihrer eigenen Breite (nicht nach dem Fenster), weil sie je nach Spalte und Spaltenbreite 300 px oder 700 px breit sein können. Cartesian Jogging bricht in Zeilen um (Joystick + Z, Rotation/Frame, Greifer-Buttons nebeneinander), die EEF-Telemetrie verkleinert sich, die Icon-Leiste des Viewports bricht in sich um, Sprachsteuerung, Greifziel-Eingabe, ZED-Modusleiste und TF-Tuner-Dropdown passen sich an. Wird der Viewport schmaler als 780 px, bekommt das POSE-Panel eine eigene Zeile; auf Bildschirmen unter 800 px Höhe hat der Viewport mindestens 560 px Höhe (die Seite scrollt, Header und Not-Aus bleiben oben).
 >   - **YOLO Grasp Integration:** Direkte Visualisierung der 3D-YOLO-Objektliste samt Eingabefeld zur Auslösung der autonomen Greifsequenz aus der Ferne.
->   - **3D-Centerpiece (WebGL Digital Twin) & Einheitliche weiße Typografie:** Zentraler, offline-fähiger 3D Digital Twin (three.js & urdf-loader) mit Live-Spiegelung von `/joint_states` und der Linearachse, Orbit-Kamera, Navigations-Gizmo oben links (Achskugeln anklicken = Ansicht ausrichten, ziehen = drehen), Reset, Draufsicht, Grid und CAD-Kanten. Im **SCENE**-Panel schalten Icons die Marker der `rviz_marker_3d_scene_objects`-Knoten einzeln ein/aus (`fa-cubes` Objekte, `fa-square` Referenzebene, `fa-shield-halved` Safety Zone - rot die vermessene unerreichbare Zone um die Roboterachse als 3D-Körper, orange flach der Bahnabstand der Scans und der leicht transparent weiße Arbeitsbereichskreis mit $r = 420\text{ mm}$ [$3\text{ mm}$ Dicke] auf Bodenhöhe $Z = 0$, `fa-video` ZED-M-Stativ), dazu YOLO-Overlay (mit sauber zentrierter zweizeiliger Klassen- und Koordinatenbeschriftung), die **ZED-Punktwolke** (`fa-braille`, standardmäßig aus: abonniert `/zed/pointcloud_web` nur, solange sie eingeschaltet ist, und zeichnet sie farbig in `world`), Distanzlinie und die MoveIt-Kollisionsschalter. Alle Section-Überschriften (Panels, Digital Twin, TF Tuner) und deren Icons sind einheitlich in reinem Weiß gehalten (`#ffffff`).
+>   - **3D-Centerpiece (WebGL Digital Twin) & Einheitliche weiße Typografie:** Zentraler, offline-fähiger 3D Digital Twin (three.js & urdf-loader) mit Live-Spiegelung von `/joint_states` und der Linearachse, Orbit-Kamera, Navigations-Gizmo oben links (Achskugeln anklicken = Ansicht ausrichten, ziehen = drehen), Reset, Draufsicht, Grid und CAD-Kanten. Im **SCENE**-Panel schalten Icons die Marker der `rviz_marker_3d_scene_objects`-Knoten einzeln ein/aus (`fa-cubes` Objekte, `fa-square` Referenzebene, `fa-shield-halved` Safety Zone - rot die vermessene unerreichbare Zone um die Roboterachse als 3D-Körper, orange flach der Bahnabstand der Scans und der leicht transparent weiße Arbeitsbereichskreis mit $r = 420\text{ mm}$ [$3\text{ mm}$ Dicke] auf Bodenhöhe $Z = 0$, `fa-video` ZED-M-Stativ), dazu YOLO-Overlay (mit sauber zentrierter zweizeiliger Klassen- und Koordinatenbeschriftung), die **ZED-Punktwolke** (`fa-braille`, standardmäßig aus: abonniert `/zed/pointcloud_web` nur, solange sie eingeschaltet ist, und zeichnet sie farbig in `world`), Distanzlinie, der Button **Virtual Obj.** (siehe unten) und die MoveIt-Kollisionsschalter. Alle Section-Überschriften (Panels, Digital Twin, TF Tuner) und deren Icons sind einheitlich in reinem Weiß gehalten (`#ffffff`).
 >   - **Dynamische Viewport-Kopfzeile:** Das 3D-Viewport-Centerpiece zeigt einen sauberen, responsiven Titel: „Digital Twin - Viewport | xArm Lite 6 (FAKE)“ bzw. „...(REAL)“ direkt neben dem Würfel-Icon – synchronisiert mit der automatischen Erkennung des physischen Roboter-Treibers (`ufactory_driver`). Enthält vertikal gestapelte Einklapp-Icons (`.centerpiece-collapse-stack`) zum Einklappen aller Viewport-HUD-Panels (`fa-window-minimize`) oder zum Einklappen des gesamten 3D-Viewports (`fa-chevron-up`).
->   - **Einklappbare Viewport-HUD-Panels:** Der Viewport trägt fünf unabhängig einklappbare Glas-Panels — **SCENE**, **MOTION**, **TELEMETRY**, **POSE** und **SPEED**. Jede Panel-Kopfzeile klappt ihren Inhalt zu, ein Button in der Viewport-Tableiste (`fa-window-minimize`) klappt alle gemeinsam zu oder auf; der Zustand wird pro Browser gespeichert. Ein eigener Schalter (`fa-ruler-horizontal`) blendet die gestrichelte Distanzlinie vom TCP zum nächsten Objekt ein oder aus. Die Zielkoordinaten des TCP-Gizmos stehen im MoveIt-Popup (siehe unten).
+>   - **Einklappbare Viewport-HUD-Panels:** Der Viewport trägt sechs unabhängig einklappbare Glas-Panels — **SCENE**, **MOTION**, **TELEMETRY**, **POSE**, **SYSTEM** und **SPEED**. Jede Panel-Kopfzeile klappt ihren Inhalt zu, ein Button in der Viewport-Tableiste (`fa-window-minimize`) klappt alle gemeinsam zu oder auf; der Zustand wird pro Browser gespeichert. Ein eigener Schalter (`fa-ruler-horizontal`) blendet die Distanzlinie vom TCP zum nächsten Objekt ein oder aus. Die Zielkoordinaten des TCP-Gizmos stehen im MoveIt-Popup (siehe unten).
+>   - **Distanzlinie als Leuchtstrahl:** Die Distanzlinie ist ein animierter Strahl (ein Mesh statt einer 1-px-WebGL-Linie) mit hellem Kern, weichem Glow und Lichtpulsen, die vom TCP zum Ziel laufen, einem Glow-Punkt an beiden Enden und einem sich ausbreitenden Ring am Ziel. Nah am Ziel wechselt die Farbe von Cyan (ab 15 cm) zu Grün (bei 3 cm), und die Pulse werden schneller.
+>   - **SYSTEM-Tab (CPU-/GPU-Last):** Zeigt die CPU- und GPU-Last des PCs in Prozent, jeweils mit einem 60-s-Verlauf auf fester Skala 0–100 % (wie der Traffic-Graph im Header der Nexus Webapp); ab 90 % wird die Zeile hervorgehoben. Die Werte kommen jede Sekunde von `/api/sys_load` aus `server.py` (`/proc/stat` bzw. `nvidia-smi`, gemessen nur, solange die UI fragt) - Same-Origin, funktioniert also auch im Quest-Browser (8443).
+>   - **Rotationen in Grad:** POSE-Felder, TELEMETRY-Werte (Roll / Pitch / Yaw) und die Gelenkwerte zeigen Winkel in Grad. Die Services (`/ui/execute_move_to_pose` usw.) bekommen weiterhin Radiant; die UI rechnet um.
+>   - **Virtuelle Objekte:** Der Button **Virtual Obj.** im SCENE-Panel schaltet `virtual_object_detections` über `/ui/set_virtual_detections` (weiß = aus, ausgegraut = Node läuft nicht). Blue Cube, Red Rectangle und Green Cylinder aus dem TF-Tuner erscheinen dann wie YOLO-Detektionen im Viewport, in der Liste *Detected Objects* und in VR (über `/ui/virtual_bboxes_3d`) - mit Greifkugel, Kontextmenü und MoveIt-Kollisionswänden. Ein Pin-Schalter in der Section *Detected Objects* legt fest, ob ein `DELETEALL` (z. B. vom YOLO der IP-Kamera) die virtuellen Objekte behält (Standard) oder wie RViz alles löscht.
+>   - **TF Control Tuner - gemeinsam und auf dem PC gespeichert:** Jede Tuner-Änderung geht latched auf `/ui/tf_tuner_state`; alle offenen Clients (Desktop, Quest 3, weitere Tabs) übernehmen den jüngsten Stand und senden identische Transformationen, statt mit eigenen Werten um dieselben Frames zu kämpfen. Die TF-Zeitstempel nutzen die ROS-Serverzeit (Offset über `/rosapi/get_time`), damit ein Client mit vorgehender Uhr (z. B. die Quest) keine Posen mehr sendet, die tf2 ignoriert. Der Badge **Save** im Tuner-Kopf speichert alle Werte auf dem PC (`/api/tf_tuner` → `~/.config/robot_control_ui/tf_tuner.json`), sodass Desktop und Quest 3 bei jedem Start denselben Stand laden; er zeigt *Save* (ungespeicherte Änderungen), *Saved* oder *Retry* (Fehler). Beim Laden der Seite gewinnt der gespeicherte Stand über den `localStorage` des Browsers, nur ein bereits laufender gemeinsamer Stand ist aktueller. Solange die virtuellen Objekte an sind, sendet der Tuner die Frames der drei Szenenobjekte auch bei ausgeschaltetem „Live TF“.
 >   - **Akustische Rückmeldung & systemweiter Mute:** Jeder Klick spielt einen kurzen UI-Sound (`sounds/ui_mouse_click.mp3`), Bewegungsbefehle werden von vorgerenderten deutschen Sprachansagen begleitet (z.B. `_voice_robot_moves_to_scan_pos.mp3`). Dedizierte Sprachansagen informieren den Nutzer, wenn ein Ziel unerreichbar ist: `_voice_object_out_of_reach.mp3` bei der Anfahrt eines Objekts (rote Greifkugel oder Eintrag der Objektliste), `_voice_pose_out_of_reach.mp3` bei Zielen über TCP-Gizmo und MoveTo-Pose (IK-Fehler, Kollision/Singularität bei der Planung, Arbeitsbereichsverletzung, abgelehnte Trajektorie). MoveIt-Fehler kommen aus dem strukturierten `/ui/moveit_motion_state` (`phase: failed`), nicht aus dem Wortlaut der Log-Zeilen; Not-Aus (`aborted`) und verworfene Pläne bleiben stumm. Eine weitere Ansage bestätigt die gezielte Anfahrt (`_voice_robot_moves_to_selected_object.mp3`, strikt 1x pro Sequenz). Ein einzelner Lautsprecher-Button (`fa-volume-high` / `fa-volume-xmark`) in der Statusleiste schaltet das gesamte System stumm: Der Zustand wird pro Browser gespeichert und alle 2 Sekunden auf **`/ui/sound_enabled`** (`std_msgs/Bool`) publiziert, das `robot_motion_handler_movegroup`, `yolo_planned_grasp_executor` und `gaze_grasp_routine_tobii_glasses` abonnieren (durch das regelmäßige Senden bekommen auch später gestartete Nodes den Zustand). Wer die Web-UI stummschaltet, schaltet damit also auch die roboterseitige Sprachausgabe stumm. Schlägt die Wiedergabe fehl (z.B. wegen der Autoplay-Policy des Browsers), wird das im Konsolen-Log ausdrücklich gemeldet statt still zu scheitern. Das Umschalten der MoveIt-Kollisionsicons wird mit „collision detection enabled/disabled“ angesagt, und ein Fehlerton (`sounds/error_sound.mp3`) erklingt, wenn der fahrende Roboter tatsächlich in eine Kollision gerät – Singularitäten bleiben stumm (Live-Telemetrie, nicht die MoveIt-Planung; 2,5 s Abklingzeit). Fahrten über das TCP-Gizmo im Viewport verzichten auf die Ansage „robot moves to absolute pose“.
 >   - **Greifersteuerung (Vakuum- & Lite 6 Greifer):** Die drei Buttons steuern den Greifer jetzt wirklich. Der Befehl geht über `/ui/gripper_cmd` an `joy_to_servo_node`, der auch die Gamepad-Tasten A/B bedient und damit der einzige Besitzer des Greiferzustands ist (`/ui/gripper_state`, latched) - Gamepad-Toggle und UI bleiben synchron. Welcher Greifer angeschlossen ist, kommt aus dem Launch-Argument (`add_vacuum_gripper:=true` → Vakuum über `/ufactory/set_vacuum_gripper`, Buttons *Release / Suction / Off*; `add_gripper:=true` → Lite 6 Greifer über `open/close/stop_lite6_gripper`, Buttons *Open / Close / Off*). Ohne beides sind die Buttons gesperrt.
 >   - **Not-Aus im Viewport + Leertaste:** Der Not-Aus sitzt unten mittig im Viewport, in einer eigenen Rasterzeile über den Panels TELEMETRY / POSE / SPEED. Standardmäßig ist er ausgeblendet und wird eingeblendet, sobald sich der Roboter bewegt (Gelenkstellungen); 1,5 s nach dem Stillstand blendet er wieder aus. Ist er gedrückt und verriegelt, bleibt er sichtbar, der Viewport bekommt einen pulsierenden roten Rahmen (wie bei einer Kollision) und daneben erscheint der orange *Reset*-Button zum Quittieren. Die **Leertaste** löst den Not-Aus jederzeit aus, auch wenn der Button ausgeblendet ist (außer in Textfeldern). Solange er verriegelt ist, sind die Bewegungs-Buttons (Initial Pose, Scan-Position, Objekt-Scan, Go) ausgegraut und deaktiviert - ein Klick spielt weder Klick-Sound noch Ansage -, und `motionAllowed()` blockiert jede Bewegung, auch Sprachbefehle und das Gizmo. Der Header lässt sich mit dem Pfeil rechts einklappen (nur Reload bleibt sichtbar); das Hardware-Mode-Badge steht rechtsbündig daneben.
@@ -1933,16 +1972,16 @@ flowchart TD
 >   - **Kollisionswände & Servo-Haltabstand:** Die Kollisionswände der erkannten Objekte erscheinen im Twin rot transparent (nur bei aktiver Objektkollision, sonst nur der Rahmen). Kommt der TCP einer Wand näher als 2 cm - dem Haltabstand von MoveIt Servo -, leuchten die Wände dieses Objekts gelb-orange und pulsieren.
 >   - **Objekt-Kontextmenü & Viewport-Greifkugeln:** Klick auf die rote Greifkugel direkt im 3D-Viewport oder auf einen Eintrag der Objektliste öffnet das einheitliche Kontextmenü: *Approach from above* (kollisionsfreie Fahrt auf 70 mm über den Greifpunkt, dann geradliniges Absenken auf 10 mm über das Ziel; bei Auto-Move aus wird erst geplant und erst nach *Execute* im MoveIt-Popup gefahren, bei Auto-Move an sofort, im Ghost-Modus erscheinen beide Teile als Geist), *Grasp* (in Umsetzung befindlicher Platzhalter mit Benachrichtigung) und *Disable / Enable collision for this object* (`/ui/set_object_collision`). Die Kopfzeile zeigt die Greifpunkt-Koordinaten in den Achsenfarben (X rot, Y grün, Z blau, jeweils mit Einheit `mm`).
 >   - **Verbindungsabbruch:** Fehlt rosbridge, legt sich ein Overlay über die gesamte Bedienfläche (Header bleibt frei) und alle Bewegungsfunktionen sind gesperrt - mit Offline-Dauer, Reconnect-Versuchen und Reload-Button.
->   - **Architektur (ES-Module, three.js r186):** Das frühere `app.js` ist in ES-Module unter `js/` aufgeteilt (`ros`, `jog`, `safety`, `motion`, `gizmo`, `grasp`, `audio`, `layout`, `log`, `status`, `tf_tuner`, `voice`, `streams`, `persist`, `columns`, `pointcloud`, `ground_popup`, `panel_snap`, `robot_limits`, `uievents`, `util`, `vr_mirror`), der Digital Twin und die VR-Module (`xr.js`, `xr_hud.js`, `xr_controls.js`, `xr_ui.js`, `xr_nozzle_cam.js`, `xr_mirror_send.js`, `xr_mirror_worker.js`) liegen in `js/twin/`. Statt globaler `window.*`-Funktionen tragen die Elemente `data-action`-Attribute, die `js/main.js` verteilt. Alle Topic- und Service-Namen stehen zentral in `js/config.js`. three.js r186 und urdf-loader 0.13 liegen lokal unter `lib/` (Import-Map, offline-fähig); der Twin rendert nur noch bei Änderungen oder laufenden Animationen. Das Log ist auf 500 Zeilen begrenzt, Polling-Intervalle pausieren bei verstecktem Tab.
->   - **Webserver ohne manuelles Cache-Busting:** `server.py` ersetzt `python3 -m http.server`: HTML/JS/CSS gehen mit `Cache-Control: no-cache` raus (unverändert → 304), und `index.html` bekommt automatisch `?v=<Änderungszeit>` an jede Skript- und Stylesheet-URL.
->   - **Letzter UI-Zustand bleibt erhalten:** Neben Spalten-Layout, eingeklappten Sections/HUD-Tabs, Sound und Overlays speichert `js/persist.js` auch Grid, CAD-Kanten, TCP-Gizmo (an/aus, Modus), Kameraansicht, Auto-Move, Base/TCP-Frame, SCENE-Schalter, alle TF-Tuner-Werte samt gewähltem Element und die per Ziehen geänderte Größe der Sections (`localStorage`). Werte des Roboters (Posen-Eingaben, Speed, Linearachse) werden bewusst nicht gespeichert.
+>   - **Architektur (ES-Module, three.js r186):** Das frühere `app.js` ist in ES-Module unter `js/` aufgeteilt (`ros`, `jog`, `safety`, `motion`, `gizmo`, `grasp`, `audio`, `layout`, `log`, `status`, `tf_tuner`, `voice`, `streams`, `persist`, `columns`, `pointcloud`, `ground_popup`, `panel_snap`, `robot_limits`, `uievents`, `util`, `vr_mirror`, `sysload`), der Digital Twin und die VR-Module (`xr.js`, `xr_hud.js`, `xr_controls.js`, `xr_ui.js`, `xr_moveit.js`, `xr_nozzle_cam.js`, `xr_mirror_send.js`, `xr_mirror_worker.js`) liegen in `js/twin/`. Statt globaler `window.*`-Funktionen tragen die Elemente `data-action`-Attribute, die `js/main.js` verteilt. Alle Topic- und Service-Namen stehen zentral in `js/config.js`. three.js r186 und urdf-loader 0.13 liegen lokal unter `lib/` (Import-Map, offline-fähig); der Twin rendert nur noch bei Änderungen oder laufenden Animationen. Das Log ist auf 500 Zeilen begrenzt, Polling-Intervalle pausieren bei verstecktem Tab.
+>   - **Webserver ohne manuelles Cache-Busting:** `server.py` ersetzt `python3 -m http.server`: HTML/JS/CSS gehen mit `Cache-Control: no-cache` raus (unverändert → 304), und `index.html` bekommt automatisch `?v=<Änderungszeit>` an jede Skript- und Stylesheet-URL. Zusätzlich liefert er die kleinen JSON-APIs `/api/header_status` (Header-Badges), `/api/sys_load` (SYSTEM-Tab) und `/api/tf_tuner` (gespeicherte TF-Tuner-Werte).
+>   - **Letzter UI-Zustand bleibt erhalten:** Neben Spalten-Layout, eingeklappten Sections/HUD-Tabs, Sound und Overlays speichert `js/persist.js` auch Grid, CAD-Kanten, TCP-Gizmo (an/aus, Modus), Kameraansicht, Auto-Move, Base/TCP-Frame, SCENE-Schalter, alle TF-Tuner-Werte samt gewähltem Element (als Rückfallebene - die per *Save* auf dem PC gespeicherten Werte haben Vorrang) und die per Ziehen geänderte Größe der Sections (`localStorage`). Werte des Roboters (Posen-Eingaben, Speed, Linearachse) werden bewusst nicht gespeichert.
 >   - **Bodenkollision aus = Z Collision Level aus:** Ist die MoveIt-Bodenkollision im SCENE-Panel abgeschaltet, sperren auch UI (Jog, MoveTo, Gizmo, Warnbanner) und `teleop_pre_collision_checker` (Gamepad) nicht mehr nach unten. Läuft `moveit_floor_collision` nicht, bleibt die Sperre als Rückfallebene aktiv.
->   - **Interaktives Bodenkollisions-Popup & HUD:** Live-Bodenkollisionsüberwachung und Schwellenwerteinstellung (`ground_popup.js`) direkt aus den Viewport-SCENE-Toggles erreichbar.
+>   - **Bodenkollisions-Popup (`ground_popup.js`):** Erscheint nur beim **Ein**schalten des Bodenkollisions-Icons im SCENE-Panel, unten mittig im Viewport in einer eigenen Rasterzeile über dem Not-Aus (ohne Überlappung mit POSE & Co.). Das Feld ist mit dem zuletzt bestätigten Z Collision Level (TCP-Höhe, im Browser gespeichert) vorbelegt; +/- und Tippen ändern nur das Feld. Erst **OK** (oder Enter) übernimmt den Wert: sofort für die UI-Bodensperre und über `/ui/set_ground_collision_level` an `moveit_floor_collision`, das die MoveIt-Box nachzieht und den gültigen (geklemmten) Wert latched auf `/ui/ground_collision_level` zurückmeldet. Unverändert und ohne Bedienung blendet sich das Popup nach 10 s wieder aus.
 >   - **TCP-Gizmo in der gewohnten Optik:** Das Gizmo nutzt weiterhin das TransformControls aus three.js r128 (`lib/three/addons/controls/TransformControls_r128.js`, als ES-Modul), der Rest des Twins läuft auf r186.
 >   - **Zone um die Roboterachse = nur Warnung:** Liegt das Gizmo-Ziel in der vermessenen unerreichbaren Zone, färben sich Koordinaten und Δ rot und das Log warnt - gesperrt wird nicht mehr (auch Auto-Move und *Execute path* nicht), MoveIt entscheidet. Bis 20 mm außerhalb der Zone gibt es eine orange Vorwarnung; die REACH-Anzeige sinkt an der Zonengrenze auf 0 %. Die frühere Live-Meldung „SELF-COLLISION / INNER CYLINDER“ entfällt, Singularitäten und Kollisionen im Betrieb meldet MoveIt Servo.
 >   - **Bidirektionales Section-Snapping & Responsiver Auto-Fit:** Wird eine Section über den rechten oder linken Resize-Grip verkleinert und anschließend wieder in Richtung Spaltenrand bzw. Viewport gezogen (in der mittleren/linken Spalte nach rechts, in der rechten Spalte über den linken/rechten Grip nach links/rechts), heftet sie sich automatisch bündig an die Maximalbreite der Spalte an (100% responsiv ohne starre px-Breite). Ein Doppelklick auf die Kopfzeile oder den Resize-Grip setzt die Section sofort wieder auf volle Spaltenbreite zurück.
 >   - **Zentrales Sound-Verzeichnis (`sounds/`):** Alle akustischen Benachrichtigungen und Sprachdateien liegen zentral und sauber im Workspace-Hauptverzeichnis `~/dev_ws/sounds/`. Der Webserver (`server.py`) mappt `/sounds/...` direkt auf dieses zentrale Verzeichnis, ohne dass Symlinks oder redundante Kopien im UI-Paket erforderlich sind.
->   - **MoveIt-Popup (Fortschritt, Gizmo-Ziel, Bestätigen & Zielobjekt-Badge):** Das Popup sitzt mittig unten im Viewport oberhalb des POSE-HUD-Tabs mit ausreichendem Abstand und dezent transparentem Glassmorphism-Hintergrund, auf 740 px (`min(740px, 100%)`) verbreitert mit 88 px breiten Aktions-Buttons. Es integriert die Live-Zielkoordinaten des TCP-Gizmos (`TARGET X/Y/Z`, Abstand Δ zum realen TCP) direkt samt **Auto-Move**-Schalter und visualisiert während eines MoveTo die Phasen IK → PLAN → EXECUTE mit Live-Timern, Fortschrittsbalken, verworfenen Kandidatenpfaden sowie Ergebnis oder Fehler. Bei Objektauswahl oder Greifanfahrt wird der Name des Zielobjekts prominent im Popup-Kopf eingeblendet (z. B. `📦 SPORTS BALL`). Ist Auto-Move aus, laufen nach dem Loslassen des Gizmos (> 3 mm oder > 2°) sofort IK und Planung; ist die Bahn gültig, zeigt das Popup *CONFIRM PATH* und *Execute path* fährt nur noch (ohne Geist, automatisches Verwerfen nach 15 s). Erneutes Ziehen verwirft die wartende Bahn und plant das neue Ziel. Bei aktiver Pfad-Vorschau bestätigt dieselbe Schaltfläche den Geist-Pfad. Nach der Bewegung blendet es sich selbsttätig aus (5 s bei Erfolg, 12 s bei Fehler). Gespeist von `/ui/moveit_motion_state`; die Schritte erscheinen zusätzlich als `[MoveIt]`-Zeilen im Log.
+>   - **MoveIt-Popup (Fortschritt, Gizmo-Ziel, Bestätigen & Zielobjekt-Badge):** Das Popup sitzt mittig unten im Viewport oberhalb des POSE-HUD-Tabs mit ausreichendem Abstand und dezent transparentem Glassmorphism-Hintergrund, auf 740 px (`min(740px, 100%)`) verbreitert mit 88 px breiten Aktions-Buttons. Es integriert die Live-Zielkoordinaten des TCP-Gizmos (`TARGET X/Y/Z`, Abstand Δ zum realen TCP) direkt samt **Auto-Move**-Schalter und visualisiert während eines MoveTo die Phasen IK → PLAN → EXECUTE mit Live-Timern, Fortschrittsbalken, verworfenen Kandidatenpfaden sowie Ergebnis oder Fehler. Bei Objektauswahl oder Greifanfahrt wird der Name des Zielobjekts prominent im Popup-Kopf eingeblendet (z. B. `📦 SPORTS BALL`). Ist Auto-Move aus, laufen nach dem Loslassen des Gizmos (> 3 mm oder > 2°) sofort IK und Planung; ist die Bahn gültig, zeigt das Popup *CONFIRM PATH* und *Execute path* fährt nur noch (ohne Geist, automatisches Verwerfen nach 15 s; der Countdown steht in einer eigenen Zeile). Erneutes Ziehen verwirft die wartende Bahn und plant das neue Ziel. Bei aktiver Pfad-Vorschau bestätigt dieselbe Schaltfläche den Geist-Pfad. Nach der Bewegung blendet es sich selbsttätig aus (5 s bei Erfolg, 12 s bei Fehler). Gespeist von `/ui/moveit_motion_state`; die Schritte erscheinen zusätzlich als `[MoveIt]`-Zeilen im Log.
 >   - **MoveIt-Kollisionsschalter:** Zwei Icons unten im **SCENE**-Panel schalten die MoveIt-Kollision der erkannten Objekte (`/ui/set_moveit_collision_objects`) und des Bodens (`/ui/set_moveit_collision_ground`) an und aus. Grün = AN, rot umrandet = AUS, grau = Node läuft nicht. Die Objekte bleiben im Viewport in jedem Fall sichtbar.
 >   - **Farbkodiertes Konsolen-Log:** Live scrollbares Log mit Syntax-Hervorhebung (Achsen, Zahlen, Topics, Einheiten) und dynamisch an die Zeilenart (Erfolg, Warnung, Fehler, Aktion, Info) angepassten Quellen-Tags (`[...]`) für sofortige optische Erfassbarkeit. Es scrollt nur mit, wenn man unten steht, und hält die letzten 500 Einträge.
 >
@@ -1976,6 +2015,9 @@ flowchart TD
 >> | **`/ui/joy_button_presses`** | `std_msgs/String` | *Greifer-Rückmeldungen des Gamepad-Nodes im Log.* |
 >> | **`/ui/emergency_stop_active`** | `std_msgs/Bool` | *Verriegelter Not-Aus (Reset-Button neben dem Not-Aus).* |
 >> | **`/ui/ground_collision_level`** | `std_msgs/Float64` | *Aktuelles Z Collision Level (mm) für Jog-/MoveTo-Sperre und Boden-Popup.* |
+>> | **`/ui/virtual_bboxes_3d`** | `visualization_msgs/MarkerArray` | *Virtuelle Detektionen von `virtual_object_detections` für Objektliste, Twin und VR.* |
+>> | **`/ui/virtual_detections_enabled`** | `std_msgs/Bool` (latched) | *Zustand des Buttons Virtual Obj.* |
+>> | **`/ui/tf_tuner_state`** | `std_msgs/String` (JSON, latched) | *Gemeinsamer TF-Tuner-Stand aller Clients (der jüngste gewinnt).* |
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1991,7 +2033,8 @@ flowchart TD
 >> | **`/ui/grasp_object_cmd`** | `std_msgs/String` | *Triggert Autonomie-Aktionen per Objekt-Identifikator.* |
 >> | **`/ui/voice_listen_trigger`** | `std_msgs/String` | *Startet Audio-Aufnahmen bei Klick auf das Mikrofon-Symbol.* |
 >> | **`/ui/safety_zone_params`** | `std_msgs/Float32MultiArray` | *Sendet aktualisierte Parameter für die Safety-Zone.* |
->> | **`/tf`** | `tf2_msgs/TFMessage` | *TF Control Tuner: sendet die eingestellten Transformationen (10 Hz, nur bei „Live TF“).* |
+>> | **`/tf`** | `tf2_msgs/TFMessage` | *TF Control Tuner: sendet die eingestellten Transformationen (10 Hz, bei „Live TF“; die Frames der drei Szenenobjekte auch, solange die virtuellen Objekte an sind). Zeitstempel in ROS-Serverzeit.* |
+>> | **`/ui/tf_tuner_state`** | `std_msgs/String` (JSON, latched) | *Jede Tuner-Änderung, damit alle offenen Clients identische Werte senden.* |
 >> | **`/ui/sound_enabled`** | `std_msgs/Bool` | *Publiziert den Mute-Zustand der akustischen Rückmeldung, damit andere Nodes synchron bleiben.* |
 >> | **`/ui/gripper_cmd`** | `std_msgs/String` | *Greiferbefehl (`open` / `close` / `off`).* |
 >> | **`/ui/set_object_collision`** | `std_msgs/String` (JSON) | *Kollision eines Objekts ab-/einschalten (Kontextmenü).* |
@@ -2015,6 +2058,8 @@ flowchart TD
 >> | **`/rosapi/nodes`** | `rosapi/Nodes` (Client) | *Erkennt anhand der Node-Liste den aktiven Hardware-Modus (Fake Arm vs. Real Arm).* |
 >> | **`/rosapi/get_param`** | `rosapi/GetParam` (Client) | *`robot_ip` des Treibers (Badge „Real Arm“) und `grab_resolution` / `grab_frame_rate` des ZED-Nodes (Stream-Details).* |
 >> | **`/rosapi/topics_for_type`** | `rosapi/TopicsForType` (Client) | *Findet die tatsächlich vorhandenen ZED-Bildtopics für das Modus-Dropdown.* |
+>> | **`/rosapi/get_time`** | `rosapi/GetTime` (Client) | *ROS-Serverzeit als Offset für die TF-Zeitstempel des Tuners.* |
+>> | **`/ui/set_virtual_detections`** | `std_srvs/srv/SetBool` (Client) | *Button Virtual Obj. im SCENE-Panel.* |
 >
 > *Der Not-Aus läuft über das blockierungsfreie Topic `/ui/emergency_stop_topic`, nicht über den Service `/ui/emergency_stop`. Die Services `/ui/execute_move_joint` und `/ui/emergency_stop` werden von `robot_motion_handler_movegroup` bereitgestellt und vom RViz-Control-Panel genutzt, nicht von dieser Web-UI.*
 
@@ -2185,6 +2230,8 @@ Dieser Node fungiert als transparenter **Sicherheits-Proxy** zwischen dem rohen 
 
 #### 5.2.1 Prädiktiver Kollisions-Algorithmus
 
+Der Node prüft nicht einfach die aktuelle Z-Position — er **sagt voraus, wo der Endeffektor** in den nächsten `LOOKAHEAD_TIME` Sekunden sein wird, und blockiert die Bewegung, wenn diese vorhergesagte Position das Sicherheitslimit verletzt:
+
 ```
 trigger_intensity = (1.0 - axes[RT]) / 2.0 # 0.0 (los) → 1.0 (voll)
 target_z_velocity = V_max × speed_factor × trigger_intensity
@@ -2197,13 +2244,14 @@ if predicted_z < Z_LIMIT:
 
 | Parameter | Wert | Beschreibung |
 |---|---|---|
-| `Z_LIMIT` | `91,0 mm` | *Absolutes Z-Limit (Tischbarriere)* |
-| `CAUTION_ZONE_START` | `110,0 mm` | *Toleranzbereich — Geschw. auf 25% begrenzt* |
-| `CAUTION_ZONE_SPEED` | `0,25` | *Max. Faktor in der Vorsichtszone* |
-| `MAX_LINEAR_VELOCITY_MM_S` | `75,0 mm/s` | *Angenommene max. Lineargeschwindigkeit* |
-| `LOOKAHEAD_TIME` | `0,1 s` | *Vorhersagehorizont* |
-| `ACCELERATION_FACTOR` (α) | `0,9` | *Dämpfungsfaktor* |
+| `Z_LIMIT` | `91.0 mm` | *Absolutes Z-Limit (Tischbarriere)* |
+| `CAUTION_ZONE_START` | `110.0 mm` | *Toleranzbereich — Geschw. auf 25% begrenzt* |
+| `CAUTION_ZONE_SPEED` | `0.25` | *Max. Faktor in der Vorsichtszone* |
+| `MAX_LINEAR_VELOCITY_MM_S` | `75.0 mm/s` | *Angenommene max. Lineargeschwindigkeit* |
+| `LOOKAHEAD_TIME` | `0.1 s` | *Vorhersagehorizont* |
+| `ACCELERATION_FACTOR` (α) | `0.9` | *Dämpfungsfaktor* |
 | `DOWN_TRIGGER_AXIS` | `5` (RT) | *Joy-Achsen-Index für Abwärts-Trigger* |
+| `EEF_TIMEOUT` | `1.0 s` | *Ohne neue `/ui/eef_position` gilt die Position danach als unbekannt — abwärts gesperrt* |
 
 
 
@@ -2212,7 +2260,7 @@ if predicted_z < Z_LIMIT:
 <br>
 
 
-### 5.2.2 Zwei-Stufen-Sicherheitsmodell
+#### 5.2.2 Zwei-Stufen-Sicherheitsmodell
 
 ```
 Z > 110 mm → Volle Geschwindigkeit, keine Einschränkungen
@@ -2226,6 +2274,8 @@ Z ≤ 91,0 mm → 🛑 HARD STOP: Abwärtsachse genullt + Rumble
 **Datei:** `src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp` 
 **Klasse:** `xarm_moveit_servo::JoyToServoPub` 
 **Registriert als:** ROS 2 Component (`RCLCPP_COMPONENTS_REGISTER_NODE`)
+
+Dieser Node empfängt das bereits bereinigte Signal `/joy_check` und übersetzt es in `geometry_msgs/TwistStamped`-Nachrichten für den MoveIt Servo Server — für eine flüssige kartesische Geschwindigkeitssteuerung in Echtzeit.
 
 
 #### 5.3.1 Vollständiges Controller Button-Mapping
@@ -2280,6 +2330,8 @@ Hardware-Eingabe
 
 #### 5.3.3 Whisper AI Integration (X-Button)
 
+Die X-Taste bindet **OpenAI Whisper** über einen ROS 2 **Action Client** (`rclcpp_action`) ein — keinen einfachen Service. Dadurch ist die Sprachaufnahme nicht blockierend, abbrechbar und läuft in Echtzeit:
+
 ```
 X drücken → async_send_goal (max_duration = 5s)
  ├─ Goal akzeptiert → is_whisper_listening_ = true
@@ -2298,7 +2350,7 @@ Status-Feedback an `/ui/joy_button_presses` nach jeder Zustandsänderung.
 |-----|------|------------|-------------|
 | **Subscriber** | `/joy_check` | `sensor_msgs/Joy` | *Bereinigtes Signal von `teleop_pre_collision_checker.py`* |
 | **Subscriber** | `/ui/robot_control/set_speed_index` | `std_msgs/Int32` | *Geschwindigkeitsstufe aus Robot Control UI / RViz-Panel* |
-| **Publisher** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | *10 Hz Live-Pose (x,y,z,r,p,y) für Telemetrie* |
+| **Publisher** | `/ui/eef_position` | `std_msgs/Float32MultiArray` | *10 Hz Live-Pose (x, y, z in mm + Quaternion qx, qy, qz, qw) für Telemetrie* |
 | **Publisher** | `/servo_server/delta_twist_cmds` | `geometry_msgs/TwistStamped` | *Kartesischer Geschwindigkeitsbefehl* |
 | **Publisher** | `/servo_server/delta_joint_cmds` | `control_msgs/JointJog` | *Gelenkraum-Befehl (Initialisierung)* |
 | **Publisher** | `/ui/robot_control/current_speed` | `std_msgs/Float32` | *Geschwindigkeitsfaktor (Latched QoS)* |
@@ -2579,6 +2631,8 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 | **Eye-Tracking Teleoperation** | Tobii Glasses 3 + ArUco-Setup | 1. `RUN DEV SETUP (REAL)` mit der Karte `Eyetracker - Gaze Control` (Real World oder UI Gaze)<br>oder `EXTRAS EXECS` → `RUN DEV + Gaze UI (ZED M) - Exocentric` / `(Rpi Cam) - Egocentric` | Gaze-Fenster, Live-Feedback |
 | **Meta Quest 3 VR Teleop** | Meta Quest 3 + PC im selben WLAN | 1. `RUN DEV SETUP (REAL)` mit angehakter Karte `VR Quest 3 Teleop` | WebXR (`https://<IP>:8443`) |
 
+*`RUN DEV SETUP` ist das Start-Popup der Nexus Webapp; einzelne Buttons wie `EXTRAS EXECS` oder `Dashboard Monitoring (Port 8080)` liegen auf der vollständigen Seite `/old_index.html` (siehe 7.3).*
+
 ---
 <br>
 
@@ -2595,24 +2649,27 @@ Dieser Abschnitt beschreibt Schritt für Schritt den Start der Hardware und Soft
 ### 7.2 Schritt 2: System starten (Nexus Webapp)
 Normalerweise muss in der Robotik jedes Mal eine Vielzahl langer `ros2 run`- oder `ros2 launch`-Befehle in mehreren Terminals parallel ausgeführt werden, um die einzelnen Nodes zu starten. Genau um dieses Problem zu lösen, wurde die **Nexus Webapp** entwickelt: Anstatt komplexe CLI-Befehle auswendig zu lernen, lassen sich alle benötigten Nodes und Launch-Files bequem per Klick direkt aus dem Browser heraus starten. Die Bringup-Sektionen: **AUTOMATED SYSTEM BRINGUP** (`RUN DEV SETUP (FAKE)` / `(REAL)`, lokale Entwicklung an einem PC), **EXTRAS EXECS** (DEV + Gaze UI, Egocentric / Exocentric), **Start Multimodal Setup** (die Aktionen von DEV SETUP FAKE / REAL als einzelne Karten) und **Client / Server Control Bringup** (verteilte Ausführung auf Bediener-PC und Roboter-PC). Die Hintergrund-Startsequenzen wurden stark optimiert: Die Backend-Nodes und MoveIt starten nun mit einer Sekunde Verzögerung dazwischen, während die ROS Bridge und Web UI als Letztes laden. Dies beugt WebSocket-Abbrüchen vor.
 
-**Start über Terminal:**
+**Quick Launch (empfohlen):**
+```bash
+./ros2_nexus/ros2_nexus_web_start.sh
+```
+Das Skript prüft Flask, sourct ROS 2 Humble und den Workspace, startet das Nexus Web Backend (Flask, Port 5000), falls es noch nicht läuft, und öffnet die Nexus Webapp: als rahmenloses WebKitGTK-Fenster (`ros2_nexus_popup_window.py`, zentriert, etwa 70 % × 90 % des Bildschirms; benötigt `gir1.2-webkit2-4.0`), sonst Chrome / Chromium im `--app`-Modus oder den Standardbrowser. Das Terminal offen lassen: Schließen des Nexus-Fensters beendet auch Backend und Terminal, Schließen des Terminals beendet das Backend. Stürzt das Backend ab, bleibt das Terminal mit dem Traceback offen.
+
+**Startseite = Start-Popup:** `http://localhost:5000/` zeigt nur noch das Start-Popup (RUN DEV SETUP mit FAKE | REAL-Umschalter, siehe 7.7). Im rahmenlosen Fenster wird das Fenster am Popup-Header verschoben, ein Doppelklick auf den Header maximiert es und das X des Popups beendet die App; in einem normalen Browser-Tab kommt das Popup nach dem Schließen (X, Cancel, Esc) wieder. Der Pfeil rechts im Popup-Header klappt den Header samt Netzwerkleiste ein (User @ Host, Netzwerk-Interface und IP, LAN-Traffic mit Verlaufsgrafik, DDS *Localhost only*, Scope, RMW, Domain); der Zustand wird im Browser gespeichert. Die bisherige vollständige Seite mit Header, Tab-Leiste und Karten-Raster ist weiterhin unter `http://localhost:5000/old_index.html` erreichbar (siehe 7.3).
+
+**Start über Terminal (nur Backend):**
 ```bash
 cd ~/dev_ws
 python3 ros2_nexus/ros2_nexus_web.py
 # → Öffnet sich unter http://localhost:5000 (auch im LAN erreichbar, z.B. http://192.168.x.x:5000)
 ```
-*Hinweis: Die Nexus Webapp verfügt über ein integriertes, ausklappbares Live Console Overlay. Es trackt alle gestarteten Nodes und deren PIDs zuverlässig in Echtzeit. Wird das Backend-Terminal geschlossen, beendet sich der Browser-Tab automatisch selbst.*
+*Hinweis: Die vollständige Seite (`/old_index.html`) verfügt über ein integriertes, ausklappbares Live Console Overlay, das alle gestarteten Nodes und deren PIDs in Echtzeit trackt.*
 
-**Alle ROS 2 Prozesse beenden:** Die Nexus Webapp Navbar enthält einen dedizierten roten Action-Button "KILL ALL ROS2 Processes". Dieser feuert ein eigenständiges System-Bash-Skript (`kill_ros2.sh`), das augenblicklich und kompromisslos alle aktiven ROS 2 Nodes, Launch-Files, RViz-Instanzen und deren dazugehörige Terminal-Fenster sicher und sauber schließt, unabhängig vom Zustand der UI. Danach lädt die Seite von selbst neu, auf dem aktuellen Tab.
+**Alle ROS 2 Prozesse beenden:** Der Button **Kill Daemon** in der Popup-Toolbar (und „KILL ALL ROS2 Processes“ in der Navbar von `/old_index.html`) führt nach einer Rückfrage `kill_ros2.sh` aus. Das Skript beendet stufenweise: zuerst SIGINT (wie Strg+C, damit Launch-Files ihre Nodes herunterfahren), dann SIGTERM, Reste per SIGKILL - jede Stufe wartet bis zu 5 s auf `ros2 run`, `ros2 launch` und `rviz2`. Danach schließt es die Terminal-Wrapper der gestarteten Befehle und stoppt den ROS 2 Daemon (veraltete Graph-Infos). Anschließend lädt Nexus sich selbst neu.
 
-**START-Button:** Der Button `START` links in der Tab-Leiste öffnet das DEV-SETUP-Popup im zuletzt genutzten Modus (FAKE oder REAL); beim Start der App öffnet es sich ebenfalls.
+**START-Button (`/old_index.html`):** Der Button `START` links in der Tab-Leiste öffnet das DEV-SETUP-Popup im zuletzt genutzten Modus (FAKE oder REAL); beim Laden der Seite öffnet es sich ebenfalls.
 
-**Quick Launch (Nexus Web Backend automatisch starten + Browser öffnen):**
-```bash
-./ros2_nexus/ros2_nexus_web_start.sh
-```
-
-**Ubuntu App Integration (1-Klick-Installer):** Sowohl die **Nexus Webapp** als auch die **Robot Control UI** können als native Ubuntu-Desktop-Anwendungen mit hochauflösenden Icons und isolierten Chrome `--app` Profilen registriert werden. Führe dazu einfach das automatisierte Einrichtungs-Skript aus:
+**Ubuntu App Integration (1-Klick-Installer):** Sowohl die **Nexus Webapp** als auch die **Robot Control UI** können als native Ubuntu-Desktop-Anwendungen mit hochauflösenden Icons registriert werden. Der Nexus-Eintrag startet `ros2_nexus_web_start.sh` in einem Terminal (rahmenloses Fenster, siehe oben), der Eintrag der Robot Control UI öffnet ein eigenes Chrome-`--app`-Profil. Führe dazu einfach das automatisierte Einrichtungs-Skript aus:
 ```bash
 cd ~/dev_ws/ros2_nexus && bash install_app.sh
 ```
@@ -2627,7 +2684,7 @@ Dies konfiguriert automatisch die Pfade, kopiert die `.desktop`-Dateien nach `~/
 
 
 ### 7.3 Schritt 3: Module über die GUI aktivieren
-Sobald sich ROS 2 Nexus im Browser geöffnet hat:
+Das Start-Popup (7.2) deckt die RUN-DEV-SETUP-Sequenzen ab. Für einzelne Nodes und Launch-Files die vollständige Seite `http://localhost:5000/old_index.html` in einem normalen Browser öffnen:
 1. Navigiere durch die Tab-Leiste: `START` (öffnet RUN DEV SETUP), `Nodes / Launch` (alle Node- und Launch-Buttons), `Pub MSG on Topic` (Nachrichten von Hand auf ein Topic publizieren), `ROS Info` (Live-Umgebungs- und Netzwerkinfos) und `System` (Terminal- und Systembefehle).
 2. Im Tab `Nodes / Launch` sind die Buttons in aufklappbare Sektionen gruppiert — `AUTOMATED SYSTEM BRINGUP`, `EXTRAS EXECS`, `Lite6 Fake / Lite6 - Moveit Servo (+Rviz2)`, `Start Multimodal Setup`, `Controllers (Input -> Moveit Servo)`, `Visualization (Rviz2)`, `Vision (Cameras + CV)`, `Workspace Analyzer Backend`, `Frontend & Browser`, `Client / Server Control Bringup`, `NVIDIA Isaac Sim` und `MoveIt Planning (OMPL Server)`. Der Treiber für die ZED-Kamera liegt beispielsweise in **`Vision (Cameras + CV)`**.
 3. Der Terminal-Output jedes gestarteten Nodes wird dir in Echtzeit direkt in die Web-Oberfläche gestreamt.
@@ -2791,6 +2848,8 @@ Die Buttons, Kategorien und Befehle in der Nexus Webapp sind vollständig anpass
 - **Wert-Parameter:** Launch-Argumente und Node-Parameter mit Werten (IPs, Zahlen, Auswahllisten) erscheinen als Eingabezeilen mit Quell-Badge `CONFIG` (YAML), `ARG` (Launch-Argument) oder `PARAM` (Node-Parameter). An den Befehl gehängt werden nur Werte, die vom Standard abweichen, Node-Parameter als `--ros-args -p`. Die Launch-Argumente inkl. eingebundener Launches liest das Backend aus (`/api/launch_details`).
 - **Bereich „Config Files“:** pro Karte die YAML-Dateien, die der Launch lädt, mit den wichtigen Werten und Einheiten, geladen / nicht geladen für die aktuellen Argumente, überschriebene Werte durchgestrichen, Status `Live` / `Copy` / `Build needed` / `Not built` (`install/` verlinkt oder kopiert), alle Schlüssel und ein Button zum Kopieren des Pfads.
 - **Suche & Filter** über Titel, Datei, Kategorie oder Port, **Dark / Light**-Umschalter und ein **Localhost only**-Schalter in der DDS-Leiste (`ROS_LOCALHOST_ONLY=1` für diese Sequenz).
+- **Toolbar:** Filter *All / Active / Inactive* mit Zählern, Drag-&-Drop-Hinweis und der Button **Kill Daemon** (siehe 7.2).
+- **Optik:** Der Popup-Inhalt wird in 80 % Größe dargestellt (Browser-Popup `min(76vw, 1700px)` breit), eigene 3D-Checkboxen (WebKitGTK zeichnete den nativen Haken riesig und flach) und Sequenz-Karten mit kräftigerem farbigem Rand, dezentem Glow und Tiefe.
 
 ![](_imgs/ros2_nexus_web_popup.png)
 
@@ -2916,12 +2975,14 @@ dev_ws/
 ├── ros2_nexus/                                                            # Zentraler Web-Launcher & Desktop-App-Integration
 │   ├── ROS2_Nexus.desktop                                                 # Ubuntu Desktop-Verknüpfung (.desktop Eintrag)
 │   ├── install_app.sh                                                     # Einrichtungs-Skript für .desktop-Verknüpfung & Icon
-│   ├── kill_ros2.sh                                                       # Bereinigungs-Skript: beendet ros2 run/launch, rviz2 & Terminal-Wrapper
+│   ├── kill_ros2.sh                                                       # Stufenweiser Stopp (SIGINT → SIGTERM → SIGKILL) von ros2 run/launch, rviz2 & Terminal-Wrappern, danach ROS 2 Daemon stoppen
 │   ├── cyclonedds.xml                                                     # Hebt das CycloneDDS-Participant-Limit an (Unicast-Discovery)
 │   ├── launcher_config.json                                               # Master Prozess- & Button-Konfiguration für Nexus
-│   ├── ros2_nexus_web_start.sh                                            # Nexus Hintergrund-Daemon & Browser-Starter
+│   ├── old_index.html                                                     # Bisherige vollständige Seite (Header, Tab-Leiste, Karten-Raster) unter /old_index.html
+│   ├── ros2_nexus_web_start.sh                                            # Startet Backend + Nexus-Fenster, beendet beide gemeinsam
 │   ├── ros2_nexus_web.py                                                  # Flask-Backend (Port 5000): Starts, Konfiguration, /api/launch_details
-│   ├── ros2_nexus_web.html                                                # Nexus Webapp Frontend-UI
+│   ├── ros2_nexus_web.html                                                # Startseite der Nexus Webapp (nur Start-Popup)
+│   ├── ros2_nexus_popup_window.py                                         # Rahmenloses WebKitGTK-Fenster für das Start-Popup
 │   ├── ros2_nexus_styles.css                                              # Nexus CSS-Stylesheets
 │   ├── ros2_nexus_script.js                                               # Zentraler Prozessmanager & Log-Viewer
 │   └── ros2_nexus_ui.js                                                   # UI-Interaktion, Modal-Dialoge & Tab-Handling
@@ -2930,7 +2991,10 @@ dev_ws/
 │   └── ui_mouse_click.mp3                                                 # UI-Klick-Soundeffekt
 ├── src/
 │   ├── gaze_control_ui_tobii_glasses/                                     # 👁️ Python: PyQt5 Blick-Auswahl & Kalibrierungs-UI
+│   │   ├── gaze_control_ui_tobii_glasses/gaze_ui_node_tobii_glasses.py    # Gaze UI (`gaze_ui`)
+│   │   └── gaze_control_ui_tobii_glasses/gaze_ui_node_tobii_glasses_zedm.py # Gaze UI mit ZED-M-Bild (`gaze_ui_zedm`)
 │   ├── gaze_grasp_routine_tobii_glasses/                                  # 👁️ Python: Tobii Eye-Tracking Blick-zu-3D-Greif-Routine
+│   │   └── gaze_grasp_routine_tobii_glasses/gaze_grasp_routine_tobii_glasses.py # Dwell-Time-Auswahl, Homographie-Lokalisierung, Greifen
 │   ├── http_dashboard_monitoring_p8080/                                   # 📊 Python/JS: ROS 2 Node-Monitor & Topologie-Dashboard
 │   │   ├── workspace_analyzer.py                                          # ROS 2 Node zur Analyse von Nodes, Topics, Actions & Graph
 │   │   ├── workspace_parser.py                                            # Statischer Code- & Paket-AST-Parser
@@ -2966,13 +3030,15 @@ dev_ws/
 │   │       ├── yolo_moveit_collision.py                                   # Dynamischer MoveIt Kollisionsobjekt-Publisher
 │   │       ├── yolo_planned_grasp_executor.py                             # 3-Phasen-Greifablauf (GraspObject Action Server)
 │   │       ├── yolo_grasp_executor.py                                     # Fallback: direktes kartesisches Greifen über /ui/execute_move_to_pose
-│   │       └── grasp_action_bridge.py                                     # Bridge /ui/grasp_object_cmd (Topic) → GraspObject Action
+│   │       ├── grasp_action_bridge.py                                     # Bridge /ui/grasp_object_cmd (Topic) → GraspObject Action
+│   │       └── virtual_object_detections.py                               # Virtuelle Szenenobjekte (Cube, Rectangle, Cylinder) als Detektionen
 │   ├── robot_motion_handler_movegroup/                                    # 🤖 Python: Zentraler MoveGroup kartesischer & Gelenkplaner
+│   │   ├── launch/standalone_move_group.launch.py                         # MoveGroup, eingebunden von beiden MoveIt-Servo-Launches
 │   │   └── robot_motion_handler_movegroup/
 │   │       ├── robot_motion_handler_movegroup.py                          # UI-Bewegungsservices, kollisionsbewusstes MoveTo, MoveIt-Fortschritt
 │   │       └── moveit_floor_collision.py                                  # Tischplatte als MoveIt-Kollisionsobjekt (schaltbar)
 │   ├── ros2_whisper/                                                      # 🎙️ Whisper AI Sprache-zu-Text Inferenzknoten
-│   ├── fake_linear_axis/                                            # 🎚️ Python: Headless TF-Publisher & interaktiver Marker
+│   ├── fake_linear_axis/                                                  # 🎚️ Python: Headless TF-Publisher & interaktiver Marker
 │   │   └── fake_linear_axis/fake_linear_axis_node.py
 │   ├── rviz_marker_3d_scene_objects/                                      # 📍 Python: RViz2-Marker für Schutzzonen & Arbeitsbereichsgrenzen
 │   │   ├── launch/rviz_marker_3d_scene_objects.launch.py
@@ -2990,7 +3056,7 @@ dev_ws/
 │   │   └── rviz_overlay_servo_status/
 │   │       └── rviz_servo_status.py                                       # MoveIt Servo-Status & Warn-HUD Overlay
 │   ├── rviz_tab_robot_control_panel/                                      # 🖥️ C++: Benutzerdefiniertes RViz2 Control Panel Plugin (rviz_common)
-│   ├── window_x11_streamer/                                                # 📹 Python/mss: X11-Fenstererfassung (Default: RViz2) → /window_capture/image_raw
+│   ├── window_x11_streamer/                                               # 📹 Python/mss: X11-Fenstererfassung (Default: RViz2) → /window_capture/image_raw
 │   │   └── window_x11_streamer/window_capture_node.py
 │   ├── tcp_laser_pointer/                                                 # 🔴 Python: Automatische Steuerung des TCP-Laserpointers
 │   │   └── tcp_laser_pointer/laser_pointer_node.py
@@ -2999,8 +3065,12 @@ dev_ws/
 │   ├── tf_control_tuner/                                                  # 📐 Python: Interaktives TF-Transformations-Kalibrierungstool
 │   │   └── tf_control_tuner/tf_control_tuner.py
 │   ├── voice_command_listener/                                            # 🗣️ Python: Intent-Parser für Sprachbefehle & Aktionsauslöser
+│   │   ├── launch/voice_listener.launch.py
+│   │   └── voice_command_listener/voice_command_listener.py               # Zuordnung Sprachbefehl → Roboteraktion
 │   ├── vr_quest3_teleop/                                                  # 🥽 Meta Quest 3 WebXR Teleoperations-Bridge
 │   │   ├── https_vr_webxr_p8443/                                          # Sichere WebXR Browser-Oberfläche & 3D-Controller
+│   │   │   └── https_vr_webxr_p8443.py                                    # HTTPS-Server (Port 8443) für die WebXR-Seite
+│   │   ├── vr_quest3_teleop/rosapi_guard.py                               # Startet /rosapi nur, wenn noch keiner läuft
 │   │   └── vr_quest3_teleop/vr_quest3_teleop_node.py                      # VR 6-DoF Controller-Pose zu MoveIt Servo Bridge
 │   ├── ip_cam_aruco_6pose_tf_coord/                                       # 🏷️ Python: 6-DoF ArUco-Marker-Erkennung & TF-Publisher
 │   ├── xarm_ros2/                                                         # 🤖 Offizieller xArm ROS 2 Stack (Submodul/Erweitert)
