@@ -69,12 +69,6 @@ This repository is a continuously evolving research and evaluation platform for 
 9. [🗂️ Repository Structure](#9--repository-structure)
 10. [🗄️ Archive / Architectural Decisions & Deprecated Concepts](#10--archive--architectural-decisions--deprecated-concepts)
 
-
-
-
-
-
-
 ---
 <br>
 
@@ -157,69 +151,8 @@ source install/setup.bash
 <br>
 
 ### 🗺️ System Architecture & Data Flow
-The following diagram illustrates the modular design and the asynchronous data flow between sensory input, UI elements, and the control components:
-
-```mermaid
-graph TD
-    %% Styling
-    classDef input fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
-    classDef vision fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
-    classDef core fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
-    classDef hardware fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
-
-    %% Inputs
-    subgraph Input Modalities
-        G[🎮 Gamepad]:::input
-        V[🗣️ Voice / Whisper AI]:::input
-        E[👁️ Eye Tracking / Tobii]:::input
-        W[💻 Web UI / Dashboard]:::input
-    end
-
-    %% Vision
-    subgraph Perception & Vision
-        Z[📷 ZED Camera]:::vision
-        Y[📦 YOLO 3D BBox]:::vision
-        O[🗺️ Octomap Server]:::vision
-        Z -->|RGB + Depth| Y
-        Z -->|Point Cloud| O
-    end
-
-    %% Processing
-    subgraph Core Processing
-        C[🛡️ Collision Checker]:::core
-        J[⚙️ Joystick Input]:::core
-        YG[🤖 Grasp Executor]:::core
-        
-        G -->|/joy| C
-        C -->|/joy_check| J
-        Y -->|/zed/bboxes_3d| YG
-        E -->|/servo_server/delta_twist_cmds| S[🏃 MoveIt Servo]:::core
-    end
-
-    %% Execution
-    subgraph Planning & Hardware
-        S
-        M[🗺️ MoveIt Planner]:::core
-        R[🦾 xArm Lite 6]:::hardware
-        
-        J -->|Twist Commands| S
-        YG -->|Action Goals| M
-        O -->|/planning_scene| M
-        O -.->|Collision Check| S
-        
-        S -->|Joint Trajectory| R
-        M -->|Joint Trajectory| R
-    end
-
-    %% Web UI Connections
-    V -->|Voice Intent| W
-    W -.->|rosbridge| S
-    W -.->|rosbridge| M
-```
-
-
-
-
+> [!NOTE]
+> 🚧 **Placeholder:** The updated system architecture diagram (modular design and data flow between sensors, UI inputs and control components) will follow here soon.
 
 ---
 
@@ -356,6 +289,12 @@ The table below illustrates which project modules can be evaluated in pure softw
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_joystick_input.cpp` &nbsp;&nbsp; <sub><i>[`/src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp`](./src/xarm_ros2/xarm_moveit_servo/src/xarm_joystick_input.cpp)</i></sub>
+
+**Purpose & Task:** Translates the sanitized gamepad signals (analog sticks & triggers) into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies exponential smoothing and handles all button mappings.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · TF2 · Services · Action Client</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -369,7 +308,6 @@ The table below illustrates which project modules can be evaluated in pure softw
 > *Further arguments of both launch files: `joystick_and_checker:=false` starts neither `joy_node` nor `teleop_pre_collision_checker` (used by the server sequences, where the gamepad sits on the client PC); `floor_collision:=false` skips `moveit_floor_collision`. Both launches also include `standalone_move_group.launch.py`.*
 > *(Loaded natively as Component inside the MoveIt Servo bringup)*
 >
-> **Purpose & Task:** Translates the sanitized gamepad signals (analog sticks & triggers) into Cartesian velocity commands (`TwistStamped`) for MoveIt Servo. Applies exponential smoothing and handles all button mappings.
 >
 > **🎮 Controller Mapping (Quick Reference):**
 >> | Input | Action | Details |
@@ -435,20 +373,25 @@ The table below illustrates which project modules can be evaluated in pure softw
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/whisper/inference`** | `whisper_idl/action/Inference` | *Starts/cancels Whisper AI speech recognition on button press (Button X).* |
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `teleop_pre_collision_checker.py` (`teleop_pre_collision_checker`) &nbsp;&nbsp; <sub><i>[`/src/teleop_pre_collision_checker/teleop_pre_collision_checker/teleop_pre_collision_checker.py`](./src/teleop_pre_collision_checker/teleop_pre_collision_checker/teleop_pre_collision_checker.py)</i></sub>
+
+**Purpose & Task:** Acts as a transparent guardian *before* movement execution. Predictively computes the future Z-coordinate (0.1 sec lookahead). If the robot would violate the safety barrier ($Z \le 91.0\text{ mm}$), the downward command is hard-overridden and zeroed out. Triggers gamepad rumble feedback (vibration via `pygame`) on collision risk.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run teleop_pre_collision_checker teleop_pre_collision_checker
 > ```
->
-> **Purpose & Task:** Acts as a transparent guardian *before* movement execution. Predictively computes the future Z-coordinate (0.1 sec lookahead). If the robot would violate the safety barrier ($Z \le 91.0\text{ mm}$), the downward command is hard-overridden and zeroed out. Triggers gamepad rumble feedback (vibration via `pygame`) on collision risk.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -484,20 +427,25 @@ The table below illustrates which project modules can be evaluated in pure softw
 >> | `ACCELERATION_FACTOR` | `0.9` | *Damping factor applied during lookahead calculation.* |
 >> | `DOWN_TRIGGER_AXIS` | `5` | *Joy axis index of the right trigger (RT, downward).* |
 >> | `EEF_TIMEOUT` | `1.0` | *Seconds without a new `/ui/eef_position` after which the position counts as unknown and downward motion is blocked.* |
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `laser_pointer_node.py` (`tcp_laser_pointer`) &nbsp;&nbsp; <sub><i>[`/src/tcp_laser_pointer/tcp_laser_pointer/laser_pointer_node.py`](./src/tcp_laser_pointer/tcp_laser_pointer/laser_pointer_node.py)</i></sub>
+
+**Purpose & Task:** Continuously monitors the real Cartesian Z-height of the Tool Center Point (`link_tcp`) relative to the robot base (`link_base`) via TF2 at 10 Hz. Whenever the TCP reaches a height of $50\text{ mm}$ ($0.05\text{ m}$) or below, it automatically turns ON the hardware laser pointer mounted on the gripper via the digital tool output (TGPIO Digital Out 0). Once the height exceeds this threshold, the node immediately switches the laser pointer OFF.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · TF2 · Services</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run tcp_laser_pointer laser_pointer_node
 > ```
->
-> **Purpose & Task:** Continuously monitors the real Cartesian Z-height of the Tool Center Point (`link_tcp`) relative to the robot base (`link_base`) via TF2 at 10 Hz. Whenever the TCP reaches a height of $50\text{ mm}$ ($0.05\text{ m}$) or below, it automatically turns ON the hardware laser pointer mounted on the gripper via the digital tool output (TGPIO Digital Out 0). Once the height exceeds this threshold, the node immediately switches the laser pointer OFF.
 >
 >
 > ![TF2](https://img.shields.io/badge/TF2-yellow?style=flat-square)
@@ -512,17 +460,21 @@ The table below illustrates which project modules can be evaluated in pure softw
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/xarm/set_tgpio_digital`** | `xarm_msgs/srv/SetDigitalIO` (Client) | *Controls Tool Digital Output 0 (TGPIO) on the gripper to switch the laser pointer ON (1) or OFF (0).* |
->
+
+</details>
 
 ---
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `xarm_moveit_servo` &nbsp;&nbsp; <sub><i>[`/src/xarm_ros2/xarm_moveit_servo`](./src/xarm_ros2/xarm_moveit_servo)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `_robot_moveit_servo_fake.launch.py` / `_robot_moveit_servo_realmove.launch.py` (`xarm_moveit_servo`) &nbsp;&nbsp; <sub><i>[`/src/xarm_ros2/xarm_moveit_servo/launch`](./src/xarm_ros2/xarm_moveit_servo/launch)</i></sub>
+
+**Purpose & Task:** The real-time motion engine from MoveIt. Checks every command against the planning scene (YOLO collision objects, floor) and slows down / halts the arm before it collides with objects.
+
+<details>
+<summary><b>🔽 Show details</b> · Subscribes · Publishes · Parameters</summary>
+
 > [!NOTE]
-> **Purpose & Task:** The real-time motion engine from MoveIt. Checks every command against the planning scene (YOLO collision objects, floor) and slows down / halts the arm before it collides with objects.
->
->
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Description |
@@ -546,8 +498,8 @@ The table below illustrates which project modules can be evaluated in pure softw
 >> | `self_collision_proximity_threshold` / `scene_collision_proximity_threshold` | `0.01` | *Below these distances (1 cm) Servo slows down exponentially in all directions.* |
 >> | `collision_check_type` | `stop_distance` | *Setting of the stop-distance mode (slow down from ~5 cm, halt at 2 cm via `min_allowable_collision_distance: 0.02`). According to the comment in the config, MoveIt Servo in Humble only evaluates the threshold mode, so the proximity thresholds above decide in practice.* |
 >> | `collision_distance_safety_factor` | `0.5` | *Safety factor of the stop-distance mode.* |
->
->
+
+</details>
 
 ---
 <br>
@@ -578,6 +530,12 @@ flowchart TD
 <br>
 
 #### ![Launch](https://img.shields.io/badge/Launch-orange?style=flat-square) `robot_vision_cameras_bringup.launch.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/launch/robot_vision_cameras_bringup.launch.py`](./src/robot_vision_cameras_bringup/launch/robot_vision_cameras_bringup.launch.py)</i></sub>
+
+**Purpose & Task:** The central orchestrator for the entire 3D vision, object detection, and autonomous grasping pipeline. Depending on the `camera` argument, it dynamically launches either the ZED Mini hardware driver (`zed_wrapper`) alongside `pointcloud_optimizer.py` and `yolo_3d_bbox_for_zed_m.py`, or the network-based `yolo_3d_bbox_for_ip_cam.py` together with `ip_cam_aruco_6pose_tf_coord.py` (ArUco 6-Pose TF coordinates). It simultaneously starts the MoveIt collision generator (`yolo_moveit_collision.py`), the trajectory grasp server (`yolo_planned_grasp_executor.py`), the UI bridge (`grasp_action_bridge.py`), the virtual object detection (`virtual_object_detections.py`, starts switched off), the RViz distance visualizer (`rviz_object_distance_visualizer.py`), and the MoveIt Servo warnings status overlay (`rviz_servo_status.py`).
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -587,8 +545,6 @@ flowchart TD
 > # Alternative: IP Camera Homography Pipeline
 > ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=ip_cam
 > ```
->
-> **Purpose & Task:** The central orchestrator for the entire 3D vision, object detection, and autonomous grasping pipeline. Depending on the `camera` argument, it dynamically launches either the ZED Mini hardware driver (`zed_wrapper`) alongside `pointcloud_optimizer.py` and `yolo_3d_bbox_for_zed_m.py`, or the network-based `yolo_3d_bbox_for_ip_cam.py` together with `ip_cam_aruco_6pose_tf_coord.py` (ArUco 6-Pose TF coordinates). It simultaneously starts the MoveIt collision generator (`yolo_moveit_collision.py`), the trajectory grasp server (`yolo_planned_grasp_executor.py`), the UI bridge (`grasp_action_bridge.py`), the virtual object detection (`virtual_object_detections.py`, starts switched off), the RViz distance visualizer (`rviz_object_distance_visualizer.py`), and the MoveIt Servo warnings status overlay (`rviz_servo_status.py`).
 >
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
@@ -611,20 +567,25 @@ flowchart TD
 >> | `velocity_scaling` / `acceleration_scaling` | `0.2` / `0.1` | *MoveIt scaling of the grasp motion (defaults from `grasping_params.yaml`).* |
 >
 > *The YAML files stay the source of the defaults; the launch arguments only override them at start (e.g. from the Nexus Webapp).*
->
+
+</details>
 
 ---
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_wrapper` &nbsp;&nbsp; <sub><i>[`/src/zed-ros2-wrapper`](./src/zed-ros2-wrapper)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `zed_camera.launch.py` (`zed_wrapper`) &nbsp;&nbsp; <sub><i>[`/src/zed-ros2-wrapper/zed_wrapper/launch/zed_camera.launch.py`](./src/zed-ros2-wrapper/zed_wrapper/launch/zed_camera.launch.py)</i></sub>
+
+**Purpose & Task:** The native hardware driver for the Stereolabs ZED Mini Camera (automatically included by `robot_vision_cameras_bringup.launch.py` when `camera:=zed_m`).
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Publishes · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zedm
 > ```
->
-> **Purpose & Task:** The native hardware driver for the Stereolabs ZED Mini Camera (automatically included by `robot_vision_cameras_bringup.launch.py` when `camera:=zed_m`). 
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -647,21 +608,26 @@ flowchart TD
 >> | `depth_texture_conf` | `100` | *Preserves textureless flat surfaces (tabletops, ground plane).* |
 >> | `remove_saturated_areas` | `false` | *Prevents point cloud holes caused by specular floor/table reflections.* |
 >> | `min_depth` / `max_depth` | `0.1` / `10.0` | *Broad 10-meter operational range ensuring full table and floor coverage.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_3d_bbox_for_zed_m.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_3d_bbox_for_zed_m.py`](./src/robot_vision_cameras_bringup/scripts/yolo_3d_bbox_for_zed_m.py)</i></sub>
+
+**Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large (`yolov8l.pt`)** model. Isolates objects, filters depth noise, and dynamically calculates millimeter-accurate 3D bounding boxes grounded to the table plane based on real 3D point cloud clusters.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_zed_m.py
 > ```
 >
-> **Purpose & Task:** Processes the RGB and Depth streams in parallel using GPU acceleration and the **YOLOv8 Large (`yolov8l.pt`)** model. Isolates objects, filters depth noise, and dynamically calculates millimeter-accurate 3D bounding boxes grounded to the table plane based on real 3D point cloud clusters.
 >
 > **Key Capabilities:**
 > - **Dynamic Object Height Estimation:** Rather than relying on rigid, pre-defined box heights, the node computes the real physical height ($z_{\text{top}} - z_{\text{bottom}}$) directly from the segmented 3D points of each detected object.
@@ -696,21 +662,26 @@ flowchart TD
 >> | `class_dimension_overrides` | `[]` | *Optional fixed metric dimensions (x,y,z) for known calibration targets. Empty by default, so every object is measured from the 3D point cloud.* |
 >
 > *The percentile cut-offs against depth noise ("flying pixels" at object edges) are applied inside the node and are not exposed as parameters. Defaults live in [`config/perception_params.yaml`](./src/robot_vision_cameras_bringup/config/perception_params.yaml).*
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_3d_bbox_for_ip_cam.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_3d_bbox_for_ip_cam.py`](./src/robot_vision_cameras_bringup/scripts/yolo_3d_bbox_for_ip_cam.py)</i></sub>
+
+**Purpose & Task:** A lightweight alternative to `yolo_3d_bbox_for_zed_m.py` for setups without a ZED depth camera. Fetches an HTTP JPEG stream (`.123` IP Camera), detects ArUco markers on the table to dynamically compute a **Homography Matrix**, and runs **YOLOv8** to detect objects. Projects the 2D YOLO bounding boxes into the 3D robot base frame (`link_base`) using the homography matrix. Generates and publishes the exact same 3D `MarkerArray` format to `/zed/bboxes_3d`, making it 100% plug-and-play with the existing UI and grasp executor without requiring actual depth hardware.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_vision_cameras_bringup yolo_3d_bbox_for_ip_cam.py
 > ```
 >
-> **Purpose & Task:** A lightweight alternative to `yolo_3d_bbox_for_zed_m.py` for setups without a ZED depth camera. Fetches an HTTP JPEG stream (`.123` IP Camera), detects ArUco markers on the table to dynamically compute a **Homography Matrix**, and runs **YOLOv8** to detect objects. Projects the 2D YOLO bounding boxes into the 3D robot base frame (`link_base`) using the homography matrix. Generates and publishes the exact same 3D `MarkerArray` format to `/zed/bboxes_3d`, making it 100% plug-and-play with the existing UI and grasp executor without requiring actual depth hardware.
 >
 > **Key Capabilities:**
 > - **ArUco Ground Plane Homography:** Continuously solves perspective distortion between 2D pixel coordinates and the real tabletop coordinate plane ($Z \approx 0$).
@@ -730,21 +701,26 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed/bboxes_3d`** | `visualization_msgs/MarkerArray` | *Publishes 3D bounding boxes, labels, and grasp point markers identical to the ZED camera output format.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `pointcloud_optimizer.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/pointcloud_optimizer.py`](./src/robot_vision_cameras_bringup/scripts/pointcloud_optimizer.py)</i></sub>
+
+**Purpose & Task:** Runs in the background during the 3D Vision Bringup and prepares the ZED point cloud for two consumers. The ZED already publishes the cloud in ROS convention (`X=forward`, `Z=up`) in `zed_left_camera_frame`, so nothing is rotated here - TF resolves the rest. Parsing uses the structured numpy arrays of `sensor_msgs_py` (Humble), ~13 ms per HD720 cloud; without any consumer the node does no work at all.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_vision_cameras_bringup pointcloud_optimizer.py
 > ```
 >
-> **Purpose & Task:** Runs in the background during the 3D Vision Bringup and prepares the ZED point cloud for two consumers. The ZED already publishes the cloud in ROS convention (`X=forward`, `Z=up`) in `zed_left_camera_frame`, so nothing is rotated here - TF resolves the rest. Parsing uses the structured numpy arrays of `sensor_msgs_py` (Humble), ~13 ms per HD720 cloud; without any consumer the node does no work at all.
 > - **MoveIt OctoMap (`cloud_optimized`):** NaN points removed, frame unchanged. **Off by default** (`publish_moveit_cloud: false`): once enabled, MoveIt treats the whole camera cloud - including the objects to be grasped - as obstacles. No cropping: MoveIt uses points beyond `ros.max_range` to clear the OctoMap along those rays.
 > - **Web Digital Twin (`/zed/pointcloud_web`):** thinned to `web_max_points`, transformed to `world` via TF, at most `web_rate_hz`, and only while a client is subscribed (point cloud toggle in the SCENE panel of the Robot Control UI).
 >
@@ -772,22 +748,26 @@ flowchart TD
 >> | `web_max_points` | `12000` | *Maximum number of points in the web cloud.* |
 >> | `web_rate_hz` | `4.0` | *Maximum publish rate of the web cloud.* |
 >> | `web_frame` | `world` | *Target frame of the web cloud.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `virtual_object_detections.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/virtual_object_detections.py`](./src/robot_vision_cameras_bringup/scripts/virtual_object_detections.py)</i></sub>
+
+**Purpose & Task:** Publishes the three scene objects **Blue Cube**, **Red Rectangle** and **Green Cylinder** on `/zed/bboxes_3d` as if YOLO had detected them - bounding box, red grasp sphere and labels in exactly the same marker format (marker IDs from 901, names with the suffix ` (virtual)`). Everything attached to `/zed/bboxes_3d` treats them like real detections: `yolo_moveit_collision` (MoveIt collision object + red walls), the Robot Control UI (viewport, *Detected Objects* list, context menu, VR) and `robot_motion_handler_movegroup` ("Approach from above", object scan). This way the grasp and collision workflow can be tested without a camera, e.g. in FAKE mode. The poses come from the TF tuner frames `target_blue_cube`, `target_red_rectangle` and `target_green_cylinder` (the TF z is the bottom of the object); while the virtual objects are on, the TF tuner of the Robot Control UI publishes these frames even with "Live TF" off. Without a frame the default or last seen pose stays. Rotated objects get the axis-aligned hull, like a real YOLO box. Off by default so that virtual collision objects never end up in MoveIt unnoticed.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Publishes · TF2 · Services · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_vision_cameras_bringup virtual_object_detections.py
 > ```
 > *(Started by `robot_vision_cameras_bringup.launch.py`, switched off by default. The switch is the **Virtual Obj.** button in the SCENE panel of the Robot Control UI.)*
->
-> **Purpose & Task:** Publishes the three scene objects **Blue Cube**, **Red Rectangle** and **Green Cylinder** on `/zed/bboxes_3d` as if YOLO had detected them - bounding box, red grasp sphere and labels in exactly the same marker format (marker IDs from 901, names with the suffix ` (virtual)`). Everything attached to `/zed/bboxes_3d` treats them like real detections: `yolo_moveit_collision` (MoveIt collision object + red walls), the Robot Control UI (viewport, *Detected Objects* list, context menu, VR) and `robot_motion_handler_movegroup` ("Approach from above", object scan). This way the grasp and collision workflow can be tested without a camera, e.g. in FAKE mode. The poses come from the TF tuner frames `target_blue_cube`, `target_red_rectangle` and `target_green_cylinder` (the TF z is the bottom of the object); while the virtual objects are on, the TF tuner of the Robot Control UI publishes these frames even with "Live TF" off. Without a frame the default or last seen pose stays. Rotated objects get the axis-aligned hull, like a real YOLO box. Off by default so that virtual collision objects never end up in MoveIt unnoticed.
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -819,20 +799,25 @@ flowchart TD
 >> |---|---|---|
 >> | `enabled` | `false` | *Switch state at start.* |
 >> | `rate_hz` | `5.0` | *Publish rate of the detections [Hz].* |
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_moveit_collision.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_moveit_collision.py`](./src/robot_vision_cameras_bringup/scripts/yolo_moveit_collision.py)</i></sub>
+
+**Purpose & Task:** Seamlessly converts the detected 3D boxes into dynamic MoveIt `CollisionObject` messages. Instead of a solid block, it generates an **open-top cup shape** (5 ultra-thin 1mm walls). This allows the gripper to safely penetrate the bounding box from above for top-down grasps, while securely blocking lateral collisions. The side walls end `top_clearance` (parameter, default 0.01 m) below the object top, so they protect almost the full object height. This is less than MoveIt Servo's 2 cm stop distance: when jogging straight down over an object, Servo may stop a little earlier; "Approach from above" plans through MoveIt and is not affected. Since several sources publish on `/zed/bboxes_3d` (YOLO and `virtual_object_detections`) and each message only carries its own objects, cleanup runs per object over time instead of by what is missing from the last message: an object leaves MoveIt after 2 s without a report, its walls after 1 s. A 0.5 s timer does this even when a source falls silent completely (node stopped, virtual objects switched off).
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Services</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_vision_cameras_bringup yolo_moveit_collision.py
 > ```
->
-> **Purpose & Task:** Seamlessly converts the detected 3D boxes into dynamic MoveIt `CollisionObject` messages. Instead of a solid block, it generates an **open-top cup shape** (5 ultra-thin 1mm walls). This allows the gripper to safely penetrate the bounding box from above for top-down grasps, while securely blocking lateral collisions. The side walls end `top_clearance` (parameter, default 0.01 m) below the object top, so they protect almost the full object height. This is less than MoveIt Servo's 2 cm stop distance: when jogging straight down over an object, Servo may stop a little earlier; "Approach from above" plans through MoveIt and is not affected. Since several sources publish on `/zed/bboxes_3d` (YOLO and `virtual_object_detections`) and each message only carries its own objects, cleanup runs per object over time instead of by what is missing from the last message: an object leaves MoveIt after 2 s without a report, its walls after 1 s. A 0.5 s timer does this even when a source falls silent completely (node stopped, virtual objects switched off).
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -860,17 +845,23 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/ui/set_moveit_collision_objects`** | `std_srvs/srv/SetBool` (Server) | *Enables/disables the objects as MoveIt obstacles (RViz markers stay visible). Defaults to ON after a restart.* |
->
+
+</details>
 
 ---
 
 <br>
 
-#### ![MoveIt 2](https://img.shields.io/badge/Integration-MoveIt_2-00529B?style=flat-square) `octomap_server`
+#### ![MoveIt 2](https://img.shields.io/badge/Integration-MoveIt_2-00529B?style=flat-square) `_robot_moveit_common.launch.py` (`octomap_server`) &nbsp;&nbsp; <sub><i>[`/src/xarm_ros2/xarm_moveit_config/launch/_robot_moveit_common.launch.py`](./src/xarm_ros2/xarm_moveit_config/launch/_robot_moveit_common.launch.py)</i></sub>
+
+**Purpose & Task:** Dynamic 3D environment mapping. Generates a real-time voxel-based collision map (OctoMap) directly from the ZED point cloud, enabling MoveIt to avoid arbitrary, unrecognized obstacles (e.g., human hands, tools) during trajectory planning and servoing.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes</summary>
+
 > [!NOTE]
 > 💻 **Run Command:** *(Natively injected into MoveIt move_group_node via sensor_manager_parameters)*
 >
-> **Purpose & Task:** Dynamic 3D environment mapping. Generates a real-time voxel-based collision map (OctoMap) directly from the ZED point cloud, enabling MoveIt to avoid arbitrary, unrecognized obstacles (e.g., human hands, tools) during trajectory planning and servoing.
 >  * ⚠️ **Input disabled by default:** `pointcloud_optimizer.py` only publishes `cloud_optimized` with `publish_moveit_cloud:=true`. Until then MoveIt plans without the camera cloud.
 >  * 🛠️ **Activation:** In the base repository (`src/xarm_ros2/xarm_moveit_config/launch/_robot_moveit_common.launch.py`), the OctoMap is configured via the `sensor_manager_parameters` dictionary (setting parameters like `octomap_resolution: 0.03` and `ros.point_cloud_topic`) and injected directly into the `move_group_node`.
 >
@@ -889,21 +880,26 @@ flowchart TD
 >> | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Integrates the generated OctoMap natively into the collision world.* |
 >
 > <img src="_imgs/SS4_pointcloud object det collision on.png" width="90%" alt="Pointcloud Collision Detection">
->
 
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_planned_grasp_executor.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_planned_grasp_executor.py`](./src/robot_vision_cameras_bringup/scripts/yolo_planned_grasp_executor.py)</i></sub>
+
+**Purpose & Task:** The central control logic of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the YOLO coordinates, and coordinates a robust **3-Phase Collision-Free Grasping Sequence**:
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Services · Action Server · Action Client · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_vision_cameras_bringup yolo_planned_grasp_executor.py
 > ```
 >
-> **Purpose & Task:** The central control logic of the autonomous grasping pipeline. Reads the UI input field ("Grasp Object"), retrieves the YOLO coordinates, and coordinates a robust **3-Phase Collision-Free Grasping Sequence**:
 >   - **Phase 1 (Retract):** Safely moves the arm strictly upwards from its current position to clear the table.
 >   - **Phase 2 (Hover):** Translates horizontally to a safe height (15cm) exactly above the target object. Forces a strict top-down orientation and uses tight IK tolerances (5mm positional, 0.001 rad tilt) to guarantee millimeter-accurate vertical alignment.
 >   - **Phase 3 (Approach):** Temporarily removes the target object from the MoveIt global collision scene via `/ui/ignore_collision_object` to allow the TCP to physically reach into the object's bounding box without triggering emergency stops, then moves down.
@@ -992,20 +988,25 @@ stateDiagram-v2
 >> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Uses MoveIt Servo / motion handler as fallback movement.* |
 >> | **`/servo_server/stop_servo`** | `std_srvs/srv/Trigger` (Client) | *Temporarily stops the servo server during trajectory execution.* |
 >> | **`/servo_server/start_servo`** | `std_srvs/srv/Trigger` (Client) | *Restarts the servo server after execution.* |
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `grasp_action_bridge.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/grasp_action_bridge.py`](./src/robot_vision_cameras_bringup/scripts/grasp_action_bridge.py)</i></sub>
+
+**Purpose & Task:** Acts as a translator node between the RViz Control Panel / Web UI and the Action Server. Receives the simple target object string from the UI and converts it into a non-blocking ROS 2 Action Goal (`robot_vision_cameras_bringup/action/GraspObject`).
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Action Client</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_vision_cameras_bringup grasp_action_bridge.py
 > ```
->
-> **Purpose & Task:** Acts as a translator node between the RViz Control Panel / Web UI and the Action Server. Receives the simple target object string from the UI and converts it into a non-blocking ROS 2 Action Goal (`robot_vision_cameras_bringup/action/GraspObject`).
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1021,18 +1022,24 @@ stateDiagram-v2
 >> |---|---|---|
 >> | **`/ui/grasp_object`** | `robot_vision_cameras_bringup/action/GraspObject` | *Calls the Grasp Action Server.* |
 
+</details>
+
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `yolo_grasp_executor.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/scripts/yolo_grasp_executor.py`](./src/robot_vision_cameras_bringup/scripts/yolo_grasp_executor.py)</i></sub>
+
+**Purpose & Task:** Direct Cartesian grasping fallback executor. Listens for target object names on `/ui/grasp_object_cmd`, retrieves the latest 3D coordinates from `/zed/bboxes_3d`, and drives the arm directly to the calculated grasp pose by calling the `/ui/execute_move_to_pose` Cartesian service provided by `robot_motion_handler_movegroup`.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Services</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_vision_cameras_bringup yolo_grasp_executor.py
 > ```
->
-> **Purpose & Task:** Direct Cartesian grasping fallback executor. Listens for target object names on `/ui/grasp_object_cmd`, retrieves the latest 3D coordinates from `/zed/bboxes_3d`, and drives the arm directly to the calculated grasp pose by calling the `/ui/execute_move_to_pose` Cartesian service provided by `robot_motion_handler_movegroup`.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1049,45 +1056,63 @@ stateDiagram-v2
 >> |---|---|---|
 >> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Dispatches Cartesian move commands to the central motion handler.* |
 
+</details>
+
 ---
 
 <br>
 
 #### ![Launch](https://img.shields.io/badge/Launch-Skript-FF9900?style=flat-square) `zed_cam_eef_rviz_octomap_yolo.launch.py` &nbsp;&nbsp; <sub><i>[`/src/robot_vision_cameras_bringup/launch/zed_cam_eef_rviz_octomap_yolo.launch.py`](./src/robot_vision_cameras_bringup/launch/zed_cam_eef_rviz_octomap_yolo.launch.py)</i></sub>
+
+**Purpose & Task:** Dedicated bringup launch file for setups where the Stereolabs ZED Mini camera is mounted directly on the robot's end effector (EEF / `link_tcp`). Broadcasts static TF relative to `link_tcp`, runs pointcloud filtering, builds real-time 3D OctoMaps, and starts YOLOv8 detection tailored for eye-in-hand visual inspection.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 launch robot_vision_cameras_bringup zed_cam_eef_rviz_octomap_yolo.launch.py
 > ```
->
-> **Purpose & Task:** Dedicated bringup launch file for setups where the Stereolabs ZED Mini camera is mounted directly on the robot's end effector (EEF / `link_tcp`). Broadcasts static TF relative to `link_tcp`, runs pointcloud filtering, builds real-time 3D OctoMaps, and starts YOLOv8 detection tailored for eye-in-hand visual inspection.
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ip_cam_aruco_6pose_tf_coord.py` (`ip_cam_aruco_6pose_tf_coord`) &nbsp;&nbsp; <sub><i>[`/src/ip_cam_aruco_6pose_tf_coord/ip_cam_aruco_6pose_tf_coord/ip_cam_aruco_6pose_tf_coord.py`](./src/ip_cam_aruco_6pose_tf_coord/ip_cam_aruco_6pose_tf_coord/ip_cam_aruco_6pose_tf_coord.py)</i></sub>
+
+**Purpose & Task:** Lightweight computer vision node using standard USB webcams (`/dev/video0` or `/dev/video2`, MJPEG format, buffer size 1 for minimum latency). Detects ArUco markers (`DICT_4X4_50`, 3 cm), estimates full 6-DoF spatial pose via OpenCV `solvePnP` (`SOLVEPNP_IPPE_SQUARE`), and calculates the relative Cartesian offset ($x, y, z$ in cm) of all detected markers relative to Marker 0 (origin). Features live onscreen 3D coordinate axes and centered text HUD overlays.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run ip_cam_aruco_6pose_tf_coord ip_cam_aruco_6pose_tf_coord
 > ```
 > *(Launched via the Nexus Webapp: section `Vision (Cameras + CV)`)*
->
-> **Purpose & Task:** Lightweight computer vision node using standard USB webcams (`/dev/video0` or `/dev/video2`, MJPEG format, buffer size 1 for minimum latency). Detects ArUco markers (`DICT_4X4_50`, 3 cm), estimates full 6-DoF spatial pose via OpenCV `solvePnP` (`SOLVEPNP_IPPE_SQUARE`), and calculates the relative Cartesian offset ($x, y, z$ in cm) of all detected markers relative to Marker 0 (origin). Features live onscreen 3D coordinate axes and centered text HUD overlays.
+
+</details>
 
 ---
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `tf_control_tuner` &nbsp;&nbsp; <sub><i>[`/src/tf_control_tuner`](./src/tf_control_tuner)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `tf_control_tuner.py` (`tf_control_tuner`) &nbsp;&nbsp; <sub><i>[`/src/tf_control_tuner/tf_control_tuner/tf_control_tuner.py`](./src/tf_control_tuner/tf_control_tuner/tf_control_tuner.py)</i></sub>
+
+**Purpose & Task:** A dedicated ROS 2 package providing a live PyQt5 GUI tuner to interactively calibrate camera TF offsets (Pointcloud) and position 3D scene elements (Cube, Rectangle, Cylinder, Table Plane) alongside an adjustable cylindrical **Safety Zone** (tunable radius and XY center) in RViz without restarting nodes.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Publishes · Defaults</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run tf_control_tuner tf_control_tuner
 > ```
->
-> **Purpose & Task:** A dedicated ROS 2 package providing a live PyQt5 GUI tuner to interactively calibrate camera TF offsets (Pointcloud) and position 3D scene elements (Cube, Rectangle, Cylinder, Table Plane) alongside an adjustable cylindrical **Safety Zone** (tunable radius and XY center) in RViz without restarting nodes.
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1110,21 +1135,26 @@ stateDiagram-v2
 >> | **Safety Zone** | `target_safety_zone` | `0.000` | `0.000` | `0.000` | `0.0°` | `0.0°` | `0.0°` |
 >
 > *Safety Zone radius default: 200 mm (sent together with X/Y on `/ui/safety_zone_params`).*
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `fake_linear_axis_node.py` (`fake_linear_axis`) &nbsp;&nbsp; <sub><i>[`/src/fake_linear_axis/fake_linear_axis/fake_linear_axis_node.py`](./src/fake_linear_axis/fake_linear_axis/fake_linear_axis_node.py)</i></sub>
+
+**Purpose & Task:** Headless ROS 2 node driving the virtual 7th degree of freedom (Linear Rail) in simulation. Subscribes to the translation command `/linear_axis_cmd` (from Web UI slider or Gamepad D-Pad), dynamically broadcasts the TF frame `world` -> `linear_axis_link`, and renders realistic 3D RViz visualization markers (main rail, guide rails, and carriage plate) on `/visualization_marker_array`.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · TF2</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run fake_linear_axis fake_linear_axis
 > ```
 > *(Automatically started in FAKE mode bringup)*
->
-> **Purpose & Task:** Headless ROS 2 node driving the virtual 7th degree of freedom (Linear Rail) in simulation. Subscribes to the translation command `/linear_axis_cmd` (from Web UI slider or Gamepad D-Pad), dynamically broadcasts the TF frame `world` -> `linear_axis_link`, and renders realistic 3D RViz visualization markers (main rail, guide rails, and carriage plate) on `/visualization_marker_array`.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1146,6 +1176,8 @@ stateDiagram-v2
 >> | Frame / Transformation | Description |
 >> |---|---|
 >> | **`world` ➔ `linear_axis_link`** | *Dynamically broadcasts robot base translation on the Y-axis.* |
+
+</details>
 
 ---
 <br>
@@ -1178,7 +1210,13 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `ros2_whisper` &nbsp;&nbsp; <sub><i>[`/src/ros2_whisper`](./src/ros2_whisper)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `bringup.launch.py` (`whisper_bringup`) &nbsp;&nbsp; <sub><i>[`/src/ros2_whisper/whisper_bringup/launch/bringup.launch.py`](./src/ros2_whisper/whisper_bringup/launch/bringup.launch.py)</i></sub>
+
+**Purpose & Task:** Local Speech-to-Text AI. Transcribes the microphone stream with Whisper and publishes the spoken words as text.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Action Server</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -1189,7 +1227,6 @@ flowchart TD
 > ros2 launch whisper_bringup bringup.launch.py use_gpu:=false
 > ```
 >
-> **Purpose & Task:** Local Speech-to-Text AI. Transcribes the microphone stream with Whisper and publishes the spoken words as text.
 > - **Listen Window Instead of Continuous Operation:** Inference only runs for `listen_window_ms` (default 7000 ms) after a `listen` trigger on `/ui/voice_listen_trigger` (the listener's recording lasts 5 s). Before, Whisper transcribed the full buffer every 250 ms even in silence (constant GPU load, log flood). `listen_window_ms: 0` restores continuous mode.
 > - **Model & Decoding (`whisper_server/config/whisper.yaml`):** Multilingual `small` model (EN/DE, noticeably cleaner than `base`, ~50-120 ms per pass on the RTX A5000; downloaded to `~/.cache/whisper.cpp` on first start), `language: "auto"`, greedy decoding (`beam_size: 1`), `temperature: 0.0`, `no_context: true`. `initial_prompt` stays empty on purpose: with a command prompt Whisper hallucinated text in silence and ran slower (tested). The bundled whisper.cpp version has no VAD - the old `silero_vad_use_cuda` argument has no effect.
 > - **GPU / CPU:** `use_gpu:=true|false`. In the Nexus Webapp the Speech Control card has a **Whisper CPU | GPU** toggle in the launch popup. With `use_gpu:=false` the launch file additionally loads the **CPU profile** `whisper_cpu.yaml`: `small` needs ~11 s per pass on the CPU - longer than the listener's 5 s recording - so the CPU profile uses `base`, 12 threads and `audio_ctx: 320` (encoder over 6.4 s instead of 30 s): ~0.35-0.75 s per pass, commands recognized after ~3 s (measured on the i9-12900K). The `ggml_cuda_init … found 1 CUDA devices` lines also appear in CPU mode (the library is built with CUDA); what matters is `use gpu = 0` and the `Decoding: … CPU` log line.
@@ -1202,21 +1239,25 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/whisper/inference`** | `whisper_idl/action/Inference` | *Action Server providing real-time text transcriptions.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `audio_listener.py` &nbsp;&nbsp; <sub><i>[`/src/ros2_whisper/audio_listener/audio_listener/audio_listener.py`](./src/ros2_whisper/audio_listener/audio_listener/audio_listener.py)</i></sub>
+
+**Purpose & Task:** Handles microphone input for the voice command system. Features an automatic, system-aware fallback logic that explicitly scans for and prioritizes the system-default `pulse` or `default` audio devices, guaranteeing reliable voice capture across different hardware environments.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Publishes</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 launch whisper_bringup bringup.launch.py use_gpu:=true
 > ```
->
-> **Purpose & Task:** Handles microphone input for the voice command system. Features an automatic, system-aware fallback logic that explicitly scans for and prioritizes the system-default `pulse` or `default` audio devices, guaranteeing reliable voice capture across different hardware environments.
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1224,14 +1265,20 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`~/audio`** | `std_msgs/Int16MultiArray` | *Publishes the raw audio stream from the microphone.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `voice_command_listener.py` &nbsp;&nbsp; <sub><i>[`/src/voice_command_listener/voice_command_listener/voice_command_listener.py`](./src/voice_command_listener/voice_command_listener/voice_command_listener.py)</i></sub>
+
+**Purpose & Task:** Analyzes discrete single-shot raw text using regex patterns to extract defined action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose"). Implements a robust **3-layer deduplication state machine** to guarantee exactly-once command execution. Whisper noise tags such as `[BLANK_AUDIO]`, `(sighs)` or `*music*` are stripped before matching. The node plays **no sound of its own**: the "robot moves to ..." announcement comes from `robot_motion_handler_movegroup` only once the motion really starts.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Services · Action Client</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -1241,8 +1288,6 @@ flowchart TD
 > # Listener only (Whisper already running):
 > ros2 run voice_command_listener voice_command_listener
 > ```
->
-> **Purpose & Task:** Analyzes discrete single-shot raw text using regex patterns to extract defined action intents (i.e., "Move to Absolute Pose", "Move to Initial Pose", "Faster", "Slower", "Scan Objects"). Features high tolerance for similar-sounding Whisper outputs (e.g. recognizing "pause" or "power" as "pose"). Implements a robust **3-layer deduplication state machine** to guarantee exactly-once command execution. Whisper noise tags such as `[BLANK_AUDIO]`, `(sighs)` or `*music*` are stripped before matching. The node plays **no sound of its own**: the "robot moves to ..." announcement comes from `robot_motion_handler_movegroup` only once the motion really starts.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1277,14 +1322,20 @@ flowchart TD
 >> | **`/voice_cmd/last`** | `std_srvs/srv/Trigger` (Server) | *Returns the last successfully recognized voice command.* |
 >
 > The `whisper_server` runs the multilingual `small` model with `language: "auto"` for English and German commands (see `whisper.yaml`; no `initial_prompt`, it causes hallucinations in silence).
->
->
+
+</details>
 
 ---
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `gaze_control_ui_tobii_glasses` &nbsp;&nbsp; <sub><i>[`/src/gaze_control_ui_tobii_glasses/...`](./src/gaze_control_ui_tobii_glasses/gaze_control_ui_tobii_glasses)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![Python UI](https://img.shields.io/badge/Python_UI-8A2BE2?style=flat-square&logo=qt&logoColor=white) `gaze_ui_node_tobii_glasses.py` / `gaze_ui_node_tobii_glasses_zedm.py` (`gaze_control_ui_tobii_glasses`) &nbsp;&nbsp; <sub><i>[`/src/gaze_control_ui_tobii_glasses/gaze_control_ui_tobii_glasses`](./src/gaze_control_ui_tobii_glasses/gaze_control_ui_tobii_glasses)</i></sub>
+
+**Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 1 sec fixation time) and sends direct movement and gripper commands. Two variants of the script exist for different camera setups:
+
+<details>
+<summary><b>🔽 Show details</b> · Features · Run Command · Subscribes · Publishes · Services</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -1295,7 +1346,6 @@ flowchart TD
 > ros2 run gaze_control_ui_tobii_glasses gaze_ui_zedm
 > ```
 >
-> **Purpose & Task:** A master control user interface (PyQt5). Maps eye-tracking gaze points (via RTSP gaze data) to button clicks (e.g., at 1 sec fixation time) and sends direct movement and gripper commands. Two variants of the script exist for different camera setups:
 > - **`gaze_ui_node_tobii_glasses.py` (Raspberry Pi):** The classic variant. Utilizes a full-screen Chromium web browser (`QWebEngineView`) in the background to display the HTTP livestream (MJPEG) of the Raspberry Pi camera.
 > - **`gaze_ui_node_tobii_glasses_zedm.py` (ZED M):** The modern variant for the 3D Vision setup. Drops the memory-intensive web browser for the main stream. Instead, the node directly subscribes to the ZED camera's ROS topic (`/zed/zed_node/rgb/image_rect_color`), thread-safely converts the ROS image messages (`bgra8`) into native `QImage`/`QPixmap` objects, and renders them as a resource-efficient background label (`bg_label`). The Picture-in-Picture (PiP) view still uses a small web browser for the Pi stream and hides disruptive RPi Cam Control UI elements via JavaScript injection (DOM manipulation).
 > 
@@ -1329,13 +1379,20 @@ flowchart TD
 >> |---|---|---|
 >> | **`/ufactory/set_vacuum_gripper`** | `xarm_msgs/srv/VacuumGripperCtrl` (Client) | *Toggles the vacuum gripper state.* |
 >> | **`/ui/execute_initial_pose`** | `std_srvs/srv/Trigger` (Client) | *Triggers the robot to move to its home pose.* |
->
+
+</details>
 
 ---
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `gaze_grasp_routine_tobii_glasses` &nbsp;&nbsp; <sub><i>[`/src/gaze_grasp_routine_tobii_glasses`](./src/gaze_grasp_routine_tobii_glasses)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `gaze_grasp_routine_tobii_glasses.py` (`gaze_grasp_routine_tobii_glasses`) &nbsp;&nbsp; <sub><i>[`/src/gaze_grasp_routine_tobii_glasses/gaze_grasp_routine_tobii_glasses/gaze_grasp_routine_tobii_glasses.py`](./src/gaze_grasp_routine_tobii_glasses/gaze_grasp_routine_tobii_glasses/gaze_grasp_routine_tobii_glasses.py)</i></sub>
+
+**Purpose & Task:** Enables "telepathic" hands-free object selection and grasping via Tobii Glasses 3.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Services · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -1344,7 +1401,6 @@ flowchart TD
 > ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses --ros-args -p tobii_ip:=192.168.100.2 -p dwell_threshold:=2.0
 > ```
 >
-> **Purpose & Task:** Enables "telepathic" hands-free object selection and grasping via Tobii Glasses 3. 
 > - **Dwell-Time Selection:** Connects to the Tobii glasses RTSP stream. A background process runs YOLOv8 object detection on the live video stream. If the user's eye-gaze fixates on a recognized object's bounding box for **2.0 seconds** (Dwell-Time, parameter `dwell_threshold`), the system automatically locks onto the target and triggers the grasp sequence.
 > - **Homography-based Precision Localization:** After selection, the robot moves to a central "Show Scene" position. The End-Effector (EEF) camera scans the table for 12 known ArUco markers to compute a highly precise `cv2.findHomography` transformation matrix. It then finds the selected object again using YOLO and maps its exact pixel coordinates perfectly into the robot's 3D base reference frame (`cv2.perspectiveTransform`), moving the EEF to hover exactly above the target.
 > - **Robust ArUco Tracking:** Detects the markers twice - in the normal and in the horizontally mirrored image - so a calibration board that was accidentally printed mirrored still works. Detection deliberately runs on the raw grayscale image (CLAHE amplified noise inside the markers).
@@ -1383,7 +1439,8 @@ flowchart TD
 >> | `dwell_threshold` | `2.0` | *Fixation time [s] on an object before it is selected.* |
 >
 > *The gaze data does not arrive over a ROS topic — it is read straight from the Tobii Glasses 3 RTSP stream (`rtsp://<tobii-ip>:8554/live/all`, JSON field `gaze2d`). Object detection runs node-internally via YOLOv8 on that same stream.*
->
+
+</details>
 
 ---
 
@@ -1396,14 +1453,19 @@ flowchart TD
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `vr_quest3_teleop_node.py` &nbsp;&nbsp; <sub><i>[`/src/vr_quest3_teleop/vr_quest3_teleop/vr_quest3_teleop_node.py`](./src/vr_quest3_teleop)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `vr_quest3_teleop_node.py` (`vr_quest3_teleop`) &nbsp;&nbsp; <sub><i>[`/src/vr_quest3_teleop/vr_quest3_teleop/vr_quest3_teleop_node.py`](./src/vr_quest3_teleop/vr_quest3_teleop/vr_quest3_teleop_node.py)</i></sub>
+
+**Purpose & Task:** Provides immersive 6DoF Cartesian teleoperation using the Meta Quest 3 VR headset. Translates the VR controller's spatial movements via WebXR into smooth `TwistStamped` velocity commands for MoveIt Servo.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Services</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py
 > ```
 >
-> **Purpose & Task:** Provides immersive 6DoF Cartesian teleoperation using the Meta Quest 3 VR headset. Translates the VR controller's spatial movements via WebXR into smooth `TwistStamped` velocity commands for MoveIt Servo.
 > - Uses a web-based local UI served via **HTTPS** on port `8443` (from `https_vr_webxr_p8443/` inside the `vr_quest3_teleop` package).
 > - The launch file **automatically starts a secure ROSbridge instance (WSS)** on port `9091` using SSL certificates (`~/dev_ws/certs/cert.pem`). This is strictly required since WebXR (for spatial 6DoF tracking) mandates a Secure Context (HTTPS/WSS).
 > - The WSS bridge runs as its own node `rosbridge_websocket_ssl_9091` with service threads and a 10 s timeout (like the 9090 bridge). It does **not** start its own `/rosapi`: two `/rosapi` nodes (Robot Control UI + VR) made `/rosapi/nodes` hang, which blocked the whole bridge (no joint states in the twin, buttons without effect). `rosapi_guard` starts one only if none is running and stops it again once a second one appears.
@@ -1479,6 +1541,8 @@ flowchart TD
 > - **"Input Sources: 0" / No movement?** → Controllers are asleep. Press any button to wake them up.
 > - **ADB Error in the terminal?** → If you are using Wi-Fi, you can safely ignore the `adb reverse` error in the terminal. It only appears when no USB cable is connected.
 
+</details>
+
 ---
 
 <br>
@@ -1493,10 +1557,14 @@ flowchart TD
 <br>
 
 #### ![Launch](https://img.shields.io/badge/Launch-Skript-FF9900?style=flat-square) `standalone_move_group.launch.py` &nbsp;&nbsp; <sub><i>[`/src/robot_motion_handler_movegroup/launch/standalone_move_group.launch.py`](./src/robot_motion_handler_movegroup/launch/standalone_move_group.launch.py)</i></sub>
+
+**Purpose & Task:** Serves as the "headless" backend for the Web UI. Starts MoveIt 2's `move_group` node without resource-intensive graphical interfaces like RViz. It provides all planning and execution services (Inverse Kinematics, Collision Avoidance, Action Servers) required by the Nexus Webapp or other remote controllers to perform motion planning and execute complex trajectories. Decoupling this from RViz prevents synchronization errors (e.g., MotionPlanning load failures) during startup.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Publishes · Services</summary>
+
 > [!NOTE]
 > 💻 **Run Command:** *(Automatically launched by `RUN DEV SETUP (FAKE)` and `RUN DEV SETUP (REAL)`)*
->
-> **Purpose & Task:** Serves as the "headless" backend for the Web UI. Starts MoveIt 2's `move_group` node without resource-intensive graphical interfaces like RViz. It provides all planning and execution services (Inverse Kinematics, Collision Avoidance, Action Servers) required by the Nexus Webapp or other remote controllers to perform motion planning and execute complex trajectories. Decoupling this from RViz prevents synchronization errors (e.g., MotionPlanning load failures) during startup.
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square) / ![Services](https://img.shields.io/badge/Services-FF1493?style=flat-square)
@@ -1505,18 +1573,22 @@ flowchart TD
 >> |---|---|---|
 >> | **`/move_action`** | Action Server | *Provides trajectory planning and execution.* |
 >> | **`/planning_scene`** | `moveit_msgs/PlanningScene` | *Maintains the collision environment and robot state.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) ![C++ GUI](https://img.shields.io/badge/C++_GUI-00599C?style=flat-square&logo=c%2B%2B&logoColor=white) `rviz_tab_robot_control_panel.cpp` &nbsp;&nbsp; <sub><i>[`/src/rviz_tab_robot_control_panel/src/rviz_tab_robot_control_panel.cpp`](./src/rviz_tab_robot_control_panel/src/rviz_tab_robot_control_panel.cpp)</i></sub>
+
+**Purpose & Task:** The native 2D control panel written in C++ for RViz. It is structured into a modern dark-theme UI with 4 distinct GroupBoxes (Cartesian Jog, Cartesian Absolute, Joint Absolute, Utilities). Provides D-Pad buttons, **6-DoF Joint Control Sliders**, the **"Grasp Object"** input field, and a **Color-Coded Live Console Log**. Employs a thread-safe `Qt::QueuedConnection` Signal/Slot architecture to pipe asynchronous ROS 2 node status messages directly into the UI without freezing.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Services</summary>
+
 > [!NOTE]
 > 💻 **Run Command:** *(Loaded automatically as C++ Plugin inside RViz2)*
->
-> **Purpose & Task:** The native 2D control panel written in C++ for RViz. It is structured into a modern dark-theme UI with 4 distinct GroupBoxes (Cartesian Jog, Cartesian Absolute, Joint Absolute, Utilities). Provides D-Pad buttons, **6-DoF Joint Control Sliders**, the **"Grasp Object"** input field, and a **Color-Coded Live Console Log**. Employs a thread-safe `Qt::QueuedConnection` Signal/Slot architecture to pipe asynchronous ROS 2 node status messages directly into the UI without freezing.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1546,21 +1618,26 @@ flowchart TD
 >> | **`/ui/execute_scan_trajectory`** | `std_srvs/srv/Trigger` (Client) | *Triggers the vision scan trajectory.* |
 >> | **`/ui/execute_move_to_pose`** | `xarm_msgs/srv/MoveCartesian` (Client) | *Commands the planner to reach a Cartesian absolute pose.* |
 >> | **`/ui/execute_move_joint`** | `xarm_msgs/srv/MoveJoint` (Client) | *Commands specific joint angles execution.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `robot_motion_handler_movegroup.py` &nbsp;&nbsp; <sub><i>[`/src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py`](./src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/robot_motion_handler_movegroup.py)</i></sub>
+
+**Purpose & Task:**
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Services · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_motion_handler_movegroup robot_motion_handler_movegroup
 > ```
 >
-> **Purpose & Task:**
 > - **Central Command Hub:** Acts as the bridge between all user interfaces (UIs/Scripts) and the low-level robot hardware/MoveIt 2. Other scripts do not need to calculate complex kinematics; they simply call the services provided by this script.
 > - **Service Provider:** Exposes essential ROS 2 services such as `/ui/execute_initial_pose`, `/ui/execute_move_to_pose`, `/ui/approach_from_above`, `/ui/execute_move_joint`, `/ui/start_octomap_scan`, and `/ui/start_object_scan`.
 > - **Resource Management:** Automatically pauses manual teleoperation (`MoveIt Servo` / Gamepad) before executing an automated trajectory, and reactivates it upon completion.
@@ -1653,18 +1730,26 @@ flowchart TD
 >> | **`/servo_server/start_servo`** | `std_srvs/srv/Trigger` (Client) | *Resumes MoveIt Servo after trajectory execution.* |
 >> | **`/ufactory/set_state`** | `xarm_msgs/srv/SetInt16` (Client) | *Sets hardware state on real controller.* |
 >> | **`/xarm/set_state`** | `xarm_msgs/srv/SetInt16` (Client) | *Sets hardware state on xArm controller.* |
->
 
+</details>
+
+---
+
+<br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `moveit_floor_collision.py` &nbsp;&nbsp; <sub><i>[`/src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/moveit_floor_collision.py`](./src/robot_motion_handler_movegroup/robot_motion_handler_movegroup/moveit_floor_collision.py)</i></sub>
+
+**Purpose & Task:** Adds the table surface as a flat collision box (2 × 2 m) to the MoveIt planning scene. Its height follows the adjustable **Z Collision Level** (TCP height in mm, default 10, set live via `/ui/set_ground_collision_level`): the box lies `servo_margin` below it, but at most at `floor_z` (1 mm below `link_base`) - higher would intersect `link_base` and abort every planning with `START_STATE_IN_COLLISION`. The box is sent as a `/planning_scene` diff, which both `move_group` and `servo_server` receive. It blocks MoveIt Servo while jogging (`HALT_FOR_COLLISION`), `/compute_ik` with `avoid_collisions` and all `move_group` planning (MoveTo, grasp sequence). It is republished every 2 s so a restarted `move_group`/`servo_server` gets it again. The Robot Control UI can switch it off and on via `/ui/set_moveit_collision_ground`. After a node restart it is always ON again.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · Services · Parameters</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run robot_motion_handler_movegroup moveit_floor_collision
 > ```
 > *Started automatically by the `xarm_moveit_servo` launch files (`_robot_moveit_servo_fake/realmove.launch.py`).*
->
-> **Purpose & Task:** Adds the table surface as a flat collision box (2 × 2 m) to the MoveIt planning scene. Its height follows the adjustable **Z Collision Level** (TCP height in mm, default 10, set live via `/ui/set_ground_collision_level`): the box lies `servo_margin` below it, but at most at `floor_z` (1 mm below `link_base`) - higher would intersect `link_base` and abort every planning with `START_STATE_IN_COLLISION`. The box is sent as a `/planning_scene` diff, which both `move_group` and `servo_server` receive. It blocks MoveIt Servo while jogging (`HALT_FOR_COLLISION`), `/compute_ik` with `avoid_collisions` and all `move_group` planning (MoveTo, grasp sequence). It is republished every 2 s so a restarted `move_group`/`servo_server` gets it again. The Robot Control UI can switch it off and on via `/ui/set_moveit_collision_ground`. After a node restart it is always ON again.
 >
 >
 > ![Parameters](https://img.shields.io/badge/Parameters-yellow?style=flat-square)
@@ -1703,21 +1788,26 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/ui/set_moveit_collision_ground`** | `std_srvs/srv/SetBool` (Server) | *Enables/disables the ground as a MoveIt obstacle.* |
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_servo_status.py` (`rviz_overlay_servo_status`) &nbsp;&nbsp; <sub><i>[`/src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_servo_status.py`](./src/rviz_overlay_servo_status/rviz_overlay_servo_status/rviz_servo_status.py)</i></sub>
+
+**Purpose & Task:** Displays a clean, elegant 2D HUD status overlay in the top-right corner of the RViz viewport monitoring live Singularity and Collision warnings (`On` / `Off`), as well as a prominent central warning pop-up banner (`/ui/rviz_overlay_warning_banner`) for immediate visual alerts during singularities or collisions.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run rviz_overlay_servo_status rviz_servo_status
 > ```
 > *(Also automatically started via `robot_vision_cameras_bringup.launch.py`)*
->
-> **Purpose & Task:** Displays a clean, elegant 2D HUD status overlay in the top-right corner of the RViz viewport monitoring live Singularity and Collision warnings (`On` / `Off`), as well as a prominent central warning pop-up banner (`/ui/rviz_overlay_warning_banner`) for immediate visual alerts during singularities or collisions.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1735,19 +1825,25 @@ flowchart TD
 >> | **`/ui/rviz_overlay_warning`** | `rviz_2d_overlay_msgs/OverlayText` | *Publishes formatted 2D HUD warnings status overlay (Singularity & Collision On/Off) in top-right corner of RViz2.* |
 >> | **`/ui/rviz_overlay_warning_banner`** | `rviz_2d_overlay_msgs/OverlayText` | *Publishes large, centered warning banner popup in RViz2 with 2.0s auto-hide during collision/singularity events.* |
 
+</details>
+
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_object_distance_visualizer.py` (`rviz_object_distance_visualizer`) &nbsp;&nbsp; <sub><i>[`/src/rviz_object_distance_visualizer/scripts/rviz_object_distance_visualizer.py`](./src/rviz_object_distance_visualizer/scripts/rviz_object_distance_visualizer.py)</i></sub>
+
+**Purpose & Task:** Computes the live distance from the robot Tool Center Point (`link_tcp`) to the nearest detected YOLO object (`/zed/bboxes_3d`). Dynamically renders a thin, semi-transparent dashed 3D green marker line in RViz connecting `link_tcp` to the object grasp center, while simultaneously displaying a formatted 2D HUD text overlay in the top-left corner of the RViz viewport with millimeter precision (X, Y, Z, D) and color-coded coordinates, with the detected object label displayed in purple.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes · TF2</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run rviz_object_distance_visualizer rviz_object_distance_visualizer.py
 > ```
 > *(Automatically started via `robot_vision_cameras_bringup.launch.py`)*
->
-> **Purpose & Task:** Computes the live distance from the robot Tool Center Point (`link_tcp`) to the nearest detected YOLO object (`/zed/bboxes_3d`). Dynamically renders a thin, semi-transparent dashed 3D green marker line in RViz connecting `link_tcp` to the object grasp center, while simultaneously displaying a formatted 2D HUD text overlay in the top-left corner of the RViz viewport with millimeter precision (X, Y, Z, D) and color-coded coordinates, with the detected object label displayed in purple.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1771,19 +1867,25 @@ flowchart TD
 >> | **`/rviz/gripper_object_distance`** | `visualization_msgs/MarkerArray` | *Publishes the thin dashed green 3D marker line between TCP and nearest object.* |
 >> | **`/rviz/gripper_object_distance_overlay`** | `rviz_2d_overlay_msgs/OverlayText` | *Publishes the 2D HUD overlay displaying object name and aligned millimeter coordinates.* |
 
+</details>
+
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `window_capture_node.py` (`window_x11_streamer`) &nbsp;&nbsp; <sub><i>[`/src/window_x11_streamer/window_x11_streamer/window_capture_node.py`](./src/window_x11_streamer/window_x11_streamer/window_capture_node.py)</i></sub>
+
+**Purpose & Task:** Captures a native running X11 window (default: RViz2, selectable via the `window_name` parameter) in real-time via `xwininfo` and `mss`, converts screen buffers into standard BGR8 ROS Image messages, and publishes them at 15 FPS to `/window_capture/image_raw`. This allows the full 3D RViz scene to be streamed seamlessly into the Web UI via `web_video_server` (Port 8082) without requiring heavy client-side 3D WebGL rendering.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Publishes</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run window_x11_streamer window_capture_node
 > ```
 > *(Started automatically by `web_video_server.launch.py`, which `http_robot_control_ui.launch.py` includes)*
->
-> **Purpose & Task:** Captures a native running X11 window (default: RViz2, selectable via the `window_name` parameter) in real-time via `xwininfo` and `mss`, converts screen buffers into standard BGR8 ROS Image messages, and publishes them at 15 FPS to `/window_capture/image_raw`. This allows the full 3D RViz scene to be streamed seamlessly into the Web UI via `web_video_server` (Port 8082) without requiring heavy client-side 3D WebGL rendering.
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1792,16 +1894,24 @@ flowchart TD
 >> |---|---|---|
 >> | **`/window_capture/image_raw`** | `sensor_msgs/Image` | *Publishes the live screen capture stream of the RViz2 window.* |
 
+</details>
+
+---
+
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_3d_scene_objects.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects.py)</i></sub>
+
+**Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., workspace reach boundary circle with radius $r = 420\text{ mm}$ and thickness $3\text{ mm}$ at TCP $Z = 0$, and interactive hollow-body target boxes). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Publishes</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 launch rviz_marker_3d_scene_objects rviz_marker_3d_scene_objects.launch.py
 > ```
->
-> **Purpose & Task:** Publishes ROS `MarkerArray` messages into the 3D scene of RViz2 (e.g., workspace reach boundary circle with radius $r = 420\text{ mm}$ and thickness $3\text{ mm}$ at TCP $Z = 0$, and interactive hollow-body target boxes). Uses a `0` timestamp to prevent flickering caused by TF tree asynchronicity.
 >
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
@@ -1809,14 +1919,20 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Renders virtual markers (workspace circle, interactive target boxes) in RViz.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_3d_scene_plane.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_plane.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_plane.py)</i></sub>
+
+**Purpose & Task:** Publishes a flat white DIN A4 plane marker (0.21 × 0.30 × 0.001 m) at the `target_white_plane` TF frame into the RViz2 3D scene. Serves as a visual template/stencil for pick-and-place operations.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Publishes</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -1824,30 +1940,32 @@ flowchart TD
 > ```
 > *(Automatically started via `rviz_marker_3d_scene_objects.launch.py`)*
 >
-> **Purpose & Task:** Publishes a flat white DIN A4 plane marker (0.21 × 0.30 × 0.001 m) at the `target_white_plane` TF frame into the RViz2 3D scene. Serves as a visual template/stencil for pick-and-place operations.
->
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Renders the white plane template marker in RViz.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_3d_scene_safety_zone.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_safety_zone.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_safety_zone.py)</i></sub>
+
+**Purpose & Task:** Publishes into the RViz2 scene (namespace `safety_zone`) the **unreachable zone around the robot axis** as a red body of revolution with contour rings, and the **scan path clearance** (safety zone radius, default 138 mm) as a flat orange disc. The red shape was measured with MoveIt (`/compute_ik` with collision checking, gripper facing down): unreachable up to radius 100 mm at z = 0–60 mm, 80 mm at 80–240 mm, 60 mm at 260 mm, 30 mm at 280 mm, free from 300 mm - there the arm would have to pass through its base or lower arm. The Robot Control UI uses the same profile (`UNREACHABLE_PROFILE` in `js/robot_limits.js`). Subscribes to `/ui/safety_zone_params` to receive position and radius of the path clearance; the red zone is fixed.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Subscribes · Publishes</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 run rviz_marker_3d_scene_objects rviz_marker_3d_scene_safety_zone
 > ```
 > *(Automatically started via `rviz_marker_3d_scene_objects.launch.py`)*
->
-> **Purpose & Task:** Publishes into the RViz2 scene (namespace `safety_zone`) the **unreachable zone around the robot axis** as a red body of revolution with contour rings, and the **scan path clearance** (safety zone radius, default 138 mm) as a flat orange disc. The red shape was measured with MoveIt (`/compute_ik` with collision checking, gripper facing down): unreachable up to radius 100 mm at z = 0–60 mm, 80 mm at 80–240 mm, 60 mm at 260 mm, 30 mm at 280 mm, free from 300 mm - there the arm would have to pass through its base or lower arm. The Robot Control UI uses the same profile (`UNREACHABLE_PROFILE` in `js/robot_limits.js`). Subscribes to `/ui/safety_zone_params` to receive position and radius of the path clearance; the red zone is fixed.
 >
 >
 > ![Subscribes](https://img.shields.io/badge/Subscribes-orange?style=flat-square)
@@ -1862,14 +1980,20 @@ flowchart TD
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`visualization_marker_array`** | `visualization_msgs/MarkerArray` | *Namespace `safety_zone`: path clearance as a disc (`CYLINDER`) + ring, unreachable zone as a body of revolution (`TRIANGLE_LIST`) + contour rings (`LINE_LIST`).* |
->
->
+
+</details>
 
 ---
 
 <br>
 
 #### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rviz_marker_3d_scene_zedm_stand.py` &nbsp;&nbsp; <sub><i>[`/src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_zedm_stand.py`](./src/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_objects/rviz_marker_3d_scene_zedm_stand.py)</i></sub>
+
+**Purpose & Task:** Mathematically generates the exact 3D model of the camera tripod (aluminum profile) alongside the 3D mesh (STL) of the Stereolabs ZED M camera and publishes them statically in RViz.
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command · Publishes</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -1877,36 +2001,45 @@ flowchart TD
 > ```
 > *(Automatically started via `rviz_marker_3d_scene_objects.launch.py`)*
 >
-> **Purpose & Task:** Mathematically generates the exact 3D model of the camera tripod (aluminum profile) alongside the 3D mesh (STL) of the Stereolabs ZED M camera and publishes them statically in RViz.
->
 >
 > ![Publishes](https://img.shields.io/badge/Publishes-green?style=flat-square)
 >
 >> | Topic / Interface | Msg Type | Description |
 >> |---|---|---|
 >> | **`/zed_visual_markers`** | `visualization_msgs/MarkerArray` | *Publishes the static 3D models of the camera stand and the ZED camera mesh.* |
->
->
+
+</details>
 
 ---
 
 <br>
 
-#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_server` &nbsp;&nbsp; <sub><i>[`/opt/ros/humble/share/rosbridge_server`](https://github.com/RobotWebTools/rosbridge_suite)</i></sub>
+#### ![Node](https://img.shields.io/badge/Node-blue?style=flat-square) `rosbridge_websocket_launch.xml` (`rosbridge_server`) &nbsp;&nbsp; <sub><i>[`/opt/ros/humble/share/rosbridge_server/launch/rosbridge_websocket_launch.xml`](https://github.com/RobotWebTools/rosbridge_suite)</i></sub>
+
+**Purpose & Task:** Standard WebSocket bridge on Port 9090, allowing the web UIs (Robot Control UI, Dashboard Monitoring UI) to access the ROS network directly. The Robot Control UI launch starts it with `call_services_in_new_thread:=true` and `default_call_service_timeout:=10.0`: otherwise every service call runs in the bridge main thread, and a slow call (e.g. `/rosapi/nodes`) delayed MoveTo by 0.3-5 s before planning started (measured; with threads a constant ~0.3 s).
+
+<details>
+<summary><b>🔽 Show details</b> · Run Command</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
 > ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 > ```
->
-> **Purpose & Task:** Standard WebSocket bridge on Port 9090, allowing the web UIs (Robot Control UI, Dashboard Monitoring UI) to access the ROS network directly. The Robot Control UI launch starts it with `call_services_in_new_thread:=true` and `default_call_service_timeout:=10.0`: otherwise every service call runs in the bridge main thread, and a slow call (e.g. `/rosapi/nodes`) delayed MoveTo by 0.3-5 s before planning started (measured; with threads a constant ~0.3 s).
->
+
+</details>
 
 ---
 
 <br>
 
-#### ![Web App](https://img.shields.io/badge/Web_App-E34F26?style=flat-square&logo=html5&logoColor=white) `http_robot_control_ui_p8081`
+#### ![Web App](https://img.shields.io/badge/Web_App-E34F26?style=flat-square&logo=html5&logoColor=white) `http_robot_control_ui.launch.py` (`http_robot_control_ui_p8081`) &nbsp;&nbsp; <sub><i>[`/src/http_robot_control_ui_p8081/launch/http_robot_control_ui.launch.py`](./src/http_robot_control_ui_p8081/launch/http_robot_control_ui.launch.py)</i></sub>
+
+**Purpose & Task:** A native-feeling, standalone Chrome Web App designed with a modern Glassmorphism aesthetic. It acts as a comprehensive multimodal dashboard directly replicating the RViz control panel features for remote operation. Operates on **Port 8081**.
+
+<details>
+<summary><b>🔽 Show details</b> · Features · Run Command · Subscribes · Publishes · Services</summary>
+
 > [!NOTE]
 > 💻 **Run Command:**
 > ```bash
@@ -1918,7 +2051,6 @@ flowchart TD
 > ```
 > *Launch arguments: `start_video_server` (default `true`), `video_server_port` (default `8082`).*
 >
-> **Purpose & Task:** A native-feeling, standalone Chrome Web App designed with a modern Glassmorphism aesthetic. It acts as a comprehensive multimodal dashboard directly replicating the RViz control panel features for remote operation. Operates on **Port 8081**.
 > **Native Desktop Integration:** The *Robot Control UI* launches in a dedicated, isolated Chrome `--app` profile: maximized as a standalone application, detached from standard browser windows and with its own taskbar icon. The *ROS 2 Nexus Webapp* opens as a frameless WebKitGTK window that only shows the start popup (see 7.2); Chrome `--app` is only its fallback.
 > - ✨ **Core Features:** 
 >   - **Standardized Status Bar & Quick Reload:** Unified navbar with a live refresh button (`fa-arrows-rotate`) on the far left, followed by standardized port badges in `Name: PORT` format (`ROS 2 Bridge: 9090`, `Robot Control UI: 8081`, `Nexus Webapp: 5000`, `Dashboard: 8080`, `Video Streams: 8082`, `VR Teleop: 9091`), device badges and live ROS environment parameters (`ROS_DOMAIN_ID: 66`, `RMW: rmw_cyclonedds_cpp`, `Localhost Only: On/Off`), and real-time hardware mode pills. All badges are fed by `/api/header_status` of the UI web server (`server.py`, the same on 8081 and 8443 - same origin, so it works in the Quest browser too): ports are checked on the PC; **Quest 3** is online via USB (sysfs), Wi-Fi (ping to the IP read once via `adb`, cached in `~/.cache/robot_control_ui/quest_ip`, `QUEST_IP` overrides) or an active WebXR session and shows e.g. `VR · USB+WLAN`; **Xbox** via USB/Bluetooth, `/joy` or the Gamepad API; **Tobii** via its RTSP port 8554 (`TOBII_IP`, default `192.168.75.51`); Domain/RMW/Localhost come from the server's environment.
@@ -2042,8 +2174,8 @@ flowchart TD
 >> | **`/ui/set_virtual_detections`** | `std_srvs/srv/SetBool` (Client) | *Virtual Obj. button in the SCENE panel.* |
 >
 > *The emergency stop is dispatched over the non-blocking topic `/ui/emergency_stop_topic`, not over the `/ui/emergency_stop` service. The services `/ui/execute_move_joint` and `/ui/emergency_stop` are provided by `robot_motion_handler_movegroup` and are used by the RViz control panel, not by this Web UI.*
->
 
+</details>
 
 ---
 <br>
@@ -2056,21 +2188,21 @@ flowchart TD
 
 <br>
 
-#### ![Bash Script](https://img.shields.io/badge/Bash_Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white) `start_isaac_sim.sh`
+#### ![Bash Script](https://img.shields.io/badge/Bash_Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white) `start_isaac_sim.sh` &nbsp;&nbsp; <sub><i>[`/isaacsim/start_isaac_sim.sh`](./isaacsim/start_isaac_sim.sh)</i></sub>
+
+**Purpose & Task:** Integrates a locally built NVIDIA Isaac Sim environment into the Nexus Webapp (section `NVIDIA Isaac Sim`). Instead of actively computing physics or conflicting with hardware controllers, Isaac Sim runs in **Shadow Mode**. It subscribes to the `/joint_states` topic and maps the physical (or fake) robot movements onto an extremely high-fidelity USD asset in real-time.
+
+<details>
+<summary><b>🔽 Show details</b></summary>
+
 > [!NOTE]
-> **Purpose & Task:** Integrates a locally built NVIDIA Isaac Sim environment into the Nexus Webapp (section `NVIDIA Isaac Sim`). Instead of actively computing physics or conflicting with hardware controllers, Isaac Sim runs in **Shadow Mode**. It subscribes to the `/joint_states` topic and maps the physical (or fake) robot movements onto an extremely high-fidelity USD asset in real-time.
 > - **Workflow:** 1. The user launches `RUN DEV SETUP (FAKE)` or `(REAL)` via the Nexus Webapp.
 >   2. The user clicks `Start Isaac Sim (Lite6 Modul)` under the Isaac Sim category.
 >   3. The custom script spawns the local `isaac-sim.sh` binary with `--allow-root` and automatically opens the pre-configured Action Graph scene (`lite6_isaac_ros2.usd`).
 > - **OmniGraph Architecture:** The scene uses a minimal footprint Action Graph consisting of an `On Playback Tick` node firing into a `ROS2 Subscribe Joint State` node (listening to `/joint_states`), which pipes directly into the `Articulation Controller` driving the robot asset.
 > - **`COLCON_IGNORE` Integration:** Because Isaac Sim contains thousands of non-ROS python scripts within its `_build` cache, a `COLCON_IGNORE` file is placed inside the `isaacsim` directory to prevent `colcon build` from fatally crashing the ROS 2 workspace compilation.
->
 
-
-
-
-
-
+</details>
 
 [⬆️ Back to Top](#table-of-contents)
 
@@ -2109,10 +2241,6 @@ flowchart TD
 
 ### 4.3 VLA & Video Action Models (Planned)
 > AI-assisted action planning through *Vision-Language-Action* models.
-
-
-
-
 
 ---
 
