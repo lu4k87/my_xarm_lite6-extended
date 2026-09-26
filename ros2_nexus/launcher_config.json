@@ -1,12 +1,13 @@
 {
   "__cards_collapsed": {
     "dev_fake": {
-      "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": true,
+      "ros2 launch http_robot_control_ui_p8081 http_robot_control_ui.launch.py": false,
       "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": true,
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": true,
       "ros2 launch vr_quest3_teleop vr_quest3_teleop.launch.py": true,
       "ros2 launch web_video_server web_video_server.launch.py": true,
-      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py attach_to:=linear_axis_link add_vacuum_gripper:=true add_gripper:=true static_objects:=true": true,
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py attach_to:=linear_axis_link add_vacuum_gripper:=true add_gripper:=true static_objects:=true": false,
+      "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py attach_to:=linear_axis_link add_vacuum_gripper:=true add_gripper:=true static_objects:=true::tree": true,
       "ros2 run gaze_grasp_routine_tobii_glasses gaze_grasp_routine_tobii_glasses": true
     },
     "dev_real": {
@@ -51,8 +52,8 @@
       "robot_ip:=192.168.1.175": true
     },
     "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py": {
-      "camera:=ip_cam": true,
-      "camera:=zed_m": false,
+      "camera:=ip_cam": false,
+      "camera:=zed_m": true,
       "use_zed_hardware:=false": false,
       "use_zed_hardware:=true": false,
       "val:acceleration_scaling": null,
@@ -91,8 +92,8 @@
       "yolo_model:=yolov8s.pt": false
     },
     "ros2 launch robot_vision_cameras_bringup robot_vision_cameras_bringup.launch.py camera:=zed_m camera:=ip_cam yolo_model:=yolov8l.pt yolo_model:=yolov8s.pt yolo_model:=my_yolo_model.pt": {
-      "camera:=ip_cam": true,
-      "camera:=zed_m": false,
+      "camera:=ip_cam": false,
+      "camera:=zed_m": true,
       "camera_model:=zed2": false,
       "camera_model:=zed2i": false,
       "camera_model:=zedm": true,
@@ -162,17 +163,17 @@
       "silero_vad_use_cuda:=false": false,
       "silero_vad_use_cuda:=true": true,
       "use_gpu:=false": false,
-      "use_gpu:=true": true,
+      "use_gpu:=true": false,
       "val:device_index": null,
       "val:language": null,
-      "val:model_name": null
+      "val:model_name": "medium"
     },
     "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": {
       "silero_vad_use_cuda:=true": true,
-      "use_gpu:=true": true,
+      "use_gpu:=true": false,
       "val:device_index": null,
       "val:language": null,
-      "val:model_name": null
+      "val:model_name": "medium"
     },
     "ros2 launch web_video_server web_video_server.launch.py": {
       "port:=8082": true
@@ -195,7 +196,7 @@
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py": {
       "add_gripper:=true": false,
       "add_vacuum_gripper:=true": true,
-      "attach_to:=linear_axis_link": false,
+      "attach_to:=linear_axis_link": true,
       "rviz:=true": true,
       "static_objects:=true": false
     },
@@ -213,7 +214,7 @@
     "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py attach_to:=linear_axis_link add_vacuum_gripper:=true add_gripper:=true static_objects:=true": {
       "add_gripper:=true": false,
       "add_vacuum_gripper:=true": true,
-      "attach_to:=linear_axis_link": false,
+      "attach_to:=linear_axis_link": true,
       "rviz:=true": true,
       "static_objects:=true": false
     },
@@ -571,13 +572,13 @@
       },
       "ros2 launch voice_command_listener voice_listener.launch.py": {
         "use_gpu:=true": false,
-        "val:model_name": null,
+        "val:model_name": "medium",
         "val:language": null,
         "val:device_index": null
       },
       "ros2 launch voice_command_listener voice_listener.launch.py silero_vad_use_cuda:=true use_gpu:=true": {
         "use_gpu:=true": false,
-        "val:model_name": null,
+        "val:model_name": "medium",
         "val:language": null,
         "val:device_index": null
       },
@@ -602,7 +603,7 @@
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py": {
         "add_vacuum_gripper:=true": true,
         "add_gripper:=true": false,
-        "attach_to:=linear_axis_link": false,
+        "attach_to:=linear_axis_link": true,
         "static_objects:=true": false,
         "rviz:=true": true
       },
@@ -618,7 +619,7 @@
       "ros2 launch xarm_moveit_servo lite6_moveit_servo_fake.launch.py attach_to:=linear_axis_link add_vacuum_gripper:=true add_gripper:=true static_objects:=true": {
         "add_vacuum_gripper:=true": true,
         "add_gripper:=true": false,
-        "attach_to:=linear_axis_link": false,
+        "attach_to:=linear_axis_link": true,
         "static_objects:=true": false,
         "rviz:=true": true
       },
